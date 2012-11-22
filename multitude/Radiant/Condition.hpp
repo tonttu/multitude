@@ -59,23 +59,31 @@ namespace Radiant {
 		~Condition();
 
     /// Waits on the wait condition for at most the given time. The mutex must
-    /// be locked by the calling thread and is released. If the mutex is not locked
-    /// the function will return immediately.
+    /// be locked by the calling thread. The mutex is released. If the mutex is
+    /// not locked the function will return immediately.
     /// @param mutex locked mutex
     /// @param millisecs timeout in milliseconds
     /// @return false if the wait timed out
     bool wait(Mutex &mutex, unsigned long millisecs = std::numeric_limits<unsigned long>::max());
+
+
+    /// Waits on the wait condition for at most the given time. Decreases the
+    /// parameter timeoutMs by amount of time waited. If the wait is timed out
+    /// returns false; otherwise true.
+    /// @param mutex locked mutex
+    /// @param[in,out] timeoutMs timeout in milliseconds to wait
+    /// @return false if the wait timed out; otherwise true
     bool wait2(Mutex & mutex, unsigned int & timeoutMs);
 
     /// Wakes all threads waiting on the condition
-		int wakeAll();
+    void wakeAll();
     /// Wakes all threads waiting on the condition
-		int wakeAll(Mutex &mutex);
+    void wakeAll(Mutex &mutex);
 
     /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
-		int wakeOne();
+    void wakeOne();
     /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
-		int wakeOne(Mutex &mutex);
+    void wakeOne(Mutex &mutex);
 
 	private:
 		class D;

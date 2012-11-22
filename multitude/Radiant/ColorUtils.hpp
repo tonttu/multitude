@@ -50,6 +50,9 @@ namespace Radiant
     /// @param rgb linear rgb color
     /// @param[out] cie CIE XYZ tristimulus values
     static void rgbToCIEXYZ(const Nimble::Vector3f & rgb, Nimble::Vector3f & cie);
+    /// Convert CIE XYZ to RGB
+    /// @param cie XYZ vector to convert
+    /// @param[out] rgb rgb vector to store the color
     static void CIEXYZToRGB(const Nimble::Vector3f & cie, Nimble::Vector3f & rgb);
 
     /// Convert CIE XYZ tristimulus values to CIE xyY values

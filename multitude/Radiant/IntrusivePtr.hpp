@@ -204,6 +204,7 @@ namespace Radiant
   class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {
   public:
+    /// Type of the object pointed to
     typedef T element_type;
 
     template <typename Y> friend class IntrusivePtr;

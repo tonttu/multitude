@@ -39,12 +39,17 @@ namespace Radiant
     virtual bool dropEvent(const Radiant::DropEvent & ) = 0;
   };
 
-  /// An object representing drop-data from a drag-and-drop operation.
+  /// This class abstracts drag and drop events. It is generated when a drag
+  /// and drop action is completed.
   class RADIANT_API DropEvent : public Patterns::NotCopyable
   {
   public:
     /// Creates a drop event that contains a collection of URLs
     DropEvent(const QList<QUrl> & urls, Nimble::Vector2 loc);
+    /// Create a drop event from QDropEvent
+    /// @param de QDropEvent to copy
+    /// @param loc drop location
+    /// @todo location in what coordinates?
     DropEvent(const QDropEvent & de, Nimble::Vector2 loc);
     /// Deletes the drop event
     ~DropEvent();

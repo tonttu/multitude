@@ -26,8 +26,7 @@ namespace Radiant
 {
 
   /// This class provides an implementation for calculating a moving average
-  /// using an IIR filter.
-  /// @todo cleanup and rename (MovingAverage)?
+  /// with a fixed window.
   template <typename T>
   class MovingAverage
   {

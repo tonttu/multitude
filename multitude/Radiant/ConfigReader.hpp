@@ -156,6 +156,7 @@ namespace Radiant {
     ChunkT() {clearFirst=false; m_chunks = new std::multimap<QString, ChunkT<T> >(); }
     ~ChunkT() { delete m_chunks; }
 
+    /// Copy constructor
     ChunkT(const ChunkT & copy)
       : clearFirst(copy.clearFirst)
       , m_variants(copy.m_variants)
@@ -163,6 +164,7 @@ namespace Radiant {
     {
     }
 
+    /// Copy a chunk
     ChunkT & operator= (const ChunkT & copy)
     {
       clearFirst = copy.clearFirst;
@@ -243,6 +245,7 @@ namespace Radiant {
     /// Iterator to the after-the-end element
     const_iterator end()   const { return m_variants.end(); }
 
+    /// Get the map of chunks
     const std::multimap<QString, ChunkT<T> > * chunks() const { return m_chunks; }
 
     /// Gets the data element from an iterator

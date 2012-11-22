@@ -82,29 +82,25 @@ namespace Radiant {
     return ret;
   }
 
-  int Condition::wakeAll()
+  void Condition::wakeAll()
   {
     m_d->wakeAll();
-    return 0;
   }
 
-  int Condition::wakeAll(Mutex & mutex)
+  void Condition::wakeAll(Mutex & mutex)
   {
     Guard g(mutex);
     wakeAll();
-    return 0;
   }
 
-  int Condition::wakeOne()
+  void Condition::wakeOne()
   {
     m_d->wakeOne();
-    return 0;
   }
 
-  int Condition::wakeOne(Mutex & mutex)
+  void Condition::wakeOne(Mutex & mutex)
   {
     Guard g(mutex);
     m_d->wakeOne();
-    return 0;
   }
 }

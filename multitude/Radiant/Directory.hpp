@@ -120,6 +120,12 @@ namespace Radiant
     /// Checks if the given directory exists
     static bool exists(const QString & dir);
 
+    /// Create a directory listing with MIME pattern filtering
+    /// @param pathname path of the directory
+    /// @param mimePattern mime pattern for files to match
+    /// @param filters one or more filters flags
+    /// @param sortFlag flag indicating how the results are sorted
+    /// @return directory object with the matching filters
     static Directory findByMimePattern(const QString & pathname,
                                        const QString & mimePattern,
                                        int filters = AllEntries | NoDotAndDotDot,

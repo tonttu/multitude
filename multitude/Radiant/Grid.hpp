@@ -32,6 +32,7 @@ namespace Radiant {
       resize(w, h);
     }
     /// Constructs a new grid with the given size
+    /// @param data pointer to grid data
     /// @param w The width of the grid
     /// @param h The height of the grid
     GridMemT(void * data, unsigned w, unsigned h)
@@ -328,6 +329,7 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
+    /// @copydoc getInterpolated
     inline T getInterpolated(const Nimble::Vector2f & v) const
     {
       return getInterpolated<T>(v);
@@ -364,6 +366,7 @@ namespace Radiant {
           get(left, bot) * wxl * wyb + get(right, bot) * wxr * wyb;
     }
 
+    /// @copydoc getInterpolatedSafe
     inline T getInterpolatedSafe(const Nimble::Vector2f & v) const
     {
       return getInterpolatedSafe<T>(v);
