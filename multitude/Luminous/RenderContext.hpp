@@ -143,6 +143,8 @@ namespace Luminous
     void postProcess();
     /// @endcond
 
+    /// Transformation from the world coordinates (pixels) to projected eye
+    /// coordinates (normalized device coordinates).
     const Nimble::Matrix4 & viewTransform() const;
     void pushViewTransform(const Nimble::Matrix4 & m);
     void popViewTransform();
