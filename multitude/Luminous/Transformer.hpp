@@ -38,6 +38,7 @@ namespace Luminous
     /// Get the top matrix of the stack
     /// @todo rename to transform
     const Nimble::Matrix4 & transform4() const { return m_stack.top(); }
+    /// Get the top matrix of the stack as 3x3-matrix
     Nimble::Matrix3 transform() const;
 
     /// Apply the current transformation matrix on a 2D vector.
