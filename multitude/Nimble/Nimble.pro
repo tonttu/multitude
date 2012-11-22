@@ -3,7 +3,7 @@ include(../multitude.pri)
 HEADERS += Export.hpp
 HEADERS += Frame4.hpp
 HEADERS += ClipStack.hpp
-HEADERS += RollingAverage.hpp
+HEADERS += SmoothingFilter.hpp
 HEADERS += Histogram.hpp 
 HEADERS += Interpolation.hpp
 HEADERS += KeyStone.hpp
@@ -28,8 +28,6 @@ HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
 HEADERS += Vector4.hpp
 
-# SOURCES += Histogram.cpp
-SOURCES += RollingAverage.cpp
 SOURCES += ClipStack.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp

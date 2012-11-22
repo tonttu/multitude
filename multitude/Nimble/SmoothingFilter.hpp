@@ -13,28 +13,26 @@
  *
  */
 
-#ifndef NIMBLE_ROLLINGAVERAGE_HPP
-#define NIMBLE_ROLLINGAVERAGE_HPP
+#ifndef NIMBLE_SMOOTHINGFILTER_HPP
+#define NIMBLE_SMOOTHINGFILTER_HPP
 
 #include "Vector4.hpp"
 
 namespace Nimble {
 
-  /// Rolling average calculation.
-  ///
-  /// This class uses simple first-order IIR filter to provide rolling average
-  /// calculation. The first sample will define the value of the average
-  /// instantly, while input of subsequent samples will have a slower reaction
-  /// to the input value.
+  /// This class uses simple first-order IIR filter to provide a smoothing of
+  /// input samples. The first input sample will define the value of the filter
+  /// output instantly, while input of subsequent samples will have a slower
+  /// reaction to the output value.
   template <class T>
-  class RollingAverageT
+  class SmoothingFilterT
   {
   public:
     /// Data type of the vector
     typedef T type;
 
     /// Construct a new RollingAverage
-    RollingAverageT() : m_any(false) {}
+    SmoothingFilterT() : m_any(false) {}
 
     /// Reset the average to the given value
     /// @param value value to reset to
@@ -78,15 +76,15 @@ namespace Nimble {
   };
 
   /// Rolling average of floats
-  typedef RollingAverageT<float> RollingAverageFloat;
+  typedef SmoothingFilterT<float> SmoothingFilterFloat;
   /// Rolling average of doubles
-  typedef RollingAverageT<double> RollingAverageDouble;
+  typedef SmoothingFilterT<double> SmoothingFilterDouble;
   /// Rolling average of Vector2s
-  typedef RollingAverageT<Vector2> RollingAverageVector2;
+  typedef SmoothingFilterT<Vector2> SmoothingFilterVector2;
   /// Rolling average of Vector3s
-  typedef RollingAverageT<Vector3> RollingAverageVector3;
+  typedef SmoothingFilterT<Vector3> SmoothingFilterVector3;
   /// Rolling average of Vector4s
-  typedef RollingAverageT<Vector4> RollingAverageVector4;
+  typedef SmoothingFilterT<Vector4> SmoothingFilterVector4;
 }
 
 #endif // NIMBLE_ROLLINGAVERAGE_HPP
