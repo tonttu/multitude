@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef BUFFER_HPP
-#define BUFFER_HPP
+#ifndef MOVING_AVERAGE_HPP
+#define MOVING_AVERAGE_HPP
 
 #include <Radiant/TimeStamp.hpp>
 
@@ -29,13 +29,13 @@ namespace Radiant
   /// using an IIR filter.
   /// @todo cleanup and rename (MovingAverage)?
   template <typename T>
-  class Buffer
+  class MovingAverage
   {
   public:
     /// Construct a new buffer
     /// @param t initial value
     /// @param history history length in seconds
-    Buffer(const T & t, double history)
+    MovingAverage(const T & t, double history)
       : m_history(Radiant::TimeStamp::createSeconds(history)),
         m_pos(-1),
         m_value(t),
