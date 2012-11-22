@@ -15,6 +15,8 @@
 #ifndef RADIANT_TABLETEVENT_HPP
 #define RADIANT_TABLETEVENT_HPP
 
+/// @cond
+
 #include <Radiant/Export.hpp>
 #include <Nimble/Vector2.hpp>
 #include <QTabletEvent>
@@ -38,5 +40,7 @@ namespace Radiant
   };
 
 }
+
+/// @endcond
 
 #endif

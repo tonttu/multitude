@@ -46,6 +46,7 @@ namespace Radiant
   /// found anymore. Use this to be safe.
   typedef decltype(nullptr) nullptr_t;
 
+  /// This class implements the reference counter used by intrusive pointrers.
   struct IntrusivePtrCounter
   {
     IntrusivePtrCounter() : useCount(0), weakCount(1) {}
@@ -458,12 +459,19 @@ namespace Radiant
     return *this;
   }
 
+  /// Check if a raw pointer and an intrusive pointer are equal
   template <typename T, typename Y> inline bool operator== (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs == lhs; }
+  /// Check if a raw pointer and an intrusive pointer are inequal
   template <typename T, typename Y> inline bool operator!= (const Y * lhs, const IntrusivePtr<T> & rhs) { return rhs != lhs; }
+  /// Compare operator for a raw pointer and an instrusive pointer
   template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return !(rhs == lhs || rhs < lhs); }
+  /// Check if nullptr is equal to intrusive pointer
   template <typename T> inline bool operator== (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs == nullptr; }
+  /// Check if nullptr is inequal to intrusive pointer
   template <typename T> inline bool operator!= (nullptr_t, const IntrusivePtr<T> & rhs) { return rhs != nullptr; }
+  /// Check if two different type intrusive pointers are equal
   template <typename T, typename Y> inline bool operator== (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs == lhs; }
+  /// Check if two different type intrusive pointers are inequal
   template <typename T, typename Y> inline bool operator!= (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs != lhs; }
 }
 

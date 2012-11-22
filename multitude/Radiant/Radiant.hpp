@@ -37,6 +37,9 @@
     Jari Kleimola, George Whale
 */
 namespace Radiant {
+
+  /// Creates a null object for aritchmetic types
+  /// @return zero cast to proper type
   /// @todo what is proper place for these?
   template<typename Y>
   typename std::enable_if<std::is_arithmetic<Y>::value, Y>::type createNull()
@@ -44,6 +47,8 @@ namespace Radiant {
     return Y(0);
   }
 
+  /// Create a null object for non-arithmetic types
+  /// @return the return value of the static null() method of the type
   template<typename Y>
   typename std::enable_if<!std::is_arithmetic<Y>::value, Y>::type createNull()
   {

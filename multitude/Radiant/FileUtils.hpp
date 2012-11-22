@@ -30,6 +30,7 @@ namespace Radiant
 {
 
   /// @cond
+
   /// This class is used by MultiTaction firmware to implement mount_rw
   class RADIANT_API FileWriter : public Patterns::NotCopyable
   {
@@ -43,6 +44,7 @@ namespace Radiant
     static void setInitFunction(void (*f)());
     static void setDeinitFunction(void (*f)());
   };
+
   /// @endcond
 
   /// FileUtils contains functions for platform independent file-handing

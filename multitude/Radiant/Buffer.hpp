@@ -25,7 +25,9 @@
 namespace Radiant
 {
 
-  /// @todo document and cleanup
+  /// This class provides an implementation for calculating a moving average
+  /// using an IIR filter.
+  /// @todo cleanup and rename (MovingAverage)?
   template <typename T>
   class Buffer
   {
@@ -42,6 +44,9 @@ namespace Radiant
       m_data.resize(std::max(10, int(history*120)));
     }
 
+    /// Add a sample with the given timestamp to the buffer
+    /// @param t sample value
+    /// @param ts timestamp of the value
     void add(const T & t, Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime())
     {
       m_pos = (m_pos+1) % m_data.size();
@@ -56,7 +61,8 @@ namespace Radiant
       m_cached = false;
     }
 
-    // Sets the average of the buffer to given value
+    /// Sets the average of the buffer to given value
+    /// @param t new buffer average
     void set(const T & t)
     {
       m_value = t;
@@ -64,7 +70,9 @@ namespace Radiant
       m_cached = true;
     }
 
-    /// Compute the average of the history values
+    /// Compute the average of the history values before given timestamp
+    /// @param ts time limit
+    /// @return average
     T avg(Radiant::TimeStamp ts = Radiant::TimeStamp::currentTime()) const
     {
       if(m_pos < 0 || m_data.empty()) return T();
@@ -80,13 +88,16 @@ namespace Radiant
       return avg / float(num);
     }
 
+    /// Implicit conversion to value-type
+    /// @return average of all samples in the buffer
     T operator* () const
     {
       if(m_cached) return m_value;
       return avg();
     }
 
-    /// Forget given sample
+    /// Forget samples
+    /// @param number of samples to forget from the end of the buffer
     void forget(int number)
     {
       m_pos -= number;

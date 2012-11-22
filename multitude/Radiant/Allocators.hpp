@@ -1,6 +1,8 @@
 #if !defined (RADIANT_ALLOCATORS_HPP)
 #define RADIANT_ALLOCATORS_HPP
 
+/// @cond
+
 #include <Radiant/Memory.hpp>
 
 #include <cstddef>
@@ -20,7 +22,6 @@ namespace Radiant
   template<typename T, unsigned int alignment>
   class aligned_allocator
   {
-    /// @cond
   public:
     typedef size_t    size_type;
     typedef ptrdiff_t difference_type;
@@ -69,8 +70,6 @@ namespace Radiant
 
   template<typename T, unsigned int alignment>
   inline bool operator!=(const aligned_allocator<T,alignment> &, const aligned_allocator<T,alignment> &) { return false; }
-
-  /// @endcond
 
   template <typename T, size_t BlockCount>
   class block_allocator
@@ -263,7 +262,8 @@ namespace Radiant
 
   template<typename T, unsigned int BlockCount>
   inline bool operator!=(const block_allocator<T,BlockCount> & lhs, const block_allocator<T,BlockCount> & rhs) { return !(lhs == rhs); }
-
 }
+
+/// @endcond
 
 #endif // RADIANT_ALLOCATORS_HPP

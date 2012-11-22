@@ -13,6 +13,7 @@ namespace Radiant
   template <> struct IntOfSize<8> { typedef uint64_t Type; };
   /// @endcond
 
+  /// This class implements type-safe flags.
   template <typename T, typename S = typename IntOfSize<sizeof(T)>::Type>
   class FlagsT
   {

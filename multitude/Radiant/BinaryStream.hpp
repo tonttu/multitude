@@ -21,6 +21,7 @@ namespace Radiant {
     virtual int read(void * buffer, int bytes, bool waitfordata = true) = 0;
     /// Write bytes to the stream
     virtual int write(const void * buffer, int bytes) = 0;
+    /// Returns true if the stream has atleast one byte waiting to be read; otherwise returns false
     virtual bool isPendingInput(unsigned int waitMicroSeconds = 0)
     { (void) waitMicroSeconds; return false; }
 

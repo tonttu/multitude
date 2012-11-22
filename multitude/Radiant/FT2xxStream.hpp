@@ -1,6 +1,8 @@
 #ifndef RADIANT_FT2XXSTREAM_HPP
 #define RADIANT_FT2XXSTREAM_HPP
 
+/// @cond
+
 #ifndef MULTI_WITH_FTD2XX
 #error "Must have FTD2XX support to compile the FT2xxStream"
 #endif
@@ -14,9 +16,7 @@
 
 namespace Radiant {
 
-  //@cond
   class FT2xxStreamInternal;
-  //@endcond
 
   class RADIANT_API FT2xxStream : public BinaryStream, public Patterns::NotCopyable
   {
@@ -56,5 +56,6 @@ namespace Radiant {
   };
 }
 
+/// @endcond
 
 #endif // FT2XXSTREAM_HPP

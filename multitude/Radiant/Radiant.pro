@@ -76,6 +76,7 @@ HEADERS += XFaker.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
+HEADERS += WinTypes.h
 
 SOURCES += Mime.cpp
 SOURCES += DropEvent.cpp
