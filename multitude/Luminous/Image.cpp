@@ -17,7 +17,6 @@
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
-#include "Utils.hpp"
 #include "Texture2.hpp"
 
 #include <Nimble/Math.hpp>

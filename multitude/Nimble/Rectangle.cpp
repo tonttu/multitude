@@ -33,9 +33,9 @@ namespace Nimble
   Rectangle::Rectangle(Nimble::Vector2f size, const Nimble::Matrix3f & m)
   {
     // Transform the points
-    m_origin = (m * Vector2f(0, 0)).vector2();
-    Nimble::Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).vector2();
-    Nimble::Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).vector2();
+    m_origin = (m * Vector3f::null()).vector2();
+    Nimble::Vector2f c0 = (m * Vector3f(0.5f * size.x, 0.f, 1)).vector2();
+    Nimble::Vector2f c1 = (m * Vector3f(0.f, 0.5f * size.y, 1)).vector2();
 
     // Compute the axii and extents
     m_axis0 = c0 - m_origin;

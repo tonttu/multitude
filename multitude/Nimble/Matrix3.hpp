@@ -662,16 +662,16 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<K>& m1,
   return res;
 }
 
-/// Multiply a matrix with a vector by implicitly adding one as the third component of the vector
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
-                   const Nimble::Vector2T<T>& m2)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot(m1.row(i), Nimble::Vector3T<T>(m2.x, m2.y, T(1)));
-  return res;
-}
+///// Multiply a matrix with a vector by implicitly adding one as the third component of the vector
+//template <class T>
+//inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
+//                   const Nimble::Vector2T<T>& m2)
+//{
+//  Nimble::Vector3T<T> res;
+//  for(int i = 0; i < 3; i++)
+//    res[i] = dot(m1.row(i), Nimble::Vector3T<T>(m2.x, m2.y, T(1)));
+//  return res;
+//}
 
 /// Insert a 2x2 matrix to the upper-left corner of the 3x3 matrix
 /// @param b matrix to insert
@@ -745,14 +745,14 @@ Matrix3T<T> Matrix3T<T>::makeRotation(T radians, const Vector3T<T> & axis)
 template<class T>
 inline Vector2T<T> Matrix3T<T>::project(const Vector2T<T> & v) const
 {
-  Vector3T<T> p = *this * v;
+  Vector3T<T> p = *this * Nimble::Vector3T<T>(v, 1);
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
 template<class T>
 inline Vector2T<T> Matrix3T<T>::project(const T & x, const T & y) const
 {
-  Vector3T<T> p = *this * Vector2T<T>(x, y);
+  Vector3T<T> p = *this * Vector3T<T>(x, y, 1);
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 

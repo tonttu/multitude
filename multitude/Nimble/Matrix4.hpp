@@ -652,20 +652,6 @@ namespace Nimble {
     return res;
   }
 
-
-  /// Compute the product of the given matrix and vector
-  /// @param m1 matrix to multiply
-  /// @param m2 vector to multiply with
-  /// @return product of the matrix and vector
-  template <class T>
-  inline Vector3T<T> operator*(const Matrix4T<T> & m1, const Vector3T<T> & m2)
-  {
-    Vector3T<T> res;
-    for(int i = 0; i < 3; i++)
-      res[i] = dot4(m1.row(i),m2);
-    return res;
-  }
-
   /// Output the given matrix to a stream
   /// @param os stream to output to
   /// @param m matrix to output

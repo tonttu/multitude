@@ -5,7 +5,6 @@
 
 #include "Image.hpp"
 #include "PixelFormat.hpp"
-#include "Utils.hpp"
 
 #include <cassert>
 #include <iostream>

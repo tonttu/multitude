@@ -109,13 +109,6 @@ namespace Nimble {
     /// @param p Point in camera coordinates
     /// @return Point in normalized display coordinates
     Nimble::Vector2 project01(const Nimble::Vector2 & p) const;
-    /// Applies a 3x3 correction marix on a 2D vector.
-    static Nimble::Vector2 project(const Nimble::Matrix3 & m,
-                                   const Nimble::Vector2 & v)
-    {
-      Nimble::Vector3 p = m * v;
-      return Nimble::Vector2(p.x / p.z, p.y / p.z);
-    }
 
     /// Do inverse projection (from screen to camera coordinates),
     /// ignoring the camera barrel distortion. Useful as a rough

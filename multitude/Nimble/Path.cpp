@@ -215,23 +215,23 @@ namespace Nimble {
   {
     for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; ++i1) {
 
-      Nimble::Vector2f v0 = *i1;
-      Nimble::Vector2f v1 = *(i1 + 1);
+      Nimble::Vector3f v0(*i1, 1);
+      Nimble::Vector3f v1(*(i1 + 1), 1);
 
-      v0 = (m1 * v0).vector2();
-      v1 = (m1 * v1).vector2();
+      v0 = (m1 * v0);
+      v1 = (m1 * v1);
 
-      Segment s1 = { v0, v1 };
+      Segment s1 = { v0.vector2(), v1.vector2() };
 
       for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; ++i2) {
 
-        Nimble::Vector2f w0 = *i2;
-        Nimble::Vector2f w1 = *(i2 + 1);
+        Nimble::Vector3f w0(*i2, 1);
+        Nimble::Vector3f w1(*(i2 + 1), 1);
 
-        w0 = (m2 * w0).vector2();
-        w1 = (m2 * w1).vector2();
+        w0 = (m2 * w0);
+        w1 = (m2 * w1);
 
-        Segment s2 = { w0, w1 };
+        Segment s2 = { w0.vector2(), w1.vector2() };
 
         if(s1.intersects(s2))
           return true;

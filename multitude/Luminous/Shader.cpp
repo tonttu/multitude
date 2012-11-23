@@ -2,7 +2,6 @@
  */
 
 #include "Shader.hpp"
-#include "Utils.hpp"
 
 #include <Radiant/FileUtils.hpp>
 

@@ -6,7 +6,6 @@
 #include "Error.hpp"
 #include "Texture.hpp"
 
-#include "Utils.hpp"
 #include "RenderCommand.hpp"
 
 #include <Nimble/ClipStack.hpp>

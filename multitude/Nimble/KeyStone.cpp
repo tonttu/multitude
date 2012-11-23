@@ -158,7 +158,7 @@ namespace Nimble {
   Nimble::Vector2 KeyStone::project(const Nimble::Vector2 & v) const
   {
     // "p.z" is really "p.w", we need to do the "perspective" correction here.
-    Vector3 p = m_matrixOut * m_lensCorrection.correct(v);
+    Vector3 p = m_matrixOut * Nimble::Vector3(m_lensCorrection.correct(v), 1);
     Nimble::Vector2f res(p.x / p.z, p.y / p.z);
     if(m_useCenterShift) {
       float dist = (res - m_dpyCenter).length();
@@ -177,14 +177,14 @@ namespace Nimble {
   Nimble::Vector2 KeyStone::project01(const Nimble::Vector2 & v) const
   {
     // "p.z" is really "p.w", we need to do the "perspective" correction here.
-    Vector3 p = m_matrix * m_lensCorrection.correct(v);
+    Vector3 p = m_matrix * Nimble::Vector3(m_lensCorrection.correct(v), 1);
     return Vector2(p.x / p.z, p.y / p.z);
   }
 
   Nimble::Vector2 KeyStone::projectInverse(const Nimble::Vector2 & v) const
   {
     Matrix3 m = m_matrixOut.inverse();
-    return project(m, v);
+    return m.project(v);
   }
 
   void  KeyStone::moveCorner(Nimble::Vector2 loc)
@@ -316,8 +316,8 @@ namespace Nimble {
     Nimble::Matrix3 backToNorm = (tmp * m_matrixExtension).inverse();
 
     for(i = 0; i < 4; i++) {
-      tnorm[i] = project(backToNorm, targets[i]);
-      rnorm[i] = project(backToNorm, real[i]);
+      tnorm[i] = backToNorm.project(targets[i]);
+      rnorm[i] = backToNorm.project(real[i]);
       /*
       printf("KeyStone::calibrateOutput # target = [%f %f] vs "
              "real = [%f %f]\n",
@@ -331,7 +331,7 @@ namespace Nimble {
       float dist = (*center - m_dpyCenter).length();
 
       float weight = 0.5f + 0.5f * cosf(Math::PI * dist / m_centerShiftSpan);
-      rcnorm = project(backToNorm, *center - weight * m_centerShift);
+      rcnorm = backToNorm.project(*center - weight * m_centerShift);
 
       printf("rcnorm = %f %f dpyc = %f %f\n",
              rcnorm.x, rcnorm.y, m_dpyCenter.x, m_dpyCenter.y);
@@ -350,9 +350,9 @@ namespace Nimble {
       // rcnorm.x *= m_width;
       // rcnorm.y *= m_height;
 
-      rcnorm = project(m_matrix.inverse(), rcnorm);
+      rcnorm = m_matrix.inverse().project(rcnorm);
 
-      Nimble::Vector2f projcenter = project(m_matrixOut, rcnorm);
+      Nimble::Vector2f projcenter = m_matrixOut.project(rcnorm);
       m_centerShift = m_dpyCenter - projcenter;
       m_centerShiftSpan = (m_dpyCenter - targets[0]).length();
       printf("KeyStone::calibrateOutput # pc = [%.2f %.2f] offset = [%.2f %.2f] span = %f\n",
@@ -419,10 +419,10 @@ namespace Nimble {
     if(offsets) {
 
       Nimble::Vector2f tests[4] = {
-        project(m_matrix, Vector2(float(m_width), float(m_height / 2))),
-        project(m_matrix, Vector2(float(0), float(m_height / 2))),
-        project(m_matrix, Vector2(float(m_width / 2), float(0))),
-        project(m_matrix, Vector2(float(m_width / 2), float(m_height)))
+        m_matrix.project(Vector2(float(m_width), float(m_height / 2))),
+        m_matrix.project(Vector2(float(0), float(m_height / 2))),
+        m_matrix.project(Vector2(float(m_width / 2), float(0))),
+        m_matrix.project(Vector2(float(m_width / 2), float(m_height)))
       };
 
       int i;
@@ -467,7 +467,7 @@ namespace Nimble {
       for(int x = 0; x < m_width; x++) {
 
         Nimble::Vector2f v1 = m_lensCorrection.correct(Vector2(float(x), float(y)));
-        v1 = project(m_matrix, v1);
+        v1 = m_matrix.project(v1);
 
         bool in = bounds.contains(v1);
 

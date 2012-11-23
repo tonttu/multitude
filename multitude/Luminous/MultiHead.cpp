@@ -18,7 +18,6 @@
 #include "GLResources.hpp"
 #include "RenderContext.hpp"
 #include "Texture.hpp"
-#include "Utils.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "PixelFormat.hpp"

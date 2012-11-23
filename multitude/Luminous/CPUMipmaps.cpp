@@ -9,8 +9,6 @@
 
 #include <Luminous/RenderContext.hpp>
 
-#include <Luminous/Utils.hpp>
-
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
