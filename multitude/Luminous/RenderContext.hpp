@@ -187,7 +187,7 @@ namespace Luminous
       @param style color and other parameters for the arc
       @param lineSegments number of steps
       */
-    void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, Luminous::Style & style, unsigned int lineSegments = 0);
+    void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, const Luminous::Style & style, unsigned int lineSegments = 0);
 
     /** Draw a circle
       @param center center of the circle

@@ -383,7 +383,7 @@ namespace Luminous
   }
   
   void RenderContext::drawArc(const Nimble::Vector2f & center, float radius,
-                              float fromRadians, float toRadians, Luminous::Style & style, unsigned int linesegments)
+                              float fromRadians, float toRadians, const Luminous::Style & style, unsigned int linesegments)
   {
     if (linesegments == 0) {
       /// @todo Automagically determine the proper number of linesegments
