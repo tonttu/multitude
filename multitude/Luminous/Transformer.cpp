@@ -58,11 +58,6 @@ namespace Luminous
     return Nimble::Vector2(p.x / p.z, p.y / p.z);
   }
 
-  float Transformer::scale() const
-  {
-    return transform().extractScale();
-  }
-
   void Transformer::pushTransformLeftMul(const Nimble::Matrix4 & m)
   {
     beforeTransformChange();

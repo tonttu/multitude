@@ -216,13 +216,6 @@ namespace Nimble {
       return Nimble::Vector2T<T>(x/z, y/z);
     }
 
-    T extractScale() const
-    {
-        Vector2T<T> v(get(0,0), get(1,1));
-        T s = std::sqrt(v.x * v.x + v.y * v.y);
-        return s;
-    }
-
     /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)
     /// Camera is positioned so that 0,0,0 is mapped to 0,0,0 and
     /// w,h,0 is mapped to w,h,0. The projection matrix doesn't have the third

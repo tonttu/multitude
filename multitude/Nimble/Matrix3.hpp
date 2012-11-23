@@ -714,16 +714,6 @@ inline Matrix3T<T> Matrix3T<T>::makeRotation(T radians)
 }
 
 template<class T>
-T Matrix3T<T>::extractScale() const
-{
-  Vector3T<T> u(T(1), T(0), T(0));
-  Vector3T<T> v = *this * u;
-  T s = std::sqrt(v.x * v.x + v.y * v.y);
-
-  return s;
-}
-
-template<class T>
 Matrix3T<T> Matrix3T<T>::makeRotation(T radians, const Vector3T<T> & axis)
 {
   T c = T(cos(radians));

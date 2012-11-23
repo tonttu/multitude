@@ -46,9 +46,6 @@ namespace Luminous
     /// Apply inverse of the current transformation matrix on a 2D vector.
     Nimble::Vector2 unproject(const Nimble::Vector2&) const;
 
-    /// Extracts the scaling from the transform. Only valid for uniform scaling.
-    float scale() const;
-
     /// Pops the top matrix from the stack
     void popTransform() { beforeTransformChange(); m_stack.pop(); }
 
