@@ -54,6 +54,8 @@ namespace Radiant {
 
     /// Constructs a timestamp
     TimeStamp() : m_val(0) {}
+    /// Construct timestamp with the given time internal representation
+    /// @param val internal time presentation
     explicit TimeStamp(type val) : m_val(val) {}
     ~TimeStamp() {}
 
@@ -75,6 +77,7 @@ namespace Radiant {
 
     /// Create a TimeStamp with the given number of milliseconds
     /// @param s number of milliseconds
+    /// @return specified timestamp
     template<class T>
     static TimeStamp createMilliSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
@@ -83,6 +86,7 @@ namespace Radiant {
       return TimeStamp(FRACTIONS_PER_SECOND * secs + (millis * FRACTIONS_PER_SECOND) / 1000);
     }
 
+    /// @copydoc createMilliSeconds
     template<class T>
     static TimeStamp createMilliSeconds(T s, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0)
     {
@@ -93,12 +97,14 @@ namespace Radiant {
 
     /// Create a TimeStamp with the given number of seconds
     /// @param s number of seconds
+    /// @return specified timestamp
     template<class T>
     static TimeStamp createSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
       return TimeStamp(static_cast<type>(s) * FRACTIONS_PER_SECOND);
     }
 
+    /// @copydoc createSeconds
     template<class T>
     static TimeStamp createSeconds(T s, typename std::enable_if<std::is_floating_point<T>::value>::type* = 0)
     {
@@ -109,6 +115,7 @@ namespace Radiant {
 
     /// Create a TimeStamp with the given number of minutes
     /// @param s number of minutes
+    /// @return specified timestamp
     template<typename T>
     static TimeStamp createMinutes(T s)
     {
@@ -118,6 +125,7 @@ namespace Radiant {
 
     /// Create a time-stamp with a given number of hours.
     /// @param hours number of hours
+    /// @return specified timestamp
     template<typename T>
     static TimeStamp createHours(T hours)
     {
@@ -127,6 +135,7 @@ namespace Radiant {
 
     /// Create a time-stamp with a given number of days.
     /// @param days number of days
+    /// @return specified timestamp
     template<typename T>
     static TimeStamp createDays(T days)
     {

@@ -51,7 +51,7 @@ namespace Radiant {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-  Thread::Thread(const char * name)
+  Thread::Thread(const QString &name)
     : m_d(new D(this))
     , m_state(STOPPED)
   {
@@ -65,9 +65,9 @@ namespace Radiant {
 	  delete m_d;
   }
 
-  void Thread::setName(const char * name)
+  void Thread::setName(const QString & name)
   {
-    m_d->setObjectName(QString(name));
+    m_d->setObjectName(name);
   }
 
   Thread::id_t Thread::myThreadId()

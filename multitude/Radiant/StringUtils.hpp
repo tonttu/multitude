@@ -45,6 +45,9 @@ namespace Radiant
       return QString::fromUtf8(os.str().c_str());
     }
 
+    /// Convert boolean to string
+    /// @param b boolean to convert
+    /// @return "1" or "0"
     template <> inline QString toString<bool>(const bool & b) { return b ? "1" : "0"; }
 
     /// @cond
@@ -77,6 +80,8 @@ namespace Radiant
       return (T)t;
     }
 
+    /// @cond
+
     template <> inline short fromString<short>(const QByteArray & str) { return str.toShort(); }
     template <> inline unsigned short fromString<unsigned short>(const QByteArray & str) { return str.toUShort(); }
     template <> inline int fromString<int>(const QByteArray & str) { return str.toInt(); }
@@ -88,6 +93,8 @@ namespace Radiant
     template <> inline float fromString<float>(const QByteArray & str) { return str.toFloat(); }
     template <> inline double fromString<double>(const QByteArray & str) { return str.toDouble(); }
     template <> inline bool fromString<bool>(const QByteArray & str) { return str.toInt(); }
+
+    /// @endcond
 
 #ifdef WIN32
     RADIANT_API QString getLastErrorMessage();

@@ -56,8 +56,11 @@ namespace Radiant {
 
     /// Pauses the watchdog
     void pause() { m_paused = true; }
+    /// Unpause the watchdog
     void unpause() { m_paused = false; }
 
+    /// Check if the watchdog is paused
+    /// @return true if paused; otherwise false
     bool paused() const { return m_paused; }
 
     /// Gets the first watchdog instance.

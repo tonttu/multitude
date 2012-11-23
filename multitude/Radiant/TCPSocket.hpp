@@ -48,8 +48,12 @@ namespace Radiant {
     /// @param fd socket file descriptor
     TCPSocket(int fd);
     ~TCPSocket();
-
+    /// Move the given socket
+    /// @param socket socket to move
     TCPSocket(TCPSocket && socket);
+    /// Move the given socket
+    /// @param socket socket to move
+    /// @return reference to this
     TCPSocket & operator=(TCPSocket && socket);
 
     /// Turn the Nagle algorithm on or off. This controls the queuing of
@@ -108,7 +112,13 @@ namespace Radiant {
     int fd() const;
     /// @endcond
 
+    /// Number of bytes received through the socket. This count gets cleared
+    /// when a socket is opened.
+    /// @return number of bytes received through the socket
     unsigned long rxBytes() const;
+    /// Number of bytes sent through the socket. This count gets cleared
+    /// when a socket is opened.
+    /// @return number of bytes sent through the socket
     unsigned long txBytes() const;
 
 /// @cond

@@ -114,10 +114,9 @@ namespace Radiant {
    */
     virtual const void * captureAudio(int * frameCount);
     /// Get audio parameters
-    /** @param channels The number of channels in the video sound-track.
-    @param sample_rate Audio sample rate
-    @param format The audio sample format
-     */
+    /// @param channels The number of channels in the video sound-track.
+    /// @param sample_rate Audio sample rate
+    /// @param format The audio sample format
     virtual void getAudioParameters(int * channels,
                                     int * sample_rate,
                                     AudioSampleFormat * format) const;

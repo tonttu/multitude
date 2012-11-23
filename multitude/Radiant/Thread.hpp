@@ -22,6 +22,8 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <QString>
+
 #include <cstring>
 #include <map>
 #include <list>
@@ -47,9 +49,11 @@ namespace Radiant {
     /// The id of the calling thread
     static id_t myThreadId();
 
-    /** Construct a thread structure. The thread is NOT activated by this
-    method. */
-    Thread(const char * name = "Radiant::Thread");
+    /// Construct a thread structure. The thread is NOT activated by this
+    /// method.
+    /// @param name thread name
+    /// @sa setName
+    Thread(const QString & name = "Radiant::Thread");
 
     /// Destructor
     /** The thread must be stopped before this method is
@@ -59,7 +63,11 @@ namespace Radiant {
     before this function). */
     virtual ~Thread();
 
-    void setName(const char * name);
+    /// Set the thread name. The thread name can be used by some debuggers, for
+    /// example QtCreator. Useful for debugging purposes. Does not affect any
+    /// functionality.
+    /// @param name thread name
+    void setName(const QString &name);
 
     /** Starts the thread */
     void run();
@@ -115,8 +123,11 @@ namespace Radiant {
 
   public:
     TLS() {}
-    /// Copy constructor
+    /// Construct a TLS variable with the given default value
+    /// @param t default value
     TLS(const T& t) : m_default(t) {}
+    /// Construct a copy
+    /// @param t object to copy
     TLS(const  TLS & t)
     {
       Radiant::Guard g1(m_mutex);
@@ -142,6 +153,8 @@ namespace Radiant {
     /// @copydoc get
     operator T&() { return get(); }
 
+    /// Set all instances of the variable to the given value
+    /// @param t value to set
     void setAll(const T & t)
     {
       Radiant::Guard g(m_mutex);
