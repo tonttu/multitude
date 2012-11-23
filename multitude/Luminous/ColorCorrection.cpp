@@ -262,6 +262,7 @@ namespace Luminous
       , m_contrast(host, "contrast", Nimble::Vector3(1.0f, 1.0f, 1.0f))
       , m_brightness(host, "brightness", Nimble::Vector3(0.0f, 0.0f, 0.0f))
       , m_identity(true)
+      , m_rgbCached(false)
     {
     }
 
@@ -273,6 +274,9 @@ namespace Luminous
 
     bool m_identity;
     std::vector<Nimble::Vector2f> m_prev[3];
+
+    bool m_rgbCached;
+    Luminous::RGBCube m_rgbCube;
   };
 
 
@@ -557,8 +561,20 @@ namespace Luminous
     return false;
   }
 
+  const RGBCube & ColorCorrection::asRGBCube() const
+  {
+    if(!m_d->m_rgbCached) {
+      m_d->m_rgbCube.fromColorSplines(*this);
+      m_d->m_rgbCached = true;
+    }
+
+    return m_d->m_rgbCube;
+  }
+
   void ColorCorrection::changed()
   {
+    m_d->m_rgbCached = false;
+
     eventSend("changed");
   }
 

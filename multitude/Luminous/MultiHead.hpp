@@ -226,6 +226,11 @@ namespace Luminous {
         return m_colorCorrection;
       }
 
+      /// Checks if software color correction is in use
+      /// @return true if software correction is used, false if color correction
+      /// is done by hardware or disabled
+      bool isSoftwareColorCorrection() const;
+
       /// Get the viewport defined by the area in window coordinates.
       /// @return the viewport defined by the area
       Nimble::Recti viewport() const

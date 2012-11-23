@@ -18,6 +18,8 @@
 
 #include "Export.hpp"
 
+#include <Luminous/RGBCube.hpp>
+
 #include <Valuable/AttributeVector.hpp>
 #include <Valuable/Node.hpp>
 #include <Valuable/AttributeContainer.hpp>
@@ -68,6 +70,8 @@ namespace Luminous
 
     virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
     virtual bool readElement(const Valuable::ArchiveElement &);
+
+    const RGBCube & asRGBCube() const;
 
   private:
     void changed();

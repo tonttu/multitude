@@ -14,10 +14,6 @@ namespace Luminous
     ColorCorrectionFilter();
     virtual ~ColorCorrectionFilter();
 
-    /// Returns the RGBCube used for the color correction. By default the RGBCube
-    /// from the currently active area is used.
-    virtual const Luminous::RGBCube * rgbCube() const;
-
     /// Retrieves the RGBCube for the current area from the render context
     void begin(Luminous::RenderContext & rc) OVERRIDE;
 

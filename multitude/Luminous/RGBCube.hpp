@@ -9,6 +9,8 @@
 
 namespace Luminous
 {
+  class ColorCorrection;
+
   /**
     This class is used to perform RGB color correction using 3D color lookup
     grid. This means that the whole RGB color cube can be remapped to attain
@@ -75,6 +77,10 @@ namespace Luminous
 
     /// Checks if the configuration has changed
     bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
+
+    /// Converts and recalculates the lookup grid from color correction splines
+    void fromColorSplines(const Luminous::ColorCorrection & cc);
+
   private:
     class D;
     D * m_d;

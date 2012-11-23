@@ -1390,8 +1390,8 @@ namespace Luminous
     for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
       const MultiHead::Area & area = m_data->m_window->area(i);
 
-      if(area.rgbCube().isDefined()) {
-        Radiant::info("Enabling color correction for area %lu", i);
+      if(area.isSoftwareColorCorrection()) {
+        Radiant::info("Enabling software color correction for area %lu", i);
         Luminous::PostProcess::Creator creator;
         creator.func = [] { return std::make_shared<Luminous::ColorCorrectionFilter>(); };
         creator.index = PostProcessChain::Color_Correction;

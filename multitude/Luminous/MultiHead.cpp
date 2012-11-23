@@ -84,6 +84,14 @@ namespace Luminous {
     return ok;
   }
 
+  bool MultiHead::Area::isSoftwareColorCorrection() const
+  {
+    const bool isSW = m_rgbCube.isDefined() || !m_colorCorrection.isIdentity();
+    const bool isHW = window()->m_screen->hwColorCorrection().ok();
+
+    return !isHW && isSW;
+  }
+
   void MultiHead::Area::cleanEdges() const
   {
 /// @todo this function should still work (the Cornerstone color calibration must work in 2.0)

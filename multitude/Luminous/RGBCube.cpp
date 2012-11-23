@@ -1,6 +1,7 @@
 #include "RGBCube.hpp"
 
 #include <Luminous/PixelFormat.hpp>
+#include <Luminous/ColorCorrection.hpp>
 
 #include <Valuable/AttributeContainer.hpp>
 #include <Valuable/Node.hpp>
@@ -380,5 +381,31 @@ namespace Luminous
     }
 
     return index;
+  }
+
+  void RGBCube::fromColorSplines(const Luminous::ColorCorrection & cc)
+  {
+    const int division = 3;
+
+    setDivision(division);
+
+    const float step = 1.0f / (division - 1);
+
+    for(int b = 0; b < division; b++) {
+      for(int g = 0; g < division; g++) {
+        for(int r = 0; r < division; r++) {
+          setRGB(r, g, b, Nimble::Vector3(cc.value(r * step, 0, true, true),
+                                          cc.value(g * step, 1, true, true),
+                                          cc.value(b * step, 2, true, true)));
+        }
+      }
+    }
+
+    int base = division * division * division;
+
+    for(int i = 0; i < (division-1); i++) {
+      float lum = (i + 0.5f) * step;
+      setIndex(base + i, cc.valueRGB(lum, true, true));
+    }
   }
 }
