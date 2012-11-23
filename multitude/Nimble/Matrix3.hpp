@@ -167,9 +167,6 @@ namespace Nimble {
     /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
 
-    /// Extract the scaling factor from a homogenous 2D transformation matrix
-    inline T extractScale() const;
-
     /// Multiply the given point with the matrix and perform the homogenous divide
     inline Vector2T<T> project(const Vector2T<T> & v) const;
     /// Multiply the given point with the matrix and perform the homogenous divide
