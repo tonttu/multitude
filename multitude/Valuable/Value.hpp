@@ -19,6 +19,7 @@
 #include "AttributeInt.hpp"
 #include "AttributeFloat.hpp"
 #include "AttributeVector.hpp"
+#include "AttributeSize.hpp"
 
 #define DefineType(_Type, _Klass) template <> struct AttributeFor< _Type > { typedef _Klass Type; }
 #define DefineTypeT(_Type, _Klass) DefineType(_Type, _Klass< _Type >)
@@ -41,6 +42,7 @@ namespace Valuable
   DefineType(Nimble::Vector2f, AttributeVector2f);
   DefineType(Nimble::Vector3f, AttributeVector3f);
   DefineType(Nimble::Vector4f, AttributeVector4f);
+  DefineType(Nimble::SizeF, AttributeSize);
   /// @endcond
 
   // Value<int> or Value<Vector4> are just better ways to say Numeric<int> or Vector<Vector4>.
