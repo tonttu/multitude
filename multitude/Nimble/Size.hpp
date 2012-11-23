@@ -114,6 +114,34 @@ namespace Nimble {
     T m_height;
   };
 
+  template <typename T, typename U>
+  inline SizeT<T> operator*(const SizeT<T> & size, U scalar)
+  {
+    SizeT<T> ret(size);
+    return ret *= scalar;
+  }
+
+  template <typename T, typename U>
+  inline SizeT<T> operator*(U scalar, const SizeT<T> & size)
+  {
+    SizeT<T> ret(size);
+    return ret *= scalar;
+  }
+
+  template <typename T, typename U>
+  inline SizeT<T> operator/(const SizeT<T> & size, U scalar)
+  {
+    SizeT<T> ret(size);
+    return ret /= scalar;
+  }
+
+  template <typename T, typename U>
+  inline SizeT<T> operator/(U scalar, const SizeT<T> & size)
+  {
+    SizeT<T> ret(size);
+    return ret /= scalar;
+  }
+
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
@@ -228,6 +256,28 @@ namespace Nimble {
     return *this;
   }
 
+  /// Scales the given size
+  /// @param lhs size
+  /// @param s scale factor
+  /// @return reference to this size
+  template <typename T, typename U>
+  SizeT<T> & operator*=(SizeT<T> & lhs, U s)
+  {
+    lhs = SizeT<T>(lhs.width() * s, lhs.height() * s);
+    return lhs;
+  }
+
+  /// Divides the given size
+  /// @param lhs size
+  /// @param s division factor
+  /// @return reference to this size
+  template <typename T, typename U>
+  SizeT<T> & operator/=(SizeT<T> & lhs, U s)
+  {
+    lhs = SizeT<T>(lhs.width() / s, lhs.height() / s);
+    return lhs;
+  }
+
 //  template<typename T, typename U>
 //  SizeT<T> & SizeT<T>::operator*=(U c)
 //  {
@@ -277,6 +327,25 @@ namespace Nimble {
   Vector2T<T> SizeT<T>::toVector() const
   {
     return Vector2T<T>(m_width, m_height);
+  }
+
+  /// Write a vector into a stream
+  template <class T>
+  inline std::ostream &operator<<(std::ostream &os, const Nimble::SizeT<T> &t)
+  {
+    os << t.width() << ' ' << t.height();
+    return os;
+  }
+
+  /// Read a vector from a stream
+  template <class T>
+  inline std::istream &operator>>(std::istream &is, Nimble::SizeT<T> &t)
+  {
+    T x, y;
+    is >> x;
+    is >> y;
+    t = SizeT<T>(x,y);
+    return is;
   }
 
   /// Two-dimensional size using integer precision
