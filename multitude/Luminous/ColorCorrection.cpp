@@ -538,11 +538,20 @@ namespace Luminous
         return true;
       }
     } else if (element.name() == "red") {
-      return m_d->m_splines[0].deserialize(element.get().toUtf8());
+      bool ok = m_d->m_splines[0].deserialize(element.get().toUtf8());
+      if(ok)
+        checkChanged();
+      return ok;
     } else if (element.name() == "green") {
-      return m_d->m_splines[1].deserialize(element.get().toUtf8());
+      bool ok = m_d->m_splines[1].deserialize(element.get().toUtf8());
+      if(ok)
+        checkChanged();
+      return ok;
     } else if (element.name() == "blue") {
-      return m_d->m_splines[2].deserialize(element.get().toUtf8());
+      bool ok = m_d->m_splines[2].deserialize(element.get().toUtf8());
+      if(ok)
+        checkChanged();
+      return ok;
     }
 
     return false;
