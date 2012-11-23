@@ -89,11 +89,11 @@ namespace Nimble {
     /// Return the sum of two sizes. Each component is added separately.
     /// @param o size to add
     /// @return sum of sizes
-    SizeT<T> & operator+(const SizeT<T> & o) const;
+    SizeT<T> operator+(const SizeT<T> & o) const;
     /// Return the subtraction of two sizes. Each component is subtracted separately.
     /// @param o size to add
     /// @return subtraction of two sizes
-    SizeT<T> & operator-(const SizeT<T> & o) const;
+    SizeT<T> operator-(const SizeT<T> & o) const;
 
     /// Compare if two sizes are equal
     /// @param o size to compare
@@ -262,13 +262,13 @@ namespace Nimble {
   }
 
   template<typename T>
-  SizeT<T> & SizeT<T>::operator+(const SizeT<T> & o) const
+  SizeT<T> SizeT<T>::operator+(const SizeT<T> & o) const
   {
     return SizeT<T>(m_width + o.m_width, m_height + o.m_height);
   }
 
   template<typename T>
-  SizeT<T> & SizeT<T>::operator-(const SizeT<T> & o) const
+  SizeT<T> SizeT<T>::operator-(const SizeT<T> & o) const
   {
     return SizeT<T>(m_width - o.m_width, m_height - o.m_height);
   }
