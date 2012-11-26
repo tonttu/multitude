@@ -31,16 +31,26 @@ namespace Radiant
   class DropEvent;
 
   /// Interface for DropEvent listeners
+  /** If a Widget - or any other object - needs to receive operating system drag-and-drop
+      events, it needs to be inherited from the DropEvent class. */
   class RADIANT_API DropListener
   {
   public:
     virtual ~DropListener();
+    /** A virtual function for receiving drop events.
+        This function must be implemented by derived classes.
 
+        @return This function should return true if the drop event is consumed by the object.
+        If the drop event is ignored it should return false.
+    */
     virtual bool dropEvent(const Radiant::DropEvent & ) = 0;
   };
 
-  /// This class abstracts drag and drop events. It is generated when a drag
-  /// and drop action is completed.
+  /** This class abstracts drag and drop events. It is generated when a drag
+      and drop action is completed.
+
+      The DropEvent is an experimental part of Cornerstone, and its API may change yet.
+  */
   class RADIANT_API DropEvent : public Patterns::NotCopyable
   {
   public:
@@ -59,12 +69,41 @@ namespace Radiant
     /// Return the list of URLs
     QList<QUrl>	urls() const;
 
-    /// Returns the location of the drop event
+    /// Returns the location of the drop event, in window coordinates
+    /** In most cases, you need to convert this location to object coordinates.
+        For Widgets, this can be done with MultiWidgets::Widget::mapFromScene function -
+        assuming that there is no complex view hierarchy that causes extra transformations.
+    */
     Nimble::Vector2 location() const;
 
-    static void addDropListener(DropListener *);
-    static void removeDropListener(DropListener *);
-    static bool deliverDropToListeners(const DropEvent &);
+    /** Registers a DropListener object. After calling this function, the listener is active
+        and will receive drop events.
+
+        This function is thread-safe.
+
+        @param l The listener to be registered.
+    */
+    static void addDropListener(DropListener * l);
+    /** Removes a DropListener object from the list of registered listeners.
+        After calling this function, the listener is no longer active and will
+        receive no further drop events.
+
+        This function is thread-safe.
+
+        @param l The listener to be removed.
+    */
+    static void removeDropListener(DropListener * l);
+    /** Deliver a DropEvent to all the registered listeners.
+        This function iterates through the list of DropListener object that have
+        been registered with #addDropListener. For each listener it will call the
+        #Radiant::DropListener::dropEvent, until the the list is exhausted or one of the
+        function calls returns true.
+
+        This function is thread-safe.
+
+        @param e The DropEvent to be delivered
+    */
+    static bool deliverDropToListeners(const DropEvent & e);
 
   private:
     class D;
