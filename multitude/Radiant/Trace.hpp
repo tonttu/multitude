@@ -19,6 +19,7 @@
 
 #include <Radiant/Export.hpp>
 
+#include <QString>
 
 #define FNAME static const char * fname = __FUNCTION__
 
@@ -127,7 +128,7 @@ namespace Radiant {
       @param enable enable or disable messages
       @param module if given, enables or disables verbose output only for given module.
   */
-  RADIANT_API void enableVerboseOutput(bool enable, const char * module = 0);
+  RADIANT_API void enableVerboseOutput(bool enable, const QString & module = QString());
   /// Returns true if the #debug function output is displayed
   RADIANT_API bool enabledVerboseOutput();
   /// Forces ANSI colors to the output even if the output isn't ANSI-capable terminal

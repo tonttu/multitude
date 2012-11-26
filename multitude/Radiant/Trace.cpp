@@ -47,7 +47,7 @@ namespace Radiant {
   static std::string g_lastLogLine = "";
   static bool g_forceColors = false;
   static bool g_enableThreadId = false;
-  static std::set<std::string> g_verboseModules;
+  static std::set<QString> g_verboseModules;
 
   QString g_appname;
 
@@ -81,12 +81,12 @@ namespace Radiant {
     return g_enableThreadId;
   }
 
-  void enableVerboseOutput(bool enable, const char * module)
+  void enableVerboseOutput(bool enable, const QString & module)
   {
 
-    if (module) {
+    if (!module.isEmpty()) {
       if (enable) {
-        g_verboseModules.insert(std::string(module));
+        g_verboseModules.insert(module);
       } else {
         g_verboseModules.erase(module);
       }
