@@ -479,6 +479,7 @@ return self;
 
         NSPoint onwindow = [sender draggingLocation];
         bool ok = true;
+        onwindow.y = [self frame].size.height - onwindow.y;
         Nimble::Vector2 loc = m_windowDef->windowToGraphics(Nimble::Vector2f(onwindow.x, onwindow.y), ok);
 
         if(ok)
