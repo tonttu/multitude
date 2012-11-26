@@ -237,13 +237,13 @@ namespace Valuable
       const QByteArray part1 = name.left(slashIndex);
       const QByteArray part2 = name.mid(slashIndex + 1);
 
-      const Attribute * attribute = getValue(part1);
+      const Attribute * attribute = getAttribute(part1);
       if(attribute) {
-        return attribute->getValue(part2);
+        return attribute->getAttribute(part2);
       }
     }
 
-    return 0;
+    return nullptr;
   }
 
   bool Node::addValue(Attribute * const value)
