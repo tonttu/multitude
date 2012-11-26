@@ -15,7 +15,7 @@
 #include "Luminous/BlendMode.hpp"
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
-#include "PipelineCommand.hpp"
+#include "RenderQueues.hpp"
 
 #include <Nimble/Matrix4.hpp>
 #include <memory>
@@ -55,87 +55,6 @@
 
 namespace Luminous
 {
-  struct RenderState
-  {
-    Luminous::ProgramGL * program;
-    VertexArrayGL * vertexArray;
-    BufferGL * uniformBuffer;
-    std::array<TextureGL*, 8> textures;
-    BlendMode blendMode;
-    StencilMode stencilMode;
-    DepthMode depthMode;
-
-    bool operator<(const RenderState & o) const
-    {
-      if(program != o.program)
-        return program < o.program;
-      if(vertexArray != o.vertexArray)
-        return vertexArray < o.vertexArray;
-      if(uniformBuffer != o.uniformBuffer)
-        return uniformBuffer < o.uniformBuffer;
-      for(std::size_t i = 0; i < textures.size(); ++i)
-        if((!textures[i] || !o.textures[i]) || (textures[i] != o.textures[i]))
-          return textures[i] < o.textures[i];
-
-      return false;
-    }
-  };
-
-  struct OpaqueRenderQueue// : public Patterns::NotCopyable
-  {
-    OpaqueRenderQueue() : frame(0), usedSize(0) {}
-
-    int frame;
-    std::size_t usedSize;
-    std::vector<RenderCommand> queue;
-  };
-
-  struct TranslucentRenderQueue
-  {
-    typedef std::vector<std::pair<RenderState, RenderCommand> > Queue;
-    TranslucentRenderQueue() : frame(0), usedSize(0) {}
-
-    int frame;
-    std::size_t usedSize;
-    Queue queue;
-  };
-
-
-  // A segment of the master render queue. A segment contains two separate
-  // command queues, one for opaque draw calls and one for translucent draw
-  // calls. The translucent draw calls are never re-ordered in order to
-  // guarantee correct output. The opaque queue can be re-ordered to maximize
-  // performance by minimizing state-changes etc. The segments themselves are
-  // never re-ordered to guarantee correct output.
-  struct RenderQueueSegment
-  {
-    RenderQueueSegment()
-    {}
-
-    RenderQueueSegment(PipelineCommand * cmd)
-      : pipelineCommand(cmd)
-    {
-    }
-
-    RenderQueueSegment(RenderQueueSegment && o)
-      : pipelineCommand(o.pipelineCommand)
-      , opaqueQueue(o.opaqueQueue)
-      , translucentQueue(o.translucentQueue)
-    {
-      o.pipelineCommand = 0;
-    }
-
-    ~RenderQueueSegment()
-    {
-      delete pipelineCommand;
-    }
-
-    //RenderTargetGL * renderTarget;
-    PipelineCommand * pipelineCommand;
-    std::map<RenderState, OpaqueRenderQueue> opaqueQueue;
-    TranslucentRenderQueue translucentQueue;
-  };
-
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
   class RenderDriverGL::D
@@ -181,6 +100,10 @@ namespace Luminous
     std::stack<RenderTargetGL*, std::vector<RenderTargetGL*> > m_rtStack;
     // Master rendering queue that consists of segments of rendering commands
     std::deque<RenderQueueSegment> m_masterRenderQueue;
+
+    // Pools for avoiding mallocs
+    OpaqueRenderQueuePool m_opaquePool;
+    TranslucentRenderQueuePool m_translucentPool;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -236,7 +159,7 @@ namespace Luminous
     void newRenderQueueSegment(PipelineCommand * cmd)
     {
       /// @todo Maybe look into a pool allocator to improve performance. Should profile more
-      m_masterRenderQueue.emplace_back(cmd);
+      m_masterRenderQueue.emplace_back(cmd, m_opaquePool, m_translucentPool);
     }
 
     void debugOutputStats()
@@ -253,7 +176,7 @@ namespace Luminous
 
         for(auto i = m_masterRenderQueue.begin(); i != m_masterRenderQueue.end(); ++i) {
           const RenderQueueSegment & segment = *i;
-          stateChanges += segment.opaqueQueue.size() + segment.translucentQueue.queue.size();
+          stateChanges += segment.opaqueQueue.size() + segment.translucentQueue.queue->size();
         }
 
         Radiant::info("Render stats: %2d Segments, %2d State changes, %2d Programs, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
@@ -433,15 +356,13 @@ namespace Luminous
     RenderCommand * cmd;
 
     if(translucent) {
-      TranslucentRenderQueue & translucentQueue = rt.translucentQueue;
-      translucentQueue.queue.emplace_back();
-      auto & pair = translucentQueue.queue[translucentQueue.usedSize++];
+      TranslucentRenderQueue & queue = rt.getTranslucentQueue();
+      auto & pair = queue.queue->newEntry();
       pair.first = m_state;
       cmd = &pair.second;
     } else {
-      OpaqueRenderQueue & queue = rt.opaqueQueue[m_state];
-      queue.queue.emplace_back();
-      cmd = &queue.queue[queue.usedSize++];
+      OpaqueRenderQueue & queue = rt.getOpaqueQueue(m_state);
+      cmd = &queue.queue->newEntry();
     }
 
 
@@ -449,7 +370,7 @@ namespace Luminous
     {
       /// @todo Prevent overflow if more than cmd->samplers.size() textures
       unit = 0;
-      int slot = 0; // one day this will be different from unit
+      int slot = 0; // one day this will be different from unit... when that day comes fix resetCommand
       if (textures != nullptr) {
         for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it, ++unit, ++slot) {
           cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
@@ -720,6 +641,9 @@ namespace Luminous
     }
     m_d->m_stateGL.bufferMaps().clear();
 
+    m_d->m_opaquePool.flush();
+    m_d->m_translucentPool.flush();
+
     // Debug: output some render stats
     //m_d->debugOutputStats();
 
@@ -727,7 +651,6 @@ namespace Luminous
     /// Every state-change is tracked already or the state is reset by the customOpenGL guard
     // Reset the OpenGL state to default
     // setDefaultState();
-
     // Iterate over the segments of the master render queue executing the
     // stored render commands
     while(!m_d->m_masterRenderQueue.empty()) {
@@ -742,7 +665,7 @@ namespace Luminous
         const RenderState & state = it->first;
         OpaqueRenderQueue & opaque = it->second;
 
-        if(opaque.usedSize == 0)
+        if(opaque.queue->size() == 0)
           continue;
 
         m_d->setState(state);
@@ -750,29 +673,29 @@ namespace Luminous
         GLint uniformHandle = state.uniformBuffer->handle();
         GLint uniformBlockIndex = 0;
 
-        for(int i = opaque.usedSize - 1; i >= 0; --i) {
-          m_d->render(opaque.queue[i], uniformHandle, uniformBlockIndex);
+        for(int i = opaque.queue->size() - 1; i >= 0; --i) {
+          m_d->render((*opaque.queue)[i], uniformHandle, uniformBlockIndex);
         }
 
-        if(opaque.usedSize * 10 > opaque.queue.capacity())
-          opaque.frame = m_d->m_frame;
+        // TODO: Was there any use of frame?
+        //if(opaque.usedSize * 10 > opaque.queue.capacity())
+        //  opaque.frame = m_d->m_frame;
 
-        opaque.usedSize = 0;
+        //opaque.usedSize = 0;
       }
 
-      auto it = queues.translucentQueue.queue.begin();
-      for(auto end = it + queues.translucentQueue.usedSize; it != end; ++it) {
-        const RenderState & state = it->first;
-        const RenderCommand & cmd = it->second;
-
+      for(std::size_t i = 0; i < queues.translucentQueue.queue->size(); ++i) {
+        auto p = (*queues.translucentQueue.queue)[i];
+        const RenderState & state = p.first;
+        const RenderCommand & cmd = p.second;
         m_d->setState(state);
         m_d->render(cmd, state.uniformBuffer->handle(), 0);
       }
 
-      if(queues.translucentQueue.usedSize * 10 > queues.translucentQueue.queue.capacity())
-        queues.translucentQueue.frame = m_d->m_frame;
+      //if(queues.translucentQueue.usedSize * 10 > queues.translucentQueue.queue.capacity())
+      //  queues.translucentQueue.frame = m_d->m_frame;
 
-      queues.translucentQueue.usedSize = 0;
+      //queues.translucentQueue.usedSize = 0;
 
       // Remove the processed segment from the master queue
       m_d->m_masterRenderQueue.pop_front();
@@ -811,7 +734,6 @@ namespace Luminous
   {
     auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());
     if(it == m_d->m_vertexArrays.end()) {
-
       it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(vertexArray.expiration());
       it->second.upload(vertexArray, program);

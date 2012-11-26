@@ -2,7 +2,8 @@ include(../multitude.pri)
 
 HEADERS += ProgramGL.hpp \
     CullMode.hpp \
-    RenderDefines.hpp
+    RenderDefines.hpp \
+    RenderQueues.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -137,6 +138,7 @@ SOURCES += QtWindow.cpp
 SOURCES += RenderContext.cpp
 SOURCES += RenderDriver.cpp
 SOURCES += RenderManager.cpp
+SOURCES += RenderQueues.cpp
 SOURCES += RenderResource.cpp
 SOURCES += RenderTarget.cpp
 SOURCES += ScreenDetector.cpp
