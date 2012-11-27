@@ -36,8 +36,9 @@ namespace Luminous
     else {
       auto vecIt = m_pool.lower_bound(predIt->second);
       if(vecIt != m_pool.end()) {
+        CachedVector<RenderCommand>* v = vecIt->second;
         m_pool.erase(vecIt);
-        return vecIt->second;
+        return v;
       } else {
         return new CachedVector<RenderCommand>(predIt->second);
       }
