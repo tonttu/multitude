@@ -146,6 +146,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType
   {
+    PrimitiveType_Polygon       = GL_POLYGON,
     PrimitiveType_Triangle      = GL_TRIANGLES,
     PrimitiveType_TriangleStrip = GL_TRIANGLE_STRIP,
     PrimitiveType_TriangleFan   = GL_TRIANGLE_FAN,
