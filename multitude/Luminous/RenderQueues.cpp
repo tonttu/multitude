@@ -19,9 +19,9 @@ namespace Luminous
     if(predIt == m_sizePredictions.end()) {
       m_sizePredictions.insert(PredType::value_type(key, vec->size()));
     } else if(predIt->second > vec->size()) {
-        m_sizePredictions.insert(predIt, PredType::value_type(key, vec->size()));
+      m_sizePredictions.insert(predIt, PredType::value_type(key, vec->size()));
     }
-    // After reset vec has at least capacity equal to its size()
+    // After reset, vec has at least capacity equal to its size()
     m_pool.insert(PoolType::value_type(vec->size(), vec));
     vec->reset();
   }
@@ -48,12 +48,14 @@ namespace Luminous
   void OpaqueRenderQueuePool::flush()
   {
     //Todo: flush only old ones
+    for(auto entry : m_pool) delete entry.second;
     m_pool.clear();
   }
 
   void TranslucentRenderQueuePool::flush()
   {
     //Todo: flush only old ones
+    for(auto entry : m_pool) delete entry;
     m_pool.clear();
   }
 
