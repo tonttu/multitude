@@ -87,9 +87,9 @@ namespace Luminous
       bind(type);
       glUnmapBuffer(type);
       GLERROR("BufferGL::map # glUnmapBuffer");
+    } else {
+      bind(type);
     }
-
-    bind(type);
 
     if(m_allocatedSize < m_size)
       allocate(type);

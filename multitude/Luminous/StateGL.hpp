@@ -5,7 +5,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <map>
+#include <unordered_map>
 #include <algorithm>
 #include <cstdint>
 
@@ -29,6 +29,11 @@ namespace Luminous
   class StateGL
   {
   public:
+    //This would probably be more efficient if using plain array, with some
+    //safe-mechanisms, since keys are usually somtehing like: 0,1,2,3,...
+    struct IdHash { std::size_t operator()(const GLuint& i) const { return i; } };
+    typedef std::unordered_map<GLuint, BufferMapping, IdHash> BufferMaps;
+
     inline StateGL(unsigned int threadIndex, RenderDriverGL & driver);
 
     /// Sets the current program object
@@ -45,7 +50,7 @@ namespace Luminous
     inline void consumeUploadBytes(int64_t bytes);
     inline void clearUploadedBytes();
 
-    inline std::map<GLuint, BufferMapping> & bufferMaps();
+    inline BufferMaps & bufferMaps();
 
     inline RenderDriverGL & driver() { return m_driver; }
 
@@ -68,7 +73,7 @@ namespace Luminous
     /// Uploaded bytes this frame
     int64_t m_uploadedBytes;
 
-    std::map<GLuint, BufferMapping> m_bufferMaps;
+    BufferMaps m_bufferMaps;
 
     RenderDriverGL & m_driver;
 
@@ -140,7 +145,7 @@ namespace Luminous
     m_uploadedBytes = 0;
   }
 
-  std::map<GLuint, BufferMapping> & StateGL::bufferMaps()
+  StateGL::BufferMaps & StateGL::bufferMaps()
   {
     return m_bufferMaps;
   }

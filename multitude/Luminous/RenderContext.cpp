@@ -37,7 +37,7 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
-    enum { MAX_TEXTURES = 64 };
+    enum { MAX_TEXTURES = 64, BUFFERSETS = 2 };
 
     Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
@@ -51,6 +51,7 @@ namespace Luminous
         , m_automaticDepthDiff(-1.0f/100000.0f)
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
+        , m_bufferIndex(0)
         , m_defaultRenderTarget(RenderTarget::WINDOW)
         , m_defaultOffScreenRenderTarget(RenderTarget::NORMAL)
         , m_currentRenderTarget(0)
@@ -253,9 +254,10 @@ namespace Luminous
     };
 
     // vertex/uniform struct size -> pool
-    std::map<std::size_t, BufferPool> m_vertexBuffers;
-    std::map<std::size_t, BufferPool> m_uniformBuffers;
-    BufferPool m_indexBuffers;
+    std::map<std::size_t, BufferPool> m_vertexBuffers[BUFFERSETS];
+    std::map<std::size_t, BufferPool> m_uniformBuffers[BUFFERSETS];
+    BufferPool m_indexBuffers[BUFFERSETS];
+    int m_bufferIndex;
 
     // Default window framebuffer
     RenderTarget m_defaultRenderTarget;
@@ -619,11 +621,12 @@ namespace Luminous
   std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
       std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
   {
+    int bufferIndex = m_data->m_bufferIndex;
     Internal::BufferPool & pool = type == Buffer::Index
-        ? m_data->m_indexBuffers
+        ? m_data->m_indexBuffers[bufferIndex]
         : type == Buffer::Vertex
-          ? m_data->m_vertexBuffers[vertexSize]
-          : m_data->m_uniformBuffers[vertexSize];
+          ? m_data->m_vertexBuffers[bufferIndex][vertexSize]
+          : m_data->m_uniformBuffers[bufferIndex][vertexSize];
 
     const std::size_t requiredBytes = vertexSize * maxVertexCount;
 
@@ -646,7 +649,6 @@ namespace Luminous
       nextSize = buffer->buffer.size() << 1;
       ++pool.currentIndex;
     }
-
     char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite |
                                   Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
     assert(data);
@@ -1130,11 +1132,12 @@ namespace Luminous
 
   void RenderContext::flush()
   {
-    m_data->m_indexBuffers.flush(*this);
+    int bufferIndex = m_data->m_bufferIndex;
+    m_data->m_indexBuffers[bufferIndex].flush(*this);
 
-    for(auto it = m_data->m_vertexBuffers.begin(); it != m_data->m_vertexBuffers.end(); ++it)
+    for(auto it = m_data->m_vertexBuffers[bufferIndex].begin(); it != m_data->m_vertexBuffers[bufferIndex].end(); ++it)
       it->second.flush(*this);
-    for(auto it = m_data->m_uniformBuffers.begin(); it != m_data->m_uniformBuffers.end(); ++it)
+    for(auto it = m_data->m_uniformBuffers[bufferIndex].begin(); it != m_data->m_uniformBuffers[bufferIndex].end(); ++it)
       it->second.flush(*this);
 
     m_data->m_driver.flush();
@@ -1350,6 +1353,7 @@ namespace Luminous
     }
 
     flush();
+    m_data->m_bufferIndex = (m_data->m_bufferIndex + 1) % RenderContext::Internal::BUFFERSETS;
 
     m_data->m_driver.postFrame();
 
