@@ -5,7 +5,7 @@ HEADERS += ProgramGL.hpp \
     RenderDefines.hpp \
     RenderQueues.hpp \
     PostProcessContext.hpp \
-    PostProcessFilter2.hpp
+    PostProcessFilter.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -47,9 +47,8 @@ HEADERS += Luminous.hpp
 HEADERS += Mipmap.hpp
 HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
-HEADERS += PostProcess.hpp
-HEADERS += PostProcessChain.hpp
 HEADERS +=
+HEADERS += PostProcessChain.hpp
 HEADERS += ColorCorrectionFilter.hpp
 HEADERS += QtWindow.hpp
 HEADERS += RenderContext.hpp
@@ -95,7 +94,8 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 
 SOURCES += ProgramGL.cpp \
     CullMode.cpp \
-    PostProcessContext.cpp
+    PostProcessContext.cpp \
+    PostProcessFilter.cpp
 SOURCES += RenderDriverGL.cpp
 SOURCES += TextureGL.cpp
 SOURCES += VertexArrayGL.cpp
@@ -135,7 +135,6 @@ SOURCES += Mipmap.cpp
 SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
 SOURCES += PostProcessChain.cpp
-SOURCES +=
 SOURCES += ColorCorrectionFilter.cpp
 SOURCES += QtWindow.cpp
 SOURCES += RenderContext.cpp

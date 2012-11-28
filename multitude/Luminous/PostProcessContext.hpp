@@ -1,9 +1,10 @@
-#ifndef POSTPROCESSOR_HPP
-#define POSTPROCESSOR_HPP
+#ifndef POSTPROCESSCONTEXT_HPP
+#define POSTPROCESSCONTEXT_HPP
 
 #include <Luminous/RenderContext.hpp>
 #include <Luminous/RenderTarget.hpp>
 #include <Luminous/Style.hpp>
+#include <Luminous/PostProcessFilter.hpp>
 
 namespace Luminous
 {
@@ -19,22 +20,14 @@ namespace Luminous
   {
   public:
     /// Creates a new post process filter
-    PostProcessContext();
+    PostProcessContext(const PostProcessFilterPtr filter);
     virtual ~PostProcessContext();
 
     /// Initializes the filter. By default attaches a color and depth attachments
     /// to the render target and resizes the render target and attachments.
-    virtual void initialize(Luminous::RenderContext & rc);
+    void initialize(Luminous::RenderContext & rc);
 
-    /// Returns the style that is used to render the scene
-    /// Override this function if you want to specify a custom style,
-    /// ie. for using a custom shader.
-    virtual Luminous::Style style() const;
-
-    /// Clears the render target
-    virtual void begin(Luminous::RenderContext & rc);
-    /// Draws a context sized quad with style from calling style().
-    virtual void apply(Luminous::RenderContext & rc);
+    void doFilter(Luminous::RenderContext & rc);
 
     /// If the filter is disabled, it is skipped
     /// @return true if enabled, false otherwise
@@ -58,5 +51,7 @@ namespace Luminous
     class D;
     D * m_d;
   };
+
+  typedef std::shared_ptr<PostProcessContext> PostProcessContextPtr;
 }
-#endif // POSTPROCESSOR_HPP
+#endif // POSTPROCESSCONTEXT_HPP

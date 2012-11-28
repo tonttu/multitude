@@ -8,9 +8,6 @@
 
 namespace Luminous
 {
-  class PostProcessContext;
-  typedef std::shared_ptr<PostProcessContext> PostProcessFilterPtr;
-
   /** PostProcessChain is a container of post process filters. The class
       is used to add new filters and iterate through enabled filters.
       This class shouldn't be used directly, but rather filters should
@@ -29,7 +26,7 @@ namespace Luminous
     virtual ~PostProcessChain();
 
     /// Container for filters
-    typedef std::map<unsigned, PostProcessFilterPtr> FilterChain;
+    typedef std::map<unsigned, PostProcessContextPtr> FilterChain;
 
     /// An iterator that skips disabled filters
     template <class IteratorType>
@@ -112,11 +109,11 @@ namespace Luminous
 
     /// Adds a filter to the end of the chain.
     /// @return true if successful, false otherwise
-    bool add(PostProcessFilterPtr filter);
+    bool add(PostProcessContextPtr ctx);
 
     /// Inserts a filter at the given index if no filter exists at the specified index
     /// @return true if succeeded, false otherwise
-    bool insert(PostProcessFilterPtr filter, unsigned index);
+    bool insert(PostProcessContextPtr ctx, unsigned index);
 
     /// Checks if a filter with the given index already exists in the chain
     bool contains(unsigned index) const;

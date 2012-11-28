@@ -18,22 +18,22 @@ namespace Luminous
     delete m_d;
   }
 
-  bool PostProcessChain::add(PostProcessFilterPtr filter)
+  bool PostProcessChain::add(PostProcessContextPtr ctx)
   {
     std::pair<FilterChain::iterator,bool> result;
     if(m_d->m_chain.empty()) {
-      result = m_d->m_chain.insert(std::make_pair(FilterChain::key_type(0), filter));
+      result = m_d->m_chain.insert(std::make_pair(FilterChain::key_type(0), ctx));
     } else {
       FilterChain::key_type key = m_d->m_chain.rbegin()->first;
-      result = m_d->m_chain.insert(std::make_pair(key+1, filter));
+      result = m_d->m_chain.insert(std::make_pair(key+1, ctx));
     }
     return result.second;
   }
 
-  bool PostProcessChain::insert(PostProcessFilterPtr filter, unsigned index)
+  bool PostProcessChain::insert(PostProcessContextPtr ctx, unsigned index)
   {
     std::pair<FilterChain::iterator,bool> result =
-        m_d->m_chain.insert(std::make_pair(index, filter));
+        m_d->m_chain.insert(std::make_pair(index, ctx));
     return result.second;
   }
 

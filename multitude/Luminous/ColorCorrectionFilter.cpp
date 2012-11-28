@@ -27,9 +27,6 @@ namespace Luminous
     {}
 
     Luminous::Program m_shader;
-
-    // This is only valid in begin/apply
-    const MultiHead::Area * m_currentArea;
   };
 
   //////////////////////////////////////////////////////////////////////
@@ -45,38 +42,31 @@ namespace Luminous
     delete m_d;
   }
 
-  void ColorCorrectionFilter::begin(Luminous::RenderContext & rc)
+  void ColorCorrectionFilter::filter(Luminous::RenderContext & rc,
+                                     Luminous::PostProcessContext & pc,
+                                     Luminous::Style style) const
   {
-    PostProcessContext::begin(rc);
-
-    m_d->m_currentArea = rc.area();
-  }
-
-  Luminous::Style ColorCorrectionFilter::style() const
-  {
-    Luminous::Style s = PostProcessContext::style();
-
     const RGBCube * cube = nullptr;
 
     // First test if RGBCube is used
-    if(m_d->m_currentArea->rgbCube().isDefined()) {
-      cube = &m_d->m_currentArea->rgbCube();
+    if(rc.area()->rgbCube().isDefined()) {
+      cube = &rc.area()->rgbCube();
     }
     // Next use spline CC
-    else if(!m_d->m_currentArea->colorCorrection().isIdentity()) {
-      const RGBCube & tmp = m_d->m_currentArea->colorCorrection().asRGBCube();
+    else if(!rc.area()->colorCorrection().isIdentity()) {
+      const RGBCube & tmp = rc.area()->colorCorrection().asRGBCube();
       if(tmp.isDefined())
         cube = &tmp;
     }
 
     if(cube != nullptr) {
-      s.setFillProgram(m_d->m_shader);
-      s.setTexture("lut", cube->asTexture());
+      style.setFillProgram(m_d->m_shader);
+      style.setTexture("lut", cube->asTexture());
     } else {
       debugLuminous("ColorCorrectionFilter # No RGBCube defined for current area. "
                     "Using default shader");
     }
 
-    return s;
+    PostProcessFilter::filter(rc, pc, style);
   }
 }

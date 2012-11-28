@@ -7,11 +7,13 @@ namespace Luminous
   class PostProcessContext::D
   {
   public:
-    D()
-      : m_enabled(true)
-    {}
+    D(const Luminous::PostProcessFilterPtr filter)
+      : m_filter(filter)
+    {
+      assert(filter);
+    }
 
-    bool m_enabled;
+    const Luminous::PostProcessFilterPtr m_filter;
 
     Luminous::RenderTarget m_renderTarget;
 
@@ -22,8 +24,8 @@ namespace Luminous
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
-  PostProcessContext::PostProcessContext()
-    : m_d(new D())
+  PostProcessContext::PostProcessContext(const Luminous::PostProcessFilterPtr filter)
+    : m_d(new D(filter))
   {
   }
 
@@ -38,50 +40,23 @@ namespace Luminous
     m_d->m_renderTarget.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
 
     m_d->m_renderTarget.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
+
+    m_d->m_filter->initialize(rc, *this);
   }
 
-  Luminous::Style PostProcessContext::style() const
+  void PostProcessContext::doFilter(Luminous::RenderContext & rc)
   {
     Luminous::Style style;
 
     style.setFillColor(1.0f, 1.0f, 1.0f, 1.0f);
     style.setTexture("tex", texture());
 
-    return style;
-  }
-
-  void PostProcessContext::begin(Luminous::RenderContext & rc)
-  {
-    rc.clear(Luminous::ClearMask_ColorDepth);
-  }
-
-  void PostProcessContext::apply(RenderContext & rc)
-  {
-    const Luminous::Style & s = style();
-    const Nimble::Vector2f size = rc.contextSize();
-    const Luminous::Program & program = s.fillProgram() ? *s.fillProgram() : rc.texShader();
-
-    auto b = rc.drawPrimitiveT<Luminous::BasicVertexUV, Luminous::BasicUniformBlock>(
-          Luminous::PrimitiveType_TriangleStrip, 0, 4, program, s.fillColor(), 1.f, s);
-
-    b.vertex[0].location.make(0, 0);
-    b.vertex[0].texCoord.make(0, 0);
-    b.vertex[1].location.make(size.x, 0);
-    b.vertex[1].texCoord.make(1, 0);
-    b.vertex[2].location.make(0, size.y);
-    b.vertex[2].texCoord.make(0, 1);
-    b.vertex[3].location.make(size.x, size.y);
-    b.vertex[3].texCoord.make(1, 1);
+    m_d->m_filter->filter(rc, *this, style);
   }
 
   bool PostProcessContext::enabled() const
   {
-    return m_d->m_enabled;
-  }
-
-  void PostProcessContext::setEnabled(bool enabled)
-  {
-    m_d->m_enabled = enabled;
+    return m_d->m_filter->enabled();
   }
 
   Luminous::RenderTarget & PostProcessContext::renderTarget()

@@ -19,6 +19,7 @@
 #include "Luminous/ColorCorrectionFilter.hpp"
 #include "Luminous/PostProcessChain.hpp"
 #include "Luminous/PostProcessContext.hpp"
+#include "Luminous/PostProcessFilter.hpp"
 
 #include <Nimble/Matrix4.hpp>
 
@@ -55,7 +56,7 @@ namespace Luminous
         , m_defaultRenderTarget(RenderTarget::WINDOW)
         , m_defaultOffScreenRenderTarget(RenderTarget::NORMAL)
         , m_currentRenderTarget(0)
-        , m_postProcessInitList(0)
+        , m_postProcessFilters(0)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -121,21 +122,22 @@ namespace Luminous
       return Nimble::Vector2f(10, 10);
     }
 
-    void createPostProcessFilters(RenderContext & rc, const PostProcess::InitList & chain)
+    void createPostProcessFilters(RenderContext & rc, const Luminous::PostProcessFilters & filters)
     {
-      for(PostProcess::InitList::const_iterator it = chain.begin(); it != chain.end(); ++it) {
+      for(Luminous::PostProcessFilters::const_iterator it = filters.begin(); it != filters.end(); ++it) {
 
-        const unsigned index = it->index;
+        const unsigned index = it->first;
 
         if(m_postProcessChain.contains(index))
           continue;
 
-        PostProcessFilterPtr ptr = it->func();
+        // Create a new context for the filter
+        auto context = std::make_shared<PostProcessContext>(it->second);
 
-        if(ptr) {
+        if(context) {
           // By default resizes new render targets to current context size
-          ptr->initialize(rc);
-          m_postProcessChain.insert(ptr, index);
+          context->initialize(rc);
+          m_postProcessChain.insert(context, index);
         }
       }
     }
@@ -265,7 +267,7 @@ namespace Luminous
     const RenderTarget * m_currentRenderTarget;
 
     // owned by Application
-    const PostProcess::InitList * m_postProcessInitList;
+    const Luminous::PostProcessFilters * m_postProcessFilters;
     PostProcessChain m_postProcessChain;
 
     std::stack<float> m_opacityStack;
@@ -1330,8 +1332,8 @@ namespace Luminous
 
   void RenderContext::beginFrame()
   {
-    if(m_data->m_postProcessInitList)
-      m_data->createPostProcessFilters(*this, *m_data->m_postProcessInitList);
+    if(m_data->m_postProcessFilters)
+      m_data->createPostProcessFilters(*this, *m_data->m_postProcessFilters);
 
     pushClipStack();
 
@@ -1407,23 +1409,28 @@ namespace Luminous
     assert(transform() == Nimble::Matrix4::IDENTITY);
   }
 
-  void RenderContext::initPostProcess(PostProcess::InitList & filters)
+  void RenderContext::initPostProcess(Luminous::PostProcessFilters & filters)
   {
-    // Add color correction filter if any of the areas have a RGBCube defined
+    m_data->m_postProcessFilters = &filters;
+
+    // Add color correction filter if any of the areas have a profile defined
     for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
       const MultiHead::Area & area = m_data->m_window->area(i);
 
       if(area.isSoftwareColorCorrection()) {
         Radiant::info("Enabling software color correction for area %lu", i);
-        Luminous::PostProcess::Creator creator;
-        creator.func = [] { return std::make_shared<Luminous::ColorCorrectionFilter>(); };
-        creator.index = PostProcessChain::Color_Correction;
-        filters.push_back(creator);
-        break;
+
+        // Check if filter already exists
+        if(!m_data->m_postProcessChain.contains(PostProcessChain::Color_Correction)) {
+
+          auto filter = std::make_shared<Luminous::ColorCorrectionFilter>();
+          auto context = std::make_shared<Luminous::PostProcessContext>(filter);
+
+          context->initialize(*this);
+          m_data->m_postProcessChain.insert(context, PostProcessChain::Color_Correction);
+        }
       }
     }
-
-    m_data->m_postProcessInitList = &filters;
   }
 
   void RenderContext::postProcess()
@@ -1441,7 +1448,7 @@ namespace Luminous
     // and color buffers and usually filters are only interested in resolved
     // color data. By blitting to an FBO that only contains a non-multisampled
     // color buffer (default) the multisample resolution happens automatically.
-    PostProcessFilterPtr first = *chain.begin();
+    PostProcessContextPtr first = *chain.begin();
     first->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
     {
       auto g = pushRenderTarget(first->renderTarget());
@@ -1463,7 +1470,7 @@ namespace Luminous
     for(PostProcessChain::FilterIterator it(chain.begin()), next(it);
         it != chain.end() && next++ != chain.end(); ++it) {
 
-      const PostProcessFilterPtr ppf = *it;
+      const PostProcessContextPtr ppf = *it;
       assert(ppf && ppf->enabled());
 
       // Note: if isLast is true, next is invalid
@@ -1488,9 +1495,7 @@ namespace Luminous
         // Sets the current area to be rendered
         setArea(&area);
 
-        ppf->begin(*this);
-        // Apply/render current filter
-        ppf->apply(*this);
+        ppf->doFilter(*this);
       }
     }
 

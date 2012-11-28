@@ -16,7 +16,7 @@
 #include <Luminous/VertexArray.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
-#include <Luminous/PostProcess.hpp>
+#include <Luminous/PostProcessFilter.hpp>
 #include "RenderTargetGL.hpp"
 #include "BufferGL.hpp"
 #include "CullMode.hpp"
@@ -139,7 +139,7 @@ namespace Luminous
     void endArea();
 
     /// @cond
-    void initPostProcess(PostProcess::InitList & filters);
+    void initPostProcess(Luminous::PostProcessFilters & filters);
     void postProcess();
     /// @endcond
 

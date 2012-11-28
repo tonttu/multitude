@@ -1,24 +1,24 @@
 #ifndef COLORCORRECTIONFILTER_HPP
 #define COLORCORRECTIONFILTER_HPP
 
-#include <Luminous/PostProcessContext.hpp>
+#include <Luminous/PostProcessFilter.hpp>
 
 namespace Luminous
 {
 
   /// This class implements the built-in color-correction in Cornerstone. It is
   /// implemented as a post-processing filter.
-  class LUMINOUS_API ColorCorrectionFilter : public Luminous::PostProcessContext
+  class LUMINOUS_API ColorCorrectionFilter : public Luminous::PostProcessFilter
   {
   public:
+
     ColorCorrectionFilter();
     virtual ~ColorCorrectionFilter();
 
-    /// Retrieves the RGBCube for the current area from the render context
-    void begin(Luminous::RenderContext & rc) OVERRIDE;
+    void filter(Luminous::RenderContext & rc,
+                Luminous::PostProcessContext & ctx,
+                Luminous::Style style) const;    
 
-    /// Returns the style used for rendering color corrected images
-    Luminous::Style style() const;
 
   private:
     class D;
