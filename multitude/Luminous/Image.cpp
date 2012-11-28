@@ -644,7 +644,7 @@ namespace Luminous
 
     FILE * file = fopen(filename.toUtf8().data(), "rb");
     if(!file) {
-      Radiant::error("Image::read # failed to open file '%s'", filename);
+      Radiant::error("Image::read # failed to open file '%s'", filename.toUtf8().data());
       // m_ready = true;
       return false;
     }
@@ -654,7 +654,7 @@ namespace Luminous
       result = codec->read(*this, file);
       // m_dataReady = result;
     } else {
-      Radiant::error("Image::read # no suitable codec found for '%s'", filename);
+      Radiant::error("Image::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
 
     fclose(file);
@@ -685,7 +685,7 @@ namespace Luminous
     if(codec) {
       ret = codec->write(*this, file);
     } else {
-      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename.toUtf8().data());
 
       codec = codecs()->getCodec(".png");
       ret = codec->write(*this, file);
