@@ -1,14 +1,14 @@
 #ifndef COLORCORRECTIONFILTER_HPP
 #define COLORCORRECTIONFILTER_HPP
 
-#include <Luminous/PostProcessFilter.hpp>
+#include <Luminous/PostProcessContext.hpp>
 
 namespace Luminous
 {
 
   /// This class implements the built-in color-correction in Cornerstone. It is
   /// implemented as a post-processing filter.
-  class LUMINOUS_API ColorCorrectionFilter : public Luminous::PostProcessFilter
+  class LUMINOUS_API ColorCorrectionFilter : public Luminous::PostProcessContext
   {
   public:
     ColorCorrectionFilter();

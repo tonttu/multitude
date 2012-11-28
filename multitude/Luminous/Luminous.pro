@@ -3,7 +3,9 @@ include(../multitude.pri)
 HEADERS += ProgramGL.hpp \
     CullMode.hpp \
     RenderDefines.hpp \
-    RenderQueues.hpp
+    RenderQueues.hpp \
+    PostProcessContext.hpp \
+    PostProcessFilter2.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -47,7 +49,7 @@ HEADERS += MultiHead.hpp
 HEADERS += PixelFormat.hpp
 HEADERS += PostProcess.hpp
 HEADERS += PostProcessChain.hpp
-HEADERS += PostProcessFilter.hpp
+HEADERS +=
 HEADERS += ColorCorrectionFilter.hpp
 HEADERS += QtWindow.hpp
 HEADERS += RenderContext.hpp
@@ -92,7 +94,8 @@ macx:OBJECTIVE_SOURCES += CocoaWindow.mm
 !mobile*:SOURCES += SpriteRenderer.cpp
 
 SOURCES += ProgramGL.cpp \
-    CullMode.cpp
+    CullMode.cpp \
+    PostProcessContext.cpp
 SOURCES += RenderDriverGL.cpp
 SOURCES += TextureGL.cpp
 SOURCES += VertexArrayGL.cpp
@@ -132,7 +135,7 @@ SOURCES += Mipmap.cpp
 SOURCES += MultiHead.cpp
 SOURCES += PixelFormat.cpp
 SOURCES += PostProcessChain.cpp
-SOURCES += PostProcessFilter.cpp
+SOURCES +=
 SOURCES += ColorCorrectionFilter.cpp
 SOURCES += QtWindow.cpp
 SOURCES += RenderContext.cpp

@@ -15,12 +15,12 @@ namespace Luminous
   /// most cases overriding style() is sufficient. By default the the filter uses
   /// the style from style() to render a context-sized quad to the bound render
   /// target.
-  class LUMINOUS_API PostProcessFilter : public Patterns::NotCopyable
+  class LUMINOUS_API PostProcessContext : public Patterns::NotCopyable
   {
   public:
     /// Creates a new post process filter
-    PostProcessFilter();
-    virtual ~PostProcessFilter();
+    PostProcessContext();
+    virtual ~PostProcessContext();
 
     /// Initializes the filter. By default attaches a color and depth attachments
     /// to the render target and resizes the render target and attachments.

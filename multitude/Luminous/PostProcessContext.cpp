@@ -1,10 +1,10 @@
-#include "PostProcessFilter.hpp"
+#include "PostProcessContext.hpp"
 
 #include <Radiant/Trace.hpp>
 
 namespace Luminous
 {
-  class PostProcessFilter::D
+  class PostProcessContext::D
   {
   public:
     D()
@@ -22,17 +22,17 @@ namespace Luminous
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
-  PostProcessFilter::PostProcessFilter()
+  PostProcessContext::PostProcessContext()
     : m_d(new D())
   {
   }
 
-  PostProcessFilter::~PostProcessFilter()
+  PostProcessContext::~PostProcessContext()
   {
     delete m_d;
   }
 
-  void PostProcessFilter::initialize(RenderContext & rc)
+  void PostProcessContext::initialize(RenderContext & rc)
   {
     m_d->m_renderTarget.attach(GL_COLOR_ATTACHMENT0, m_d->m_framebuffer);
     m_d->m_renderTarget.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
@@ -40,7 +40,7 @@ namespace Luminous
     m_d->m_renderTarget.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
   }
 
-  Luminous::Style PostProcessFilter::style() const
+  Luminous::Style PostProcessContext::style() const
   {
     Luminous::Style style;
 
@@ -50,12 +50,12 @@ namespace Luminous
     return style;
   }
 
-  void PostProcessFilter::begin(Luminous::RenderContext & rc)
+  void PostProcessContext::begin(Luminous::RenderContext & rc)
   {
     rc.clear(Luminous::ClearMask_ColorDepth);
   }
 
-  void PostProcessFilter::apply(RenderContext & rc)
+  void PostProcessContext::apply(RenderContext & rc)
   {
     const Luminous::Style & s = style();
     const Nimble::Vector2f size = rc.contextSize();
@@ -74,32 +74,32 @@ namespace Luminous
     b.vertex[3].texCoord.make(1, 1);
   }
 
-  bool PostProcessFilter::enabled() const
+  bool PostProcessContext::enabled() const
   {
     return m_d->m_enabled;
   }
 
-  void PostProcessFilter::setEnabled(bool enabled)
+  void PostProcessContext::setEnabled(bool enabled)
   {
     m_d->m_enabled = enabled;
   }
 
-  Luminous::RenderTarget & PostProcessFilter::renderTarget()
+  Luminous::RenderTarget & PostProcessContext::renderTarget()
   {
     return m_d->m_renderTarget;
   }
 
-  const Luminous::RenderTarget & PostProcessFilter::renderTarget() const
+  const Luminous::RenderTarget & PostProcessContext::renderTarget() const
   {
     return m_d->m_renderTarget;
   }
 
-  const Luminous::Texture & PostProcessFilter::texture() const
+  const Luminous::Texture & PostProcessContext::texture() const
   {
     return m_d->m_framebuffer;
   }
 
-  const Luminous::RenderBuffer & PostProcessFilter::depthBuffer() const
+  const Luminous::RenderBuffer & PostProcessContext::depthBuffer() const
   {
     return m_d->m_depthBuffer;
   }

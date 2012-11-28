@@ -18,7 +18,7 @@
 #include "Luminous/SimpleTextLayout.hpp"
 #include "Luminous/ColorCorrectionFilter.hpp"
 #include "Luminous/PostProcessChain.hpp"
-#include "Luminous/PostProcessFilter.hpp"
+#include "Luminous/PostProcessContext.hpp"
 
 #include <Nimble/Matrix4.hpp>
 

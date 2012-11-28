@@ -1,15 +1,15 @@
 #ifndef POSTPROCESSCHAIN_HPP
 #define POSTPROCESSCHAIN_HPP
 
-#include "PostProcessFilter.hpp"
+#include "PostProcessContext.hpp"
 
 #include <map>
 #include <iterator>
 
 namespace Luminous
 {
-  class PostProcessFilter;
-  typedef std::shared_ptr<PostProcessFilter> PostProcessFilterPtr;
+  class PostProcessContext;
+  typedef std::shared_ptr<PostProcessContext> PostProcessFilterPtr;
 
   /** PostProcessChain is a container of post process filters. The class
       is used to add new filters and iterate through enabled filters.

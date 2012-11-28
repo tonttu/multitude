@@ -8,11 +8,11 @@
 /// @cond
 namespace Luminous
 {
-  class PostProcessFilter;
+  class PostProcessContext;
 
   namespace PostProcess
   {
-    typedef std::function<std::shared_ptr<PostProcessFilter>() > InitFunc;
+    typedef std::function<std::shared_ptr<PostProcessContext>() > InitFunc;
 
     struct Creator
     {

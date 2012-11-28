@@ -47,14 +47,14 @@ namespace Luminous
 
   void ColorCorrectionFilter::begin(Luminous::RenderContext & rc)
   {
-    PostProcessFilter::begin(rc);
+    PostProcessContext::begin(rc);
 
     m_d->m_currentArea = rc.area();
   }
 
   Luminous::Style ColorCorrectionFilter::style() const
   {
-    Luminous::Style s = PostProcessFilter::style();
+    Luminous::Style s = PostProcessContext::style();
 
     const RGBCube * cube = nullptr;
 
