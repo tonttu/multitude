@@ -83,8 +83,14 @@ namespace Nimble {
     inline double	length	    (void) const		       { return std::sqrt(double(x*x+y*y+z*z+w*w)); }
    /// Returns the squared length of the vector
     inline double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
-    /// Normalizes the vector to given length
+    /// Normalizes the vector to the given length
+    /// @param len length to normalize to
+    /// @return reference to this
     inline Vector4T&	normalize   (double len = 1.0)		       { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
+    /// Get a vector normalized to given length
+    /// @param len length to normalize to
+    /// @return normalized vector
+    inline Vector4T	normalized  (double len = 1.0)	const	       { auto v = *this; v.normalize(len); return v; }
     /// Multiplies the vector component-wise
     inline Vector4T&	scale		(const Vector4T& v)	       { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
     /// Divides the vector component-wise

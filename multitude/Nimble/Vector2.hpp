@@ -88,7 +88,13 @@ namespace Nimble {
     /// Negates the vector
     inline Vector2T&	negate		(void)						      { x=-x; y=-y; return *this; }
     /// Normalizes the vector to the given length
+    /// @param len length to normalize to
+    /// @return reference to this
     Vector2T& normalize(T len = T(1)) { auto l = length(); if(l != 0) *this *= (len / l); return *this; }
+    /// Get a vector normalized to given length
+    /// @param len length to normalize to
+    /// @return normalized vector
+    Vector2T normalized(T len = T(1)) const { auto v = *this; v.normalize(len); return v; }
     /// Normalizes the vector to the given length if it is longer
     inline Vector2T&	limitLength	(T len)	 { auto l = length(); if (l > len) *this *= (len/l); return *this; }
     /// Scales the vector

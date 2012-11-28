@@ -88,8 +88,14 @@ namespace Nimble {
     inline double	lengthSqr	(void) const			   { return x*x+y*y+z*z; }
     /// Returns the negation of the vector
     inline Vector3T&	negate		(void)				   { x=-x; y=-y; z=-z; return *this; }
-    /// Normalizes the vector to given length
+    /// Normalizes the vector to the given length
+    /// @param len length to normalize to
+    /// @return reference to this
     inline Vector3T&	normalize	(double len = 1.0)	   { double l = length(); if (l!=0.0) *this *= T(len/l); return *this; }
+    /// Get a vector normalized to given length
+    /// @param len length to normalize to
+    /// @return normalized vector
+    inline Vector3T	normalized (double len = 1.0)	const { auto v = *this; v.normalize(len); return v; }
     /// Multiply component-wise
     inline Vector3T&	scale		(const Vector3T& v)		   { x *= v.x; y *= v.y; z *= v.z; return *this; }
     /// Divide component-wise
