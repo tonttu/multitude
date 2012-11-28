@@ -634,7 +634,7 @@ namespace Luminous
     return type;
   }
 */
-  bool Image::read(const char* filename)
+  bool Image::read(const QString & filename)
   {
     initDefaultImageCodecs();
 
@@ -642,7 +642,7 @@ namespace Luminous
 
     clear();
 
-    FILE * file = fopen(filename, "rb");
+    FILE * file = fopen(filename.toUtf8().data(), "rb");
     if(!file) {
       Radiant::error("Image::read # failed to open file '%s'", filename);
       // m_ready = true;
@@ -669,15 +669,15 @@ namespace Luminous
     return result;
   }
 
-  bool Image::write(const char* filename) const
+  bool Image::write(const QString & filename) const
   {
     initDefaultImageCodecs();
 
     bool ret = false;
 
-    FILE * file = fopen(filename, "wb");
+    FILE * file = fopen(filename.toUtf8().data(), "wb");
     if(!file) {
-      Radiant::error("Image::write # failed to open file '%s'", filename);
+      Radiant::error("Image::write # failed to open file '%s'", filename.toUtf8().data());
       return false;
     }
 

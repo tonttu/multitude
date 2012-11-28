@@ -94,11 +94,11 @@ namespace Luminous
     /** Read a file to this Image object.
     @param filename name of the file to read from
     @return true if the image was successfully read */
-    bool read(const char * filename);
+    bool read(const QString & filename);
     /** Write this Image to a file.
     @param filename name of the file to write to
     @return true if the image was successfully written*/
-    bool write(const char * filename) const;
+    bool write(const QString & filename) const;
 
     /** Create an image object from data provided by the user.
     @param bytes pointer to image data
