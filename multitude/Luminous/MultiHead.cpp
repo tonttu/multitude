@@ -446,6 +446,7 @@ namespace Luminous {
       m_iconify(this, "iconify", false),
       m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
+      m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_edited(false)
   {
     m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
@@ -630,7 +631,9 @@ namespace Luminous {
   {
     addValue(w);
     m_windows.push_back(std::shared_ptr<Window>(w));
-    if(m_windows.size() == 1 && w->areaCount() == 1) {
+    if(m_hwColorCorrectionEnabled) {
+      /// @todo this is a wrong assumption that area 0 would contain a color
+      /// correction profile. Do this correctly..
       m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
     } else {
       m_hwColorCorrection.syncWith(0);

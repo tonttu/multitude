@@ -503,6 +503,7 @@ namespace Luminous {
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;
+    Valuable::AttributeBool m_hwColorCorrectionEnabled;
     HardwareColorCorrection m_hwColorCorrection;
 
     bool m_edited;
