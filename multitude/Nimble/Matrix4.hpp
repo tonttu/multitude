@@ -103,6 +103,8 @@ namespace Nimble {
 
     /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
+    /// Make a transpose of a matrix to a given matrix
+    inline void transpose(Matrix4T<T>& ret) const;
     /// Returns a transposed matrix
     inline Matrix4T<T> transposed() const { Matrix4T<T> m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
@@ -401,6 +403,15 @@ namespace Nimble {
       for(int j = 0; j < 3; j++)
     res[i][j] = m[i][j];
     return res;
+  }
+
+  template <class T>
+  inline void Matrix4T<T>::transpose(Matrix4T<T>& ret) const
+  {
+    ret[0][0] = m[0][0]; ret[0][1] = m[1][0]; ret[0][2] = m[2][0]; ret[0][3] = m[3][0];
+    ret[1][0] = m[0][1]; ret[1][1] = m[1][1]; ret[1][2] = m[2][1]; ret[1][3] = m[3][1];
+    ret[2][0] = m[0][2]; ret[2][1] = m[1][2]; ret[2][2] = m[2][2]; ret[2][3] = m[3][2];
+    ret[3][0] = m[0][3]; ret[3][1] = m[1][3]; ret[3][2] = m[2][3]; ret[3][3] = m[3][3];
   }
 
   template <class T>
