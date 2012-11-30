@@ -1,5 +1,7 @@
 #include "PostProcessChain.hpp"
 
+#include <Luminous/PostProcessFilter.hpp>
+
 namespace Luminous
 {
   class PostProcessChain::D
@@ -18,28 +20,29 @@ namespace Luminous
     delete m_d;
   }
 
-  bool PostProcessChain::add(PostProcessContextPtr ctx)
+  void PostProcessChain::insert(PostProcessContextPtr ctx)
   {
-    std::pair<FilterChain::iterator,bool> result;
-    if(m_d->m_chain.empty()) {
-      result = m_d->m_chain.insert(std::make_pair(FilterChain::key_type(0), ctx));
-    } else {
-      FilterChain::key_type key = m_d->m_chain.rbegin()->first;
-      result = m_d->m_chain.insert(std::make_pair(key+1, ctx));
+    m_d->m_chain.insert(std::make_pair(ctx->order(), ctx));
+  }
+
+  bool PostProcessChain::hasFilterType(const std::type_info & type)
+  {
+    for(FilterChain::iterator it = m_d->m_chain.begin(); it != m_d->m_chain.end(); ++it) {
+      if(typeid(*it->second) == type)
+        return true;
     }
-    return result.second;
+    return false;
   }
 
-  bool PostProcessChain::insert(PostProcessContextPtr ctx, unsigned index)
+  bool PostProcessChain::contains(const PostProcessFilterPtr & filter) const
   {
-    std::pair<FilterChain::iterator,bool> result =
-        m_d->m_chain.insert(std::make_pair(index, ctx));
-    return result.second;
-  }
-
-  bool PostProcessChain::contains(unsigned index) const
-  {
-    return m_d->m_chain.find(index) != m_d->m_chain.end();
+    for(FilterChain::const_iterator it = m_d->m_chain.begin(); it != m_d->m_chain.end(); ++it)
+    {
+      const PostProcessContext & ptr = *it->second;
+      if(ptr.filter() == filter)
+         return true;
+    }
+    return false;
   }
 
   PostProcessChain::FilterIterator PostProcessChain::begin()
@@ -81,5 +84,22 @@ namespace Luminous
   size_t PostProcessChain::size() const
   {
     return m_d->m_chain.size();
+  }
+
+  void PostProcessChain::prepare()
+  {
+    // Reorder chain if necessary (copied from Widget::updateInternal)
+    for(FilterChain::iterator it = m_d->m_chain.begin(); it != m_d->m_chain.end(); ) {
+
+      FilterChain::iterator cur = it;
+      ++it;
+
+      PostProcessContext & ctx = *cur->second;
+
+      if(ctx.order() != (*cur).first) {
+        m_d->m_chain.insert(FilterChain::value_type(ctx.order(), std::move(cur->second)));
+        m_d->m_chain.erase(cur);
+      }
+    }
   }
 }

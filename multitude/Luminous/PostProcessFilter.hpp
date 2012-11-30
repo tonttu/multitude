@@ -31,9 +31,6 @@ namespace Luminous
     PostProcessFilter(Valuable::Node * host = 0, const QByteArray & name = "");
     virtual ~PostProcessFilter();
 
-    /// Called by the application when the scene is updated.
-    virtual void update(float dt);
-
     /// Initialize is called when a context is created for the filter. Override
     /// this if you need to specify additional parameter to the context, such as
     /// extra buffer attachments.
@@ -60,12 +57,21 @@ namespace Luminous
     /// @param enabled true to enable, false to disable.
     void setEnabled(bool enabled);
 
+    /// Returns the order index in which this filter is applied.
+    /// @return order index
+    unsigned int order() const;
+
+    /// Sets the order for this filter. Filters are
+    /// applied in order from low to high.
+    /// @param order order index
+    void setOrder(unsigned int order);
+
   private:
     class D;
     D * m_d;
   };
 
   typedef std::shared_ptr<PostProcessFilter> PostProcessFilterPtr;
-  typedef std::map<unsigned, PostProcessFilterPtr> PostProcessFilters;
+  typedef std::vector<PostProcessFilterPtr> PostProcessFilters;
 }
 #endif // POSTPROCESSFILTER_HPP

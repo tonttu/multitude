@@ -126,18 +126,16 @@ namespace Luminous
     {
       for(Luminous::PostProcessFilters::const_iterator it = filters.begin(); it != filters.end(); ++it) {
 
-        const unsigned index = it->first;
-
-        if(m_postProcessChain.contains(index))
+        if(m_postProcessChain.contains(*it))
           continue;
 
         // Create a new context for the filter
-        auto context = std::make_shared<PostProcessContext>(it->second);
+        auto context = std::make_shared<PostProcessContext>(*it);
 
         if(context) {
           // By default resizes new render targets to current context size
           context->initialize(rc);
-          m_postProcessChain.insert(context, index);
+          m_postProcessChain.insert(context);
         }
       }
     }
@@ -1332,8 +1330,11 @@ namespace Luminous
 
   void RenderContext::beginFrame()
   {
-    if(m_data->m_postProcessFilters)
+    if(m_data->m_postProcessFilters) {
       m_data->createPostProcessFilters(*this, *m_data->m_postProcessFilters);
+      // Reorders the chain is necessary
+      m_data->m_postProcessChain.prepare();
+    }
 
     pushClipStack();
 
@@ -1421,13 +1422,15 @@ namespace Luminous
         Radiant::info("Enabling software color correction for area %lu", i);
 
         // Check if filter already exists
-        if(!m_data->m_postProcessChain.contains(PostProcessChain::Color_Correction)) {
+        if(!m_data->m_postProcessChain.hasFilterType<ColorCorrectionFilter>()) {
 
           auto filter = std::make_shared<Luminous::ColorCorrectionFilter>();
+          filter->setOrder(PostProcessChain::Color_Correction);
+
           auto context = std::make_shared<Luminous::PostProcessContext>(filter);
 
           context->initialize(*this);
-          m_data->m_postProcessChain.insert(context, PostProcessChain::Color_Correction);
+          m_data->m_postProcessChain.insert(context);
         }
       }
     }

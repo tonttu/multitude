@@ -26,7 +26,7 @@ namespace Luminous
     virtual ~PostProcessChain();
 
     /// Container for filters
-    typedef std::map<unsigned, PostProcessContextPtr> FilterChain;
+    typedef std::multimap<unsigned, PostProcessContextPtr> FilterChain;
 
     /// An iterator that skips disabled filters
     template <class IteratorType>
@@ -107,16 +107,24 @@ namespace Luminous
     /// @copydoc end
     ConstFilterIterator end() const;
 
-    /// Adds a filter to the end of the chain.
-    /// @return true if successful, false otherwise
-    bool add(PostProcessContextPtr ctx);
+    /// Inserts a filter into the chain. The position in the chain is specified
+    /// by the order attribute of the filter. Items with the same order are preserved
+    /// in the order they were added in.
+    void insert(PostProcessContextPtr ctx);
 
-    /// Inserts a filter at the given index if no filter exists at the specified index
-    /// @return true if succeeded, false otherwise
-    bool insert(PostProcessContextPtr ctx, unsigned index);
+    /// Checks if the given filter type is present in the filters.
+    /// @param type Type info of the filter
+    /// @return true if the filter is present
+    bool hasFilterType(const std::type_info & type);
 
-    /// Checks if a filter with the given index already exists in the chain
-    bool contains(unsigned index) const;
+    /// Checks if the given filter type is present in the filters.
+    /// @see hasFilterType(const std::type_info&)
+    /// @return true if the filter is present
+    template <typename T>
+    bool hasFilterType() { return hasFilterType(typeid(T)); }
+
+    /// Checks if a filter instance already exists in the chain
+    bool contains(const PostProcessFilterPtr & filter) const;
 
     /// Checks if the chain is empty
     /// @return true if chain is empty or only contains disabled filters
@@ -131,6 +139,10 @@ namespace Luminous
   private:
     class D;
     D * m_d;
+
+    void prepare();
+
+    friend class RenderContext;
   };
 }
 #endif // POSTPROCESSCHAIN_HPP

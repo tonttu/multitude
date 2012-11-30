@@ -10,10 +10,12 @@ namespace Luminous
   public:
     D()
       : m_enabled(true)
+      , m_order(0)
     {
     }
 
     bool m_enabled;
+    unsigned int m_order;
   };
 
   ////////////////////////////////////////////////////////////
@@ -29,9 +31,6 @@ namespace Luminous
   {
     delete m_d;
   }
-
-  void PostProcessFilter::update(float)
-  {}
 
   void PostProcessFilter::initialize(RenderContext &,
                                      PostProcessContext &) const
@@ -68,5 +67,15 @@ namespace Luminous
   void PostProcessFilter::setEnabled(bool enabled)
   {
     m_d->m_enabled = enabled;
+  }
+
+  unsigned int PostProcessFilter::order() const
+  {
+    return m_d->m_order;
+  }
+
+  void PostProcessFilter::setOrder(unsigned int order)
+  {
+    m_d->m_order = order;
   }
 }

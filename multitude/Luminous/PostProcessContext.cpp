@@ -59,6 +59,16 @@ namespace Luminous
     return m_d->m_filter->enabled();
   }
 
+  unsigned int PostProcessContext::order() const
+  {
+    return m_d->m_filter->order();
+  }
+
+  const PostProcessFilterPtr & PostProcessContext::filter() const
+  {
+    return m_d->m_filter;
+  }
+
   Luminous::RenderTarget & PostProcessContext::renderTarget()
   {
     return m_d->m_renderTarget;

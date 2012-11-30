@@ -16,7 +16,7 @@ namespace Luminous
   public:
     /// Creates a new post process filter
     /// @param filter filter that this context belongs to
-    PostProcessContext(const PostProcessFilterPtr filter);
+    explicit PostProcessContext(const PostProcessFilterPtr filter);
     virtual ~PostProcessContext();
 
     /// Initializes the filter. By default attaches a color and depth attachments
@@ -32,6 +32,14 @@ namespace Luminous
     /// Checks if the filter is enabled, disabled filters will be skipped.
     /// @return true if enabled, false otherwise.
     bool enabled() const;
+
+    /// Returns the order of the filter corresponding to this context.
+    /// @return order index
+    unsigned int order() const;
+
+    /// Returns a reference to the filter that owns this context
+    /// @return filter pointer to post-process filter
+    const PostProcessFilterPtr & filter() const;
 
     /// Returns the render target used for rendering the scene
     Luminous::RenderTarget & renderTarget();
