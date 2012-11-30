@@ -181,7 +181,7 @@ namespace Luminous
     if (m_mask & ClearMask_Depth)
       glMask |= GL_DEPTH_BUFFER_BIT;
     if (m_mask & ClearMask_Stencil)
-      glMask |= GL_DEPTH_BUFFER_BIT;
+      glMask |= GL_STENCIL_BUFFER_BIT;
 
     glBlitFramebuffer(m_src.low().x, m_src.low().y, m_src.high().x, m_src.high().y,
                       m_dst.low().x, m_dst.low().y, m_dst.high().x, m_dst.high().y,
