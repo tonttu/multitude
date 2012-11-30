@@ -57,6 +57,7 @@ namespace Luminous
   void VertexArray::setIndexBuffer(const Luminous::Buffer & indexBuffer)
   {
     m_d->indexBuffer = indexBuffer.resourceId();
+    invalidate();
   }
 
   void VertexArray::removeBinding(const Luminous::Buffer & buffer)

@@ -232,8 +232,9 @@ namespace Luminous
       else state.textures[t]->bind(t);
     }
 
-    if(state.vertexArray)
+    if(state.vertexArray) {
       state.vertexArray->bind();
+    }
   }
 
   void RenderDriverGL::D::applyUniform(GLint location, const Luminous::ShaderUniform & uniform)
@@ -323,6 +324,8 @@ namespace Luminous
     m_state.program->link(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
+
+    if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
 
     // In case of non-shared buffers, we'll re-upload if anything has changed
     m_state.uniformBuffer->upload(uniformBuffer, Buffer::Uniform);

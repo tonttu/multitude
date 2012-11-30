@@ -62,19 +62,20 @@ namespace Luminous
     setVertexAttributes(vertexArray, program);
 
     Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
-    if (index != nullptr) {
+    assert(vertexArray.indexBuffer() == 0 || index != nullptr);
 
+    if (index != nullptr) {
       auto & bufferGL = m_state.driver().handle(*index);
       bufferGL.bind(Buffer::Index);
       /// Upload new data if we need to
       bufferGL.upload(*index, Buffer::Index);
-
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
   }
 
   void VertexArrayGL::setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program)
   {
+    assert(m_generation == vertexArray.generation());
     // Bind all vertex buffers
     for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
       VertexArray::Binding b = vertexArray.binding(i);

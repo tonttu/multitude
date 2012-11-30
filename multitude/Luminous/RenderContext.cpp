@@ -178,7 +178,7 @@ namespace Luminous
       VertexArrayKey(RenderResource::Id id1 = 0,
 		     RenderResource::Id id2 = 0,
 		     const ProgramGL* program = 0)
-	      : m_id1(id1), m_id2(id2), m_program(program) {}
+	: m_id1(id1), m_id2(id2), m_program(program) {}
 
       inline bool operator == (const VertexArrayKey & that) const
       {
@@ -618,8 +618,8 @@ namespace Luminous
     return m4 * v4;
   }
 
-  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
-      std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
+  RenderContext::SharedBuffer* RenderContext::findAvailableBuffer(
+      std::size_t vertexSize, std::size_t vertexCount, Buffer::Type type)
   {
     int bufferIndex = m_data->m_bufferIndex;
     Internal::BufferPool & pool = type == Buffer::Index
@@ -628,7 +628,7 @@ namespace Luminous
           ? m_data->m_vertexBuffers[bufferIndex][vertexSize]
           : m_data->m_uniformBuffers[bufferIndex][vertexSize];
 
-    const std::size_t requiredBytes = vertexSize * maxVertexCount;
+    const std::size_t requiredBytes = vertexSize * vertexCount;
 
     SharedBuffer * buffer = nullptr;
     std::size_t nextSize = 1 << 20;
@@ -646,15 +646,23 @@ namespace Luminous
       if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
         break;
 
-      nextSize = buffer->buffer.size() << 1;
+      nextSize <<= 1;
       ++pool.currentIndex;
     }
+    return buffer;
+  }
+
+  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
+      std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
+  {
+    SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
+
     char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite |
                                   Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
-    buffer->reservedBytes += requiredBytes;
+    buffer->reservedBytes += vertexSize * maxVertexCount;
     return std::make_pair(data, buffer);
   }
 
@@ -718,7 +726,9 @@ namespace Luminous
     SharedBuffer * ibuffer;
     RenderResource::Id ibufferId = 0;
     if (indexCount > 0) {
-      std::tie(mappedIndexBuffer, ibuffer) = sharedBuffer<unsigned int>(indexCount, Buffer::Index, indexOffset);
+      // Index buffers are implicitly tied to VAO when bound so we make mapping after we
+      // are sure that correct VAO is bound
+      ibuffer = findAvailableBuffer(sizeof(unsigned int), indexCount, Buffer::Index);
       // Get the matching vertexarray from cache or create a new one if needed
       ibufferId = ibuffer->buffer.resourceId();
     }
@@ -741,6 +751,15 @@ namespace Luminous
 
     RenderCommand & cmd = m_data->m_driver.createRenderCommand(
           translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
+    if(indexCount > 0) {
+      // Now we are ready to bind index buffer (driver made sure that VAO is bound)
+      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::Index, Buffer::MapWrite |
+                                    Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
+      mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
+      indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
+      ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
+    }
+
     cmd.primitiveCount = ( indexCount > 0 ? indexCount : vertexCount );
     cmd.indexed = (indexCount > 0);
     cmd.indexOffset = indexOffset;

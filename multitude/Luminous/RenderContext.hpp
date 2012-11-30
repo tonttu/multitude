@@ -369,6 +369,9 @@ namespace Luminous
 
   public:
 
+    SharedBuffer * findAvailableBuffer(std::size_t vertexSize, std::size_t vertexCount,
+                                       Buffer::Type type);
+
     template <typename T>
     T * mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
                   Radiant::FlagsT<Buffer::MapAccess> access);
