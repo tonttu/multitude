@@ -775,6 +775,8 @@ namespace Luminous
       *trilinearBlending = blending;
     }
 
+    assert(bestlevel >= 0 && bestlevel <= m_d->m_maxLevel);
+
     return bestlevel;
   }
 
