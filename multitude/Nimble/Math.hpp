@@ -73,14 +73,12 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-#if defined(__APPLE__)
-      return std::isfinite(v);
-#elif defined(_MSC_VER) && !defined(CLANG_XML)
+#if defined(_MSC_VER) && !defined(CLANG_XML)
       return _finite(v) != 0;
 #elif defined(_MSC_VER) && defined(CLANG_XML)
       return v == v && (v == 0 || v != 2*v);
 #else
-      return finite(v);
+      return std::isfinite(v);
 #endif
     }
     /// Checks if the given number is a NaN
