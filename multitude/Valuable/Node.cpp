@@ -67,7 +67,7 @@ namespace
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
-  QList<QueueItem*> s_queue;
+  std::list<QueueItem*> s_queue;
   QSet<void *> s_queueOnce;
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
@@ -81,7 +81,7 @@ namespace
       if(s_queueOnce.contains(once)) return;
       s_queueOnce << once;
     }
-    s_queue << item;
+    s_queue.push_back(item);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc func,
@@ -93,7 +93,7 @@ namespace
       if(s_queueOnce.contains(once)) return;
       s_queueOnce << once;
     }
-    s_queue << item;
+    s_queue.push_back(item);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc2 func,
@@ -105,7 +105,7 @@ namespace
       if(s_queueOnce.contains(once)) return;
       s_queueOnce << once;
     }
-    s_queue << item;
+    s_queue.push_back(item);
   }
 }
 
@@ -173,7 +173,7 @@ namespace Valuable
 
     {
       Radiant::Guard g(s_queueMutex);
-      for(QList<QueueItem*>::iterator it = s_queue.begin(); it != s_queue.end(); ++it) {
+      for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
         QueueItem* item = *it;
         if(item->target == this)
           item->target = 0;
@@ -730,7 +730,11 @@ namespace Valuable
   {
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
-    for(QueueItem* item : s_queue) {
+
+    // Can not use range-based loop here because it doesn't iterate all
+    // elements when the QList gets modified inside the loop.
+    for(auto i = s_queue.begin(); i != s_queue.end(); ++i) {
+      auto item = *i;
       if(item->target) {
         std::swap(item->target->m_sender, item->sender);
         item->target->processMessage(item->to, item->data);
