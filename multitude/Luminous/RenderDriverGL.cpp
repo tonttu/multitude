@@ -368,15 +368,22 @@ namespace Luminous
       cmd = &queue.queue->newEntry();
     }
 
-
     // Assign the samplers
     {
-      /// @todo Prevent overflow if more than cmd->samplers.size() textures
       unit = 0;
       int slot = 0; // one day this will be different from unit... when that day comes fix resetCommand
       if (textures != nullptr) {
-        for(auto it = std::begin(*textures), end = std::end(*textures); it != end; ++it, ++unit, ++slot) {
-          cmd->samplers[slot] = std::make_pair(m_state.program->uniformLocation(it->first), unit);
+        auto it = std::begin(*textures);
+        auto end = std::end(*textures);
+        while (it != end && slot < cmd->samplers.size()) {
+          auto location = m_state.program->uniformLocation(it->first);
+          if (location >= 0) {
+            cmd->samplers[slot++] = std::make_pair(location, unit++);
+          }
+          else {
+            Radiant::warning("RenderDriverGL - Cannot bind sampler %s - No such sampler found", it->first.data());
+          }
+          ++it;
         }
       }
       cmd->samplers[slot].first = -1;
@@ -384,17 +391,21 @@ namespace Luminous
 
     // Assign the uniforms
     {
-      /// @todo Prevent overflow if more than cmd->uniforms.size() uniforms
       size_t slot = 0;
       if (uniforms) {
-        for (auto it = std::begin(*uniforms), end = std::end(*uniforms); it != end; ++it) {
+        auto it = std::begin(*uniforms);
+        auto end = std::end(*uniforms);
+        while (it != end && slot < cmd->uniforms.size()) {
           GLint location = m_state.program->uniformLocation(it->first);
-          if (location == -1) {
-            Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", it->first.data());
-            continue;
+          if (location >= 0) {
+            assert(it->second.type() != ShaderUniform::Unknown);
+            cmd->uniforms[slot++] = std::make_pair(location, it->second);
           }
-          assert(it->second.type() != ShaderUniform::Unknown);
-          cmd->uniforms[slot++] = std::make_pair(location, it->second);
+          else {
+            Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", it->first.data());
+          }
+
+          ++it;
         }
       }
       cmd->uniforms[slot].first = -1;
