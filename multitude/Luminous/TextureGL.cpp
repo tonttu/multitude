@@ -78,8 +78,8 @@ namespace Luminous
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
       bool recreate = (((texture.dimensions() == 1 || texture.dimensions() == 2)
-                       && (m_target != GL_TEXTURE_2D || m_target != GL_TEXTURE_2D_MULTISAMPLE)) ||
-          (texture.dimensions() == 3 && (m_target != GL_TEXTURE_3D || m_target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY)));
+                       && (m_target != GL_TEXTURE_2D && m_target != GL_TEXTURE_2D_MULTISAMPLE)) ||
+          (texture.dimensions() == 3 && (m_target != GL_TEXTURE_3D && m_target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY)));
 
       recreate = recreate || (m_size[0] != texture.width() || m_size[1] != texture.height() || m_size[2] != texture.depth());
 
