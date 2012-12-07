@@ -1007,8 +1007,9 @@ namespace Luminous
     uniform.split = 0.0f;
 
     /// @todo how to calculate these?
-    const float edge = 0.5f - style.fontRenderWidth() / 60.0f;
-    const float strokeWidth = std::min(1.0f, style.strokeWidth() / 60.0f);
+    const float magic = 175.f;
+    const float edge = 0.5f - style.fontRenderWidth() / magic;
+    const float strokeWidth = std::min(1.0f, style.strokeWidth() / magic);
 
     if (style.dropShadowColor().alpha() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.dropShadowColor();
