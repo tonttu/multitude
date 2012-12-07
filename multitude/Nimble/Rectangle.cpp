@@ -7,10 +7,10 @@
  * See file "Nimble.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "Rectangle.hpp"
@@ -33,9 +33,9 @@ namespace Nimble
   Rectangle::Rectangle(Nimble::Vector2f size, const Nimble::Matrix3f & m)
   {
     // Transform the points
-    m_origin = (m * Vector3f::null()).vector2();
-    Nimble::Vector2f c0 = (m * Vector3f(0.5f * size.x, 0.f, 1)).vector2();
-    Nimble::Vector2f c1 = (m * Vector3f(0.f, 0.5f * size.y, 1)).vector2();
+    m_origin = m.project(Nimble::Vector2f(0, 0));
+    Nimble::Vector2f c0 = m.project(Vector2f(0.5f * size.x, 0.f));
+    Nimble::Vector2f c1 = m.project(Vector2f(0.f, 0.5f * size.y));
 
     // Compute the axii and extents
     m_axis0 = c0 - m_origin;
@@ -109,7 +109,7 @@ namespace Nimble
     absAdD = std::abs(dot(r.m_axis1, d));
     sum = r.m_extent1 + m_extent0 * absAdB[0][1] + m_extent1 * absAdB[1][1];
     if(absAdD > sum)
-      return false;  
+      return false;
 
     return true;
   }
