@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_OPENGL_PIPELINECOMMAND_HPP
 #define LUMINOUS_OPENGL_PIPELINECOMMAND_HPP
 
+/// @cond
+
 #include "RenderTargetGL.hpp"
 #include "RenderDriverGL.hpp"
 #include "CullMode.hpp"
@@ -183,5 +185,7 @@ namespace Luminous
     FaceWinding m_winding;
   };
 }
+
+/// @endcond
 
 #endif

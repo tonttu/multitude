@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_VM1_HPP
 #define LUMINOUS_VM1_HPP
 
+/// @cond
+
 #include "Export.hpp"
 
 #include <Radiant/SerialPort.hpp>
@@ -33,4 +35,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
+
 #endif // VM1_HPP

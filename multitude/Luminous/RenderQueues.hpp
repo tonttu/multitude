@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_RENDERQUEUES_HPP
 #define LUMINOUS_RENDERQUEUES_HPP
 
+/// @cond
+
 #include "PipelineCommand.hpp"
 
 #include <tuple>
@@ -156,5 +158,7 @@ namespace Luminous
   };
 
 } //namespace Luminous
+
+/// @endcond
 
 #endif

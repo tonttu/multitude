@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_SCREENDETECTOR_HPP
 #define LUMINOUS_SCREENDETECTOR_HPP
 
+/// @cond
+
 #include "Export.hpp"
 
 #include <Nimble/Rect.hpp>
@@ -75,5 +77,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif // LUMINOUS_SCREENDETECTOR_HPP

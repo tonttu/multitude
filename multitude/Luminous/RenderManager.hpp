@@ -16,6 +16,8 @@
 #ifndef LUMINOUS_RENDERMANAGER_HPP
 #define LUMINOUS_RENDERMANAGER_HPP
 
+/// @cond
+
 #include "Export.hpp"
 #include <Luminous/Luminous.hpp>
 #include <Luminous/RenderResource.hpp>
@@ -54,5 +56,7 @@ namespace Luminous
     RenderManager();
   };
 }
+
+/// @endcond
 
 #endif // LUMINOUS_RENDERMANAGER_HPP

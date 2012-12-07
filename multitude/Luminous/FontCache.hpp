@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_FONT_CACHE_HPP
 #define LUMINOUS_FONT_CACHE_HPP
 
+/// @cond
+
 #include <Luminous/TextureAtlas.hpp>
 
 class QRawFont;
@@ -58,5 +60,7 @@ namespace Luminous
     D * m_d;
   };
 } // namespace Luminous
+
+/// @endcond
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef LUMINOUS_TEXTUREATLAS_HPP
 #define LUMINOUS_TEXTUREATLAS_HPP
 
+/// @cond
+
 #include "Image.hpp"
 
 #include <Patterns/NotCopyable.hpp>
@@ -177,5 +179,7 @@ namespace Luminous
   }
 
 } // namespace Luminous
+
+/// @endcond
 
 #endif // LUMINOUS_TEXTUREATLAS_HPP

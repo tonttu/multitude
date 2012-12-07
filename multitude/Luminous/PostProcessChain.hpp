@@ -1,6 +1,8 @@
 #ifndef POSTPROCESSCHAIN_HPP
 #define POSTPROCESSCHAIN_HPP
 
+/// @cond
+
 #include "PostProcessContext.hpp"
 
 #include <map>
@@ -145,4 +147,7 @@ namespace Luminous
     friend class RenderContext;
   };
 }
+
+/// @endcond
+
 #endif // POSTPROCESSCHAIN_HPP

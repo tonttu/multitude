@@ -1,6 +1,8 @@
 #if !defined (LUMINOUS_RENDERDRIVER_HPP)
 #define LUMINOUS_RENDERDRIVER_HPP
 
+/// @cond
+
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/RenderCommand.hpp"
@@ -98,4 +100,7 @@ namespace Luminous
     virtual void releaseResource(RenderResource::Id id) = 0;
   };
 }
+
+/// @endcond
+
 #endif // LUMINOUS_RENDERDRIVER_HPP

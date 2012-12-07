@@ -1,6 +1,8 @@
 #if !defined (LUMINOUS_RENDERDRIVERGL_HPP)
 #define LUMINOUS_RENDERDRIVERGL_HPP
 
+/// @cond
+
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderDriver.hpp"
 #include "Luminous/BufferGL.hpp"
@@ -93,5 +95,7 @@ namespace Luminous
     D * m_d;
   };
 }
+
+/// @endcond
 
 #endif // LUMINOUS_RENDERDRIVERGL_HPP
