@@ -551,9 +551,11 @@ namespace Luminous
 
   FontCache::~FontCache()
   {
-    Radiant::Guard g(m_d->m_cacheMutex);
-    while(!m_d->m_request.empty())
-      m_d->m_cacheCondition.wait(m_d->m_cacheMutex);
+    {
+      Radiant::Guard g(m_d->m_cacheMutex);
+      while(!m_d->m_request.empty())
+        m_d->m_cacheCondition.wait(m_d->m_cacheMutex);
+    }
 
     delete m_d;
   }
