@@ -27,14 +27,14 @@ namespace Luminous
 
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, ubuffer->buffer, builder.depth, program, textures, uniforms);
 
-    cmd.primitiveType = type;                         // Lines, points, vertices, etc
-    cmd.primitiveSize = primitiveSize;                // For lines/points
-    cmd.primitiveCount = vertexCount;                 // Number of vertices
-    cmd.indexed = (vertexArray.indexBuffer() != 0);   // Whether we should use indexed or non-indexed drawing
-    cmd.vertexOffset = offset;                        // Vertex offset (for indexed and non-indexed)
-    cmd.indexOffset = offset;                         // Index offset (for indexed drawing only)
-    cmd.uniformOffsetBytes = uniformOffset * uniformSize; // Start of active uniform in buffer
-    cmd.uniformSizeBytes = uniformSize;               // Size of uniform
+    cmd.primitiveType = type;                                             // Lines, points, vertices, etc
+    cmd.primitiveSize = primitiveSize;                                    // For lines/points
+    cmd.primitiveCount = vertexCount;                                     // Number of vertices
+    cmd.indexed = (vertexArray.indexBuffer() != 0);                       // Whether we should use indexed or non-indexed drawing
+    cmd.vertexOffset = offset;                                            // Vertex offset (for indexed and non-indexed)
+    cmd.indexOffset = offset;                                             // Index offset (for indexed drawing only)
+    cmd.uniformOffsetBytes = uniformOffset * (unsigned int) uniformSize;  // Start of active uniform in buffer
+    cmd.uniformSizeBytes = (unsigned int)uniformSize;                     // Size of uniform
 
     builder.command = &cmd;
 
