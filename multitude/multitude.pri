@@ -152,7 +152,7 @@ linux-*{
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
   }
 
-  build_pass:CONFIG(debug,debug|release) {
+  CONFIG(debug,debug|release) {
     # Debug builds run with Electric Fence for extra memory testing
     # Check the efence manpages for using different environment variables
     LIBS += -lefence
