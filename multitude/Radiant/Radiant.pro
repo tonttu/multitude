@@ -2,6 +2,7 @@
 include(../multitude.pri)
 
 HEADERS += Flags.hpp
+HEADERS += FutureBool.hpp
 HEADERS += DropEvent.hpp
 HEADERS += TabletEvent.hpp
 HEADERS += BGThread.hpp

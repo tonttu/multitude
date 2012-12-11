@@ -36,6 +36,11 @@ namespace Radiant
 
   BGThread::~BGThread()
   {
+    {
+      Radiant::Guard g(m_mutexWait);
+      m_taskQueue.clear();
+    }
+
     Radiant::info("Waiting for all background threads to finish...");
     stop();
     Radiant::debug("Deleting %d & %d background tasks...",
