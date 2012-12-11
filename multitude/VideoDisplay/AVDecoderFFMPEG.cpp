@@ -1262,7 +1262,7 @@ namespace VideoPlayer2
     while(running && (packet.size > 0 || flush)) {
       int gotFrame = 0;
       avcodec_get_frame_defaults(av.frame);
-      int consumedBytes = avcodec_decode_audio4(av.audioCodecContext, av.frame,
+      const int consumedBytes = avcodec_decode_audio4(av.audioCodecContext, av.frame,
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: Audio decoding error").
@@ -1310,11 +1310,12 @@ namespace VideoPlayer2
                   Radiant::Sleep::sleepMs(10);
                 }
 
-                if(output->pts != (int64_t) AV_NOPTS_VALUE) {
+                /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
+                /*if(output->pts != (int64_t) AV_NOPTS_VALUE) {
                   pts = output->pts;
                   dpts = av.audioTsToSecs * output->pts;
                   nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
-                }
+                }*/
 
                 decodedAudioBuffer->fillPlanar(Timestamp(dpts + loopOffset, seekGeneration),
                                                av_get_channel_layout_nb_channels(output->audio->channel_layout),
