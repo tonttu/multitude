@@ -35,17 +35,17 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector2f &, Layer, QList<ValueUnit>) OVERRIDE
     {
       return false;
     }
 
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector3f &, Layer, QList<ValueUnit>) OVERRIDE
     {
       return false;
     }
 
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual bool set(const Nimble::Vector4f &, Layer, QList<ValueUnit>) OVERRIDE
     {
       return false;
     }
