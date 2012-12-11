@@ -27,6 +27,7 @@ extern "C" {
 
 # include <libavdevice/avdevice.h>
 
+# include <libavutil/audioconvert.h>
 # include <libavutil/imgutils.h>
 # include <libavutil/opt.h>
 # include <libavutil/pixdesc.h>
@@ -36,7 +37,6 @@ extern "C" {
 # include <libavcodec/avcodec.h>
 
 # include <libavfilter/avfiltergraph.h>
-# include <libavfilter/avcodec.h>
 # include <libavfilter/buffersink.h>
 # include <libavfilter/buffersrc.h>
 
@@ -189,19 +189,6 @@ namespace
     }
   }
 
-  typedef int (*QueryFormatsFunc)(AVFilterContext *);
-  QueryFormatsFunc s_origQueryFormats = nullptr;
-  int asinkQueryFormats(AVFilterContext * filterContext)
-  {
-    assert(s_origQueryFormats);
-    int ret = s_origQueryFormats(filterContext);
-    /// @todo should not hard-code
-    const int lst[] = {44100, -1};
-    AVFilterFormats * fmts = avfilter_make_format_list(lst);
-    avfilter_formats_ref(fmts, &filterContext->inputs[0]->in_samplerates);
-    return ret;
-  }
-
   void avError(const QString & prefix, int err)
   {
     char buffer[128];
@@ -232,35 +219,51 @@ namespace
   //   - accelerated formats like xvmc / va api / vdpau, they don't work with multi-threaded rendering
   //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
   const PixelFormat s_pixFmts[] = {
-    PIX_FMT_YUV420P,   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-    PIX_FMT_YUV422P,   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
-    PIX_FMT_YUV444P,   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
-    PIX_FMT_YUV410P,   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
-    PIX_FMT_YUV411P,   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
-    PIX_FMT_GRAY8,     ///<        Y        ,  8bpp
-    PIX_FMT_YUVJ420P,  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
-    PIX_FMT_YUVJ422P,  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
-    PIX_FMT_YUVJ444P,  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
+    AV_PIX_FMT_YUV420P,   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+    AV_PIX_FMT_YUV422P,   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+    AV_PIX_FMT_YUV444P,   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
+    AV_PIX_FMT_YUV410P,   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+    AV_PIX_FMT_YUV411P,   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+    AV_PIX_FMT_GRAY8,     ///<        Y        ,  8bpp
+    AV_PIX_FMT_YUVJ420P,  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
+    AV_PIX_FMT_YUVJ422P,  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
+    AV_PIX_FMT_YUVJ444P,  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
 
 #ifdef LUMINOUS_OPENGLES
-    PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
-    PIX_FMT_RGBA,      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+    AV_PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
+    AV_PIX_FMT_RGBA,      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
 #else
-    PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
-    PIX_FMT_BGRA,      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+    AV_PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
+    AV_PIX_FMT_BGRA,      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
 #endif
 
-    PIX_FMT_YUV440P,   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
-    PIX_FMT_YUVJ440P,  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
-    PIX_FMT_YUVA420P,  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+    AV_PIX_FMT_YUV440P,   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
+    AV_PIX_FMT_YUVJ440P,  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
+    AV_PIX_FMT_YUVA420P,  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
 
-    PIX_FMT_GRAY8A,    ///< 8bit gray, 8bit alpha
+    AV_PIX_FMT_Y400A,    ///< 8bit gray, 8bit alpha
 
-    PIX_FMT_YUVA444P,  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
-    PIX_FMT_YUVA422P,  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
+    AV_PIX_FMT_YUVA444P,  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
+    AV_PIX_FMT_YUVA422P,  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
 
-    PIX_FMT_NONE
+    AV_PIX_FMT_NONE
   };
+
+  QByteArray supportedPixFormatsStr()
+  {
+    QByteArray lst;
+    for (auto it = s_pixFmts; *it != PIX_FMT_NONE; ++it) {
+      const char * str = av_get_pix_fmt_name(*it);
+      if (!str) {
+        Radiant::error("supportedPixFormatsStr # Failed to convert pixel format %d to string", *it);
+      } else {
+        if (!lst.isEmpty())
+          lst += ":";
+        lst += str;
+      }
+    }
+    return lst;
+  }
 }
 
 namespace VideoPlayer2
@@ -306,12 +309,22 @@ namespace VideoPlayer2
       bool dr1;
     };
 
+    // Borrowed from libav/avplay
+    struct PtsCorrectionContext
+    {
+      int64_t num_faulty_pts; /// Number of incorrect PTS values so far
+      int64_t num_faulty_dts; /// Number of incorrect DTS values so far
+      int64_t last_pts;       /// PTS of the last frame
+      int64_t last_dts;       /// DTS of the last frame
+    };
+
     D(AVDecoderFFMPEG * host)
       : m_host(host)
       , seekGeneration(0)
       , running(true)
       , finished(false)
       , av()
+      , ptsCorrection()
       , realTimeSeeking(false)
       , pauseTimestamp(Radiant::TimeStamp::currentTime())
       , videoFilter()
@@ -332,6 +345,7 @@ namespace VideoPlayer2
     bool finished;
 
     MyAV av;
+    PtsCorrectionContext ptsCorrection;
 
     MemoryPool<DecodedImageBuffer, 80> imageBuffers;
 
@@ -345,6 +359,7 @@ namespace VideoPlayer2
     {
       AVFilterContext * bufferSourceContext;
       AVFilterContext * bufferSinkContext;
+      AVFilterContext * formatContext;
       AVFilterGraph * graph;
     };
     FilterGraph videoFilter;
@@ -371,6 +386,9 @@ namespace VideoPlayer2
     bool seekToBeginning();
     bool seek();
 
+    // Partially borrowed from libav / ffplay
+    int64_t guessCorrectPts(AVFrame * frame);
+
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
     VideoFrameFFMPEG * getFreeFrame(bool & setTimestampToPts, double & dpts);
@@ -392,16 +410,20 @@ namespace VideoPlayer2
 
     AVFilter * buffersrc = nullptr;
     AVFilter * buffersink = nullptr;
+    AVFilter * format = nullptr;
     AVFilterInOut * outputs = nullptr;
     AVFilterInOut * inputs  = nullptr;
     int err = 0;
 
     try {
       buffersrc = avfilter_get_by_name(video ? "buffer" : "abuffer");
-      if(!buffersrc) throw "Failed to find video filter \"(a)buffer\"";
+      if(!buffersrc) throw "Failed to find filter \"(a)buffer\"";
 
       buffersink = avfilter_get_by_name(video ? "buffersink" : "abuffersink");
-      if(!buffersink) throw "Failed to find video filter \"(a)buffersink\"";
+      if(!buffersink) throw "Failed to find filter \"(a)buffersink\"";
+
+      format = avfilter_get_by_name(video ? "format" : "aformat");
+      if (!format) throw "Failed to find filter \"(a)format\"";
 
       filterGraph.graph = avfilter_graph_alloc();
       if(!filterGraph.graph) throw "Failed to allocate filter graph";
@@ -416,58 +438,50 @@ namespace VideoPlayer2
                      av.videoCodecContext->sample_aspect_ratio.den);
         int err = avfilter_graph_create_filter(&filterGraph.bufferSourceContext, buffersrc,
                                                "in", args.toUtf8().data(), nullptr, filterGraph.graph);
-        if(err < 0) throw "Failed to create video buffer source";
+        if (err < 0) throw "Failed to create video buffer source";
 
-#if FF_API_OLD_VSINK_API
-        // Const cast because this old avfilter api just takes void * when we
-        // want to give it a list of pixel formats (const)
         err = avfilter_graph_create_filter(&filterGraph.bufferSinkContext, buffersink,
-                                           "out", nullptr, const_cast<PixelFormat*>(s_pixFmts),
-                                           filterGraph.graph);
-#else
-        AVBufferSinkParams * bufferSinkParams = av_buffersink_params_alloc();
-        if(!bufferSinkParams) throw "Failed to allocate AVBufferSinkParams";
-        bufferSinkParams->pixel_fmts = s_pixFmts;
-        ret = avfilter_graph_create_filter(&filterGraph.bufferSinkContext, buffersink,
-                                           "out", nullptr, bufferSinkParams, filterGraph.graph);
-        av_freep(&bufferSinkParams);
-        bufferSinkParams = nullptr;
-#endif
-        if(err < 0) throw "Failed to create video buffer sink";
+                                           "out", nullptr, nullptr, filterGraph.graph);
+        if (err < 0) throw "Failed to create video buffer sink";
+
+        err = avfilter_graph_create_filter(&filterGraph.formatContext, format,
+                                           "format", supportedPixFormatsStr().data(),
+                                           nullptr, filterGraph.graph);
+        if (err < 0) throw "Failed to create video format filter";
       } else {
         if(!av.audioCodecContext->channel_layout)
           av.audioCodecContext->channel_layout = av_get_default_channel_layout(
                 av.audioCodecContext->channels);
 
+        QByteArray channelLayoutName(255, '\0');
+        av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
+                                     av.audioCodecContext->channels, av.audioCodecContext->channel_layout);
+
         /// @todo ffmpeg application uses AVStream instead of codec context to
         ///       read time_base, is this wrong?
-        args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%" PRIx64,
+        args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
                      av.audioCodecContext->time_base.num,
                      av.audioCodecContext->time_base.den,
                      av.audioCodecContext->sample_rate,
                      av_get_sample_fmt_name(av.audioCodecContext->sample_fmt),
-                     av.audioCodecContext->channel_layout);
+                     channelLayoutName.data());
         err = avfilter_graph_create_filter(&filterGraph.bufferSourceContext, buffersrc,
                                            "in", args.toUtf8().data(), nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio buffer source";
 
-        AVABufferSinkParams * bufferSinkParams = av_abuffersink_params_alloc();
-        bufferSinkParams->sample_fmts = s_sampleFmts;
-        /// @todo maybe if the original audioChannels is not defined, we
-        ///       should use avfilter_all_channel_layouts heree
-        const int64_t channelLayouts[] = {
-          av_get_default_channel_layout(options.audioChannels), -1 };
-        bufferSinkParams->channel_layouts = channelLayouts;
         err = avfilter_graph_create_filter(&filterGraph.bufferSinkContext, buffersink, "out",
-                                           nullptr, bufferSinkParams, filterGraph.graph);
-        av_freep(&bufferSinkParams);
+                                           nullptr, nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio buffer sink";
 
-        QueryFormatsFunc func = filterGraph.bufferSinkContext->filter->query_formats;
-        if(!s_origQueryFormats && func != asinkQueryFormats)
-          s_origQueryFormats = func;
-        filterGraph.bufferSinkContext->filter->query_formats = asinkQueryFormats;
+        args.sprintf("sample_fmts=fltp:sample_rates=44100:channel_layouts=%s",
+                     options.channelLayout.data());
+        err = avfilter_graph_create_filter(&filterGraph.formatContext, format, "format",
+                                           args.toUtf8().data(), nullptr, filterGraph.graph);
+        if(err < 0) throw "Failed to create audio format filter";
       }
+
+      err = avfilter_link(filterGraph.formatContext, 0, filterGraph.bufferSinkContext, 0);
+      if (err < 0) throw "Failed to link format filter to buffer sink";
 
       if(!description.isEmpty()) {
         outputs = avfilter_inout_alloc();
@@ -482,19 +496,19 @@ namespace VideoPlayer2
         outputs->next = nullptr;
 
         inputs->name = av_strdup("out");
-        inputs->filter_ctx = filterGraph.bufferSinkContext;
+        inputs->filter_ctx = filterGraph.formatContext;
         inputs->pad_idx = 0;
         inputs->next = nullptr;
 
         err = avfilter_graph_parse(filterGraph.graph, description.toUtf8().data(),
-                                   &inputs, &outputs, nullptr);
+                                   inputs, outputs, nullptr);
         if(err < 0) throw "Failed to parse filter description";
 
         avfilter_inout_free(&inputs);
         avfilter_inout_free(&outputs);
       } else {
         err = avfilter_link(filterGraph.bufferSourceContext, 0,
-                            filterGraph.bufferSinkContext, 0);
+                            filterGraph.formatContext, 0);
         if(err < 0) throw "Failed to link buffer source and buffer sink";
       }
 
@@ -724,8 +738,13 @@ namespace VideoPlayer2
     }
 
     if(av.audioCodecContext) {
-      if(options.audioChannels <= 0)
-        options.audioChannels = av.audioCodecContext->channels;
+      if (options.channelLayout.isEmpty()) {
+        QByteArray channelLayout(255, '\0');
+        av_get_channel_layout_string(channelLayout.data(), channelLayout.size(),
+                                     av.audioCodecContext->channels,
+                                     av.audioCodecContext->channel_layout);
+        options.channelLayout = channelLayout.data();
+      }
 
       bool audioFormatSupported = false;
       for(auto it = s_sampleFmts; *it != (AVSampleFormat)-1; ++it) {
@@ -739,7 +758,7 @@ namespace VideoPlayer2
       const bool useAudioFilters = !audioFormatSupported ||
           !options.audioFilters.isEmpty() ||
           av.audioCodecContext->sample_rate != targetSampleRate ||
-          av.audioCodecContext->channels != options.audioChannels;
+          av.audioCodecContext->channel_layout != av_get_channel_layout(options.channelLayout.data());
 
       if(useAudioFilters)
         initFilters(audioFilter, options.audioFilters, false);
@@ -791,7 +810,8 @@ namespace VideoPlayer2
     }
 
     if(av.audioCodec) {
-      m_audioTransfer = new AudioTransfer(m_host, options.audioChannels);
+      int channelLayout = av_get_channel_layout(options.channelLayout);
+      m_audioTransfer = new AudioTransfer(m_host, av_get_channel_layout_nb_channels(channelLayout));
       m_audioTransfer->setSeekGeneration(seekGeneration);
       m_audioTransfer->setPlayMode(options.playMode);
 
@@ -1050,6 +1070,35 @@ namespace VideoPlayer2
     }
   }
 
+  int64_t AVDecoderFFMPEG::D::guessCorrectPts(AVFrame * frame)
+  {
+    int64_t reordered_pts = frame->pkt_pts;
+    int64_t dts = frame->pkt_dts;
+    int64_t pts = AV_NOPTS_VALUE;
+
+    if (dts != (int64_t) AV_NOPTS_VALUE) {
+      ptsCorrection.num_faulty_dts += dts <= ptsCorrection.last_dts;
+      ptsCorrection.last_dts = dts;
+    }
+    if (reordered_pts != (int64_t) AV_NOPTS_VALUE) {
+      ptsCorrection.num_faulty_pts += reordered_pts <= ptsCorrection.last_pts;
+      ptsCorrection.last_pts = reordered_pts;
+    }
+    if ((ptsCorrection.num_faulty_pts<=ptsCorrection.num_faulty_dts || dts == (int64_t) AV_NOPTS_VALUE)
+        && reordered_pts != (int64_t) AV_NOPTS_VALUE)
+      pts = reordered_pts;
+    else
+      pts = dts;
+
+    if (pts == (int64_t) AV_NOPTS_VALUE)
+      pts = frame->pts;
+
+    if (pts == (int64_t) AV_NOPTS_VALUE)
+      pts = frame->pkt_pts;
+
+    return pts;
+  }
+
   bool AVDecoderFFMPEG::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
     const double prevDpts = dpts;
@@ -1067,11 +1116,7 @@ namespace VideoPlayer2
     if(!gotPicture)
       return false;
 
-    int64_t pts = av_frame_get_best_effort_timestamp(av.frame);
-    if(pts == (int64_t) AV_NOPTS_VALUE)
-      pts = av.frame->pts;
-    if(pts == (int64_t) AV_NOPTS_VALUE)
-      pts = av.frame->pkt_pts;
+    int64_t pts = guessCorrectPts(av.frame);
 
     dpts = av.videoTsToSecs * pts;
 
@@ -1085,31 +1130,38 @@ namespace VideoPlayer2
     }
 
     if(videoFilter.graph) {
-      AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_frame(av.frame,
-                                                                         AV_PERM_READ | AV_PERM_WRITE);
+      AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
+            av.frame->data, av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
+            av.frame->width, av.frame->height,
+            av.videoCodecContext->pix_fmt);
+
+      if (ref)
+        avfilter_copy_frame_props(ref, av.frame);
+
       if(buffer) {
         ref->buf->priv = new std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *>(this, buffer);
         ref->buf->free = releaseFilterBuffer;
       }
 
-      int err = av_buffersrc_add_ref(videoFilter.bufferSourceContext, ref,
-                                     AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT |
-                                     AV_BUFFERSRC_FLAG_NO_COPY);
+      int err = av_buffersrc_buffer(videoFilter.bufferSourceContext, ref);
       if(err < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
                 arg(options.src), err);
         avfilter_unref_buffer(ref);
       } else {
-        while((err = avfilter_poll_frame(videoFilter.bufferSinkContext->inputs[0])) > 0) {
-          AVFilterBufferRef * output = nullptr;
+        while (true) {
           // we either use custom deleter (releaseFilterBuffer) or the
           // default one with the actual data cleared
           if(!buffer)
             av.packet.data = nullptr;
-          int err2 = av_buffersink_get_buffer_ref(videoFilter.bufferSinkContext, &output, 0);
-          if(err2 < 0) {
-            avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_get_buffer_ref failed").
-                    arg(options.src), err2);
+
+          AVFilterBufferRef * output = nullptr;
+          err = av_buffersink_read(videoFilter.bufferSinkContext, &output);
+          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+            break;
+          if (err < 0) {
+            avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_read failed").
+                    arg(options.src), err);
             break;
           }
 
@@ -1140,10 +1192,6 @@ namespace VideoPlayer2
 
             decodedVideoFrames.put();
           }
-        }
-        if(err < 0) {
-          avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: avfilter_poll_frame failed").
-                  arg(options.src), err);
         }
       }
     } else {
@@ -1224,34 +1272,32 @@ namespace VideoPlayer2
 
       if(gotFrame) {
         gotFrames = true;
-        int64_t pts = av_frame_get_best_effort_timestamp(av.frame);
-        if(pts == (int64_t) AV_NOPTS_VALUE)
-          pts = av.frame->pts;
-        if(pts == (int64_t) AV_NOPTS_VALUE)
-          pts = av.frame->pkt_pts;
+        int64_t pts = guessCorrectPts(av.frame);
 
         dpts = av.audioTsToSecs * pts;
-        nextDpts = dpts + double(av.frame->nb_samples) / av_frame_get_sample_rate(av.frame);
+        nextDpts = dpts + double(av.frame->nb_samples) / av.frame->sample_rate;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
         if(audioFilter.graph) {
-          AVFilterBufferRef * ref = nullptr;
-          ref = avfilter_get_audio_buffer_ref_from_frame(av.frame, AV_PERM_READ | AV_PERM_WRITE);
-          int err = av_buffersrc_add_ref(audioFilter.bufferSourceContext, ref,
-                                         0 /*AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT |
-                                         AV_BUFFERSRC_FLAG_NO_COPY*/);
-          // av_buffersrc_write_frame(audioFilter.bufferSourceContext, av.frame);
-
-          if(err < 0) {
-            avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersrc_add_ref failed").
-                    arg(options.src), err);
+          AVFilterBufferRef * ref = avfilter_get_audio_buffer_ref_from_arrays(
+                av.frame->data, av.frame->linesize[0], AV_PERM_READ | AV_PERM_WRITE,
+              av.frame->nb_samples, (AVSampleFormat)av.frame->format, av.frame->channel_layout);
+          ref->buf->free = [](AVFilterBuffer *ptr) { av_free(ptr); };
+          if (!ref) {
+            Radiant::error("AVDecoderFFMPEG::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
+                           options.src.toUtf8().data());
           } else {
-            while((err = avfilter_poll_frame(audioFilter.bufferSinkContext->inputs[0])) > 0) {
+            avfilter_copy_frame_props(ref, av.frame);
+            av_buffersrc_buffer(audioFilter.bufferSourceContext, ref);
+            while (true) {
               AVFilterBufferRef * output = nullptr;
-              int err2 = av_buffersink_get_buffer_ref(audioFilter.bufferSinkContext, &output, 0);
-              if(err2 < 0) {
-                avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersink_get_buffer_ref failed").
-                        arg(options.src), err2);
+              int err = av_buffersink_read(audioFilter.bufferSinkContext, &output);
+              if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+                break;
+
+              if (err < 0) {
+                avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersink_read failed").
+                        arg(options.src), err);
                 break;
               }
 
@@ -1270,17 +1316,12 @@ namespace VideoPlayer2
                   nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
                 }
 
-                // av_get_channel_layout_nb_channels
                 decodedAudioBuffer->fillPlanar(Timestamp(dpts + loopOffset, seekGeneration),
-                                               options.audioChannels, output->audio->nb_samples,
-                                               (const float **)(output->data));
+                                               av_get_channel_layout_nb_channels(output->audio->channel_layout),
+                                               output->audio->nb_samples, (const float **)(output->data));
                 m_audioTransfer->putReadyBuffer(output->audio->nb_samples);
                 avfilter_unref_buffer(output);
               }
-            }
-            if(err < 0) {
-              avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: avfilter_poll_frame failed").
-                      arg(options.src), err);
             }
           }
         } else {
@@ -1409,7 +1450,7 @@ namespace VideoPlayer2
     }
 
     if(size[1] && !size[2])
-      ff_set_systematic_pal2((uint32_t*)frame->data[1], context->pix_fmt);
+      avpriv_set_systematic_pal2((uint32_t*)frame->data[1], context->pix_fmt);
 
     // Tell ffmpeg not to do anything weird with this buffer, since this is ours
     frame->type = FF_BUFFER_TYPE_USER;

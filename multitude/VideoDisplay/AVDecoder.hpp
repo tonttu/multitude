@@ -133,7 +133,7 @@ namespace VideoPlayer2
     struct Options
     {
       Options()
-        : audioChannels(2)
+        : channelLayout("downmix")
         , loop(true)
         , audio(true)
         , video(true)
@@ -178,10 +178,10 @@ namespace VideoPlayer2
       /// 5.1 to 2.0, but just drop the extra channels, you can add new filter:
       /// pan="stereo: c0=FL : c1=FR"
       ///
-      /// 0 or negative value means disabled down/up-mix
+      /// Empty string means disabled down/up-mix
       ///
-      /// Default: 2
-      int audioChannels;
+      /// Default: "downmix"
+      QByteArray channelLayout;
 
       /// Seek to this position before starting the playback
       SeekRequest seek;

@@ -147,7 +147,11 @@ linux-*{
 
   !mobile:QMAKE_LIBDIR += $$PWD/Linux/lib
 
-  exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
+  exists(/opt/multitouch-libav/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch -lavfilter-multitouch -lswscale-multitouch
+    INCLUDEPATH += /opt/multitouch-libav/include
+  }
+  else:exists(/opt/multitouch-ffmpeg/include/libavcodec/avcodec.h) {
     MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch -lavfilter-multitouch -lswscale-multitouch
     INCLUDEPATH += /opt/multitouch-ffmpeg/include
   }
