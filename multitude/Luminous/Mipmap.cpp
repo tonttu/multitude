@@ -128,6 +128,7 @@ namespace Luminous
     bool recursiveLoad(ImageTex3 & imageTex, int level);
     void lock(int);
     void unlock(int);
+    virtual void cancel() { Radiant::Task::cancel(); m_mipmap->cancelLoading(); }
 
   protected:
     Luminous::MipmapPtr m_mipmap;
@@ -164,6 +165,7 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
+    virtual void cancel() OVERRIDE;
 
   private:
     bool ping(Luminous::Mipmap::D & mipmap);
@@ -232,6 +234,8 @@ namespace Luminous
 
     Valuable::AttributeBool m_ready;
     bool m_valid;
+
+    bool m_cancelled;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -440,6 +444,15 @@ namespace Luminous
     m_users.release();
   }
 
+  void PingTask::cancel()
+  {
+    Radiant::Task::cancel();
+
+    auto mipmap = m_mipmap.lock();
+    if(mipmap)
+      mipmap->cancelLoading();
+  }
+
   bool PingTask::ping(Luminous::Mipmap::D & mipmap)
   {
     QFileInfo fi(mipmap.m_filenameAbs);
@@ -600,6 +613,7 @@ namespace Luminous
     , m_expireSeconds(3.0f)
     , m_ready(nullptr, "", false)
     , m_valid(false)
+    , m_cancelled(false)
   {
     MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
   }
@@ -621,6 +635,7 @@ namespace Luminous
     : m_d(new D(*this, filenameAbs))
   {
     eventAddOut("ready");
+    eventAddOut("cancel-loading");
     m_d->m_ready.addListener([&] { if(m_d->m_ready) eventSend("ready"); });
   }
 
@@ -807,6 +822,11 @@ namespace Luminous
     return m_d->m_sourceInfo.pf.hasAlpha();
   }
 
+  bool Mipmap::isLoadCancelled() const
+  {
+    return m_d->m_cancelled;
+  }
+
   float Mipmap::pixelAlpha(Nimble::Vector2 relLoc)
   {
     if(!m_d->m_ready || !m_d->m_valid) return 1.0f;
@@ -953,10 +973,19 @@ namespace Luminous
     return fullPath;
   }
 
-  void Mipmap::startLoading(bool compressedMipmaps)
+  bool Mipmap::startLoading(bool compressedMipmaps)
   {
+    m_d->m_cancelled = false;
     assert(!m_d->m_ping);
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
+
+    return (m_d->m_ping->state() != Radiant::Task::CANCELLED);
+  }
+
+  void Mipmap::cancelLoading()
+  {
+    m_d->m_cancelled = true;
+    eventSend("cancel-loading");
   }
 }

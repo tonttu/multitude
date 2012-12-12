@@ -120,6 +120,13 @@ namespace Radiant
 
     /// Dump information about the tasks at hand
     void dumpInfo(FILE * f = 0, int indent = 0);
+
+    /// Prepare the BGThread for shutdown. This function will cancel all
+    /// currently queued tasks and wait for any currently executed tasks to
+    /// finish. Any tasks added to the BGThread after calling this function
+    /// will be immediately cancelled and never executed.
+    void shutdown();
+
   private:
     virtual void childLoop();
 
@@ -141,6 +148,7 @@ namespace Radiant
     Radiant::Condition m_idleWait;
 
     QAtomicInt m_runningTasks;
+    bool m_isShuttingDown;
   };
 
 }

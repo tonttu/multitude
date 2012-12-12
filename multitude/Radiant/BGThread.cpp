@@ -31,34 +31,22 @@ namespace Radiant
 
   BGThread::BGThread()
     : m_idle(0)
+    , m_isShuttingDown(false)
   {
   }
 
   BGThread::~BGThread()
   {
-    {
-      Radiant::Guard g(m_mutexWait);
-      m_taskQueue.clear();
-    }
-
-    Radiant::info("Waiting for all background threads to finish...");
     stop();
-    Radiant::debug("Deleting %d & %d background tasks...",
-                  (int) m_taskQueue.size(), (int) m_reserved.size());
-    while(!m_taskQueue.empty()) {
-      Task * t = &* m_taskQueue.begin()->second;
-      Radiant::debug("BGThread::~BGThread # Removing task %p %s", t, typeid(*t).name());
-      m_taskQueue.erase(m_taskQueue.begin());
-    }
-
-    m_taskQueue.clear();
-
-    m_reserved.clear();
-    Radiant::info("Background tasks and threads cleared");
   }
 
   void BGThread::addTask(std::shared_ptr<Task> task)
   {
+    if(threads() == 0 || m_isShuttingDown) {
+      task->cancel();
+      return;
+    }
+
     assert(task);
     if(task->m_host == this) return;
     task->m_host = this;
@@ -82,6 +70,7 @@ namespace Radiant
     if(it != m_taskQueue.end()) {
       task->m_host = 0;
       m_taskQueue.erase(it);
+      task->cancel();
       return true;
     }
 
@@ -290,6 +279,29 @@ namespace Radiant
   {
     ThreadPool::wakeAll();
     m_idleWait.wakeAll();
+  }
+
+  void BGThread::shutdown()
+  {
+    m_isShuttingDown = true;
+    {
+      Radiant::Guard g(m_mutexWait);
+
+      // Cancel all tasks
+      for(auto & task : m_taskQueue)
+        task.second->cancel();
+
+      for(auto & task : m_reserved)
+        task->cancel();
+
+      m_taskQueue.clear();
+      m_reserved.clear();
+    }
+
+    /// @todo spin-lock is not very elegant, but we need to wait until all
+    /// running tasks have been cleared.
+    while(m_runningTasks > 0)
+      Radiant::Sleep::sleepMs(100);
   }
 }
 

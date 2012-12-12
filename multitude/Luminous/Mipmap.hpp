@@ -56,6 +56,10 @@ namespace Luminous
 
     LUMINOUS_API bool isValid() const;
 
+    /// Check if the mipmap loading was cancelled.
+    /// @return true if loading was cancelled; otherwise false
+    LUMINOUS_API bool isLoadCancelled() const;
+
     /// @return Returns true if the images have alpha channel
     LUMINOUS_API bool hasAlpha() const;
 
@@ -87,11 +91,12 @@ namespace Luminous
     LUMINOUS_API static QString cacheFileName(const QString & src, int level = -1,
                                               const QString & suffix = "png");
 
+    void cancelLoading();
   private:
     Mipmap(const QString & filenameAbs);
 
     void mipmapReady(const ImageInfo & imginfo);
-    void startLoading(bool compressedMipmaps);
+    bool startLoading(bool compressedMipmaps);
 
   private:
     friend class PingTask;

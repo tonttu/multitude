@@ -85,7 +85,8 @@ namespace Radiant
       {
         WAITING,      ///< Task is waiting in queue to be processed
         RUNNING,      ///< Task is currently running
-        DONE          ///< Task has finished
+        DONE,         ///< Task has finished
+        CANCELLED     ///< Task has been cancelled
       };
 
       /// Get the current priority of the task
@@ -97,6 +98,10 @@ namespace Radiant
       /// The actual work the task does should be implemented in here. Override
       /// in the derived class
       virtual void doTask() = 0;
+
+      /// This function gets called if the task is removed from the BGThread
+      /// without executing it.
+      virtual void cancel() { setState(CANCELLED); }
 
       /// Return a timestamp for the next execution of the task
       Radiant::TimeStamp scheduled() const { return m_scheduled; }
