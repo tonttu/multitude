@@ -228,7 +228,14 @@ win32 {
     QMAKE_CXXFLAGS += -D_USE_MATH_DEFINES
     # Use multiprocessor compilation
     QMAKE_CXXFLAGS += -MP
-    
+
+    exists("C:/Cornerstone-deps/libav/include") {
+      INCLUDEPATH += "C:/Cornerstone-deps/libav/include"
+      LIBS += -L"C:/Cornerstone-deps/libav/bin"
+    } else {
+      error(Requires the Cornerstone dependency package to compile)
+    }
+
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
       # TODO There shouldn't be a glew_d library
@@ -245,7 +252,7 @@ win32 {
       LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
       enable-js:LIB_V8 = -lv8_d -lnode_d
-	}
+    }
 }
 
 MULTI_VIDEO_LIBS = $$LIB_RESONANT $$LIB_VIDEODISPLAY
