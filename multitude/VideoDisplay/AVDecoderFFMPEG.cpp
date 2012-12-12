@@ -1173,8 +1173,8 @@ namespace VideoPlayer2
             frame->bufferRef = output;
             frame->imageBuffer = nullptr;
 
-            auto & fmtDescriptor = av_pix_fmt_descriptors[output->format];
-            setFormat(*frame, fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
+            auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(output->format));
+            setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
             for (int i = 0; i < frame->planes; ++i) {
               frame->lineSize[i] = output->linesize[i];
               frame->data[i] = output->data[i];
@@ -1202,9 +1202,9 @@ namespace VideoPlayer2
       frame->bufferRef = nullptr;
       frame->imageBuffer = buffer;
 
-      auto & fmtDescriptor = av_pix_fmt_descriptors[av.frame->format];
+      auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(av.frame->format));
       int bytes = 0;
-      setFormat(*frame, fmtDescriptor, Nimble::Vector2i(av.frame->width, av.frame->height));
+      setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(av.frame->width, av.frame->height));
       for(int i = 0; i < frame->planes; ++i) {
         frame->lineSize[i] = av.frame->linesize[i];
         frame->data[i] = av.frame->data[i];
@@ -1373,7 +1373,8 @@ namespace VideoPlayer2
     if((context->flags & CODEC_FLAG_EMU_EDGE) == 0)
       bufferSize += Nimble::Vector2i(edgeWidth*2, edgeWidth*2);
 
-    const int pixelSize = av_pix_fmt_descriptors[context->pix_fmt].comp[0].step_minus1+1;
+    auto fmtDescriptor = av_pix_fmt_desc_get(context->pix_fmt);
+    const int pixelSize = fmtDescriptor->comp[0].step_minus1+1;
 
     int hChromaShift, vChromaShift;
     avcodec_get_chroma_sub_sample(context->pix_fmt, &hChromaShift, &vChromaShift);
