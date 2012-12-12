@@ -980,7 +980,7 @@ namespace Luminous
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
 
-    return (m_d->m_ping->state() != Radiant::Task::CANCELLED);
+    return (!m_d->m_ping || m_d->m_ping->state() != Radiant::Task::CANCELLED);
   }
 
   void Mipmap::cancelLoading()
