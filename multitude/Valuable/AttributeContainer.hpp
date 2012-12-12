@@ -54,6 +54,9 @@ namespace
 
 namespace Valuable
 {
+
+  /// This class is a base class for wrapping STL-like containers into attributes.
+  /// @sa Valuable::AttributeContainer
   template<typename T> class AttributeContainerT : public Attribute
   {
   public:

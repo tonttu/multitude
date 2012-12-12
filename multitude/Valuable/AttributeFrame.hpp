@@ -28,6 +28,9 @@
 
 namespace Valuable
 {
+  /// This class provides an attribute that stores a two-dimensional frame. The
+  /// frame width can be individually defined for top, right, bottom, and left
+  /// edges of the frame. This class is used by the CSS engine.
   class AttributeFrame : public Attribute
   {
   public:

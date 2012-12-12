@@ -6,6 +6,7 @@
 namespace Valuable
 {
 
+  /// This class provides an attribute for Nimble::Vector2f.
   class AttributeLocation2f : public AttributeVector<Nimble::Vector2f>
   {
   public:

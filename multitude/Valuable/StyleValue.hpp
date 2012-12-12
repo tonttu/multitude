@@ -29,6 +29,7 @@ namespace Valuable
   class VALUABLE_API StyleValue
   {
   public:
+    /// A separator in a string
     enum Separator
     {
       WhiteSpace,
@@ -36,6 +37,7 @@ namespace Valuable
       Slash
     };
 
+    /// Utility class used when parsing lists separated by tokens
     struct Group
     {
       QVariantList values;

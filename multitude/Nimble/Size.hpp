@@ -114,6 +114,10 @@ namespace Nimble {
     T m_height;
   };
 
+  /// Scale size by given scalar
+  /// @param size size to scale
+  /// @param scalar value to scale with
+  /// @return scaled size
   template <typename T, typename U>
   inline SizeT<T> operator*(const SizeT<T> & size, U scalar)
   {
@@ -121,6 +125,10 @@ namespace Nimble {
     return ret *= scalar;
   }
 
+  /// Scale size by given scalar
+  /// @param scalar value to scale with
+  /// @param size size to scale
+  /// @return scaled size
   template <typename T, typename U>
   inline SizeT<T> operator*(U scalar, const SizeT<T> & size)
   {
@@ -128,6 +136,10 @@ namespace Nimble {
     return ret *= scalar;
   }
 
+  /// Divide the size component-wise by the given scalar
+  /// @param size size to scale
+  /// @return scaled size
+  /// @param scalar value to divide with
   template <typename T, typename U>
   inline SizeT<T> operator/(const SizeT<T> & size, U scalar)
   {
@@ -135,6 +147,10 @@ namespace Nimble {
     return ret /= scalar;
   }
 
+  /// Divide the size component-wise by the given scalar
+  /// @param size size to scale
+  /// @param scalar value to divide with
+  /// @return scaled size
   template <typename T, typename U>
   inline SizeT<T> operator/(U scalar, const SizeT<T> & size)
   {

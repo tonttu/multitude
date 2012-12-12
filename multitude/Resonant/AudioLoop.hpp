@@ -28,6 +28,8 @@ class QString;
 struct PaStreamCallbackTimeInfo;
 namespace Resonant {
 
+  /// @cond
+
   struct CallbackTime
   {
     CallbackTime(Radiant::TimeStamp outputTime, double latency, unsigned long flags)
@@ -42,6 +44,8 @@ namespace Resonant {
     /// PaStreamCallbackFlags
     const unsigned long flags;
   };
+
+  /// @endcond
 
   /** A simple audio IO class.
 

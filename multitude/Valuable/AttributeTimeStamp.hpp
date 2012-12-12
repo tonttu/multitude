@@ -11,6 +11,7 @@
 namespace Valuable
 {
 
+  /// This class provides a Radiant::TimeStamp attribute.
   class AttributeTimeStamp : public AttributeT<Radiant::TimeStamp>
   {
     typedef AttributeT<Radiant::TimeStamp> Base;

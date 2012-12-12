@@ -6,6 +6,7 @@
 
 namespace Valuable
 {
+  /// This class provides a StyleValue attribute.
   class AttributeStyleValue : public AttributeT<StyleValue>
   {
   public:

@@ -8,6 +8,7 @@
 
 namespace Valuable
 {
+  /// This class provides a QStringList attribute.
   class VALUABLE_API AttributeStringList : public AttributeT<QStringList>
   {
     typedef AttributeT<QStringList> Base;

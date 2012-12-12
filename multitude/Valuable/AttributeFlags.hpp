@@ -28,14 +28,24 @@
 
 namespace Valuable {
 
+  /// This struct is used to define the name strings for flags so they can be
+  /// referenced from CSS.
   struct FlagNames
   {
+    /// Name of the flag
     const char * name;
+    /// Value of the value
     long value;
   };
 
   template <typename T> class AttributeFlagsT;
 
+  /// This class provides a mechanism to toggle individual flags on and off
+  /// using their name from CSS. With this class we can write things like:
+  /// @code
+  /// Widget {
+  ///   input-pass-to-children: true;
+  /// @endcode
   template <typename T>
   class FlagAliasT : public Attribute
   {
@@ -83,7 +93,7 @@ namespace Valuable {
   };
 
   /**
-   * Valuable Flags, bitmask of enum values.
+   * Attribute containing flags, bitmask of enum values.
    *
    * @code
    * /// FunnyWidget.hpp
