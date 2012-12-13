@@ -102,6 +102,11 @@ namespace Valuable
         m_factors[layer] = factor;
       }
 
+      float percentage(Attribute::Layer layer) const
+      {
+        return m_factors[layer];
+      }
+
       virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
