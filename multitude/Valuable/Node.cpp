@@ -128,7 +128,7 @@ namespace Valuable
 
   Node::Node()
       : Attribute(),
-      m_sender(0),
+      m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
@@ -136,6 +136,7 @@ namespace Valuable
 
   Node::Node(Node * host, const QByteArray & name, bool transit)
       : Attribute(host, name, transit),
+      m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
       m_frame(0)
