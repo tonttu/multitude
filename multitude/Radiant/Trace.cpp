@@ -135,6 +135,9 @@ namespace Radiant {
     const char * color = "";
     const char * colors_end = "";
 
+#ifndef RADIANT_OSX
+    /* On OSX Mountain Lion the color switching code seems to corrupt the terminal
+       if the application crashes. It is easier to just not use the colors. */
     if(use_colors) {
       if(s == WARNING) {
         color = "\033[1;33m";
@@ -146,6 +149,7 @@ namespace Radiant {
       timestamp_color = "\033[1;30m";
       colors_end = "\033[0m";
     }
+#endif
 
     char storage[1024];
     char * buffer = storage;
