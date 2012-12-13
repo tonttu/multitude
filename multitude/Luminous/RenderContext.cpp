@@ -845,6 +845,41 @@ namespace Luminous
     }
   }
 
+  void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
+  {
+    if (style.fillColor().w > 0.f) {
+      if(style.fill().textures().empty()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+        b.vertex[0].location = vertices[0];
+        b.vertex[1].location = vertices[1];
+        b.vertex[2].location = vertices[2];
+        b.vertex[3].location = vertices[3];
+      }
+      else {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+
+        b.vertex[0].location = vertices[0];
+        b.vertex[0].texCoord = uvs[0];
+
+        b.vertex[1].location = vertices[1];
+        b.vertex[1].texCoord = uvs[1];
+
+        b.vertex[2].location = vertices[2];
+        b.vertex[2].texCoord = uvs[2];
+
+        b.vertex[3].location = vertices[3];
+        b.vertex[3].texCoord = uvs[3];
+      }
+    }
+
+    // Draw the outline
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+      Radiant::warning("RenderContext::drawQuad # Stroke is not implemented");
+    }
+  }
+
   //
   void RenderContext::drawRectWithHole(const Nimble::Rectf & area,
                                        const Nimble::Rectf & hole,

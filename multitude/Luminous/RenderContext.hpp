@@ -284,6 +284,9 @@ namespace Luminous
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
+    /// Renders a quad
+    /// Stroke is not implemented for quads at the moment
+    void drawQuad(const Nimble::Vector2 * vertices, const Nimble::Vector2 * uvs, const Style & style);
     void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const TextStyle & style);
     void drawText(const QString & text, const Nimble::Rectf & rect, const TextStyle & style, TextFlags flags = TextStatic);
 
