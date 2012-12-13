@@ -37,32 +37,29 @@ namespace Luminous
       // Allow drop-events, so that people can drop files on the widget
       setAcceptDrops(true);
 
-      /// DEBUG
+      // Display some debug information if requested
       const auto f = this->format();
-      Radiant::warning("OpenGL Context Debug:");
-      Radiant::warning("\tValid OpenGL Context: %d", isValid());
-      Radiant::warning("\tAccum Buffer Size: %d", f.accumBufferSize());
-      Radiant::warning("\tDepth Buffer Size: %d", f.depthBufferSize());
-      Radiant::warning("\tStencil Buffer Size: %d", f.stencilBufferSize());
+      debugLuminous("OpenGL Context Debug:");
+      debugLuminous("\tValid OpenGL Context: %d", isValid());
+      debugLuminous("\tAccum Buffer Size: %d", f.accumBufferSize());
+      debugLuminous("\tDepth Buffer Size: %d", f.depthBufferSize());
+      debugLuminous("\tStencil Buffer Size: %d", f.stencilBufferSize());
 
-      Radiant::warning("\tRed Buffer Size: %d", f.redBufferSize());
-      Radiant::warning("\tGreen Buffer Size: %d", f.greenBufferSize());
-      Radiant::warning("\tBlue Buffer Size: %d", f.blueBufferSize());
-      Radiant::warning("\tAlpha Buffer Size: %d", f.alphaBufferSize());
+      debugLuminous("\tRed Buffer Size: %d", f.redBufferSize());
+      debugLuminous("\tGreen Buffer Size: %d", f.greenBufferSize());
+      debugLuminous("\tBlue Buffer Size: %d", f.blueBufferSize());
+      debugLuminous("\tAlpha Buffer Size: %d", f.alphaBufferSize());
 
-      Radiant::warning("\tDouble Buffering: %d", f.doubleBuffer());
-      Radiant::warning("\tDirect Rendering: %d", f.directRendering());
+      debugLuminous("\tDouble Buffering: %d", f.doubleBuffer());
+      debugLuminous("\tDirect Rendering: %d", f.directRendering());
 
-      Radiant::warning("\tProfile: %d", f.profile());
+      debugLuminous("\tProfile: %d", f.profile());
 
-      Radiant::warning("\tVersion Major: %d", f.majorVersion());
-      Radiant::warning("\tVersion Minor: %d", f.minorVersion());
+      debugLuminous("\tVersion Major: %d", f.majorVersion());
+      debugLuminous("\tVersion Minor: %d", f.minorVersion());
 
-      Radiant::warning("\tMultisampling: %d", f.sampleBuffers());
-      Radiant::warning("\tSamples: %d", f.samples());
-
-
-
+      debugLuminous("\tMultisampling: %d", f.sampleBuffers());
+      debugLuminous("\tSamples: %d", f.samples());
     }
 
     virtual void showCursor(bool visible)
