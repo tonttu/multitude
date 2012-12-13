@@ -134,7 +134,7 @@ namespace VideoPlayer2
     {
       Options()
         : channelLayout("downmix")
-        , loop(true)
+        , loop(false)
         , audio(true)
         , video(true)
         , playMode(Pause)
@@ -187,7 +187,7 @@ namespace VideoPlayer2
       SeekRequest seek;
 
       /// Play media in loop, can be changed with AVDecoder::setLooping()
-      /// Default: true
+      /// Default: false
       bool loop;
 
       /// Enable audio
