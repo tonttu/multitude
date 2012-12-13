@@ -49,6 +49,18 @@ namespace Valuable
     m_separators << WhiteSpace;
   }
 
+  StyleValue::StyleValue(const QMap<QString, QString> & map)
+  {
+    for (auto it = map.begin(); it != map.end(); ++it) {
+      if (m_values.size() == 0)
+        m_separators << WhiteSpace << WhiteSpace;
+      else
+        m_separators << Comma << WhiteSpace;
+      m_values << it.key() << it.value();
+      m_units << Attribute::VU_UNKNOWN << Attribute::VU_UNKNOWN;
+    }
+  }
+
   StyleValue::~StyleValue()
   {}
 
@@ -231,6 +243,18 @@ namespace Valuable
       }
     }
     return all;
+  }
+
+  QMap<QString, QString> StyleValue::asMap() const
+  {
+    QMap<QString, QString> map;
+    for (auto group: groups(Comma)) {
+      QStringList tmp;
+      for (auto v: group.values.mid(1))
+        tmp << v.toString();
+      map[group.values[0].toString()] = tmp.join(" ");
+    }
+    return map;
   }
 
   std::ostream & operator<<(std::ostream & os, const StyleValue & value)
