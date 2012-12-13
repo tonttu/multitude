@@ -250,15 +250,6 @@ namespace Luminous
     void popRenderTarget();
 
     //////////////////////////////////////////////////////////////////////////
-    /// DEPRECATED FUNCTIONS
-    /// @todo remove or replace with Styled-equivalent
-    //////////////////////////////////////////////////////////////////////////
-    void drawLine(const Nimble::Vector2f & /*p1*/, const Nimble::Vector2f & /*p2*/, float /*width*/, float * /*rgba*/) {}
-    void drawCircle(Nimble::Vector2f /*center*/, float /*radius*/, const float * /*rgba*/, int /*segments*/ = 0)  {}
-    void drawRect(const Nimble::Rectf & /*rect*/, const float * /*rgba*/) {}
-    void drawTexRect(const Nimble::Rectf & /*rect*/, float * /*rgba*/) {}
-
-    //////////////////////////////////////////////////////////////////////////
     // Implementation
 
     /** Returns RenderBuilder for the given program. Assumes that UniformBlock has at least fields: @c projMatrix (Nimble::Matrix4),
