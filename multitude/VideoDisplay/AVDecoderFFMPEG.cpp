@@ -357,9 +357,9 @@ namespace VideoPlayer2
 
     struct FilterGraph
     {
-      AVFilterContext * bufferSourceContext;
-      AVFilterContext * bufferSinkContext;
-      AVFilterContext * formatContext;
+      AVFilterContext * bufferSourceFilter;
+      AVFilterContext * bufferSinkFilter;
+      AVFilterContext * formatFilter;
       AVFilterGraph * graph;
     };
     FilterGraph videoFilter;
@@ -436,15 +436,15 @@ namespace VideoPlayer2
                      av.videoCodecContext->time_base.num, av.videoCodecContext->time_base.den,
                      av.videoCodecContext->sample_aspect_ratio.num,
                      av.videoCodecContext->sample_aspect_ratio.den);
-        int err = avfilter_graph_create_filter(&filterGraph.bufferSourceContext, buffersrc,
+        int err = avfilter_graph_create_filter(&filterGraph.bufferSourceFilter, buffersrc,
                                                "in", args.toUtf8().data(), nullptr, filterGraph.graph);
         if (err < 0) throw "Failed to create video buffer source";
 
-        err = avfilter_graph_create_filter(&filterGraph.bufferSinkContext, buffersink,
+        err = avfilter_graph_create_filter(&filterGraph.bufferSinkFilter, buffersink,
                                            "out", nullptr, nullptr, filterGraph.graph);
         if (err < 0) throw "Failed to create video buffer sink";
 
-        err = avfilter_graph_create_filter(&filterGraph.formatContext, format,
+        err = avfilter_graph_create_filter(&filterGraph.formatFilter, format,
                                            "format", supportedPixFormatsStr().data(),
                                            nullptr, filterGraph.graph);
         if (err < 0) throw "Failed to create video format filter";
@@ -465,22 +465,22 @@ namespace VideoPlayer2
                      av.audioCodecContext->sample_rate,
                      av_get_sample_fmt_name(av.audioCodecContext->sample_fmt),
                      channelLayoutName.data());
-        err = avfilter_graph_create_filter(&filterGraph.bufferSourceContext, buffersrc,
+        err = avfilter_graph_create_filter(&filterGraph.bufferSourceFilter, buffersrc,
                                            "in", args.toUtf8().data(), nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio buffer source";
 
-        err = avfilter_graph_create_filter(&filterGraph.bufferSinkContext, buffersink, "out",
+        err = avfilter_graph_create_filter(&filterGraph.bufferSinkFilter, buffersink, "out",
                                            nullptr, nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio buffer sink";
 
         args.sprintf("sample_fmts=fltp:sample_rates=44100:channel_layouts=%s",
                      options.channelLayout.data());
-        err = avfilter_graph_create_filter(&filterGraph.formatContext, format, "format",
+        err = avfilter_graph_create_filter(&filterGraph.formatFilter, format, "format",
                                            args.toUtf8().data(), nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio format filter";
       }
 
-      err = avfilter_link(filterGraph.formatContext, 0, filterGraph.bufferSinkContext, 0);
+      err = avfilter_link(filterGraph.formatFilter, 0, filterGraph.bufferSinkFilter, 0);
       if (err < 0) throw "Failed to link format filter to buffer sink";
 
       if(!description.isEmpty()) {
@@ -491,24 +491,21 @@ namespace VideoPlayer2
         if(!inputs) throw "Failed to allocate AVFilterInOut";
 
         outputs->name = av_strdup("in");
-        outputs->filter_ctx = filterGraph.bufferSourceContext;
+        outputs->filter_ctx = filterGraph.bufferSourceFilter;
         outputs->pad_idx = 0;
         outputs->next = nullptr;
 
         inputs->name = av_strdup("out");
-        inputs->filter_ctx = filterGraph.formatContext;
+        inputs->filter_ctx = filterGraph.formatFilter;
         inputs->pad_idx = 0;
         inputs->next = nullptr;
 
         err = avfilter_graph_parse(filterGraph.graph, description.toUtf8().data(),
                                    inputs, outputs, nullptr);
         if(err < 0) throw "Failed to parse filter description";
-
-        avfilter_inout_free(&inputs);
-        avfilter_inout_free(&outputs);
       } else {
-        err = avfilter_link(filterGraph.bufferSourceContext, 0,
-                            filterGraph.formatContext, 0);
+        err = avfilter_link(filterGraph.bufferSourceFilter, 0,
+                            filterGraph.formatFilter, 0);
         if(err < 0) throw "Failed to link buffer source and buffer sink";
       }
 
@@ -522,8 +519,6 @@ namespace VideoPlayer2
       } else {
         Radiant::error("%s %s", errorMsg.data(), error);
       }
-      avfilter_inout_free(&inputs);
-      avfilter_inout_free(&outputs);
       avfilter_graph_free(&filterGraph.graph);
     }
     return false;
@@ -1133,7 +1128,7 @@ namespace VideoPlayer2
       AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
             av.frame->data, av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
             av.frame->width, av.frame->height,
-            av.videoCodecContext->pix_fmt);
+            AVPixelFormat(av.frame->format));
 
       if (ref)
         avfilter_copy_frame_props(ref, av.frame);
@@ -1143,7 +1138,7 @@ namespace VideoPlayer2
         ref->buf->free = releaseFilterBuffer;
       }
 
-      int err = av_buffersrc_buffer(videoFilter.bufferSourceContext, ref);
+      int err = av_buffersrc_buffer(videoFilter.bufferSourceFilter, ref);
       if(err < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
                 arg(options.src), err);
@@ -1156,7 +1151,7 @@ namespace VideoPlayer2
             av.packet.data = nullptr;
 
           AVFilterBufferRef * output = nullptr;
-          err = av_buffersink_read(videoFilter.bufferSinkContext, &output);
+          err = av_buffersink_read(videoFilter.bufferSinkFilter, &output);
           if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
             break;
           if (err < 0) {
@@ -1176,6 +1171,15 @@ namespace VideoPlayer2
             auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(output->format));
             setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
             for (int i = 0; i < frame->planes; ++i) {
+              if (output->linesize[i] < 0) {
+                /// @todo if we have a negative linesize, we should just make a copy of the data,
+                ///       since OpenGL doesn't support negative linesizes (GL_UNPACK_ROW_LENGTH
+                ///       needs to be positive). For now some formats and filters (like vflip)
+                ///       won't work.
+              } else {
+                frame->lineSize[i] = output->buf->linesize[i];
+                frame->data[i] = output->buf->data[i];
+              }
               frame->lineSize[i] = output->linesize[i];
               frame->data[i] = output->data[i];
             }
@@ -1288,10 +1292,10 @@ namespace VideoPlayer2
                            options.src.toUtf8().data());
           } else {
             avfilter_copy_frame_props(ref, av.frame);
-            av_buffersrc_buffer(audioFilter.bufferSourceContext, ref);
+            av_buffersrc_buffer(audioFilter.bufferSourceFilter, ref);
             while (true) {
               AVFilterBufferRef * output = nullptr;
-              int err = av_buffersink_read(audioFilter.bufferSinkContext, &output);
+              int err = av_buffersink_read(audioFilter.bufferSinkFilter, &output);
               if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
                 break;
 

@@ -50,6 +50,7 @@ namespace Valuable
     StyleValue(float v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     StyleValue(int v);
     StyleValue(QVariant v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
+    StyleValue(const QMap<QString, QString> & map);
     virtual ~StyleValue();
 
     virtual int asInt(int idx = 0) const;
@@ -85,6 +86,10 @@ namespace Valuable
     bool operator==(const StyleValue & v) const;
 
     QList<Group> groups(Separator sep) const;
+
+    /// CSS value "aaa bbb, ccc ddd eee, fff" will be converted to map:
+    /// "aaa" => "bbb", "ccc" => "ddd eee", "fff" => ""
+    QMap<QString, QString> asMap() const;
 
   private:
     bool m_uniform;
