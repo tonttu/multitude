@@ -27,9 +27,9 @@ namespace Luminous
       , m_magFilter(Filter_Linear)
     {
       // Set default texture wrap modes
-      m_wrap[0] = Wrap_Repeat;
-      m_wrap[1] = Wrap_Repeat;
-      m_wrap[2] = Wrap_Repeat;
+      m_wrap[0] = Wrap_Clamp;
+      m_wrap[1] = Wrap_Clamp;
+      m_wrap[2] = Wrap_Clamp;
     }
 
     uint8_t dimensions;
