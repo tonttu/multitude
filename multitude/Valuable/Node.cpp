@@ -131,6 +131,7 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
+      m_hasReadyListener(false),
       m_frame(0)
   {}
 
@@ -139,6 +140,7 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
+      m_hasReadyListener(false),
       m_frame(0)
   {
   }
@@ -726,6 +728,38 @@ namespace Valuable
     return attr->addListener(func, role);
   }
 #endif
+
+  void Node::onReady(CallbackType callback, ListenerType type)
+  {
+    Radiant::Guard g(m_readyCallbacksMutex);
+
+    if (!m_hasReadyListener) {
+      m_hasReadyListener = true;
+      eventAddListener("ready", [=] {
+        Radiant::Guard g(m_readyCallbacksMutex);
+        for (auto c: m_readyCallbacks)
+          c(this);
+        m_readyCallbacks.clear();
+      }, type);
+    }
+
+    if(isReady(false)) {
+      callback(this);
+    } else {
+      m_readyCallbacks << callback;
+    }
+  }
+
+
+  void Node::onReadyVoid(std::function<void(void)> readyCallback, ListenerType type)
+  {
+    onReady([readyCallback](Valuable::Node*) { readyCallback();}, type);
+  }
+
+  bool Node::isReady(bool) const
+  {
+    return true;
+  }
 
   int Node::processQueue()
   {

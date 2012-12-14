@@ -58,6 +58,7 @@ namespace Valuable
 
     typedef std::function<void ()> ListenerFunc;
     typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
+    typedef std::function<void(Valuable::Node*)> CallbackType;
 
     /// Types of event listeners
     enum ListenerType
@@ -104,6 +105,37 @@ namespace Valuable
     {
       return addAttribute(name, &*attribute);
     }
+
+    virtual bool isReady(bool recursive) const;
+
+    /// Callback is called when the node is ready or immediately if the node is already ready
+    /// This is needed for ensuring that callbacks get called. For example the following
+    /// code is not thread-safe:
+    /// if(n.isReady()) {
+    ///   /// do something
+    /// } else {
+    ///   n.eventAddListener("ready", "do smth", ..);
+    /// }
+    template <typename T>
+    void onReady(std::function<void(T*)> readyCallback, ListenerType type = AFTER_UPDATE)
+    {
+      onReady([readyCallback](Valuable::Node* n) { readyCallback(static_cast<T*>(n)); }, type);
+    }
+
+    template <typename T, template <typename T> class Ptr>
+    void onReady(std::function<void(Ptr<T>)> readyCallback, ListenerType type = AFTER_UPDATE)
+    {
+      onReady([readyCallback](Valuable::Node* n) {
+            T* ptr = static_cast<T*>(n);
+            readyCallback(Ptr<T>(ptr));
+            }, type);
+    }
+
+    /// Same as other onReady-functions but supports functions taking none parameters
+    //  In perfect world compiler could deduce the types more correctly but at least g++ 4.6.3
+    //  had serious problems with type inference when function below was named "onReady"
+    void onReadyVoid(std::function<void(void)> readyCallback, ListenerType type = AFTER_UPDATE);
+    void onReady(CallbackType readyCallback, ListenerType type = AFTER_UPDATE);
 
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
@@ -508,6 +540,14 @@ namespace Valuable
     QSet<Attribute*> m_valueListening;
 
     Valuable::AttributeIntT<Uuid> m_id;
+
+    /// List of all listeners added in onReady()
+    QList<CallbackType> m_readyCallbacks;
+    /// Protects m_readyCallbacks and isReady() call in onReady()
+    Radiant::Mutex m_readyCallbacksMutex;
+    /// Used by onReady to check if there already is "ready" event listener
+    bool m_hasReadyListener;
+
     // For invalidating the too new ValuePass objects
     int m_frame;
 
