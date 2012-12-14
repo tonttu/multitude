@@ -40,9 +40,9 @@ namespace Luminous
 
     /// Calculate the ideal mipmap level
     LUMINOUS_API unsigned int level(const Nimble::Matrix4 & transform, Nimble::Vector2 pixelSize,
-                                    float * trilinearBlending = nullptr);
+                                    float * trilinearBlending = nullptr) const;
     LUMINOUS_API unsigned int level(Nimble::Vector2 pixelSize,
-                                    float * trilinearBlending = nullptr);
+                                    float * trilinearBlending = nullptr) const;
 
     /** @return Returns the native size of the image, in pixels. */
     LUMINOUS_API const Nimble::Vector2i & nativeSize() const;

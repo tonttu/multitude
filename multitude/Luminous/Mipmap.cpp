@@ -745,7 +745,7 @@ namespace Luminous
 #endif
 #endif
   unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::Vector2f pixelSize,
-                             float * trilinearBlending)
+                             float * trilinearBlending) const
   {
     // Assume that the view matrix is ortho projection with no scaling
     // we can ignore Z and just look X/Y vector projections to determine the maximum scaling
@@ -754,7 +754,7 @@ namespace Luminous
     return level(std::max(sx, sy) * pixelSize, trilinearBlending);
   }
 
-  unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending)
+  unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending) const
   {
     const float ask = pixelSize.maximum();
 
