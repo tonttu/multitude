@@ -53,7 +53,13 @@ namespace Luminous
     bool isMTDevice()
     {
       //TODO find a better way to do this
-        return name().contains("MultiTouchVM1") || name()== "DDI Prisma2 1080p";
+        return name().contains("MultiTouchVM1") || name().contains("Prisma2 1080p");
+    }
+
+    bool isTaction()
+    {
+      //TODO find a better way to do this
+        return name().contains("MultiTouchVM1");
     }
 
   private:
