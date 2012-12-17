@@ -122,7 +122,7 @@ namespace Valuable
       onReady([readyCallback](Valuable::Node* n) { readyCallback(static_cast<T*>(n)); }, type);
     }
 
-    template <typename T, template <typename T> class Ptr>
+    template <typename T, template <typename> class Ptr >
     void onReady(std::function<void(Ptr<T>)> readyCallback, ListenerType type = AFTER_UPDATE)
     {
       onReady([readyCallback](Valuable::Node* n) {
