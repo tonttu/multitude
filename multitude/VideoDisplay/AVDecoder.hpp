@@ -3,6 +3,7 @@
 
 #include "Export.hpp"
 
+#include <Nimble/Size.hpp>
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix4.hpp>
 
@@ -295,7 +296,7 @@ namespace VideoPlayer2
     /// When in real-time seeking mode, the video acts like it's paused
     virtual void setRealTimeSeeking(bool value) = 0;
 
-    virtual Nimble::Vector2i videoSize() const = 0;
+    virtual Nimble::Size videoSize() const = 0;
 
     void seekRelative(double pos) { seek(SeekRequest(pos, SeekRelative, SeekAnyDirection)); }
     void seek(double seconds) { seek(SeekRequest(seconds, SeekBySeconds, SeekAnyDirection)); }

@@ -21,7 +21,7 @@ namespace VideoPlayer2
     virtual void seek(const SeekRequest & req) OVERRIDE;
     virtual void setRealTimeSeeking(bool value) OVERRIDE;
 
-    virtual Nimble::Vector2i videoSize() const OVERRIDE;
+    virtual Nimble::Size videoSize() const OVERRIDE;
 
     virtual void setLooping(bool doLoop) OVERRIDE;
 

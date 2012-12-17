@@ -304,7 +304,7 @@ namespace VideoPlayer2
 
       double duration;
       double start;
-      Nimble::Vector2i videoSize;
+      Nimble::Size videoSize;
 
       bool dr1;
     };
@@ -335,7 +335,7 @@ namespace VideoPlayer2
     {
       av.videoStreamIndex = -1;
       av.audioStreamIndex = -1;
-      av.videoSize.clear();
+      av.videoSize = Nimble::Size();
     }
 
     AVDecoderFFMPEG * m_host;
@@ -822,9 +822,9 @@ namespace VideoPlayer2
     }
 
     if(av.videoCodecContext) {
-      av.videoSize = Nimble::Vector2i(av.videoCodecContext->width, av.videoCodecContext->height);
+      av.videoSize = Nimble::Size(av.videoCodecContext->width, av.videoCodecContext->height);
     } else {
-      av.videoSize.clear();
+      av.videoSize = Nimble::Size();
     }
     av.duration = av.formatContext->duration / double(AV_TIME_BASE);
     av.start = std::numeric_limits<double>::quiet_NaN();
@@ -835,7 +835,7 @@ namespace VideoPlayer2
   void AVDecoderFFMPEG::D::close()
   {
     av.duration = 0;
-    av.videoSize.clear();
+    av.videoSize = Nimble::Size();
 
     // Close the codecs
     if(av.audioCodecContext || av.videoCodecContext) {
@@ -1714,7 +1714,7 @@ namespace VideoPlayer2
     m_d->running = false;
   }
 
-  Nimble::Vector2i AVDecoderFFMPEG::videoSize() const
+  Nimble::Size AVDecoderFFMPEG::videoSize() const
   {
     return m_d->av.videoSize;
   }
