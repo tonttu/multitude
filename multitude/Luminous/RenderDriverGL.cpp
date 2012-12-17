@@ -214,6 +214,7 @@ namespace Luminous
   /// Cleanup any queued-for-deletion or expired resources
   void RenderDriverGL::D::removeResources()
   {
+    Radiant::Guard g(RenderManager::resourceLock());
     removeResource(m_vertexArrays, m_releaseQueue);
     removeBufferResource(m_buffers, m_releaseQueue);
     removeResource(m_textures, m_releaseQueue);

@@ -127,6 +127,11 @@ namespace Luminous
     return t_threadIndex;
   }
 
+  Radiant::Mutex & RenderManager::resourceLock()
+  {
+    return s_resourceMapMutex;
+  }
+
   // Only specialize for valid types
   template <> LUMINOUS_API Buffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Buffer>(id); }
   template <> LUMINOUS_API VertexArray * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<VertexArray>(id); }

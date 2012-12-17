@@ -19,6 +19,8 @@
 /// @cond
 
 #include "Export.hpp"
+
+#include <Radiant/Mutex.hpp>
 #include <Luminous/Luminous.hpp>
 #include <Luminous/RenderResource.hpp>
 
@@ -51,6 +53,8 @@ namespace Luminous
     LUMINOUS_API static unsigned threadIndex();
 
     template <typename T> static T * getResource( RenderResource::Id id );
+
+    LUMINOUS_API static Radiant::Mutex & resourceLock();
 
   private:
     RenderManager();
