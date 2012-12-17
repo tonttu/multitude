@@ -165,7 +165,11 @@ namespace Nimble {
   SizeT<T>::SizeT()
     : m_width(T(-1))
     , m_height(T(-1))
-  {}
+  {
+    // We do not support unsigned type because isValid() would not be defined
+    // with them.
+    static_assert(!std::is_unsigned<T>::value, "Nimble::SizeT does not support unsigned value types");
+  }
 
   template<typename T>
   SizeT<T>::SizeT(T width, T height)
