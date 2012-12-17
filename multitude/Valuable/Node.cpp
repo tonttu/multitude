@@ -729,7 +729,7 @@ namespace Valuable
   }
 #endif
 
-  void Node::onReady(CallbackType callback, ListenerType type)
+  void Node::onReady(CallbackType callback, bool once, ListenerType type)
   {
     Radiant::Guard g(m_readyCallbacksMutex);
 
@@ -739,21 +739,24 @@ namespace Valuable
         Radiant::Guard g(m_readyCallbacksMutex);
         for (auto c: m_readyCallbacks)
           c(this);
-        m_readyCallbacks.clear();
+        for(auto c: m_readyOnceCallbacks)
+          c(this);
+        m_readyOnceCallbacks.clear();
       }, type);
     }
 
     if(isReady(false)) {
       callback(this);
-    } else {
-      m_readyCallbacks << callback;
+    } else if(once) {
+      m_readyOnceCallbacks << callback;
     }
+    if(!once) m_readyCallbacks << callback;
   }
 
 
-  void Node::onReadyVoid(std::function<void(void)> readyCallback, ListenerType type)
+  void Node::onReadyVoid(std::function<void(void)> readyCallback, bool once, ListenerType type)
   {
-    onReady([readyCallback](Valuable::Node*) { readyCallback();}, type);
+    onReady([readyCallback](Valuable::Node*) { readyCallback();}, once, type);
   }
 
   bool Node::isReady(bool) const

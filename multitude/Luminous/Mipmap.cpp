@@ -546,7 +546,6 @@ namespace Luminous
       // preload the maximum level mipmap image
       mipmap.m_mipmap.texture(mipmap.m_maxLevel);
     }
-
     return true;
   }
 
@@ -907,9 +906,9 @@ namespace Luminous
   void Mipmap::mipmapReady(const ImageInfo & imginfo)
   {
     m_d->m_compressedMipmapInfo = imginfo;
-    m_d->m_ready = true;
-    m_d->m_valid = true;
 
+    m_d->m_valid = true;
+    m_d->m_ready = true;
     m_d->m_mipmapGenerator.reset();
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);
