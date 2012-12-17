@@ -890,8 +890,12 @@ namespace Luminous
   Texture & Image::texture() const
   {
     if(!m_texture) {
-      m_texture.reset(new Texture());
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
+      Radiant::Guard g(m_textureMutex);
+      if (!m_texture) {
+        std::unique_ptr<Texture> tex(new Texture());
+        tex->setData(width(), height(), pixelFormat(), m_data);
+        std::swap(m_texture, tex);
+      }
     }
 
     return *m_texture.get();

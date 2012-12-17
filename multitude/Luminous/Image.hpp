@@ -201,6 +201,7 @@ namespace Luminous
     size_t generation() const { return m_generation; }
 
     /// Get a texture object based on the image
+    /// This function is thread-safe so it can be used in render functions
     /// @return texture matching the image
     Luminous::Texture & texture() const;
 
@@ -221,6 +222,7 @@ namespace Luminous
 
   private:
     mutable std::unique_ptr<Texture> m_texture;
+    mutable Radiant::Mutex m_textureMutex;
   };
 
   /// @cond
