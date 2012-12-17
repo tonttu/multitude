@@ -181,6 +181,10 @@ namespace Luminous
         GLERROR("TextureGL::upload # glTexParameteri");
         glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(r) );
         GLERROR("TextureGL::upload # glTexParameteri");
+
+        const Radiant::Color & c = texture.borderColor();
+        glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, c.data());
+        GLERROR("TextureGL::upload # glTexParameterfv GL_TEXTURE_BORDER_COLOR");
       }
     }
 

@@ -4,6 +4,8 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 
+#include <Radiant/Color.hpp>
+
 #include <QRegion>
 
 namespace Luminous
@@ -78,6 +80,10 @@ namespace Luminous
 
     LUMINOUS_API void setWrap(Wrap s, Wrap t, Wrap r);
     LUMINOUS_API void getWrap(Wrap & s, Wrap & t, Wrap & r) const;
+
+    LUMINOUS_API void setBorderColor(const Radiant::Color & color);
+    LUMINOUS_API const Radiant::Color & borderColor() const;
+
   private:
     class D;
     D * m_d;

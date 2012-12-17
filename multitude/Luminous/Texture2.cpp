@@ -25,6 +25,7 @@ namespace Luminous
       , dirtyRegions()
       , m_minFilter(Filter_Linear)
       , m_magFilter(Filter_Linear)
+      , m_borderColor(0, 0, 0, 0)
     {
       // Set default texture wrap modes
       m_wrap[0] = Wrap_Clamp;
@@ -47,6 +48,7 @@ namespace Luminous
     ContextArrayT<QRegion> dirtyRegions;
     Filter m_minFilter, m_magFilter;
     Wrap m_wrap[3];
+    Radiant::Color m_borderColor;
 
   public:
     void rehash();
@@ -276,6 +278,9 @@ namespace Luminous
 
   void Texture::setWrap(Wrap s, Wrap t, Wrap r)
   {
+    if (m_d->m_wrap[0] == s && m_d->m_wrap[1] == t && m_d->m_wrap[2] == r)
+      return;
+
     m_d->m_wrap[0] = s;
     m_d->m_wrap[1] = t;
     m_d->m_wrap[2] = r;
@@ -288,4 +293,18 @@ namespace Luminous
     t = m_d->m_wrap[1];
     r = m_d->m_wrap[2];
   }
+
+  void Texture::setBorderColor(const Radiant::Color & color)
+  {
+    if (m_d->m_borderColor == color)
+      return;
+    m_d->m_borderColor = color;
+    invalidate();
+  }
+
+  const Radiant::Color & Texture::borderColor() const
+  {
+    return m_d->m_borderColor;
+  }
+
 }
