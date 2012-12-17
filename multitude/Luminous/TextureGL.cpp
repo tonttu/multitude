@@ -72,7 +72,8 @@ namespace Luminous
 
     const bool compressedFormat = texture.dataFormat().compression() != PixelFormat::COMPRESSION_NONE;
 
-    if(m_generation != texture.generation()) {
+    const bool dirty = m_generation != texture.generation();
+    if (dirty) {
       m_generation = texture.generation();
 
       // Check if we need to reallocate the texture. We reallocate if the
@@ -162,7 +163,9 @@ namespace Luminous
           GLERROR("TextureGL::upload # glTexImage3D");
         }
       }
+    }
 
+    if (dirty) {
       // These are not supported by multisampled textures
       if(texture.samples() == 0) {
         glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
