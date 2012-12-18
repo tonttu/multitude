@@ -65,6 +65,19 @@ namespace Valuable {
       return false;
     }
 
+    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
+    {
+      beginChangeTransaction();
+
+      for(int i = 0; i < 2; ++i)
+        m_values[i]->set(v, layer, unit);
+
+      endChangeTransaction();
+
+      return true;
+    }
+
+
     virtual bool set(const Nimble::Vector2f &v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       beginChangeTransaction();
