@@ -228,8 +228,8 @@ namespace Luminous
     std::shared_ptr<MipMapGenerator> m_mipmapGenerator;
 
     Radiant::Mutex m_headerReadyCallbacksMutex;
-    QList<std::function<void(Mipmap *)> > m_headerReadyCallbacks;
-    QList<std::function<void(Mipmap *)> > m_headerReadyOnceCallbacks;
+    QList<std::function<void(void)> > m_headerReadyCallbacks;
+    QList<std::function<void(void)> > m_headerReadyOnceCallbacks;
     int m_hasHeaderReadyListener;
 
     QString m_mipmapFormat;
@@ -762,24 +762,27 @@ namespace Luminous
     return level(std::max(sx, sy) * pixelSize, trilinearBlending);
   }
 
-  void Mipmap::onHeaderReady(std::function<void(Mipmap* mipmap)> callback, bool once, ListenerType type)
+  void Mipmap::onHeaderReady(std::function<void(void)> callback, bool once, ListenerType type)
   {
+    std::weak_ptr<Mipmap> weak = shared_from_this();
+
     Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
 
     if((m_d->m_hasHeaderReadyListener & type) == 0) {
       m_d->m_hasHeaderReadyListener |= type;
       eventAddListener("header-ready", [=] {
         //This might get called after dtor
-        if(!m_d) return;
-        Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
-        for (auto c : m_d->m_headerReadyCallbacks) c(this);
-        for (auto c : m_d->m_headerReadyOnceCallbacks) c(this);
-        m_d->m_headerReadyOnceCallbacks.clear();
+        std::shared_ptr<Mipmap> ptr = weak.lock();
+        if(!ptr) return;
+        Radiant::Guard g(ptr->m_d->m_headerReadyCallbacksMutex);
+        for (auto c : ptr->m_d->m_headerReadyCallbacks) c();
+        for (auto c : ptr->m_d->m_headerReadyOnceCallbacks) c();
+        ptr->m_d->m_headerReadyOnceCallbacks.clear();
       }, type);
     }
 
     if(isHeaderReady()) {
-      callback(this);
+      callback();
     } else if(once) {
       m_d->m_headerReadyOnceCallbacks << callback;
     }
