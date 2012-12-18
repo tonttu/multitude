@@ -122,6 +122,7 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
+    void mipmapReady();
 
   private:
     bool recursiveLoad(int level);
@@ -226,15 +227,20 @@ namespace Luminous
     std::shared_ptr<PingTask> m_ping;
     std::shared_ptr<MipMapGenerator> m_mipmapGenerator;
 
+    Radiant::Mutex m_headerReadyCallbacksMutex;
+    QList<std::function<void(Mipmap *)> > m_headerReadyCallbacks;
+    QList<std::function<void(Mipmap *)> > m_headerReadyOnceCallbacks;
+    int m_hasHeaderReadyListener;
+
     QString m_mipmapFormat;
 
     std::vector<ImageTex3> m_levels;
 
     float m_expireSeconds;
 
+    Valuable::AttributeBool m_headerReady;
     Valuable::AttributeBool m_ready;
     bool m_valid;
-
     bool m_cancelled;
   };
 
@@ -253,8 +259,14 @@ namespace Luminous
   {
     lock(m_level);
     recursiveLoad(m_level);
+    mipmapReady();
     unlock(m_level);
     setFinished();
+  }
+
+  void LoadImageTask::mipmapReady()
+  {
+    m_mipmap->m_d->m_ready = true;
   }
 
   void LoadImageTask::lock(int level)
@@ -402,6 +414,7 @@ namespace Luminous
       m_tex.cimage = std::move(im);
       int now = frameTime();
       m_tex.lastUsed.testAndSetOrdered(Loading, now);
+      mipmapReady();
     }
     setFinished();
   }
@@ -463,6 +476,8 @@ namespace Luminous
       Radiant::error("PingTask::doPing # failed to query image size for %s",
                      mipmap.m_filenameAbs.toUtf8().data());
       mipmap.m_valid = false;
+      mipmap.m_headerReady = true;
+      // Images failed to load are considered to be ready
       mipmap.m_ready = true;
       return false;
     }
@@ -471,6 +486,7 @@ namespace Luminous
       Radiant::error("PingTask::doPing # Image %s has unsupported format",
                      mipmap.m_filenameAbs.toUtf8().data());
       mipmap.m_valid = false;
+      mipmap.m_headerReady = true;
       mipmap.m_ready = true;
       return false;
     }
@@ -542,7 +558,7 @@ namespace Luminous
 #endif // LUMINOUS_OPENGLES
     {
       mipmap.m_valid = true;
-      mipmap.m_ready = true;
+      mipmap.m_headerReady = true;
       // preload the maximum level mipmap image
       mipmap.m_mipmap.texture(mipmap.m_maxLevel);
     }
@@ -564,7 +580,7 @@ namespace Luminous
     for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {
       Luminous::MipmapPtr ptr = it->second.lock();
       if(ptr) {
-        if(ptr->m_d->m_ready) {
+        if(ptr->isHeaderReady()) {
           const int expire = ptr->m_d->m_expireSeconds * 10;
           std::vector<ImageTex3> & levels = ptr->m_d->m_levels;
           // do not expire the last mipmap level (smallest image)
@@ -608,10 +624,12 @@ namespace Luminous
     , m_maxLevel(0)
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
+    , m_hasHeaderReadyListener(0)
     , m_mipmapFormat("png")
     , m_expireSeconds(3.0f)
+    , m_headerReady(nullptr, "", false)
     , m_ready(nullptr, "", false)
-    , m_valid(false)
+    , m_valid(true)
     , m_cancelled(false)
   {
     MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
@@ -619,6 +637,8 @@ namespace Luminous
 
   Mipmap::D::~D()
   {
+    m_headerReadyCallbacks.clear();
+    m_headerReadyOnceCallbacks.clear();
     // Make a local copy, if PingTask is just finishing and removes m_d->m_ping
     std::shared_ptr<PingTask> ping = m_ping;
     if(ping) {
@@ -634,7 +654,9 @@ namespace Luminous
     : m_d(new D(*this, filenameAbs))
   {
     eventAddOut("ready");
+    eventAddOut("header-ready");
     eventAddOut("cancel-loading");
+    m_d->m_headerReady.addListener([&] { if(m_d->m_headerReady) eventSend("header-ready"); });
     m_d->m_ready.addListener([&] { if(m_d->m_ready) eventSend("ready"); });
   }
 
@@ -645,8 +667,8 @@ namespace Luminous
 
   Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
-    if(!m_d->m_ready) {
-      if(!m_d->m_valid)
+    if(!isHeaderReady()) {
+      if(!isValid())
         return nullptr;
 
       if(priorityChange > 0) {
@@ -662,7 +684,7 @@ namespace Luminous
       }
       return nullptr;
     }
-    if(!m_d->m_valid)
+    if(!isValid())
       return nullptr;
 
     int time = frameTime();
@@ -727,22 +749,6 @@ namespace Luminous
     return nullptr;
   }
 
-#if 0
-  Image * Mipmap::image(unsigned int level) const
-  {
-    if (m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE ||
-        m_d->m_useCompressedMipmaps || !m_d->m_ready || !m_d->m_valid)
-      return nullptr;
-    ImageTex3 & imageTex = m_d->m_levels[level];
-    return imageTex.image.get();
-  }
-
-#ifndef LUMINOUS_OPENGLES
-  CompressedImage * Mipmap::compressedImage(unsigned int level)
-  {
-  }
-#endif
-#endif
   unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::Vector2f pixelSize,
                              float * trilinearBlending) const
   {
@@ -751,6 +757,28 @@ namespace Luminous
     float sx = Nimble::Vector2f(transform[0][0], transform[0][1]).length();
     float sy = Nimble::Vector2f(transform[1][0], transform[1][1]).length();
     return level(std::max(sx, sy) * pixelSize, trilinearBlending);
+  }
+
+  void Mipmap::onHeaderReady(std::function<void(Mipmap* mipmap)> callback, bool once, ListenerType type)
+  {
+    Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
+
+    if((m_d->m_hasHeaderReadyListener & type) == 0) {
+      m_d->m_hasHeaderReadyListener |= type;
+      eventAddListener("header-ready", [=] {
+        Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
+        for (auto c : m_d->m_headerReadyCallbacks) c(this);
+        for (auto c : m_d->m_headerReadyOnceCallbacks) c(this);
+        m_d->m_headerReadyOnceCallbacks.clear();
+      }, type);
+    }
+
+    if(isHeaderReady()) {
+      callback(this);
+    } else if(once) {
+      m_d->m_headerReadyOnceCallbacks << callback;
+    }
+    if(!once) m_d->m_headerReadyCallbacks << callback;
   }
 
   unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending) const
@@ -811,6 +839,11 @@ namespace Luminous
     return m_d->m_ready;
   }
 
+  bool Mipmap::isHeaderReady() const
+  {
+    return m_d->m_headerReady;
+  }
+
   bool Mipmap::isValid() const
   {
     return m_d->m_valid;
@@ -828,7 +861,7 @@ namespace Luminous
 
   float Mipmap::pixelAlpha(Nimble::Vector2 relLoc)
   {
-    if(!m_d->m_ready || !m_d->m_valid) return 1.0f;
+    if(!isHeaderReady() || !isValid()) return 1.0f;
 
     int time = frameTime();
     for(int level = 0; level <= m_d->m_maxLevel; ) {

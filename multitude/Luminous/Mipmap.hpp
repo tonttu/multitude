@@ -50,6 +50,19 @@ namespace Luminous
     /** If the native height is zero (e.g. no file was loaded) this returns 1.*/
     LUMINOUS_API float aspect() const;
 
+    LUMINOUS_API void onHeaderReady(std::function<void(Mipmap* mipmap)> callback, bool once=false, ListenerType type=AFTER_UPDATE);
+
+    template <typename T, template <typename> class Ptr>
+    LUMINOUS_API void onHeaderReady(std::function<void(Ptr<T>)> callback, bool once=false, ListenerType type=AFTER_UPDATE)
+    {
+      onHeaderReady([callback](Mipmap* mipmap) {
+        T* ptr = static_cast<Mipmap*>(mipmap);
+        callback(Ptr<T>(ptr));
+      }, once, type);
+    }
+
+    LUMINOUS_API bool isHeaderReady() const;
+
     /// Mipmap is not ready, if it still has PingTask running/waiting
     /// After the mipmap is ready, nativeSize() returns the correct size
     LUMINOUS_API bool isReady() const;
