@@ -203,67 +203,6 @@ namespace
     AV_SAMPLE_FMT_FLTP,
     (AVSampleFormat)-1
   };
-
-
-  // Supported video formats
-  // We support:
-  //   - all 8 bit planar YUV formats
-  //   - grayscale formats
-  // We don't support on purpose:
-  //   - packed YUV, rendering those is silly and slow
-  //   - any other RGB-style format except bgr24 and bgra, better convert it
-  //     here than in drivers / render thread - except with OpenGL ES.
-  //     And GL_ARB_texture_swizzle isn't supported in OS X
-  //   - palette formats
-  //   - 1 bit monowhite/monoblack
-  //   - accelerated formats like xvmc / va api / vdpau, they don't work with multi-threaded rendering
-  //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
-  const PixelFormat s_pixFmts[] = {
-    AV_PIX_FMT_YUV420P,   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-    AV_PIX_FMT_YUV422P,   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
-    AV_PIX_FMT_YUV444P,   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
-    AV_PIX_FMT_YUV410P,   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
-    AV_PIX_FMT_YUV411P,   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
-    AV_PIX_FMT_GRAY8,     ///<        Y        ,  8bpp
-    AV_PIX_FMT_YUVJ420P,  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
-    AV_PIX_FMT_YUVJ422P,  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
-    AV_PIX_FMT_YUVJ444P,  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
-
-#ifdef LUMINOUS_OPENGLES
-    AV_PIX_FMT_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
-    AV_PIX_FMT_RGBA,      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
-#else
-    AV_PIX_FMT_BGR24,     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
-    AV_PIX_FMT_BGRA,      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
-#endif
-
-    AV_PIX_FMT_YUV440P,   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
-    AV_PIX_FMT_YUVJ440P,  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
-    AV_PIX_FMT_YUVA420P,  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
-
-    AV_PIX_FMT_Y400A,    ///< 8bit gray, 8bit alpha
-
-    AV_PIX_FMT_YUVA444P,  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
-    AV_PIX_FMT_YUVA422P,  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
-
-    AV_PIX_FMT_NONE
-  };
-
-  QByteArray supportedPixFormatsStr()
-  {
-    QByteArray lst;
-    for (auto it = s_pixFmts; *it != PIX_FMT_NONE; ++it) {
-      const char * str = av_get_pix_fmt_name(*it);
-      if (!str) {
-        Radiant::error("supportedPixFormatsStr # Failed to convert pixel format %d to string", *it);
-      } else {
-        if (!lst.isEmpty())
-          lst += ":";
-        lst += str;
-      }
-    }
-    return lst;
-  }
 }
 
 namespace VideoPlayer2
@@ -355,6 +294,8 @@ namespace VideoPlayer2
     AVDecoder::Options options;
     Radiant::TimeStamp pauseTimestamp;
 
+    QList<PixelFormat> pixelFormats;
+
     struct FilterGraph
     {
       AVFilterContext * bufferSourceFilter;
@@ -386,6 +327,9 @@ namespace VideoPlayer2
     bool seekToBeginning();
     bool seek();
 
+    QByteArray supportedPixFormatsStr();
+    void updateSupportedPixFormats();
+
     // Partially borrowed from libav / ffplay
     int64_t guessCorrectPts(AVFrame * frame);
 
@@ -401,6 +345,83 @@ namespace VideoPlayer2
     void setFormat(VideoFrameFFMPEG & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
   };
+
+  void AVDecoderFFMPEG::D::updateSupportedPixFormats()
+  {
+    // Supported video formats
+    // We support:
+    //   - all 8 bit planar YUV formats
+    //   - grayscale formats
+    // We don't support on purpose:
+    //   - packed YUV, rendering those is silly and slow
+    //   - any other RGB-style format except bgr24 and bgra, better convert it
+    //     here than in drivers / render thread - except with OpenGL ES.
+    //     And GL_ARB_texture_swizzle isn't supported in OS X
+    //   - palette formats
+    //   - 1 bit monowhite/monoblack
+    //   - accelerated formats like xvmc / va api / vdpau, they don't work with multi-threaded rendering
+    //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
+    pixelFormats.clear();
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::GRAY) {
+      pixelFormats << AV_PIX_FMT_GRAY8;     ///<        Y        ,  8bpp
+    }
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::GRAY_ALPHA) {
+      pixelFormats << AV_PIX_FMT_Y400A;     ///< 8bit gray, 8bit alpha
+    }
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::RGB) {
+#ifdef LUMINOUS_OPENGLES
+      pixelFormats << AV_PIX_FMT_RGB24;     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
+#else
+      pixelFormats << AV_PIX_FMT_BGR24;     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
+#endif
+    }
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::RGBA) {
+#ifdef LUMINOUS_OPENGLES
+      pixelFormats << AV_PIX_FMT_RGBA;      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+#else
+      pixelFormats << AV_PIX_FMT_BGRA;      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+#endif
+    }
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::YUV) {
+      pixelFormats << AV_PIX_FMT_YUV420P;   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+      pixelFormats << AV_PIX_FMT_YUV422P;   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+      pixelFormats << AV_PIX_FMT_YUV444P;   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
+      pixelFormats << AV_PIX_FMT_YUV410P;   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+      pixelFormats << AV_PIX_FMT_YUV411P;   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+      pixelFormats << AV_PIX_FMT_YUVJ420P;  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
+      pixelFormats << AV_PIX_FMT_YUVJ422P;  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
+      pixelFormats << AV_PIX_FMT_YUVJ444P;  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
+      pixelFormats << AV_PIX_FMT_YUV440P;   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
+      pixelFormats << AV_PIX_FMT_YUVJ440P;  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
+    }
+
+    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::YUVA) {
+      pixelFormats << AV_PIX_FMT_YUVA420P;  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+      pixelFormats << AV_PIX_FMT_YUVA444P;  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
+      pixelFormats << AV_PIX_FMT_YUVA422P;  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
+    }
+  }
+
+  QByteArray AVDecoderFFMPEG::D::supportedPixFormatsStr()
+  {
+    QByteArray lst;
+    for (auto format: pixelFormats) {
+      const char * str = av_get_pix_fmt_name(format);
+      if (!str) {
+        Radiant::error("supportedPixFormatsStr # Failed to convert pixel format %d to string", format);
+      } else {
+        if (!lst.isEmpty())
+          lst += ":";
+        lst += str;
+      }
+    }
+    return lst;
+  }
 
   bool AVDecoderFFMPEG::D::initFilters(FilterGraph & filterGraph,
                                        const QString & description, bool video)
@@ -720,8 +741,8 @@ namespace VideoPlayer2
       }
 
       bool pixelFormatSupported = false;
-      for(auto it = s_pixFmts; *it != PIX_FMT_NONE; ++it) {
-        if(av.videoCodecContext->pix_fmt == *it) {
+      for (auto fmt: pixelFormats) {
+        if(av.videoCodecContext->pix_fmt == fmt) {
           pixelFormatSupported = true;
           break;
         }
@@ -1707,6 +1728,7 @@ namespace VideoPlayer2
   {
     assert(!isRunning());
     m_d->options = options;
+    m_d->updateSupportedPixFormats();
     seek(m_d->options.seek);
   }
 

@@ -143,6 +143,7 @@ namespace VideoPlayer2
         , audioStreamIndex(-1)
         , audioBufferSeconds(2.0)
         , videoBufferFrames(10)
+        , pixelFormat(VideoFrame::UNKNOWN)
       {}
 
       /// Input file, device, URL or special parameter to input format.
@@ -280,6 +281,11 @@ namespace VideoPlayer2
       /// @see audioBufferSeconds
       /// Default: 10
       int videoBufferFrames;
+
+      /// Preferred output pixel format, by default choose the best pixel format
+      /// to remove or at least minimize the conversion overhead.
+      /// Do not touch this unless you have a good reason.
+      VideoFrame::Format pixelFormat;
     };
 
   public:
