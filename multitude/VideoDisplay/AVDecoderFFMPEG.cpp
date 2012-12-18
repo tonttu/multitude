@@ -1707,6 +1707,7 @@ namespace VideoPlayer2
   {
     assert(!isRunning());
     m_d->options = options;
+    seek(m_d->options.seek);
   }
 
   void AVDecoderFFMPEG::close()
