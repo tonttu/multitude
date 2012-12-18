@@ -733,6 +733,7 @@ namespace Valuable
 
   void Node::clearReadyCallbacks()
   {
+    Radiant::Guard g(m_readyCallbacksMutex);
     m_readyCallbacks.clear();
     m_readyOnceCallbacks.clear();
   }

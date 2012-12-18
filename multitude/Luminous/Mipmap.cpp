@@ -637,8 +637,11 @@ namespace Luminous
 
   Mipmap::D::~D()
   {
-    m_headerReadyCallbacks.clear();
-    m_headerReadyOnceCallbacks.clear();
+    {
+      Radiant::Guard g(m_headerReadyCallbacksMutex);
+      m_headerReadyCallbacks.clear();
+      m_headerReadyOnceCallbacks.clear();
+    }
     // Make a local copy, if PingTask is just finishing and removes m_d->m_ping
     std::shared_ptr<PingTask> ping = m_ping;
     if(ping) {
@@ -766,6 +769,8 @@ namespace Luminous
     if((m_d->m_hasHeaderReadyListener & type) == 0) {
       m_d->m_hasHeaderReadyListener |= type;
       eventAddListener("header-ready", [=] {
+        //This might get called after dtor
+        if(!m_d) return;
         Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
         for (auto c : m_d->m_headerReadyCallbacks) c(this);
         for (auto c : m_d->m_headerReadyOnceCallbacks) c(this);
