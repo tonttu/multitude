@@ -53,9 +53,7 @@ SOURCES += Serializer.cpp
 SOURCES += StyleValue.cpp
 SOURCES += AttributeBool.cpp
 SOURCES += AttributeObject.cpp
-SOURCES += AttributeRect.cpp
 SOURCES += AttributeString.cpp
-SOURCES += AttributeVector.cpp
 SOURCES += XMLArchive.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8

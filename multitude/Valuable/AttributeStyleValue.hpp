@@ -62,8 +62,6 @@ namespace Valuable
       if (ok) *ok = true;
       return value().stringify();
     }
-
-    virtual const char * type() const OVERRIDE { return "style-value"; }
   };
 } // namespace Valuable
 

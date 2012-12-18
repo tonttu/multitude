@@ -21,8 +21,6 @@
 #include <Valuable/Export.hpp>
 #include <Valuable/AttributeNumeric.hpp>
 
-#define VO_TYPE_FLOAT "float"
-
 namespace Valuable
 {
   /// Template class for floating-point values.
@@ -83,8 +81,6 @@ namespace Valuable
         }
         return true;
       }
-
-      virtual const char * type() const OVERRIDE { return VO_TYPE_FLOAT; }
 
       void setSrc(float src)
       {

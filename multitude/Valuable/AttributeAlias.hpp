@@ -47,9 +47,6 @@ namespace Valuable
     virtual ArchiveElement serialize(Archive & archive) const;
     virtual bool deserialize(const ArchiveElement & element);
 
-    /// Get the type id of the alias class (not the target class)
-    virtual const char * type() const;
-
     /// Get the target Attribute where this class points to
     Attribute * attribute() const;
 

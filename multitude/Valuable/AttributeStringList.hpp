@@ -25,8 +25,6 @@ namespace Valuable
 
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
-
-    virtual const char * type() const OVERRIDE { return "string-list"; }
   };
 } // namespace Valuable
 

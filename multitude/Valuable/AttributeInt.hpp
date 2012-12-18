@@ -21,8 +21,6 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#define VO_TYPE_INT "int"
-
 namespace Valuable
 {
 
@@ -126,8 +124,6 @@ namespace Valuable
     bool operator > (const T & i) const { return value() > i; }
     /// Compares greater or equal than
     bool operator >= (const T & i) const { return value() >= i; }
-
-    virtual const char * type() const OVERRIDE { return VO_TYPE_INT; }
 
     virtual void processMessage(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
     {

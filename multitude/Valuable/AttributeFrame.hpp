@@ -145,11 +145,6 @@ namespace Valuable
       return true;
     }
 
-    virtual const char * type() const OVERRIDE
-    {
-      return "AttributeFrame";
-    }
-
     virtual bool isChanged() const OVERRIDE
     {
       for (int i = 0; i < 4; ++i)

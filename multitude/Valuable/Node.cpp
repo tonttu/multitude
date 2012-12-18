@@ -474,7 +474,7 @@ namespace Valuable
         ok = readElement(elem);
       if(!ok) {
         Radiant::error(
-            "Node::deserialize # (%s) don't know how to handle element '%s'", type(), name.data());
+            "Node::deserialize # (%s) don't know how to handle element '%s'", type().data(), name.data());
         return false;
       }
     }

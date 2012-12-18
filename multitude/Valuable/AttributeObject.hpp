@@ -241,8 +241,9 @@ namespace Valuable
     /// Sets the value of the object
     virtual bool set(const StyleValue & value, Layer layer = USER);
 
-    /// Get the type id of the type
-    virtual const char * type() const = 0;
+    /// Get the type id of the attribute
+    /// @return type of the attribute
+    virtual QByteArray type() const { return QByteArray(); }
 
     /// The object is serialized using its name as a tag name.
     /// @param archive Serialization archive that is used to create new elements.

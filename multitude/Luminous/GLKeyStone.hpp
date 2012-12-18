@@ -44,9 +44,6 @@ namespace Luminous {
     GLKeyStone(Valuable::Node * host, const QByteArray &name);
     virtual ~GLKeyStone();
 
-    /// Returns the object type name = "glkeystone"
-    virtual const char * type() const { return "glkeystone"; }
-
     /// Reads in variables from the DOMElement and calculates the matrix
     virtual bool deserialize(const Valuable::ArchiveElement & e);
 

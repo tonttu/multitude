@@ -6,8 +6,6 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#define VO_TYPE_TIMESTAMP "timestamp"
-
 namespace Valuable
 {
 
@@ -36,8 +34,6 @@ namespace Valuable
       const Radiant::TimeStamp & ts = value();
       return QString::number(ts.value());
     }
-
-    virtual const char * type() const OVERRIDE { return VO_TYPE_TIMESTAMP; }
 
   };
 

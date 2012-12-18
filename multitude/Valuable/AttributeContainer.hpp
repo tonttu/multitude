@@ -73,11 +73,11 @@ namespace Valuable
 
     typedef T container_type;
 
-    virtual const char* type() const OVERRIDE { return "container"; }
-
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      ArchiveElement elem = archive.createElement(name().isEmpty() ? QByteArray(type()) : name());
+      QString elementName = name().isEmpty() ? "AttributeContainerT" : name();
+
+      ArchiveElement elem = archive.createElement(elementName);
       for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {
         elem.add(Serializer::serialize(archive, *it));
       }

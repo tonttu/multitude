@@ -32,8 +32,6 @@ namespace Valuable
     AttributeBool(Node * host, const QByteArray &name, bool value, bool transit = false);
     virtual ~AttributeBool();
 
-    virtual const char * type() const OVERRIDE { return "bool"; }
-
     /// @cond
     virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;
     /// @endcond

@@ -122,9 +122,6 @@ namespace Luminous {
       /// Blends the edges defined by seams
       void cleanEdges() const;
 
-      /// Returns the type name for areas (="area").
-      virtual const char * type() const { return "area"; }
-
       /// Returns the keystone correction
       /// @return keystone correction
       GLKeyStone & keyStone() { return m_keyStone; }
@@ -278,8 +275,6 @@ namespace Luminous {
       /// Constructs a new window for the given screen
       LUMINOUS_API Window(MultiHead * screen = 0);
       LUMINOUS_API ~Window();
-
-      const char * type() const { return "window"; }
 
       /// Set the location and size of this window
       void setGeometry(int x, int y, int w, int h)

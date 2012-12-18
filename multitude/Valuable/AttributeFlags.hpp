@@ -83,7 +83,6 @@ namespace Valuable {
 
     Radiant::FlagsT<T> flags() const { return m_flags; }
 
-    const char * type() const OVERRIDE { return "FlagAlias"; }
     ArchiveElement serialize(Archive &) const OVERRIDE { return ArchiveElement(); }
     bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
 
@@ -225,8 +224,6 @@ namespace Valuable {
       *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8());
       return true;
     }
-
-    virtual const char * type() const OVERRIDE { return "AttributeFlags"; }
 
     virtual int asInt(bool * const ok = 0) const OVERRIDE
     {

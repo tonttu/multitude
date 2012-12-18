@@ -119,8 +119,6 @@ namespace Valuable
       return true;
     }
 
-    virtual const char * type() const OVERRIDE { return "enum"; }
-
     virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       QString str;

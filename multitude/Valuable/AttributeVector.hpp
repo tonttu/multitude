@@ -78,8 +78,6 @@ namespace Valuable
 
       virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
-      virtual const char * type() const OVERRIDE;
-
       /// Sets the value
       // In some cases this is a override function, but not always
       /// @todo This should be fixed properly, but it's not important and just
@@ -175,7 +173,6 @@ namespace Valuable
     }
   }
 
-  template<class VectorType> const char *  AttributeVector<VectorType>::type() const { return "vector"; }
 }
 
 #endif

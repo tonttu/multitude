@@ -50,7 +50,6 @@ namespace Valuable
     { return this->value().data(); }
 
     // virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data);
-    virtual const char * type() const OVERRIDE { return "Matrix"; }
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
 

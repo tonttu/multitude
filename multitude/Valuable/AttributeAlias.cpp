@@ -111,11 +111,6 @@ namespace Valuable
     return m_attribute->deserialize(element);
   }
 
-  const char * AttributeAlias::type() const
-  {
-    return "Alias";
-  }
-
   Attribute * AttributeAlias::attribute() const
   {
     return m_attribute;

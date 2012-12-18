@@ -37,8 +37,6 @@
 #include <QString>
 #include <QSet>
 
-#define VO_TYPE_HASVALUES "Node"
-
 namespace Valuable
 {
   /** Base class for objects that include member variables with automatic IO.
@@ -224,9 +222,6 @@ namespace Valuable
 
     /// Reads this object (and its children) from a memory buffer
     bool loadFromMemoryXML(const QByteArray & buffer);
-
-    /// Returns the typename of this object.
-    virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
     virtual ArchiveElement serialize(Archive &doc) const;

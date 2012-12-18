@@ -90,11 +90,6 @@ namespace Valuable {
       return true;
     }
 
-    virtual const char * type() const OVERRIDE
-    {
-      return "AttributeSize";
-    }
-
     virtual bool isChanged() const OVERRIDE
     {
       for(int i = 0; i < 2; ++i)
