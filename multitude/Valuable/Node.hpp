@@ -547,7 +547,7 @@ namespace Valuable
     QList<CallbackType> m_readyCallbacks;
     QList<CallbackType> m_readyOnceCallbacks;
     /// Protects m_readyCallbacks and isReady() call in onReady()
-    Radiant::Mutex m_readyCallbacksMutex;
+    std::shared_ptr<Radiant::Mutex> m_readyCallbacksMutex;
     /// Used by onReady to check if there already is "ready" event listener
     int m_hasReadyListener;
 

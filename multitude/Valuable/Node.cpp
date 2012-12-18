@@ -131,6 +131,7 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
+      m_readyCallbacksMutex(new Radiant::Mutex()),
       m_hasReadyListener(0),
       m_frame(0)
   {}
@@ -140,6 +141,7 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
+        m_readyCallbacksMutex(new Radiant::Mutex()),
       m_hasReadyListener(0),
       m_frame(0)
   {
@@ -149,6 +151,7 @@ namespace Valuable
   {
     // Make sure that any of the callbacks doesn't get access to this
     clearReadyCallbacks();
+    m_readyCallbacksMutex.reset();
     // Host of HasValues class member ValueObjects must be zeroed to avoid double-delete
     m_id.removeHost();
 
@@ -733,19 +736,22 @@ namespace Valuable
 
   void Node::clearReadyCallbacks()
   {
-    Radiant::Guard g(m_readyCallbacksMutex);
+    Radiant::Guard g(*m_readyCallbacksMutex);
     m_readyCallbacks.clear();
     m_readyOnceCallbacks.clear();
   }
 
   void Node::onReady(CallbackType callback, bool once, ListenerType type)
   {
-    Radiant::Guard g(m_readyCallbacksMutex);
+    Radiant::Guard g(*m_readyCallbacksMutex);
+    std::weak_ptr<Radiant::Mutex> weak = m_readyCallbacksMutex;
 
     if ((m_hasReadyListener & type) == 0) {
       m_hasReadyListener |= type;
       eventAddListener("ready", [=] {
-        Radiant::Guard g(m_readyCallbacksMutex);
+        std::shared_ptr<Radiant::Mutex> mptr = weak.lock();
+        if(!mptr) return;
+        Radiant::Guard g(*mptr);
         for (auto c: m_readyCallbacks)
           c(this);
         for(auto c: m_readyOnceCallbacks)
