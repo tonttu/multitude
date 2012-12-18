@@ -289,13 +289,13 @@ namespace Luminous
     GLERROR("RenderDriverGL::render # glBindBufferRange");
 
     // Set linewidth
-    if (cmd.primitiveType == Luminous::PrimitiveType_Line || cmd.primitiveType == Luminous::PrimitiveType_LineStrip) {
+    if (cmd.primitiveType == Luminous::PRIMITIVE_LINE || cmd.primitiveType == Luminous::PRIMITIVE_LINE_STRIP) {
       glLineWidth(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glLineWidth");
     }
 
     // Set point width
-    if (cmd.primitiveType == Luminous::PrimitiveType_Point) {
+    if (cmd.primitiveType == Luminous::PRIMITIVE_POINT) {
       glPointSize(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glPointSize");
     }
@@ -329,7 +329,7 @@ namespace Luminous
     if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
 
     // In case of non-shared buffers, we'll re-upload if anything has changed
-    m_state.uniformBuffer->upload(uniformBuffer, Buffer::Uniform);
+    m_state.uniformBuffer->upload(uniformBuffer, Buffer::UNIFORM);
 
     int unit = 0;
     if (textures != nullptr) {

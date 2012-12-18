@@ -22,7 +22,7 @@ namespace Luminous
 
     SharedBuffer * ubuffer;
     void * uniformData;
-    std::tie(uniformData, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
+    std::tie(uniformData, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::UNIFORM, uniformOffset);
     builder.uniform = static_cast<UniformBlock*>(uniformData);
 
     RenderCommand & cmd = createRenderCommand(translucent, vertexArray, ubuffer->buffer, builder.depth, program, textures, uniforms);

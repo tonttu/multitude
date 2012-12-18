@@ -146,23 +146,23 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType
   {
-    PrimitiveType_Triangle      = GL_TRIANGLES,
-    PrimitiveType_TriangleStrip = GL_TRIANGLE_STRIP,
-    PrimitiveType_TriangleFan   = GL_TRIANGLE_FAN,
-    PrimitiveType_Line          = GL_LINES,
-    PrimitiveType_LineStrip     = GL_LINE_STRIP,
-    PrimitiveType_Point         = GL_POINTS,
+    PRIMITIVE_TRIANGLE       = GL_TRIANGLES,
+    PRIMITIVE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
+    PRIMITIVE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
+    PRIMITIVE_LINE           = GL_LINES,
+    PRIMITIVE_LINE_STRIP     = GL_LINE_STRIP,
+    PRIMITIVE_POINT          = GL_POINTS
   };
 
   enum ClearMask
   {
-    ClearMask_Color              = (1 << 0),
-    ClearMask_Depth              = (1 << 1),
-    ClearMask_Stencil            = (1 << 2),
-    ClearMask_ColorDepth         = ClearMask_Color | ClearMask_Depth,
-    ClearMask_ColorStencil       = ClearMask_Color | ClearMask_Stencil,
-    ClearMask_DepthStencil       = ClearMask_Depth | ClearMask_Stencil,
-    ClearMask_ColorDepthStencil  = ClearMask_Color | ClearMask_Depth | ClearMask_Stencil,
+    CLEARMASK_COLOR                = (1 << 0),
+    CLEARMASK_DEPTH                = (1 << 1),
+    CLEARMASK_STENCIL              = (1 << 2),
+    CLEARMASK_COLOR_DEPTH          = CLEARMASK_COLOR | CLEARMASK_DEPTH,
+    CLEARMASK_COLOR_STENCIL        = CLEARMASK_COLOR | CLEARMASK_STENCIL,
+    CLEARMASK_DEPTH_STENCIL        = CLEARMASK_DEPTH | CLEARMASK_STENCIL,
+    CLEARMASK_COLOR_DEPTH_STENCIL  = CLEARMASK_COLOR | CLEARMASK_DEPTH | CLEARMASK_STENCIL
   };
 
   //////////////////////////////////////////////////////////////////////////

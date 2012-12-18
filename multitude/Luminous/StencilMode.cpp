@@ -20,13 +20,13 @@ namespace Luminous
 
   void StencilMode::setFunction(Face face, Function function, int ref, unsigned int mask)
   {
-    if(face == Front || face == FrontAndBack) {
+    if(face == FRONT || face == FRONT_AND_BACK) {
       m_frontFunction = function;
       m_frontRefValue = ref;
       m_frontMaskValue = mask;
     }
 
-    if(face == Back || face == FrontAndBack) {
+    if(face == BACK || face == FRONT_AND_BACK) {
       m_backFunction = function;
       m_backRefValue = ref;
       m_backMaskValue = mask;
@@ -35,13 +35,13 @@ namespace Luminous
 
   void StencilMode::setOperation(Face face, Operation stencilFail, Operation depthFail, Operation pass)
   {
-    if(face == Front || face == FrontAndBack) {
+    if(face == FRONT || face == FRONT_AND_BACK) {
       m_frontStencilFail = stencilFail;
       m_frontDepthFail = depthFail;
       m_frontPass = pass;
     }
 
-    if(face == Back || face == FrontAndBack) {
+    if(face == BACK || face == FRONT_AND_BACK) {
       m_backStencilFail = stencilFail;
       m_backDepthFail = depthFail;
       m_backPass = pass;

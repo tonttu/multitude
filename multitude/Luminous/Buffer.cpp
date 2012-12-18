@@ -11,7 +11,7 @@ namespace Luminous
     D()
       : size(0)
       , data(nullptr)
-      , usage(Buffer::StaticDraw)
+      , usage(Buffer::STATIC_DRAW)
     {
     }
 

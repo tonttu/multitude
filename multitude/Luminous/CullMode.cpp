@@ -5,7 +5,7 @@ namespace Luminous
 
 CullMode::CullMode()
   : m_enabled(true)
-  , m_face(Back)
+  , m_face(BACK)
 {
 }
 

@@ -245,7 +245,7 @@ namespace Luminous
         for(auto it = buffers.begin(); it != buffers.end(); ++it) {
           if (it->reservedBytes > 0) {
             // @todo Investigate if orphaning is any faster on multi-screen/multi-GPU setups
-            // it->buffer.setData(nullptr, it->buffer.size(), Buffer::StreamDraw);
+            // it->buffer.setData(nullptr, it->buffer.size(), Buffer::STREAM_DRAW);
             ctx.unmapBuffer(it->buffer, it->type, 0, it->reservedBytes);
             it->reservedBytes = 0;
           }
@@ -394,7 +394,7 @@ namespace Luminous
 
     /// The maximum supported linewidth is often quite low so we'll generate a triangle strip instead
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, (linesegments + 1) * 2,
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, (linesegments + 1) * 2,
       program, style.strokeColor(), style.strokeWidth(), style);
 
     float step = (toRadians - fromRadians) / linesegments;
@@ -433,7 +433,7 @@ namespace Luminous
     // Draw fill
     if (style.fillColor().w > 0.f) {
       const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleFan, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_FAN, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
       // Center is the first vertex in a fan
       b.vertex[0].location = center;
       // Create the rest of the vertices
@@ -508,11 +508,11 @@ namespace Luminous
     if(isFilled) {
       if (style.fill().textures().empty()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-        fill = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
+        fill = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
       }
       else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        textured = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
+        textured = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
         isTextured = true;
       }
     }
@@ -521,8 +521,8 @@ namespace Luminous
     if(stroke) {
       const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
       if(needInnerStroke)
-        innerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
-      outerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
+        innerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
+      outerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
     }
 
     /// Generate the vertex data
@@ -622,9 +622,9 @@ namespace Luminous
       std::size_t vertexSize, std::size_t vertexCount, Buffer::Type type)
   {
     int bufferIndex = m_data->m_bufferIndex;
-    Internal::BufferPool & pool = type == Buffer::Index
+    Internal::BufferPool & pool = type == Buffer::INDEX
         ? m_data->m_indexBuffers[bufferIndex]
-        : type == Buffer::Vertex
+        : type == Buffer::VERTEX
           ? m_data->m_vertexBuffers[bufferIndex][vertexSize]
           : m_data->m_uniformBuffers[bufferIndex][vertexSize];
 
@@ -636,7 +636,7 @@ namespace Luminous
       if(pool.currentIndex >= int(pool.buffers.size())) {
         pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
-        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::StreamDraw);
+        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::STREAM_DRAW);
         /// Fix the generation so it doesn't get automatically overwritten by an upload()
         buffer->buffer.setGeneration(0);
         break;
@@ -657,8 +657,8 @@ namespace Luminous
   {
     SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
 
-    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MapWrite |
-                                  Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
+    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE |
+                                  Buffer::MAP_INVALIDATE_RANGE | Buffer::MAP_FLUSH_EXPLICIT);
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
@@ -718,17 +718,17 @@ namespace Luminous
     uniformSize = alignUniform(uniformSize);
 
     SharedBuffer * vbuffer;
-    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::Vertex, vertexOffset);
+    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::VERTEX, vertexOffset);
 
     SharedBuffer * ubuffer;
-    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::Uniform, uniformOffset);
+    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::UNIFORM, uniformOffset);
 
     SharedBuffer * ibuffer;
     RenderResource::Id ibufferId = 0;
     if (indexCount > 0) {
       // Index buffers are implicitly tied to VAO when bound so we make mapping after we
       // are sure that correct VAO is bound
-      ibuffer = findAvailableBuffer(sizeof(unsigned int), indexCount, Buffer::Index);
+      ibuffer = findAvailableBuffer(sizeof(unsigned int), indexCount, Buffer::INDEX);
       // Get the matching vertexarray from cache or create a new one if needed
       ibufferId = ibuffer->buffer.resourceId();
     }
@@ -753,8 +753,8 @@ namespace Luminous
           translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
     if(indexCount > 0) {
       // Now we are ready to bind index buffer (driver made sure that VAO is bound)
-      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::Index, Buffer::MapWrite |
-                                    Buffer::MapInvalidateRange | Buffer::MapFlushExplicit);
+      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE |
+                                    Buffer::MAP_INVALIDATE_RANGE | Buffer::MAP_FLUSH_EXPLICIT);
       mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
       indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
       ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
@@ -792,7 +792,7 @@ namespace Luminous
     if (style.fillColor().w > 0.f) {
       if(style.fill().textures().empty()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
         b.vertex[0].location = rect.low();
         b.vertex[1].location = rect.highLow();
         b.vertex[2].location = rect.lowHigh();
@@ -800,7 +800,7 @@ namespace Luminous
       }
       else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
         b.vertex[0].location = rect.low();
         b.vertex[0].texCoord = uvs.low();
@@ -835,7 +835,7 @@ namespace Luminous
       drawRectWithHole(outer, inner, s);
       /*
       const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
       b.vertex[0].location.make(rect.low(), b.depth);
       b.vertex[1].location.make(rect.highLow(), b.depth);
       b.vertex[2].location.make(rect.high(), b.depth);
@@ -850,7 +850,7 @@ namespace Luminous
     if (style.fillColor().w > 0.f) {
       if(style.fill().textures().empty()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
         b.vertex[0].location = vertices[0];
         b.vertex[1].location = vertices[1];
         b.vertex[2].location = vertices[2];
@@ -858,7 +858,7 @@ namespace Luminous
       }
       else {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
         b.vertex[0].location = vertices[0];
         b.vertex[0].texCoord = uvs[0];
@@ -889,7 +889,7 @@ namespace Luminous
       if (style.fill().textures().empty()) {
         // Untextured
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 10, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 10, program, style.fillColor(), 1.f, style);
         b.vertex[0].location = hole.low();
         b.vertex[1].location = area.low();
         b.vertex[2].location = hole.highLow();
@@ -905,7 +905,7 @@ namespace Luminous
         // Textured
         /// @todo calculate correct UVs for the inside ring
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PrimitiveType_TriangleStrip, 0, 10, program, style.fillColor(), 1.f, style);
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 10, program, style.fillColor(), 1.f, style);
 
         b.vertex[0].location = hole.low();
         b.vertex[0].texCoord.make(0,0);
@@ -968,7 +968,7 @@ namespace Luminous
   {
     assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Line, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
     b.vertex[0].location = p1;
     b.vertex[1].location = p2;
   }
@@ -1018,7 +1018,7 @@ namespace Luminous
     assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     /// @todo Can't rely on supported line sizes. Should just make triangle strips for values > 1
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_LineStrip, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
       b.vertex[i].location = points[i];
   }
@@ -1027,7 +1027,7 @@ namespace Luminous
   {
     /// @todo Can't rely on supported point sizes. Should this just call drawCircle instead for values > 1
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PrimitiveType_Point, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_POINT, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
     for (size_t i = 0; i < numPoints; ++i)
       b.vertex[i].location = points[i];
   }
@@ -1089,7 +1089,7 @@ namespace Luminous
 
     std::map<QByteArray, const Texture *> textures = style.fill().textures();
     DepthMode d;
-    d.setFunction(DepthMode::LessEqual);
+    d.setFunction(DepthMode::LESS_EQUAL);
     setDepthMode(d);
 
     Nimble::Matrix4f m;
@@ -1107,7 +1107,7 @@ namespace Luminous
         const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
-              true, PrimitiveType_TriangleStrip, count*6 - 2, count*4, 1, program, &textures);
+              true, PRIMITIVE_TRIANGLE_STRIP, count*6 - 2, count*4, 1, program, &textures);
         uniform.projMatrix = b.uniform->projMatrix;
         *b.uniform = uniform;
 

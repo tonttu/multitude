@@ -118,7 +118,7 @@ namespace Luminous {
       m_d->m_program.setVertexDescription(m_d->m_vdescr);
     }
 
-    m_d->m_depthMode.setFunction(DepthMode::LessEqual);
+    m_d->m_depthMode.setFunction(DepthMode::LESS_EQUAL);
   }
 
   SpriteRenderer::~SpriteRenderer()
@@ -153,7 +153,7 @@ namespace Luminous {
     rc.setBlendMode(m_d->m_blendMode);
     rc.setDepthMode(m_d->m_depthMode);
 
-    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PrimitiveType_Point, 0, spriteCount(), 1.f,
+    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PRIMITIVE_POINT, 0, spriteCount(), 1.f,
                                                   m_d->m_program, &m_d->m_texture);
 
     b.uniform->velocityScale = m_d->m_velocityScale;

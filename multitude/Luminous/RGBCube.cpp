@@ -17,7 +17,7 @@ namespace Luminous
       , m_dimension(&cube, "dimension", 32)
       , m_cube(cube)
     {
-      m_texture.setWrap(Texture::Wrap_Clamp, Texture::Wrap_Clamp, Texture::Wrap_Clamp);
+      m_texture.setWrap(Texture::WRAP_CLAMP, Texture::WRAP_CLAMP, Texture::WRAP_CLAMP);
       m_generation = m_texture.generation();
 
       // Invalidate cached texture if either of these are edited

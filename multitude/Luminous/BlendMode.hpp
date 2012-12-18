@@ -11,33 +11,33 @@ namespace Luminous
   public:
     enum Equation
     {
-      Add                       = GL_FUNC_ADD,
-      Subtract                  = GL_FUNC_SUBTRACT,
-      ReverseSubtract           = GL_FUNC_REVERSE_SUBTRACT,
-      Min                       = GL_MIN,
-      Max                       = GL_MAX,
+      ADD                       = GL_FUNC_ADD,
+      SUBTRACT                  = GL_FUNC_SUBTRACT,
+      REVERSE_SUBTRACT           = GL_FUNC_REVERSE_SUBTRACT,
+      MIN                       = GL_MIN,
+      MAX                       = GL_MAX
     };
 
     enum Function
     {
-      Zero                      = GL_ZERO,
-      One                       = GL_ONE,
-      SourceColor               = GL_SRC_COLOR,
-      SourceAlpha               = GL_SRC_ALPHA,
-      OneMinusSourceColor       = GL_ONE_MINUS_SRC_COLOR,
-      OneMinusSourceAlpha       = GL_ONE_MINUS_SRC_ALPHA,
+      ZERO                      = GL_ZERO,
+      ONE                       = GL_ONE,
+      SOURCE_COLOR               = GL_SRC_COLOR,
+      SOURCE_ALPHA               = GL_SRC_ALPHA,
+      ONE_MINUS_SOURCE_COLOR       = GL_ONE_MINUS_SRC_COLOR,
+      ONE_MINUS_SOURCE_ALPHA       = GL_ONE_MINUS_SRC_ALPHA,
 
-      DestinationColor          = GL_DST_COLOR,
-      DestinationAlpha          = GL_DST_ALPHA,
-      OneMinusDestinationColor  = GL_ONE_MINUS_DST_COLOR,
-      OneMinusDestinationAlpha  = GL_ONE_MINUS_DST_ALPHA,
+      DESTINATION_COLOR          = GL_DST_COLOR,
+      DESTINATION_ALPHA          = GL_DST_ALPHA,
+      ONE_MINUS_DESTINATION_COLOR  = GL_ONE_MINUS_DST_COLOR,
+      ONE_MINUS_DESTINATION_ALPHA  = GL_ONE_MINUS_DST_ALPHA,
 
-      ConstantColor             = GL_CONSTANT_COLOR,
-      ConstantAlpha             = GL_CONSTANT_ALPHA,
-      OneMinusConstantColor     = GL_ONE_MINUS_CONSTANT_COLOR,
-      OneMinusConstantAlpha     = GL_ONE_MINUS_CONSTANT_ALPHA,
+      CONSTANT_COLOR             = GL_CONSTANT_COLOR,
+      CONSTANT_ALPHA             = GL_CONSTANT_ALPHA,
+      ONE_MINUS_CONSTANT_COLOR     = GL_ONE_MINUS_CONSTANT_COLOR,
+      ONE_MINUS_CONSTANT_ALPHA     = GL_ONE_MINUS_CONSTANT_ALPHA,
 
-      AlphaSaturate             = GL_SRC_ALPHA_SATURATE,
+      ALPHA_SATURATE             = GL_SRC_ALPHA_SATURATE,
 
       // GL_SRC1_COLOR
       // GL_ONE_MINUS_SRC1_COLOR

@@ -16,19 +16,19 @@ namespace Luminous
     GLbitfield glMask = 0;
 
     // Clear color buffer
-    if (m_clearMask & ClearMask_Color) {
+    if (m_clearMask & CLEARMASK_COLOR) {
       glClearColor(m_clearColor.red(), m_clearColor.green(), m_clearColor.blue(), m_clearColor.alpha());
       glMask |= GL_COLOR_BUFFER_BIT;
     }
 
     // Clear depth buffer
-    if (m_clearMask & ClearMask_Depth) {
+    if (m_clearMask & CLEARMASK_DEPTH) {
       glClearDepth(m_clearDepth);
       glMask |= GL_DEPTH_BUFFER_BIT;
     }
 
     // Clear stencil buffer
-    if (m_clearMask & ClearMask_Stencil) {
+    if (m_clearMask & CLEARMASK_STENCIL) {
       glClearStencil(m_clearStencil);
       glMask |= GL_STENCIL_BUFFER_BIT;
     }
@@ -176,11 +176,11 @@ namespace Luminous
   void CommandBlitGL::execute()
   {
     GLbitfield glMask = 0;
-    if (m_mask & ClearMask_Color)
+    if (m_mask & CLEARMASK_COLOR)
       glMask |= GL_COLOR_BUFFER_BIT;
-    if (m_mask & ClearMask_Depth)
+    if (m_mask & CLEARMASK_DEPTH)
       glMask |= GL_DEPTH_BUFFER_BIT;
-    if (m_mask & ClearMask_Stencil)
+    if (m_mask & CLEARMASK_STENCIL)
       glMask |= GL_STENCIL_BUFFER_BIT;
 
     glBlitFramebuffer(m_src.low().x, m_src.low().y, m_src.high().x, m_src.high().y,

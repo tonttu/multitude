@@ -11,11 +11,11 @@ namespace Luminous
   enum Face
   {
     /// Front-facing primitives
-    Front = GL_FRONT,
+    FRONT = GL_FRONT,
     /// Back-facing primitives
-    Back = GL_BACK,
+    BACK = GL_BACK,
     /// Front and back facing primitives
-    FrontAndBack = GL_FRONT_AND_BACK
+    FRONT_AND_BACK = GL_FRONT_AND_BACK
   };
 
   /// Defines the ordering of a rendering primitive

@@ -377,7 +377,7 @@ namespace Luminous {
     bool translucent =
       m_shader.translucent();
 
-    auto b = r.render<Vertex, UniformBlock>(translucent, Luminous::PrimitiveType_TriangleStrip, 0, vertices, 1.f, m_shader);
+    auto b = r.render<Vertex, UniformBlock>(translucent, Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, vertices, 1.f, m_shader);
     std::copy(m_vertices.begin(), m_vertices.end(), b.vertex);
 
     b.uniform->time = time;

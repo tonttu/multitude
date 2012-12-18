@@ -21,36 +21,36 @@ namespace Luminous
   public:
     enum Usage
     {
-      StaticDraw = GL_STATIC_DRAW,
-      StaticRead = GL_STATIC_READ,
-      StaticCopy = GL_STATIC_COPY,
+      STATIC_DRAW = GL_STATIC_DRAW,
+      STATIC_READ = GL_STATIC_READ,
+      STATIC_COPY = GL_STATIC_COPY,
 
-      StreamDraw = GL_STREAM_DRAW,
-      StreamRead = GL_STREAM_READ,
-      StreamCopy = GL_STREAM_COPY,
+      STREAM_DRAW = GL_STREAM_DRAW,
+      STREAM_READ = GL_STREAM_READ,
+      STREAM_COPY = GL_STREAM_COPY,
 
-      DynamicDraw = GL_DYNAMIC_DRAW,
-      DynamicRead = GL_DYNAMIC_READ,
-      DynamicCopy = GL_DYNAMIC_COPY,
+      DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
+      DYNAMIC_READ = GL_DYNAMIC_READ,
+      DYNAMIC_COPY = GL_DYNAMIC_COPY
     };
 
     enum MapAccess
     {
-      MapRead               = GL_MAP_READ_BIT,
-      MapWrite              = GL_MAP_WRITE_BIT,
-      MapReadWrite          = MapRead | MapWrite,
-      MapInvalidateRange    = GL_MAP_INVALIDATE_RANGE_BIT,
-      MapInvalidateBuffer   = GL_MAP_INVALIDATE_BUFFER_BIT,
-      MapFlushExplicit      = GL_MAP_FLUSH_EXPLICIT_BIT,
-      MapUnsynchronized     = GL_MAP_UNSYNCHRONIZED_BIT,
+      MAP_READ               = GL_MAP_READ_BIT,
+      MAP_WRITE              = GL_MAP_WRITE_BIT,
+      MAP_READ_WRITE         = MAP_READ | MAP_WRITE,
+      MAP_INVALIDATE_RANGE   = GL_MAP_INVALIDATE_RANGE_BIT,
+      MAP_INVALIDATE_BUFFER  = GL_MAP_INVALIDATE_BUFFER_BIT,
+      MAP_FLUSH_EXPLICIT     = GL_MAP_FLUSH_EXPLICIT_BIT,
+      MAP_UNSYNCHRONIZED     = GL_MAP_UNSYNCHRONIZED_BIT
     };
 
     enum Type
     {
-      Unknown  = 0,
-      Vertex   = GL_ARRAY_BUFFER,
-      Index    = GL_ELEMENT_ARRAY_BUFFER,
-      Uniform  = GL_UNIFORM_BUFFER,
+      UNKNOWN  = 0,
+      VERTEX   = GL_ARRAY_BUFFER,
+      INDEX    = GL_ELEMENT_ARRAY_BUFFER,
+      UNIFORM  = GL_UNIFORM_BUFFER
     };
 
   public:

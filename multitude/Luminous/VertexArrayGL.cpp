@@ -66,9 +66,9 @@ namespace Luminous
 
     if (index != nullptr) {
       auto & bufferGL = m_state.driver().handle(*index);
-      bufferGL.bind(Buffer::Index);
+      bufferGL.bind(Buffer::INDEX);
       /// Upload new data if we need to
-      bufferGL.upload(*index, Buffer::Index);
+      bufferGL.upload(*index, Buffer::INDEX);
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
   }
@@ -84,9 +84,9 @@ namespace Luminous
       assert(buffer != nullptr);
 
       auto & bufferGL = m_state.driver().handle(*buffer);
-      bufferGL.bind(Buffer::Vertex);
+      bufferGL.bind(Buffer::VERTEX);
       /// Upload new data if we need to
-      bufferGL.upload(*buffer, Buffer::Vertex);
+      bufferGL.upload(*buffer, Buffer::VERTEX);
 
       setVertexDescription(b.description, program);
 

@@ -41,13 +41,13 @@ namespace Luminous
                                  Luminous::PostProcessContext &,
                                  Luminous::Style style) const
   {
-    rc.clear(Luminous::ClearMask_ColorDepth);
+    rc.clear(Luminous::CLEARMASK_COLOR_DEPTH);
 
     const Nimble::Vector2f size = rc.contextSize();
     const Luminous::Program & program = style.fillProgram() ? *style.fillProgram() : rc.texShader();
 
     auto b = rc.drawPrimitiveT<Luminous::BasicVertexUV, Luminous::BasicUniformBlock>(
-          Luminous::PrimitiveType_TriangleStrip, 0, 4, program, style.fillColor(), 1.f, style);
+          Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
     b.vertex[0].location.make(0, 0);
     b.vertex[0].texCoord.make(0, 0);

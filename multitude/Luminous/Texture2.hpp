@@ -14,15 +14,15 @@ namespace Luminous
   {
   public:
     enum Filter {
-      Filter_Nearest = GL_NEAREST,
-      Filter_Linear = GL_LINEAR
+      FILTER_NEAREST = GL_NEAREST,
+      FILTER_LINEAR = GL_LINEAR
     };
 
     enum Wrap {
-      Wrap_Repeat,
-      Wrap_Mirror,
-      Wrap_Clamp,
-      Wrap_Border,
+      WRAP_REPEAT,
+      WRAP_MIRROR,
+      WRAP_CLAMP,
+      WRAP_BORDER
     };
 
   public:

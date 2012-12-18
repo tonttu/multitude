@@ -10,10 +10,10 @@ namespace
   {
     switch (wrapMode)
     {
-    case Luminous::Texture::Wrap_Border: return GL_CLAMP_TO_BORDER;
-    case Luminous::Texture::Wrap_Clamp: return GL_CLAMP_TO_EDGE;
-    case Luminous::Texture::Wrap_Mirror: return GL_MIRRORED_REPEAT;
-    case Luminous::Texture::Wrap_Repeat: return GL_REPEAT;
+    case Luminous::Texture::WRAP_BORDER: return GL_CLAMP_TO_BORDER;
+    case Luminous::Texture::WRAP_CLAMP: return GL_CLAMP_TO_EDGE;
+    case Luminous::Texture::WRAP_MIRROR: return GL_MIRRORED_REPEAT;
+    case Luminous::Texture::WRAP_REPEAT: return GL_REPEAT;
     default:
       Radiant::error("TextureGL: Invalid wrapmode %d - Assuming default (repeat)", wrapMode);
       return GL_REPEAT;

@@ -23,14 +23,14 @@ namespace Luminous
       , translucent()
       , lineSizePixels()
       , dirtyRegions()
-      , m_minFilter(Filter_Linear)
-      , m_magFilter(Filter_Linear)
+      , m_minFilter(FILTER_LINEAR)
+      , m_magFilter(FILTER_LINEAR)
       , m_borderColor(0, 0, 0, 0)
     {
       // Set default texture wrap modes
-      m_wrap[0] = Wrap_Clamp;
-      m_wrap[1] = Wrap_Clamp;
-      m_wrap[2] = Wrap_Clamp;
+      m_wrap[0] = WRAP_CLAMP;
+      m_wrap[1] = WRAP_CLAMP;
+      m_wrap[2] = WRAP_CLAMP;
     }
 
     uint8_t dimensions;

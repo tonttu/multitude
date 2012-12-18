@@ -75,8 +75,8 @@ namespace Luminous
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) OVERRIDE;
 
     LUMINOUS_API virtual void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
-                                   Luminous::ClearMask mask = Luminous::ClearMask_ColorDepth,
-                                   Luminous::Texture::Filter filter = Luminous::Texture::Filter_Nearest) OVERRIDE;
+                                   Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
+                                   Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
 
     LUMINOUS_API unsigned long availableGPUMemory() const OVERRIDE;
     LUMINOUS_API unsigned long maxGPUMemory() const OVERRIDE;

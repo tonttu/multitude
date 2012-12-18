@@ -81,8 +81,8 @@ namespace Luminous
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) = 0;
 
     LUMINOUS_API virtual void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
-                                   Luminous::ClearMask mask = Luminous::ClearMask_ColorDepth,
-                                   Luminous::Texture::Filter filter = Luminous::Texture::Filter_Nearest) = 0;
+                                   Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
+                                   Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) = 0;
 
     LUMINOUS_API virtual unsigned long availableGPUMemory() const = 0;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const = 0;

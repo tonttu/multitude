@@ -11,14 +11,14 @@ namespace Luminous
   public:
     enum Function
     {
-      Never         = GL_NEVER,
-      Less          = GL_LESS,
-      Equal         = GL_EQUAL,
-      LessEqual     = GL_LEQUAL,
-      Greater       = GL_GREATER,
-      NotEqual      = GL_NOTEQUAL,
-      GreaterEqual  = GL_GEQUAL,
-      Always        = GL_ALWAYS,
+      NEVER         = GL_NEVER,
+      LESS          = GL_LESS,
+      EQUAL         = GL_EQUAL,
+      LESS_EQUAL    = GL_LEQUAL,
+      GREATER       = GL_GREATER,
+      NOT_EQUAL     = GL_NOTEQUAL,
+      GREATER_EQUAL = GL_GEQUAL,
+      ALWAYS        = GL_ALWAYS
     };
 
   public:
