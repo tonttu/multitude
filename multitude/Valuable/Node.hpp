@@ -65,15 +65,15 @@ namespace Valuable
     {
       /// Listener will activate immediately when an event is sent. Listener is
       /// executed in the thread the event is sent.
-      DIRECT,
+      DIRECT=1,
 
       /// Listener activation is delayed to happen after update. Listener is
       /// executed in the main thread.
-      AFTER_UPDATE,
+      AFTER_UPDATE=2,
       /// Listener activation is delayed to happen after update. Duplicate
       /// events are merged, so the listener activates only once even if multiple
       /// events were sent. Listener is executed in the main thread.
-      AFTER_UPDATE_ONCE
+      AFTER_UPDATE_ONCE=4
     };
 
     Node();
@@ -130,6 +130,8 @@ namespace Valuable
             readyCallback(Ptr<T>(ptr));
             }, once, type);
     }
+
+    void clearReadyCallbacks();
 
     /// Same as other onReady-functions but supports functions taking none parameters
     //  In perfect world compiler could deduce the types more correctly but at least g++ 4.6.3
@@ -547,7 +549,7 @@ namespace Valuable
     /// Protects m_readyCallbacks and isReady() call in onReady()
     Radiant::Mutex m_readyCallbacksMutex;
     /// Used by onReady to check if there already is "ready" event listener
-    bool m_hasReadyListener;
+    int m_hasReadyListener;
 
     // For invalidating the too new ValuePass objects
     int m_frame;
