@@ -523,6 +523,8 @@ namespace Luminous
       }
       if(!compressedMipmapTs.isValid()) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
+        mipmap.m_valid = true;
+        mipmap.m_headerReady = true;
         auto ptr = mipmap.m_mipmap.shared_from_this();
         mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
       }
