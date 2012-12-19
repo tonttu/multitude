@@ -775,6 +775,7 @@ namespace Luminous
         //This might get called after dtor
         std::shared_ptr<Mipmap> ptr = weak.lock();
         if(!ptr) return;
+        assert(ptr->isHeaderReady());
         Radiant::Guard g(ptr->m_d->m_headerReadyCallbacksMutex);
         for (auto c : ptr->m_d->m_headerReadyCallbacks) c();
         for (auto c : ptr->m_d->m_headerReadyOnceCallbacks) c();
@@ -950,6 +951,7 @@ namespace Luminous
     m_d->m_compressedMipmapInfo = imginfo;
 
     m_d->m_mipmapGenerator.reset();
+    m_d->m_ready = true;
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);
   }
