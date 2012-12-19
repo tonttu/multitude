@@ -266,6 +266,7 @@ namespace Luminous
 
   void LoadImageTask::mipmapReady()
   {
+    assert(m_mipmap->m_d->m_headerReady);
     m_mipmap->m_d->m_ready = true;
   }
 
@@ -842,7 +843,7 @@ namespace Luminous
     return native.y ? native.x / (float) native.y : 1.0f;
   }
 
-  bool Mipmap::isReady() const
+  bool Mipmap::isReady(bool) const
   {
     return m_d->m_ready;
   }
@@ -948,8 +949,6 @@ namespace Luminous
   {
     m_d->m_compressedMipmapInfo = imginfo;
 
-    m_d->m_valid = true;
-    m_d->m_ready = true;
     m_d->m_mipmapGenerator.reset();
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);

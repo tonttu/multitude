@@ -57,7 +57,7 @@ namespace Luminous
 
     /// Mipmap is not ready, if it still has PingTask running/waiting
     /// After the mipmap is ready, nativeSize() returns the correct size
-    LUMINOUS_API bool isReady() const;
+    LUMINOUS_API bool isReady(bool f=false) const OVERRIDE;
 
     LUMINOUS_API bool isValid() const;
 
