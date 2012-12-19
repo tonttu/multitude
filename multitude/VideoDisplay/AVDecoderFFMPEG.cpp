@@ -1647,7 +1647,7 @@ namespace VideoPlayer2
     return ret;
   }
 
-  void AVDecoderFFMPEG::releaseOldVideoFrames(const Timestamp & ts, bool * eof)
+  int AVDecoderFFMPEG::releaseOldVideoFrames(const Timestamp & ts, bool * eof)
   {
     int frameIndex = 0;
     for(;; ++frameIndex) {
@@ -1688,6 +1688,8 @@ namespace VideoPlayer2
       *eof = m_d->finished && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->decodedVideoFrames.itemCount() <= 1;
     }
+
+    return frameIndex;
   }
 
   Nimble::Matrix4f AVDecoderFFMPEG::yuvMatrix() const

@@ -30,7 +30,7 @@ namespace VideoPlayer2
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
     virtual Timestamp latestDecodedTimestamp() const OVERRIDE;
     virtual VideoFrame * getFrame(const Timestamp & ts) const OVERRIDE;
-    virtual void releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
+    virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
