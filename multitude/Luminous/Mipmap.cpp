@@ -501,6 +501,7 @@ namespace Luminous
     // Use DXT compression if it is requested and supported
     mipmap.m_useCompressedMipmaps = m_preferCompressedMipmaps && s_dxtSupported;
 
+
 #ifndef LUMINOUS_OPENGLES
 
     if(mipmap.m_sourceInfo.pf.compression() && (
@@ -523,8 +524,6 @@ namespace Luminous
       }
       if(!compressedMipmapTs.isValid()) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
-        mipmap.m_valid = true;
-        mipmap.m_headerReady = true;
         auto ptr = mipmap.m_mipmap.shared_from_this();
         mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
       }
@@ -553,6 +552,9 @@ namespace Luminous
     }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
+    // Send the event "header-ready"-event
+    mipmap.m_valid = true;
+    mipmap.m_headerReady = true;
 
 #ifndef LUMINOUS_OPENGLES
     if(mipmap.m_mipmapGenerator) {
@@ -560,8 +562,6 @@ namespace Luminous
     } else
 #endif // LUMINOUS_OPENGLES
     {
-      mipmap.m_valid = true;
-      mipmap.m_headerReady = true;
       // preload the maximum level mipmap image
       mipmap.m_mipmap.texture(mipmap.m_maxLevel);
     }
