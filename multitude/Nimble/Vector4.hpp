@@ -67,6 +67,18 @@ namespace Nimble {
 
     /// Compares if two vectors differ
     inline bool         operator!=  (const Vector4T& src) const        { return !operator==(src); }
+
+    /// Adds two vectors
+    inline Vector4T      operator+	(const Vector4T& v) const { return Vector4T(x + v.x, y + v.y, z + v.z, w + v.w); }
+    /// Subtract two vectors
+    inline Vector4T      operator-	(const Vector4T& v) const { return Vector4T(x - v.x, y - v.y, z - v.z, w - v.w); }
+    /// Returns the negation of the vector
+    inline Vector4T      operator-	()                  const { return Vector4T(-x, -y, -z, -w); }
+    /// Multiplies a vector with a scalar
+    inline Vector4T      operator*	(T s) const               { return Vector4T(x * s, y * s, z * s, w * s); }
+    /// Divides a vector with a scalar
+    inline Vector4T      operator/	(T s) const               { return Vector4T(x / s, y / s, z / s, w / s); }
+
     /// Adds two vectors
     inline Vector4T&	operator+=  (const Vector4T& v)	               { x += v.x; y += v.y; z += v.z;  w += v.w; return *this; }
     /// Subtracts two vectors
@@ -75,6 +87,7 @@ namespace Nimble {
     inline Vector4T&	operator*=  (T s)		               { x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
     /// Divides a vector by scalar
     inline Vector4T&	operator/=  (T s)		               { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
+
     /// Checks if all components are one
     inline bool		isOne	    (void) const		       { return (x == 1.0f && y == 1.0f && z == 1.0f && w == 1.0f); }
     /// Checks if all components are zero
@@ -203,11 +216,6 @@ namespace Nimble {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return v * s;
   }
-
-  /// Divide a vector by scalar
-  template <class T> inline	Vector4T<T>	operator/	(const Vector4T<T>& v, const double s)		{ double r = 1.0/s; return v*r; }
-  /// Returns the negation of a vector
-  template <class T> inline	Vector4T<T>	operator-	(const Vector4T<T>& v)						{ return Vector4T<T>(-v.x, -v.y, -v.z, -v.w); }
 
   /// Vector of four floats
   typedef Vector4T<float> Vector4;
