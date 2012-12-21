@@ -530,7 +530,7 @@ namespace Luminous
       // Expand path of ellipse e(t) = (a cos(t), b sin(t)) along normals
 
       Nimble::Vector2f c = Nimble::Vector2(std::cos(angle), std::sin(angle));
-      Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalize(r);
+      Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalized(r);
 
       Nimble::Vector2 e(a*c.x, b*c.y);
 
@@ -561,7 +561,7 @@ namespace Luminous
         // Add de/dt
         s_ += Nimble::Vector2(-a*c.y, b*c.x);
 
-        Nimble::Vector2 offset = s_.perpendicular().normalize(0.5f * style.strokeWidth());
+        Nimble::Vector2 offset = s_.perpendicular().normalized(0.5f * style.strokeWidth());
 
         if(needInnerStroke) {
           innerStroke.vertex[2*i].location = in + offset;
@@ -984,7 +984,7 @@ namespace Luminous
   {
 
 
-    Nimble::Vector2 otherAxis = axis.perpendicular().normalize(otherAxisLength);
+    Nimble::Vector2 otherAxis = axis.perpendicular().normalized(otherAxisLength);
 
     Nimble::Matrix3 m(axis.x, otherAxis.x, 0,
                       axis.y, otherAxis.y, 0,

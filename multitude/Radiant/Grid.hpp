@@ -8,6 +8,7 @@
 #include "Export.hpp"
 
 #include <Nimble/Vector4.hpp>
+#include <Nimble/Math.hpp>
 
 #include <cassert>
 

@@ -21,6 +21,8 @@
 
 #include <Radiant/TimeStamp.hpp>
 
+#include <Nimble/Math.hpp>
+
 namespace Valuable
 {
 

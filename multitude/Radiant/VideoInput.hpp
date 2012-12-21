@@ -21,7 +21,7 @@
 #include <Radiant/VideoImage.hpp>
 
 #include <vector>
-
+#include <cstdint>
 
 namespace Radiant {
 

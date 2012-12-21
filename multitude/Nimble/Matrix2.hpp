@@ -9,6 +9,7 @@
 #include "Vector2.hpp"
 
 #include <cassert>
+#include <ostream>
 
 namespace Nimble {
 

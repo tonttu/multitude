@@ -742,7 +742,7 @@ Matrix3T<T> Matrix3T<T>::makeRotation(T radians, const Vector3T<T> & axis)
 template<class T>
 inline Vector2T<T> Matrix3T<T>::project(const Vector2T<T> & v) const
 {
-  Vector3T<T> p = *this * Nimble::Vector3T<T>(v, 1);
+  Vector3T<T> p = *this * Nimble::Vector3T<T>(v, 1.f);
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
