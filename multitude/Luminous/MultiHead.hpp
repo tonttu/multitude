@@ -235,6 +235,8 @@ namespace Luminous {
         return Nimble::Recti(m_location[0], m_location[1], m_location[0]+m_size[0], m_location[1]+m_size[1]);
       }
 
+      QByteArray type() const OVERRIDE { return "area"; }
+
       enum {
         /* Render to the screen, using straight coordinates. Then
        read-back and re-render, with skewed coordinates. */
@@ -385,6 +387,8 @@ namespace Luminous {
                              location().x + width(),
                              location().y + height());
       }
+
+      QByteArray type() const { return "window"; }
 
     private:
       LUMINOUS_API virtual bool readElement(const Valuable::ArchiveElement & ce);
