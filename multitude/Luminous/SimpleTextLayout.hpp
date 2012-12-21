@@ -20,15 +20,23 @@ namespace Luminous
                                   const QFont & font, const QTextOption & textOption);
     LUMINOUS_API virtual ~SimpleTextLayout();
 
+    LUMINOUS_API void setText(const QString & text);
+
+    LUMINOUS_API QTextOption textOption() const;
+    LUMINOUS_API void setTextOption(const QTextOption & textOption);
+
+    LUMINOUS_API QFont font() const;
+    LUMINOUS_API void setFont(const QFont & font);
+
     LUMINOUS_API void setLineHeight(const Valuable::StyleValue & height);
     LUMINOUS_API const Valuable::StyleValue & lineHeight() const;
 
     LUMINOUS_API void setLetterSpacing(const Valuable::StyleValue & spacing);
     LUMINOUS_API const Valuable::StyleValue & letterSpacing() const;
 
-    /// If the QTextLayout is modified, it's required to call invalidate() manually
-    LUMINOUS_API QTextLayout & layout();
-    LUMINOUS_API const QTextLayout & layout() const;
+    /// If any of the QTextLayouts are modified, it's required to call invalidate() manually
+    LUMINOUS_API std::list<QTextLayout> & layouts();
+    LUMINOUS_API const std::list<QTextLayout> & layouts() const;
 
     LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
                                                               const Nimble::Vector2f & size,
