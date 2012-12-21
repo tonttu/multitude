@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Export.hpp
+HEADERS += Export.hpp \
+    LineIntersection.hpp
 HEADERS += Frame4.hpp
 HEADERS += ClipStack.hpp
 HEADERS += SmoothingFilter.hpp

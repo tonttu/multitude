@@ -19,6 +19,7 @@
 #include "Export.hpp"
 #include "Vector2.hpp"
 
+#include <cstddef>
 #include <vector>
 
 namespace Luminous {

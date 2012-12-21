@@ -20,6 +20,8 @@
 #include "Vector2.hpp"
 #include "Matrix3.hpp"
 
+#include "LineIntersection.hpp"
+
 #include <vector>
 
 namespace Nimble {
