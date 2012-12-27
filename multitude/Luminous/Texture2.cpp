@@ -262,7 +262,8 @@ namespace Luminous
   void Texture::setMinFilter(Filter filter)
   {
     m_d->m_minFilter = filter;
-    invalidate();
+    // This is tied into sampler unit not to the texture so no need to invalidate tex
+    // invalidate();
   }
 
   Texture::Filter Texture::getMagFilter() const
@@ -273,18 +274,17 @@ namespace Luminous
   void Texture::setMagFilter(Filter filter)
   {
     m_d->m_magFilter = filter;
-    invalidate();
+    // This is tied into sampler unit not to the texture so no need to invalidate tex
+    // invalidate();
   }
 
   void Texture::setWrap(Wrap s, Wrap t, Wrap r)
   {
-    if (m_d->m_wrap[0] == s && m_d->m_wrap[1] == t && m_d->m_wrap[2] == r)
-      return;
-
     m_d->m_wrap[0] = s;
     m_d->m_wrap[1] = t;
     m_d->m_wrap[2] = r;
-    invalidate();
+    // These are tied into sampler unit not to the texture so no need to invalidate tex
+    // invalidate();
   }
 
   void Texture::getWrap(Wrap & s, Wrap & t, Wrap & r) const

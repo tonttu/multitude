@@ -230,7 +230,10 @@ namespace Luminous
 
     for(std::size_t t = 0; t < state.textures.size(); ++t) {
       if(!state.textures[t]) break;
-      else state.textures[t]->bind(t);
+      else {
+        state.textures[t]->bind(t);
+        state.textures[t]->setTexParameters();
+      }
     }
 
     if(state.vertexArray) {

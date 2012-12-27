@@ -2,6 +2,7 @@
 #define LUMINOUS_TEXTUREGL_HPP
 
 #include "ResourceHandleGL.hpp"
+#include "Texture2.hpp"
 
 #include <Nimble/Vector3.hpp>
 
@@ -20,6 +21,7 @@ namespace Luminous
 
     inline QRegion & dirtyRegion2D();
 
+    LUMINOUS_API void setTexParameters() const;
     /// @param textureUnit Texture unit, starting from 0
     LUMINOUS_API void upload(const Texture & texture, int textureUnit, bool alwaysBind);
     inline void bind(int textureUnit);
@@ -31,6 +33,10 @@ namespace Luminous
     QRegion m_dirtyRegion2D;
     Nimble::Vector3u m_size;
     unsigned int m_samples;
+
+    Texture::Filter m_minFilter, m_magFilter;
+    Texture::Wrap m_wrap[3];
+    Radiant::Color m_borderColor;
   };
 
   /////////////////////////////////////////////////////////////////////////////

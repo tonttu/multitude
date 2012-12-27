@@ -73,6 +73,13 @@ namespace Luminous
     const bool compressedFormat = texture.dataFormat().compression() != PixelFormat::COMPRESSION_NONE;
 
     const bool dirty = m_generation != texture.generation();
+
+    // Set parameters of tex unit
+    texture.getWrap(m_wrap[0], m_wrap[1], m_wrap[2]);
+    m_minFilter = texture.getMinFilter();
+    m_magFilter = texture.getMagFilter();
+    m_borderColor = texture.borderColor();
+
     if (dirty) {
       m_generation = texture.generation();
 
@@ -165,29 +172,6 @@ namespace Luminous
       }
     }
 
-    if (dirty) {
-      // These are not supported by multisampled textures
-      if(texture.samples() == 0) {
-        glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, texture.getMinFilter());
-        GLERROR("TextureGL::upload # glTexParameteri");
-        glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, texture.getMagFilter());
-        GLERROR("TextureGL::upload # glTexParameteri");
-
-        Texture::Wrap s, t, r;
-        texture.getWrap(s,t,r);
-        glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(s) );
-        GLERROR("TextureGL::upload # glTexParameteri");
-        glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(t) );
-        GLERROR("TextureGL::upload # glTexParameteri");
-        glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(r) );
-        GLERROR("TextureGL::upload # glTexParameteri");
-
-        const Radiant::Color & c = texture.borderColor();
-        glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, c.data());
-        GLERROR("TextureGL::upload # glTexParameterfv GL_TEXTURE_BORDER_COLOR");
-      }
-    }
-
     if(!bound && alwaysBind) {
       bind(textureUnit);
       bound = true;
@@ -267,6 +251,26 @@ namespace Luminous
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
+    }
+  }
+
+  void TextureGL::setTexParameters() const
+  {
+    if(m_samples == 0) {
+      glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
+      GLERROR("TextureGL::upload # glTexParameteri");
+      glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, m_magFilter);
+      GLERROR("TextureGL::upload # glTexParameteri");
+
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(m_wrap[0]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(m_wrap[1]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+      glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(m_wrap[2]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+
+      glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, m_borderColor.data());
+      GLERROR("TextureGL::upload # glTexParameterfv GL_TEXTURE_BORDER_COLOR");
     }
   }
 }
