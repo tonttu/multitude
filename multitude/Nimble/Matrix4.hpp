@@ -268,6 +268,14 @@ namespace Nimble {
       return mm;
     }
 
+    static Matrix4T<T> makeTranslation(const Vector2T<T> & v)
+    {
+      return Matrix4T(1, 0, 0, v[0],
+                      0, 1, 0, v[1],
+                      0, 0, 1, 0,
+                      0, 0, 0, 1);
+    }
+
     /// Create a translation matrix
     /// @param v Translation vector
     /// @return New translation matrix
