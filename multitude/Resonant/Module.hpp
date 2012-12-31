@@ -88,13 +88,13 @@ namespace Resonant {
 
     /// Sets the id of the module.
     /// @param id The new id
-    void setId(const QString & id);
+    void setId(const QByteArray & id);
     /// ID of the module
     /// @return the id of the module.
-    const QString & id() const { return m_id; }
+    const QByteArray & id() const { return m_id; }
 
   private:
-    QString m_id;
+    QByteArray m_id;
   };
 
 }

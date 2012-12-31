@@ -113,6 +113,9 @@ namespace Radiant {
     /// Write a string to the buffer
     /// @param str string to write
     void writeString(const QString & str) { writeString(str.toUtf8().data()); }
+    /// Write a string to the buffer
+    /// @param str string to write
+    void writeString(const QByteArray & str) { writeString(str.data()); }
 
     /// Writes binary blob to the buffer.
     void writeBlob(const void * ptr, int n);

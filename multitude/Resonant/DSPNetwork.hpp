@@ -102,13 +102,13 @@ namespace Resonant {
       /** @param moduleId The id of the module that we are connecting to.
           @param channel The channel to connect to.
       */
-      Connection(const QString & moduleId, int channel)
+      Connection(const QByteArray & moduleId, int channel)
         : m_moduleId(moduleId), m_channel(channel),m_buf(0)
       {
       }
 
       /// Sets the id of the connected module
-      void setModuleId(const QString & id)
+      void setModuleId(const QByteArray & id)
       {
         m_moduleId = id;
       }
@@ -124,7 +124,7 @@ namespace Resonant {
       friend class DSPNetwork;
 
       /// @cond
-      QString m_moduleId;
+      QByteArray m_moduleId;
       int         m_channel;
       Buf        *m_buf;
       /// @endcond
@@ -139,9 +139,9 @@ namespace Resonant {
     public:
       NewConnection() : m_sourceChannel(0), m_targetChannel(0) {}
       /** The id of the audio source module. */
-      QString m_sourceId;
+      QByteArray m_sourceId;
       /** The id of the audio destination module. */
-      QString m_targetId;
+      QByteArray m_targetId;
       /** The channel index in the source module (where the signal is coming from). */
       int         m_sourceChannel;
       /** The channel index in the target module (where the signal is going to). */
@@ -195,10 +195,10 @@ namespace Resonant {
       }
 
       void eraseInput(const Connection & c);
-      void eraseInputs(const QString & moduleId);
+      void eraseInputs(const QByteArray & moduleId);
       int findInInput(float * ptr) const;
       int findInOutput(float * ptr) const;
-      void removeInputsFrom(const QString & id);
+      void removeInputsFrom(const QByteArray & id);
 
       Module * m_module;
 
@@ -266,11 +266,11 @@ DSPNetwork::instance().send(control);
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
-    Item * findItem(const QString & id);
+    Item * findItem(const QByteArray & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
-    Module * findModule(const QString & id);
+    Module * findModule(const QByteArray & id);
 
     /// @cond
     void dumpInfo(FILE *f);
@@ -291,7 +291,7 @@ DSPNetwork::instance().send(control);
     void checkNewControl();
     void checkNewItems();
     void checkDoneItems();
-    void deliverControl(const QString & moduleid, const char * commandid,
+    void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 
     bool uncompile(Item &);
@@ -300,7 +300,7 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    float * findOutput(const QString & id, int channel);
+    float * findOutput(const QByteArray & id, int channel);
     long countBufferBytes();
     void duDumpInfo(FILE *f);
 

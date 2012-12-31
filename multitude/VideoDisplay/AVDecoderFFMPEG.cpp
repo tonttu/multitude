@@ -833,7 +833,7 @@ namespace VideoPlayer2
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
-      m_audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value));
+      m_audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value).toUtf8());
 
       auto item = Resonant::DSPNetwork::Item();
       item.setModule(m_audioTransfer);

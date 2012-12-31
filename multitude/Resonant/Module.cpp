@@ -43,7 +43,7 @@ namespace Resonant {
     return true;
   }
 
-  void Module::setId(const QString & id)
+  void Module::setId(const QByteArray & id)
   {
     m_id = id;
   }
