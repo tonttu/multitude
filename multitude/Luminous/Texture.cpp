@@ -27,6 +27,9 @@ namespace
   static RADIANT_TLS(bool) t_enabled(true);
 }
 
+// This is a deprecated class. It's expected to generate deprecation warnings.
+PUSH_IGNORE_DEPRECATION_WARNINGS
+
 namespace Luminous
 {
 
@@ -636,3 +639,4 @@ namespace Luminous
 
 }
 
+POP_IGNORE_DEPRECATION_WARNINGS

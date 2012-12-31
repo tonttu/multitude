@@ -375,7 +375,7 @@ namespace Luminous
     // Assign the samplers
     {
       unit = 0;
-      int slot = 0; // one day this will be different from unit... when that day comes fix resetCommand
+      std::size_t slot = 0; // one day this will be different from unit... when that day comes fix resetCommand
       if (textures != nullptr) {
         auto it = std::begin(*textures);
         auto end = std::end(*textures);

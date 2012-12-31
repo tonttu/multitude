@@ -326,8 +326,8 @@ namespace Valuable
   {
   }
 
-  bool Attribute::handleShorthand(const StyleValue & value,
-                                  QMap<Attribute *, StyleValue> & expanded)
+  bool Attribute::handleShorthand(const StyleValue &,
+                                  QMap<Attribute *, StyleValue> &)
   {
     return false;
   }

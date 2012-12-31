@@ -213,7 +213,7 @@ namespace Luminous
 
   QRegion Texture::dirtyRegion(unsigned int threadIndex) const
   {
-    assert(threadIndex < m_d->dirtyRegions.size());
+    assert(int(threadIndex) < m_d->dirtyRegions.size());
     return m_d->dirtyRegions[threadIndex];
   }
 
