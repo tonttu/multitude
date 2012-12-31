@@ -1721,6 +1721,24 @@ namespace VideoPlayer2
           0,    0,    0, 1);
   }
 
+  void AVDecoderFFMPEG::panAudioTo(Nimble::Vector2f location) const
+  {
+    if (m_d->m_audioTransfer) {
+      char buf[128];
+
+      Radiant::BinaryData control;
+
+      control.writeString("panner/setsourcelocation");
+
+      snprintf(buf, sizeof(buf), "%s-%d", m_d->m_audioTransfer->id().data(), (int) 0);
+
+      control.writeString(buf);
+      control.writeVector2Float32(location); // sound source location
+
+      Resonant::DSPNetwork::instance()->send(control);
+    }
+  }
+
   void AVDecoderFFMPEG::audioTransferDeleted()
   {
     m_d->m_audioTransfer = nullptr;

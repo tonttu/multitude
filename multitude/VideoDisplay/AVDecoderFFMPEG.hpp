@@ -34,6 +34,7 @@ namespace VideoPlayer2
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
+    virtual void panAudioTo(Nimble::Vector2f location) const OVERRIDE;
 
     void audioTransferDeleted();
   protected:

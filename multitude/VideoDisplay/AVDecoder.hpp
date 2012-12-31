@@ -322,6 +322,8 @@ namespace VideoPlayer2
 
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
+    virtual void panAudioTo(Nimble::Vector2f location) const = 0;
+
   protected:
     AVDecoder();
     virtual void load(const Options & options) = 0;
