@@ -211,6 +211,10 @@ namespace Radiant {
     /// @param[out] str string to write to
     /// @return true on success
     bool readString(QString & str);
+    /// Read a string from the buffer
+    /// @param[out] str string to write to
+    /// @return true on success
+    bool readString(QByteArray & str);
     /// Reads a blob of expected size
     /// @param[out] ptr buffer to write to
     /// @param n bytes to read

@@ -446,6 +446,25 @@ namespace Radiant {
     return true;
   }
 
+  bool BinaryData::readString(QByteArray & str)
+  {
+    if(!available(sizeof(int32_t))) {
+      str.clear();
+      return false;
+    }
+
+    int32_t marker = getRef<int32_t>();
+
+    if(marker == STRING_MARKER) {
+      str = m_buf + m_current;
+      skipParameter(marker);
+    } else {
+      skipParameter(marker);
+      return false;
+    }
+    return true;
+  }
+
   bool BinaryData::readBlob(void * ptr, int n)
   {
     if(!available(sizeof(int32_t)))

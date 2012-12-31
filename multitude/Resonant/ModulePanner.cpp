@@ -88,12 +88,12 @@ namespace Resonant {
       m_sources.push_back(s);
     }
     else if(id == "removesource") {
-      QString id;
+      QByteArray id;
       data.readString(id);
       removeSource(id);
     }
     else if(id == "setsourcelocation") {
-      QString id;
+      QByteArray id;
       data.readString(id);
       Nimble::Vector2 loc = data.readVector2Float32( & ok);
 
@@ -102,7 +102,7 @@ namespace Resonant {
       }
       else {
         Radiant::error("ModulePanner::control # %s # Could not read source location",
-              id.toUtf8().data());
+              id.data());
       }
     }
     else {
@@ -213,10 +213,10 @@ namespace Resonant {
     setSpeaker(i, Nimble::Vector2(x, y));
   }
 
-  void ModulePanner::setSourceLocation(const QString & id,
+  void ModulePanner::setSourceLocation(const QByteArray & id,
                                        Nimble::Vector2 location)
   {
-    debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", id.toUtf8().data(),
+    debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", id.data(),
           location.x, location.y);
 
     Source * s = 0;
@@ -230,7 +230,7 @@ namespace Resonant {
 
     if(!s) {
       Radiant::error("ModulePanner::setSourceLocation # id \"%s\" is not known",
-            id.toUtf8().data());
+            id.data());
       return;
     }
 
@@ -305,7 +305,7 @@ namespace Resonant {
     }
   }
 
-  void ModulePanner::removeSource(const QString & id)
+  void ModulePanner::removeSource(const QByteArray & id)
   {
 
     for(Sources::iterator it = m_sources.begin(); it != m_sources.end(); ++it) {
@@ -313,12 +313,12 @@ namespace Resonant {
       if(s.m_id == id) {
         m_sources.erase(it);
         debugResonant("ModulePanner::removeSource # Removed source %s, now %lu",
-              id.toUtf8().data(), m_sources.size());
+              id.data(), m_sources.size());
         return;
       }
     }
 
-    Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", id.toUtf8().data());
+    Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", id.data());
   }
 
   void ModulePanner::addSoundRectangleSpeakers(SoundRectangle * r)

@@ -104,8 +104,8 @@ namespace Resonant {
 
     friend class ModuleRectPanner;
 
-    void setSourceLocation(const QString &, Nimble::Vector2 location);
-    void removeSource(const QString &);
+    void setSourceLocation(const QByteArray &, Nimble::Vector2 location);
+    void removeSource(const QByteArray &);
     void addSoundRectangleSpeakers(SoundRectangle * r);
 
     /// @cond
@@ -144,7 +144,7 @@ namespace Resonant {
 
       Nimble::Vector2 m_location;
       bool  m_updates;
-      QString  m_id;
+      QByteArray  m_id;
       long m_generation; /// @see ModulePanner::m_generation
 
       std::vector<Pipe> m_pipes;
