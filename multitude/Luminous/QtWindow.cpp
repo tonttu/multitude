@@ -151,8 +151,6 @@ namespace Luminous
 
     virtual void dropEvent(QDropEvent *de) OVERRIDE
     {
-      Radiant::info("dropEvent");
-
       if(m_window.eventHook()) {
         bool ok = true;
 
@@ -168,18 +166,9 @@ namespace Luminous
 
     virtual void dragEnterEvent(QDragEnterEvent *e) OVERRIDE
     {
-      Radiant::info("dragEnterEvent");
-
       // We accept all kinds of drops
       e->acceptProposedAction();
     }
-
-    /*
-    void dragMoveEvent(QDragMoveEvent *de) OVERRIDE
-    {
-      de->accept();
-    }
-    */
 
     QtWindow & m_window;
     const MultiHead::Window & m_windowDef;
