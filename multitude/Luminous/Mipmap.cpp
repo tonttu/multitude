@@ -228,8 +228,8 @@ namespace Luminous
     std::shared_ptr<MipMapGenerator> m_mipmapGenerator;
 
     Radiant::Mutex m_headerReadyCallbacksMutex;
-    QList<std::function<void(void)> > m_headerReadyCallbacks;
-    QList<std::function<void(void)> > m_headerReadyOnceCallbacks;
+    QList<QPair<std::function<void(void)>, ListenerType>> m_headerReadyCallbacks;
+    QList<QPair<std::function<void(void)>, ListenerType>> m_headerReadyOnceCallbacks;
     int m_hasHeaderReadyListener;
 
     QString m_mipmapFormat;
@@ -779,18 +779,24 @@ namespace Luminous
         if(!ptr) return;
         assert(ptr->isHeaderReady());
         Radiant::Guard g(ptr->m_d->m_headerReadyCallbacksMutex);
-        for (auto c : ptr->m_d->m_headerReadyCallbacks) c();
-        for (auto c : ptr->m_d->m_headerReadyOnceCallbacks) c();
-        ptr->m_d->m_headerReadyOnceCallbacks.clear();
+        for (auto p : ptr->m_d->m_headerReadyCallbacks)
+          if (p.second == type)
+            p.first();
+        for (auto it = ptr->m_d->m_headerReadyOnceCallbacks.begin(); it != ptr->m_d->m_headerReadyOnceCallbacks.end();) {
+          if (it->second == type) {
+            it->first();
+            it = ptr->m_d->m_headerReadyOnceCallbacks.erase(it);
+          } else ++it;
+        }
       }, type);
     }
 
     if(isHeaderReady()) {
       callback();
     } else if(once) {
-      m_d->m_headerReadyOnceCallbacks << callback;
+      m_d->m_headerReadyOnceCallbacks << qMakePair(callback, type);
     }
-    if(!once) m_d->m_headerReadyCallbacks << callback;
+    if(!once) m_d->m_headerReadyCallbacks << qMakePair(callback, type);
   }
 
   unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending) const

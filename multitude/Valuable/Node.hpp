@@ -539,8 +539,8 @@ namespace Valuable
     Valuable::AttributeIntT<Uuid> m_id;
 
     /// List of all listeners added in onReady()
-    QList<CallbackType> m_readyCallbacks;
-    QList<CallbackType> m_readyOnceCallbacks;
+    QList<QPair<CallbackType, ListenerType>> m_readyCallbacks;
+    QList<QPair<CallbackType, ListenerType>> m_readyOnceCallbacks;
     /// Protects m_readyCallbacks and isReady() call in onReady()
     std::shared_ptr<Radiant::Mutex> m_readyCallbacksMutex;
     /// Used by onReady to check if there already is "ready" event listener

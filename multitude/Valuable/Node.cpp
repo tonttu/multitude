@@ -752,20 +752,24 @@ namespace Valuable
         std::shared_ptr<Radiant::Mutex> mptr = weak.lock();
         if(!mptr) return;
         Radiant::Guard g(*mptr);
-        for (auto c: m_readyCallbacks)
-          c(this);
-        for(auto c: m_readyOnceCallbacks)
-          c(this);
-        m_readyOnceCallbacks.clear();
+        for (auto p: m_readyCallbacks)
+          if (p.second == type)
+            p.first(this);
+        for (auto it = m_readyOnceCallbacks.begin(); it != m_readyOnceCallbacks.end();) {
+          if (it->second == type) {
+            it->first(this);
+            it = m_readyOnceCallbacks.erase(it);
+          } else ++it;
+        }
       }, type);
     }
 
     if(isReady(false)) {
       callback(this);
     } else if(once) {
-      m_readyOnceCallbacks << callback;
+      m_readyOnceCallbacks << qMakePair(callback, type);
     }
-    if(!once) m_readyCallbacks << callback;
+    if(!once) m_readyCallbacks << qMakePair(callback, type);
   }
 
 
