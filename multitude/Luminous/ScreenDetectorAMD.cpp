@@ -228,7 +228,8 @@ namespace {
         screenInfo.setName(currentDisplay.strDisplayName);
         screenInfo.setGpuName(currentAdapter.strAdapterName);
         //same id scheme used by amdcccle, or so it seems
-        screenInfo.setNumId(currentDisplay.displayID.iDisplayPhysicalAdapterIndex + 1);
+        int nid = currentDisplay.displayID.iDisplayLogicalAdapterIndex + 1;
+        screenInfo.setNumId(nid);
 
         int gpuID = 0;
         ADL_Adapter_ID_Get(adapterInfo[adapterIdx].iAdapterIndex, &gpuID);
