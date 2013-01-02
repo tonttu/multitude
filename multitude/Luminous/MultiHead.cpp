@@ -78,8 +78,8 @@ namespace Luminous {
   bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
     bool ok = Node::deserialize(element);
-
-    updateBBox();
+    if(ok)
+      updateBBox();
 
     return ok;
   }
@@ -418,7 +418,13 @@ namespace Luminous {
   bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
     /// @todo Remove this function and use the correct serialization API
-    QByteArray name = ce.name().toUtf8();
+    bool ok = true;
+    const QByteArray name = ce.name().toUtf8();
+
+    // This is for backwards compatibility. The attribute was removed in 2.0
+    // but we still want to be able to parse old configuration files.
+    if(name == "displaynumber")
+      return true;
 
     // Get the 'type' attribute
     const QString & type = ce.get("type");
@@ -427,13 +433,13 @@ namespace Luminous {
       Area * area = new Area(this);
       // Add as child & recurse
       addValue(name, area);
-      area->deserialize(ce);
+      ok &= area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
     } else {
       return false;
     }
 
-    return true;
+    return ok;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -615,14 +621,14 @@ namespace Luminous {
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
+    if(ok) {
+      const float pixelSizeCm = m_widthcm.asFloat() / width();
 
-    const float pixelSizeCm = m_widthcm.asFloat() / width();
+      for(size_t i = 0; i < windowCount(); i++)
+        window(i).setPixelSizeCm(pixelSizeCm);
 
-    for(size_t i = 0; i < windowCount(); i++) {
-      window(i).setPixelSizeCm(pixelSizeCm);
+      m_edited = false;
     }
-
-    m_edited = false;
 
     return ok;
   }
@@ -642,15 +648,16 @@ namespace Luminous {
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
-    // const QString & name = ce.name();
-
     const QString & type = ce.get("type");
 
     if(type == "window") {
       Window * win = new Window(this);
 
-      //recurse
-      win->deserialize(ce);
+      bool ok = win->deserialize(ce);
+      if(!ok) {
+        Radiant::error("MultiHead::readElement # failed to parse window configuration");
+        return false;
+      }
 
       addWindow(win);
     } else {
