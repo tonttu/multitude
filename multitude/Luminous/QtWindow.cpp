@@ -100,6 +100,11 @@ namespace Luminous
 
     virtual void mousePressEvent(QMouseEvent * e) OVERRIDE
     {
+      // If we are running in frameless mode, we must explicitly make the
+      // window active so it gets keyboard focus
+      if(m_windowDef.frameless())
+        activateWindow();
+
       if(m_window.eventHook()) {
         m_window.eventHook()->handleMouseEvent(*e);
         e->accept();
@@ -202,11 +207,11 @@ namespace Luminous
     : Window()
     , m_d(new D())
   {
-    /* The code below opens a new OpenGL window at desired loation. Extra steps
-       are taken to ensure that the window creation happens so that:
+    /* The code below opens a new OpenGL window at desired location. Extra
+       steps are taken to ensure that the window creation happens so that:
 
-       1) A dummy window is created, and moved to the right location,
-       with right size etc.
+       1) A dummy window is created, and moved to the right location, with
+       right size etc.
 
        2) An OpenGL widget is opened at this correct location.
 
@@ -219,8 +224,10 @@ namespace Luminous
     */
 
     Qt::WindowFlags flags = 0;
-    if(window.frameless())
-      flags = Qt::FramelessWindowHint;
+    if(window.frameless()) {
+      flags |= Qt::FramelessWindowHint;
+      flags |= Qt::X11BypassWindowManagerHint;
+    }
 
     QWidget * parent = 0;
 
@@ -253,7 +260,9 @@ namespace Luminous
       m_d->m_hostWidget->showFullScreen();
 
     QGLFormat format = QGLFormat::defaultFormat();
-    // disable multisampling default framebuffer if we do our own multisampling
+
+    // Disable multi-sampling in the default framebuffer if we do our own
+    // multi-sampling
     if(window.directRendering())
       format.setSamples(window.antiAliasingSamples());
 
@@ -262,10 +271,20 @@ namespace Luminous
 
     m_d->m_mainWindow = new GLThreadWidget(format, m_d->m_hostWidget, *this, flags, window);
 
-    m_d->m_mainWindow->raise();
     m_d->m_mainWindow->show();
     m_d->m_mainWindow->resize(window.width(), window.height());
-    m_d->m_mainWindow->setFocus();
+    m_d->m_mainWindow->raise();
+
+    m_d->m_mainWindow->setFocus(Qt::ActiveWindowFocusReason);
+
+    // If we bypass the window manager, we must explicitly make the window
+    // active to get keyboard focus. To do this when creating a window, we must
+    // execute the event loop once so the window actually gets created before
+    // activateWindow() is called.
+    if(flags & Qt::X11BypassWindowManagerHint) {
+      QApplication::processEvents();
+      m_d->m_mainWindow->activateWindow();
+    }
   }
 
   QtWindow::~QtWindow()
