@@ -76,7 +76,7 @@ namespace Radiant
 
     for(size_t i = 0; i < size(); i++) {
       if(r.exactMatch(QString::fromUtf8(strings[i]))) {
-        QString func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
+        QByteArray func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
         QString file;
 
         Dl_info info;
@@ -94,7 +94,7 @@ namespace Radiant
         if(func.isEmpty())
           Radiant::error("#%-2d %p at %s", int(i), m_frames[i], file.toUtf8().data());
         else
-          Radiant::error("#%-2d %s at %s", int(i), func.toUtf8().data(), file.toUtf8().data());
+          Radiant::error("#%-2d %s at %s", int(i), func.data(), file.toUtf8().data());
       } else {
         Radiant::error("#%-2d %s", int(i), strings[i]);
       }

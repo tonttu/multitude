@@ -18,36 +18,62 @@
 #ifdef INTRUSIVE_PTR_DEBUG
 
 #include "Mutex.hpp"
+#include "StringUtils.hpp"
+#include "Trace.hpp"
 
 namespace
 {
-  typedef std::map<const void *, Radiant::IntrusivePtrDebug::CallMap> Map;
-  Map s_map;
-  Radiant::Mutex s_mapMutex;
+  Radiant::IntrusivePtrDebug::CallMapDB s_db;
+  Radiant::Mutex s_dbMutex;
 }
 
 namespace Radiant
 {
-  IntrusivePtrDebug::CallMap IntrusivePtrDebug::fetch(const void * ptr)
+  IntrusivePtrDebug::CallMap IntrusivePtrDebug::fetch(const IntrusivePtrCounter * counter)
   {
-    Guard g(s_mapMutex);
-    Map::const_iterator it = s_map.find(ptr);
-    if(it == s_map.end()) return CallMap();
+    Guard g(s_dbMutex);
+    auto it = s_db.find(counter);
+    if(it == s_db.end()) return CallMap();
     return it->second;
   }
 
-  void IntrusivePtrDebug::add(const void * ptr, const void * intrusivePtr)
+  IntrusivePtrDebug::CallMapDB IntrusivePtrDebug::db()
   {
-    Guard g(s_mapMutex);
-    s_map[ptr][intrusivePtr];
+    Guard g(s_dbMutex);
+    return s_db;
   }
 
-  void IntrusivePtrDebug::remove(const void * ptr, const void * intrusivePtr)
+  void IntrusivePtrDebug::add(const Radiant::IntrusivePtrCounter * counter, const void * intrusivePtr,
+                              const std::type_info & type)
   {
-    Guard g(s_mapMutex);
-    CallMap & map = s_map[ptr];
-    map.erase(intrusivePtr);
-    if(map.empty()) s_map.erase(ptr);
+    if (!counter) return;
+    Guard g(s_dbMutex);
+    auto & map = s_db[counter];
+    // We can't just store type_info pointer, since when we read this data,
+    // the dll that provided this type_info can already be unloaded
+    if (map.name.isEmpty())
+      map.name = StringUtils::demangle(type.name());
+    map.links[intrusivePtr];
+  }
+
+  void IntrusivePtrDebug::move(const IntrusivePtrCounter * counter, const void * intrusivePtrFrom,
+                               const void * intrusivePtrTo)
+  {
+    if (!counter) return;
+    Guard g(s_dbMutex);
+    auto & map = s_db[counter];
+    map.links[intrusivePtrTo] = map.links[intrusivePtrFrom];
+    map.links.erase(intrusivePtrFrom);
+  }
+
+  void IntrusivePtrDebug::remove(const IntrusivePtrCounter * counter, const void * intrusivePtr)
+  {
+    if (!counter) return;
+    Guard g(s_dbMutex);
+    auto & map = s_db[counter];
+    map.links.erase(intrusivePtr);
+    if (map.links.empty()) s_db.erase(counter);
   }
 }
+
 #endif

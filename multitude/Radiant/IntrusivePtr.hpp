@@ -1,42 +1,64 @@
 #if !defined (RADIANT_INTRUSIVEPTR_HPP)
 #define RADIANT_INTRUSIVEPTR_HPP
 
-#include "Radiant/SafeBool.hpp"
+#include "Platform.hpp"
+#include "SafeBool.hpp"
+
 #include <cassert>
 
 #include <QAtomicInt>
 
-// #define INTRUSIVE_PTR_DEBUG
+#ifdef RADIANT_DEBUG
+#define INTRUSIVE_PTR_DEBUG
+#endif
+
 #ifdef INTRUSIVE_PTR_DEBUG
+
+#include <Valuable/Export.hpp>
 
 #include "Export.hpp"
 #include "CallStack.hpp"
+
+#include <QByteArray>
 
 #include <map>
 // for std::nullptr_t
 #include <cstddef>
 
 #define INTRUSIVE_PTR_DEBUG_ACQUIRE \
-  IntrusivePtrDebug::add(m_ptr, this)
+  IntrusivePtrDebug::add(m_counter, this, typeid(*m_ptr))
 
 #define INTRUSIVE_PTR_DEBUG_RELEASE \
-  IntrusivePtrDebug::remove(m_ptr, this)
+  IntrusivePtrDebug::remove(m_counter, this)
+
+#define INTRUSIVE_PTR_DEBUG_MOVE \
+  IntrusivePtrDebug::move(m_counter, &iptr, this)
 
 namespace Radiant
 {
+  struct IntrusivePtrCounter;
   namespace IntrusivePtrDebug
   {
-    typedef std::map<const void *, Radiant::CallStack> CallMap;
+    struct CallMap
+    {
+      QByteArray name;
+      std::map<const void *, Radiant::CallStack> links;
+    };
 
-    RADIANT_API CallMap fetch(const void * ptr);
-    RADIANT_API void add(const void * ptr, const void * intrusivePtr);
-    RADIANT_API void remove(const void * ptr, const void * intrusivePtr);
-  };
+    typedef std::map<const void *, CallMap> CallMapDB;
+
+    RADIANT_API CallMap fetch(const Radiant::IntrusivePtrCounter * counter);
+    RADIANT_API CallMapDB db();
+    RADIANT_API void add(const Radiant::IntrusivePtrCounter * counter, const void * intrusivePtr, const std::type_info & type);
+    RADIANT_API void move(const Radiant::IntrusivePtrCounter * counter, const void * intrusivePtrFrom, const void * intrusivePtrTo);
+    RADIANT_API void remove(const Radiant::IntrusivePtrCounter * counter, const void * intrusivePtr);
+  }
 }
 
 #else
 #define INTRUSIVE_PTR_DEBUG_ACQUIRE
 #define INTRUSIVE_PTR_DEBUG_RELEASE
+#define INTRUSIVE_PTR_DEBUG_MOVE
 #endif
 
 namespace Radiant
@@ -319,6 +341,7 @@ namespace Radiant
     {
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
+      INTRUSIVE_PTR_DEBUG_MOVE;
     }
 
     /// A move constructor for intrusive pointers
@@ -328,6 +351,7 @@ namespace Radiant
     {
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
+      INTRUSIVE_PTR_DEBUG_MOVE;
     }
 
     /// Construct an intrusive pointer from instrusive weak pointer
@@ -343,6 +367,7 @@ namespace Radiant
         } while (!wptr.m_counter->useCount.testAndSetOrdered(count, count + 1));
         m_ptr = wptr.m_ptr;
         m_counter = wptr.m_counter;
+        INTRUSIVE_PTR_DEBUG_ACQUIRE;
       }
     }
 
@@ -383,6 +408,7 @@ namespace Radiant
       m_counter = iptr.m_counter;
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
+      INTRUSIVE_PTR_DEBUG_MOVE;
       return *this;
     }
 
@@ -397,6 +423,7 @@ namespace Radiant
       m_counter = iptr.m_counter;
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
+      INTRUSIVE_PTR_DEBUG_MOVE;
       return *this;
     }
 
@@ -541,13 +568,13 @@ namespace Radiant
     inline void deref()
     {
       if(m_counter) {
+        INTRUSIVE_PTR_DEBUG_RELEASE;
         if(!m_counter->useCount.deref()) {
           intrusivePtrRelease(m_ptr);
           if(!m_counter->weakCount.deref())
             delete m_counter;
         }
       }
-      INTRUSIVE_PTR_DEBUG_RELEASE;
     }
     inline void ref(T * ptr, IntrusivePtrCounter * counter)
     {
