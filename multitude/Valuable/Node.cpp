@@ -517,9 +517,9 @@ namespace Valuable
     }
 
     if(!obj->m_eventListenNames.contains(to)) {
-      const QString & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+      const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
       Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.toUtf8().data(), obj->name().data(), obj, to.data());
+              klass.data(), obj->name().data(), obj, to.data());
     }
 
     if(defaultData)
@@ -671,9 +671,9 @@ namespace Valuable
         /*warning("Node::processMessage # %s (%s %p) doesn't accept event '%s'",
                   klass.c_str(), name().c_str(), this, id);*/
       } else {
-        const QString klass = Radiant::StringUtils::demangle(typeid(*this).name());
+        const QByteArray klass = Radiant::StringUtils::demangle(typeid(*this).name());
         Radiant::warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
-                klass.toUtf8().data(), name().data(), this, id.data());
+                klass.data(), name().data(), this, id.data());
       }
     }
   }

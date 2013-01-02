@@ -161,7 +161,7 @@ namespace Radiant
     for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
       Radiant::FileUtils::indent(f, indent);
       std::shared_ptr<Task> t = it->second;
-      fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).toUtf8().data(), t.get());
+      fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).data(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
               (float) -t->scheduled().sinceSecondsD());

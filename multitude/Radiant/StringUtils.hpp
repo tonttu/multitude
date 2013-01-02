@@ -105,7 +105,7 @@ namespace Radiant
     /// If the name can't be parsed, the original string is returned
     /// @param name Mangled symbol name
     /// @returns Demangled symbol name
-    RADIANT_API QString demangle(const char * name);
+    RADIANT_API QByteArray demangle(const char * name);
 
   }
 }
