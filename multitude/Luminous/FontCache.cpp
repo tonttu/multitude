@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QPainter>
 #include <QSettings>
+#include <QThread>
 
 namespace
 {
@@ -174,9 +175,11 @@ namespace Luminous
     /// found in file cache, these aren't created at all
     std::unique_ptr<QPainter> m_painter;
     std::unique_ptr<QImage> m_painterImg;
-    /// @todo QRawFont isn't thread-safe, so we make our own copy.
-    ///       However, it's unclear if even the copy constructor is thread-safe / reentrant
-    std::unique_ptr<QRawFont> m_rawFont;
+    /// QRawFont isn't thread-safe, so we make our own copy
+    QRawFont m_rawFont;
+    /// m_rawFont is thread-specific variable. If the active background thread
+    /// changes, we need to re-create the font
+    Qt::HANDLE m_rawFontThread;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -194,7 +197,7 @@ namespace Luminous
       FileCacheItem(const QString & src, const QRectF & rect)
         : src(src), rect(rect) {}
 
-      /// Filename (TGA)
+      /// Filename (our own format)
       QString src;
       /// Glyph::m_location, Glyph::m_size
       QRectF rect;
@@ -223,6 +226,7 @@ namespace Luminous
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
     : Radiant::Task(PRIORITY_HIGH)
     , m_cache(cache)
+    , m_rawFontThread(0)
   {
     eventAddOut("glyph-ready");
     eventAddListenerBd("glyph-ready", [&] (Radiant::BinaryData & bd) {
@@ -274,7 +278,7 @@ namespace Luminous
     // delete these in this thread
     m_painter.reset();
     m_painterImg.reset();
-    m_rawFont.reset();
+    m_rawFont = QRawFont();
     m_cache.m_cacheCondition.wakeAll(m_cache.m_cacheMutex);
   }
 
@@ -328,6 +332,9 @@ namespace Luminous
     QImage & img = *static_cast<QImage*>(painter.device());
     img.fill(Qt::transparent);
     painter.drawPath(path);
+
+    /*static QAtomicInt id;
+    img.save(QString("glyph-bg-%1.png").arg(id.fetchAndAddOrdered(1)));*/
 
     for (int y = 0; y < s_maxHiresSize; ++y) {
       const QRgb * from = reinterpret_cast<const QRgb*>(img.constScanLine(y));
@@ -455,11 +462,21 @@ namespace Luminous
 
   QRawFont & FontCache::FontGenerator::createRawFont()
   {
-    if (m_rawFont)
-      return *m_rawFont;
+    if (m_rawFont.isValid() && m_rawFontThread == QThread::currentThreadId())
+      return m_rawFont;
 
-    m_rawFont.reset(new QRawFont(m_cache.m_rawFont));
-    return *m_rawFont;
+    // QRawFont must be re-created on every thread that uses it.
+    // Copy-constructor isn't enough, we need to use QRawFont::fromFont
+    // and hope that we are able to set all necessary parameters from
+    // the original QRawFont to this temporary QFont.
+    QFont font(m_cache.m_rawFont.familyName());
+    font.setWeight(m_cache.m_rawFont.weight());
+    font.setStyle(m_cache.m_rawFont.style());
+    font.setPixelSize(m_cache.m_rawFont.pixelSize());
+    font.setHintingPreference(m_cache.m_rawFont.hintingPreference());
+    m_rawFont = QRawFont::fromFont(font);
+    m_rawFontThread = QThread::currentThreadId();
+    return m_rawFont;
   }
 
   /////////////////////////////////////////////////////////////////////////////
