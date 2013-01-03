@@ -8,9 +8,7 @@
 
 #include <QAtomicInt>
 
-#ifdef RADIANT_DEBUG
-#define INTRUSIVE_PTR_DEBUG
-#endif
+// #define INTRUSIVE_PTR_DEBUG
 
 #ifdef INTRUSIVE_PTR_DEBUG
 
