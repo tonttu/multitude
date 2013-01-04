@@ -94,15 +94,14 @@ namespace Luminous
   {
   public:
     D();
+    D(const QTextLayout & copy);
 
     void layout(const Nimble::Vector2f & size);
 
   public:
     Valuable::StyleValue m_lineHeight;
     Valuable::StyleValue m_letterSpacing;
-    std::list<QTextLayout> m_layouts;
-    QFont m_font;
-    QTextOption m_textOption;
+    QTextLayout m_layout;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -110,6 +109,15 @@ namespace Luminous
 
   SimpleTextLayout::D::D()
   {
+    QFont font;
+    font.setHintingPreference(QFont::PreferNoHinting);
+    m_layout.setFont(font);
+  }
+
+  SimpleTextLayout::D::D(const QTextLayout & copy)
+    : m_layout(copy.text(), copy.font())
+  {
+    m_layout.setTextOption(copy.textOption());
   }
 
   void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
@@ -131,39 +139,38 @@ namespace Luminous
       }
     }
 
-    for (auto & layout: m_layouts) {
-      assert(layout.font().hintingPreference() == QFont::PreferNoHinting);
+    assert(m_layout.font().hintingPreference() == QFont::PreferNoHinting);
 
-      QFont font = layout.font();
-      if (m_letterSpacing.size() == 1) {
-        if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
-          font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
-        } else {
-          font.setLetterSpacing(QFont::AbsoluteSpacing, m_letterSpacing.asFloat());
-        }
+    QFont font = m_layout.font();
+    if (m_letterSpacing.size() == 1) {
+      if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
+        font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
       } else {
-        font.setLetterSpacing(QFont::PercentageSpacing, 100.0f);
+        font.setLetterSpacing(QFont::AbsoluteSpacing, m_letterSpacing.asFloat());
       }
-      layout.setFont(font);
+    } else {
+      font.setLetterSpacing(QFont::PercentageSpacing, 100.0f);
+    }
+    m_layout.setFont(font);
 
-      QFontMetricsF fontMetrics(font);
-      const float leading = fontMetrics.leading();
+    QFontMetricsF fontMetrics(font);
+    const float leading = fontMetrics.leading();
 
-      layout.beginLayout();
-      while (true) {
-        QTextLine line = layout.createLine();
-        if (!line.isValid())
-          break;
+    m_layout.beginLayout();
+    while (true) {
+      QTextLine line = m_layout.createLine();
+      if (!line.isValid())
+        break;
 
-        line.setLineWidth(lineWidth);
-        y += leading;
-        line.setPosition(QPointF(0, y));
-        if (forceHeight)
-          y += height;
-        else
-          y += line.height() * heightFactor;
-      }
-      layout.endLayout();
+      line.setLineWidth(lineWidth);
+      y += leading;
+      line.setPosition(QPointF(0, y));
+      if (forceHeight)
+        y += height;
+      else
+        y += line.height() * heightFactor;
+    }
+    m_layout.endLayout();
 
 #if 0
       QImage dbgimg(layout.boundingRect().width(), layout.boundingRect().height(),
@@ -198,7 +205,6 @@ namespace Luminous
         }
       }
 #endif
-    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -212,14 +218,8 @@ namespace Luminous
 
   SimpleTextLayout::SimpleTextLayout(const SimpleTextLayout & that)
     : TextLayout(that.maximumSize())
-    , m_d(new D())
+    , m_d(new D(that.m_d->m_layout))
   {
-    setFont(that.font());
-    setTextOption(that.textOption());
-    for (auto & layout: that.m_d->m_layouts) {
-      m_d->m_layouts.emplace_back(layout.text(), m_d->m_font);
-      m_d->m_layouts.back().setTextOption(m_d->m_textOption);
-    }
   }
 
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
@@ -239,48 +239,33 @@ namespace Luminous
 
   void SimpleTextLayout::setText(const QString & text)
   {
-    auto layoutit = m_d->m_layouts.begin();
-    for (auto row: text.split(QRegExp("\\r\\n|\\n|\\r"))) {
-      if (layoutit == m_d->m_layouts.end()) {
-        m_d->m_layouts.emplace_back(row, m_d->m_font);
-        m_d->m_layouts.back().setTextOption(m_d->m_textOption);
-        layoutit = m_d->m_layouts.end();
-      } else {
-        layoutit->setText(row);
-        ++layoutit;
-      }
-    }
-
-    while (layoutit != m_d->m_layouts.end())
-      layoutit = m_d->m_layouts.erase(layoutit);
-
+    QString tmp = text;
+    tmp.replace(QRegExp("\\r\\n|\\n|\\r"), QString(QChar::LineSeparator));
+    m_d->m_layout.setText(tmp);
     invalidate();
   }
 
   QTextOption SimpleTextLayout::textOption() const
   {
-    return m_d->m_textOption;
+    return m_d->m_layout.textOption();
   }
 
   void SimpleTextLayout::setTextOption(const QTextOption & textOption)
   {
-    m_d->m_textOption = textOption;
-    for (auto & layout: m_d->m_layouts)
-      layout.setTextOption(textOption);
+    m_d->m_layout.setTextOption(textOption);
     invalidate();
   }
 
   QFont SimpleTextLayout::font() const
   {
-    return m_d->m_font;
+    return m_d->m_layout.font();
   }
 
   void SimpleTextLayout::setFont(const QFont & font)
   {
-    m_d->m_font = font;
-    m_d->m_font.setHintingPreference(QFont::PreferNoHinting);
-    for (auto & layout: m_d->m_layouts)
-      layout.setFont(m_d->m_font);
+    QFont tmp = font;
+    tmp.setHintingPreference(QFont::PreferNoHinting);
+    m_d->m_layout.setFont(tmp);
     invalidate();
   }
 
@@ -310,14 +295,14 @@ namespace Luminous
     return m_d->m_letterSpacing;
   }
 
-  std::list<QTextLayout> & SimpleTextLayout::layouts()
+  QTextLayout & SimpleTextLayout::layout()
   {
-    return m_d->m_layouts;
+    return m_d->m_layout;
   }
 
-  const std::list<QTextLayout> & SimpleTextLayout::layouts() const
+  const QTextLayout & SimpleTextLayout::layout() const
   {
-    return m_d->m_layouts;
+    return m_d->m_layout;
   }
 
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
@@ -353,16 +338,9 @@ namespace Luminous
     if (!isLayoutReady()) {
       m_d->layout(maximumSize());
       // We need to avoid calling bounding box here, becourse it calls generateInternal
-      QRectF boundingBox;
-      for (auto & layout: m_d->m_layouts) {
-        boundingBox |= layout.boundingRect();
-      }
+      QRectF boundingBox = m_d->m_layout.boundingRect();
       nonConst->setBoundingBox(boundingBox);
-      auto align = Qt::AlignLeft | Qt::AlignTop;
-
-      // We use the alignment of the first layout as the alignment of the whole text
-      if (!m_d->m_layouts.empty())
-        align = m_d->m_layouts.front().textOption().alignment();
+      auto align = m_d->m_layout.textOption().alignment();
 
       if (align & Qt::AlignBottom) {
         nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox.height()));
@@ -381,12 +359,10 @@ namespace Luminous
     nonConst->clearGlyphs();
 
     bool missingGlyphs = false;
-    for (auto & layout: m_d->m_layouts) {
-      const Nimble::Vector2f layoutLocation(layout.position().x(), layout.position().y());
+    const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
 
-      foreach (const QGlyphRun & glyphRun, layout.glyphRuns())
-        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
-    }
+    foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
+      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
 
     nonConst->setGlyphsReady(!missingGlyphs);
   }
