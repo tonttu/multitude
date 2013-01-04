@@ -877,7 +877,7 @@ namespace Luminous
     return m_d->m_cancelled;
   }
 
-  float Mipmap::pixelAlpha(Nimble::Vector2 relLoc)
+  float Mipmap::pixelAlpha(Nimble::Vector2 relLoc) const
   {
     if(!isHeaderReady() || !isValid()) return 1.0f;
 

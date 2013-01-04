@@ -68,8 +68,11 @@ namespace Luminous
     /// @return Returns true if the images have alpha channel
     LUMINOUS_API bool hasAlpha() const;
 
-    /// Not finished
-    LUMINOUS_API float pixelAlpha(Nimble::Vector2 relLoc);
+    /// Reads alpha value in the most accurate loaded mipmap level in given coordinate
+    /// This function doesn't trigger any mipmap loading
+    /// @param relLoc relative XY-location, values should be from 0 to 1
+    /// @return alpha value from 0 to 1, or 1 if reading fails
+    LUMINOUS_API float pixelAlpha(Nimble::Vector2 relLoc) const;
 
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
