@@ -68,6 +68,7 @@ namespace Luminous {
   {
     m_colorCorrectionShader = new Luminous::Shader();
     m_colorCorrectionShader->setFragmentShader(fs_shader);
+    eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::Area::~Area()
@@ -328,6 +329,7 @@ namespace Luminous {
     m_graphicsBounds.high().x += m_seams[1];
     m_graphicsBounds.low().y  -= m_seams[3];
     m_graphicsBounds.high().y += m_seams[2];
+    eventSend("graphics-bounds-changed");
   }
 
 
@@ -385,6 +387,20 @@ namespace Luminous {
     }
   }
 
+  void MultiHead::Window::addArea(Area * a)
+  {
+    if (!a)
+      return;
+    m_areas.push_back(std::shared_ptr<Area>(a));
+    addValue(a);
+
+    if (m_screen) {
+      a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
+      Radiant::BinaryData bd;
+      m_screen->processMessage("graphics-bounds-changed", bd);
+    }
+  }
+
   Nimble::Vector2f MultiHead::Window::windowToGraphics(Nimble::Vector2f loc, bool & convOk) const
   {
     //      Radiant::trace("MultiHead::Window::windowToGraphics # loc(%f,%f), m_size[1] = %d", loc.x, loc.y, m_size[1]);
@@ -435,6 +451,10 @@ namespace Luminous {
       addValue(name, area);
       ok &= area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
+      if (m_screen) {
+        Radiant::BinaryData bd;
+        m_screen->processMessage("graphics-bounds-changed", bd);
+      }
     } else {
       return false;
     }
@@ -456,6 +476,8 @@ namespace Luminous {
       m_edited(false)
   {
     m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
+    eventAddIn("graphics-bounds-changed");
+    eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::~MultiHead()
@@ -644,6 +666,14 @@ namespace Luminous {
     } else {
       m_hwColorCorrection.syncWith(0);
     }
+    eventSend("graphics-bounds-changed");
+  }
+
+  void MultiHead::processMessage(const QByteArray & messageId, Radiant::BinaryData & data)
+  {
+    if (messageId == "graphics-bounds-changed") {
+      eventSend("graphics-bounds-changed");
+    } else Node::processMessage(messageId, data);
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)

@@ -309,7 +309,7 @@ namespace Luminous {
       LUMINOUS_API void setSeam(float seam);
 
       /// Adds an area to the window
-      void addArea(Area * a) { m_areas.push_back(std::shared_ptr<Area>(a)); addValue(a); }
+      LUMINOUS_API void addArea(Area * a);
 
       /// Location of the window on the computer display
       const Vector2i & location() const { return m_location.asVector(); }
@@ -374,11 +374,12 @@ namespace Luminous {
 
       void deleteAreas()
       {
-        for(std::vector<std::shared_ptr<Area> >::iterator it = m_areas.begin(); it != m_areas.end(); ++it)
-        {
-          removeValue(it->get());
+        for (auto area: m_areas) {
+          removeValue(area.get());
+          area->eventRemoveListener(m_screen);
         }
         m_areas.clear();
+        eventSend("graphics-bounds-changed");
       }
 
       Nimble::Recti getRect() const {
@@ -491,6 +492,8 @@ namespace Luminous {
 
     float dpi() const;
     void setDpi(float dpi);
+
+    virtual void processMessage(const QByteArray & messageId, Radiant::BinaryData & data);
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
