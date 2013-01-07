@@ -37,6 +37,24 @@ namespace Valuable {
         delete m_values[i];
     }
 
+    bool setWidth(float w)
+    {
+      beginChangeTransaction();
+      *m_values[0] = w;
+      endChangeTransaction();
+
+      return true;
+    }
+
+    bool setHeight(float h)
+    {
+      beginChangeTransaction();
+      *m_values[1] = h;
+      endChangeTransaction();
+
+      return true;
+    }
+
     virtual QString asString(bool * const ok = 0) const OVERRIDE
     {
       if(ok) *ok = true;
