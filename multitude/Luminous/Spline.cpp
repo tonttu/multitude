@@ -81,6 +81,7 @@ namespace Luminous {
       m_descr.addAttribute<Nimble::Vector2f>("vertex_range");
       m_descr.addAttribute<Nimble::Vector4f>("vertex_color");
       m_shader.setVertexDescription(m_descr);
+      m_shader.setTranslucency(true);
     }
 
     void clear()
