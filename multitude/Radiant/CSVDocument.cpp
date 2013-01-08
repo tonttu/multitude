@@ -31,7 +31,7 @@ namespace Radiant {
   {
   }
 
-  int CSVDocument::load(const QString &filename, const char * delimiter)
+  int CSVDocument::load(const QString &filename, const char * delimiter, bool removeQuations)
   {
     m_rows.clear();
 
@@ -46,8 +46,16 @@ namespace Radiant {
 
     foreach(QString line, contents.split("\n")) {
       Row r;
-      foreach(QString str, line.split(delim2))
+      foreach(QString str, line.split(delim2)) {
+
+        if(removeQuations && str.size() >= 2) {
+          if(str[0] == '\"')
+            str.remove(0, 1);
+          if(str[str.size()-1] == '\"')
+            str.remove(str.size()-1, 1);
+        }
         r.push_back(str.trimmed());
+      }
       m_rows.push_back(r);
     }
 
@@ -67,6 +75,24 @@ namespace Radiant {
     }
 
     return 0;
+  }
+
+  int CSVDocument::findColumnOnRow(const QString &key, unsigned rowIndex)
+  {
+    Row * r = row(rowIndex);
+
+    if(!r)
+      return -1;
+
+    for(size_t i = 0; i < r->size(); i++) {
+
+      // Radiant::info("CSVDocument::findColumnOnRow (%s)", r->at(i).toUtf8().data());
+
+      if(r->at(i) == key)
+        return i;
+    }
+
+    return -1;
   }
 
   CSVDocument::Row * CSVDocument::row(unsigned index)
