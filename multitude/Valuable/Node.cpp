@@ -276,7 +276,7 @@ namespace Valuable
     // Check values
     if(m_values.find(cname) != m_values.end()) {
       Radiant::error(
-          "Node::addValue # can not add value '%s' as '%s' "
+          "Node::addAttribute # can not add value '%s' as '%s' "
           "already has a value with the same name.",
           cname.data(), m_name.data());
       return false;
@@ -286,7 +286,7 @@ namespace Valuable
     Node * host = value->host();
     if(host) {
       Radiant::error(
-          "Node::addValue # '%s' already has a host '%s'. "
+          "Node::addAttribute # '%s' already has a host '%s'. "
           "Unlinking it to set new host.",
           cname.data(), host->name().data());
       value->removeHost();
