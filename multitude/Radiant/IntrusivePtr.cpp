@@ -62,8 +62,9 @@ namespace Radiant
     if (!counter) return;
     Guard g(s_dbMutex);
     auto & map = s_db[counter];
-    map.links[intrusivePtrTo] = map.links[intrusivePtrFrom];
+
     map.links.erase(intrusivePtrFrom);
+    map.links[intrusivePtrTo];
   }
 
   void IntrusivePtrDebug::remove(const IntrusivePtrCounter * counter, const void * intrusivePtr)
