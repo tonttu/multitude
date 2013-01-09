@@ -324,11 +324,12 @@ namespace Luminous
 
     if(since > hideCursorLowerLimit) {
 
-      if(m_d->m_mainWindow->cursor().shape() != Qt::BlankCursor)
-        m_d->m_mainWindow->setCursor(Qt::BlankCursor);
+      auto cursor = QApplication::overrideCursor();
 
-    } else if(m_d->m_mainWindow->cursor().shape() == Qt::BlankCursor) {
-      m_d->m_mainWindow->setCursor(Qt::ArrowCursor);
+      if(cursor && cursor->shape() != Qt::BlankCursor)
+        QApplication::setOverrideCursor(Qt::BlankCursor);
+      else if(!cursor || cursor->shape() == Qt::BlankCursor)
+        QApplication::restoreOverrideCursor();
     }
   }
 
