@@ -25,6 +25,7 @@ namespace Luminous
   public:
     QtWindow & m_window;
     const MultiHead::Window & m_windowDef;
+    Radiant::TimeStamp m_lastMouseAction;
 
     GLThreadWidget(const QGLFormat & format, QWidget * host, QtWindow & window, Qt::WindowFlags flags,
                    const MultiHead::Window & windowDef)
@@ -99,6 +100,8 @@ namespace Luminous
         m_window.eventHook()->handleMouseEvent(*e);
         e->accept();
       }
+
+      m_lastMouseAction = Radiant::TimeStamp::currentTime();
     }
 
     virtual void mousePressEvent(QMouseEvent * e) OVERRIDE
@@ -314,6 +317,19 @@ namespace Luminous
   void QtWindow::swapBuffers()
   {
     m_d->m_mainWindow->swapBuffers();
+
+    // Timeout in seconds after which the cursor is hidden
+    const float hideCursorLowerLimit = 5.f;
+    float since = m_d->m_mainWindow->m_lastMouseAction.sinceSecondsD();
+
+    if(since > hideCursorLowerLimit) {
+
+      if(m_d->m_mainWindow->cursor().shape() != Qt::BlankCursor)
+        m_d->m_mainWindow->setCursor(Qt::BlankCursor);
+
+    } else if(m_d->m_mainWindow->cursor().shape() == Qt::BlankCursor) {
+      m_d->m_mainWindow->setCursor(Qt::ArrowCursor);
+    }
   }
 
   void QtWindow::minimize()
