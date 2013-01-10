@@ -71,6 +71,9 @@
 
     This class is thread-safe. */
 #define DEFINE_SINGLETON(T)                                        \
+  DEFINE_SINGLETON2(T, )
+
+#define DEFINE_SINGLETON2(T, INIT)                                 \
   std::shared_ptr<T> T :: instance() {                             \
     std::shared_ptr<T> p = s_multiSingletonInstance.lock();        \
     if(!p) {                                                       \
@@ -78,6 +81,7 @@
       p = s_multiSingletonInstance.lock();                         \
       if(p) return p;                                              \
       p.reset(new T());                                            \
+      INIT                                                         \
       s_multiSingletonInstance = p;                                \
     }                                                              \
     return p;                                                      \
