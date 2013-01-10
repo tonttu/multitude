@@ -210,6 +210,8 @@ namespace Luminous {
         return m_colorCorrection;
       }
 
+      bool readElement(const Valuable::ArchiveElement & element);
+
     private:
 
       enum {

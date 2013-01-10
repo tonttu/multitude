@@ -286,6 +286,12 @@ namespace Luminous {
     return t2 * s * t1;
   }
 
+  bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
+  {
+    Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", element.name().toUtf8().data());
+    return true;
+  }
+
   void MultiHead::Area::updateBBox()
   {
     m_graphicsBounds.set
@@ -396,7 +402,7 @@ namespace Luminous {
       area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
     } else {
-      return false;
+      Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", name.toUtf8().data());
     }
 
     return true;
@@ -606,7 +612,7 @@ namespace Luminous {
 
       addWindow(win);
     } else {
-      return false;
+      Radiant::warning("MultiHead::readElement # Ignoring unknown element %s", name.toUtf8().data());
     }
 
     return true;
