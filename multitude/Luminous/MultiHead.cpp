@@ -320,6 +320,12 @@ namespace Luminous {
     }
   }
 
+  bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
+  {
+    Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", element.name().toUtf8().data());
+    return true;
+  }
+
   void MultiHead::Area::updateBBox()
   {
     m_graphicsBounds.set
@@ -456,7 +462,7 @@ namespace Luminous {
         m_screen->processMessage("graphics-bounds-changed", bd);
       }
     } else {
-      return false;
+      Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", name.data());
     }
 
     return ok;
@@ -691,7 +697,7 @@ namespace Luminous {
 
       addWindow(win);
     } else {
-      return false;
+      Radiant::warning("MultiHead::readElement # Ignoring unknown element %s", ce.name().toUtf8().data());
     }
 
     return true;

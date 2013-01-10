@@ -237,6 +237,8 @@ namespace Luminous {
 
       QByteArray type() const OVERRIDE { return "area"; }
 
+      bool readElement(const Valuable::ArchiveElement & element);
+
       enum {
         /* Render to the screen, using straight coordinates. Then
        read-back and re-render, with skewed coordinates. */
