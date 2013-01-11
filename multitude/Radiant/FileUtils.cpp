@@ -33,6 +33,8 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
+#include <QProcess>
+#include <QThread>
 
 #ifdef RADIANT_WINDOWS
 #include <io.h>
@@ -309,4 +311,52 @@ namespace Radiant
 		return QString("/");
 #endif
 	}
+
+#ifdef RADIANT_LINUX
+  int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err)
+  {
+    QProcess p;
+    p.start(cmd, argv, QProcess::ReadOnly);
+    p.waitForStarted();
+    p.waitForFinished(-1);
+    if(out) *out = p.readAllStandardOutput();
+    if(err) {
+      *err = p.readAllStandardError();
+    } else {
+      QByteArray e = p.readAllStandardError();
+      if(!e.isEmpty())
+        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
+    }
+    return p.exitCode();
+  }
+
+  int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err)
+  {
+#ifdef RADIANT_UNIX
+    if(geteuid() == 0) {
+      return run(cmd, argv, out, err);
+    } else {
+      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, out, err);
+    }
+#else
+    return 0;
+#endif
+  }
+
+  void FileUtils::writeAsRoot(const QString & filename, const QByteArray & data)
+  {
+    Radiant::FileWriter writer;
+    int id = (int)QThread::currentThreadId();
+    QFile file(QString("/tmp/taction.tmpfile.%1").arg(id));
+    if(file.open(QFile::WriteOnly)) {
+      file.write(data);
+      file.close();
+      runAsRoot("mv", QStringList() << "/tmp/taction.tmpfile" << filename);
+      runAsRoot("chown", QStringList() << "root:root" << filename);
+      runAsRoot("chmod", QStringList() << "0644" << filename);
+    } else {
+      Radiant::error("Failed to write %s", filename.toUtf8().data());
+    }
+  }
+#endif
 }

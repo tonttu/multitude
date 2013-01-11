@@ -23,7 +23,7 @@
 
 #include <fstream>
 
-#include <QString>
+#include <QStringList>
 
 namespace Radiant
 {
@@ -169,6 +169,15 @@ namespace Radiant
 
 		/// Returns the directory separator for the current platform
     static QString directorySeparator();
+
+#ifdef RADIANT_LINUX
+    /// @todo these run-functions are in a wrong place
+    static int run(QString cmd, QStringList argv = QStringList(),
+                   QByteArray * out = 0, QByteArray * err = 0);
+    static int runAsRoot(QString cmd, QStringList argv = QStringList(),
+                         QByteArray * out = 0, QByteArray * err = 0);
+    static void writeAsRoot(const QString & filename, const QByteArray & data);
+#endif
   };
 }
 
