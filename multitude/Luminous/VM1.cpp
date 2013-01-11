@@ -211,13 +211,21 @@ namespace Luminous
       return "";
 
     QByteArray res;
-    for(;;) {
+    int prev = 0;
+    for (int i = 0; i < 100; ++i) {
       /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
-      Radiant::Sleep::sleepMs(4);
       int r = port.read(buffer, 256);
       if(r > 0) {
         res.append(buffer, r);
-      } else break;
+        prev = r;
+      } else if (r == 0 || errno != EAGAIN) {
+        break;
+      } else {
+        if (res.size() > 0 && prev == 0)
+          break;
+        prev = 0;
+        Radiant::Sleep::sleepMs(4);
+      }
     }
     return res;
   }
