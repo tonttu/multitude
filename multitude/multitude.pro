@@ -12,7 +12,6 @@ SUBDIRS += Valuable
 SUBDIRS += Luminous
 SUBDIRS += Resonant
 SUBDIRS += VideoDisplay
-SUBDIRS += Box2D
 
 #exists(Examples/Examples.pro):SUBDIRS += Examples
 !mobile*{

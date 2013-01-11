@@ -84,7 +84,6 @@ withbundles = $$(MULTI_BUNDLES)
 CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
 
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
-LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}
 
 !mobile {
   # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
@@ -240,7 +239,6 @@ win32 {
     build_pass:CONFIG(debug,debug|release) {
       # TODO There shouldn't be a glew_d library
       LIB_OPENGL = -lglew_d -lglu32 -lopengl32
-      LIB_BOX2D = -lBox2D$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_STYLISH = -lStylish$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
