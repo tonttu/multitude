@@ -173,10 +173,10 @@ namespace Radiant
 #ifdef RADIANT_LINUX
     /// @todo these run-functions are in a wrong place
     static int run(QString cmd, QStringList argv = QStringList(),
-                   QByteArray * out = 0, QByteArray * err = 0);
+                   QByteArray * out = 0, QByteArray * err = 0, bool quiet = false);
     static int runAsRoot(QString cmd, QStringList argv = QStringList(),
-                         QByteArray * out = 0, QByteArray * err = 0);
-    static void writeAsRoot(const QString & filename, const QByteArray & data);
+                         QByteArray * out = 0, QByteArray * err = 0, bool quiet = false);
+    static void writeAsRoot(const QString & filename, const QByteArray & data, bool quiet = false);
 #endif
   };
 }

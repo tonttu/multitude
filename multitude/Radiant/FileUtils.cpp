@@ -313,7 +313,7 @@ namespace Radiant
 	}
 
 #ifdef RADIANT_LINUX
-  int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err)
+  int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
     QProcess p;
     p.start(cmd, argv, QProcess::ReadOnly);
@@ -324,26 +324,23 @@ namespace Radiant
       *err = p.readAllStandardError();
     } else {
       QByteArray e = p.readAllStandardError();
-      if(!e.isEmpty())
+      if(!e.isEmpty() && !quiet)
         Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
     }
     return p.exitCode();
   }
 
-  int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err)
+  int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
-#ifdef RADIANT_UNIX
     if(geteuid() == 0) {
-      return run(cmd, argv, out, err);
+      return run(cmd, argv, out, err, quiet);
     } else {
-      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, out, err);
+      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, out, err, quiet);
     }
-#else
     return 0;
-#endif
   }
 
-  void FileUtils::writeAsRoot(const QString & filename, const QByteArray & data)
+  void FileUtils::writeAsRoot(const QString & filename, const QByteArray & data, bool quiet)
   {
     Radiant::FileWriter writer;
     int id = (int)QThread::currentThreadId();
@@ -351,11 +348,12 @@ namespace Radiant
     if(file.open(QFile::WriteOnly)) {
       file.write(data);
       file.close();
-      runAsRoot("mv", QStringList() << "/tmp/taction.tmpfile" << filename);
-      runAsRoot("chown", QStringList() << "root:root" << filename);
-      runAsRoot("chmod", QStringList() << "0644" << filename);
+      runAsRoot("mv", QStringList() << file.fileName() << filename, 0, 0, quiet);
+      runAsRoot("chown", QStringList() << "root:root" << filename, 0, 0, quiet);
+      runAsRoot("chmod", QStringList() << "0644" << filename, 0, 0, quiet);
     } else {
-      Radiant::error("Failed to write %s", filename.toUtf8().data());
+      if (!quiet)
+        Radiant::error("Failed to write %s", filename.toUtf8().data());
     }
   }
 #endif
