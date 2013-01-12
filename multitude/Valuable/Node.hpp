@@ -372,25 +372,6 @@ namespace Valuable
       return eventRemoveListener(QByteArray(), QByteArray(), listener);
     }
 
-    /// Adds an event source
-    template <typename Widget>
-    void eventAddSource(Radiant::IntrusivePtr<Widget>& source)
-    {
-      eventAddSource(&*source);
-    }
-
-    /// Removes an event source
-    template <typename Widget>
-    void eventRemoveSource(Radiant::IntrusivePtr<Widget>& source)
-    {
-      eventRemoveSource(&*source);
-    }
-
-    /// Adds an event source
-    void eventAddSource(Valuable::Node * source);
-    /// Removes an event source
-    void eventRemoveSource(Valuable::Node * source);
-
     /// Returns the number of event sources
     unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
     /// Returns the number of event listeners
@@ -495,6 +476,11 @@ namespace Valuable
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
 
+  private:
+    /// Adds an event source
+    void eventAddSource(Valuable::Node * source);
+    /// Removes an event source
+    void eventRemoveSource(Valuable::Node * source);
 
   private:
 
@@ -529,7 +515,7 @@ namespace Valuable
     typedef std::list<ValuePass> Listeners;
     Listeners m_elisteners; // Event listeners
 
-    typedef std::set<Valuable::Node *> Sources;
+    typedef std::map<Valuable::Node *, int> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
 

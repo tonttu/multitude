@@ -157,7 +157,7 @@ namespace Valuable
 
     while(!m_eventSources.empty()) {
       /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
-      (*m_eventSources.begin())->eventRemoveListener(this);
+      m_eventSources.begin()->first->eventRemoveListener(this);
     }
 
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
@@ -607,8 +607,6 @@ namespace Valuable
   {
     int removed = 0;
 
-    QSet<Node *> nodes;
-
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
 
       // match obj if specified
@@ -617,10 +615,10 @@ namespace Valuable
         if((from.isNull() || it->m_from == from) &&
            (to.isNull() || it->m_to == to)) {
 
-          nodes << it->m_listener;
+          if (it->m_listener)
+            it->m_listener->eventRemoveSource(this);
+
           it = m_elisteners.erase(it);
-          /* We cannot erase the list iterator, since that might invalidate iterators
-             elsewhere. */
           removed++;
           continue;
         }
@@ -628,34 +626,19 @@ namespace Valuable
       ++it;
     }
 
-    if(removed) {
-
-      // Count number of references left to the objects
-      QMap<Node *, size_t> count;
-      for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
-        if(nodes.contains(it->m_listener))
-          ++count[it->m_listener];
-      }
-
-      // If nothing references the object, remove the source
-      foreach(Node * node, nodes)
-        if(node && count.value(node) == 0)
-          node->eventRemoveSource(this);
-    }
-
     return removed;
   }
 
   void Node::eventAddSource(Valuable::Node * source)
   {
-    m_eventSources.insert(source);
+    ++m_eventSources[source];
   }
 
   void Node::eventRemoveSource(Valuable::Node * source)
   {
     Sources::iterator it = m_eventSources.find(source);
 
-    if(it != m_eventSources.end())
+    if (it != m_eventSources.end() && --it->second <= 0)
       m_eventSources.erase(it);
   }
 
