@@ -141,7 +141,7 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
-        m_readyCallbacksMutex(new Radiant::Mutex()),
+      m_readyCallbacksMutex(new Radiant::Mutex()),
       m_hasReadyListener(0),
       m_frame(0)
   {
@@ -205,6 +205,10 @@ namespace Valuable
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_valueListening(std::move(node.m_valueListening))
     , m_id(std::move(node.m_id))
+    , m_readyCallbacks(std::move(node.m_readyCallbacks))
+    , m_readyOnceCallbacks(std::move(node.m_readyOnceCallbacks))
+    , m_readyCallbacksMutex(std::move(node.m_readyCallbacksMutex))
+    , m_hasReadyListener(std::move(node.m_hasReadyListener))
     , m_frame(std::move(node.m_frame))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
@@ -221,6 +225,10 @@ namespace Valuable
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_valueListening = std::move(node.m_valueListening);
     m_id = std::move(node.m_id);
+    m_readyCallbacks = std::move(node.m_readyCallbacks);
+    m_readyOnceCallbacks = std::move(node.m_readyOnceCallbacks);
+    m_readyCallbacksMutex = std::move(node.m_readyCallbacksMutex);
+    m_hasReadyListener = std::move(node.m_hasReadyListener);
     m_frame = std::move(node.m_frame);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
