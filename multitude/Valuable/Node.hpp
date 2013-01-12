@@ -273,57 +273,57 @@ namespace Valuable
 
     */
     template <typename Widget>
-    void eventAddListener(const QByteArray &eventId,
+    long eventAddListener(const QByteArray &eventId,
                           const QByteArray &messageId,
                           Radiant::IntrusivePtr<Widget>& listener,
                           ListenerType listenerType,
                           const Radiant::BinaryData *defaultData = 0)
     {
-      eventAddListener(eventId, messageId, &*listener, listenerType, defaultData);
+      return eventAddListener(eventId, messageId, &*listener, listenerType, defaultData);
     }
 
 
     /// Add an event listener to this object.
     template <typename Widget>
-    void eventAddListener(const QByteArray &eventId,
+    long eventAddListener(const QByteArray &eventId,
                           const QByteArray &messageId,
                           Radiant::IntrusivePtr<Widget>& listener,
                           const Radiant::BinaryData *defaultData = 0)
     {
-      eventAddListener(eventId, messageId, &*listener, DIRECT, defaultData);
+      return eventAddListener(eventId, messageId, &*listener, DIRECT, defaultData);
     }
 
     /// @todo the raw pointers in these should be fixed!
-    void eventAddListener(const QByteArray & eventId,
+    long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
                           Valuable::Node * listener,
                           ListenerType listenerType,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QByteArray & eventId,
+    long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
                           Valuable::Node * listener,
                           const Radiant::BinaryData * defaultData = 0)
     {
-      eventAddListener(eventId, messageId, listener, DIRECT, defaultData);
+      return eventAddListener(eventId, messageId, listener, DIRECT, defaultData);
     }
 
 #ifdef CORNERSTONE_JS
-    void eventAddListener(const QByteArray & eventId,
+    long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QByteArray & eventId,
+    long eventAddListener(const QByteArray & eventId,
                           v8::Persistent<v8::Function> func,
                           const Radiant::BinaryData * defaultData = 0)
     {
-      eventAddListener(eventId, eventId, func, defaultData);
+      return eventAddListener(eventId, eventId, func, defaultData);
     }
 #endif
 
-    void eventAddListener(const QByteArray & eventId, ListenerFunc func,
+    long eventAddListener(const QByteArray & eventId, ListenerFunc func,
                           ListenerType listenerType = DIRECT);
 
-    void eventAddListenerBd(const QByteArray & eventId, ListenerFunc2 func,
+    long eventAddListenerBd(const QByteArray & eventId, ListenerFunc2 func,
                             ListenerType listenerType = DIRECT);
 
     template <typename Widget>
@@ -371,6 +371,10 @@ namespace Valuable
     {
       return eventRemoveListener(QByteArray(), QByteArray(), listener);
     }
+
+    /// Removes event listener with given id
+    /// @returns true if listener was found and removed
+    bool eventRemoveListener(long listenerId);
 
     /// Returns the number of event sources
     unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
@@ -495,7 +499,7 @@ namespace Valuable
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0), m_func(), m_func2(), m_frame(-1), m_type(DIRECT) {}
+      ValuePass(long id) : m_listener(0), m_func(), m_func2(), m_frame(-1), m_type(DIRECT), m_listenerId(id) {}
 
       inline bool operator == (const ValuePass & that) const;
 
@@ -510,6 +514,7 @@ namespace Valuable
       QByteArray m_to;
       int         m_frame;
       ListenerType m_type;
+      long m_listenerId;
     };
 
     typedef std::list<ValuePass> Listeners;
@@ -534,6 +539,8 @@ namespace Valuable
 
     // For invalidating the too new ValuePass objects
     int m_frame;
+
+    long m_listenersId;
 
     QSet<QByteArray> m_eventSendNames;
     QSet<QByteArray> m_eventListenNames;

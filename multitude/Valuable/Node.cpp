@@ -133,7 +133,8 @@ namespace Valuable
       m_id(this, "id", generateId()),
       m_readyCallbacksMutex(new Radiant::Mutex()),
       m_hasReadyListener(0),
-      m_frame(0)
+      m_frame(0),
+      m_listenersId(0)
   {}
 
   Node::Node(Node * host, const QByteArray & name, bool transit)
@@ -143,7 +144,8 @@ namespace Valuable
       m_id(this, "id", generateId()),
       m_readyCallbacksMutex(new Radiant::Mutex()),
       m_hasReadyListener(0),
-      m_frame(0)
+      m_frame(0),
+      m_listenersId(0)
   {
   }
 
@@ -210,6 +212,7 @@ namespace Valuable
     , m_readyCallbacksMutex(std::move(node.m_readyCallbacksMutex))
     , m_hasReadyListener(std::move(node.m_hasReadyListener))
     , m_frame(std::move(node.m_frame))
+    , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
   {
@@ -230,6 +233,7 @@ namespace Valuable
     m_readyCallbacksMutex = std::move(node.m_readyCallbacksMutex);
     m_hasReadyListener = std::move(node.m_hasReadyListener);
     m_frame = std::move(node.m_frame);
+    m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
     return *this;
@@ -507,13 +511,13 @@ namespace Valuable
     Radiant::trace(Radiant::DEBUG, "}");
   }
 
-  void Node::eventAddListener(const QByteArray & from,
+  long Node::eventAddListener(const QByteArray & from,
                               const QByteArray & to,
                               Valuable::Node * obj,
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
-    ValuePass vp;
+    ValuePass vp(++m_listenersId);
     vp.m_listener = obj;
     vp.m_from = from;
     vp.m_to = to;
@@ -541,15 +545,16 @@ namespace Valuable
       m_elisteners.push_back(vp);
       obj->eventAddSource(this);
     }
+    return vp.m_listenerId;
   }
 
 #ifdef CORNERSTONE_JS
-  void Node::eventAddListener(const QByteArray & from,
+  long Node::eventAddListener(const QByteArray & from,
                               const QByteArray & to,
                               v8::Persistent<v8::Function> func,
                               const Radiant::BinaryData * defaultData)
   {
-    ValuePass vp;
+    ValuePass vp(++m_listenersId);
     vp.m_funcv8 = func;
     vp.m_from = from;
     vp.m_to = to;
@@ -568,13 +573,14 @@ namespace Valuable
     else {
       m_elisteners.push_back(vp);
     }
+    return vp.m_listenerId;
   }
 #endif
 
-  void Node::eventAddListener(const QByteArray & from, ListenerFunc func,
+  long Node::eventAddListener(const QByteArray & from, ListenerFunc func,
                               ListenerType listenerType)
   {
-    ValuePass vp;
+    ValuePass vp(++m_listenersId);
     vp.m_func = func;
     vp.m_from = from;
     vp.m_type = listenerType;
@@ -585,12 +591,13 @@ namespace Valuable
 
     // No duplicate check, since there is no way to compare std::function objects
     m_elisteners.push_back(vp);
+    return vp.m_listenerId;
   }
 
-  void Node::eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
+  long Node::eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
                                 ListenerType listenerType)
   {
-    ValuePass vp;
+    ValuePass vp(++m_listenersId);
     vp.m_func2 = func;
     vp.m_from = from;
     vp.m_type = listenerType;
@@ -601,6 +608,7 @@ namespace Valuable
 
     // No duplicate check, since there is no way to compare std::function objects
     m_elisteners.push_back(vp);
+    return vp.m_listenerId;
   }
 
   int Node::eventRemoveListener(const QByteArray & from, const QByteArray & to, Valuable::Node * obj)
@@ -627,6 +635,19 @@ namespace Valuable
     }
 
     return removed;
+  }
+
+  bool Node::eventRemoveListener(long listenerId)
+  {
+    for (auto it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
+      if (it->m_listenerId == listenerId) {
+        if (it->m_listener)
+          it->m_listener->eventRemoveSource(this);
+        it = m_elisteners.erase(it);
+        return true;
+      }
+    }
+    return false;
   }
 
   void Node::eventAddSource(Valuable::Node * source)
