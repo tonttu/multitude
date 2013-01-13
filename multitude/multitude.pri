@@ -74,6 +74,10 @@ enable-js {
   DEFINES += CORNERSTONE_JS=1
 }
 
+widget-profiler {
+  DEFINES += MULTI_WIDGET_PROFILER=1
+}
+
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
