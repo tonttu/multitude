@@ -88,6 +88,30 @@ namespace Valuable
       setSrcy(src.y);
     }
 
+    void setX(float x, Layer layer = USER, ValueUnit unit = VU_PXS)
+    {
+      Nimble::Vector2f f(x, value().y);
+      if (unit == VU_PERCENTAGE) {
+        m_factors[layer][0] = x;
+        f[0] *= m_src[0];
+      } else {
+        m_factors[layer][0] = std::numeric_limits<float>::quiet_NaN();
+      }
+      setValue(f, layer);
+    }
+
+    void setY(float y, Layer layer = USER, ValueUnit unit = VU_PXS)
+    {
+      Nimble::Vector2f f(value().x, y);
+      if (unit == VU_PERCENTAGE) {
+        m_factors[layer][1] = y;
+        f[1] *= m_src[1];
+      } else {
+        m_factors[layer][1] = std::numeric_limits<float>::quiet_NaN();
+      }
+      setValue(f, layer);
+    }
+
     virtual void clearValue(Attribute::Layer layer = USER) OVERRIDE
     {
       for(int j = 0; j < m_factors[layer].Elements; ++j)

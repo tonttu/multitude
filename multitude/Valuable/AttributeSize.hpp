@@ -37,19 +37,19 @@ namespace Valuable {
         delete m_values[i];
     }
 
-    bool setWidth(float w)
+    bool setWidth(float w, Layer layer = USER, ValueUnit unit = VU_PXS)
     {
       beginChangeTransaction();
-      *m_values[0] = w;
+      m_values[0]->set(w, layer, unit);
       endChangeTransaction();
 
       return true;
     }
 
-    bool setHeight(float h)
+    bool setHeight(float h, Layer layer = USER, ValueUnit unit = VU_PXS)
     {
       beginChangeTransaction();
-      *m_values[1] = h;
+      m_values[1]->set(h, layer, unit);
       endChangeTransaction();
 
       return true;
