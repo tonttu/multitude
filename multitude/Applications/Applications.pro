@@ -4,7 +4,7 @@ CONFIG += Qt
 QT += core
 
 SUBDIRS += FireCapture
-SUBDIRS += FireView
+# SUBDIRS += FireView
 SUBDIRS += ListPortAudioDevices
 
 stuff.path = /src/MultiTouch/multitude/Applications
