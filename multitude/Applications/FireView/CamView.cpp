@@ -21,9 +21,8 @@
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/ColorUtils.hpp>
 
-#include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
-#include <Luminous/DummyOpenGL.hpp>
+// #include <Luminous/DummyOpenGL.hpp>
 
 #include <Radiant/ImageConversion.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -96,7 +95,7 @@ namespace FireView {
     m_continue = true;
     m_frameCount = 0;
 
-    m_lastCheckTime = Radiant::TimeStamp::getTime();
+    m_lastCheckTime = Radiant::TimeStamp::currentTime();
     m_lastCheckFrame = 0;
     m_lastCheckFps = 0;
 
@@ -138,13 +137,13 @@ namespace FireView {
 
     m_state = RUNNING;
 
-    Radiant::TimeStamp starttime(Radiant::TimeStamp::getTime());
+    Radiant::TimeStamp starttime(Radiant::TimeStamp::currentTime());
     Radiant::SleepSync sync;
     sync.resetTiming();
 
     debug("Capturing video");
 
-    m_lastCheckTime = Radiant::TimeStamp::getTime();
+    m_lastCheckTime = Radiant::TimeStamp::currentTime();
 
     while(m_continue) {
 
@@ -219,7 +218,7 @@ namespace FireView {
         m_camera->getFeatures( & m_features);
 
 
-      Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+      Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
       double dt = Radiant::TimeStamp(now - m_lastCheckTime).secondsD();
 
@@ -239,7 +238,7 @@ namespace FireView {
     // qDebug("CamView::InputThread::childLoop # DONE");
 
     float fps = m_frameCount /
-                Radiant::TimeStamp(Radiant::TimeStamp::getTime() - starttime).secondsD();
+                Radiant::TimeStamp(Radiant::TimeStamp::currentTime() - starttime).secondsD();
 
     m_frame.freeMemory();
 
@@ -614,7 +613,9 @@ namespace FireView {
 
   void CamView::paintGL()
   {
+#if 0
     // We must initialize GLEW for OpenGL to work
+
     Luminous::initLuminous(true);
 
     using Luminous::PixelFormat;
@@ -857,6 +858,7 @@ namespace FireView {
       Luminous::Utils::glGrayf(m_textColor);
       renderText(sp.x + 10, sp.y, m_text);
     }
+#endif
   }
 
   void CamView::grabImageLuminosity(int screenx, int screeny)

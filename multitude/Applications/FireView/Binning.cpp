@@ -74,7 +74,9 @@ namespace FireView {
   }
 
   void Binning::debugVisualize(int sx, int sy)
-  {/*
+  {
+#if 0
+    /*
     Radiant::Color c[] = {
       Radiant::Color(1.f, 0.f, 0.f, 1.f),
       Radiant::Color(0.f, 1.f, 0.f, 1.f),
@@ -111,6 +113,7 @@ namespace FireView {
     glBegin(GL_POINTS);
     glVertex2f(m_debugLastPoint.x * sx, (1.f - m_debugLastPoint.y) * sy);
     glEnd();
+#endif
   }
 
   void Binning::defineBins_ANSI_C78_377()
