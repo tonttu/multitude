@@ -1,6 +1,6 @@
 include(../Applications.pri)
 
-SOURCES += Main.cpp
+SOURCES += FireCapture.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE
 LIBS += $$LIB_PATTERNS $$LIB_LUMINOUS $$LIB_VALUABLE $$LIB_V8

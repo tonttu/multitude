@@ -101,7 +101,7 @@ private:
     char buf[64];
     int count = 0;
 
-    Radiant::TimeStamp start(Radiant::TimeStamp::getTime());
+    Radiant::TimeStamp start(Radiant::TimeStamp::currentTime());
 
     Luminous::Image saver;
 
