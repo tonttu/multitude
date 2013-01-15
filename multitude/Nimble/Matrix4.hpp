@@ -473,7 +473,7 @@ namespace Nimble {
     T fB5 = my[10]*my[15] - my[11]*my[14];
 
     T fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
-    if ( std::abs(fDet) <= 1.0e-10 ) {
+    if ( std::abs(fDet) <= std::numeric_limits<T>::epsilon()) {
       if(ok) *ok = false;
       Matrix4T<T> tmp;
       tmp.identity();
