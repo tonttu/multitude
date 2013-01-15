@@ -25,10 +25,6 @@ namespace Nimble {
   namespace Math
   {
     // Constants:
-
-    /// Tolerance used when comparing floating point numbers
-    const double TOLERANCE  = 0.000001f;
-
     /// Pi
     const double PI         = 3.1415926535897931;
     /// Pi times two
@@ -42,8 +38,6 @@ namespace Nimble {
     const double SQRT2      = 1.41421356237309514547;
     /// Square root of two divided by two
     const double SQRT2_PER2 = 0.70710678118654757273;
-    /// A small number
-    const double EPSILON    = 1.0e-10;
 
     // float & double inlines:
 

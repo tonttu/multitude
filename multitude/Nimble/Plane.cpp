@@ -15,9 +15,6 @@
 
 #include "Plane.hpp"
 
-/// @todo use Nimble::TOLERANCE
-static const float EPSILON = 1e-5f;
-
 namespace Nimble
 {
 
@@ -42,17 +39,17 @@ namespace Nimble
 
   bool Plane::intersect(const Nimble::Vector3f & rayO, const Nimble::Vector3f & rayD, float & rayT) const
   {
-    float dotDN = dot(rayD, m_normal);
-    float dist = distanceTo(rayO);
+    auto dotDN = dot(rayD, m_normal);
+    auto dist = distanceTo(rayO);
 
-    if(fabs(dotDN) > EPSILON) {
+    if(std::abs(dotDN) > std::numeric_limits<float>::epsilon()) {
       // Not parallel
       rayT = -dist / dotDN;
 
       return true;
     }
 
-    if(fabs(dist) <= EPSILON) {
+    if(std::abs(dist) <= std::numeric_limits<float>::epsilon()) {
       // Parallel
       rayT = 0.f;
       return true;
