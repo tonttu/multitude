@@ -44,7 +44,10 @@ namespace Luminous
 
     LUMINOUS_API static FontCache & acquire(const QRawFont & rawFont);
 
+    LUMINOUS_API static int generation();
+
     LUMINOUS_API static void deinitialize();
+    LUMINOUS_API static void init();
 
     /// @cond
     LUMINOUS_API static TextureAtlasGroup<Glyph> & atlas();

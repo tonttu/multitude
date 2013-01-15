@@ -24,6 +24,7 @@ namespace
                                              Luminous::PixelFormat::TYPE_USHORT);
   Luminous::TextureAtlasGroup<Luminous::FontCache::Glyph> s_atlas(s_pixelFormat);
   Radiant::Mutex s_atlasMutex;
+  int s_atlasGeneration = 0;
 
   const int s_distanceFieldPixelSize = 128;
   const float s_padding = 60;
@@ -520,6 +521,11 @@ namespace Luminous
     return *ptr;
   }
 
+  void FontCache::init()
+  {
+    ++s_atlasGeneration;
+  }
+
   void FontCache::deinitialize()
   {
     {
@@ -530,6 +536,11 @@ namespace Luminous
       Radiant::Guard g(s_atlasMutex);
       s_atlas.clear();
     }
+  }
+
+  int FontCache::generation()
+  {
+    return s_atlasGeneration;
   }
 
   TextureAtlasGroup<FontCache::Glyph> & FontCache::atlas()

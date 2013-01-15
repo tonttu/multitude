@@ -33,6 +33,7 @@ namespace Luminous
     /// Do we have all glyphs == no need to call regenerate()
     bool m_glyphsReady;
 
+    int m_atlasGeneration;
     std::map<RenderResource::Id, int> m_groupCache;
     std::vector<Group> m_groups;
   };
@@ -45,6 +46,7 @@ namespace Luminous
     , m_renderLocation(0, 0)
     , m_layoutReady(false)
     , m_glyphsReady(false)
+    , m_atlasGeneration(-1)
   {
     /*QImage img(m_layout.boundingRect().width(), m_layout.boundingRect().height(), QImage::Format_ARGB32_Premultiplied);
     QPainter p(&img);
@@ -62,6 +64,7 @@ namespace Luminous
     const QVector<QPointF> & positions = glyphRun.positions();
 
     FontCache & cache = FontCache::acquire(font);
+
     const float scale = float(font.pixelSize()) / cache.pixelSize();
     const float invsize = 1.0f / float(font.pixelSize());
 
@@ -144,6 +147,16 @@ namespace Luminous
     return *this;
   }
 
+  void TextLayout::check() const
+  {
+    if(!correctAtlas()) {
+      TextLayout * nc = const_cast<TextLayout*>(this);
+      nc->setLayoutReady(false);
+      nc->clearGlyphs();
+      nc->generate();
+    }
+  }
+
   int TextLayout::groupCount() const
   {
     return m_d->m_groups.size();
@@ -171,7 +184,10 @@ namespace Luminous
 
   void TextLayout::generate()
   {
-    generateInternal();
+    if(!isComplete()) {
+      m_d->m_atlasGeneration = FontCache::generation();
+      generateInternal();
+    }
   }
 
   void TextLayout::setMaximumSize(const Nimble::Vector2f & size)
@@ -229,6 +245,11 @@ namespace Luminous
     m_d->m_groupCache.clear();
     m_d->m_groups.clear();
     m_d->m_glyphsReady = false;
+  }
+
+  bool TextLayout::correctAtlas() const
+  {
+    return m_d->m_atlasGeneration == FontCache::generation();
   }
 
   bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,

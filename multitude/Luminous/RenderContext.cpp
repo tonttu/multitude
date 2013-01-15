@@ -1098,6 +1098,8 @@ namespace Luminous
 
     Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low() + renderOffset;
 
+    // Need to check here that we are using correct texture atlas
+    layout.check();
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
 

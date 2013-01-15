@@ -321,9 +321,17 @@ namespace Luminous
 #endif
 
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
-      if (!ptr)
+      std::unique_ptr<SimpleTextLayout> & tptr = s_layoutCache[key];
+
+      bool reset = tptr && !tptr->correctAtlas();
+      if(reset) {
+        s_layoutCache.clear();
+      }
+      std::unique_ptr<SimpleTextLayout> & ptr = reset?s_layoutCache[key]:tptr;
+
+      if (!ptr) {
         ptr.reset(new SimpleTextLayout(text, size, font, option));
+      }
       layout = ptr.get();
     }
 
