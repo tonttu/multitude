@@ -163,7 +163,11 @@ namespace Valuable
     {
       const QString path = QFileInfo(relativePath).absoluteFilePath();
       m_watcher.removePath(path);
-      m_watcher.addPath(path);
+
+      // If the file was removed, don't re-add the path to avoid warnings from
+      // QFileSystemWatcher
+      if(QFileInfo(path).exists())
+        m_watcher.addPath(path);
 
       // We can't assume that directory changed preceeds file changed event, so
       // we must always delay file changed events
