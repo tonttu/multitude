@@ -32,8 +32,8 @@ namespace Valuable
     FileWatcher();
     ~FileWatcher();
 
-    void addPath(const QString & relativePath);
-    void addPaths(const QStringList & paths);
+    bool addPath(const QString & relativePath);
+    bool addPaths(const QStringList & paths);
 
     QStringList directories() const;
     QStringList files() const;

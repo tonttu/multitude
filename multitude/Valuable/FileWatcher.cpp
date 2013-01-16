@@ -221,9 +221,14 @@ namespace Valuable
     delete m_d;
   }
 
-  void FileWatcher::addPath(const QString &path)
+  bool FileWatcher::addPath(const QString &path)
   {
     QFileInfo fi(path);
+
+    // Fail if the path does not exist
+    if(!fi.exists())
+      return false;
+
     const QString absoluteFilePath = fi.absoluteFilePath();
     // Files and directories behave differently
     const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
@@ -231,7 +236,7 @@ namespace Valuable
     // Avoid adding the same file multiple times to suppress warnings from
     // QFileSystemWatcher
     if(files().contains(absoluteFilePath))
-      return;
+      return false;
 
     // Initialize file cache if needed
     if(!m_d->m_directoryFiles.contains(absolutePath)) {
@@ -250,12 +255,17 @@ namespace Valuable
         m_d->m_watcher.addPath(fi.absolutePath());
     }
 
+    return true;
   }
 
-  void FileWatcher::addPaths(const QStringList &paths)
+  bool FileWatcher::addPaths(const QStringList &paths)
   {
+    bool ok = true;
+
     foreach(QString path, paths)
-      addPath(path);
+      ok &= addPath(path);
+
+    return ok;
   }
 
   QStringList FileWatcher::directories() const
