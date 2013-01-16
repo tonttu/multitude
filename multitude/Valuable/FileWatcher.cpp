@@ -225,7 +225,8 @@ namespace Valuable
   {
     QFileInfo fi(path);
     const QString absoluteFilePath = fi.absoluteFilePath();
-    const QString absolutePath = fi.absolutePath();
+    // Files and directories behave differently
+    const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
 
     // Avoid adding the same file multiple times to suppress warnings from
     // QFileSystemWatcher
