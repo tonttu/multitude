@@ -133,9 +133,16 @@ namespace Luminous
         missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
     }
 
-    for (int i = 0; ; ++i) {
+    QList<int> indices;
+    for (const QTextFormat & fmt: m_d->doc().allFormats()) {
+      int idx = fmt.objectIndex();
+      if (idx >= 0)
+        indices << idx;
+    }
+
+    for (int i: indices) {
       QTextObject * obj = m_d->doc().object(i);
-      if (!obj) break;
+      if (!obj) continue;
       QTextList * lst = dynamic_cast<QTextList*>(obj);
       if (!lst) continue;
 
