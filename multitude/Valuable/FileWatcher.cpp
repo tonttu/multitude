@@ -75,6 +75,11 @@ namespace Valuable
 
     QTimer m_delayTimer;
 
+    QMap<QString, int> m_directoryRefCounts;
+
+    QSet<QString> m_userAddedFiles;
+    QSet<QString> m_userAddedDirectories;
+
     D(FileWatcher & host)
       : m_host(host)
     {
@@ -233,6 +238,8 @@ namespace Valuable
     // Files and directories behave differently
     const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
 
+    assert(QFileInfo(absolutePath).isDir());
+
     // Avoid adding the same file multiple times to suppress warnings from
     // QFileSystemWatcher
     if(files().contains(absoluteFilePath))
@@ -249,11 +256,16 @@ namespace Valuable
     // If the path is a file, monitor it's directory as well
     if(!fi.isDir()) {
 
-      /// @todo keep track of dependencies so these automatic paths can be removed
       // Don't add paths multiple times to avoid errors from QFileSystemWatcher
-      if(!m_d->m_watcher.directories().contains(fi.absolutePath()))
-        m_d->m_watcher.addPath(fi.absolutePath());
-    }
+      if(!m_d->m_watcher.directories().contains(absolutePath))
+        m_d->m_watcher.addPath(absolutePath);
+
+      m_d->m_userAddedFiles.insert(absoluteFilePath);
+    } else
+      m_d->m_userAddedDirectories.insert(absoluteFilePath);
+
+    // Increase reference count for the path
+    m_d->m_directoryRefCounts[absolutePath]++;
 
     return true;
   }
@@ -268,24 +280,57 @@ namespace Valuable
     return ok;
   }
 
-  QStringList FileWatcher::directories() const
+  QStringList FileWatcher::allWatchedDirectories() const
   {
     return m_d->m_watcher.directories();
   }
 
-  QStringList FileWatcher::files() const
+  QStringList FileWatcher::allWatchedFiles() const
   {
     return m_d->m_watcher.files();
   }
 
+  QStringList FileWatcher::files() const
+  {
+    return m_d->m_userAddedFiles.toList();
+  }
+
+  QStringList FileWatcher::directories() const
+  {
+    return m_d->m_userAddedDirectories.toList();
+  }
+
   void FileWatcher::removePath(const QString &path)
   {
-    return m_d->m_watcher.removePath(path);
+    QFileInfo fi(path);
+
+    const QString absoluteFilePath = fi.absoluteFilePath();
+    // Files and directories behave differently
+    const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
+
+    // Decrement reference count
+    int & refs = m_d->m_directoryRefCounts[absolutePath];
+    assert(refs > 0);
+    --refs;
+
+    // Remove the path if ref count is zero. If the argument is a directory,
+    // this will remove it
+    if(refs == 0)
+      m_d->m_watcher.removePath(absolutePath);
+
+    if(!fi.isDir()) {
+      // If the argument is not a directory, the above check will not remove it
+      m_d->m_watcher.removePath(absoluteFilePath);
+
+      m_d->m_userAddedFiles.remove(absoluteFilePath);
+    } else
+      m_d->m_userAddedDirectories.remove(absoluteFilePath);
   }
 
   void FileWatcher::removePaths(const QStringList &paths)
   {
-    return m_d->m_watcher.removePaths(paths);
+    foreach(QString path, paths)
+      removePath(path);
   }
 
   void FileWatcher::clear()

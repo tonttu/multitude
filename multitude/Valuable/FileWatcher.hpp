@@ -35,8 +35,11 @@ namespace Valuable
     bool addPath(const QString & relativePath);
     bool addPaths(const QStringList & paths);
 
-    QStringList directories() const;
     QStringList files() const;
+    QStringList directories() const;
+
+    QStringList allWatchedDirectories() const;
+    QStringList allWatchedFiles() const;
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);
