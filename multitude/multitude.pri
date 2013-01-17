@@ -59,12 +59,6 @@ mobile {
   CONFIG += render_es2
 }
 
-CONFIG += render_es2
-
-render_es2 {
-  DEFINES += CORNERSTONE_RENDER_ES2=1
-}
-
 # JS is enabled by default
 !disable-js {
   CONFIG += enable-js
