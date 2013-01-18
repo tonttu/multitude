@@ -30,7 +30,7 @@ namespace Radiant {
       If the program appears to be stuck (not calling #hostIsAlive for
       given time) then this class simply shuts down the application.
    */
-  class RADIANT_API WatchDog : private Radiant::Thread FINAL
+  class RADIANT_API WatchDog FINAL : private Radiant::Thread
   {
     DECLARE_SINGLETON(WatchDog);
 
