@@ -173,37 +173,37 @@ namespace Luminous
     m_layout.endLayout();
 
 #if 0
-      QImage dbgimg(layout.boundingRect().width(), layout.boundingRect().height(),
-                    QImage::Format_ARGB32_Premultiplied);
-      dbgimg.fill(Qt::white);
-      QPainter painter(&dbgimg);
-      layout.draw(&painter, QPoint(0, 0));
-      dbgimg.save("img.png");
+    static QAtomicInt id;
+    QImage dbgimg(m_layout.boundingRect().width(), m_layout.boundingRect().height(),
+                  QImage::Format_ARGB32_Premultiplied);
+    dbgimg.fill(Qt::white);
+    QPainter painter(&dbgimg);
+    m_layout.draw(&painter, QPoint(0, 0));
+    dbgimg.save(QString("img-%1.png").arg(id.fetchAndAddOrdered(1)));
 
-      foreach (const QGlyphRun & glyphRun, layout.glyphRuns()) {
-        const QRawFont & rawFont = glyphRun.rawFont();
-        const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
-        // const QVector<QPointF> & positions = glyphRun.positions();
-        for (int i = 0; i < glyphs.size(); ++i) {
-          QImage dbgimg2(500, 500, QImage::Format_ARGB32_Premultiplied);
-          dbgimg2.fill(Qt::white);
-          QPainter painter2(&dbgimg2);
+    foreach (const QGlyphRun & glyphRun, m_layout.glyphRuns()) {
+      const QRawFont & rawFont = glyphRun.rawFont();
+      const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
+      // const QVector<QPointF> & positions = glyphRun.positions();
+      for (int i = 0; i < glyphs.size(); ++i) {
+        QImage dbgimg2(500, 500, QImage::Format_ARGB32_Premultiplied);
+        dbgimg2.fill(Qt::white);
+        QPainter painter2(&dbgimg2);
 
-          painter2.setRenderHint(QPainter::Antialiasing, true);
-          painter2.setRenderHint(QPainter::TextAntialiasing, true);
-          painter2.setRenderHint(QPainter::HighQualityAntialiasing, true);
-          painter2.setPen(Qt::NoPen);
-          painter2.setBrush(QBrush(Qt::black));
-          QPainterPath path = rawFont.pathForGlyph(glyphs[i]);
-          path.translate(250, 250);
-          painter2.drawPath(path);
+        painter2.setRenderHint(QPainter::Antialiasing, true);
+        painter2.setRenderHint(QPainter::TextAntialiasing, true);
+        painter2.setRenderHint(QPainter::HighQualityAntialiasing, true);
+        painter2.setPen(Qt::NoPen);
+        painter2.setBrush(QBrush(Qt::black));
+        QPainterPath path = rawFont.pathForGlyph(glyphs[i]);
+        path.translate(250, 250);
+        painter2.drawPath(path);
 
-          static QAtomicInt id;
-          dbgimg2.save(QString("glyph-%1.png").arg(id.fetchAndAddOrdered(1)));
-          if (id > 10)
-            return;
-        }
+        dbgimg2.save(QString("glyph-%1.png").arg(id.fetchAndAddOrdered(1)));
+        if (id > 10)
+          return;
       }
+    }
 #endif
   }
 

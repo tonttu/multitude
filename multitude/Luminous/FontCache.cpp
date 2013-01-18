@@ -33,6 +33,40 @@ namespace
   // space character etc
   static Luminous::FontCache::Glyph s_emptyGlyph;
 
+  // QPainterPaths of glyphs. New requests (null items) are added in FontGenerator thread
+  // actual QPainterPaths are rendered in main thread
+  static Radiant::Mutex s_glyphPainterPathMutex;
+  bool s_glyphPainterScheduled = false;
+  std::set<std::pair<quint32, QRawFont*> > s_glyphPainterPathQueue;
+  std::map<std::pair<quint32, QRawFont*>, QPainterPath> s_glyphPainterPathReady;
+
+  void processGlyphPainterPaths()
+  {
+    std::pair<quint32, QRawFont*> key;
+
+    {
+      Radiant::Guard g(s_glyphPainterPathMutex);
+      if (s_glyphPainterPathQueue.empty()) {
+        s_glyphPainterScheduled = false;
+        return;
+      }
+
+      key = *s_glyphPainterPathQueue.begin();
+    }
+
+    QPainterPath path = key.second->pathForGlyph(key.first);
+
+    Radiant::Guard g(s_glyphPainterPathMutex);
+    s_glyphPainterPathQueue.erase(key);
+    s_glyphPainterPathReady.insert(std::make_pair(key, path));
+
+    if (s_glyphPainterPathQueue.empty()) {
+      s_glyphPainterScheduled = false;
+    } else {
+      Valuable::Node::invokeAfterUpdate(processGlyphPainterPaths);
+    }
+  }
+
   QString makeKey(const QRawFont & rawFont)
   {
     return QString("%3!%4!%1!%2").arg(rawFont.weight()).
@@ -161,7 +195,7 @@ namespace Luminous
     virtual void finished() OVERRIDE;
 
   private:
-    Glyph * generateGlyph(quint32 glyphIndex);
+    Glyph * generateGlyph(QPainterPath path, quint32 glyphIndex);
     Glyph * getGlyph(quint32 glyphIndex);
     Glyph * makeGlyph(const Image & img);
     void loadFileCache();
@@ -176,11 +210,6 @@ namespace Luminous
     /// found in file cache, these aren't created at all
     std::unique_ptr<QPainter> m_painter;
     std::unique_ptr<QImage> m_painterImg;
-    /// QRawFont isn't thread-safe, so we make our own copy
-    QRawFont m_rawFont;
-    /// m_rawFont is thread-specific variable. If the active background thread
-    /// changes, we need to re-create the font
-    Qt::HANDLE m_rawFontThread;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -227,7 +256,6 @@ namespace Luminous
   FontCache::FontGenerator::FontGenerator(FontCache::D & cache)
     : Radiant::Task(PRIORITY_HIGH)
     , m_cache(cache)
-    , m_rawFontThread(0)
   {
     eventAddOut("glyph-ready");
     eventAddListenerBd("glyph-ready", [&] (Radiant::BinaryData & bd) {
@@ -250,28 +278,43 @@ namespace Luminous
 
   void FontCache::FontGenerator::doTask()
   {
-    quint32 request = 0;
-    {
-      Radiant::Guard g(m_cache.m_cacheMutex);
-      if (m_cache.m_request.empty()) {
-        m_cache.m_taskCreated = false;
-        setFinished();
-        return;
+    for (int i = 0; i < 5; ++i) {
+      quint32 request = 0;
+      {
+        Radiant::Guard g(m_cache.m_cacheMutex);
+        if (m_cache.m_request.empty()) {
+          m_cache.m_taskCreated = false;
+          setFinished();
+          return;
+        }
+
+        std::set<quint32>::const_iterator it = m_cache.m_request.begin();
+        for (int j = 0; j < i; ++j) {
+          ++it;
+          if (it == m_cache.m_request.end()) {
+            scheduleFromNowSecs(0.02);
+            return;
+          }
+        }
+
+        request = *it;
       }
 
-      request = *m_cache.m_request.begin();
+      Glyph * glyph = getGlyph(request);
+
+      if (glyph) {
+        Radiant::Guard g(m_cache.m_cacheMutex);
+        m_cache.m_request.erase(request);
+        m_cache.m_cache.insert(std::make_pair(request, glyph));
+
+        if (m_cache.m_request.empty()) {
+          m_cache.m_taskCreated = false;
+          setFinished();
+        }
+        return;
+      }
     }
-
-    Glyph * glyph = getGlyph(request);
-
-    Radiant::Guard g(m_cache.m_cacheMutex);
-    m_cache.m_request.erase(request);
-    m_cache.m_cache.insert(std::make_pair(request, glyph));
-
-    if (m_cache.m_request.empty()) {
-      m_cache.m_taskCreated = false;
-      setFinished();
-    }
+    scheduleFromNowSecs(0.02);
   }
 
   void FontCache::FontGenerator::finished()
@@ -279,16 +322,13 @@ namespace Luminous
     // delete these in this thread
     m_painter.reset();
     m_painterImg.reset();
-    m_rawFont = QRawFont();
     m_cache.m_cacheCondition.wakeAll(m_cache.m_cacheMutex);
   }
 
-  FontCache::Glyph * FontCache::FontGenerator::generateGlyph(quint32 glyphIndex)
+  FontCache::Glyph * FontCache::FontGenerator::generateGlyph(QPainterPath path, quint32 glyphIndex)
   {
     QPainter & painter = createPainter();
-    QRawFont & rawFont = createRawFont();
 
-    QPainterPath path = rawFont.pathForGlyph(glyphIndex);
     if (path.isEmpty()) {
       /// @todo sometimes glyph generation seems to fail, do not ever cache empty glyphs
       /*QSettings settings(indexFileName(), QSettings::IniFormat);
@@ -380,19 +420,37 @@ namespace Luminous
     auto it = m_cache.m_fileCache.find(glyphIndex);
     if (it != m_cache.m_fileCache.end()) {
       const FontCache::D::FileCacheItem & item = it->second;
-      if (item.rect.isEmpty())
-        //return &s_emptyGlyph;
-        return generateGlyph(glyphIndex);
-
-      Luminous::Image img;
-      if (loadImage(img, item.src)) {
-        FontCache::Glyph * glyph = makeGlyph(img);
-        glyph->setLocation(Nimble::Vector2f(item.rect.left(), item.rect.top()));
-        glyph->setSize(Nimble::Vector2f(item.rect.width(), item.rect.height()));
-        return glyph;
+      if (!item.rect.isEmpty()) {
+        Luminous::Image img;
+        if (loadImage(img, item.src)) {
+          FontCache::Glyph * glyph = makeGlyph(img);
+          glyph->setLocation(Nimble::Vector2f(item.rect.left(), item.rect.top()));
+          glyph->setSize(Nimble::Vector2f(item.rect.width(), item.rect.height()));
+          return glyph;
+        }
       }
     }
-    return generateGlyph(glyphIndex);
+
+    QPainterPath path;
+    {
+      const std::pair<quint32, QRawFont*> key = std::make_pair(glyphIndex, &m_cache.m_rawFont);
+      Radiant::Guard g(s_glyphPainterPathMutex);
+
+      auto it = s_glyphPainterPathReady.find(key);
+      if (it == s_glyphPainterPathReady.end()) {
+        s_glyphPainterPathQueue.insert(key);
+        if (!s_glyphPainterScheduled) {
+          Node::invokeAfterUpdate(processGlyphPainterPaths);
+          s_glyphPainterScheduled = true;
+        }
+        return nullptr;
+      } else {
+        path = std::move(it->second);
+        s_glyphPainterPathReady.erase(it);
+      }
+    }
+
+    return generateGlyph(path, glyphIndex);
   }
 
   FontCache::Glyph * FontCache::FontGenerator::makeGlyph(const Image & img)
@@ -459,25 +517,6 @@ namespace Luminous
     m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
 
     return *m_painter;
-  }
-
-  QRawFont & FontCache::FontGenerator::createRawFont()
-  {
-    if (m_rawFont.isValid() && m_rawFontThread == QThread::currentThreadId())
-      return m_rawFont;
-
-    // QRawFont must be re-created on every thread that uses it.
-    // Copy-constructor isn't enough, we need to use QRawFont::fromFont
-    // and hope that we are able to set all necessary parameters from
-    // the original QRawFont to this temporary QFont.
-    QFont font(m_cache.m_rawFont.familyName());
-    font.setWeight(m_cache.m_rawFont.weight());
-    font.setStyle(m_cache.m_rawFont.style());
-    font.setPixelSize(m_cache.m_rawFont.pixelSize());
-    font.setHintingPreference(m_cache.m_rawFont.hintingPreference());
-    m_rawFont = QRawFont::fromFont(font);
-    m_rawFontThread = QThread::currentThreadId();
-    return m_rawFont;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -579,6 +618,25 @@ namespace Luminous
 
   FontCache::~FontCache()
   {
+    {
+      Radiant::Guard g(s_glyphPainterPathMutex);
+      for (auto it = s_glyphPainterPathQueue.begin(); it != s_glyphPainterPathQueue.end();) {
+        if (it->second == &m_d->m_rawFont) {
+          it = s_glyphPainterPathQueue.erase(it);
+        } else {
+          ++it;
+        }
+      }
+
+      for (auto it = s_glyphPainterPathReady.begin(); it != s_glyphPainterPathReady.end();) {
+        if (it->first.second == &m_d->m_rawFont) {
+          it = s_glyphPainterPathReady.erase(it);
+        } else {
+          ++it;
+        }
+      }
+    }
+
     {
       Radiant::Guard g(m_d->m_cacheMutex);
       while(!m_d->m_request.empty())

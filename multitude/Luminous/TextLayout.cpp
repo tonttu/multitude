@@ -48,10 +48,6 @@ namespace Luminous
     , m_glyphsReady(false)
     , m_atlasGeneration(-1)
   {
-    /*QImage img(m_layout.boundingRect().width(), m_layout.boundingRect().height(), QImage::Format_ARGB32_Premultiplied);
-    QPainter p(&img);
-    m_layout.draw(&p, QPointF(0, 0));
-    img.save("/tmp/qlayout.png");*/
   }
 
   bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
