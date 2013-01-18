@@ -418,6 +418,9 @@ namespace Valuable
 
     static bool copyValues(const Node & from, Node & to);
 
+    /// Queue function to be called in the main thread after the next update()
+    static void invokeAfterUpdate(ListenerFunc function);
+
     virtual void setAsDefaults() OVERRIDE;
 
   protected:

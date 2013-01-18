@@ -67,45 +67,39 @@ namespace
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
-  std::list<QueueItem*> s_queue;
-  QSet<void *> s_queueOnce;
+  bool s_processingQueue = false;
+  std::list<QueueItem*> s_queue, s_queueTmp;
+  QSet<void *> s_queueOnce, s_queueOnceTmp;
+
+  void queueEvent(QueueItem * item, void * once)
+  {
+    Radiant::Guard g(s_queueMutex);
+    std::list<QueueItem*> * queue = s_processingQueue ? &s_queueTmp : &s_queue;
+    QSet<void *> * queueOnce = s_processingQueue ? &s_queueOnceTmp : &s_queueOnce;
+    if (once) {
+      if (queueOnce->contains(once)) return;
+      (*queueOnce) << once;
+    }
+    queue->push_back(item);
+  }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
                   const QByteArray & to, const Radiant::BinaryData & data,
                   void * once)
   {
-    // make the new item before locking
-    QueueItem * item = new QueueItem(sender, target, to, data);
-    Radiant::Guard g(s_queueMutex);
-    if(once) {
-      if(s_queueOnce.contains(once)) return;
-      s_queueOnce << once;
-    }
-    s_queue.push_back(item);
+    queueEvent(new QueueItem(sender, target, to, data), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc func,
                   void * once)
   {
-    QueueItem * item = new QueueItem(sender, func);
-    Radiant::Guard g(s_queueMutex);
-    if(once) {
-      if(s_queueOnce.contains(once)) return;
-      s_queueOnce << once;
-    }
-    s_queue.push_back(item);
+    queueEvent(new QueueItem(sender, func), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc2 func,
                   const Radiant::BinaryData & data, void * once)
   {
-    QueueItem * item = new QueueItem(sender, func, data);
-    Radiant::Guard g(s_queueMutex);
-    if(once) {
-      if(s_queueOnce.contains(once)) return;
-      s_queueOnce << once;
-    }
-    s_queue.push_back(item);
+    queueEvent(new QueueItem(sender, func, data), once);
   }
 }
 
@@ -184,6 +178,13 @@ namespace Valuable
     {
       Radiant::Guard g(s_queueMutex);
       for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
+        QueueItem* item = *it;
+        if(item->target == this)
+          item->target = 0;
+        if(item->sender == this)
+          item->sender = 0;
+      }
+      for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
         QueueItem* item = *it;
         if(item->target == this)
           item->target = 0;
@@ -799,6 +800,7 @@ namespace Valuable
   {
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
+    s_processingQueue = true;
 
     // Can not use range-based loop here because it doesn't iterate all
     // elements when the QList gets modified inside the loop.
@@ -819,8 +821,11 @@ namespace Valuable
     for(QueueItem* item : s_queue)
       delete item;
     int r = s_queue.size();
-    s_queue.clear();
-    s_queueOnce.clear();
+    s_queue = s_queueTmp;
+    s_queueOnce = s_queueOnceTmp;
+    s_queueTmp.clear();
+    s_queueOnceTmp.clear();
+    s_processingQueue = false;
     return r;
   }
 
@@ -831,6 +836,11 @@ namespace Valuable
     if(!e.isNull())
       return to.deserialize(e);
     return false;
+  }
+
+  void Node::invokeAfterUpdate(Node::ListenerFunc function)
+  {
+    queueEvent(nullptr, function, nullptr);
   }
 
   void Node::eventSend(const QByteArray & id, Radiant::BinaryData & bd)
