@@ -35,23 +35,18 @@
 
 namespace Radiant {
 
-  WatchDog * WatchDog::m_instance = 0;
-
   WatchDog::WatchDog()
     : Radiant::Thread("Watchdog")
     , m_continue(true)
     , m_intervalSeconds(60.0f)
     , m_paused(false)
   {
-    if(!m_instance)
-      m_instance = this;
+    run();
   }
 
   WatchDog::~WatchDog()
   {
     stop();
-    if(m_instance == this)
-      m_instance = 0;
   }
 
   void WatchDog::hostIsAlive(void * key)
@@ -72,8 +67,6 @@ namespace Radiant {
 
   void WatchDog::childLoop()
   {
-    m_continue = true;
-
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
 
@@ -162,13 +155,9 @@ namespace Radiant {
       return;
 
     m_continue = false;
-    if(isRunning())
-      waitEnd();
+    while(isRunning())
+      waitEnd(100);
   }
 
-  WatchDog * WatchDog::instance()
-  {
-    return m_instance;
-  }
-
+  DEFINE_SINGLETON(WatchDog);
 }

@@ -17,6 +17,7 @@
 #define RADIANT_WATCHDOG_HPP
 
 #include <Radiant/Export.hpp>
+#include <Radiant/Singleton.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Thread.hpp>
 
@@ -29,11 +30,13 @@ namespace Radiant {
       If the program appears to be stuck (not calling #hostIsAlive for
       given time) then this class simply shuts down the application.
    */
-  class RADIANT_API WatchDog : public Radiant::Thread
+  class RADIANT_API WatchDog : private Radiant::Thread FINAL
   {
+    DECLARE_SINGLETON(WatchDog);
+
   public:
     WatchDog();
-    virtual ~WatchDog();
+    ~WatchDog();
 
     /** Inform the watchdog that the host application is working. You can call this function
         at any time, and the call is fully thread-safe. After calling this method for the first time,
@@ -63,11 +66,8 @@ namespace Radiant {
     /// @return true if paused; otherwise false
     bool paused() const { return m_paused; }
 
-    /// Gets the first watchdog instance.
-    static WatchDog * instance();
-
   private:
-    
+
     virtual void childLoop();
 
     class Item
@@ -85,11 +85,8 @@ namespace Radiant {
     volatile bool m_continue;
     float m_intervalSeconds;
     bool m_paused;
-
-    static WatchDog *m_instance;
-
   };
-  
+
 }
 
 #endif
