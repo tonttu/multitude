@@ -101,9 +101,9 @@ namespace Valuable {
    *   FunnyWidget();
    *
    *   enum InputFlags {
-   *     INPUT_MOTION_X = 1 << 1,
-   *     INPUT_MOTION_Y = 1 << 2,
-   *     INPUT_MOTION_XY = INPUT_MOTION_X | INPUT_MOTION_Y
+   *     INPUT_TRANSLATE_X = 1 << 1,
+   *     INPUT_TRANSLATE_Y = 1 << 2,
+   *     INPUT_TRANSLATE_XY = INPUT_TRANSLATE_X | INPUT_TRANSLATE_Y
    *   };
    *
    *   /// m_flags is bitwise or of InputFlags values
@@ -115,23 +115,23 @@ namespace Valuable {
    * /// FunnyWidget.cpp
    *
    * /// In CSS/Script you can write "motion-x: true;" or "flags: motion-x motion-y;"
-   * Valuable::FlagNames s_flags[] = {{"motion-x", FunnyWidget::INPUT_MOTION_X},
-   *                                  {"motion-y", FunnyWidget::INPUT_MOTION_Y},
-   *                                  {"motion-xy", FunnyWidget::INPUT_MOTION_XY},
-   *                                  {"INPUT_MOTION_X", FunnyWidget::INPUT_MOTION_X},
-   *                                  {"INPUT_MOTION_Y", FunnyWidget::INPUT_MOTION_Y},
-   *                                  {"INPUT_MOTION_XY", FunnyWidget::INPUT_MOTION_XY},
+   * Valuable::FlagNames s_flags[] = {{"translate-x", FunnyWidget::INPUT_TRANSLATE_X},
+   *                                  {"translate-y", FunnyWidget::INPUT_TRANSLATE_Y},
+   *                                  {"translate-xy", FunnyWidget::INPUT_TRANSLATE_XY},
+   *                                  {"INPUT_TRANSLATE_X", FunnyWidget::INPUT_TRANSLATE_X},
+   *                                  {"INPUT_TRANSLATE_Y", FunnyWidget::INPUT_TRANSLATE_Y},
+   *                                  {"INPUT_TRANSLATE_XY", FunnyWidget::INPUT_TRANSLATE_XY},
    *                                  {0, 0}};
    *
    * FunnyWidget::FunnyWidget()
-   *  : m_flags(this, "flags", s_flags, INPUT_MOTION_XY)
+   *  : m_flags(this, "flags", s_flags, INPUT_TRANSLATE_XY)
    * {
-   *   m_flags.mask("input-motion")
-   *     ("xy", INPUT_MOTION_XY)
-   *     ("x", INPUT_MOTION_X)
-   *     ("y", INPUT_MOTION_Y);
+   *   m_flags.mask("input-translate")
+   *     ("xy", INPUT_TRANSLATE_XY)
+   *     ("x", INPUT_TRANSLATE_X)
+   *     ("y", INPUT_TRANSLATE_Y);
    *   m_flags.mask("fixed")
-   *     (true, INPUT_MOTION_XY)
+   *     (true, INPUT_TRANSLATE_XY)
    *     (false, 0);
    *
    * @endcode
