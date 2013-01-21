@@ -223,25 +223,21 @@ namespace Luminous
 
     struct BufferPool
     {
-      BufferPool() : currentIndex(0) {}
+      BufferPool() {}
       std::vector<SharedBuffer> buffers;
-      int currentIndex;
 
       BufferPool(BufferPool && pool)
         : buffers(std::move(pool.buffers))
-        , currentIndex(pool.currentIndex)
       {}
 
       BufferPool & operator=(BufferPool && pool)
       {
         buffers = std::move(pool.buffers);
-        currentIndex = pool.currentIndex;
         return *this;
       }
 
       void flush(RenderContext & ctx)
       {
-        currentIndex = 0;
         for(auto it = buffers.begin(); it != buffers.end(); ++it) {
           if (it->reservedBytes > 0) {
             // @todo Investigate if orphaning is any faster on multi-screen/multi-GPU setups
@@ -632,8 +628,8 @@ namespace Luminous
 
     SharedBuffer * buffer = nullptr;
     std::size_t nextSize = 1 << 20;
-    for(;;) {
-      if(pool.currentIndex >= int(pool.buffers.size())) {
+    for(int i = 0; ;++i) {
+      if(i >= int(pool.buffers.size())) {
         pool.buffers.emplace_back(type);
         buffer = &pool.buffers.back();
         buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::STREAM_DRAW);
@@ -642,12 +638,11 @@ namespace Luminous
         break;
       }
 
-      buffer = &pool.buffers[pool.currentIndex];
+      buffer = &pool.buffers[i];
       if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
         break;
 
-      nextSize <<= 1;
-      ++pool.currentIndex;
+      nextSize <<= 1;;
     }
     return buffer;
   }
