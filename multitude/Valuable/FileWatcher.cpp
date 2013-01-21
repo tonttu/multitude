@@ -27,7 +27,7 @@
 namespace {
 
   // Default for merging change events (milliseconds)
-  const int CHANGE_EVENT_DELAY = 300;
+  const int CHANGE_EVENT_DELAY = 1000;
 
   struct ChangeEvent
   {
@@ -109,7 +109,7 @@ namespace Valuable
       QSet<QString> files;
 
       QDir dir(path);
-      dir.setFilter(QDir::Files);
+      dir.setFilter(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
       foreach(QFileInfo fi, dir.entryInfoList())
         files.insert(fi.absoluteFilePath());
@@ -226,13 +226,9 @@ namespace Valuable
     delete m_d;
   }
 
-  bool FileWatcher::addPath(const QString &path)
+  void FileWatcher::addPath(const QString &path)
   {
     QFileInfo fi(path);
-
-    // Fail if the path does not exist
-    if(!fi.exists())
-      return false;
 
     const QString absoluteFilePath = fi.absoluteFilePath();
     // Files and directories behave differently
@@ -242,8 +238,10 @@ namespace Valuable
 
     // Avoid adding the same file multiple times to suppress warnings from
     // QFileSystemWatcher
-    if(files().contains(absoluteFilePath))
-      return false;
+    if(fi.isDir() && directories().contains(absoluteFilePath))
+      return;
+    else if(files().contains(absoluteFilePath))
+      return;
 
     // Initialize file cache if needed
     if(!m_d->m_directoryFiles.contains(absolutePath)) {
@@ -251,7 +249,9 @@ namespace Valuable
       cache = m_d->cachePathFiles(absolutePath);
     }
 
-    m_d->m_watcher.addPath(absoluteFilePath);
+    // Only add to QFileSystemWatcher if the file exists to avoid errors
+    if(fi.exists())
+      m_d->m_watcher.addPath(absoluteFilePath);
 
     // If the path is a file, monitor it's directory as well
     if(!fi.isDir()) {
@@ -266,18 +266,12 @@ namespace Valuable
 
     // Increase reference count for the path
     m_d->m_directoryRefCounts[absolutePath]++;
-
-    return true;
   }
 
-  bool FileWatcher::addPaths(const QStringList &paths)
+  void FileWatcher::addPaths(const QStringList &paths)
   {
-    bool ok = true;
-
     foreach(QString path, paths)
-      ok &= addPath(path);
-
-    return ok;
+      addPath(path);
   }
 
   QStringList FileWatcher::allWatchedDirectories() const
