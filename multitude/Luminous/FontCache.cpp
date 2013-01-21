@@ -542,7 +542,7 @@ namespace Luminous
       QSettings settings(indexFileName(), QSettings::IniFormat);
       /// Update this when something is changed with the generation code so that
       /// the old cache needs to be invalidated
-      const int version = 1;
+      const int version = 2;
       if (settings.value("cache-version").toInt() != version) {
         settings.clear();
         settings.setValue("cache-version", version);
