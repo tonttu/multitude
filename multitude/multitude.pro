@@ -8,15 +8,11 @@ SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
 SUBDIRS += Valuable
-!mobile*:SUBDIRS += Squish
+SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Resonant
 SUBDIRS += VideoDisplay
-
-#exists(Examples/Examples.pro):SUBDIRS += Examples
-!mobile*{
-  SUBDIRS += Applications
-}
+SUBDIRS += Applications
 
 CONFIG += ordered
 

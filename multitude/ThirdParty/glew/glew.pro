@@ -11,16 +11,26 @@ TARGET = glew
 
 SOURCES += src/glew.c
 
+HEADERS += include/GL/glew.h
+HEADERS += include/GL/glxew.h
+HEADERS += include/GL/wglew.h
+
 INCLUDEPATH += include
 
 DESTDIR = ../../lib
 
-header_install.path = /include/GL
-header_install.files = \
-    include/GL/glew.h \
-    include/GL/glxew.h \
-    include/GL/wglew.h
-
-INSTALLS += header_install
-
 include(../../library.pri)
+
+# Override default installation
+src_code.path = /src/multitude/ThirdParty/$$TARGET/src
+src_code.files = $$SOURCES
+
+src_headers.path = /src/multitude/ThirdParty/$$TARGET/include/GL
+src_headers.files = $$HEADERS
+
+src_projectfile.path = /src/multitude/ThirdParty/$$TARGET
+src_projectfile.files = $$PROJECT_FILE
+
+includes.path = /include/GL
+
+INSTALLS += src_headers src_projectfile
