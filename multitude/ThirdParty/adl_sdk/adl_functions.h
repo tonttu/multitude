@@ -8,7 +8,7 @@
 /// ADL uses this
 #if defined (RADIANT_LINUX)
 #  define LINUX
-#  include "XRandR.hpp"
+#  include <Luminous/XRandR.hpp>
 #endif // RADIANT_LINUX
 
 #include <adl_sdk.h>
