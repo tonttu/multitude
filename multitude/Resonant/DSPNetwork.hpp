@@ -276,6 +276,8 @@ DSPNetwork::instance().send(control);
     void dumpInfo(FILE *f);
     /// @endcond
 
+    bool hasPanner() const { return m_panner != nullptr; }
+
   private:
     /// Creates an empty DSPNetwork object.
     DSPNetwork();

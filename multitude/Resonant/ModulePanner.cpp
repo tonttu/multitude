@@ -194,6 +194,23 @@ namespace Resonant {
     return (ModulePanner::Mode)*m_operatingMode;
   }
 
+  int ModulePanner::locationToChannel(Nimble::Vector2 location) const
+  {
+    int best = -1;
+    float bestd = 1000000.0f;
+    int i = 0;
+    for(auto it = m_speakers->begin(); it != m_speakers->end(); it++, i++) {
+      const LoudSpeaker & l = **it;
+      const float dist = (l.m_location - location).length();
+      if(dist < bestd || best == -1) {
+        best = i;
+        bestd = dist;
+      }
+    }
+
+    return (best >= 0) ? best : 0;
+  }
+
   void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
   {
     assert(i < 100000);

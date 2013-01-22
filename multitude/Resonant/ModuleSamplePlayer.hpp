@@ -104,6 +104,40 @@ namespace Resonant {
                     bool loop = false,
                     Radiant::TimeStamp time = Radiant::TimeStamp(0));
 
+    /// Plays an audio sample
+    /** This function starts the playback of an audio sample.
+
+        @param filename The name of the audio sample file.
+
+        @param gain The gain coefficient for playback. Setting gain to one
+        plays the file back at the original volume.
+
+        @param relpitch The pitch for the playback. If the pitch is set to one,
+        then the file will play back at the original speed. With pitch of 0.5
+        the file will play back one octave below original pitch, and last
+        twice as long as nominal file duration.
+
+        @param location The screen location where this sample should be located. Currently
+        the location is used so that the sample player tries to find an audio panning module and
+        if the panner is present uses that to convert the location to one
+        specific audio out channel. The sound is then played out on that channel.
+
+        @param sampleChannel Select the channel of the source file that should be used as the
+        source.
+
+        @param loop Turns on looping if necessary. With looping the sample will play
+        back for-ever.
+
+        @param time optional timestamp when to play the sample
+    */
+    void playSampleAtLocation(const char * filename,
+                              float gain,
+                              float relpitch,
+                              Nimble::Vector2 location,
+                              int sampleChannel,
+                              bool loop = false,
+                              Radiant::TimeStamp time = Radiant::TimeStamp(0));
+
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
 
@@ -114,6 +148,8 @@ namespace Resonant {
     /// Current playback time
     /// @return Current playback time
     const Radiant::TimeStamp & time() { return m_time; }
+
+    int locationToChannel(Nimble::Vector2 location);
 
   private:
 
@@ -171,7 +207,7 @@ namespace Resonant {
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
-      void init(std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
+      void init(ModuleSamplePlayer *, std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
 
       bool isActive() { return m_state != INACTIVE; }
 

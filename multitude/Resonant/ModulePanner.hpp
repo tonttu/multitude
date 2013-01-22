@@ -100,10 +100,13 @@ namespace Resonant {
     /// Query the current panner mode
     /// @return Current panner mode
     Mode getMode() const;
+
   private:
 
     friend class ModuleRectPanner;
+    friend class ModuleSamplePlayer;
 
+    int locationToChannel(Nimble::Vector2) const;
     void setSourceLocation(const QByteArray &, Nimble::Vector2 location);
     void removeSource(const QByteArray &);
     void addSoundRectangleSpeakers(SoundRectangle * r);

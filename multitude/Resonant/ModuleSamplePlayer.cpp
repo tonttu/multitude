@@ -2,6 +2,8 @@
  */
 
 #include "ModuleSamplePlayer.hpp"
+
+#include "ModulePanner.hpp"
 #include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
@@ -183,7 +185,7 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::SampleVoice::init
-      (std::shared_ptr<Sample> sample, Radiant::BinaryData & data)
+      (ModuleSamplePlayer * host, std::shared_ptr<Sample> sample, Radiant::BinaryData &data)
   {
     m_sample = sample;
     m_position = 0;
@@ -216,6 +218,11 @@ namespace Resonant {
         m_sampleChannel = data.readInt32( & ok);
       else if(strcmp(name, "targetchannel") == 0)
         m_targetChannel = data.readInt32( & ok);
+      else if(strcmp(name, "location") == 0) {
+        Nimble::Vector2 loc = data.readVector2Float32( & ok);
+        if(ok)
+          m_targetChannel = host->locationToChannel(loc);
+      }
       else if(strcmp(name, "loop") == 0)
         m_loop = (data.readInt32( & ok) != 0);
       else if(strcmp(name, "time") == 0)
@@ -418,7 +425,7 @@ namespace Resonant {
 
     bool ok = true;
 
-    if(id == "playsample") {
+    if(id == "playsample" || id == "playsample-at-location") {
       int voiceind = findFreeVoice();
 
       if(voiceind < 0) {
@@ -446,7 +453,7 @@ namespace Resonant {
         // return;
       }
 
-      voice.init(sampleind >= 0 ?
+      voice.init(this, sampleind >= 0 ?
                  m_samples[sampleind] : std::shared_ptr<Sample>(), data);
       m_active++;
 
@@ -630,6 +637,72 @@ namespace Resonant {
     // Send the control message to the sample player.
     DSPNetwork::instance()->send(control);
 
+  }
+
+  void ModuleSamplePlayer::playSampleAtLocation(const char *filename, float gain, float relpitch,
+                                                Nimble::Vector2 location, int sampleChannel, bool loop, Radiant::TimeStamp time)
+  {
+    SF_INFO info;
+    SNDFILE * sndf = sf_open(filename, SFM_READ, & info);
+
+    if(!sndf) {
+      Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
+                     filename);
+      return;
+    }
+
+    sf_close(sndf);
+
+    Radiant::BinaryData control;
+    control.writeString(id() + "/playsample-at-location");
+
+    control.writeString(filename);
+
+    control.writeString("gain");
+    control.writeFloat32(gain);
+
+    // Relative pitch
+    control.writeString("relpitch");
+    control.writeFloat32(relpitch * info.samplerate / 44100.0f);
+
+    // Infinite looping;
+    control.writeString("loop");
+    control.writeInt32(loop);
+
+    // Select a channel from the sample
+    control.writeString("samplechannel");
+    control.writeInt32(sampleChannel);
+
+    // Select the target channel for the sample
+    control.writeString("location");
+    control.writeVector2Float32(location);
+
+    control.writeString("time");
+    control.writeTimeStamp(time);
+
+    // Finish parameters
+    control.writeString("end");
+
+    // Send the control message to the sample player.
+    DSPNetwork::instance()->send(control);
+  }
+
+  int ModuleSamplePlayer::locationToChannel(Nimble::Vector2 location)
+  {
+    DSPNetwork::Item * item = DSPNetwork::instance()->findItem("panner");
+    if(!item) {
+      Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to find a panner");
+      return 0;
+    }
+
+    Resonant::ModulePanner * pan = dynamic_cast<Resonant::ModulePanner *>(item->module());
+
+    if(!pan) {
+      Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to cast a panner");
+      return 0;
+    }
+
+    return pan->locationToChannel(location);
   }
 
   int ModuleSamplePlayer::findFreeVoice()
