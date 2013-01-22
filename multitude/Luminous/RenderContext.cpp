@@ -642,7 +642,7 @@ namespace Luminous
       if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
         break;
 
-      nextSize <<= 1;;
+      nextSize <<= 1;
     }
     return buffer;
   }
