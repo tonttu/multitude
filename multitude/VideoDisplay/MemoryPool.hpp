@@ -6,7 +6,7 @@
 
 namespace VideoPlayer2
 {
-  template <typename T, size_t N>
+  template <typename T, std::size_t N>
   class MemoryPool
   {
   public:
@@ -24,7 +24,7 @@ namespace VideoPlayer2
     std::array<PoolItem, N> m_data;
   };
 
-  template <typename T, size_t N>
+  template <typename T, std::size_t N>
   T * MemoryPool<T, N>::get()
   {
     for(int i = 0; i < (int) N; ++i) {
@@ -36,7 +36,7 @@ namespace VideoPlayer2
     return 0;
   }
 
-  template <typename T, size_t N>
+  template <typename T, std::size_t N>
   void MemoryPool<T, N>::put(const T & t)
   {
     for(int i = 0; i < (int) N; ++i) {
