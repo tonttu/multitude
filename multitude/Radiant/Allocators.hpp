@@ -107,13 +107,13 @@ namespace Radiant
       m_activeChunk = m_topChunk.get();
     }
   private:
-    block_allocator(const block_allocator& rhs) throw()
+    block_allocator(const block_allocator&) throw()
     {
       assert(false);
     }
 
     template<typename U>
-    block_allocator(const block_allocator<U,BlockCount> & rhs) throw()
+    block_allocator(const block_allocator<U,BlockCount> &) throw()
     {
       assert(false);
     }

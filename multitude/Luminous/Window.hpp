@@ -77,7 +77,6 @@ namespace Luminous
 
   private:
     ///@cond
-    bool m_active;
     bool m_finished;
     bool m_fullscreen;
     int m_width;

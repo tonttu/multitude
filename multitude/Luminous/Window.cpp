@@ -21,7 +21,6 @@ namespace Luminous
 {
 
   Window::Window() : 
-    m_active(false),
     m_finished(false),
     m_fullscreen(false),
     m_width(0),
