@@ -35,7 +35,6 @@ namespace Radiant
     RADIANT_API QEvent::Type type() const;
   private:
     Nimble::Vector2f m_location;
-    float pressure;
     QEvent::Type m_type;
   };
 
