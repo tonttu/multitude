@@ -63,7 +63,7 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QByteArray &name);
+    virtual Attribute * getAttribute(const QByteArray & name) const;
 
   private:
     Attribute * m_attribute;

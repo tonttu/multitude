@@ -151,7 +151,7 @@ namespace Valuable
     return false;
   }
 
-  Attribute * AttributeAlias::getAttribute(const QByteArray & name)
+  Attribute * AttributeAlias::getAttribute(const QByteArray & name) const
   {
     if(!m_attribute)
       return nullptr;
