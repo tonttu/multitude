@@ -38,6 +38,13 @@ namespace Valuable
     ~AttributeColor()
     {}
 
+    bool set(const Nimble::Vector4f & color, Layer layer = USER,
+             QList<ValueUnit> = QList<ValueUnit>())
+    {
+      this->setValue(color, layer);
+      return true;
+    }
+
     /// Converts the value object to color
     Radiant::Color asColor() const { return asVector(); }
     
