@@ -1,9 +1,8 @@
 TEMPLATE = subdirs
 
 include(multitude.pri)
-include(Externals.pri)
 
-!macx:SUBDIRS += ThirdParty/glew
+SUBDIRS += ThirdParty
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 SUBDIRS += Radiant
