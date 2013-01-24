@@ -66,27 +66,6 @@ LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8 -lnode
 
 #
-# Platform specific: Unix (OS X & Linux)
-#
-unix {
-  # Use ccache if available
-  exists(/opt/local/bin/ccache) {
-    # For Macports + QtCreator users:
-    QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
-    QMAKE_CC=/opt/local/bin/ccache $$QMAKE_CC
-  }
-  else {
-    system(which ccache > /dev/null 2>&1) {
-      QMAKE_CXX=ccache $$QMAKE_CXX
-      QMAKE_CC=ccache $$QMAKE_CC
-    }
-  }
-
-  exists($$CORNERSTONE_DEPS_DIR):INCLUDEPATH+=$$CORNERSTONE_DEPS_DIR/include
-  exists($$CORNERSTONE_DEPS_DIR):LIBS+=-L$$CORNERSTONE_DEPS_DIR/lib
-}
-
-#
 # Platform specific: GNU Linux
 #
 linux-*{
@@ -127,12 +106,12 @@ contains(MEMCHECK,yes) {
 #
 # Platform specific: Apple OS X
 #
-macx* {
+macx {
   CORNERSTONE_DEPS_DIR = /opt/multitouch
   exists(/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR
   exists(/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
+  exists(/opt/multitouch-$${CORNERSTONE_VERSION}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
+  exists(/opt/multitouch-$${CORNERSTONE_VERSION_STR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
 
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
@@ -217,6 +196,27 @@ win32 {
       LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
       enable-js:LIB_V8 = -lv8_d -lnode_d
     }
+}
+
+#
+# Platform specific: Unix (OS X & Linux)
+#
+unix {
+  # Use ccache if available
+  exists(/opt/local/bin/ccache) {
+    # For Macports + QtCreator users:
+    QMAKE_CXX=/opt/local/bin/ccache $$QMAKE_CXX
+    QMAKE_CC=/opt/local/bin/ccache $$QMAKE_CC
+  }
+  else {
+    system(which ccache > /dev/null 2>&1) {
+      QMAKE_CXX=ccache $$QMAKE_CXX
+      QMAKE_CC=ccache $$QMAKE_CC
+    }
+  }
+
+  exists($$CORNERSTONE_DEPS_DIR):INCLUDEPATH+=$$CORNERSTONE_DEPS_DIR/include
+  exists($$CORNERSTONE_DEPS_DIR):LIBS+=-L$$CORNERSTONE_DEPS_DIR/lib
 }
 
 MULTI_VIDEO_LIBS = $$LIB_RESONANT $$LIB_VIDEODISPLAY
