@@ -105,7 +105,7 @@ namespace Luminous
     /// Returns the color of the object to be drawn
     const Radiant::Color & fillColor() const { return m_fill.color(); }
     /// Sets the color of the object to be drawn
-    void setFillColor(const Nimble::Vector4 & c) { m_fill.setColor(c); }
+    void setFillColor(const Radiant::Color & c) { m_fill.setColor(c); }
     /// Sets the color of the object to be drawn
     void setFillColor(float r, float g, float b, float a) { m_fill.setColor(Radiant::Color(r, g, b, a)); }
 
