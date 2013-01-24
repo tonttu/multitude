@@ -19,79 +19,36 @@ CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
 # 2
 CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
-macx {
-  CORNERSTONE_DEPS_DIR = /opt/multitouch
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR
-  exists(/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
-}
-
 # We need C++11 to compile
-!macx:*g++*:QMAKE_CXXFLAGS += -std=c++0x
-!macx:*clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
-macx {
-  QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
-  QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
-  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-  QMAKE_CC = clang -std=c++11 -stdlib=libc++
-  QMAKE_LFLAGS += -stdlib=libc++
-
-  QMAKE_CFLAGS_WARN_ON =
-  QMAKE_CXXFLAGS_WARN_ON =
-}
-
-iphone {
-  CONFIG += mobile
-  CONFIG += ios
-}
-
-ios {
-  CONFIG += mobile
-  QMAKE_CXXFLAGS -= -std=gnu99
-  QMAKE_CXXFLAGS -= -fobjc-legacy-dispatch
-}
-
-mobile {
-  message(Mobile device compilation)
-  # For QString::toStdWString
-  DEFINES += QT_STL=1
-  CONFIG += render_es2
+!macx {
+  *g++*:QMAKE_CXXFLAGS += -std=c++0x
+  *clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 }
 
 # JS is enabled by default
-!disable-js {
-  CONFIG += enable-js
-}
+!disable-js:CONFIG += enable-js
+enable-js:DEFINES += CORNERSTONE_JS=1
 
-enable-js {
-  DEFINES += CORNERSTONE_JS=1
-}
-
-widget-profiler {
-  DEFINES += MULTI_WIDGET_PROFILER=1
-}
+widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 withbundles = $$(MULTI_BUNDLES)
 
-!mobile*:MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
+MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
 
 CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
 
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 
-!mobile {
-  # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
-  # message(FTD2XX support detected.)
-  # !win32:CONFIG += with-ftd2xx
-  with-ftd2xx {
-    LIB_FTD2XX = -lftd2xx
-    WITH_FTD2XX = yes
-    DEFINES += MULTI_WITH_FTD2XX=1
-  }
+# exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
+# message(FTD2XX support detected.)
+# !win32:CONFIG += with-ftd2xx
+with-ftd2xx {
+  LIB_FTD2XX = -lftd2xx
+  WITH_FTD2XX = yes
+  DEFINES += MULTI_WITH_FTD2XX=1
 }
 
 LIB_OPENCL = -lOpenCL
@@ -102,14 +59,14 @@ LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
 LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX} $$LIB_FTD2XX
-!mobile*:LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
+LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8 -lnode
 
 #
-# Platform specific: Unix (OSX & linux)
+# Platform specific: Unix (OS X & Linux)
 #
 unix {
   # Use ccache if available
@@ -143,7 +100,7 @@ linux-*{
 
   QMAKE_LIBDIR += /usr/lib/nvidia-current
 
-  !mobile:QMAKE_LIBDIR += $$PWD/Linux/lib
+  QMAKE_LIBDIR += $$PWD/Linux/lib
 
   exists(/opt/multitouch-libav1/include/libavcodec/avcodec.h) {
     MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav1/lib -lavcodec-multitouch1 -lavutil-multitouch1 -lavformat-multitouch1 -lavdevice-multitouch1 -lavfilter-multitouch1 -lswscale-multitouch1
@@ -167,25 +124,35 @@ contains(MEMCHECK,yes) {
   linux:LIBS += -rdynamic
 }
 
-macx*|mobile* {
+#
+# Platform specific: Apple OS X
+#
+macx* {
+  CORNERSTONE_DEPS_DIR = /opt/multitouch
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR
+  exists(/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
+  exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
+
+  QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
+  QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
+  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
+  QMAKE_CC = clang -std=c++11 -stdlib=libc++
+  QMAKE_LFLAGS += -stdlib=libc++
+
+  QMAKE_CFLAGS_WARN_ON =
+  QMAKE_CXXFLAGS_WARN_ON =
+
   QMAKE_LIBDIR += $$PWD/OSX/lib
 
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
 
-  !mobile* {
-    DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
-
-  # change architecture to x86_64 if snow leopard
-  system([ `uname -r | cut -d . -f1` -gt 9 ] )  {
-  CONFIG += x86_64
-
-  }
+  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
 
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
-}
 }
 
 #

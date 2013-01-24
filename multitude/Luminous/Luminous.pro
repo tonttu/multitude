@@ -1,5 +1,12 @@
 include(../multitude.pri)
 
+CONFIG += qt
+QT += gui opengl
+
+INCLUDEPATH += ../ThirdParty/adl_sdk
+
+DEFINES += LUMINOUS_EXPORT
+
 HEADERS += ProgramGL.hpp \
     CullMode.hpp \
     RenderDefines.hpp \
@@ -77,20 +84,13 @@ HEADERS += RenderCommand.hpp
 HEADERS += VM1.hpp
 HEADERS += WindowEventHook.hpp
 HEADERS += Window.hpp
-linux-*:HEADERS += XRandR.hpp
-linux-*:SOURCES += XRandR.cpp
-!macx:HEADERS += ScreenDetectorAMD.hpp
-!macx:HEADERS += ScreenDetectorNV.hpp
-macx:OBJECTIVE_SOURCES += CocoaWindow.mm
-!macx:SOURCES += ScreenDetectorAMD.cpp
-!macx:SOURCES += ScreenDetectorNV.cpp
-!mobile*:HEADERS += ImageCodecDDS.hpp
-!mobile*:HEADERS += MipMapGenerator.hpp
-!mobile*:HEADERS += SpriteRenderer.hpp
-!mobile*:SOURCES += ImageCodecDDS.cpp
-!mobile*:SOURCES += ImageCodecTGA.cpp
-!mobile*:SOURCES += MipMapGenerator.cpp
-!mobile*:SOURCES += SpriteRenderer.cpp
+HEADERS += ImageCodecDDS.hpp
+HEADERS += MipMapGenerator.hpp
+HEADERS += SpriteRenderer.hpp
+SOURCES += ImageCodecDDS.cpp
+SOURCES += ImageCodecTGA.cpp
+SOURCES += MipMapGenerator.cpp
+SOURCES += SpriteRenderer.cpp
 
 SOURCES += ProgramGL.cpp \
     CullMode.cpp \
@@ -168,34 +168,41 @@ LIBS += $$LIB_RADIANT \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS
 
-DEFINES += LUMINOUS_COMPILE
-win32:DEFINES += LUMINOUS_EXPORT
 HEADERS += ImageCodecQT.hpp
-!mobile*:HEADERS += ImageCodecSVG.hpp
+HEADERS += ImageCodecSVG.hpp
 SOURCES += ImageCodecQT.cpp
-!mobile*:SOURCES += ImageCodecSVG.cpp
+SOURCES += ImageCodecSVG.cpp
 QT += gui
-!mobile*:QT += svg
+QT += svg
 
-# On Windows we need to install the Qt plugins
-win32 {
-    qt_plugin_install.path += /bin
-    qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-    INSTALLS += qt_plugin_install
-}
-
+# Platform specific: Microsoft Windows
 win32 {
   win64:LIBS += -lnvapi64
   else:LIBS += -lnvapi
   LIBS += -lUser32
+
+  # On Windows we need to install the Qt plugins
+  qt_plugin_install.path += /bin
+  qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
+  INSTALLS += qt_plugin_install
 }
-linux-*:LIBS += -lXNVCtrl -lXrandr -lXext -lX11
 
-INCLUDEPATH += ../ThirdParty/adl_sdk
+# Platform specific: Apple OS X
+macx {
+  OBJECTIVE_SOURCES += CocoaWindow.mm
+} else {
+  HEADERS += ScreenDetectorAMD.hpp
+  HEADERS += ScreenDetectorNV.hpp
+  SOURCES += ScreenDetectorAMD.cpp
+  SOURCES += ScreenDetectorNV.cpp
+}
 
-DEFINES += LUMINOUS_EXPORT
+# Platform specific: GNU Linux
+linux-* {
+  LIBS += -lXNVCtrl -lXrandr -lXext -lX11
 
-CONFIG += qt
-QT += gui opengl
+  HEADERS += XRandR.hpp
+  SOURCES += XRandR.cpp
+}
 
 include(../library.pri)
