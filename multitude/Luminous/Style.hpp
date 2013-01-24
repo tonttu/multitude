@@ -177,6 +177,8 @@ namespace Luminous
     /// Set the font for the style
     void setFont(const QFont & font) { m_font = font; }
 
+    void setPointSize(float size) { m_font.setPointSizeF(size); }
+
     /// Get the text options for the style. The options are used to define things like wrapping and alignment.
     QTextOption & textOption() { return m_textOption; }
     /// @copydoc textOption
