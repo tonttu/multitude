@@ -190,6 +190,7 @@ win32 {
 # Platform specific: Apple OS X
 macx {
   OBJECTIVE_SOURCES += CocoaWindow.mm
+  src_code.files += $$OBJECTIVE_SOURCES
 } else {
   HEADERS += ScreenDetectorAMD.hpp
   HEADERS += ScreenDetectorNV.hpp

@@ -1,7 +1,11 @@
 #include "ScreenDetector.hpp"
 
-#include "ScreenDetectorAMD.hpp"
-#include "ScreenDetectorNV.hpp"
+#include <Radiant/Platform.hpp>
+
+#ifndef RADIANT_OSX
+# include "ScreenDetectorAMD.hpp"
+# include "ScreenDetectorNV.hpp"
+#endif
 
 #if defined (RADIANT_LINUX)
 #include <QX11Info>
