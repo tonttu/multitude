@@ -133,8 +133,9 @@ unix {
 # Platform specific: GNU Linux
 #
 linux-*{
-  LIB_PREFIX = lib
-  SHARED_LIB_SUFFIX = so
+
+  # Must define this manually on Linux & Windows
+  QMAKE_EXTENSION_SHLIB=so
 
   contains(USEGLEW,no) {
     DEFINES += MULTI_WITHOUT_GLEW=1
@@ -191,6 +192,9 @@ macx*|mobile* {
 # Platform specific: Microsoft Windows
 #
 win32 {
+    # Must define this manually on Linux & Windows
+    QMAKE_EXTENSION_SHLIB=dll
+
     # Try to identify used compiler on Windows (32 vs 64)
     COMPILER_OUTPUT=$$system(cl 2>&1)
     contains(COMPILER_OUTPUT,x64):CONFIG+=win64
@@ -200,9 +204,6 @@ win32 {
     INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
     enable-js:INCLUDEPATH += $$PWD\\Win64x\\include\\v8
-
-    LIB_PREFIX =
-    SHARED_LIB_SUFFIX = dll
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
