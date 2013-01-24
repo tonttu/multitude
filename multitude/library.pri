@@ -31,7 +31,7 @@ extra_inc.CONFIG += no_check_exist
 
 # Installation target for source code
 src_code.path = /src/multitude/$$TARGET
-src_code.files = $$EXPORT_SOURCES $$EXPORT_HEADERS
+src_code.files += $$EXPORT_SOURCES $$EXPORT_HEADERS
 src_code.files += $$FLEXSOURCES $$BISONSOURCES
 src_code.files += $$PROJECT_FILE
 
