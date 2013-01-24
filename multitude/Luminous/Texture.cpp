@@ -141,7 +141,7 @@ namespace Luminous
       used *= 1;
       break;
     case GL_RGB:
-    LUMINOUS_IN_FULL_OPENGL(case GL_BGR:)
+    case GL_BGR:
       used *= 3;
       break;
 #ifdef GL_RGB32F
@@ -634,8 +634,8 @@ namespace Luminous
   }
 
   template class TextureT<GL_TEXTURE_2D>;
-  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_1D>;)
-  LUMINOUS_IN_FULL_OPENGL(template class TextureT<GL_TEXTURE_3D>;)
+  template class TextureT<GL_TEXTURE_1D>;
+  template class TextureT<GL_TEXTURE_3D>;
 
 }
 

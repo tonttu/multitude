@@ -32,7 +32,7 @@ namespace Luminous
 {
   class PixelFormat;
   class Image;
-  LUMINOUS_IN_FULL_OPENGL(class CompressedImage);
+  class CompressedImage;
 
   /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
   /// These limits should be obeyed when loading data to GPU with glTexImage2D

@@ -51,43 +51,43 @@ namespace Luminous
   {
 #ifndef LUMINOUS_OPENGLES
     switch(m_compression) {
-      case COMPRESSED_RGB_DXT1:
-        return 3;
-      case COMPRESSED_RGBA_DXT1:
-      case COMPRESSED_RGBA_DXT3:
-      case COMPRESSED_RGBA_DXT5:
-        return 4;
-      case COMPRESSION_NONE:
-        break;
+    case COMPRESSED_RGB_DXT1:
+      return 3;
+    case COMPRESSED_RGBA_DXT1:
+    case COMPRESSED_RGBA_DXT3:
+    case COMPRESSED_RGBA_DXT5:
+      return 4;
+    case COMPRESSION_NONE:
+      break;
     }
 #endif // LUMINOUS_OPENGLES
 
     switch(m_layout) {
 #ifndef LUMINOUS_OPENGLES
 
-      case LAYOUT_STENCIL_INDEX:
-      case LAYOUT_DEPTH_COMPONENT:
-      case LAYOUT_RED:
-      case LAYOUT_GREEN:
-      case LAYOUT_BLUE:
+    case LAYOUT_STENCIL_INDEX:
+    case LAYOUT_DEPTH_COMPONENT:
+    case LAYOUT_RED:
+    case LAYOUT_GREEN:
+    case LAYOUT_BLUE:
 #endif // LUMINOUS_OPENGLES
 
-      case LAYOUT_ALPHA:
-        return 1;
-        break;
-      case LAYOUT_RED_GREEN:
-        return 2;
-        break;
-      case LAYOUT_RGB:
-      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGR:)
-        return 3;
-        break;
-      case LAYOUT_RGBA:
-      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGRA:)
-        return 4;
-        break;
-      default:
-        return 0;
+    case LAYOUT_ALPHA:
+      return 1;
+      break;
+    case LAYOUT_RED_GREEN:
+      return 2;
+      break;
+    case LAYOUT_RGB:
+    case LAYOUT_BGR:
+      return 3;
+      break;
+    case LAYOUT_RGBA:
+    case LAYOUT_BGRA:
+      return 4;
+      break;
+    default:
+      return 0;
     }
   }
 
@@ -96,34 +96,29 @@ namespace Luminous
     int nc = numChannels();
 
     switch(m_type) {
-      case TYPE_BYTE:
-      case TYPE_UBYTE:
-        return 1 * nc;
-        break;
-      case TYPE_SHORT:
-      case TYPE_USHORT:
-        return 2 * nc;
-        break;
-      LUMINOUS_IN_FULL_OPENGL(case TYPE_INT:)
-    LUMINOUS_IN_FULL_OPENGL(case TYPE_UINT:)
-      case TYPE_FLOAT:
-        return 4 * nc;
-        break;
-#ifndef LUMINOUS_OPENGLES
-
+    case TYPE_BYTE:
+    case TYPE_UBYTE:
+      return 1 * nc;
+      break;
+    case TYPE_SHORT:
+    case TYPE_USHORT:
+      return 2 * nc;
+      break;
+    case TYPE_INT:
+    case TYPE_UINT:
+    case TYPE_FLOAT:
+      return 4 * nc;
+      break;
     case TYPE_DOUBLE:
-        return 8 * nc;
-        break;
-#endif // LUMINOUS_OPENGLES
-
+      return 8 * nc;
+      break;
     default:
-        return 0;
+      return 0;
     }
   }
 
   bool PixelFormat::hasAlpha() const
   {
-#ifndef LUMINOUS_OPENGLES
     switch(m_compression) {
     case COMPRESSED_RGBA_DXT1:
     case COMPRESSED_RGBA_DXT3:
@@ -133,13 +128,12 @@ namespace Luminous
     default:
       break;
     }
-#endif // LUMINOUS_OPENGLES
 
     switch(m_layout) {
     case LAYOUT_ALPHA:
     case LAYOUT_RGBA:
-      LUMINOUS_IN_FULL_OPENGL(case LAYOUT_BGRA:)
-          return true;
+    case LAYOUT_BGRA:
+      return true;
 
     default:
       return false;
@@ -150,29 +144,26 @@ namespace Luminous
   {
     switch(type)
     {
-      case PixelFormat::TYPE_UNKNOWN:
-        return "TYPE_UNKNOWN";
-      case PixelFormat::TYPE_BYTE:
-        return "TYPE_BYTE";
-      case PixelFormat::TYPE_UBYTE:
-        return "TYPE_UBYTE";
-      case PixelFormat::TYPE_SHORT:
-        return "TYPE_SHORT";
-      case PixelFormat::TYPE_USHORT:
-        return "TYPE_USHORT";
+    case PixelFormat::TYPE_UNKNOWN:
+      return "TYPE_UNKNOWN";
+    case PixelFormat::TYPE_BYTE:
+      return "TYPE_BYTE";
+    case PixelFormat::TYPE_UBYTE:
+      return "TYPE_UBYTE";
+    case PixelFormat::TYPE_SHORT:
+      return "TYPE_SHORT";
+    case PixelFormat::TYPE_USHORT:
+      return "TYPE_USHORT";
     case PixelFormat::TYPE_FLOAT:
       return "TYPE_FLOAT";
-
-#ifndef LUMINOUS_OPENGLES
-      case PixelFormat::TYPE_INT:
-        return "TYPE_INT";
-      case PixelFormat::TYPE_UINT:
-        return "TYPE_UINT";
-      case PixelFormat::TYPE_DOUBLE:
-        return "TYPE_DOUBLE";
-#endif // LUMINOUS_OPENGLES
-      default:
-        return "Invalid value (should never happen)";
+    case PixelFormat::TYPE_INT:
+      return "TYPE_INT";
+    case PixelFormat::TYPE_UINT:
+      return "TYPE_UINT";
+    case PixelFormat::TYPE_DOUBLE:
+      return "TYPE_DOUBLE";
+    default:
+      return "Invalid value (should never happen)";
     }
 
   }
@@ -181,9 +172,7 @@ namespace Luminous
   {
     switch(layout)
     {
-#ifndef LUMINOUS_OPENGLES
-
-   case PixelFormat::LAYOUT_STENCIL_INDEX:
+    case PixelFormat::LAYOUT_STENCIL_INDEX:
       return "LAYOUT_STENCIL_INDEX";
     case PixelFormat::LAYOUT_DEPTH_COMPONENT:
       return "LAYOUT_DEPTH_COMPONENT";
@@ -193,26 +182,22 @@ namespace Luminous
       return "LAYOUT_GREEN";
     case PixelFormat::LAYOUT_BLUE:
       return "LAYOUT_BLUE";
-
     case PixelFormat::LAYOUT_BGR:
       return "LAYOUT_BGR";
     case PixelFormat::LAYOUT_BGRA:
       return "LAYOUT_BGRA";
-#endif // LUMINOUS_OPENGLES
-
-      case PixelFormat::LAYOUT_UNKNOWN:
-        return "LAYOUT_UNKNOWN";
-      case PixelFormat::LAYOUT_ALPHA:
-        return "LAYOUT_ALPHA";
-      case PixelFormat::LAYOUT_RGB:
-        return "LAYOUT_RGB";
-      case PixelFormat::LAYOUT_RGBA:
-        return "LAYOUT_RGBA";
-      case PixelFormat::LAYOUT_RED_GREEN:
-        return "LAYOUT_RED_GREEN";
-      default:
-        return "Invalid value (should never happen)";
-
+    case PixelFormat::LAYOUT_UNKNOWN:
+      return "LAYOUT_UNKNOWN";
+    case PixelFormat::LAYOUT_ALPHA:
+      return "LAYOUT_ALPHA";
+    case PixelFormat::LAYOUT_RGB:
+      return "LAYOUT_RGB";
+    case PixelFormat::LAYOUT_RGBA:
+      return "LAYOUT_RGBA";
+    case PixelFormat::LAYOUT_RED_GREEN:
+      return "LAYOUT_RED_GREEN";
+    default:
+      return "Invalid value (should never happen)";
     }
   }
 

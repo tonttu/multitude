@@ -267,14 +267,14 @@ namespace Luminous {
       {
         m_state = WAITING;
         m_image.reset();
-        LUMINOUS_IN_FULL_OPENGL(m_compressedImage.reset());
+        m_compressedImage.reset();
         m_lastUsed = Radiant::TimeStamp(0);
       }
 
       void dropFromGPU()
       {
         if(m_image) m_image.reset(m_image->move());
-        LUMINOUS_IN_FULL_OPENGL(if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());)
+        if(m_compressedImage) m_compressedImage.reset(m_compressedImage->move());
       }
 
       float sinceLastUse() const { return m_lastUsed.sinceSecondsD(); }
