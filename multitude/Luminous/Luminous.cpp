@@ -133,7 +133,7 @@ namespace Luminous
       if(dir) {
         pluginPath = std::string(dir) + std::string("\\bin\\plugins");
       } else {
-        pluginPath = std::string("..\\lib\\Plugins");
+        pluginPath = std::string("..\\lib\\plugins");
       }
       QCoreApplication::addLibraryPath(pluginPath.c_str());
 #endif
