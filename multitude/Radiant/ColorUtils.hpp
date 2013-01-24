@@ -18,6 +18,7 @@
 
 #include "Export.hpp"
 #include "VideoImage.hpp"
+#include "Color.hpp"
 
 #include <Nimble/Math.hpp>
 #include <Nimble/Vector3.hpp>
@@ -42,9 +43,13 @@ namespace Radiant
     /// @copybrief rgbTohsv
     static void rgbTohsv(const Nimble::Vector3f & rgb, Nimble::Vector3f & hsv);
     /// @copybrief rgbTohsv
+    static Color rgbTohsv(const Color & rgb);
+    /// @copybrief rgbTohsv
     static void hsvTorgb(float h, float s, float v, float & r, float & g, float & b);
     /// @copybrief rgbTohsv
     static void hsvTorgb(const Nimble::Vector3f & hsv, Nimble::Vector3f & rgb);
+    /// @copybrief rgbTohsv
+    static Color hsvTorgb(const Color & hsv);
 
     /// Convert linear RGB to CIE XYZ tristimulus values
     /// @param rgb linear rgb color

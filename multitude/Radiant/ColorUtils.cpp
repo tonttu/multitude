@@ -67,6 +67,14 @@ namespace Radiant
     rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
   }
 
+  Color ColorUtils::rgbTohsv(const Color & rgb)
+  {
+    Color hsv;
+    hsv.w = rgb.w;
+    ColorUtils::rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
+    return hsv;
+  }
+
   void ColorUtils::hsvTorgb(float h, float s, float v, float & r, float & g, float & b)
   {
     r = g = b = 0.0f;
@@ -110,6 +118,14 @@ namespace Radiant
   void ColorUtils::hsvTorgb(const Nimble::Vector3f & hsv, Nimble::Vector3f & rgb)
   {
     hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+  }
+
+  Color ColorUtils::hsvTorgb(const Color & hsv)
+  {
+    Color rgb;
+    rgb.w = hsv.w;
+    hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+    return rgb;
   }
 
   void ColorUtils::colorBalance(VideoImage & img, Nimble::Vector3f rgbCoeff)

@@ -69,7 +69,16 @@ namespace Radiant
       /// value of 1 means fully opaque color.
       /// @return alpha component of the color
       float alpha() const { return get(3); }
- };
+
+      /// Sets the red color component
+      void setRed(float r) { x = r; }
+      /// Sets the green color component
+      void setGreen(float g) { y = g; }
+      /// Sets the blue color component
+      void setBlue(float b) { z = b; }
+      /// Sets the alpha color component
+      void setAlpha(float a) { w = a; }
+    };
 
 }
 
