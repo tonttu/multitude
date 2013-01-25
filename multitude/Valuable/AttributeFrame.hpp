@@ -231,8 +231,16 @@ namespace Valuable
                          QMap<Attribute *, StyleValue> & expanded) OVERRIDE
     {
       if (value.size() > 0 && value.size() < 5) {
-        for (int i = 0; i < 4; ++i)
-          expanded[m_values[i]] = value[i % value.size()];
+        for (int i = 0; i < 4; ++i) {
+          if(i < value.size())
+            expanded[m_values[i]] = value[i];
+          else if(i == 3) // missing left is right
+            expanded[m_values[i]] = expanded[m_values[1]];
+          else if(i == 2) // missing bottom is top
+            expanded[m_values[i]] = expanded[m_values[0]];
+          else if(i == 1) // missing right is top
+            expanded[m_values[i]] = expanded[m_values[0]];
+        }
         return true;
       }
       return false;
