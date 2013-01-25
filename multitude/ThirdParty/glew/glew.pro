@@ -22,13 +22,13 @@ DESTDIR = ../../lib
 include(../../library.pri)
 
 # Override default installation
-src_code.path = /src/multitude/ThirdParty/$$TARGET/src
+src_code.path = /src/multitude/ThirdParty/glew/src
 src_code.files = $$SOURCES
 
-src_headers.path = /src/multitude/ThirdParty/$$TARGET/include/GL
+src_headers.path = /src/multitude/ThirdParty/glew/include/GL
 src_headers.files = $$HEADERS
 
-src_projectfile.path = /src/multitude/ThirdParty/$$TARGET
+src_projectfile.path = /src/multitude/ThirdParty/glew
 src_projectfile.files = $$PROJECT_FILE
 
 includes.path = /include/GL
