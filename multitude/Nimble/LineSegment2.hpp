@@ -92,7 +92,7 @@ template <typename T>
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
-      Nimble::Vector2f tmp;
+      Nimble::Vector2T<T> tmp;
 
       bool r = linesIntersect(m_points[0], m_points[1],
                               that.m_points[0], that.m_points[1], & tmp);
@@ -234,7 +234,7 @@ template <typename T>
     }
 
     struct Subdivider {
-      Nimble::LineSegment2f check;
+      Nimble::LineSegment2T<T> check;
 
       std::vector< Vector2T<T> > & points;
       int counts;
@@ -258,7 +258,7 @@ template <typename T>
             return false;
         } else if(level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f) {
           Vector2T<T> iPoint;
-          if(check.intersects(Nimble::LineSegment2f(p1, p4), &iPoint)) {
+          if(check.intersects(Nimble::LineSegment2T<T>(p1, p4), &iPoint)) {
             points.push_back(iPoint);
             return true;
           }
@@ -268,7 +268,7 @@ template <typename T>
     };
 
     std::vector< Vector2T<T> > p;
-    Subdivider sub = { Nimble::LineSegment2f(Vector2(0, 0), Vector2(end.length(), 0)), p, 0 };
+    Subdivider sub = { Nimble::LineSegment2T<T>(Vector2T<T>(0, 0), Vector2T<T>(end.length(), 0)), p, 0 };
 
     return sub.subdivide( cps[0], cps[1], cps[2], cps[3] );
   }

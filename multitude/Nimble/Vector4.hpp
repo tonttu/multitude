@@ -93,9 +93,9 @@ namespace Nimble {
     /// Checks if all components are zero
     inline bool		isZero	    (void) const		       { return (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f); }
     /// Returns the length of the vector
-    inline double	length	    (void) const		       { return std::sqrt(double(x*x+y*y+z*z+w*w)); }
+    inline auto	length	    (void) const -> decltype(T() * 1.0f) { return std::sqrt(lengthSqr()); }
    /// Returns the squared length of the vector
-    inline double	lengthSqr   (void) const		       { return x*x+y*y+z*z+w*w; }
+    inline auto	lengthSqr   (void) const -> decltype(T() * 1.0f) { return x*x+y*y+z*z+w*w; }
     /// Normalizes the vector to the given length
     /// @param len length to normalize to
     /// @return reference to this

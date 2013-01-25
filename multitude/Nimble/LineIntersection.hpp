@@ -21,28 +21,27 @@ namespace Nimble
   /// @param slopeType reference to int to receive slope type.
   /// @param delta reference to Nimble::Vector2f to receive delta.
   /// @return Slope value.
-  inline float lineSlope(const Nimble::Vector2f & lineStart, const Nimble::Vector2f & lineEnd,
-                         int & slopeType, Nimble::Vector2f & delta)
+  template <typename T>
+  auto lineSlope(const Nimble::Vector2T<T> & lineStart, const Nimble::Vector2T<T> & lineEnd,
+                 int & slopeType, Nimble::Vector2T<T> & delta) -> decltype(T() * 1.0f)
   {
-    float   m = 0.0f;
-
     delta = lineEnd - lineStart;
 
-    if(std::abs(delta.x) < std::numeric_limits<float>::epsilon())
+    if(std::abs(delta.x) < std::numeric_limits<T>::epsilon())
     {
       slopeType = LS_VERTICAL;
     }
-    else if(std::abs(delta.y) < std::numeric_limits<float>::epsilon())
+    else if(std::abs(delta.y) < std::numeric_limits<T>::epsilon())
     {
       slopeType = LS_HORIZONTAL;
     }
     else
     {
       slopeType = LS_SLOPING;
-      m = delta.y / delta.x;
+      return delta.y / delta.x;
     }
 
-    return m;
+    return 0;
   }
 
   /// Test for intersection of line segments.
@@ -61,13 +60,13 @@ namespace Nimble
 
     // Get slope and deltas of first line
     int   slopeType1 = 0;
-    Nimble::Vector2f  delta1;
-    const float   m1 = lineSlope(line1Start, line1End, slopeType1, delta1);
+    Nimble::Vector2T<T>  delta1;
+    const auto   m1 = lineSlope(line1Start, line1End, slopeType1, delta1);
 
     // Get slope and deltas of second line
     int   slopeType2 = 0;
-    Nimble::Vector2f  delta2;
-    const float   m2 = lineSlope(line2Start, line2End, slopeType2, delta2);
+    Nimble::Vector2T<T>  delta2;
+    const auto   m2 = lineSlope(line2Start, line2End, slopeType2, delta2);
 
     // Determine whether infinite lines cross: if so compute line parameters
     bool  cross = false;
@@ -166,10 +165,10 @@ namespace Nimble
 
     // Compute point of intersection
     if(interPoint)
-      * interPoint = Vector2f(line1Start.x + t1 * delta1.x, line1Start.y + t1 * delta1.y);
+      * interPoint = Vector2T<T>(line1Start.x + t1 * delta1.x, line1Start.y + t1 * delta1.y);
 
     // Return true only if point of intersection is on both lines
-    return(t1 >= 0.0f && t1 <= 1.0f && t2 >= 0.0f && t2 <= 1.0f);
+    return(t1 >= T(0) && t1 <= T(1) && t2 >= T(0) && t2 <= T(1));
   }
 
 

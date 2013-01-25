@@ -242,14 +242,14 @@ namespace Nimble {
 
       // could just change the projection plane in projection matrix,
       // but maybe this is a bit more clear
-      Matrix4T<T> camera = makeTranslation(Vector3f(0, 0, -dist));
+      Matrix4T<T> camera = makeTranslation(Vector3T<T>(0, 0, -dist));
 
       Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
                          0, height * 0.5, 0, 0.0+height*0.5,
                          0, 0, 1, 0,
                          0, 0, 0, 1);
 
-      Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
+      Matrix4T<T> view = makeTranslation(Vector3T<T>(-width*.5, -height*.5, 0));
 
       return window * projection * camera * view;
     }
