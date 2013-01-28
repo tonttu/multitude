@@ -1656,6 +1656,10 @@ namespace Luminous
       glLineWidth(1.f);
       glUseProgram(0);
       glDisable(GL_DEPTH_TEST);
+      glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
   }
 
