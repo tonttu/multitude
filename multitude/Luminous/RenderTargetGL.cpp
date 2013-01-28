@@ -45,7 +45,7 @@ namespace Luminous
     GLERROR("RenderBufferGL::unbind # glBindRenderbuffer");
   }
 
-  void RenderBufferGL::storageFormat(const RenderBuffer & buffer)
+  void RenderBufferGL::setStorageFormat(const RenderBuffer & buffer)
   {
     GLERROR("RenderBufferGL::storageFormat # zoo");
     touch();
@@ -61,7 +61,7 @@ namespace Luminous
   void RenderBufferGL::sync(const RenderBuffer & buffer)
   {
     bind();
-    storageFormat(buffer);
+    setStorageFormat(buffer);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

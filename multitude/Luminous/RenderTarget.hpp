@@ -12,24 +12,46 @@ namespace Luminous
 {
 
 
-  /// This class represents an off-screen render target that is optimized for use as a render target. This class should be used if you
-  /// do not need to sample (e.g. use as a texture) your rendered image.
+  /// This class represents an off-screen render target that is optimized for
+  /// use as a render target. This class should be used if you do not need to
+  /// sample (e.g. use as a texture) your rendered image.
   class LUMINOUS_API RenderBuffer : public RenderResource
   {
   public:
+    /// Construct a new RenderBuffer
     RenderBuffer();
+    /// Destructor
     ~RenderBuffer();
 
+    /// Construct a copy of the given RenderBuffer
+    /// @param rb buffer to copy
     RenderBuffer(RenderBuffer & rb);
+    /// Copy the given RenderBuffer
+    /// @param rb buffer to copy
     RenderBuffer & operator=(RenderBuffer & rb);
 
+    /// Move constructor
+    /// @param rb buffer to move
     RenderBuffer(RenderBuffer && rb);
+    /// Move the given RenderBuffer
+    /// @param rb buffer to move
     RenderBuffer & operator=(RenderBuffer && rb);
 
-    void storageFormat(const Nimble::Size &size, GLenum format, int samples);
+    /// Set the data storage, format, dimensions and sample count of the
+    /// RenderBuffer's buffer
+    /// @param size dimensions of the buffer
+    /// @param format data format
+    /// @param samples buffer sample count
+    void setStorageFormat(const Nimble::Size &size, GLenum format, int samples);
 
+    /// Get the dimensions of the buffer
+    /// @return dimensions of the buffer
     const Nimble::Size & size() const;
+    /// Get the buffer format
+    /// @return format of the buffer
     GLenum format() const;
+    /// Get the sample count of the buffer
+    /// @return buffer sample count
     int samples() const;
 
   private:

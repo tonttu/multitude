@@ -62,7 +62,7 @@ namespace Luminous
     return *this;
   }
 
-  void RenderBuffer::storageFormat(const Nimble::Size &size, GLenum format, int samples)
+  void RenderBuffer::setStorageFormat(const Nimble::Size &size, GLenum format, int samples)
   {
     if(m_d->m_size == size &&
        m_d->m_format == format &&
@@ -138,7 +138,7 @@ namespace Luminous
       if(format == 0)
         format = deduceBufferFormat(attachment);
 
-      buffer.storageFormat(m_size, format, m_samples);
+      buffer.setStorageFormat(m_size, format, m_samples);
 
       m_renderBufferAttachments[attachment] = buffer.resourceId();
     }
@@ -161,7 +161,7 @@ namespace Luminous
     {
       auto buf = std::unique_ptr<Luminous::RenderBuffer>(new Luminous::RenderBuffer());
 
-      buf->storageFormat(m_size, storageFormat, m_samples);
+      buf->setStorageFormat(m_size, storageFormat, m_samples);
 
       attach(attachment, *buf);
 
@@ -273,7 +273,7 @@ namespace Luminous
     // Resize all attachments
     for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
-      rb->storageFormat(size, rb->format(), rb->samples());
+      rb->setStorageFormat(size, rb->format(), rb->samples());
     }
 
     for(GLenum attachment : m_d->m_textureAttachments.keys()) {
@@ -294,7 +294,7 @@ namespace Luminous
     // Change sample count for all render buffer attachments
     for(GLenum attachment : m_d->m_renderBufferAttachments.keys()) {
       auto rb = renderBuffer(attachment);
-      rb->storageFormat(rb->size(), rb->format(), samples);
+      rb->setStorageFormat(rb->size(), rb->format(), samples);
     }
 
     // Change sample count for all texture attachments

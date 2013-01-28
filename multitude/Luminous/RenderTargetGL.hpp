@@ -19,7 +19,7 @@ namespace Luminous
 
     LUMINOUS_API void sync(const RenderBuffer & buffer);
 
-    LUMINOUS_API void storageFormat(const RenderBuffer & buffer);
+    LUMINOUS_API void setStorageFormat(const RenderBuffer & buffer);
 
     LUMINOUS_API void bind();
     LUMINOUS_API void unbind();
