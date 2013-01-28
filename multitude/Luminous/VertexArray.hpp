@@ -10,7 +10,8 @@
 
 namespace Luminous
 {
-  /// VAO
+
+  /// This class abstracts OpenGL VertexArrayObjects.
   /// @todo implement copying (note bindings)
   class VertexArray
     : public RenderResource

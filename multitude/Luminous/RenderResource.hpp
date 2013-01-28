@@ -10,9 +10,14 @@
 
 namespace Luminous
 {
+
+  /// This class provides common interface for different resources needed
+  /// during rendering.
   class LUMINOUS_API RenderResource
   {
   public:
+
+    /// Hash used to identify rendering resources
     struct Hash
     {
       uint64_t data[2];

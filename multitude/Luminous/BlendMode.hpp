@@ -6,9 +6,13 @@
 
 namespace Luminous
 {
+
+  /// This class defines a blending mode used during rendering.
   class BlendMode
   {
   public:
+    /// The blending equation. See
+    /// http://www.opengl.org/sdk/docs/man3/xhtml/glBlendEquation.xml for details.
     enum Equation
     {
       ADD                       = GL_FUNC_ADD,
@@ -18,6 +22,8 @@ namespace Luminous
       MAX                       = GL_MAX
     };
 
+    /// Defines the pixel arithmetic used during blending. See
+    /// http://www.opengl.org/sdk/docs/man3/xhtml/glBlendFunc.xml for details.
     enum Function
     {
       ZERO                      = GL_ZERO,

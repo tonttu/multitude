@@ -13,6 +13,8 @@ namespace Luminous
 {
   class RenderDriverGL;
 
+  /// @cond
+
   struct BufferMapping
   {
     BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
@@ -23,6 +25,8 @@ namespace Luminous
     void * data;
   };
 
+  /// @endcond
+
   /// Keeps track of current OpenGL state, one instance is shared between all *GL
   /// -classes in the same context
   /// None of these functions actually modify any OpenGL state
@@ -30,7 +34,7 @@ namespace Luminous
   {
   public:
     //This would probably be more efficient if using plain array, with some
-    //safe-mechanisms, since keys are usually somtehing like: 0,1,2,3,...
+    //safe-mechanisms, since keys are usually something like: 0,1,2,3,...
     struct IdHash { std::size_t operator()(const GLuint& i) const { return i; } };
     typedef std::unordered_map<GLuint, BufferMapping, IdHash> BufferMaps;
 

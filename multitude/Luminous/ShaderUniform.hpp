@@ -20,6 +20,9 @@
 
 namespace Luminous
 {
+
+  /// A shader uniform. Shader uniforms are used to pass uniform variables to
+  /// OpenGL shaders.
   struct ShaderUniform
   {
     enum Type
@@ -71,4 +74,5 @@ namespace Luminous
     Type m_type;
   };
 }
+
 #endif // LUMINOUS_SHADERUNIFORM_HPP

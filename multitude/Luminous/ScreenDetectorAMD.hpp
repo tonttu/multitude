@@ -3,6 +3,8 @@
 
 #include "ScreenDetector.hpp"
 
+/// @cond
+
 namespace Luminous
 {
   class ScreenDetectorAMD
@@ -11,4 +13,7 @@ namespace Luminous
     static bool detect(int screen, QList<ScreenInfo> & results);
   };
 }
+
+/// @endcond
+
 #endif // LUMINOUS_SCREENDETECTORAMD_HPP

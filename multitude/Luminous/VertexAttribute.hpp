@@ -6,6 +6,9 @@
 
 namespace Luminous
 {
+
+  /// This class represents a single vertex attribute in vertex description.
+  /// @sa VertexDescription
   struct VertexAttribute
   {
     enum Type

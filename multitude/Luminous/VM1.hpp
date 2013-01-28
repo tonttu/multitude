@@ -13,6 +13,9 @@
 namespace Luminous
 {
   class ColorCorrection;
+
+  // This class is internal to MultiTouch Ltd. Do not use this class. It will
+  // be removed in future revisions.
   class LUMINOUS_API VM1
   {
   public:

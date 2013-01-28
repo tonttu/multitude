@@ -59,6 +59,7 @@ namespace Luminous
     D * m_d;
   };
 
+  /// A shared pointer to PostProcessContext
   typedef std::shared_ptr<PostProcessContext> PostProcessContextPtr;
 }
 #endif // POSTPROCESSCONTEXT_HPP

@@ -71,7 +71,9 @@ namespace Luminous
     D * m_d;
   };
 
+  /// A shared pointer to PostProcessFilter
   typedef std::shared_ptr<PostProcessFilter> PostProcessFilterPtr;
+  /// A collection of PostProcessFilter pointers
   typedef std::vector<PostProcessFilterPtr> PostProcessFilters;
 }
 #endif // POSTPROCESSFILTER_HPP

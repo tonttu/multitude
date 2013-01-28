@@ -33,18 +33,24 @@ namespace Luminous
 {
   class GLSLProgramObject;
 
-
-
   /// RenderContext contains the current rendering state.
   class LUMINOUS_API RenderContext : public Transformer, public GLResources
   {
   public:
 
+    /// This class provides a simple guard for setting opacity. It will
+    /// automatically pop opacity in its destructor so the user doesn't need to
+    /// remember to do it manually.
     class OpacityGuard : public Patterns::NotCopyable
     {
     public:
+      /// Construct a new guard
+      /// @param r render context
       OpacityGuard(RenderContext & r) : m_rc(&r) {}
+      /// Construct a guard by moving
+      /// @param o guard to move
       OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
+      /// Destructor. This function automatically calls RenderContext::popOpacity().
       ~OpacityGuard() { m_rc->popOpacity(); }
 
     private:

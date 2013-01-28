@@ -14,6 +14,9 @@
 
 namespace Luminous
 {
+
+  /// This class provides a custom mipmap management for images loaded from
+  /// disk.
   class Mipmap : public Valuable::Node,
                  public std::enable_shared_from_this<Mipmap>
   {

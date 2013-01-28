@@ -6,9 +6,15 @@
 #include <Patterns/NotCopyable.hpp>
 #include <Radiant/Singleton.hpp>
 
+/// @cond
+
 namespace Luminous
 {
+
   class ColorCorrection;
+
+  // This class is internal to MultiTouch Ltd. Do not use this class.
+  // It will be removed in future revisions.
   class LUMINOUS_API HardwareColorCorrection : public Patterns::NotCopyable
   {
     DECLARE_SINGLETON(HardwareColorCorrection);
@@ -24,5 +30,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif // LUMINOUS_HARDWARECOLORCORRECTION_HPP
