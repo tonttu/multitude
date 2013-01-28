@@ -87,6 +87,8 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const;
     LUMINOUS_API void setVertexDescription(const VertexDescription & description);
 
+    /// This is not supported in OS X Mountain Lion.
+    /// Sample shading value for objects rendered with this shader, see glMinSampleShading
     LUMINOUS_API float sampleShading() const;
     LUMINOUS_API void setSampleShading(float sample);
 

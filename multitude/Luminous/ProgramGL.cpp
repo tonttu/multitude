@@ -119,7 +119,9 @@ namespace Luminous
     // Avoid re-applying the same shader
     if(m_state.setProgram(m_handle)) {
       glUseProgram(m_handle);
+#ifndef RADIANT_OSX_MOUNTAIN_LION
       glMinSampleShading(m_sampleShading);
+#endif
       //GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
     }
   }
