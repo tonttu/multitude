@@ -26,6 +26,8 @@
 
 #include <vector>
 
+/// @cond
+
 namespace Luminous
 {
   // Color correction curves for red, green and blue channels
@@ -82,5 +84,7 @@ namespace Luminous
     D * m_d;
   };
 }
+
+/// @endcond
 
 #endif

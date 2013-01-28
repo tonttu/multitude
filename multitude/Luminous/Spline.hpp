@@ -8,6 +8,8 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+/// @cond
+
 class QDataStream;
 
 namespace Luminous {
@@ -58,5 +60,7 @@ namespace Luminous {
   LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
   LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);
 }
+
+/// @endcond
 
 #endif // SPLINE_HPP
