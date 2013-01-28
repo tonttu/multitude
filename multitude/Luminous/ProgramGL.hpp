@@ -62,6 +62,7 @@ namespace Luminous
     std::map<QByteArray, int> m_uniforms;
     std::map<QByteArray, int> m_uniformBlocks;
     VertexDescription m_vertexDescription;
+    float m_sampleShading;
     bool m_linked;
     // UniformDescription m_baseDescription
   };

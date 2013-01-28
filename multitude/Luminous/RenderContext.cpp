@@ -93,6 +93,7 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       desc.addAttribute<float>("vertex_invsize");
       m_fontShader.setVertexDescription(desc);
+      m_fontShader.setSampleShading(1.0f);
     }
 
     ~Internal()

@@ -78,6 +78,7 @@ namespace Luminous
   ProgramGL::ProgramGL(StateGL & state, const Program & program)
     : ResourceHandleGL(state)
     , m_vertexDescription(program.vertexDescription())
+    , m_sampleShading(0.0f)
     , m_linked(false)
   {
     m_handle = glCreateProgram();
@@ -89,6 +90,7 @@ namespace Luminous
     , m_attributes(std::move(program.m_attributes))
     , m_uniforms(std::move(program.m_uniforms))
     , m_uniformBlocks(std::move(program.m_uniformBlocks))
+    , m_sampleShading(std::move(program.m_sampleShading))
     , m_linked(program.m_linked)
   {
   }
@@ -100,6 +102,7 @@ namespace Luminous
     std::swap(m_attributes, program.m_attributes);
     std::swap(m_uniforms, program.m_uniforms);
     std::swap(m_uniformBlocks, program.m_uniformBlocks);
+    std::swap(m_sampleShading, program.m_sampleShading);
     std::swap(m_linked, program.m_linked);
     return *this;
   }
@@ -116,6 +119,7 @@ namespace Luminous
     // Avoid re-applying the same shader
     if(m_state.setProgram(m_handle)) {
       glUseProgram(m_handle);
+      glMinSampleShading(m_sampleShading);
       //GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
     }
   }
@@ -199,6 +203,7 @@ namespace Luminous
       }
     }
     m_vertexDescription = program.vertexDescription();
+    m_sampleShading = program.sampleShading();
 
     if (m_vertexDescription.attributeCount() == 0)
       Radiant::warning("ProgramGL::link # shader %d (%s) has no vertex attributes defined. Did you forget to assign a vertex description?", handle(), program.shaderFilenames().join(", ").toUtf8().data());

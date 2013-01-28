@@ -87,6 +87,9 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const;
     LUMINOUS_API void setVertexDescription(const VertexDescription & description);
 
+    LUMINOUS_API float sampleShading() const;
+    LUMINOUS_API void setSampleShading(float sample);
+
     /// @cond
     LUMINOUS_API const UniformDescription & uniformDescription() const;
     LUMINOUS_API void setUniformDescription(const UniformDescription & description);

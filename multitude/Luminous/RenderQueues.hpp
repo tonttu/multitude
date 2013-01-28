@@ -17,9 +17,6 @@ namespace Luminous
     VertexArrayGL * vertexArray;
     BufferGL * uniformBuffer;
     std::array<TextureGL*, 8> textures;
-    BlendMode blendMode;
-    StencilMode stencilMode;
-    DepthMode depthMode;
 
     bool operator<(const RenderState & o) const
     {

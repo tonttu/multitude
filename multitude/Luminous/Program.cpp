@@ -128,7 +128,7 @@ namespace Luminous
   // Program
   class Program::D {
   public:
-    D() : translucent(false), needRehash(false) {}
+    D() : sampleShading(0.0f), translucent(false), needRehash(false) {}
 
   public:
     typedef std::vector<std::unique_ptr<ShaderGLSL>> ShaderList;
@@ -136,6 +136,7 @@ namespace Luminous
     VertexDescription vertexDescription;
     UniformDescription uniformDescription;
     RenderResource::Hash hash;
+    float sampleShading;
     bool translucent;
     bool needRehash;
   };
@@ -251,6 +252,17 @@ namespace Luminous
   {
     m_d->vertexDescription = description;
     /// @todo invalidate?
+  }
+
+  float Program::sampleShading() const
+  {
+    return m_d->sampleShading;
+  }
+
+  void Program::setSampleShading(float sample)
+  {
+    m_d->sampleShading = sample;
+    invalidate();
   }
 
   const UniformDescription & Program::uniformDescription() const

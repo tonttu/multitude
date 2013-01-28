@@ -563,6 +563,8 @@ namespace Luminous
 
   void RenderDriverGL::setDefaultState()
   {
+    glEnable(GL_SAMPLE_SHADING);
+
     // Default modes
     setBlendMode(Luminous::BlendMode::Default());
     setDepthMode(Luminous::DepthMode::Default());
