@@ -1034,7 +1034,7 @@ namespace Luminous
     const Nimble::Matrix4f model = transform();
 
     FontUniformBlock uniform;
-    uniform.invscale = 1.0f / Nimble::Vector2f(model[0][1], model[1][1]).length() / style.textSharpness();
+    uniform.invscale = 1.0f / Nimble::Vector2f(model[1][0], model[1][1]).length() / style.textSharpness();
     uniform.split = 0.0f;
 
     /// @todo how to calculate these?
@@ -1108,8 +1108,9 @@ namespace Luminous
               true, PRIMITIVE_TRIANGLE_STRIP, count*6 - 2, count*4, 1, program, &textures);
         uniform.projMatrix = b.uniform->projMatrix;
         *b.uniform = uniform;
+        b.uniform->depth = b.depth;
 
-        Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, b.depth);
+        Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, 0);
         if (style.textOverflow() == OverflowVisible) {
           b.uniform->clip.set(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(),
                               std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
