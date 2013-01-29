@@ -347,11 +347,11 @@ namespace Valuable
       myWidget1->eventRemoveListener(myWidget2);
 
       // Remove selected event links between two widgets:
-      myWidget1->eventRemoveListener("interactionbegin", myWidget3);
+      myWidget1->eventRemoveListener("interaction-begin", myWidget3);
       myWidget1->eventRemoveListener(QByteArray(), "clear", myWidget4);
 
       // Remove all selected events to any other widgets
-      myWidget1->eventRemoveListener("singletap");
+      myWidget1->eventRemoveListener("single-tap");
       @endcode
 
 
