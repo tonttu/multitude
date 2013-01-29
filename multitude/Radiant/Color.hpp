@@ -18,7 +18,12 @@
 
 #include "Export.hpp"
 
+#include <QByteArray>
+#include <QColor>
+
 #include <Nimble/Vector4.hpp>
+
+#include <cstdint>
 
 namespace Radiant
 {
@@ -38,15 +43,9 @@ namespace Radiant
     public:
       RADIANT_API Color();
 
-      /** Decode color from a hex-string. The string must be in typical hex
-      format and start with hash. If the string contains 8 number values, then
-      the last to are interpreted as alpha. By default the alpha is set to 255
-      (fully opaque).
-
-      Example arguments are \#000000 (black), \#FFFFFF (white), \#FF0000
-      (red) and \#FF000088 (transparent red).
-      @param color color string to parse */
-      RADIANT_API Color(const char * color);
+      /// Construct a color from a string
+      /// @sa set
+      RADIANT_API Color(const QByteArray & color);
       /// Constructs a color from the given floats. The values are expected to be [0,1]
       RADIANT_API Color(float r, float g, float b, float a = 1.f);
       /// Constructs a color from the given vector. The component values are expected to be [0,1]
@@ -57,6 +56,20 @@ namespace Radiant
       RADIANT_API void setRGBA(float r, float g, float b, float a);
       /// Make HSVA color from floats.
       RADIANT_API void setHSVA(float h, float s, float v, float a);
+
+      /// Set color as a string
+      /// @param color CSS3 color module extended color keyword or RGB(A) hexadecimal notation.
+      /// See http://www.w3.org/TR/css3-color/#svg-color and http://www.w3.org/TR/css3-color/#rgb-color
+      /// Example arguments: "black", "purple", "\#FFF" (white), "\#F00" (red) and "\#FF000080" (transparent red).
+      /// @returns true if color was valid
+      RADIANT_API bool set(const QByteArray & color);
+
+      /// Converts this color to QColor. QColor uses 16-bit integers, so this
+      /// conversion might lose some data. Values are also clamped between 0 and 255.
+      RADIANT_API QColor toQColor() const;
+
+      /// Returns a new Color from RGBA values. All parameters are from 0 to 255.
+      RADIANT_API static Color fromRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255u);
 
       /// Returns the red color component
       float red()   const { return get(0); }

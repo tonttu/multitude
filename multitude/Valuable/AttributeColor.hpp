@@ -20,6 +20,7 @@
 
 #include <Valuable/Export.hpp>
 #include <Valuable/AttributeVector.hpp>
+#include <Valuable/StyleValue.hpp>
 
 namespace Valuable
 {
@@ -35,6 +36,12 @@ namespace Valuable
       : AttributeVector<Radiant::Color>(host, name, c, transit)
     {}
 
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param c The color value as string
+    AttributeColor(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
+      : AttributeVector<Radiant::Color>(host, name, Radiant::Color(c), transit)
+    {}
+
     ~AttributeColor()
     {}
 
@@ -43,6 +50,28 @@ namespace Valuable
     {
       this->setValue(color, layer);
       return true;
+    }
+
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
+    {
+      Radiant::Color c;
+      if (c.set(v.toUtf8())) {
+        this->setValue(c, layer);
+        return true;
+      }
+      return false;
+    }
+
+    virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
+    {
+      if (v.size() != 1)
+        return false;
+      Radiant::Color c;
+      if (c.set(v.values()[0].toByteArray())) {
+        this->setValue(c, layer);
+        return true;
+      }
+      return false;
     }
 
     /// Converts the value object to color
