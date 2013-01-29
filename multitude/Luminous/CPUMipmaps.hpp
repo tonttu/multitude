@@ -54,8 +54,7 @@ namespace Luminous {
   */
   /// @todo examples
   /// @deprecated use Luminous::Mipmap instead
-  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Radiant::Task,
-                                  public std::enable_shared_from_this<CPUMipmaps>
+  class LUMINOUS_API CPUMipmaps : public Luminous::Collectable, public Radiant::Task
   {
     MEMCHECKED_USING(Luminous::Collectable);
   public:

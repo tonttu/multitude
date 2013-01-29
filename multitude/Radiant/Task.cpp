@@ -33,6 +33,26 @@ namespace Radiant
       m_host(0)
   {}
 
+  void Task::runNow(bool finish)
+  {
+    if (m_state == DONE || m_state == CANCELLED)
+      return;
+    if (m_host)
+      m_host->removeTask(shared_from_this(), false, true);
+
+    if (m_state == WAITING) {
+      initialize();
+      m_state = RUNNING;
+    }
+
+    do {
+      doTask();
+    } while (finish && m_state != DONE);
+
+    if (m_state == DONE)
+      finished();
+  }
+
   Task::~Task()
   {}
 

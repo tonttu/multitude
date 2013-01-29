@@ -56,7 +56,7 @@ namespace Radiant
     wakeThread();
   }
 
-  bool BGThread::removeTask(std::shared_ptr<Task> task)
+  bool BGThread::removeTask(std::shared_ptr<Task> task, bool cancel, bool wait)
   {
     if(task->m_host != this)
       return false;
@@ -70,11 +70,29 @@ namespace Radiant
     if(it != m_taskQueue.end()) {
       task->m_host = 0;
       m_taskQueue.erase(it);
-      task->cancel();
+      if (cancel)
+        task->cancel();
       return true;
     }
 
-    // The task isn't in the queue, maybe it's been executed currently
+    // The task wasn't in the queue, maybe it's been executed currently, we don't care
+    if (!wait)
+      return false;
+
+    if (m_runningTasks.count(task) > 0) {
+      m_removeQueue.insert(task);
+      while (!m_isShuttingDown && m_removeQueue.count(task) > 0) {
+        m_removeCond.wait(m_mutexWait);
+      }
+      if (m_isShuttingDown) {
+        m_removeQueue.erase(task);
+        return false;
+      }
+      if (cancel)
+        task->cancel();
+      return true;
+    }
+
     return false;
   }
 
@@ -132,7 +150,7 @@ namespace Radiant
 
   unsigned int BGThread::runningTasks() const
   {
-    return m_runningTasks;
+    return m_runningTasksCount;
   }
 
   unsigned int BGThread::overdueTasks() const
@@ -185,21 +203,29 @@ namespace Radiant
         task->m_state = Task::RUNNING;
       }
 
-      if(task->state() != Task::DONE) {
-        m_runningTasks.ref();
+      if(task->state() != Task::DONE)
         task->doTask();
-        m_runningTasks.deref();
-      }
+
+      bool done = task->state() == Task::DONE;
 
       // Did the task complete?
-      if(task->state() == Task::DONE) {
+      if(done) {
         task->finished();
         task->m_host = 0;
-      } else {
+      }
+
+      Radiant::Guard guard(m_mutexWait);
+      m_runningTasks.erase(task);
+      --m_runningTasksCount;
+
+      auto it = m_removeQueue.find(task);
+      if (it != m_removeQueue.end()) {
+        m_removeQueue.erase(it);
+        m_removeCond.wakeAll();
+      } else if (!done) {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be
         // executed in round-robin
-        Radiant::Guard guard(m_mutexWait);
         m_taskQueue.insert(contained(task->priority(), task));
       }
     }
@@ -222,6 +248,8 @@ namespace Radiant
         // Should the task be run now?
         if(next <= Radiant::TimeStamp(0)) {
           m_taskQueue.erase(it);
+          m_runningTasks.insert(task);
+          m_runningTasksCount = m_runningTasks.size();
           return task;
         } else if(next < wait && m_reserved.find(task) == m_reserved.end()) {
           wait = next;
@@ -303,7 +331,7 @@ namespace Radiant
 
     /// @todo spin-lock is not very elegant, but we need to wait until all
     /// running tasks have been cleared.
-    while(m_runningTasks > 0)
+    while(m_runningTasksCount > 0)
       Radiant::Sleep::sleepMs(100);
   }
 }

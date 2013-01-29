@@ -79,11 +79,13 @@ namespace Radiant
         after which BGThread will remove it when it has a chance.
 
         @param task The task to be removed
+        @param cancel Should the task be cancelled if succesfully removed
+        @param wait Block until the task execution returns, if the task is currently running
         @return True if the task was successfully removes, false otherwise.
         @sa Radiant::Task::setFinished
         @sa Radiant::Task::schedule
     */
-    virtual bool removeTask(TaskPtr task);
+    virtual bool removeTask(TaskPtr task, bool cancel = true, bool wait = false);
 
     /// Notify the BGThread that a task execution time has been rescheduled.
     /// This function should always be called after modifying the time-stamp of a
@@ -137,6 +139,8 @@ namespace Radiant
     void wakeThread();
     void wakeAll();
 
+    /// @todo pimpl
+
     // locked with m_mutexWait
     container m_taskQueue;
 
@@ -147,7 +151,15 @@ namespace Radiant
     int m_idle;
     Radiant::Condition m_idleWait;
 
-    QAtomicInt m_runningTasks;
+    // protected with m_mutexWait
+    std::set<TaskPtr> m_runningTasks;
+    int m_runningTasksCount;
+
+    // protected with m_mutexWait, includes all tasks that should be removed and not rescheduled
+    std::set<TaskPtr> m_removeQueue;
+    // Use with m_mutexWait
+    Radiant::Condition m_removeCond;
+
     bool m_isShuttingDown;
   };
 

@@ -61,7 +61,7 @@ namespace Radiant
       may stall for a while when closing down because the application will wait
       for any tasks to finish before it stops the BGThread running them.
     */
-  class RADIANT_API Task : Patterns::NotCopyable
+  class RADIANT_API Task : Patterns::NotCopyable, public std::enable_shared_from_this<Task>
   {
     MEMCHECKED
   public:
@@ -118,6 +118,17 @@ namespace Radiant
 
       /// Marks the task as finished, so it will be removed.
       void setFinished() { setState(DONE); }
+
+      /// If the task isn't already finished, runs the task immediately in the
+      /// calling thread. If the task is running in a background thread, waits
+      /// until the task is released.
+      /// Will call initialize() and finished() -functions if necessary.
+      /// It's fine to call this function either before or after the task is
+      /// added to BGThread, but this shouldn't be called at the same time as
+      /// BGThread::addTask.
+      /// @param finish run doTask until the task is in DONE state, otherwise
+      ///               just run the task once.
+      void runNow(bool finish);
 
     protected:
        /// Initialize the task. Called by BGThread before the task is processed
