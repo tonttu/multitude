@@ -31,9 +31,6 @@
 
 namespace Radiant
 {
-  /// Shared pointer to a Task
-  typedef std::shared_ptr<Task> TaskPtr;
-
   /** A class used to execute tasks in a separated threads.
 
     BGThread implements a thread-pool of one or more threads that are used to

@@ -153,6 +153,8 @@ namespace Radiant
 
       friend class BGThread;
   };
+  /// Shared pointer to a Task
+  typedef std::shared_ptr<Task> TaskPtr;
 
   /// This class executes the given function within BGThread.
   class RADIANT_API FunctionTask : public Task

@@ -56,17 +56,14 @@ namespace Luminous
 
     LUMINOUS_API void onHeaderReady(std::function<void(void)> callback, bool once=false, ListenerType type=AFTER_UPDATE);
 
+    /// Mipmap is not "header-ready", if it still has PingTask running/waiting
+    /// After the mipmap is header-ready, nativeSize() returns the correct size
     LUMINOUS_API bool isHeaderReady() const;
 
-    /// Mipmap is not ready, if it still has PingTask running/waiting
-    /// After the mipmap is ready, nativeSize() returns the correct size
+    /// Mipmap is not ready, if it still has PingTask or MipmapGeneratorTask running/waiting
     LUMINOUS_API bool isReady(bool f=false) const OVERRIDE;
 
     LUMINOUS_API bool isValid() const;
-
-    /// Check if the mipmap loading was cancelled.
-    /// @return true if loading was cancelled; otherwise false
-    LUMINOUS_API bool isLoadCancelled() const;
 
     /// @return Returns true if the images have alpha channel
     LUMINOUS_API bool hasAlpha() const;
@@ -88,6 +85,9 @@ namespace Luminous
     /// @return filename from which the mipmaps have been created
     LUMINOUS_API const QString & filename() const;
 
+    LUMINOUS_API Radiant::TaskPtr pingTask();
+    LUMINOUS_API Radiant::TaskPtr mipmapGeneratorTask();
+
     /// Gets a shared pointer to an image file CPU-side mipmap.
     /// @param filename The name of the image file
     /// @param compressedMipmaps control whether compressed mipmaps should be used
@@ -102,12 +102,11 @@ namespace Luminous
     LUMINOUS_API static QString cacheFileName(const QString & src, int level = -1,
                                               const QString & suffix = "png");
 
-    void cancelLoading();
   private:
     Mipmap(const QString & filenameAbs);
 
     void mipmapReady(const ImageInfo & imginfo);
-    bool startLoading(bool compressedMipmaps);
+    void startLoading(bool compressedMipmaps);
 
   private:
     friend class PingTask;

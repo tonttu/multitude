@@ -66,6 +66,8 @@ namespace Luminous {
     /// @return ideal pixel format
     LUMINOUS_API static PixelFormat chooseMipmapFormat(const Image & img);
 
+    LUMINOUS_API static int defaultPriority();
+
   private:
     void resize(const Image & img, const int level);
 

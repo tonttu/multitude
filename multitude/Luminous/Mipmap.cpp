@@ -57,7 +57,7 @@ namespace
   /// will expire these (set to empty state)
   struct ImageTex3
   {
-    ImageTex3() {}
+    ImageTex3() : loadingPriority(0) {}
 
     ImageTex3(ImageTex3 && t);
     ImageTex3 & operator=(ImageTex3 && t);
@@ -67,6 +67,9 @@ namespace
     std::unique_ptr<Luminous::Image> image;
 
     Luminous::Texture texture;
+
+    int loadingPriority;
+    std::weak_ptr<Radiant::Task> loader;
 
     /// Either LoadState enum value, or time when this class was last used.
     /// These need to be in the same atomic int, or alternatively we could do
@@ -93,17 +96,25 @@ namespace
   /////////////////////////////////////////////////////////////////////////////
 
   ImageTex3::ImageTex3(ImageTex3 && t)
-    : image(std::move(t.image))
+    : cimage(std::move(t.cimage))
+    , image(std::move(t.image))
     , texture(std::move(t.texture))
+    , loadingPriority(loadingPriority)
+    , loader(std::move(t.loader))
     , lastUsed(t.lastUsed)
+    , locked(t.locked)
   {
   }
 
   ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
   {
+    cimage = std::move(t.cimage);
     image = std::move(t.image);
     texture = std::move(t.texture);
+    loadingPriority = t.loadingPriority;
+    loader = std::move(t.loader);
     lastUsed = t.lastUsed;
+    locked = t.locked;
     return *this;
   }
 }
@@ -129,7 +140,6 @@ namespace Luminous
     bool recursiveLoad(ImageTex3 & imageTex, int level);
     void lock(int);
     void unlock(int);
-    virtual void cancel() { Radiant::Task::cancel(); m_mipmap->cancelLoading(); }
 
   protected:
     Luminous::MipmapPtr m_mipmap;
@@ -166,7 +176,6 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
-    virtual void cancel() OVERRIDE;
 
   private:
     bool ping(Luminous::Mipmap::D & mipmap);
@@ -241,7 +250,6 @@ namespace Luminous
     Valuable::AttributeBool m_headerReady;
     Valuable::AttributeBool m_ready;
     bool m_valid;
-    bool m_cancelled;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -439,7 +447,6 @@ namespace Luminous
   // Mipmap guarantees that m_mipmap wont get deleted during doTask()
   void PingTask::doTask()
   {
-    setFinished();
     auto mipmap = m_mipmap.lock();
     assert(mipmap);
 
@@ -449,6 +456,7 @@ namespace Luminous
       // BGThread keeps one copy of shared_ptr to this alive during doTask(),
       // so we can manually remove this from Mipmap::D
       mipmap->m_d->m_ping.reset();
+      setFinished();
       return;
     }
 
@@ -456,15 +464,7 @@ namespace Luminous
 
     mipmap->m_d->m_ping.reset();
     m_users.release();
-  }
-
-  void PingTask::cancel()
-  {
-    Radiant::Task::cancel();
-
-    auto mipmap = m_mipmap.lock();
-    if(mipmap)
-      mipmap->cancelLoading();
+    setFinished();
   }
 
   bool PingTask::ping(Luminous::Mipmap::D & mipmap)
@@ -633,7 +633,6 @@ namespace Luminous
     , m_headerReady(nullptr, "", false)
     , m_ready(nullptr, "", false)
     , m_valid(true)
-    , m_cancelled(false)
   {
     MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
   }
@@ -661,7 +660,6 @@ namespace Luminous
   {
     eventAddOut("ready");
     eventAddOut("header-ready");
-    eventAddOut("cancel-loading");
     m_d->m_headerReady.addListener([&] { if(m_d->m_headerReady) eventSend("header-ready"); });
     m_d->m_ready.addListener([&] { if(m_d->m_ready) eventSend("ready"); });
   }
@@ -673,29 +671,43 @@ namespace Luminous
 
   Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
-    if(!isHeaderReady()) {
-      if(!isValid())
-        return nullptr;
-
-      if(priorityChange > 0) {
+    // If we haven't pinged the image yet, and it seems that this is (un)important image,
+    // reschedule the ping task with updated priority
+    if (!isHeaderReady()) {
+      if (priorityChange != 0) {
         auto ping = m_d->m_ping;
-        auto gen = m_d->m_mipmapGenerator;
 
-        int newPriority = s_defaultPingPriority + priorityChange;
-        if(ping && newPriority != ping->priority())
+        const int newPriority = s_defaultPingPriority + priorityChange;
+        if (ping && newPriority != ping->priority())
           Radiant::BGThread::instance()->reschedule(ping, newPriority);
-
-        if(gen && newPriority != gen->priority())
-          Radiant::BGThread::instance()->reschedule(gen, newPriority);
       }
       return nullptr;
     }
-    if(!isValid())
+
+    // Mipmap is valid after header is read successfully, if the header is
+    // ready and the mipmap isn't valid, just abort.
+    if (!isValid())
       return nullptr;
 
-    int time = frameTime();
+    const int req = std::min<int>(requestedLevel, m_d->m_maxLevel);
 
-    int req = std::min<int>(requestedLevel, m_d->m_maxLevel);
+    // If the image isn't yet loaded, lets check if we could reschedule mipmap
+    // generator task or the correct Load(Compressed)ImageTask.
+    if (!isReady()) {
+      auto gen = m_d->m_mipmapGenerator;
+      if (gen) {
+        const int newGenPriority = MipMapGenerator::defaultPriority() + priorityChange;
+        if (newGenPriority != gen->priority())
+          Radiant::BGThread::instance()->reschedule(gen, newGenPriority);
+      }
+      // We are still generating mipmaps, nothing to do here
+      if (gen)
+        return nullptr;
+    }
+
+    int time = frameTime();
+    const int newLoadPriority = m_d->m_loadingPriority + priorityChange;
+
     for(int level = req, diff = -1; level <= m_d->m_maxLevel; level += diff) {
       if(level < 0) {
         level = req;
@@ -712,6 +724,14 @@ namespace Luminous
             return &imageTex.texture;
           }
 
+          // Reschedule loader tasks
+          if (old == Loading && level == req && imageTex.loadingPriority != newLoadPriority) {
+            imageTex.loadingPriority = newLoadPriority;
+            auto loader = imageTex.loader.lock();
+            if (loader)
+              Radiant::BGThread::instance()->reschedule(loader, newLoadPriority);
+          }
+
           if(old == Loading || old == LoadError)
             break;
 
@@ -724,22 +744,23 @@ namespace Luminous
 
           if(imageTex.lastUsed.testAndSetOrdered(old, now)) {
             if(now == Loading) {
+              Radiant::TaskPtr task;
               if(m_d->m_useCompressedMipmaps) {
-                Radiant::BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
-                                                shared_from_this(), imageTex,
-                                                m_d->m_loadingPriority + priorityChange,
-                                                m_d->m_compressedMipmapFile, level));
+                task = std::make_shared<LoadCompressedImageTask>(shared_from_this(), imageTex,
+                                                                 m_d->m_loadingPriority + priorityChange,
+                                                                 m_d->m_compressedMipmapFile, level);
               } else if(m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
-                Radiant::BGThread::instance()->addTask(std::make_shared<LoadCompressedImageTask>(
-                                                shared_from_this(), imageTex,
-                                                m_d->m_loadingPriority + priorityChange,
-                                                m_d->m_filenameAbs, level));
+                task = std::make_shared<LoadCompressedImageTask>(shared_from_this(), imageTex,
+                                                                 m_d->m_loadingPriority + priorityChange,
+                                                                 m_d->m_filenameAbs, level);
               } else {
-                Radiant::BGThread::instance()->addTask(std::make_shared<LoadImageTask>(
-                                                shared_from_this(),
-                                                m_d->m_loadingPriority + priorityChange,
-                                                m_d->m_filenameAbs, level));
+                task = std::make_shared<LoadImageTask>(shared_from_this(),
+                                                       m_d->m_loadingPriority + priorityChange,
+                                                       m_d->m_filenameAbs, level);
               }
+              Radiant::BGThread::instance()->addTask(task);
+              imageTex.loadingPriority = task->priority();
+              imageTex.loader = task;
               break;
             }
             if(returnedLevel)
@@ -872,11 +893,6 @@ namespace Luminous
     return m_d->m_sourceInfo.pf.hasAlpha();
   }
 
-  bool Mipmap::isLoadCancelled() const
-  {
-    return m_d->m_cancelled;
-  }
-
   float Mipmap::pixelAlpha(Nimble::Vector2 relLoc) const
   {
     if(!isHeaderReady() || !isValid()) return 1.0f;
@@ -954,6 +970,16 @@ namespace Luminous
     return m_d->m_filenameAbs;
   }
 
+  Radiant::TaskPtr Mipmap::pingTask()
+  {
+    return m_d->m_ping;
+  }
+
+  Radiant::TaskPtr Mipmap::mipmapGeneratorTask()
+  {
+    return m_d->m_mipmapGenerator;
+  }
+
   void Mipmap::mipmapReady(const ImageInfo & imginfo)
   {
     m_d->m_compressedMipmapInfo = imginfo;
@@ -1022,19 +1048,10 @@ namespace Luminous
     return fullPath;
   }
 
-  bool Mipmap::startLoading(bool compressedMipmaps)
+  void Mipmap::startLoading(bool compressedMipmaps)
   {
-    m_d->m_cancelled = false;
     assert(!m_d->m_ping);
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
-
-    return (!m_d->m_ping || m_d->m_ping->state() != Radiant::Task::CANCELLED);
-  }
-
-  void Mipmap::cancelLoading()
-  {
-    m_d->m_cancelled = true;
-    eventSend("cancel-loading");
   }
 }

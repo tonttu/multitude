@@ -24,7 +24,7 @@ namespace Luminous {
 
   MipMapGenerator::MipMapGenerator(const QString & src,
                                    const QString & target)
-    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+    : Task(defaultPriority()),
       m_src(src),
       m_target(target),
       m_out(0),
@@ -35,7 +35,7 @@ namespace Luminous {
   MipMapGenerator::MipMapGenerator(const QString & src,
                                    const QString & target,
                                    const PixelFormat & mipmapFormat)
-    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+    : Task(defaultPriority()),
       m_src(src),
       m_target(target),
       m_mipmapFormat(mipmapFormat),
@@ -50,17 +50,17 @@ namespace Luminous {
 
   void MipMapGenerator::doTask()
   {
-    setFinished();
-
     if(m_mipmapFormat != PixelFormat() &&
        m_mipmapFormat.compression() == PixelFormat::COMPRESSION_NONE) {
       Radiant::error("MipMapGenerator::doTask # non-DXT -formats aren't supported");
+      setFinished();
       return;
     }
 
     Image img;
     if(!img.read(m_src.toUtf8().data())) {
       Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.toUtf8().data());
+      setFinished();
       return;
     }
 
@@ -115,6 +115,7 @@ namespace Luminous {
       info.pf = m_mipmapFormat;
       m_listener(info);
     }
+    setFinished();
   }
 
   void MipMapGenerator::setListener(std::function<void (const ImageInfo &)> func)
@@ -150,5 +151,10 @@ namespace Luminous {
       return PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT3);
     else
       return PixelFormat(PixelFormat::COMPRESSED_RGB_DXT1);
+  }
+
+  int MipMapGenerator::defaultPriority()
+  {
+    return (PRIORITY_NORMAL + PRIORITY_LOW) / 2;
   }
 }

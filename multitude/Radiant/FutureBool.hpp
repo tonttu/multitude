@@ -1,6 +1,8 @@
 #ifndef RADIANT_FUTUREBOOL_HPP
 #define RADIANT_FUTUREBOOL_HPP
 
+#include "Task.hpp"
+
 #include <future>
 
 namespace Radiant {
@@ -31,6 +33,53 @@ namespace Radiant {
 
   private:
     std::future<bool> m_future;
+  };
+
+  class FutureBoolI
+  {
+  public:
+    virtual bool isReady() const = 0;
+    virtual bool validate() = 0;
+    virtual Radiant::TaskPtr task() const = 0;
+  };
+  typedef std::unique_ptr<FutureBoolI> FutureBoolIPtr;
+
+  class FutureBool2
+  {
+  public:
+    explicit FutureBool2(FutureBoolIPtr future)
+      : m_future(std::move(future))
+      , m_cached(false)
+      , m_cacheSet(false)
+    {}
+
+    inline operator bool()
+    {
+      if (m_cacheSet)
+        return m_cached;
+
+      m_cached = run();
+      m_cacheSet = true;
+      return m_cached;
+    }
+
+  private:
+    bool run() const
+    {
+      while (!m_future->isReady()) {
+        auto task = m_future->task();
+        if (!task)
+          break;
+        task->runNow(true);
+      }
+
+      return m_future->validate();
+    }
+
+  private:
+    FutureBoolIPtr m_future;
+    bool m_cached;
+    bool m_cacheSet;
   };
 
 } // namespace Radiant
