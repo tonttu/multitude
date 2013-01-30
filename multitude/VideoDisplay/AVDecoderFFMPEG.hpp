@@ -3,7 +3,7 @@
 
 #include "AVDecoder.hpp"
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   VIDEODISPLAY_API void ffmpegInit();
 

@@ -3,7 +3,7 @@
 /// @todo this include is just for create(), should be removed
 #include "AVDecoderFFMPEG.hpp"
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   AVDecoder::AVDecoder()
   {

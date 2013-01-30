@@ -4,7 +4,7 @@
 #include <array>
 #include <cassert>
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   template <typename T, std::size_t N>
   class MemoryPool

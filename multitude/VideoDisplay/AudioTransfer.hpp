@@ -8,7 +8,7 @@
 
 #include <Resonant/Module.hpp>
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   class DecodedAudioBuffer
   {

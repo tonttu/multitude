@@ -3,7 +3,7 @@
 
 #include "AVDecoderFFMPEG.hpp"
 #include "MemoryPool.hpp"
-#include "AudioTransfer2.hpp"
+#include "AudioTransfer.hpp"
 
 #include <Nimble/Vector2.hpp>
 
@@ -205,7 +205,7 @@ namespace
   };
 }
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   class VideoFrameFFMPEG : public VideoFrame
   {
@@ -834,7 +834,7 @@ namespace VideoPlayer2
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
-      m_audioTransfer->setId(QString("VideoPlayer2.AudioTransfer.%1").arg(value).toUtf8());
+      m_audioTransfer->setId(QString("VideoDisplay.AudioTransfer.%1").arg(value).toUtf8());
 
       auto item = Resonant::DSPNetwork::Item();
       item.setModule(m_audioTransfer);

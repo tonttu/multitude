@@ -1,4 +1,4 @@
-#include "AudioTransfer2.hpp"
+#include "AudioTransfer.hpp"
 
 #include "AVDecoderFFMPEG.hpp"
 
@@ -15,7 +15,7 @@ namespace
   }
 }
 
-namespace VideoPlayer2
+namespace VideoDisplay
 {
   const int s_decodedBufferCount = 200;
 
