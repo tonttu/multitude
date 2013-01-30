@@ -280,4 +280,14 @@ namespace VideoPlayer2
       m_d->m_samplesInGeneration = 0;
     m_d->m_seekGeneration = seekGeneration;
   }
+
+  float AudioTransfer::gain() const
+  {
+    return m_d->m_gain;
+  }
+
+  void AudioTransfer::setGain(float gain)
+  {
+    m_d->m_gain = gain;
+  }
 }

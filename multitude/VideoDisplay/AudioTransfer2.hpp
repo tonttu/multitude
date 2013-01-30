@@ -69,6 +69,10 @@ namespace VideoPlayer2
     void setSeeking(bool seeking);
     void setSeekGeneration(int seekGeneration);
 
+    /// Gain factor for the sound-track
+    float gain() const;
+    void setGain(float gain);
+
   private:
     class D;
     D * m_d;
