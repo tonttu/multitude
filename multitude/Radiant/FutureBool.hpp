@@ -47,11 +47,25 @@ namespace Radiant {
   class FutureBool2
   {
   public:
-    explicit FutureBool2(FutureBoolIPtr future)
+    FutureBool2(FutureBoolIPtr future)
       : m_future(std::move(future))
       , m_cached(false)
       , m_cacheSet(false)
     {}
+
+    FutureBool2(FutureBool2 && f)
+      : m_future(std::move(f.m_future))
+      , m_cached(f.m_cached)
+      , m_cacheSet(f.m_cacheSet)
+    {}
+
+    FutureBool2 & operator=(FutureBool2 && f)
+    {
+      std::swap(m_future, f.m_future);
+      m_cached = f.m_cached;
+      m_cacheSet = f.m_cacheSet;
+      return *this;
+    }
 
     inline operator bool()
     {
