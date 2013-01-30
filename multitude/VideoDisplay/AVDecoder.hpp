@@ -324,11 +324,14 @@ namespace VideoDisplay
 
     virtual void panAudioTo(Nimble::Vector2f location) const = 0;
 
+    virtual bool isReady() const = 0;
+    virtual bool hasError() const = 0;
+
   protected:
     AVDecoder();
     virtual void load(const Options & options) = 0;
   };
-
+  typedef std::shared_ptr<AVDecoder> AVDecoderPtr;
 }
 
 #endif // VIDEODISPLAY_AVDECODER_HPP

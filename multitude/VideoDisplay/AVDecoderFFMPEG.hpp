@@ -36,6 +36,9 @@ namespace VideoDisplay
 
     virtual void panAudioTo(Nimble::Vector2f location) const OVERRIDE;
 
+    virtual bool isReady() const OVERRIDE;
+    virtual bool hasError() const OVERRIDE;
+
     void audioTransferDeleted();
   protected:
     virtual void load(const Options & options) OVERRIDE;

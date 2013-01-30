@@ -14,6 +14,8 @@
 
 #include <Resonant/DSPNetwork.hpp>
 
+#include <Valuable/AttributeBool.hpp>
+
 #include <QSet>
 #include <QString>
 #include <QThread>
@@ -261,7 +263,9 @@ namespace VideoDisplay
       : m_host(host)
       , m_seekGeneration(0)
       , m_running(true)
-      , m_finished(false)
+      , m_finished(nullptr, "finished", false)
+      , m_error(nullptr, "error", false)
+      , m_ready(nullptr, "ready", false)
       , m_av()
       , m_ptsCorrection()
       , m_realTimeSeeking(false)
@@ -281,7 +285,9 @@ namespace VideoDisplay
     int m_seekGeneration;
 
     bool m_running;
-    bool m_finished;
+    Valuable::AttributeBool m_finished;
+    Valuable::AttributeBool m_error;
+    Valuable::AttributeBool m_ready;
 
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
@@ -1559,6 +1565,10 @@ namespace VideoDisplay
     : m_d(new D(this))
   {
     Thread::setName("AVDecoderFFMPEG");
+    eventAddOut("header-ready");
+    m_d->m_finished.addListener([=] { if (m_d->m_finished) eventSend("finished"); });
+    m_d->m_error.addListener([=] { if (m_d->m_error) eventSend("error"); });
+    m_d->m_ready.addListener([=] { if (m_d->m_ready) eventSend("ready"); });
   }
 
   AVDecoderFFMPEG::~AVDecoderFFMPEG()
@@ -1740,6 +1750,16 @@ namespace VideoDisplay
     }
   }
 
+  bool AVDecoderFFMPEG::isReady() const
+  {
+    return m_d->m_ready;
+  }
+
+  bool AVDecoderFFMPEG::hasError() const
+  {
+    return m_d->m_error;
+  }
+
   void AVDecoderFFMPEG::audioTransferDeleted()
   {
     m_d->m_audioTransfer = nullptr;
@@ -1796,11 +1816,12 @@ namespace VideoDisplay
     ffmpegInit();
 
     if(!m_d->open()) {
+      m_d->m_ready = true;
       m_d->m_finished = true;
-      eventSend("error");
+      m_d->m_error = true;
       return;
     }
-    eventSend("ready");
+    eventSend("header-ready");
 
     enum EofState {
       Normal,
@@ -1849,6 +1870,7 @@ namespace VideoDisplay
         ///       read_packet to make sure we actually are at eof
         if(err != AVERROR_EOF) {
           avError(QString("%1 Read error").arg(errorMsg.data()), err);
+          m_d->m_error = true;
           break;
         }
 
@@ -1935,9 +1957,12 @@ namespace VideoDisplay
 
       // Free the packet that was allocated by av_read_frame
       av_free_packet(&av.packet);
+
+      if (gotFrames)
+        m_d->m_ready = true;
     }
 
-    eventSend("finished");
+    m_d->m_ready = true;
     m_d->m_finished = true;
     s_src = nullptr;
   }
