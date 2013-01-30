@@ -512,22 +512,20 @@ namespace Valuable
     Radiant::trace(Radiant::DEBUG, "}");
   }
 
-  long Node::eventAddListener(const QByteArray & from,
+  long Node::eventAddListener(const QByteArray & fromIn,
                               const QByteArray & to,
                               Valuable::Node * obj,
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
+    const QByteArray from = validateEvent(fromIn);
+
     ValuePass vp(++m_listenersId);
     vp.m_listener = obj;
     vp.m_from = from;
     vp.m_to = to;
     vp.m_frame = m_frame;
     vp.m_type = listenerType;
-
-    if(!m_eventSendNames.contains(from)) {
-      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
-    }
 
     if(!obj->m_eventListenNames.contains(to)) {
       const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
@@ -550,19 +548,17 @@ namespace Valuable
   }
 
 #ifdef CORNERSTONE_JS
-  long Node::eventAddListener(const QByteArray & from,
+  long Node::eventAddListener(const QByteArray & fromIn,
                               const QByteArray & to,
                               v8::Persistent<v8::Function> func,
                               const Radiant::BinaryData * defaultData)
   {
+    const QByteArray from = validateEvent(fromIn);
+
     ValuePass vp(++m_listenersId);
     vp.m_funcv8 = func;
     vp.m_from = from;
     vp.m_to = to;
-
-    if(!m_eventSendNames.contains(from)) {
-      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
-    }
 
     if(defaultData)
       vp.m_defaultData = *defaultData;
@@ -578,34 +574,30 @@ namespace Valuable
   }
 #endif
 
-  long Node::eventAddListener(const QByteArray & from, ListenerFunc func,
+  long Node::eventAddListener(const QByteArray & fromIn, ListenerFunc func,
                               ListenerType listenerType)
   {
+    const QByteArray from = validateEvent(fromIn);
+
     ValuePass vp(++m_listenersId);
     vp.m_func = func;
     vp.m_from = from;
     vp.m_type = listenerType;
-
-    if(!m_eventSendNames.contains(from)) {
-      Radiant::warning("Node::eventAddListener # Adding listener to nonexistent event '%s'", from.data());
-    }
 
     // No duplicate check, since there is no way to compare std::function objects
     m_elisteners.push_back(vp);
     return vp.m_listenerId;
   }
 
-  long Node::eventAddListenerBd(const QByteArray & from, ListenerFunc2 func,
+  long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFunc2 func,
                                 ListenerType listenerType)
   {
+    const QByteArray from = validateEvent(fromIn);
+
     ValuePass vp(++m_listenersId);
     vp.m_func2 = func;
     vp.m_from = from;
     vp.m_type = listenerType;
-
-    if(!m_eventSendNames.contains(from)) {
-      Radiant::warning("Node::eventAddListenerBd # Adding listener to nonexistent event '%s'", from.data());
-    }
 
     // No duplicate check, since there is no way to compare std::function objects
     m_elisteners.push_back(vp);
@@ -956,6 +948,32 @@ namespace Valuable
   {
     for(auto i = m_values.begin(); i != m_values.end(); ++i)
       i->second->setAsDefaults();
+  }
+
+  void Node::eventAddDeprecated(const QByteArray &deprecatedId, const QByteArray &newId)
+  {
+    m_deprecatedEventCompatibility[deprecatedId] = newId;
+  }
+
+  QByteArray Node::validateEvent(const QByteArray &from)
+  {
+    // Issue warning if the original requested event is not registered
+    if(!m_eventSendNames.contains(from)) {
+
+      // Check for event conversions
+      if(m_deprecatedEventCompatibility.contains(from)) {
+
+        const QByteArray & converted = m_deprecatedEventCompatibility[from];
+        Radiant::warning("The event '%s' is deprecated. Use '%s' instead.", from.data(), converted.data());
+
+        return converted;
+      }
+
+      Radiant::warning("Node::validateEvent # event '%s' does not exist for this class", from.data());
+
+    }
+
+    return from;
   }
 
 }

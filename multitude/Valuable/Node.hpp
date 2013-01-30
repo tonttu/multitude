@@ -401,6 +401,12 @@ namespace Valuable
     /// Registers a new event that this class handles in processMessage
     void eventAddIn(const QByteArray & messageId);
 
+    /// Register a deprecated event that is automatically converted to new
+    /// event id and a warning is issued when it is used.
+    /// @param deprecatedId deprecated event id
+    /// @param newId replacing event id
+    void eventAddDeprecated(const QByteArray & deprecatedId, const QByteArray & newId);
+
     /// Returns true if this object accepts event 'id' in processMessage
     bool acceptsEvent(const QByteArray & messageId) const;
 
@@ -489,6 +495,10 @@ namespace Valuable
     /// Removes an event source
     void eventRemoveSource(Valuable::Node * source);
 
+    /// Check that the given event is registered. Also convert deprecated
+    /// events to new ids and issue warnings.
+    QByteArray validateEvent(const QByteArray & from);
+
   private:
 
     Node * m_sender;
@@ -547,6 +557,8 @@ namespace Valuable
 
     QSet<QByteArray> m_eventSendNames;
     QSet<QByteArray> m_eventListenNames;
+
+    QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
   };
 
 }
