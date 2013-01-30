@@ -59,46 +59,46 @@ namespace VideoPlayer2
   public:
     D(AVDecoderFFMPEG * avff, int channels)
       : m_avff(avff)
-      , channels(channels)
-      , seekGeneration(0)
-      , playMode(AVDecoder::Pause)
-      , seeking(false)
-      , decodedBuffers(s_decodedBufferCount)
-      , buffersReader(0)
-      , buffersWriter(0)
-      , resonantToPts(0)
-      , usedSeekGeneration(0)
-      , samplesInGeneration(0)
-      , gain(1.0f)
+      , m_channels(channels)
+      , m_seekGeneration(0)
+      , m_playMode(AVDecoder::Pause)
+      , m_seeking(false)
+      , m_decodedBuffers(s_decodedBufferCount)
+      , m_buffersReader(0)
+      , m_buffersWriter(0)
+      , m_resonantToPts(0)
+      , m_usedSeekGeneration(0)
+      , m_samplesInGeneration(0)
+      , m_gain(1.0f)
       /*, samplesProcessed(0)*/
     {}
 
     AVDecoderFFMPEG * m_avff;
-    const int channels;
-    int seekGeneration;
-    AVDecoder::PlayMode playMode;
-    bool seeking;
+    const int m_channels;
+    int m_seekGeneration;
+    AVDecoder::PlayMode m_playMode;
+    bool m_seeking;
 
-    Timestamp pts;
+    Timestamp m_pts;
 
-    std::vector<DecodedAudioBuffer> decodedBuffers;
+    std::vector<DecodedAudioBuffer> m_decodedBuffers;
 
     // decodedBuffers[buffersReader % s_decodedBufferCount] points to the next
     // buffer that could be processed to Resonant (iff readyBuffers > 0).
     // Only used from process()
-    int buffersReader;
+    int m_buffersReader;
     // decodedBuffers[buffersWriter % s_decodedBufferCount] points to the next
     // buffer that could be filled with new decoded audio from the AVDecoder
-    int buffersWriter;
+    int m_buffersWriter;
 
-    QAtomicInt readyBuffers;
-    QAtomicInt samplesInBuffers;
+    QAtomicInt m_readyBuffers;
+    QAtomicInt m_samplesInBuffers;
 
-    double resonantToPts;
-    int usedSeekGeneration;
-    int samplesInGeneration;
+    double m_resonantToPts;
+    int m_usedSeekGeneration;
+    int m_samplesInGeneration;
 
-    float gain;
+    float m_gain;
     /*long samplesProcessed;*/
 
     DecodedAudioBuffer * getReadyBuffer();
@@ -107,16 +107,16 @@ namespace VideoPlayer2
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
   {
-    while((playMode == AVDecoder::Play || seeking) && readyBuffers > 0) {
-      DecodedAudioBuffer * buffer = & decodedBuffers[buffersReader % s_decodedBufferCount];
-      if(buffer->timestamp().seekGeneration < seekGeneration) {
-        samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
-        readyBuffers.deref();
-        ++buffersReader;
+    while((m_playMode == AVDecoder::Play || m_seeking) && m_readyBuffers > 0) {
+      DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
+      if(buffer->timestamp().seekGeneration < m_seekGeneration) {
+        m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
+        m_readyBuffers.deref();
+        ++m_buffersReader;
         continue;
       }
       /// @todo shouldn't be hard-coded
-      if(seeking && samplesInGeneration > 44100.0/24.0)
+      if(m_seeking && m_samplesInGeneration > 44100.0/24.0)
         return nullptr;
       return buffer;
     }
@@ -125,9 +125,9 @@ namespace VideoPlayer2
 
   void AudioTransfer::D::bufferConsumed(int samples)
   {
-    readyBuffers.deref();
-    samplesInBuffers.fetchAndAddRelaxed(-samples);
-    ++buffersReader;
+    m_readyBuffers.deref();
+    m_samplesInBuffers.fetchAndAddRelaxed(-samples);
+    ++m_buffersReader;
   }
 
   AudioTransfer::AudioTransfer(AVDecoderFFMPEG * avff, int channels)
@@ -148,7 +148,7 @@ namespace VideoPlayer2
   bool AudioTransfer::prepare(int & channelsIn, int & channelsOut)
   {
     channelsIn = 0;
-    channelsOut = m_d->channels;
+    channelsOut = m_d->m_channels;
     return true;
   }
 
@@ -172,7 +172,7 @@ namespace VideoPlayer2
     while(remaining > 0) {
       DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
       if(!decodedBuffer) {
-        zero(out, m_d->channels, remaining, processed);
+        zero(out, m_d->m_channels, remaining, processed);
         break;
       } else {
         const int offset = decodedBuffer->offset();
@@ -184,27 +184,27 @@ namespace VideoPlayer2
         // when currently processed audio will be written to audio hardware
         const double pts = ts.pts + offset / 44100.0;
 
-        m_d->pts = ts;
-        m_d->pts.pts = pts + samples / 44100.0;
+        m_d->m_pts = ts;
+        m_d->m_pts.pts = pts + samples / 44100.0;
 
         if(first) {
           // We can convert Resonant times to pts with this offset
-          m_d->resonantToPts = pts - time.outputTime.secondsD();
-          m_d->usedSeekGeneration = ts.seekGeneration;
+          m_d->m_resonantToPts = pts - time.outputTime.secondsD();
+          m_d->m_usedSeekGeneration = ts.seekGeneration;
 
           first = false;
         }
-        m_d->samplesInGeneration += samples;
+        m_d->m_samplesInGeneration += samples;
 
         // We could take the gain into account in the preprocessing stage,
         // in another thread with more resources, but then changing gain
         // would have a noticeably latency
-        const float gain = m_d->seeking ? m_d->gain * 0.35 : m_d->gain;
+        const float gain = m_d->m_seeking ? m_d->m_gain * 0.35 : m_d->m_gain;
         if(std::abs(gain - 1.0f) < 1e-5f) {
-          for(int channel = 0; channel < m_d->channels; ++channel)
+          for(int channel = 0; channel < m_d->m_channels; ++channel)
             memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
         } else {
-          for(int channel = 0; channel < m_d->channels; ++channel) {
+          for(int channel = 0; channel < m_d->m_channels; ++channel) {
             float * destination = out[channel] + processed;
             const float * source = decodedBuffer->data(channel) + offset;
             for(int s = 0; s < samples; ++s)
@@ -225,19 +225,19 @@ namespace VideoPlayer2
 
   Timestamp AudioTransfer::toPts(const Radiant::TimeStamp & ts) const
   {
-    const Timestamp newts(ts.secondsD() + m_d->resonantToPts, m_d->usedSeekGeneration);
-    return std::min(m_d->pts, newts);
+    const Timestamp newts(ts.secondsD() + m_d->m_resonantToPts, m_d->m_usedSeekGeneration);
+    return std::min(m_d->m_pts, newts);
   }
 
   Timestamp AudioTransfer::lastPts() const
   {
-    return m_d->pts;
+    return m_d->m_pts;
   }
 
   float AudioTransfer::bufferStateSeconds() const
   {
     /// @todo shouldn't be hard-coded
-    return m_d->samplesInBuffers / 44100.0f;
+    return m_d->m_samplesInBuffers / 44100.0f;
   }
 
   void AudioTransfer::shutdown()
@@ -247,37 +247,37 @@ namespace VideoPlayer2
 
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
-    if(m_d->readyBuffers >= int(m_d->decodedBuffers.size()))
+    if(m_d->m_readyBuffers >= int(m_d->m_decodedBuffers.size()))
       return nullptr;
 
-    if(m_d->samplesInBuffers > samples)
+    if(m_d->m_samplesInBuffers > samples)
       return nullptr;
 
-    int b = m_d->buffersWriter++;
+    int b = m_d->m_buffersWriter++;
 
-    return & m_d->decodedBuffers[b % s_decodedBufferCount];
+    return & m_d->m_decodedBuffers[b % s_decodedBufferCount];
   }
 
   void AudioTransfer::putReadyBuffer(int samples)
   {
-    m_d->samplesInBuffers.fetchAndAddRelaxed(samples);
-    m_d->readyBuffers.ref();
+    m_d->m_samplesInBuffers.fetchAndAddRelaxed(samples);
+    m_d->m_readyBuffers.ref();
   }
 
   void AudioTransfer::setPlayMode(AVDecoder::PlayMode playMode)
   {
-    m_d->playMode = playMode;
+    m_d->m_playMode = playMode;
   }
 
   void AudioTransfer::setSeeking(bool seeking)
   {
-    m_d->seeking = seeking;
+    m_d->m_seeking = seeking;
   }
 
   void AudioTransfer::setSeekGeneration(int seekGeneration)
   {
-    if(m_d->seekGeneration != seekGeneration)
-      m_d->samplesInGeneration = 0;
-    m_d->seekGeneration = seekGeneration;
+    if(m_d->m_seekGeneration != seekGeneration)
+      m_d->m_samplesInGeneration = 0;
+    m_d->m_seekGeneration = seekGeneration;
   }
 }
