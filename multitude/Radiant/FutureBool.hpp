@@ -3,69 +3,48 @@
 
 #include "Task.hpp"
 
-#include <future>
+namespace Radiant
+{
 
-namespace Radiant {
-
-  /// This class wraps a std::future boolean and provides implicit conversion
-  /// to boolean type. The class is used to provide asynchronous return values
-  /// from functions.
-  class FutureBool
-  {
-  public:
-    /// Construct a new FutureBool by taking ownership of the given std::future
-    /// @param future boolean future to wrap
-    explicit FutureBool(std::future<bool> && future)
-      : m_future(std::move(future))
-    {}
-
-    /// Implicit conversion to boolean. This function will block until the
-    /// value of the future has been set.
-    /// @return boolean value
-    operator bool()
-    {
-      try {
-        return m_future.get();
-      } catch(std::future_error &) {
-        return false;
-      }
-    }
-
-  private:
-    std::future<bool> m_future;
-  };
-
+  /// Interface class for FutureBool backends.
   class FutureBoolI
   {
   public:
+    /// Are all Radiant::Tasks finished that are associated with this object
+    /// If the job we are waiting for doesn't use tasks, return true
     virtual bool isReady() const = 0;
-    virtual bool validate() = 0;
+    /// Return next task that need to be executed to get the job done
     virtual Radiant::TaskPtr task() const = 0;
+    /// Once all tasks are ready, this returns the actual boolean value we want.
+    /// This is only called once and might block.
+    virtual bool validate() = 0;
   };
   typedef std::unique_ptr<FutureBoolI> FutureBoolIPtr;
 
-  class FutureBool2
+  /// This class provides implicit conversion to boolean type. The class is
+  /// used to provide asynchronous return values from functions.
+  class FutureBool
   {
   public:
-    FutureBool2(bool value)
+    FutureBool(bool value)
       : m_cached(value)
       , m_cacheSet(true)
     {
     }
 
-    FutureBool2(FutureBoolIPtr future)
+    FutureBool(FutureBoolIPtr future)
       : m_future(std::move(future))
       , m_cached(false)
       , m_cacheSet(false)
     {}
 
-    FutureBool2(FutureBool2 && f)
+    FutureBool(FutureBool && f)
       : m_future(std::move(f.m_future))
       , m_cached(f.m_cached)
       , m_cacheSet(f.m_cacheSet)
     {}
 
-    FutureBool2 & operator=(FutureBool2 && f)
+    FutureBool & operator=(FutureBool && f)
     {
       std::swap(m_future, f.m_future);
       m_cached = f.m_cached;
@@ -73,6 +52,9 @@ namespace Radiant {
       return *this;
     }
 
+    /// Implicit conversion to boolean. This function will block until the
+    /// value of the future has been set.
+    /// @return boolean value
     inline operator bool()
     {
       if (m_cacheSet)
