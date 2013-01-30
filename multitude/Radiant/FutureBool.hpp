@@ -47,6 +47,12 @@ namespace Radiant {
   class FutureBool2
   {
   public:
+    FutureBool2(bool value)
+      : m_cached(value)
+      , m_cacheSet(true)
+    {
+    }
+
     FutureBool2(FutureBoolIPtr future)
       : m_future(std::move(future))
       , m_cached(false)
