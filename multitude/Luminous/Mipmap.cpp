@@ -35,7 +35,7 @@ namespace
 
   bool s_dxtSupported = true;
 
-  /// Special time values in ImageTex3::lastUsed
+  /// Special time values in MipmapLevel::lastUsed
   enum LoadState {
     New,
     Loading,
@@ -45,7 +45,7 @@ namespace
 
   /// Current time, unit is the same as in RenderManager::frameTime.
   /// This file excludes LoadState times.
-  /// See also ImageTex3::lastUsed
+  /// See also MipmapLevel::lastUsed
   inline int frameTime();
 
   /////////////////////////////////////////////////////////////////////////////
@@ -55,12 +55,12 @@ namespace
   /// "empty", meaning that the texture is invalid (!isValid()) and images
   /// are null. LoadTasks will load this when needed, and MipmapReleaseTask
   /// will expire these (set to empty state)
-  struct ImageTex3
+  struct MipmapLevel
   {
-    ImageTex3() : loadingPriority(0) {}
+    MipmapLevel() : loadingPriority(0) {}
 
-    ImageTex3(ImageTex3 && t);
-    ImageTex3 & operator=(ImageTex3 && t);
+    MipmapLevel(MipmapLevel && t);
+    MipmapLevel & operator=(MipmapLevel && t);
 
     /// Only one of the image types is defined at once
     std::unique_ptr<Luminous::CompressedImage> cimage;
@@ -78,7 +78,7 @@ namespace
     QAtomicInt lastUsed;
 
     /// During expiration, this will be 1. If you are doing something with this
-    /// ImageTex3 without updating lastUsed, you can lock the ImageTex3 from
+    /// MipmapLevel without updating lastUsed, you can lock the MipmapLevel from
     /// being deleted by setting locked to 1 from 0.
     QAtomicInt locked;
   };
@@ -95,7 +95,7 @@ namespace
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ImageTex3::ImageTex3(ImageTex3 && t)
+  MipmapLevel::MipmapLevel(MipmapLevel && t)
     : cimage(std::move(t.cimage))
     , image(std::move(t.image))
     , texture(std::move(t.texture))
@@ -106,7 +106,7 @@ namespace
   {
   }
 
-  ImageTex3 & ImageTex3::operator=(ImageTex3 && t)
+  MipmapLevel & MipmapLevel::operator=(MipmapLevel && t)
   {
     cimage = std::move(t.cimage);
     image = std::move(t.image);
@@ -124,7 +124,7 @@ namespace
 
 namespace Luminous
 {
-  /// Loads uncompressed mipmaps from file to ImageTex3 / create them if necessary
+  /// Loads uncompressed mipmaps from file to MipmapLevel / create them if necessary
   class LoadImageTask : public Radiant::Task
   {
   public:
@@ -137,7 +137,7 @@ namespace Luminous
 
   private:
     bool recursiveLoad(int level);
-    bool recursiveLoad(ImageTex3 & imageTex, int level);
+    bool recursiveLoad(MipmapLevel & imageTex, int level);
     void lock(int);
     void unlock(int);
 
@@ -150,18 +150,18 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  /// Loads existing compressed mipmaps from file to ImageTex3
+  /// Loads existing compressed mipmaps from file to MipmapLevel
   class LoadCompressedImageTask : public LoadImageTask
   {
   public:
-    LoadCompressedImageTask(Luminous::MipmapPtr mipmap, ImageTex3 & tex,
+    LoadCompressedImageTask(Luminous::MipmapPtr mipmap, MipmapLevel & tex,
                             Radiant::Priority priority, const QString & filename, int level);
 
   protected:
     virtual void doTask() OVERRIDE;
 
   private:
-    ImageTex3 & m_tex;
+    MipmapLevel & m_tex;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -243,7 +243,7 @@ namespace Luminous
 
     QString m_mipmapFormat;
 
-    std::vector<ImageTex3> m_levels;
+    std::vector<MipmapLevel> m_levels;
 
     float m_expireSeconds;
 
@@ -280,7 +280,7 @@ namespace Luminous
 
   void LoadImageTask::lock(int level)
   {
-    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
 
     /// If this fails, then another task is just creating a mipmap for this level,
     /// or MipmapReleaseTask is releasing it
@@ -291,13 +291,13 @@ namespace Luminous
 
   void LoadImageTask::unlock(int level)
   {
-    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
     imageTex.locked = 0;
   }
 
   bool LoadImageTask::recursiveLoad(int level)
   {
-    ImageTex3 & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
 
     int lastUsed = imageTex.lastUsed;
     if (lastUsed == LoadError) {
@@ -322,7 +322,7 @@ namespace Luminous
     return ok;
   }
 
-  bool LoadImageTask::recursiveLoad(ImageTex3 & imageTex, int level)
+  bool LoadImageTask::recursiveLoad(MipmapLevel & imageTex, int level)
   {
     if (level == 0) {
       // Load original
@@ -407,7 +407,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   LoadCompressedImageTask::LoadCompressedImageTask(
-      Luminous::MipmapPtr mipmap, ImageTex3 & tex, Radiant::Priority priority,
+      Luminous::MipmapPtr mipmap, MipmapLevel & tex, Radiant::Priority priority,
       const QString & filename, int level)
     : LoadImageTask(mipmap, priority, filename, level)
     , m_tex(tex)
@@ -585,10 +585,10 @@ namespace Luminous
       if(ptr) {
         if(ptr->isHeaderReady()) {
           const int expire = ptr->m_d->m_expireSeconds * 10;
-          std::vector<ImageTex3> & levels = ptr->m_d->m_levels;
+          std::vector<MipmapLevel> & levels = ptr->m_d->m_levels;
           // do not expire the last mipmap level (smallest image)
           for(int level = 0, s = levels.size() - 1; level < s; ++level) {
-            ImageTex3 & imageTex = levels[level];
+            MipmapLevel & imageTex = levels[level];
             int lastUsed = imageTex.lastUsed;
             if(lastUsed > Loading && now > lastUsed + expire) {
               if(imageTex.locked.testAndSetOrdered(0, 1)) {
@@ -713,7 +713,7 @@ namespace Luminous
         level = req;
         diff = 1;
       } else {
-        ImageTex3 & imageTex = m_d->m_levels[level];
+        MipmapLevel & imageTex = m_d->m_levels[level];
 
         int now = time;
         int old = imageTex.lastUsed;
@@ -899,7 +899,7 @@ namespace Luminous
 
     int time = frameTime();
     for(int level = 0; level <= m_d->m_maxLevel; ) {
-      ImageTex3 & imageTex = m_d->m_levels[level];
+      MipmapLevel & imageTex = m_d->m_levels[level];
       int old = imageTex.lastUsed;
       if(old == New || old == Loading || old == LoadError) {
         ++level;
