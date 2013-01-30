@@ -259,42 +259,42 @@ namespace VideoPlayer2
 
     D(AVDecoderFFMPEG * host)
       : m_host(host)
-      , seekGeneration(0)
-      , running(true)
-      , finished(false)
-      , av()
-      , ptsCorrection()
-      , realTimeSeeking(false)
-      , pauseTimestamp(Radiant::TimeStamp::currentTime())
-      , videoFilter()
-      , audioFilter()
-      , radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
-      , loopOffset(0)
+      , m_seekGeneration(0)
+      , m_running(true)
+      , m_finished(false)
+      , m_av()
+      , m_ptsCorrection()
+      , m_realTimeSeeking(false)
+      , m_pauseTimestamp(Radiant::TimeStamp::currentTime())
+      , m_videoFilter()
+      , m_audioFilter()
+      , m_radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
+      , m_loopOffset(0)
       , m_audioTransfer(nullptr)
     {
-      av.videoStreamIndex = -1;
-      av.audioStreamIndex = -1;
-      av.videoSize = Nimble::Size();
+      m_av.videoStreamIndex = -1;
+      m_av.audioStreamIndex = -1;
+      m_av.videoSize = Nimble::Size();
     }
 
     AVDecoderFFMPEG * m_host;
-    int seekGeneration;
+    int m_seekGeneration;
 
-    bool running;
-    bool finished;
+    bool m_running;
+    bool m_finished;
 
-    MyAV av;
-    PtsCorrectionContext ptsCorrection;
+    MyAV m_av;
+    PtsCorrectionContext m_ptsCorrection;
 
-    MemoryPool<DecodedImageBuffer, 80> imageBuffers;
+    MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
 
-    bool realTimeSeeking;
-    SeekRequest seekRequest;
+    bool m_realTimeSeeking;
+    SeekRequest m_seekRequest;
 
-    AVDecoder::Options options;
-    Radiant::TimeStamp pauseTimestamp;
+    AVDecoder::Options m_options;
+    Radiant::TimeStamp m_pauseTimestamp;
 
-    QList<PixelFormat> pixelFormats;
+    QList<PixelFormat> m_pixelFormats;
 
     struct FilterGraph
     {
@@ -303,22 +303,23 @@ namespace VideoPlayer2
       AVFilterContext * formatFilter;
       AVFilterGraph * graph;
     };
-    FilterGraph videoFilter;
-    FilterGraph audioFilter;
+    FilterGraph m_videoFilter;
+    FilterGraph m_audioFilter;
 
     // only used when there is no audio
-    double radiantTimestampToPts;
+    double m_radiantTimestampToPts;
 
-    double loopOffset;
+    double m_loopOffset;
 
     AudioTransfer * m_audioTransfer;
 
     /// From main thread to decoder thread, list of BufferRefs that should be
     /// released. Can't run that in the main thread without locking.
-    LockFreeQueue<AVFilterBufferRef*, 40> consumedBufferRefs;
+    LockFreeQueue<AVFilterBufferRef*, 40> m_consumedBufferRefs;
 
-    LockFreeQueue<VideoFrameFFMPEG, 40> decodedVideoFrames;
+    LockFreeQueue<VideoFrameFFMPEG, 40> m_decodedVideoFrames;
 
+  public:
     bool initFilters(FilterGraph & filterGraph, const QString & description,
                      bool video);
     bool open();
@@ -361,56 +362,56 @@ namespace VideoPlayer2
     //   - 1 bit monowhite/monoblack
     //   - accelerated formats like xvmc / va api / vdpau, they don't work with multi-threaded rendering
     //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
-    pixelFormats.clear();
+    m_pixelFormats.clear();
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::GRAY) {
-      pixelFormats << AV_PIX_FMT_GRAY8;     ///<        Y        ,  8bpp
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::GRAY) {
+      m_pixelFormats << AV_PIX_FMT_GRAY8;     ///<        Y        ,  8bpp
     }
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::GRAY_ALPHA) {
-      pixelFormats << AV_PIX_FMT_Y400A;     ///< 8bit gray, 8bit alpha
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::GRAY_ALPHA) {
+      m_pixelFormats << AV_PIX_FMT_Y400A;     ///< 8bit gray, 8bit alpha
     }
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::RGB) {
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::RGB) {
 #ifdef LUMINOUS_OPENGLES
       pixelFormats << AV_PIX_FMT_RGB24;     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
 #else
-      pixelFormats << AV_PIX_FMT_BGR24;     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
+      m_pixelFormats << AV_PIX_FMT_BGR24;     ///< packed RGB 8:8:8, 24bpp, BGRBGR...
 #endif
     }
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::RGBA) {
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::RGBA) {
 #ifdef LUMINOUS_OPENGLES
       pixelFormats << AV_PIX_FMT_RGBA;      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
 #else
-      pixelFormats << AV_PIX_FMT_BGRA;      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+      m_pixelFormats << AV_PIX_FMT_BGRA;      ///< packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
 #endif
     }
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::YUV) {
-      pixelFormats << AV_PIX_FMT_YUV420P;   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-      pixelFormats << AV_PIX_FMT_YUV422P;   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
-      pixelFormats << AV_PIX_FMT_YUV444P;   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
-      pixelFormats << AV_PIX_FMT_YUV410P;   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
-      pixelFormats << AV_PIX_FMT_YUV411P;   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
-      pixelFormats << AV_PIX_FMT_YUVJ420P;  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
-      pixelFormats << AV_PIX_FMT_YUVJ422P;  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
-      pixelFormats << AV_PIX_FMT_YUVJ444P;  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
-      pixelFormats << AV_PIX_FMT_YUV440P;   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
-      pixelFormats << AV_PIX_FMT_YUVJ440P;  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::YUV) {
+      m_pixelFormats << AV_PIX_FMT_YUV420P;   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUV422P;   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUV444P;   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUV410P;   ///< planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUV411P;   ///< planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUVJ420P;  ///< planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV420P and setting color_range
+      m_pixelFormats << AV_PIX_FMT_YUVJ422P;  ///< planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV422P and setting color_range
+      m_pixelFormats << AV_PIX_FMT_YUVJ444P;  ///< planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of PIX_FMT_YUV444P and setting color_range
+      m_pixelFormats << AV_PIX_FMT_YUV440P;   ///< planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
+      m_pixelFormats << AV_PIX_FMT_YUVJ440P;  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
     }
 
-    if (options.pixelFormat == VideoFrame::UNKNOWN || options.pixelFormat == VideoFrame::YUVA) {
-      pixelFormats << AV_PIX_FMT_YUVA420P;  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
-      pixelFormats << AV_PIX_FMT_YUVA444P;  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
-      pixelFormats << AV_PIX_FMT_YUVA422P;  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
+    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::YUVA) {
+      m_pixelFormats << AV_PIX_FMT_YUVA420P;  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+      m_pixelFormats << AV_PIX_FMT_YUVA444P;  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
+      m_pixelFormats << AV_PIX_FMT_YUVA422P;  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
     }
   }
 
   QByteArray AVDecoderFFMPEG::D::supportedPixFormatsStr()
   {
     QByteArray lst;
-    for (auto format: pixelFormats) {
+    for (auto format: m_pixelFormats) {
       const char * str = av_get_pix_fmt_name(format);
       if (!str) {
         Radiant::error("supportedPixFormatsStr # Failed to convert pixel format %d to string", format);
@@ -426,7 +427,7 @@ namespace VideoPlayer2
   bool AVDecoderFFMPEG::D::initFilters(FilterGraph & filterGraph,
                                        const QString & description, bool video)
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::initFilters # " + options.src.toUtf8() +
+    QByteArray errorMsg("AVDecoderFFMPEG::D::initFilters # " + m_options.src.toUtf8() +
                         " " + (video ? "video" : "audio") +":");
 
     AVFilter * buffersrc = nullptr;
@@ -452,11 +453,11 @@ namespace VideoPlayer2
       QString args;
       if(video) {
         args.sprintf("%d:%d:%d:%d:%d:%d:%d",
-                     av.videoCodecContext->width, av.videoCodecContext->height,
-                     av.videoCodecContext->pix_fmt,
-                     av.videoCodecContext->time_base.num, av.videoCodecContext->time_base.den,
-                     av.videoCodecContext->sample_aspect_ratio.num,
-                     av.videoCodecContext->sample_aspect_ratio.den);
+                     m_av.videoCodecContext->width, m_av.videoCodecContext->height,
+                     m_av.videoCodecContext->pix_fmt,
+                     m_av.videoCodecContext->time_base.num, m_av.videoCodecContext->time_base.den,
+                     m_av.videoCodecContext->sample_aspect_ratio.num,
+                     m_av.videoCodecContext->sample_aspect_ratio.den);
         int err = avfilter_graph_create_filter(&filterGraph.bufferSourceFilter, buffersrc,
                                                "in", args.toUtf8().data(), nullptr, filterGraph.graph);
         if (err < 0) throw "Failed to create video buffer source";
@@ -470,21 +471,21 @@ namespace VideoPlayer2
                                            nullptr, filterGraph.graph);
         if (err < 0) throw "Failed to create video format filter";
       } else {
-        if(!av.audioCodecContext->channel_layout)
-          av.audioCodecContext->channel_layout = av_get_default_channel_layout(
-                av.audioCodecContext->channels);
+        if(!m_av.audioCodecContext->channel_layout)
+          m_av.audioCodecContext->channel_layout = av_get_default_channel_layout(
+                m_av.audioCodecContext->channels);
 
         QByteArray channelLayoutName(255, '\0');
         av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
-                                     av.audioCodecContext->channels, av.audioCodecContext->channel_layout);
+                                     m_av.audioCodecContext->channels, m_av.audioCodecContext->channel_layout);
 
         /// @todo ffmpeg application uses AVStream instead of codec context to
         ///       read time_base, is this wrong?
         args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
-                     av.audioCodecContext->time_base.num,
-                     av.audioCodecContext->time_base.den,
-                     av.audioCodecContext->sample_rate,
-                     av_get_sample_fmt_name(av.audioCodecContext->sample_fmt),
+                     m_av.audioCodecContext->time_base.num,
+                     m_av.audioCodecContext->time_base.den,
+                     m_av.audioCodecContext->sample_rate,
+                     av_get_sample_fmt_name(m_av.audioCodecContext->sample_fmt),
                      channelLayoutName.data());
         err = avfilter_graph_create_filter(&filterGraph.bufferSourceFilter, buffersrc,
                                            "in", args.toUtf8().data(), nullptr, filterGraph.graph);
@@ -495,7 +496,7 @@ namespace VideoPlayer2
         if(err < 0) throw "Failed to create audio buffer sink";
 
         args.sprintf("sample_fmts=fltp:sample_rates=44100:channel_layouts=%s",
-                     options.channelLayout.data());
+                     m_options.channelLayout.data());
         err = avfilter_graph_create_filter(&filterGraph.formatFilter, format, "format",
                                            args.toUtf8().data(), nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio format filter";
@@ -550,8 +551,8 @@ namespace VideoPlayer2
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
 
-    QString src(options.src);
-    QStringList srcs = Radiant::ResourceLocator::instance()->locate(options.src);
+    QString src(m_options.src);
+    QStringList srcs = Radiant::ResourceLocator::instance()->locate(m_options.src);
 
     if(!srcs.empty())
       src = srcs.front();
@@ -559,8 +560,8 @@ namespace VideoPlayer2
 
     QByteArray errorMsg("AVDecoderFFMPEG::D::open # " + src.toUtf8() + ":");
 
-    if(!options.demuxerOptions.isEmpty()) {
-      for(auto it = options.demuxerOptions.begin(); it != options.demuxerOptions.end(); ++it) {
+    if(!m_options.demuxerOptions.isEmpty()) {
+      for(auto it = m_options.demuxerOptions.begin(); it != m_options.demuxerOptions.end(); ++it) {
         int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
         if(err < 0) {
           Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -571,14 +572,14 @@ namespace VideoPlayer2
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
-    if(!options.format.isEmpty()) {
-      inputFormat = av_find_input_format(options.format.toUtf8().data());
+    if(!m_options.format.isEmpty()) {
+      inputFormat = av_find_input_format(m_options.format.toUtf8().data());
       if(!inputFormat)
-        Radiant::warning("%s Failed to find input format '%s'", errorMsg.data(), options.format.toUtf8().data());
+        Radiant::warning("%s Failed to find input format '%s'", errorMsg.data(), m_options.format.toUtf8().data());
     }
 
     // Open the actual video, should be thread-safe
-    int err = avformat_open_input(&av.formatContext, src.toUtf8().data(),
+    int err = avformat_open_input(&m_av.formatContext, src.toUtf8().data(),
                                   inputFormat, &avoptions);
 
     {
@@ -599,68 +600,68 @@ namespace VideoPlayer2
     // Retrieve stream information, avformat processes some stream data, so
     // this might take a while, and it might fail with some files (at least
     // with some mkv files), so we don't abort on error
-    err = avformat_find_stream_info(av.formatContext, nullptr);
+    err = avformat_find_stream_info(m_av.formatContext, nullptr);
     if(err < 0)
       avError(QString("%1 Failed to find stream info").arg(errorMsg.data()), err);
 
-    if(options.video) {
-      av.videoStreamIndex = av_find_best_stream(av.formatContext, AVMEDIA_TYPE_VIDEO,
-                                                options.videoStreamIndex, -1,
-                                                &av.videoCodec, 0);
-      if(av.videoStreamIndex < 0) {
-        if(av.videoStreamIndex == AVERROR_STREAM_NOT_FOUND) {
+    if(m_options.video) {
+      m_av.videoStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_VIDEO,
+                                                m_options.videoStreamIndex, -1,
+                                                &m_av.videoCodec, 0);
+      if(m_av.videoStreamIndex < 0) {
+        if(m_av.videoStreamIndex == AVERROR_STREAM_NOT_FOUND) {
           Radiant::warning("%s Video stream not found", errorMsg.data());
-        } else if(av.videoStreamIndex == AVERROR_DECODER_NOT_FOUND) {
+        } else if(m_av.videoStreamIndex == AVERROR_DECODER_NOT_FOUND) {
           Radiant::error("%s No decoder found for any video stream", errorMsg.data());
         } else {
           Radiant::error("%s Error #%d when trying to find video stream",
-                         errorMsg.data(), av.videoStreamIndex);
+                         errorMsg.data(), m_av.videoStreamIndex);
         }
       } else {
-        av.videoCodecContext = av.formatContext->streams[av.videoStreamIndex]->codec;
-        assert(av.videoCodecContext);
-        av.videoCodecContext->opaque = this;
-        av.videoCodecContext->thread_count = 1;
+        m_av.videoCodecContext = m_av.formatContext->streams[m_av.videoStreamIndex]->codec;
+        assert(m_av.videoCodecContext);
+        m_av.videoCodecContext->opaque = this;
+        m_av.videoCodecContext->thread_count = 1;
         /// @todo On slower computers having at least 4 threads is requirement for 4k videos.
         ///       It is unknown if this adds too much overhead if there are ~100 low quality videos.
-        if (av.videoCodec && (av.videoCodec->capabilities & CODEC_CAP_SLICE_THREADS)) {
-          av.videoCodecContext->thread_count = (av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS)
+        if (m_av.videoCodec && (m_av.videoCodec->capabilities & CODEC_CAP_SLICE_THREADS)) {
+          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS)
             ? 0 : 4;
         }
       }
     }
 
-    if(options.audio) {
-      av.audioStreamIndex = av_find_best_stream(av.formatContext, AVMEDIA_TYPE_AUDIO,
-                                                options.audioStreamIndex, -1,
-                                                &av.audioCodec, 0);
-      if(av.audioStreamIndex < 0) {
-        if(av.audioStreamIndex == AVERROR_STREAM_NOT_FOUND) {
+    if(m_options.audio) {
+      m_av.audioStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_AUDIO,
+                                                m_options.audioStreamIndex, -1,
+                                                &m_av.audioCodec, 0);
+      if(m_av.audioStreamIndex < 0) {
+        if(m_av.audioStreamIndex == AVERROR_STREAM_NOT_FOUND) {
           Radiant::debug("%s Audio stream not found", errorMsg.data());
-        } else if(av.audioStreamIndex == AVERROR_DECODER_NOT_FOUND) {
+        } else if(m_av.audioStreamIndex == AVERROR_DECODER_NOT_FOUND) {
           Radiant::error("%s No decoder found for any audio stream", errorMsg.data());
         } else {
           Radiant::error("%s Error #%d when trying to find audio stream",
-                         errorMsg.data(), av.audioStreamIndex);
+                         errorMsg.data(), m_av.audioStreamIndex);
         }
       } else {
-        av.audioCodecContext = av.formatContext->streams[av.audioStreamIndex]->codec;
-        assert(av.audioCodecContext);
-        av.audioCodecContext->opaque = this;
-        av.audioCodecContext->thread_count = 1;
+        m_av.audioCodecContext = m_av.formatContext->streams[m_av.audioStreamIndex]->codec;
+        assert(m_av.audioCodecContext);
+        m_av.audioCodecContext->opaque = this;
+        m_av.audioCodecContext->thread_count = 1;
       }
     }
 
-    if(!av.videoCodec && !av.audioCodec) {
+    if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Didn't open any media streams", errorMsg.data());
-      avformat_close_input(&av.formatContext);
+      avformat_close_input(&m_av.formatContext);
       return false;
     }
 
     // Open codecs
-    if(av.videoCodec) {
-      if(!options.videoOptions.isEmpty()) {
-        for(auto it = options.videoOptions.begin(); it != options.videoOptions.end(); ++it) {
+    if(m_av.videoCodec) {
+      if(!m_options.videoOptions.isEmpty()) {
+        for(auto it = m_options.videoOptions.begin(); it != m_options.videoOptions.end(); ++it) {
           int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
           if(err < 0) {
             Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -669,7 +670,7 @@ namespace VideoPlayer2
         }
       }
 
-      err = avcodec_open2(av.videoCodecContext, av.videoCodec, &avoptions);
+      err = avcodec_open2(m_av.videoCodecContext, m_av.videoCodec, &avoptions);
 
       {
         AVDictionaryEntry * it = nullptr;
@@ -682,15 +683,15 @@ namespace VideoPlayer2
       }
 
       if(err < 0) {
-        av.videoCodecContext = nullptr;
-        av.videoCodec = nullptr;
+        m_av.videoCodecContext = nullptr;
+        m_av.videoCodec = nullptr;
         avError(QString("%1 Failed to open video codec").arg(errorMsg.data()), err);
       }
     }
 
-    if(av.audioCodec) {
-      if(!options.audioOptions.isEmpty()) {
-        for(auto it = options.audioOptions.begin(); it != options.audioOptions.end(); ++it) {
+    if(m_av.audioCodec) {
+      if(!m_options.audioOptions.isEmpty()) {
+        for(auto it = m_options.audioOptions.begin(); it != m_options.audioOptions.end(); ++it) {
           int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
           if(err < 0) {
             Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -699,7 +700,7 @@ namespace VideoPlayer2
         }
       }
 
-      err = avcodec_open2(av.audioCodecContext, av.audioCodec, &avoptions);
+      err = avcodec_open2(m_av.audioCodecContext, m_av.audioCodec, &avoptions);
 
       {
         AVDictionaryEntry * it = nullptr;
@@ -712,15 +713,15 @@ namespace VideoPlayer2
       }
 
       if(err < 0) {
-        av.audioCodecContext = nullptr;
-        av.audioCodec = nullptr;
+        m_av.audioCodecContext = nullptr;
+        m_av.audioCodec = nullptr;
         avError(QString("%1 Failed to open audio codec").arg(errorMsg.data()), err);
       }
     }
 
-    if(!av.videoCodec && !av.audioCodec) {
+    if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Failed to open any media stream codecs", errorMsg.data());
-      avformat_close_input(&av.formatContext);
+      avformat_close_input(&m_av.formatContext);
       return false;
     }
 
@@ -729,42 +730,42 @@ namespace VideoPlayer2
     // If the codec doesn't support that, we have to make a copy of the data
     // buffer after decoding. When using filters, we just use buffer refs
 
-    if(av.videoCodecContext) {
-      if(av.videoCodecContext && (av.videoCodec->capabilities & CODEC_CAP_DR1)) {
-        av.videoCodecContext->get_buffer = getBuffer;
+    if(m_av.videoCodecContext) {
+      if(m_av.videoCodecContext && (m_av.videoCodec->capabilities & CODEC_CAP_DR1)) {
+        m_av.videoCodecContext->get_buffer = getBuffer;
         //videoCodecContext->reget_buffer = AVDecoderFFMPEG::D::regetBuffer;
-        av.videoCodecContext->release_buffer = releaseBuffer;
-        av.dr1 = true;
+        m_av.videoCodecContext->release_buffer = releaseBuffer;
+        m_av.dr1 = true;
       } else {
         Radiant::debug("%s Codec has no CODEC_CAP_DR1, need to copy the image data every frame", errorMsg.data());
-        av.dr1 = false;
+        m_av.dr1 = false;
       }
 
       bool pixelFormatSupported = false;
-      for (auto fmt: pixelFormats) {
-        if(av.videoCodecContext->pix_fmt == fmt) {
+      for (auto fmt: m_pixelFormats) {
+        if(m_av.videoCodecContext->pix_fmt == fmt) {
           pixelFormatSupported = true;
           break;
         }
       }
-      const bool useVideoFilters = !pixelFormatSupported || !options.videoFilters.isEmpty();
+      const bool useVideoFilters = !pixelFormatSupported || !m_options.videoFilters.isEmpty();
 
       if(useVideoFilters)
-        initFilters(videoFilter, options.videoFilters, true);
+        initFilters(m_videoFilter, m_options.videoFilters, true);
     }
 
-    if(av.audioCodecContext) {
-      if (options.channelLayout.isEmpty()) {
+    if(m_av.audioCodecContext) {
+      if (m_options.channelLayout.isEmpty()) {
         QByteArray channelLayout(255, '\0');
         av_get_channel_layout_string(channelLayout.data(), channelLayout.size(),
-                                     av.audioCodecContext->channels,
-                                     av.audioCodecContext->channel_layout);
-        options.channelLayout = channelLayout.data();
+                                     m_av.audioCodecContext->channels,
+                                     m_av.audioCodecContext->channel_layout);
+        m_options.channelLayout = channelLayout.data();
       }
 
       bool audioFormatSupported = false;
       for(auto it = s_sampleFmts; *it != (AVSampleFormat)-1; ++it) {
-        if(av.audioCodecContext->sample_fmt == *it) {
+        if(m_av.audioCodecContext->sample_fmt == *it) {
           audioFormatSupported = true;
           break;
         }
@@ -772,64 +773,64 @@ namespace VideoPlayer2
       /// @todo shouldn't be hard-coded
       const int targetSampleRate = 44100;
       const bool useAudioFilters = !audioFormatSupported ||
-          !options.audioFilters.isEmpty() ||
-          av.audioCodecContext->sample_rate != targetSampleRate ||
-          av.audioCodecContext->channel_layout != av_get_channel_layout(options.channelLayout.data());
+          !m_options.audioFilters.isEmpty() ||
+          m_av.audioCodecContext->sample_rate != targetSampleRate ||
+          m_av.audioCodecContext->channel_layout != av_get_channel_layout(m_options.channelLayout.data());
 
       if(useAudioFilters)
-        initFilters(audioFilter, options.audioFilters, false);
+        initFilters(m_audioFilter, m_options.audioFilters, false);
     }
 
     // pts/dts x video/audioTsToSecs == timestamp in seconds
-    if(av.videoCodecContext) {
-      const auto & time_base = av.formatContext->streams[av.videoStreamIndex]->time_base;
-      av.videoTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(av.videoCodecContext->time_base) *
-                                              av.videoCodecContext->ticks_per_frame;
+    if(m_av.videoCodecContext) {
+      const auto & time_base = m_av.formatContext->streams[m_av.videoStreamIndex]->time_base;
+      m_av.videoTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
+                                              av_q2d(m_av.videoCodecContext->time_base) *
+                                              m_av.videoCodecContext->ticks_per_frame;
     }
 
-    if(av.audioCodecContext) {
-      const auto & time_base = av.formatContext->streams[av.audioStreamIndex]->time_base;
-      av.audioTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(av.audioCodecContext->time_base) *
-                                              av.audioCodecContext->ticks_per_frame;
+    if(m_av.audioCodecContext) {
+      const auto & time_base = m_av.formatContext->streams[m_av.audioStreamIndex]->time_base;
+      m_av.audioTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
+                                              av_q2d(m_av.audioCodecContext->time_base) *
+                                              m_av.audioCodecContext->ticks_per_frame;
     }
 
     // Size of the decoded audio buffer, in samples (~44100 samples means one second buffer)
-    av.decodedAudioBufferSamples = av.audioCodecContext ?
-          options.audioBufferSeconds * av.audioCodecContext->sample_rate : 0;
+    m_av.decodedAudioBufferSamples = m_av.audioCodecContext ?
+          m_options.audioBufferSeconds * m_av.audioCodecContext->sample_rate : 0;
 
-    av.needFlushAtEof = (av.audioCodec && (av.audioCodec->capabilities & CODEC_CAP_DELAY)) ||
-        (av.videoCodec && (av.videoCodec->capabilities & CODEC_CAP_DELAY));
+    m_av.needFlushAtEof = (m_av.audioCodec && (m_av.audioCodec->capabilities & CODEC_CAP_DELAY)) ||
+        (m_av.videoCodec && (m_av.videoCodec->capabilities & CODEC_CAP_DELAY));
 
     // We seek by bytes only if the input file has timestamp discontinuities
     // (seeking by timestamp doesn't really make sense in that case). If the
     // format doesn't support byte seek, we still use timestamp seeking as a
     // fallback, and then just hope for the best.
-    av.seekByBytes = (av.formatContext->iformat->flags & AVFMT_TS_DISCONT) &&
-        !(av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK);
+    m_av.seekByBytes = (m_av.formatContext->iformat->flags & AVFMT_TS_DISCONT) &&
+        !(m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK);
 
     /// @todo can seeking be supported even if format context doesn't have an IO Context?
-    av.seekingSupported = av.formatContext->pb && av.formatContext->pb->seekable;
+    m_av.seekingSupported = m_av.formatContext->pb && m_av.formatContext->pb->seekable;
 
-    av_init_packet(&av.packet);
+    av_init_packet(&m_av.packet);
 
     // In theory we could write this, but we wouldn't be binary-compatible with
     // different ffmpeg versions:
     // AVFrame avFrame;
     // avcodec_get_frame_defaults(&avFrame);
-    av.frame = avcodec_alloc_frame();
-    if(!av.frame) {
+    m_av.frame = avcodec_alloc_frame();
+    if(!m_av.frame) {
       Radiant::error("%s Failed to allocate new AVFrame", errorMsg.data());
       close();
       return false;
     }
 
-    if(av.audioCodec) {
-      int channelLayout = av_get_channel_layout(options.channelLayout);
+    if(m_av.audioCodec) {
+      int channelLayout = av_get_channel_layout(m_options.channelLayout);
       m_audioTransfer = new AudioTransfer(m_host, av_get_channel_layout_nb_channels(channelLayout));
-      m_audioTransfer->setSeekGeneration(seekGeneration);
-      m_audioTransfer->setPlayMode(options.playMode);
+      m_audioTransfer->setSeekGeneration(m_seekGeneration);
+      m_audioTransfer->setPlayMode(m_options.playMode);
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
@@ -842,35 +843,35 @@ namespace VideoPlayer2
       Resonant::DSPNetwork::instance()->addModule(item);
     }
 
-    if(av.videoCodecContext) {
-      av.videoSize = Nimble::Size(av.videoCodecContext->width, av.videoCodecContext->height);
+    if(m_av.videoCodecContext) {
+      m_av.videoSize = Nimble::Size(m_av.videoCodecContext->width, m_av.videoCodecContext->height);
     } else {
-      av.videoSize = Nimble::Size();
+      m_av.videoSize = Nimble::Size();
     }
-    av.duration = av.formatContext->duration / double(AV_TIME_BASE);
-    av.start = std::numeric_limits<double>::quiet_NaN();
+    m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
+    m_av.start = std::numeric_limits<double>::quiet_NaN();
 
     return true;
   }
 
   void AVDecoderFFMPEG::D::close()
   {
-    av.duration = 0;
-    av.videoSize = Nimble::Size();
+    m_av.duration = 0;
+    m_av.videoSize = Nimble::Size();
 
     // Close the codecs
-    if(av.audioCodecContext || av.videoCodecContext) {
-      if(av.audioCodecContext)
-        avcodec_close(av.audioCodecContext);
-      if(av.videoCodecContext)
-        avcodec_close(av.videoCodecContext);
+    if(m_av.audioCodecContext || m_av.videoCodecContext) {
+      if(m_av.audioCodecContext)
+        avcodec_close(m_av.audioCodecContext);
+      if(m_av.videoCodecContext)
+        avcodec_close(m_av.videoCodecContext);
     }
 
     // Close the video file
-    if(av.formatContext)
-      avformat_close_input(&av.formatContext);
+    if(m_av.formatContext)
+      avformat_close_input(&m_av.formatContext);
 
-    av_free(av.frame);
+    av_free(m_av.frame);
 
     if(m_audioTransfer) {
       m_audioTransfer->shutdown();
@@ -883,28 +884,28 @@ namespace VideoPlayer2
   bool AVDecoderFFMPEG::D::seekToBeginning()
   {
     int err = 0;
-    if(av.seekingSupported) {
-      if(av.seekByBytes) {
-        err = avformat_seek_file(av.formatContext, -1,
+    if(m_av.seekingSupported) {
+      if(m_av.seekByBytes) {
+        err = avformat_seek_file(m_av.formatContext, -1,
                                  std::numeric_limits<int64_t>::min(), 0,
                                  std::numeric_limits<int64_t>::max(),
                                  AVSEEK_FLAG_BYTE);
       } else {
-        int64_t pos = av.formatContext->start_time == (int64_t) AV_NOPTS_VALUE
-            ? 0 : av.formatContext->start_time;
-        err = avformat_seek_file(av.formatContext, -1,
+        int64_t pos = m_av.formatContext->start_time == (int64_t) AV_NOPTS_VALUE
+            ? 0 : m_av.formatContext->start_time;
+        err = avformat_seek_file(m_av.formatContext, -1,
                                  std::numeric_limits<int64_t>::min(), pos,
                                  std::numeric_limits<int64_t>::max(), 0);
       }
       if(err < 0) {
-        avError(QString("AVDecoderFFMPEG::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(options.src), err);
+        avError(QString("AVDecoderFFMPEG::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.src), err);
         close();
         return open();
       } else {
-        if(av.audioCodecContext)
-          avcodec_flush_buffers(av.audioCodecContext);
-        if(av.videoCodecContext)
-          avcodec_flush_buffers(av.videoCodecContext);
+        if(m_av.audioCodecContext)
+          avcodec_flush_buffers(m_av.audioCodecContext);
+        if(m_av.videoCodecContext)
+          avcodec_flush_buffers(m_av.videoCodecContext);
       }
     } else {
       // If we want to loop, but there is no way to seek, we just close
@@ -917,28 +918,28 @@ namespace VideoPlayer2
 
   bool AVDecoderFFMPEG::D::seek()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + options.src.toUtf8() + ":");
+    QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + m_options.src.toUtf8() + ":");
 
-    if(seekRequest.value <= std::numeric_limits<double>::epsilon()) {
+    if(m_seekRequest.value <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
       if(ok) {
-        ++seekGeneration;
+        ++m_seekGeneration;
         if(m_audioTransfer)
-          m_audioTransfer->setSeekGeneration(seekGeneration);
-        radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-        if(options.playMode == Pause)
-          pauseTimestamp = Radiant::TimeStamp::currentTime();
+          m_audioTransfer->setSeekGeneration(m_seekGeneration);
+        m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
+        if(m_options.playMode == Pause)
+          m_pauseTimestamp = Radiant::TimeStamp::currentTime();
       }
       return ok;
     }
 
-    if(!av.seekingSupported)
+    if(!m_av.seekingSupported)
       return false;
 
-    bool seekByBytes = av.seekByBytes || seekRequest.type == SeekByBytes;
+    bool seekByBytes = m_av.seekByBytes || m_seekRequest.type == SeekByBytes;
 
-    if(seekRequest.type == SeekByBytes &&
-       (av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK)) {
+    if(m_seekRequest.type == SeekByBytes &&
+       (m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK)) {
       Radiant::error("%s Seek failed, media doesn't support byte seeking",
                      errorMsg.data());
       return false;
@@ -946,14 +947,14 @@ namespace VideoPlayer2
 
     int64_t pos = 0;
     if(!seekByBytes) {
-      if(seekRequest.type == SeekBySeconds) {
-        pos = seekRequest.value * AV_TIME_BASE;
+      if(m_seekRequest.type == SeekBySeconds) {
+        pos = m_seekRequest.value * AV_TIME_BASE;
       } else {
-        assert(seekRequest.type == SeekRelative);
-        if(av.formatContext->duration > 0) {
-          pos = seekRequest.value * av.formatContext->duration;
+        assert(m_seekRequest.type == SeekRelative);
+        if(m_av.formatContext->duration > 0) {
+          pos = m_seekRequest.value * m_av.formatContext->duration;
         } else {
-          if(av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK) {
+          if(m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK) {
             Radiant::error("%s Seek failed, couldn't get the content duration"
                            " and the media doesn't support byte seeking",
                            errorMsg.data());
@@ -962,81 +963,81 @@ namespace VideoPlayer2
           seekByBytes = true;
         }
       }
-      if(av.formatContext->start_time != (int64_t) AV_NOPTS_VALUE)
-          pos += av.formatContext->start_time;
+      if(m_av.formatContext->start_time != (int64_t) AV_NOPTS_VALUE)
+          pos += m_av.formatContext->start_time;
     }
 
     if(seekByBytes) {
-      if(seekRequest.type == SeekByBytes) {
-        pos = seekRequest.value;
-      } else if(seekRequest.type == SeekBySeconds) {
-        int64_t size = avio_size(av.formatContext->pb);
-        if(av.formatContext->duration <= 0 || size <= 0) {
+      if(m_seekRequest.type == SeekByBytes) {
+        pos = m_seekRequest.value;
+      } else if(m_seekRequest.type == SeekBySeconds) {
+        int64_t size = avio_size(m_av.formatContext->pb);
+        if(m_av.formatContext->duration <= 0 || size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media duration/size",
                          errorMsg.data());
           return false;
         }
         // This is just a guess, since there is no byte size and time 1:1 mapping
-        pos = size * seekRequest.value / av.duration;
+        pos = size * m_seekRequest.value / m_av.duration;
 
       } else {
-        assert(seekRequest.type == SeekRelative);
-        int64_t size = avio_size(av.formatContext->pb);
+        assert(m_seekRequest.type == SeekRelative);
+        int64_t size = avio_size(m_av.formatContext->pb);
         if(size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media size",
                          errorMsg.data());
           return false;
         }
-        pos = seekRequest.value * size;
+        pos = m_seekRequest.value * size;
       }
     }
 
-    int64_t minTs = seekRequest.direction == SeekOnlyForward
+    int64_t minTs = m_seekRequest.direction == SeekOnlyForward
         ? pos : std::numeric_limits<int64_t>::min();
-    int64_t maxTs = seekRequest.direction == SeekOnlyBackward
+    int64_t maxTs = m_seekRequest.direction == SeekOnlyBackward
         ? pos : std::numeric_limits<int64_t>::max();
 
-    int err = avformat_seek_file(av.formatContext, -1, minTs, pos, maxTs,
+    int err = avformat_seek_file(m_av.formatContext, -1, minTs, pos, maxTs,
                                  seekByBytes ? AVSEEK_FLAG_BYTE : 0);
     if(err < 0) {
       Radiant::error("%s Seek failed", errorMsg.data());
       return false;
     }
 
-    if(av.audioCodecContext)
-      avcodec_flush_buffers(av.audioCodecContext);
-    if(av.videoCodecContext)
-      avcodec_flush_buffers(av.videoCodecContext);
-    ++seekGeneration;
+    if(m_av.audioCodecContext)
+      avcodec_flush_buffers(m_av.audioCodecContext);
+    if(m_av.videoCodecContext)
+      avcodec_flush_buffers(m_av.videoCodecContext);
+    ++m_seekGeneration;
     if(m_audioTransfer)
-      m_audioTransfer->setSeekGeneration(seekGeneration);
-    radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-    if(options.playMode == Pause)
-      pauseTimestamp = Radiant::TimeStamp::currentTime();
+      m_audioTransfer->setSeekGeneration(m_seekGeneration);
+    m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
+    if(m_options.playMode == Pause)
+      m_pauseTimestamp = Radiant::TimeStamp::currentTime();
 
     return true;
   }
 
   VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool & setTimestampToPts, double & dpts)
   {
-    while(running) {
-      VideoFrameFFMPEG * frame = decodedVideoFrames.takeFree();
+    while(m_running) {
+      VideoFrameFFMPEG * frame = m_decodedVideoFrames.takeFree();
       if(frame) return frame;
       // Set this here, because another frame might be waiting for us
       // However, if we have a filter that changes pts, this might not be right.
-      if(Nimble::Math::isNAN(radiantTimestampToPts)) {
+      if(Nimble::Math::isNAN(m_radiantTimestampToPts)) {
         const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
-        radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
+        m_radiantTimestampToPts = dpts + m_loopOffset - now.secondsD() + 4.0/60.0;
         setTimestampToPts = true;
       }
-      if(!running) break;
+      if(!m_running) break;
       // if the video buffer is full, and audio buffer is almost empty,
       // we need to resize the video buffer, otherwise we could starve.
       // Growing the video buffer is safe, as long as the buffer size
       // doesn't grow over the hard-limit (setSize checks that)
-      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < options.audioBufferSeconds * 0.15f) {
-        if(decodedVideoFrames.setSize(decodedVideoFrames.size() + 1)) {
-          options.videoBufferFrames = decodedVideoFrames.size();
+      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds * 0.15f) {
+        if(m_decodedVideoFrames.setSize(m_decodedVideoFrames.size() + 1)) {
+          m_options.videoBufferFrames = m_decodedVideoFrames.size();
           continue;
         }
       }
@@ -1093,14 +1094,14 @@ namespace VideoPlayer2
     int64_t pts = AV_NOPTS_VALUE;
 
     if (dts != (int64_t) AV_NOPTS_VALUE) {
-      ptsCorrection.num_faulty_dts += dts <= ptsCorrection.last_dts;
-      ptsCorrection.last_dts = dts;
+      m_ptsCorrection.num_faulty_dts += dts <= m_ptsCorrection.last_dts;
+      m_ptsCorrection.last_dts = dts;
     }
     if (reordered_pts != (int64_t) AV_NOPTS_VALUE) {
-      ptsCorrection.num_faulty_pts += reordered_pts <= ptsCorrection.last_pts;
-      ptsCorrection.last_pts = reordered_pts;
+      m_ptsCorrection.num_faulty_pts += reordered_pts <= m_ptsCorrection.last_pts;
+      m_ptsCorrection.last_pts = reordered_pts;
     }
-    if ((ptsCorrection.num_faulty_pts<=ptsCorrection.num_faulty_dts || dts == (int64_t) AV_NOPTS_VALUE)
+    if ((m_ptsCorrection.num_faulty_pts<=m_ptsCorrection.num_faulty_dts || dts == (int64_t) AV_NOPTS_VALUE)
         && reordered_pts != (int64_t) AV_NOPTS_VALUE)
       pts = reordered_pts;
     else
@@ -1121,63 +1122,63 @@ namespace VideoPlayer2
     dpts = std::numeric_limits<double>::quiet_NaN();
 
     int gotPicture = 0;
-    avcodec_get_frame_defaults(av.frame);
-    int err = avcodec_decode_video2(av.videoCodecContext, av.frame, &gotPicture, &av.packet);
+    avcodec_get_frame_defaults(m_av.frame);
+    int err = avcodec_decode_video2(m_av.videoCodecContext, m_av.frame, &gotPicture, &m_av.packet);
     if(err < 0) {
       avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: Failed to decode a video frame").
-              arg(options.src), err);
+              arg(m_options.src), err);
       return false;
     }
 
     if(!gotPicture)
       return false;
 
-    int64_t pts = guessCorrectPts(av.frame);
+    int64_t pts = guessCorrectPts(m_av.frame);
 
-    dpts = av.videoTsToSecs * pts;
+    dpts = m_av.videoTsToSecs * pts;
 
     VideoFrameFFMPEG * frame = 0;
     bool setTimestampToPts = false;
 
     DecodedImageBuffer * buffer = nullptr;
-    if(av.dr1 && av.frame->opaque) {
-      buffer = static_cast<DecodedImageBuffer*>(av.frame->opaque);
+    if(m_av.dr1 && m_av.frame->opaque) {
+      buffer = static_cast<DecodedImageBuffer*>(m_av.frame->opaque);
       buffer->refcount.ref();
     }
 
-    if(videoFilter.graph) {
+    if(m_videoFilter.graph) {
       AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
-            av.frame->data, av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
-            av.frame->width, av.frame->height,
-            AVPixelFormat(av.frame->format));
+            m_av.frame->data, m_av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
+            m_av.frame->width, m_av.frame->height,
+            AVPixelFormat(m_av.frame->format));
 
       if (ref)
-        avfilter_copy_frame_props(ref, av.frame);
+        avfilter_copy_frame_props(ref, m_av.frame);
 
       if(buffer) {
         ref->buf->priv = new std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *>(this, buffer);
         ref->buf->free = releaseFilterBuffer;
       }
 
-      int err = av_buffersrc_buffer(videoFilter.bufferSourceFilter, ref);
+      int err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
       if(err < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
-                arg(options.src), err);
+                arg(m_options.src), err);
         avfilter_unref_buffer(ref);
       } else {
         while (true) {
           // we either use custom deleter (releaseFilterBuffer) or the
           // default one with the actual data cleared
           if(!buffer)
-            av.packet.data = nullptr;
+            m_av.packet.data = nullptr;
 
           AVFilterBufferRef * output = nullptr;
-          err = av_buffersink_read(videoFilter.bufferSinkFilter, &output);
+          err = av_buffersink_read(m_videoFilter.bufferSinkFilter, &output);
           if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
             break;
           if (err < 0) {
             avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_read failed").
-                    arg(options.src), err);
+                    arg(m_options.src), err);
             break;
           }
 
@@ -1209,13 +1210,13 @@ namespace VideoPlayer2
             /// but some filters just set it always to zero
             if(output->pts != (int64_t) AV_NOPTS_VALUE && output->pts != 0) {
               pts = output->pts;
-              dpts = av.videoTsToSecs * output->pts;
+              dpts = m_av.videoTsToSecs * output->pts;
             }
 
             frame->imageSize = Nimble::Vector2i(output->video->w, output->video->h);
-            frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
+            frame->timestamp = Timestamp(dpts + m_loopOffset, m_seekGeneration);
 
-            decodedVideoFrames.put();
+            m_decodedVideoFrames.put();
           }
         }
       }
@@ -1227,20 +1228,20 @@ namespace VideoPlayer2
       frame->bufferRef = nullptr;
       frame->imageBuffer = buffer;
 
-      auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(av.frame->format));
+      auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(m_av.frame->format));
       int bytes = 0;
-      setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(av.frame->width, av.frame->height));
+      setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       for(int i = 0; i < frame->planes; ++i) {
-        frame->lineSize[i] = av.frame->linesize[i];
-        frame->data[i] = av.frame->data[i];
+        frame->lineSize[i] = m_av.frame->linesize[i];
+        frame->data[i] = m_av.frame->data[i];
         bytes += frame->lineSize[i] * frame->planeSize[i].y;
       }
 
       if(!buffer) {
-        buffer = imageBuffers.get();
+        buffer = m_imageBuffers.get();
         if(!buffer) {
           Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
-                         options.src.toUtf8().data());
+                         m_options.src.toUtf8().data());
           for(int i = 0; i < frame->planes; ++i)
             frame->data[i] = nullptr;
           frame->planes = 0;
@@ -1252,27 +1253,27 @@ namespace VideoPlayer2
             uint8_t * dst = buffer->data.data() + offset;
             bytes = frame->lineSize[i] * frame->planeSize[i].y;
             offset += bytes;
-            memcpy(dst, av.frame->data[i], bytes);
+            memcpy(dst, m_av.frame->data[i], bytes);
             frame->data[i] = dst;
           }
         }
       }
 
-      frame->imageSize = Nimble::Vector2i(av.frame->width, av.frame->height);
-      frame->timestamp = Timestamp(dpts + loopOffset, seekGeneration);
-      decodedVideoFrames.put();
+      frame->imageSize = Nimble::Vector2i(m_av.frame->width, m_av.frame->height);
+      frame->timestamp = Timestamp(dpts + m_loopOffset, m_seekGeneration);
+      m_decodedVideoFrames.put();
     }
 
     // Normally av.packet.duration can't be trusted
     if(Nimble::Math::isNAN(prevDpts)) {
-      nextDpts = av.videoTsToSecs * (av.packet.duration + pts);
+      nextDpts = m_av.videoTsToSecs * (m_av.packet.duration + pts);
     } else {
       nextDpts = dpts + (dpts - prevDpts);
     }
 
-    if(Nimble::Math::isNAN(radiantTimestampToPts) || setTimestampToPts) {
+    if(Nimble::Math::isNAN(m_radiantTimestampToPts) || setTimestampToPts) {
       const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
-      radiantTimestampToPts = dpts + loopOffset - now.secondsD() + 4.0/60.0;
+      m_radiantTimestampToPts = dpts + m_loopOffset - now.secondsD() + 4.0/60.0;
     }
 
     return true;
@@ -1280,58 +1281,58 @@ namespace VideoPlayer2
 
   bool AVDecoderFFMPEG::D::decodeAudioPacket(double & dpts, double & nextDpts)
   {
-    AVPacket packet = av.packet;
+    AVPacket packet = m_av.packet;
     bool gotFrames = false;
     bool flush = packet.size == 0;
 
-    while(running && (packet.size > 0 || flush)) {
+    while(m_running && (packet.size > 0 || flush)) {
       int gotFrame = 0;
-      avcodec_get_frame_defaults(av.frame);
-      const int consumedBytes = avcodec_decode_audio4(av.audioCodecContext, av.frame,
+      avcodec_get_frame_defaults(m_av.frame);
+      const int consumedBytes = avcodec_decode_audio4(m_av.audioCodecContext, m_av.frame,
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: Audio decoding error").
-                arg(options.src), consumedBytes);
+                arg(m_options.src), consumedBytes);
         break;
       }
 
       if(gotFrame) {
         gotFrames = true;
-        int64_t pts = guessCorrectPts(av.frame);
+        int64_t pts = guessCorrectPts(m_av.frame);
 
-        dpts = av.audioTsToSecs * pts;
-        nextDpts = dpts + double(av.frame->nb_samples) / av.frame->sample_rate;
+        dpts = m_av.audioTsToSecs * pts;
+        nextDpts = dpts + double(m_av.frame->nb_samples) / m_av.frame->sample_rate;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
-        if(audioFilter.graph) {
+        if(m_audioFilter.graph) {
           AVFilterBufferRef * ref = avfilter_get_audio_buffer_ref_from_arrays(
-                av.frame->data, av.frame->linesize[0], AV_PERM_READ | AV_PERM_WRITE,
-              av.frame->nb_samples, (AVSampleFormat)av.frame->format, av.frame->channel_layout);
+                m_av.frame->data, m_av.frame->linesize[0], AV_PERM_READ | AV_PERM_WRITE,
+              m_av.frame->nb_samples, (AVSampleFormat)m_av.frame->format, m_av.frame->channel_layout);
           ref->buf->free = [](AVFilterBuffer *ptr) { av_free(ptr); };
           if (!ref) {
             Radiant::error("AVDecoderFFMPEG::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
-                           options.src.toUtf8().data());
+                           m_options.src.toUtf8().data());
           } else {
-            avfilter_copy_frame_props(ref, av.frame);
-            av_buffersrc_buffer(audioFilter.bufferSourceFilter, ref);
+            avfilter_copy_frame_props(ref, m_av.frame);
+            av_buffersrc_buffer(m_audioFilter.bufferSourceFilter, ref);
             while (true) {
               AVFilterBufferRef * output = nullptr;
-              int err = av_buffersink_read(audioFilter.bufferSinkFilter, &output);
+              int err = av_buffersink_read(m_audioFilter.bufferSinkFilter, &output);
               if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
                 break;
 
               if (err < 0) {
                 avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersink_read failed").
-                        arg(options.src), err);
+                        arg(m_options.src), err);
                 break;
               }
 
               if(output) {
                 while(true) {
                   decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
-                        av.decodedAudioBufferSamples - output->audio->nb_samples);
+                        m_av.decodedAudioBufferSamples - output->audio->nb_samples);
                   if(decodedAudioBuffer) break;
-                  if(!running) return gotFrames;
+                  if(!m_running) return gotFrames;
                   Radiant::Sleep::sleepMs(10);
                 }
 
@@ -1342,7 +1343,7 @@ namespace VideoPlayer2
                   nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
                 }*/
 
-                decodedAudioBuffer->fillPlanar(Timestamp(dpts + loopOffset, seekGeneration),
+                decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_seekGeneration),
                                                av_get_channel_layout_nb_channels(output->audio->channel_layout),
                                                output->audio->nb_samples, (const float **)(output->data));
                 m_audioTransfer->putReadyBuffer(output->audio->nb_samples);
@@ -1353,16 +1354,16 @@ namespace VideoPlayer2
         } else {
           while(true) {
             decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
-                  av.decodedAudioBufferSamples - av.frame->nb_samples);
+                  m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
-            if(!running) return gotFrames;
+            if(!m_running) return gotFrames;
             Radiant::Sleep::sleepMs(10);
           }
 
-          decodedAudioBuffer->fill(Timestamp(dpts + loopOffset, seekGeneration),
-                                   av.audioCodecContext->channels, av.frame->nb_samples,
-                                   reinterpret_cast<const int16_t *>(av.frame->data[0]));
-          m_audioTransfer->putReadyBuffer(av.frame->nb_samples);
+          decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_seekGeneration),
+                                   m_av.audioCodecContext->channels, m_av.frame->nb_samples,
+                                   reinterpret_cast<const int16_t *>(m_av.frame->data[0]));
+          m_audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
         }
       } else {
         flush = false;
@@ -1440,10 +1441,10 @@ namespace VideoPlayer2
 
     assert(context->opaque);
     AVDecoderFFMPEG::D & d = *static_cast<AVDecoderFFMPEG::D*>(context->opaque);
-    DecodedImageBuffer * buffer = d.imageBuffers.get();
+    DecodedImageBuffer * buffer = d.m_imageBuffers.get();
     if(!buffer) {
       Radiant::error("AVDecoderFFMPEG::D::getBuffer # %s: not enough ImageBuffers",
-                     d.options.src.toUtf8().data());
+                     d.m_options.src.toUtf8().data());
       return -1;
     }
 
@@ -1524,7 +1525,7 @@ namespace VideoPlayer2
     DecodedImageBuffer & buffer = *static_cast<DecodedImageBuffer*>(frame->opaque);
     if(!buffer.refcount.deref()) {
       AVDecoderFFMPEG::D & d = *static_cast<AVDecoderFFMPEG::D *>(context->opaque);
-      d.imageBuffers.put(buffer);
+      d.m_imageBuffers.put(buffer);
     }
     frame->opaque = nullptr;
     memset(frame->data, 0, sizeof(frame->data));
@@ -1535,7 +1536,7 @@ namespace VideoPlayer2
     auto * param = static_cast<std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *> *>(filterBuffer->priv);
 
     if(!param->second->refcount.deref())
-      param->first->imageBuffers.put(*param->second);
+      param->first->m_imageBuffers.put(*param->second);
 
     av_free(filterBuffer);
     delete param;
@@ -1543,14 +1544,14 @@ namespace VideoPlayer2
 
   void AVDecoderFFMPEG::D::checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts)
   {
-    if((seekRequest.type != SeekNone)) {
+    if((m_seekRequest.type != SeekNone)) {
       if(seek()) {
-        loopOffset = 0;
+        m_loopOffset = 0;
         nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
         nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
         videoDpts = std::numeric_limits<double>::quiet_NaN();
       }
-      seekRequest.type = SeekNone;
+      m_seekRequest.type = SeekNone;
     }
   }
 
@@ -1565,10 +1566,10 @@ namespace VideoPlayer2
     /// @todo We might be forgetting something here, some buffers might leak?
     close();
     while(true) {
-      AVFilterBufferRef ** ref = m_d->consumedBufferRefs.readyItem();
+      AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
       if(!ref) break;
       avfilter_unref_buffer(*ref);
-      m_d->consumedBufferRefs.next();
+      m_d->m_consumedBufferRefs.next();
     }
     if(isRunning())
       waitEnd();
@@ -1578,50 +1579,50 @@ namespace VideoPlayer2
 
   AVDecoder::PlayMode AVDecoderFFMPEG::playMode() const
   {
-    return m_d->options.playMode;
+    return m_d->m_options.playMode;
   }
 
   void AVDecoderFFMPEG::setPlayMode(AVDecoder::PlayMode mode)
   {
-    if(m_d->options.playMode == mode)
+    if(m_d->m_options.playMode == mode)
       return;
 
-    m_d->options.playMode = mode;
+    m_d->m_options.playMode = mode;
     if(m_d->m_audioTransfer)
       m_d->m_audioTransfer->setPlayMode(mode);
     if(mode == Pause)
-      m_d->pauseTimestamp = Radiant::TimeStamp::currentTime();
+      m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     if(mode == Play)
-      m_d->radiantTimestampToPts -= m_d->pauseTimestamp.sinceSecondsD();
+      m_d->m_radiantTimestampToPts -= m_d->m_pauseTimestamp.sinceSecondsD();
   }
 
   Timestamp AVDecoderFFMPEG::getTimestampAt(const Radiant::TimeStamp & ts) const
   {
-    if(m_d->realTimeSeeking && m_d->av.videoCodec) {
-      VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
+    if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
+      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
       if(frame)
-        return Timestamp(frame->timestamp.pts + 0.0001, m_d->seekGeneration);
+        return Timestamp(frame->timestamp.pts + 0.0001, m_d->m_seekGeneration);
     }
 
     if(m_d->m_audioTransfer) {
       Timestamp t = m_d->m_audioTransfer->toPts(ts);
-      if(t.seekGeneration < m_d->seekGeneration)
+      if(t.seekGeneration < m_d->m_seekGeneration)
         return Timestamp();
       return t;
     }
 
-    if(Nimble::Math::isNAN(m_d->radiantTimestampToPts))
+    if(Nimble::Math::isNAN(m_d->m_radiantTimestampToPts))
       return Timestamp();
 
-    if(m_d->options.playMode == Pause)
-      return Timestamp(m_d->pauseTimestamp.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
+    if(m_d->m_options.playMode == Pause)
+      return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
 
-    return Timestamp(ts.secondsD() + m_d->radiantTimestampToPts, m_d->seekGeneration);
+    return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
   }
 
   Timestamp AVDecoderFFMPEG::latestDecodedTimestamp() const
   {
-    VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
+    VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
     if (frame) {
       return frame->timestamp;
     } else return Timestamp();
@@ -1631,7 +1632,7 @@ namespace VideoPlayer2
   {
     VideoFrameFFMPEG * ret = 0;
     for(int i = 0;; ++i) {
-      VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.readyItem(i);
+      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(i);
       if(!frame) break;
 
       if(frame->timestamp.seekGeneration < ts.seekGeneration)
@@ -1651,7 +1652,7 @@ namespace VideoPlayer2
   {
     int frameIndex = 0;
     for(;; ++frameIndex) {
-      VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.readyItem(frameIndex);
+      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(frameIndex);
       if(!frame) break;
 
       if(frame->timestamp.seekGeneration >= ts.seekGeneration &&
@@ -1663,30 +1664,30 @@ namespace VideoPlayer2
     --frameIndex;
 
     for(int i = 0; i < frameIndex; ++i) {
-      VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.readyItem();
+      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem();
       assert(frame);
 
       DecodedImageBuffer * buffer = frame->imageBuffer;
       if(buffer && !buffer->refcount.deref())
-        m_d->imageBuffers.put(*buffer);
+        m_d->m_imageBuffers.put(*buffer);
 
       if(frame->bufferRef) {
-        AVFilterBufferRef ** ref = m_d->consumedBufferRefs.takeFree();
+        AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.takeFree();
         if(ref) {
           *ref = frame->bufferRef;
-          m_d->consumedBufferRefs.put();
+          m_d->m_consumedBufferRefs.put();
         } else {
           Radiant::error("AVDecoderFFMPEG::releaseOldVideoFrames # consumedBufferRefs is full, leaking memory");
         }
         frame->bufferRef = nullptr;
       }
 
-      m_d->decodedVideoFrames.next();
+      m_d->m_decodedVideoFrames.next();
     }
 
     if(eof) {
-      *eof = m_d->finished && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
-          && m_d->decodedVideoFrames.itemCount() <= 1;
+      *eof = m_d->m_finished && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
+          && m_d->m_decodedVideoFrames.itemCount() <= 1;
     }
 
     return frameIndex;
@@ -1694,7 +1695,7 @@ namespace VideoPlayer2
 
   Nimble::Matrix4f AVDecoderFFMPEG::yuvMatrix() const
   {
-    if(!m_d->av.videoCodecContext)
+    if(!m_d->m_av.videoCodecContext)
       return Nimble::Matrix4f::IDENTITY;
     /// @todo why does everything look so wrong when using the correct colorspace?
     ///       for now we just force ITU-R BT601-6 (same as SMPTE170M)
@@ -1702,7 +1703,7 @@ namespace VideoPlayer2
     const int colorspace = SWS_CS_SMPTE170M;
     const int * coeffs = sws_getCoefficients(colorspace);
     int l = 16, h = 235;
-    if(m_d->av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
+    if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
       l = 0;
       h = 255;
     }
@@ -1747,55 +1748,55 @@ namespace VideoPlayer2
   void AVDecoderFFMPEG::load(const Options & options)
   {
     assert(!isRunning());
-    m_d->options = options;
+    m_d->m_options = options;
     m_d->updateSupportedPixFormats();
-    seek(m_d->options.seek);
+    seek(m_d->m_options.seek);
   }
 
   void AVDecoderFFMPEG::close()
   {
-    m_d->running = false;
+    m_d->m_running = false;
   }
 
   Nimble::Size AVDecoderFFMPEG::videoSize() const
   {
-    return m_d->av.videoSize;
+    return m_d->m_av.videoSize;
   }
 
   void AVDecoderFFMPEG::setLooping(bool doLoop)
   {
-    m_d->options.loop = doLoop;
+    m_d->m_options.loop = doLoop;
   }
 
   double AVDecoderFFMPEG::duration() const
   {
-    return m_d->av.duration;
+    return m_d->m_av.duration;
   }
 
   void AVDecoderFFMPEG::seek(const SeekRequest & req)
   {
-    m_d->seekRequest = req;
+    m_d->m_seekRequest = req;
   }
 
   void AVDecoderFFMPEG::setRealTimeSeeking(bool value)
   {
-    m_d->realTimeSeeking = value;
+    m_d->m_realTimeSeeking = value;
     if(m_d->m_audioTransfer)
       m_d->m_audioTransfer->setSeeking(value);
   }
 
   void AVDecoderFFMPEG::childLoop()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->options.src.toUtf8() + ":");
+    QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->m_options.src.toUtf8() + ":");
     QThread::currentThread()->setPriority(QThread::LowPriority);
 
-    QByteArray src = m_d->options.src.toUtf8();
+    QByteArray src = m_d->m_options.src.toUtf8();
     s_src = src.data();
 
     ffmpegInit();
 
     if(!m_d->open()) {
-      m_d->finished = true;
+      m_d->m_finished = true;
       eventSend("error");
       return;
     }
@@ -1811,28 +1812,28 @@ namespace VideoPlayer2
     double nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
     double videoDpts = std::numeric_limits<double>::quiet_NaN();
 
-    auto & av = m_d->av;
+    auto & av = m_d->m_av;
 
-    m_d->pauseTimestamp = Radiant::TimeStamp::currentTime();
+    m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
-    while(m_d->running) {
-      m_d->decodedVideoFrames.setSize(m_d->options.videoBufferFrames);
+    while(m_d->m_running) {
+      m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames);
 
       while(true) {
-        AVFilterBufferRef ** ref = m_d->consumedBufferRefs.readyItem();
+        AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
         if(!ref) break;
         avfilter_unref_buffer(*ref);
-        m_d->consumedBufferRefs.next();
+        m_d->m_consumedBufferRefs.next();
       }
 
       int err = 0;
 
-      if(!waitingFrame || !m_d->realTimeSeeking)
+      if(!waitingFrame || !m_d->m_realTimeSeeking)
         m_d->checkSeek(nextVideoDpts, videoDpts, nextAudioDpts);
 
-      if(m_d->running && m_d->realTimeSeeking && av.videoCodec) {
-        VideoFrameFFMPEG * frame = m_d->decodedVideoFrames.lastReadyItem();
-        if(frame && frame->timestamp.seekGeneration == m_d->seekGeneration) {
+      if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
+        VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
+        if(frame && frame->timestamp.seekGeneration == m_d->m_seekGeneration) {
           Radiant::Sleep::sleepMs(1);
           continue;
         }
@@ -1860,11 +1861,11 @@ namespace VideoPlayer2
 
       // We really are at the end of the stream and we have flushed all the packages
       if(eof == EofState::Eof) {
-        if(m_d->realTimeSeeking) {
+        if(m_d->m_realTimeSeeking) {
           Radiant::Sleep::sleepMs(1);
           continue;
         }
-        if(m_d->options.loop) {
+        if(m_d->m_options.loop) {
           m_d->seekToBeginning();
           eof = EofState::Normal;
 
@@ -1872,15 +1873,15 @@ namespace VideoPlayer2
             // might be NaN
             // no need to check because the comparision will just be false
             double newDuration = nextVideoDpts - av.start;
-            if(newDuration > m_d->av.duration) {
-              m_d->av.duration = newDuration;
+            if(newDuration > m_d->m_av.duration) {
+              m_d->m_av.duration = newDuration;
             }
             newDuration = nextAudioDpts - av.start;
-            if(newDuration > m_d->av.duration)
-              m_d->av.duration = newDuration;
+            if(newDuration > m_d->m_av.duration)
+              m_d->m_av.duration = newDuration;
           }
 
-          m_d->loopOffset += m_d->av.duration;
+          m_d->m_loopOffset += m_d->m_av.duration;
           continue;
         } else {
           // all done
@@ -1930,14 +1931,14 @@ namespace VideoPlayer2
           av.start = std::min(videoDpts, audioDpts);
       }
 
-      waitingFrame = m_d->realTimeSeeking && av.videoCodec && !gotFrames;
+      waitingFrame = m_d->m_realTimeSeeking && av.videoCodec && !gotFrames;
 
       // Free the packet that was allocated by av_read_frame
       av_free_packet(&av.packet);
     }
 
     eventSend("finished");
-    m_d->finished = true;
+    m_d->m_finished = true;
     s_src = nullptr;
   }
 
