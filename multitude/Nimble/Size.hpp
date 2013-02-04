@@ -19,6 +19,9 @@ namespace Nimble {
   public:
     /// Constructs a size with invalid width and height (i.e. isValid() returns false)
     SizeT();
+    /// Construct a size defined by a 2D vector
+    /// @param v vector whose components define the size
+    explicit SizeT(const Nimble::Vector2T<T> & v);
 
     /// Constructs a size with the given width and height
     /// @param width width to initialize the size to
@@ -175,6 +178,12 @@ namespace Nimble {
   SizeT<T>::SizeT(T width, T height)
     : m_width(width)
     , m_height(height)
+  {}
+
+  template<typename T>
+  SizeT<T>::SizeT(const Nimble::Vector2T<T> &v)
+    : m_width(v.x)
+    , m_height(v.y)
   {}
 
   template<typename T>
