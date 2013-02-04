@@ -99,7 +99,7 @@ namespace
     : cimage(std::move(t.cimage))
     , image(std::move(t.image))
     , texture(std::move(t.texture))
-    , loadingPriority(loadingPriority)
+    , loadingPriority(t.loadingPriority)
     , loader(std::move(t.loader))
     , lastUsed(t.lastUsed)
     , locked(t.locked)
