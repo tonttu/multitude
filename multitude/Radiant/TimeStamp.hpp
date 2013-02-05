@@ -223,7 +223,7 @@ namespace Radiant {
 
     /// @copydoc currentTime()
     /// @deprecated this function will be removed in Cornerstone 2.1. Use Radiant::TimeStamp::currentTime() instead.
-    MULTI_ATTR_DEPRECATED("Use TimeStamp::currentTime()", static TimeStamp getTime());
+    MULTI_ATTR_DEPRECATED("TimeStamp::getTime() is deprecated. Use TimeStamp::currentTime()", static TimeStamp getTime());
 
     /// Returns the current time value, by looking at the wall clock
     /// @return current time
