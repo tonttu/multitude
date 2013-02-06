@@ -53,6 +53,39 @@ exists("C:/Cornerstone-deps/libav/bin") {
   INSTALLS += win64_libav_headers2
 }
 
+exists("C:/Cornerstone-deps/node/bin") {
+  win64_node_dlls1.path = /bin
+  win64_node_dlls1.files = C:/Cornerstone-deps/node/bin/node.exe
+  win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/*.cmd
+  win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/*.dll
+  win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/node_modules
+
+  win64_node_dlls2.path = /src/multitude/Win64x/bin64
+  win64_node_dlls2.files = C:/Cornerstone-deps/node/bin/node.exe
+  win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/*.cmd
+  win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/*.dll
+  win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/node_modules
+
+  win64_node_libs1.path = /lib
+  win64_node_libs1.files = C:/Cornerstone-deps/node/lib/*lib
+
+  win64_node_libs2.path = /src/multitude/Win64x/lib64
+  win64_node_libs2.files = C:/Cornerstone-deps/node/lib/*lib
+
+  win64_node_headers1.path = /include
+  win64_node_headers1.files = C:/Cornerstone-deps/node/include/*
+
+  win64_node_headers2.path = /src/multitude/Win64x/include
+  win64_node_headers2.files = C:/Cornerstone-deps/node/include/*
+
+  INSTALLS += win64_node_dlls1
+  INSTALLS += win64_node_dlls2
+  INSTALLS += win64_node_libs1
+  INSTALLS += win64_node_libs2
+  INSTALLS += win64_node_headers1
+  INSTALLS += win64_node_headers2
+}
+
 INSTALLS += win64_runtime_dlls
 INSTALLS += win64_sdk_libs1
 INSTALLS += win64_sdk_libs2
