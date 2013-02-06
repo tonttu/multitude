@@ -149,7 +149,6 @@ win32 {
     INCLUDEPATH += $$PWD\\Win64x\\include
     INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
-    enable-js:INCLUDEPATH += $$PWD\\Win64x\\include\\v8
 
     DDK_PATH="C:\\WinDDK\\7600.16385.1"
 
@@ -176,6 +175,11 @@ win32 {
     exists("C:/Cornerstone-deps/libav/include") {
       INCLUDEPATH += "C:/Cornerstone-deps/libav/include"
       LIBS += -L"C:/Cornerstone-deps/libav/bin"
+      enable-js {
+        INCLUDEPATH += "C:/Cornerstone-deps/node/include"
+        LIBS += -L"C:/Cornerstone-deps/node/bin"
+        QMAKE_LIBDIR += "C:/Cornerstone-deps/node/lib"
+      }
     } else {
       error(Requires the Cornerstone dependency package to compile)
     }
