@@ -56,6 +56,7 @@ namespace Valuable {
         m_master(master),
         m_flags(flags)
     {
+      setSerializable(false);
     }
 
     virtual bool set(int v, Layer layer, ValueUnit) OVERRIDE
@@ -214,14 +215,35 @@ namespace Valuable {
 
     virtual QString asString(bool * const ok) const OVERRIDE
     {
-      /// @todo should serialize using flag names, not ints
-      return QString::number(asInt(ok));
+      /// @todo should remove duplicates, for example "motion-x, motion-y and motion-xy"
+      QStringList flags;
+      Flags v = value();
+      for (auto it = m_flags.begin(); it != m_flags.end(); ++it) {
+        if ((v & *it) == v)
+          flags << it.key();
+      }
+
+      if (ok)
+        *ok = true;
+      return flags.join(" ");
     }
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      /// @todo Should we serialize all layers?
-      *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8());
+      QString tmp = element.get();
+      bool ok = false;
+      int num = tmp.toInt(&ok);
+      if (ok) {
+        *this = Flags::fromInt(num);
+      } else {
+        Flags newValue;
+        for (auto str: tmp.split(QRegExp("\\s+"), QString::SkipEmptyParts)) {
+          auto it = m_flags.find(str.toUtf8().toLower());
+          if (it == m_flags.end()) return false;
+          newValue |= *it;
+        }
+        *this = newValue;
+      }
       return true;
     }
 
