@@ -90,7 +90,7 @@ namespace Radiant
 
     /// Convert the flags to integer
     /// @return flags as integer
-    S asInt() { return m_value; }
+    S asInt() const { return m_value; }
 
     /// Converts int to Flags. If you end up using this function,
     /// you better have a real good reason to do so.

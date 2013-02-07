@@ -165,7 +165,6 @@ namespace Nimble {
     /// @return True or false.
     inline bool randBool()
     {
-      // count bits in 13 bit random value
       return std::uniform_int_distribution<uint32_t>(0,1)(m_rand);
     }
 

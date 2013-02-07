@@ -26,6 +26,8 @@
 #include <QMap>
 #include <QByteArray>
 
+#include <bitset>
+
 namespace Valuable {
 
   /// This struct is used to define the name strings for flags so they can be
@@ -215,17 +217,36 @@ namespace Valuable {
 
     virtual QString asString(bool * const ok) const OVERRIDE
     {
-      /// @todo should remove duplicates, for example "motion-x, motion-y and motion-xy"
-      QStringList flags;
+      // All matching flags sorted by their popcount and their location in the
+      // original array to optimize the string representation.
+      // For example motion-x and motion-y will become motion-xy, since motion-xy
+      // has a higher popcount than motion-x / -y
+      std::multimap<int, std::pair<QByteArray, Flags> > flags;
+
       Flags v = value();
-      for (auto it = m_flags.begin(); it != m_flags.end(); ++it) {
-        if ((v & *it) == v)
-          flags << it.key();
+      int i = 0;
+      for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
+        if ((v & *it) == *it) {
+          std::bitset<sizeof(T)*8> bitset(it->asInt());
+          flags.insert(std::make_pair(i-1024*bitset.count(), std::make_pair(it.key(), *it)));
+        }
+      }
+
+      QStringList flagLst;
+      for (auto p: flags) {
+        Flags v2 = p.second.second;
+        if ((v2 & v) == v2) {
+          flagLst << p.second.first;
+          // these bits are now consumed by this flag, remove those from the value
+          v &= ~v2;
+          if (!v)
+            break;
+        }
       }
 
       if (ok)
         *ok = true;
-      return flags.join(" ");
+      return flagLst.join(" ");
     }
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
