@@ -415,10 +415,10 @@ namespace Luminous
   static Radiant::Mutex detector_mutex;
   bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
   {
-
     MULTI_ONCE {
-      Radiant::info("Multionce adlAvailable");
-      adlAvailable = initADL(); }
+      adlAvailable = initADL();
+    }
+
     if (!adlAvailable)
       return false;
 
@@ -435,6 +435,7 @@ namespace Luminous
 #endif
 
     ADL_Main_Control_Destroy();
+
     return success;
   }
 }

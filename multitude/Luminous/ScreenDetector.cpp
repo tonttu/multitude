@@ -15,30 +15,20 @@
 namespace Luminous
 {
 
-#ifdef RADIANT_LINUX
   void ScreenDetector::scan(bool /*forceRescan*/)
   {
     m_results.clear();
 
+#ifdef RADIANT_LINUX
     int screens = XScreenCount(QX11Info::display());
     for(int screen = 0; screen < screens; ++screen) {
       if(ScreenDetectorNV::detect(screen, m_results)) continue;
       if(ScreenDetectorAMD::detect(screen, m_results)) continue;
     }
-  }
 #elif RADIANT_WINDOWS
-  void ScreenDetector::scan(bool /*forceRescan*/)
-  {
-    m_results.clear();
-
     ScreenDetectorNV::detect(0, m_results);
     ScreenDetectorAMD::detect(0, m_results);
-  }
-#else
-  void ScreenDetector::scan(bool /*forceRescan*/)
-  {
-    m_results.clear();
-  }
 #endif
+  }
 
 }
