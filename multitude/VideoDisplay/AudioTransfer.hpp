@@ -54,6 +54,7 @@ namespace VideoDisplay
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time) OVERRIDE;
 
+    double resonantToPts() const;
     Timestamp toPts(const Radiant::TimeStamp & ts) const;
 
     Timestamp lastPts() const;

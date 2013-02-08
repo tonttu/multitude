@@ -275,6 +275,9 @@ namespace VideoDisplay
       , m_radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
       , m_loopOffset(0)
       , m_audioTransfer(nullptr)
+      , m_audioTrackHasEnded(false)
+      , m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN())
+      , m_lastDecodedVideoPts(std::numeric_limits<double>::quiet_NaN())
     {
       m_av.videoStreamIndex = -1;
       m_av.audioStreamIndex = -1;
@@ -312,12 +315,20 @@ namespace VideoDisplay
     FilterGraph m_videoFilter;
     FilterGraph m_audioFilter;
 
-    // only used when there is no audio
+    // only used when there is no audio or the audio track has ended
     double m_radiantTimestampToPts;
 
     double m_loopOffset;
 
     AudioTransfer * m_audioTransfer;
+
+    /// In some videos, the audio track might be shorter than the video track
+    /// We have some heuristic to determine when the audio track has actually ended,
+    /// we really can't rely on some header-information, we just detect when
+    /// there are not audio frames coming out from the av packets.
+    bool m_audioTrackHasEnded;
+    double m_lastDecodedAudioPts;
+    double m_lastDecodedVideoPts;
 
     /// From main thread to decoder thread, list of BufferRefs that should be
     /// released. Can't run that in the main thread without locking.
@@ -912,6 +923,9 @@ namespace VideoDisplay
           avcodec_flush_buffers(m_av.audioCodecContext);
         if(m_av.videoCodecContext)
           avcodec_flush_buffers(m_av.videoCodecContext);
+        m_audioTrackHasEnded = false;
+        m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
+        m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
       }
     } else {
       // If we want to loop, but there is no way to seek, we just close
@@ -1020,6 +1034,9 @@ namespace VideoDisplay
     m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
     if(m_options.playMode == Pause)
       m_pauseTimestamp = Radiant::TimeStamp::currentTime();
+    m_audioTrackHasEnded = false;
+    m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
+    m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
 
     return true;
   }
@@ -1614,7 +1631,7 @@ namespace VideoDisplay
         return Timestamp(frame->timestamp.pts + 0.0001, m_d->m_seekGeneration);
     }
 
-    if(m_d->m_audioTransfer) {
+    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded) {
       Timestamp t = m_d->m_audioTransfer->toPts(ts);
       if(t.seekGeneration < m_d->m_seekGeneration)
         return Timestamp();
@@ -1960,6 +1977,27 @@ namespace VideoDisplay
 
       if (gotFrames)
         m_d->m_ready = true;
+
+      if (m_d->m_audioTransfer) {
+        if (!Nimble::Math::isNAN(audioDpts))
+          m_d->m_lastDecodedAudioPts = audioDpts;
+        if (!Nimble::Math::isNAN(videoDpts))
+          m_d->m_lastDecodedVideoPts = videoDpts;
+        double delay = m_d->m_lastDecodedAudioPts - m_d->m_lastDecodedVideoPts;
+
+        // In case of NaN, this will become false
+        bool ended = m_d->m_audioTrackHasEnded;
+        if (delay < -0.1)
+          ended = true;
+        else if (delay > 0.1 && delay < 5.0)
+          ended = false;
+        if (m_d->m_audioTrackHasEnded != ended) {
+          m_d->m_audioTrackHasEnded = ended;
+          if (ended) {
+            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->resonantToPts();
+          }
+        }
+      }
     }
 
     m_d->m_ready = true;
