@@ -82,18 +82,6 @@ namespace Valuable
       /// Sets the value
       virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE;
 
-      virtual bool set(const Nimble::Vector2f &, Attribute::Layer = Attribute::USER,
-            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
-      { return false; }
-
-      virtual bool set(const Nimble::Vector3f &, Attribute::Layer = Attribute::USER,
-            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
-      { return false; }
-
-      virtual bool set(const Nimble::Vector4f &, Attribute::Layer = Attribute::USER,
-            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
-      { return false; }
-
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
@@ -117,19 +105,46 @@ namespace Valuable
       }
   };
 
+  template <template <typename Y> class VectorT, typename T>
+  class AttributeVectorT : public AttributeVector<VectorT<T> >
+  {
+    typedef VectorT<T> VectorType;
+    typedef AttributeVector<VectorType> Base;
+    enum { N = VectorType::Elements };
+
+  public:
+    using Base::operator =;
+    using Base::value;
+
+    AttributeVectorT() : Base() {}
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param v The value of this object
+    AttributeVectorT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
+      : Base(host, name, v, transit) {}
+
+    virtual bool set(const VectorT<float> & v, Attribute::Layer layer = Attribute::USER,
+                     QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
+    {
+      this->setValue(v.template cast<T>(), layer);
+      return true;
+    }
+
+    virtual ~AttributeVectorT() {}
+  };
+
   /// An integer Nimble::Vector2f value object
-  typedef AttributeVector<Nimble::Vector2i> AttributeVector2i;
+  typedef AttributeVectorT<Nimble::Vector2T, int> AttributeVector2i;
   /// An integer vector3 value object
-  typedef AttributeVector<Nimble::Vector3i> AttributeVector3i;
+  typedef AttributeVectorT<Nimble::Vector3T, int> AttributeVector3i;
   /// An integer vector4 value object
-  typedef AttributeVector<Nimble::Vector4i> AttributeVector4i;
+  typedef AttributeVectorT<Nimble::Vector4T, int> AttributeVector4i;
 
   /// A float Nimble::Vector2f value object
-  typedef AttributeVector<Nimble::Vector2f> AttributeVector2f;
+  typedef AttributeVectorT<Nimble::Vector2T, float> AttributeVector2f;
   /// A float vector3 value object
-  typedef AttributeVector<Nimble::Vector3f> AttributeVector3f;
+  typedef AttributeVectorT<Nimble::Vector3T, float> AttributeVector3f;
   /// A float vector4 value object
-  typedef AttributeVector<Nimble::Vector4f> AttributeVector4f;
+  typedef AttributeVectorT<Nimble::Vector4T, float> AttributeVector4f;
 
   template<class VectorType>
   QString AttributeVector<VectorType>::asString(bool * const ok) const {
