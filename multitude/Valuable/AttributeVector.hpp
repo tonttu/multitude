@@ -16,8 +16,9 @@
 #ifndef VALUABLE_VALUE_VECTOR_HPP
 #define VALUABLE_VALUE_VECTOR_HPP
 
-#include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include "Export.hpp"
+#include "AttributeObject.hpp"
+#include "StyleValue.hpp"
 
 #include <Nimble/Vector4.hpp>
 
@@ -79,11 +80,19 @@ namespace Valuable
       virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
       /// Sets the value
-      // In some cases this is a override function, but not always
-      /// @todo This should be fixed properly, but it's not important and just
-      ///       fills the compiler output with the same warning
-      virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::USER,
-                                    QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
+      virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE;
+
+      virtual bool set(const Nimble::Vector2f &, Attribute::Layer = Attribute::USER,
+            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
+      { return false; }
+
+      virtual bool set(const Nimble::Vector3f &, Attribute::Layer = Attribute::USER,
+            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
+      { return false; }
+
+      virtual bool set(const Nimble::Vector4f &, Attribute::Layer = Attribute::USER,
+            QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
+      { return false; }
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
@@ -130,10 +139,16 @@ namespace Valuable
   }
 
   template<class VectorType>
-  bool AttributeVector<VectorType>::set(const VectorType & v, Attribute::Layer layer,
-    QList<Attribute::ValueUnit>)
+  bool AttributeVector<VectorType>::set(const StyleValue & value, Attribute::Layer layer)
   {
-    this->setValue(v, layer);
+    if (value.size() != N || !value.uniform() || !value.isNumber())
+      return false;
+
+    VectorType vector;
+    for (int i = 0; i < N; ++i)
+      vector[i] = value.asFloat(i);
+
+    this->setValue(vector, layer);
     return true;
   }
 
