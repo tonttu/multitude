@@ -202,7 +202,10 @@ namespace {
     if (!checkADL("ADL_Adapter_XScreenInfo_Get", ADL_Adapter_XScreenInfo_Get(xscreens.data(), sizeof(XScreenInfo) * xscreens.size())))
       return false;
 
-    std::set<ADLDisplayID> uniqueDisplays;
+    std::set<int> uniqueDisplays;
+    //for some reason ADL returns duplicate adapters so we need to make sure we skip those
+    //we use AdapterInfo.strUDID which should be unique
+    std::set<QString> uniqueAdapters;
     bool ok = false;
     for(size_t adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
 
@@ -211,6 +214,11 @@ namespace {
 
       const AdapterInfo & currentAdapter = adapterInfo[adapterIdx];
 
+      QString adapterID(currentAdapter.strUDID);
+      if(uniqueAdapters.find(adapterID) != uniqueAdapters.end())                   // Already seen this adapter
+        continue;
+      uniqueAdapters.insert(adapterID);
+
       std::vector<ADLDisplayInfo> displayInfos;
       if (!getDisplayInfo(currentAdapter.iAdapterIndex, displayInfos))
         continue;
@@ -218,11 +226,11 @@ namespace {
       for(size_t displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
         const ADLDisplayInfo & currentDisplay = displayInfos[displayIdx];
 
-        if (uniqueDisplays.find(currentDisplay.displayID) != uniqueDisplays.end()                   // Already seen this display
+        if (uniqueDisplays.find(currentDisplay.displayID.iDisplayLogicalAdapterIndex) != uniqueDisplays.end()                   // Already seen this display
             ||(currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED ) == 0)  // Don't care about disconnected outputs
           continue;
 
-        uniqueDisplays.insert(currentDisplay.displayID);
+        uniqueDisplays.insert(currentDisplay.displayID.iDisplayLogicalAdapterIndex);
 
         Luminous::ScreenInfo screenInfo;
         screenInfo.setName(currentDisplay.strDisplayName);
