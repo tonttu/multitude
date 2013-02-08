@@ -67,7 +67,7 @@ namespace Valuable
       if (v.size() != 1)
         return false;
       Radiant::Color c;
-      if (c.set(v.values()[0].toByteArray())) {
+      if (c.set(v.stringify().toUtf8())) {
         this->setValue(c, layer);
         return true;
       }
