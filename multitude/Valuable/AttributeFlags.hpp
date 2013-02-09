@@ -221,7 +221,7 @@ namespace Valuable {
       // original array to optimize the string representation.
       // For example motion-x and motion-y will become motion-xy, since motion-xy
       // has a higher popcount than motion-x / -y
-      std::multimap<int, std::pair<QByteArray, Flags> > flags;
+      std::multimap<size_t, std::pair<QByteArray, Flags> > flags;
 
       Flags v = value();
       int i = 0;
