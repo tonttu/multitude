@@ -355,6 +355,7 @@ namespace Luminous {
       m_screennumber(this, "screennumber", 0),
       m_pixelSizeCm(0.1f)
   {
+      eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::Window::~Window()
