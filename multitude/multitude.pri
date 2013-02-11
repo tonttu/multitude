@@ -116,7 +116,7 @@ macx {
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-  QMAKE_CC = clang -std=c++11 -stdlib=libc++
+  QMAKE_CC = clang -stdlib=libc++
   QMAKE_LFLAGS += -stdlib=libc++
 
   QMAKE_CFLAGS_WARN_ON =
