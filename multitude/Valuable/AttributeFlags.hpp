@@ -221,14 +221,14 @@ namespace Valuable {
       // original array to optimize the string representation.
       // For example motion-x and motion-y will become motion-xy, since motion-xy
       // has a higher popcount than motion-x / -y
-      std::multimap<size_t, std::pair<QByteArray, Flags> > flags;
+      std::multimap<int, std::pair<QByteArray, Flags> > flags;
 
       Flags v = value();
       int i = 0;
       for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
         if ((v & *it) == *it) {
           std::bitset<sizeof(T)*8> bitset(it->asInt());
-          flags.insert(std::make_pair(i-1024*bitset.count(), std::make_pair(it.key(), *it)));
+          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), *it)));
         }
       }
 
@@ -236,7 +236,13 @@ namespace Valuable {
       for (auto p: flags) {
         Flags v2 = p.second.second;
         if ((v2 & v) == v2) {
-          flagLst << p.second.first;
+          // If we have bits on that aren't actual enums (or the string version
+          // is missing), v might still have some bits enabled, but v2 might be
+          // an enum with a value of zero. Skip this case, since otherwise we
+          // might have something like "lock-depth flags-none" that makes no
+          // sense.
+          if (v2 || flagLst.isEmpty())
+            flagLst << p.second.first;
           // these bits are now consumed by this flag, remove those from the value
           v &= ~v2;
           if (!v)
