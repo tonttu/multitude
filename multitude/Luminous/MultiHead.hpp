@@ -60,10 +60,9 @@ namespace Luminous {
 
     class Window;
 
-    /** One OpenGL area
-    Areas are roughly equivalent to OpenGL viewports. Multiple
-    areas can share the same OpenGL context, as one window can
-    have may areas inside it.*/
+    /// An OpenGL area. Areas are roughly equivalent to OpenGL viewports.
+    /// Multiple areas can share the same OpenGL context, as one window can
+    /// have may areas inside it.
     /// @todo rename to ViewPort?
     class LUMINOUS_API Area : public Valuable::Node, public Collectable
     {
@@ -82,171 +81,131 @@ namespace Luminous {
       /// @param w width
       /// @param h height
       /// @param copyToGraphics if true, the settings are copied to graphics coordinates
-      void setGeometry(int x, int y, int w, int h, bool copyToGraphics = true)
-      {
-        m_location = Nimble::Vector2i(x, y);
-        m_size = Nimble::Vector2i(w, h);
-
-        if(copyToGraphics) {
-          setGraphicsGeometry(x, y, w, h);
-          updateBBox();
-        }
-      }
+      void setGeometry(int x, int y, int w, int h, bool copyToGraphics = true);
 
       /// Sets the size of the area
-      void setSize(Vector2i size)
-      {
-        m_size = size;
-      }
+      /// @param size area size in pixels
+      void setSize(Vector2i size);
 
       /// Sets the graphics geometry of the area
-      void setGraphicsGeometry(int x, int y, int w, int h)
-      {
-        m_graphicsLocation = Nimble::Vector2f(x, y);
-        m_graphicsSize = Nimble::Vector2f(w, h);
-        updateBBox();
-      }
+      /// @param x x coordinate of the graphics area
+      /// @param y y coordinate of the graphics area
+      /// @param w width of the graphics area
+      /// @param h height of the graphics area
+      void setGraphicsGeometry(int x, int y, int w, int h);
 
-      /// Sets the seams for the area
-      void setSeams(float left, float right, float bottom, float top)
-      {
-        m_seams = Nimble::Vector4f(left, right, bottom, top);
-        updateBBox();
-      }
+      /// Sets the seams for the area. Seams are used by projector setups to
+      /// define areas (seams) that are edge-blended together.
+      void setSeams(float left, float right, float bottom, float top);
 
       /// Returns the width of the largest seam
-      float maxSeam() { return m_seams.asVector().maximum(); }
+      float maxSeam() const;
 
-      /// Applies an orthogonal projection to OpenGL defined by the graphics geometry of the area
-      //void applyViewportAndViewTransform(Luminous::RenderContext &) const;
       /// Blends the edges defined by seams
       void cleanEdges() const;
 
-      /// Returns the keystone correction
+      /// Returns the keystone correction object
       /// @return keystone correction
-      GLKeyStone & keyStone() { return m_keyStone; }
+      GLKeyStone & keyStone();
       /// @copydoc keyStone
-      const GLKeyStone & keyStone() const { return m_keyStone; }
+      const GLKeyStone & keyStone() const;
 
-      /// The pixel location of the area on the window
-      const Vector2i & location() const { return m_location.asVector(); }
-      /// The coordinate of the pixel location
-      int x() const { return m_location[0]; }
-      /// The coordinate of the pixel location
-      int y() const { return m_location[1]; }
-      /// The pixel size of the area on the window
-      const Vector2i & size() const { return m_size.asVector(); }
-      /// The width of the area in the window
-      int width() const { return m_size[0]; }
-      /// The width of the area in the window
-      int height() const { return m_size[1]; }
+      /// Location of the area origin in pixels in window coordinates
+      const Vector2i & location() const;
+      /// Size of the area inside the window in pixels
+      const Vector2i & size() const;
 
-      /// The offset of the graphics inside the area (virtual pixels)
-      const Nimble::Vector2f graphicsLocation(bool withseams = true) const
-      {
-        return withseams ?
-            m_graphicsLocation.asVector() - Nimble::Vector2f(m_seams[0], m_seams[3]) :
-            m_graphicsLocation.asVector();
-      }
+      /// Origin of the graphics coordinates in the area
+      const Nimble::Vector2f graphicsLocation(bool withseams = true) const;
+
       /// The size of the graphics inside this area (virtual pixels)
-      const Nimble::Vector2f graphicsSize(bool withseams = true) const
-      {
-        return withseams ?
-            m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],
-                                                         m_seams[2] + m_seams[3]) :
-            m_graphicsSize.asVector();
-      }
+      const Nimble::Vector2f graphicsSize(bool withseams = true) const;
 
-      /** The bounds of the graphics.
+      /// The bounds of the graphics. In principle this method only combines
+      /// the information you get with graphicsLocation() and graphicsSize().
+      /// In practice however that information is not exactly correct as the
+      /// bounds also need to include the small extra areas, if edge-blending
+      /// is used.
+      /// @return graphics bounds rectangle
+      const Rect & graphicsBounds() const;
 
-          In principle this method only combines the information you get with
-          graphicsLocation() and graphicsSize(). In practice however that
-          information is not exactly correct as the bounds also need to include
-          the small extra areas, if edge-blending is used.
-          @return graphics bounds rectangle*/
-      const Rect & graphicsBounds() const
-      { return m_graphicsBounds; }
-
-      /** Converts a screen-space coordinate to image-space coordinate.
-          @param loc The location vector to convert.
-          @param windowheight height of the window
-          @param insideArea set to true if the location is inside this
-      area. Otherwise convOk is set to
-          false.
-          @return The vector in graphics coordinates.
-      */
+      /// Convert window coordinates to graphics coordinates.
+      /// @param loc location in window coordinates
+      /// @param windowheight height of the window
+      /// @param[out] insideArea set to true if the location is inside this
+      /// area; otherwise false
+      /// @return vector in graphics coordinates.
       Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
+      /// Convert graphics coordinates to window coordinates
+      /// @param loc location in graphics coordinates
+      /// @param windowheight height of the window
+      /// @param[out] insideArea set to true if the location is inside this
+      /// area; otherwise false
+      /// @return vector in graphics coordinates.
       Nimble::Vector2f graphicsToWindow(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
-      /// Returns true if the area is active (graphics will be drawn to it)
-      bool active() const { return m_active; }
+      void setActive(bool isActive);
+      /// Is the area active (i.e. is it rendered)
+      bool active() const;
 
       /// Sets the width of a single pixel in centimeters
-      void setPixelSizeCm(float sizeCm) { m_pixelSizeCm = sizeCm; }
-      /// Returns the width of a single pixel in centimeters
-      float pixelSizeCm() const { return m_pixelSizeCm; }
+      /// @param sizeCm pixel size in centimeters
+      void setPixelSizeCm(float sizeCm);
+      /// Get the pixel size in centimeters
+      /// @return pixel size in centimeters
+      float pixelSizeCm() const;
       /// Converts centimeters to pixels
-      float cmToPixels(float cm) { return cm / m_pixelSizeCm; }
+      /// @param cm length in centimeters to convert
+      /// @return number of pixels
+      float cmToPixels(float cm);
 
       /// Get the view transformation (projection) matrix defined by the area
       /// @return view transformation defined by the area
       Nimble::Matrix4 viewTransform() const;
 
       /// Swaps the width and height of the graphics size
-      void swapGraphicsWidthHeight()
-      {
-        m_graphicsSize = m_graphicsSize.asVector().shuffle();
-        updateBBox();
-      }
+      void swapGraphicsWidthHeight();
 
       /// Returns a pointer to the window that holds this area
-      const Window * window() const { return m_window; }
+      const Window * window() const;
 
-      RGBCube & rgbCube()
-      {
-        return m_rgbCube;
-      }
+      /// Get the 3D color-correction RGB cube associated with this area. The
+      /// 3D color-correction is used by Cornerstone.
+      /// @return 3D color-correction
+      RGBCube & rgbCube();
+      /// @copydoc rgbCube
+      const RGBCube & rgbCube() const;
 
-      const RGBCube & rgbCube() const
-      {
-        return m_rgbCube;
-      }
+      /// Get the 2D color-correction associated with this area. The 2D
+      /// color-correction is used by the hardware on the cells.
+      /// @return 2D color-correction
+      ColorCorrection & colorCorrection();
+      /// @copydoc colorCorrection
+      const ColorCorrection & colorCorrection() const;
 
-      ColorCorrection & colorCorrection()
-      {
-        return m_colorCorrection;
-      }
-
-      const ColorCorrection & colorCorrection() const
-      {
-        return m_colorCorrection;
-      }
-
-      /// Checks if software color correction is in use
-      /// @return true if software correction is used, false if color correction
-      /// is done by hardware or disabled
+      /// Checks if software color correction is in use. This function returns
+      /// true if 3D RGB cube color-correction is used, false if the 2D
+      /// color-correction is used or the 3D color-correction is disabled.
+      /// @return true if 3D color-correction is used; otherwise false
       bool isSoftwareColorCorrection() const;
 
       /// Get the viewport defined by the area in window coordinates.
       /// @return the viewport defined by the area
-      Nimble::Recti viewport() const
-      {
-        return Nimble::Recti(m_location[0], m_location[1], m_location[0]+m_size[0], m_location[1]+m_size[1]);
-      }
+      Nimble::Recti viewport() const;
 
       QByteArray type() const OVERRIDE { return "area"; }
 
-      bool readElement(const Valuable::ArchiveElement & element);
+      bool readElement(const Valuable::ArchiveElement & element) OVERRIDE;
 
-      enum {
-        /* Render to the screen, using straight coordinates. Then
-       read-back and re-render, with skewed coordinates. */
+      /// How the area is rendered to the framebuffer
+      enum RenderMethod {
+        /// Render to framebuffer, the read-back to texture, then re-render applying keystone-correction.
         METHOD_TEXTURE_READBACK,
-        /* Render directly with skewed coordinates. Nice for
-       performance, but a bit tricky for ripple effects etc. */
+        /// Render to framebuffer using keystone-correction
         METHOD_MATRIX_TRICK
       };
+
     private:
 
       void updateBBox();

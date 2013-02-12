@@ -32,22 +32,26 @@
 
 #include <functional>
 
-static const char* fs_shader =
-"#version 120\n"
-"uniform sampler2D tex;\n"
-"uniform sampler1D lut;\n"
-"const float off = 0*0.5*(1.0/256.0);"
-"void main() {\n"
-"vec2 uv = gl_TexCoord[0].st;\n"
-"vec3 color = texture2D(tex, uv).rgb;\n"
-"float r = texture1D(lut, color.r+off).r;\n"
-"float g = texture1D(lut, color.g+off).g;\n"
-"float b = texture1D(lut, color.b+off).b;\n"
-//" r = color.r; g = color.g; b = color.b;\n"
-"gl_FragColor = vec4(r, g, b, 1);\n"
-"}";
+namespace
+{
+  static const char* s_colorCorrectionShader =
+      "#version 120\n"
+      "uniform sampler2D tex;\n"
+      "uniform sampler1D lut;\n"
+      "const float off = 0*0.5*(1.0/256.0);"
+      "void main() {\n"
+      "vec2 uv = gl_TexCoord[0].st;\n"
+      "vec3 color = texture2D(tex, uv).rgb;\n"
+      "float r = texture1D(lut, color.r+off).r;\n"
+      "float g = texture1D(lut, color.g+off).g;\n"
+      "float b = texture1D(lut, color.b+off).b;\n"
+      //" r = color.r; g = color.g; b = color.b;\n"
+      "gl_FragColor = vec4(r, g, b, 1);\n"
+      "}";
+}
 
-namespace Luminous {
+namespace Luminous
+{
 
   MultiHead::Area::Area(Window * window)
       : Node(0, "Area"),
@@ -67,13 +71,74 @@ namespace Luminous {
       m_rgbCube(this, "rgbcube")
   {
     m_colorCorrectionShader = new Luminous::Shader();
-    m_colorCorrectionShader->setFragmentShader(fs_shader);
+    m_colorCorrectionShader->setFragmentShader(s_colorCorrectionShader);
+
     eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::Area::~Area()
   {
     delete m_colorCorrectionShader;
+  }
+
+  void MultiHead::Area::setGeometry(int x, int y, int w, int h, bool copyToGraphics)
+  {
+    m_location = Nimble::Vector2i(x, y);
+    m_size = Nimble::Vector2i(w, h);
+
+    if(copyToGraphics) {
+      setGraphicsGeometry(x, y, w, h);
+      updateBBox();
+    }
+  }
+
+  void MultiHead::Area::setSize(Vector2i size)
+  {
+    m_size = size;
+  }
+
+  const Vector2i & MultiHead::Area::size() const
+  {
+    return m_size.asVector();
+  }
+
+  const Nimble::Vector2f MultiHead::Area::graphicsLocation(bool withseams) const
+  {
+    return withseams ?
+        m_graphicsLocation.asVector() - Nimble::Vector2f(m_seams[0], m_seams[3]) :
+        m_graphicsLocation.asVector();
+  }
+
+  const Nimble::Vector2f MultiHead::Area::graphicsSize(bool withseams) const
+  {
+    return withseams ?
+        m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],
+                                                     m_seams[2] + m_seams[3]) :
+        m_graphicsSize.asVector();
+  }
+
+  const Rect & MultiHead::Area::graphicsBounds() const
+  {
+    return m_graphicsBounds;
+  }
+
+
+  void MultiHead::Area::setGraphicsGeometry(int x, int y, int w, int h)
+  {
+    m_graphicsLocation = Nimble::Vector2f(x, y);
+    m_graphicsSize = Nimble::Vector2f(w, h);
+    updateBBox();
+  }
+
+  void MultiHead::Area::setSeams(float left, float right, float bottom, float top)
+  {
+    m_seams = Nimble::Vector4f(left, right, bottom, top);
+    updateBBox();
+  }
+
+  float MultiHead::Area::maxSeam() const
+  {
+    return m_seams.asVector().maximum();
   }
 
   bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
@@ -243,6 +308,22 @@ namespace Luminous {
 #endif
   }
 
+  GLKeyStone & MultiHead::Area::keyStone()
+  {
+    return m_keyStone;
+  }
+
+  const GLKeyStone & MultiHead::Area::keyStone() const
+  {
+    return m_keyStone;
+  }
+
+  const Vector2i & MultiHead::Area::location() const
+  {
+    return m_location.asVector();
+  }
+
+
   Nimble::Vector2f MultiHead::Area::windowToGraphics
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const
   {
@@ -296,6 +377,31 @@ namespace Luminous {
     return loc;
   }
 
+  void MultiHead::Area::setActive(bool isActive)
+  {
+    m_active = isActive;
+  }
+
+  bool MultiHead::Area::active() const
+  {
+    return m_active;
+  }
+
+  void MultiHead::Area::setPixelSizeCm(float sizeCm)
+  {
+    m_pixelSizeCm = sizeCm;
+  }
+
+  float MultiHead::Area::pixelSizeCm() const
+  {
+    return m_pixelSizeCm;
+  }
+
+  float MultiHead::Area::cmToPixels(float cm)
+  {
+    return cm / m_pixelSizeCm;
+  }
+
   Nimble::Matrix4 MultiHead::Area::viewTransform() const
   {
     Nimble::Rect b = graphicsBounds();
@@ -320,6 +426,17 @@ namespace Luminous {
     }
   }
 
+  void MultiHead::Area::swapGraphicsWidthHeight()
+  {
+    m_graphicsSize = m_graphicsSize.asVector().shuffle();
+    updateBBox();
+  }
+
+  const MultiHead::Window * MultiHead::Area::window() const
+  {
+    return m_window;
+  }
+
   bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
   {
     Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", element.name().toUtf8().data());
@@ -336,6 +453,31 @@ namespace Luminous {
     m_graphicsBounds.low().y  -= m_seams[3];
     m_graphicsBounds.high().y += m_seams[2];
     eventSend("graphics-bounds-changed");
+  }
+
+  RGBCube & MultiHead::Area::rgbCube()
+  {
+    return m_rgbCube;
+  }
+
+  const RGBCube & MultiHead::Area::rgbCube() const
+  {
+    return m_rgbCube;
+  }
+
+  ColorCorrection & MultiHead::Area::colorCorrection()
+  {
+    return m_colorCorrection;
+  }
+
+  const ColorCorrection & MultiHead::Area::colorCorrection() const
+  {
+    return m_colorCorrection;
+  }
+
+  Nimble::Recti MultiHead::Area::viewport() const
+  {
+    return Nimble::Recti(m_location[0], m_location[1], m_location[0]+m_size[0], m_location[1]+m_size[1]);
   }
 
 
