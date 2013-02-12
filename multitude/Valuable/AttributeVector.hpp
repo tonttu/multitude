@@ -105,6 +105,8 @@ namespace Valuable
       }
   };
 
+  /// This class is a utility class that provides a setter for vector
+  /// attributes
   template <template <typename Y> class VectorT, typename T>
   class AttributeVectorT : public AttributeVector<VectorT<T> >
   {
