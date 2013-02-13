@@ -28,7 +28,7 @@ namespace Valuable
 {
 
   /// Value struct helps finding the correct Attribute for any type T.
-  /// For example Value<int>::Type == AttributeInt
+  /// For example AttributeFor<int>::Type == AttributeInt
   template <typename T> struct AttributeFor
   {
     /// The actual Attribute type
@@ -36,13 +36,16 @@ namespace Valuable
   };
 
   /// @cond
+
   DefineTypeT(int, AttributeIntT);
   DefineTypeT(float, AttributeFloatT);
   /// @todo do these correctly, that is, with some more generic thing
   DefineType(Nimble::Vector2f, AttributeVector2f);
   DefineType(Nimble::Vector3f, AttributeVector3f);
   DefineType(Nimble::Vector4f, AttributeVector4f);
-  DefineType(Nimble::SizeF, AttributeSize);
+  DefineType(Nimble::SizeF, AttributeSizeF);
+  DefineType(Nimble::Size, AttributeSize);
+
   /// @endcond
 
   // Value<int> or Value<Vector4> are just better ways to say Numeric<int> or Vector<Vector4>.

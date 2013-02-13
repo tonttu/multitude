@@ -2,6 +2,7 @@
 #define VALUABLE_ATTRIBUTESIZE_HPP
 
 #include "AttributeFloat.hpp"
+#include "AttributeInt.hpp"
 
 #include <Nimble/Size.hpp>
 
@@ -11,33 +12,41 @@
 
 namespace Valuable {
 
-  /// This class defines an attribute that stores a floating-point precision size.
-  class AttributeSize : public Valuable::Attribute
+  /// This class defines an attribute that stores a Nimble::Size(F) object.
+  template<typename ElementType, class SizeClass, class ElementAttribute>
+  class AttributeSizeT : public Valuable::Attribute
   {
   public:
-    AttributeSize(Node * host, const QByteArray & name, const Nimble::SizeF & size = Nimble::SizeF(), bool transit = false)
+    /// Constructor
+    /// @param host host node
+    /// @param name name of the size attribute
+    /// @param widthName name for attribute alias to width of the size
+    /// @param heightName name for attribute alias to height of the size
+    /// @param size initial value
+    /// @param transit (ignored)
+    AttributeSizeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const SizeClass & size = SizeClass(), bool transit = false)
       : Attribute(host, name, transit)
       , m_inChangeTransaction(false)
       , m_emitChangedAfterTransaction(false)
     {
-      m_values[0] = new AttributeFloat(host, "width", size.width(), transit);
-      m_values[1] = new AttributeFloat(host, "height", size.height(), transit);
+      m_values[0] = new ElementAttribute(host, widthName, size.width(), transit);
+      m_values[1] = new ElementAttribute(host, heightName, size.height(), transit);
 
 #ifndef CLANG_XML
       for(int i = 0; i < 2; ++i) {
-        m_values[i]->addListener(std::bind(&AttributeSize::valuesChanged, this));
+        m_values[i]->addListener(std::bind(&AttributeSizeT::valuesChanged, this));
         m_values[i]->setSerializable(false);
       }
 #endif
     }
 
-    ~AttributeSize()
+    ~AttributeSizeT()
     {
       for(int i = 0; i < 2; ++i)
         delete m_values[i];
     }
 
-    bool setWidth(float w, Layer layer = USER, ValueUnit unit = VU_PXS)
+    bool setWidth(ElementType w, Layer layer = USER, ValueUnit unit = VU_PXS)
     {
       beginChangeTransaction();
       m_values[0]->set(w, layer, unit);
@@ -46,7 +55,7 @@ namespace Valuable {
       return true;
     }
 
-    bool setHeight(float h, Layer layer = USER, ValueUnit unit = VU_PXS)
+    bool setHeight(ElementType h, Layer layer = USER, ValueUnit unit = VU_PXS)
     {
       beginChangeTransaction();
       m_values[1]->set(h, layer, unit);
@@ -67,7 +76,7 @@ namespace Valuable {
 
       if(lst.size() == 2) {
 
-        Nimble::Vector2f size;
+        Nimble::Vector2T<ElementType> size;
 
         for(int i = 0; i < 2; ++i) {
           bool ok = false;
@@ -83,7 +92,7 @@ namespace Valuable {
       return false;
     }
 
-    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
+    virtual bool set(ElementType v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       beginChangeTransaction();
 
@@ -101,7 +110,7 @@ namespace Valuable {
       beginChangeTransaction();
 
       for(int i = 0; i < 2; ++i)
-        m_values[i]->set(v[i], layer, i >= units.size() ? VU_UNKNOWN : units[i]);
+        m_values[i]->set(static_cast<ElementType>(v[i]), layer, i >= units.size() ? VU_UNKNOWN : units[i]);
 
       endChangeTransaction();
 
@@ -136,7 +145,7 @@ namespace Valuable {
       endChangeTransaction();
     }
 
-    void setSrc(Nimble::Vector2f src)
+    void setSrc(Nimble::Vector2T<ElementType> src)
     {
       beginChangeTransaction();
 
@@ -146,10 +155,10 @@ namespace Valuable {
       endChangeTransaction();
     }
 
-    const Nimble::SizeF operator * () const { return value(); }
-    operator const Nimble::SizeF () const { return value(); }
+    const SizeClass operator * () const { return value(); }
+    operator const SizeClass () const { return value(); }
 
-    AttributeSize & operator=(const AttributeSize & size)
+    AttributeSizeT & operator=(const AttributeSizeT & size)
     {
       beginChangeTransaction();
 
@@ -161,7 +170,7 @@ namespace Valuable {
       return *this;
     }
 
-    AttributeSize & operator=(Nimble::Vector2f vec)
+    AttributeSizeT & operator=(Nimble::Vector2T<ElementType> vec)
     {
       beginChangeTransaction();
 
@@ -173,7 +182,7 @@ namespace Valuable {
       return *this;
     }
 
-    AttributeSize & operator=(const Nimble::SizeF & size)
+    AttributeSizeT & operator=(const SizeClass & size)
     {
       beginChangeTransaction();
 
@@ -185,9 +194,9 @@ namespace Valuable {
       return *this;
     }
 
-    Nimble::SizeF value() const
+    SizeClass value() const
     {
-      return Nimble::SizeF(*m_values[0], *m_values[1]);
+      return SizeClass(*m_values[0], *m_values[1]);
     }
 
   private:
@@ -217,11 +226,14 @@ namespace Valuable {
       }
     }
 
-    std::array<AttributeFloat*, 2> m_values;
+    std::array<ElementAttribute*, 2> m_values;
 
     bool m_inChangeTransaction;
     bool m_emitChangedAfterTransaction;
   };
+
+  typedef AttributeSizeT<float, Nimble::SizeF, AttributeFloat> AttributeSizeF;
+  typedef AttributeSizeT<int, Nimble::Size, AttributeInt> AttributeSize;
 
 } // namespace Valuable
 
