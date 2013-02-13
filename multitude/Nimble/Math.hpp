@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <cstdlib>
 
 namespace Nimble {
 
