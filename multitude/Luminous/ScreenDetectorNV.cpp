@@ -374,14 +374,14 @@ namespace
         for (NvU32 j = 0; j < gpuCount; ++j) {
           if (displayGpu[i] == gpu[j]) {
             if (!gpuInfo.isEmpty()) gpuInfo += ",";
-            gpuInfo += QString("GPU-%1").arg(i);
+            gpuInfo += QString("GPU-%1").arg(j);
             break;
           }
         }
       }
 
       // Note: display is physically attached to the first GPU
-      NvPhysicalGpuHandle gpuHandle = gpu[0];
+      NvPhysicalGpuHandle gpuHandle = displayGpu[0];
       NvAPI_ShortString gpuName;
       /// @todo errorcheck
       NvAPI_GPU_GetFullName(gpuHandle, gpuName);
@@ -427,7 +427,7 @@ namespace
         rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
         rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
         info.setGeometry(rect);
-
+        info.setNumId(results.size()+1);
         results.push_back(info);
     }
 
