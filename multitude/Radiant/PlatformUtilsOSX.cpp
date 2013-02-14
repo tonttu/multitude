@@ -109,6 +109,11 @@ namespace Radiant
 
     }
 
+    QString getLibraryPath(const QString& libraryName)
+    {
+      return QString();
+    }
+
   }
 
 }

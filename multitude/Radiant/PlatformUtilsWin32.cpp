@@ -157,6 +157,11 @@ namespace Radiant
       return pmc.WorkingSetSize;
     }
 
+    QString getLibraryPath(const QString& libraryName)
+    {
+      return QString();
+    }
+
   }
 
 }
