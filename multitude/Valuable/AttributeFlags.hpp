@@ -174,8 +174,8 @@ namespace Valuable {
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
     AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, USER); return *this; }
-    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, USER); return *this; }
-    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, USER); return *this; }
+    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() | b, USER); return *this; }
+    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() ^ b, USER); return *this; }
 
     operator Flags() const { return m_cache; }
 
