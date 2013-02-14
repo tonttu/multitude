@@ -341,9 +341,15 @@ namespace {
       for ( int displayTargetIdx = 0; displayTargetIdx < displayTargets.size(); ++displayTargetIdx )
       {
         std::vector<ADLMode> targetMode;
-        if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex, displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex, targetMode))
+        int disp_id =
+            displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex;
+        if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex,
+                                  disp_id,
+                                  targetMode) ||
+            targetMode.size()==0)
           continue;
 
+        screeninfo.setNumId(disp_id);
         // Search the 'normal' modes
         std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(), slsModes.end(), targetMode[0]);
         std::vector<ADLBezelTransientMode>::const_iterator bezelIter;
