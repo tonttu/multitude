@@ -123,7 +123,6 @@ namespace Radiant
       auto pid = QCoreApplication::applicationPid();
 
       QTemporaryFile file;
-      file.setAutoRemove(false);
       if(!file.open()) {
         Radiant::error("getLibraryPath # failed to create temporary file '%s'", file.fileName().toUtf8().data());
         return QString();
