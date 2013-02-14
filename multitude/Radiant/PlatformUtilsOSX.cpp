@@ -22,6 +22,9 @@
 # include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include <QCoreApplication>
+#include <QTemporaryFile>
+
 namespace Radiant
 {
 
@@ -111,7 +114,19 @@ namespace Radiant
 
     QString getLibraryPath(const QString& libraryName)
     {
-      return QString();
+      auto pid = QCoreApplication::applicationPid();
+
+      QTemporaryFile file;
+      if(!file.open()) {
+        Radiant::error("getLibraryPath # failed to create temporary file '%s'", file.fileName().toUtf8().data());
+        return QString();
+      }
+
+      const QString cmd = QString("vmmap %2 | grep %1 | awk '{print $7}' | head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
+
+      system(cmd.toUtf8().data());
+
+      return file.readAll().trimmed();
     }
 
   }
