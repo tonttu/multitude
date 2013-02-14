@@ -95,6 +95,26 @@ linux-*{
     message(Enabling document generator)
     DEFINES += MULTI_DOCUMENTER=1
   }
+
+  defineTest(checkCompiler) {
+    COMPILER_OUTPUT=$$system($$1 -dumpversion 2>/dev/null)
+    COMPILER_V1 = $$section(COMPILER_OUTPUT, ".", 0, 0)
+    COMPILER_V2 = $$section(COMPILER_OUTPUT, ".", 1, 1)
+    greaterThan(COMPILER_V1, 4): return(true)
+    greaterThan(COMPILER_V1, 3): greaterThan(COMPILER_V2, 5): return(true)
+    return(false)
+  }
+  !checkCompiler($$QMAKE_CXX) {
+    checkCompiler(g++-4.6): QMAKE_CXX=g++-4.6
+    else:checkCompiler(g++-4.7): QMAKE_CXX=g++-4.7
+    else:checkCompiler(g++-4.8): QMAKE_CXX=g++-4.8
+  }
+  !checkCompiler($$QMAKE_CC) {
+    checkCompiler(gcc-4.6): QMAKE_CC=gcc-4.6
+    else:checkCompiler(gcc-4.7): QMAKE_CC=gcc-4.7
+    else:checkCompiler(gcc-4.8): QMAKE_CC=gcc-4.8
+  }
+  !checkCompiler($$QMAKE_LINK): QMAKE_LINK=$$QMAKE_CXX
 }
 
 contains(MEMCHECK,yes) {
@@ -186,8 +206,7 @@ win32 {
 
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
-      # TODO There shouldn't be a glew_d library
-      LIB_OPENGL = -lglew_d -lglu32 -lopengl32
+      LIB_OPENGL = -lglew -lglu32 -lopengl32
       LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_STYLISH = -lStylish$${CORNERSTONE_LIB_SUFFIX}_d
       LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
