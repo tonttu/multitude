@@ -223,11 +223,6 @@ namespace VideoDisplay
     }
   }
 
-  double AudioTransfer::resonantToPts() const
-  {
-    return m_d->m_resonantToPts;
-  }
-
   Timestamp AudioTransfer::toPts(const Radiant::TimeStamp & ts) const
   {
     const Timestamp newts(ts.secondsD() + m_d->m_resonantToPts, m_d->m_usedSeekGeneration);

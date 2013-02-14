@@ -276,6 +276,7 @@ namespace VideoDisplay
       , m_loopOffset(0)
       , m_audioTransfer(nullptr)
       , m_audioTrackHasEnded(false)
+      , m_maxAudioDelay(0.3)
       , m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN())
       , m_lastDecodedVideoPts(std::numeric_limits<double>::quiet_NaN())
     {
@@ -327,6 +328,7 @@ namespace VideoDisplay
     /// we really can't rely on some header-information, we just detect when
     /// there are not audio frames coming out from the av packets.
     bool m_audioTrackHasEnded;
+    double m_maxAudioDelay;
     double m_lastDecodedAudioPts;
     double m_lastDecodedVideoPts;
 
@@ -1987,14 +1989,20 @@ namespace VideoDisplay
 
         // In case of NaN, this will become false
         bool ended = m_d->m_audioTrackHasEnded;
-        if (delay < -0.1)
+        if (delay < -m_d->m_maxAudioDelay)
           ended = true;
-        else if (delay > 0.1 && delay < 5.0)
+        else if (!Nimble::Math::isNAN(audioDpts))
           ended = false;
         if (m_d->m_audioTrackHasEnded != ended) {
           m_d->m_audioTrackHasEnded = ended;
           if (ended) {
-            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->resonantToPts();
+            // Radiant::info("%s Audio/Video decoding delay: %lf, assuming that the audio track has ended", errorMsg.data(), delay);
+            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->toPts(Radiant::TimeStamp(0)).pts;
+          } else {
+            // Radiant::info("%s Got audio packet, restoring audio sync. Delay: %lf", errorMsg.data(), delay);
+            // This is a file specific feature, there seems to be no other way
+            // than just guess a better estimate when ever we see that we made a mistake
+            m_d->m_maxAudioDelay = std::min(1.4, m_d->m_maxAudioDelay + 0.1);
           }
         }
       }

@@ -259,7 +259,11 @@ namespace Resonant {
     // (Linux/Pulseaudio). In that case we just generate the timing information
     // ourselves. In this case we also guess that the latency is ~30 ms
     // (on Linux/Alsa it seems to be ~20-30 ms when having some cheap hw)
-    if(streams > 1 || time.outputBufferDacTime == 0) {
+    // On some broken platforms outputBufferDacTime is just not implemented
+    // and is always 0, but on some other platforms it seems to be just a small
+    // number (~0.001..0.005), too small and random to be the audio latency or
+    // anything like that.
+    if(streams > 1 || time.outputBufferDacTime < 1.0) {
       latency = 0.030;
       /// @todo shouldn't hardcode 44100
       if(m_syncinfo.baseTime == Radiant::TimeStamp(0) /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
