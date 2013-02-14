@@ -52,6 +52,12 @@ namespace Radiant
     /** This function is not implemented for all platforms. */
     /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
+
+    /// This function returns the path to a library the running process is
+    /// linked against.
+    /// @param libraryName (part of) linked library name to search for
+    /// @return absolute path to the library file
+    RADIANT_API QString getLibraryPath(const QString& libraryName);
   }
 
 }

@@ -30,6 +30,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <QCoreApplication>
+#include <QTemporaryFile>
+
 namespace Radiant
 {
 
@@ -113,6 +116,24 @@ namespace Radiant
         fclose(f);
       }
       return uint64_t(vmrss) * pagesize;
+    }
+
+    QString getLibraryPath(const QString& libraryName)
+    {
+      auto pid = QCoreApplication::applicationPid();
+
+      QTemporaryFile file;
+      file.setAutoRemove(false);
+      if(!file.open()) {
+        Radiant::error("getLibraryPath # failed to create temporary file '%s'", file.fileName().toUtf8().data());
+        return QString();
+      }
+
+      const QString cmd = QString("grep %1 /proc/%2/maps | awk '{print $6}'|sort|uniq > %3").arg(libraryName).arg(pid).arg(file.fileName());
+
+      system(cmd.toUtf8().data());
+
+      return file.readAll().trimmed();
     }
 
   }
