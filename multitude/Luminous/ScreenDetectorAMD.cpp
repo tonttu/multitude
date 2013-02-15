@@ -72,18 +72,28 @@ namespace {
 
 #if defined (RADIANT_WINDOWS)
   // Retrieve display configuration
-  bool getDisplayMapConfig(int adapterIndex, std::vector<ADLDisplayMap> & displayMap, std::vector<ADLDisplayTarget> & displayTarget)
+  bool getDisplayMapConfig(int adapterIndex,
+                           std::vector<ADLDisplayMap> & displayMap,
+                           std::vector<ADLDisplayTarget> & displayTarget)
   {
     ADLDisplayMap * maps = NULL;
     ADLDisplayTarget * targets = NULL;
     int numDisplayMaps = 0;
     int numDisplayTargets = 0;
 
-    bool success = checkADL("ADL_Display_DisplayMapConfig_Get", ADL_Display_DisplayMapConfig_Get(adapterIndex, &numDisplayMaps, &maps, &numDisplayTargets, &targets, ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO));
+    bool success = checkADL("ADL_Display_DisplayMapConfig_Get",
+                            ADL_Display_DisplayMapConfig_Get(adapterIndex,
+                                                             &numDisplayMaps,
+                                                             &maps,
+                                                             &numDisplayTargets,
+                                                             &targets,
+                                                             ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO));
     if (success) {
       // Copy into target containers
-      displayMap.resize(numDisplayMaps); memcpy(displayMap.data(), maps, numDisplayMaps * sizeof(ADLDisplayMap));
-      displayTarget.resize(numDisplayTargets); memcpy(displayTarget.data(), targets, numDisplayTargets * sizeof(ADLDisplayTarget));
+      displayMap.resize(numDisplayMaps);
+      memcpy(displayMap.data(), maps, numDisplayMaps * sizeof(ADLDisplayMap));
+      displayTarget.resize(numDisplayTargets);
+      memcpy(displayTarget.data(), targets, numDisplayTargets * sizeof(ADLDisplayTarget));
 
       // Clean-up
       adlFree(maps);
@@ -93,7 +103,14 @@ namespace {
   }
 
   // Retrieve SLS (EyeFinity) configuration
-  bool getSLSMapConfig(int adapterIndex, std::vector<ADLDisplayTarget> displayTargets, ADLSLSMap & slsMap, std::vector<ADLSLSTarget> & targets, std::vector<ADLSLSMode> & modes, std::vector<ADLBezelTransientMode> & bezels, std::vector<ADLBezelTransientMode> & transients, std::vector<ADLSLSOffset> & offsets)
+  bool getSLSMapConfig(int adapterIndex,
+                       std::vector<ADLDisplayTarget> displayTargets,
+                       ADLSLSMap & slsMap,
+                       std::vector<ADLSLSTarget> & targets,
+                       std::vector<ADLSLSMode> & modes,
+                       std::vector<ADLBezelTransientMode> & bezels,
+                       std::vector<ADLBezelTransientMode> & transients,
+                       std::vector<ADLSLSOffset> & offsets)
   {
     int slsIndex = 0;
     int numDisplayTarget = (int)displayTargets.size();
@@ -101,7 +118,10 @@ namespace {
 
     bool success = false;
     // NOTE: we don't use checkADL here since this is allowed to fail on non-SLS targets
-    if (ADL_Display_SLSMapIndex_Get(adapterIndex, numDisplayTarget, displayTarget, &slsIndex) == ADL_OK) {
+    if (ADL_Display_SLSMapIndex_Get(adapterIndex,
+                                    numDisplayTarget,
+                                    displayTarget,
+                                    &slsIndex) == ADL_OK) {
       int numSLSTargets = 0;
       int numNativeModes = 0;
       int numBezelModes = 0;
