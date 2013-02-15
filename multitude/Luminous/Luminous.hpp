@@ -61,6 +61,8 @@ namespace Luminous
   */
   LUMINOUS_API void initDefaultImageCodecs();
 
+  /// Should be called only after initLuminous is called
+  LUMINOUS_API bool sampleShadingSupported();
 
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType

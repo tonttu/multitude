@@ -564,8 +564,8 @@ namespace Luminous
   void RenderDriverGL::setDefaultState()
   {
 #ifndef RADIANT_OSX_MOUNTAIN_LION
-    /// @todo Fix #3642
-    // glEnable(GL_SAMPLE_SHADING);
+    if (sampleShadingSupported())
+      glEnable(GL_SAMPLE_SHADING);
 #endif
 
     // Default modes
