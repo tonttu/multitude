@@ -186,12 +186,13 @@ namespace {
     int numDisplayTarget = (int)displayTargets.size();
     ADLDisplayTarget * displayTarget = displayTargets.data();
 
-    bool success = false;
+    bool success = true;
     // NOTE: we don't use checkADL here since this is allowed to fail on non-SLS targets
     if (ADL_Display_SLSMapIndex_Get(adapterIndex,
                                     numDisplayTarget,
                                     displayTarget,
                                     &slsIndex) == ADL_OK) {
+      success = false;
       int numSLSTargets = 0;
       int numNativeModes = 0;
       int numBezelModes = 0;
