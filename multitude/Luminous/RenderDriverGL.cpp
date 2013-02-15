@@ -889,6 +889,11 @@ namespace Luminous
   void RenderDriverGL::setVSync(bool vsync)
   {
 #if defined(RADIANT_LINUX)
+    if (!glxewIsSupported("GLX_EXT_swap_control")) {
+      Radiant::warning("GLX_EXT_swap_control not supported");
+      return;
+    }
+
     Display *dpy = glXGetCurrentDisplay();
     GLXDrawable drawable = glXGetCurrentDrawable();
     const int interval = (vsync ? 1 : 0);
@@ -905,6 +910,11 @@ namespace Luminous
 
     glXSwapIntervalEXT(dpy, drawable, interval);
 #elif defined (RADIANT_WINDOWS)
+    if (!wglewIsSupported("WGL_EXT_swap_control")) {
+      Radiant::warning("WGL_EXT_swap_control not supported");
+      return;
+    }
+
     const int interval = (vsync ? 1 : 0);
     wglSwapIntervalEXT(interval);
 #else
