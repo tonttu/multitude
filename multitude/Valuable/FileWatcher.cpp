@@ -302,6 +302,11 @@ namespace Valuable
     // Files and directories behave differently
     const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
 
+    if (!m_d->m_directoryRefCounts.contains(absoluteFilePath)) {
+      // Nothing to remove
+      return;
+    }
+
     // Decrement reference count
     int & refs = m_d->m_directoryRefCounts[absolutePath];
     assert(refs > 0);
