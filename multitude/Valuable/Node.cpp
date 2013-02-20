@@ -67,20 +67,40 @@ namespace
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
+  std::list<QueueItem*> s_queue;
+  QSet<void *> s_queueOnce;
+
+  Radiant::Mutex s_processingQueueMutex;
   bool s_processingQueue = false;
-  std::list<QueueItem*> s_queue, s_queueTmp;
-  QSet<void *> s_queueOnce, s_queueOnceTmp;
+  std::list<QueueItem*> s_queueTmp;
+  QSet<void *> s_queueOnceTmp;
 
   void queueEvent(QueueItem * item, void * once)
   {
-    Radiant::Guard g(s_queueMutex);
-    std::list<QueueItem*> * queue = s_processingQueue ? &s_queueTmp : &s_queue;
-    QSet<void *> * queueOnce = s_processingQueue ? &s_queueOnceTmp : &s_queueOnce;
-    if (once) {
-      if (queueOnce->contains(once)) return;
-      (*queueOnce) << once;
+    s_processingQueueMutex.lock();
+    {
+      if (s_processingQueue) {
+        if (once) {
+          if (s_queueOnceTmp.contains(once)) {
+            s_processingQueueMutex.unlock();
+            return;
+          }
+          s_queueOnceTmp << once;
+        }
+        s_queueTmp.push_back(item);
+        s_processingQueueMutex.unlock();
+        return;
+      }
     }
-    queue->push_back(item);
+
+    Radiant::Guard g(s_queueMutex);
+    s_processingQueueMutex.unlock();
+
+    if (once) {
+      if (s_queueOnce.contains(once)) return;
+      s_queueOnce << once;
+    }
+    s_queue.push_back(item);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
@@ -790,9 +810,13 @@ namespace Valuable
 
   int Node::processQueue()
   {
+    {
+      Radiant::Guard g(s_processingQueueMutex);
+      s_processingQueue = true;
+    }
+
     /// The queue must be locked during the whole time when calling the callback
     Radiant::Guard g(s_queueMutex);
-    s_processingQueue = true;
 
     // Can not use range-based loop here because it doesn't iterate all
     // elements when the QList gets modified inside the loop.
@@ -813,6 +837,16 @@ namespace Valuable
     for(QueueItem* item : s_queue)
       delete item;
     int r = s_queue.size();
+
+    // Since we are locking two mutexes at the same time also in queueEvent,
+    // it's important that the lock order is right. Always lock
+    // s_processingQueueMutex before s_queueMutex. That is why we need to
+    // release the lock, otherwise we will get deadlock if queueEvent has
+    // already locked s_processingQueueMutex and is waiting for s_queueMutex.
+    s_queueMutex.unlock();
+    Radiant::Guard g2(s_processingQueueMutex);
+    s_queueMutex.lock();
+
     s_queue = s_queueTmp;
     s_queueOnce = s_queueOnceTmp;
     s_queueTmp.clear();
