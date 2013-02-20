@@ -40,7 +40,10 @@ MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscal
 
 CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
 
-LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
+# On Windows, add _d for debug builds
+build_pass:CONFIG(debug,debug|release) {
+  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}_d
+}
 
 # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
 # message(FTD2XX support detected.)
@@ -63,6 +66,7 @@ LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}
 LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
+LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8 -lnode
 
 #
@@ -207,16 +211,6 @@ win32 {
     # These libs have an extra extension for debug builds
     build_pass:CONFIG(debug,debug|release) {
       LIB_OPENGL = -lglew -lglu32 -lopengl32
-      LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_STYLISH = -lStylish$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_RADIANT = -lRadiant$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_VIDEODISPLAY = -lVideoDisplay$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}_d
-      LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}_d
       enable-js:LIB_V8 = -lv8_d -lnode_d
     }
 }

@@ -46,16 +46,11 @@ TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
 win32 {
     DLLDESTDIR = $$PWD/bin
 
-  # Debug libraries have an extra extension
-  build_pass:CONFIG(debug,debug|release) {
-    TARGET=$$join(TARGET,,,_d)
-  }
-
   # Optimized debug libraries
   build_pass:CONFIG(debug,debug|release) {
     CONFIG(optimized) {
       # Set optimization level
-	  QMAKE_CFLAGS_DEBUG += -O2
+      QMAKE_CFLAGS_DEBUG += -O2
       QMAKE_CXXFLAGS_DEBUG += -O2
       QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
       QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)

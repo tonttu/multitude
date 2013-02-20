@@ -32,6 +32,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <vector>
+
 namespace Radiant
 {
 
@@ -159,7 +161,31 @@ namespace Radiant
 
     QString getLibraryPath(const QString& libraryName)
     {
-      return QString();
+      auto wLibraryName = libraryName.toStdWString();
+
+      HMODULE handle = GetModuleHandle(wLibraryName.data());
+      if(handle == NULL) {
+        Radiant::error("getLibraryPath # failed for '%s'", libraryName.toUtf8().data());
+        return QString();
+      }
+
+      std::vector<wchar_t> buffer(MAX_PATH);
+
+      DWORD got = GetModuleFileName(handle, &buffer[0], buffer.size());
+
+      while(got == buffer.size()) {
+
+        buffer.resize(2 * buffer.size());
+
+        got = GetModuleFileName(handle, &buffer[0], buffer.size());
+      }
+
+      if(got == 0) {
+        Radiant::error("getLibraryPath # failed to get path for '%s'", libraryName.toUtf8().data());
+        return QString();
+      }
+
+      return QString::fromStdWString(std::wstring(buffer.begin(), buffer.begin() + got));
     }
 
   }
