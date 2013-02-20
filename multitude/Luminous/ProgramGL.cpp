@@ -121,7 +121,7 @@ namespace Luminous
       glUseProgram(m_handle);
 #ifndef RADIANT_OSX_MOUNTAIN_LION
       // OpenGL 4.0 feature, so we use the ARB version
-      if (sampleShadingSupported())
+      if (isSampleShadingSupported())
         glMinSampleShadingARB(m_sampleShading);
 #endif
       //GLERROR("RenderDriverGL::setShaderProgram glUseProgram");

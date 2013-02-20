@@ -61,8 +61,11 @@ namespace Luminous
   */
   LUMINOUS_API void initDefaultImageCodecs();
 
-  /// Should be called only after initLuminous is called
-  LUMINOUS_API bool sampleShadingSupported();
+  /// Check if GL_ARB_sample_shading OpenGL extension is supported. This
+  /// function should only be called after Luminous::initLuminous had been
+  /// called.
+  /// @return true if the extension is supported; otherwise false
+  LUMINOUS_API bool isSampleShadingSupported();
 
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType

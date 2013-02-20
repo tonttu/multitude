@@ -33,6 +33,15 @@
 
 namespace Luminous
 {
+  bool isSampleShadingSupported()
+  {
+#ifdef RADIANT_OSX_MOUNTAIN_LION
+    return false;
+#else
+    static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
+    return s_supported;
+#endif
+  }
 
   bool initLuminous(bool initOpenGL)
   {
