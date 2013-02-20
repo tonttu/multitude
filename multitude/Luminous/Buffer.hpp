@@ -6,11 +6,6 @@
 
 #include <Radiant/Flags.hpp>
 
-#ifdef RADIANT_OSX
-// Required for MapAccess enums (which nobody seems to use?)
-#include <OpenGL/gl3.h>
-#endif
-
 namespace Luminous
 {
   /// This class represents a general unformatted linear memory stored on the

@@ -77,10 +77,6 @@ linux-*{
   # Must define this manually on Linux & Windows
   QMAKE_EXTENSION_SHLIB=so
 
-  contains(USEGLEW,no) {
-    DEFINES += MULTI_WITHOUT_GLEW=1
-  }
-
   QMAKE_LIBDIR += /usr/lib/nvidia-current
 
   QMAKE_LIBDIR += $$PWD/Linux/lib

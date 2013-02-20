@@ -1,10 +1,12 @@
-#include <Radiant/DropEvent.hpp>
-#include "Radiant/KeyEvent.hpp"
-
 #if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION)
 
-#import <Cocoa/Cocoa.h>
+#include "Luminous.hpp"
 #import "CocoaWindow.hpp"
+
+#include <Radiant/DropEvent.hpp>
+#include <Radiant/KeyEvent.hpp>
+
+#import <Cocoa/Cocoa.h>
 
 #include <QUrl>
 

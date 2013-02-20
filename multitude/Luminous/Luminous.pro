@@ -87,7 +87,8 @@ HEADERS += Window.hpp
 HEADERS += ImageCodecDDS.hpp
 HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
-SOURCES += ImageCodecDDS.cpp
+SOURCES += ImageCodecDDS.cpp \
+    DummyOpenGL.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
 SOURCES += SpriteRenderer.cpp

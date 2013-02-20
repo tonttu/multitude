@@ -22,9 +22,7 @@
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 
-#if defined (RADIANT_OSX)
-#  include <OpenGL/gl3.h>
-#elif defined (RADIANT_WINDOWS)
+#if defined (RADIANT_WINDOWS)
 #  include <GL/wglew.h>
 #elif defined (RADIANT_LINUX)
 #  include <GL/glxew.h>

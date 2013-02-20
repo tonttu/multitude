@@ -7,7 +7,7 @@
 #if defined(RADIANT_OSX)
 
 /* Dummy implementations of various OpenGL functions/macros which are present in
-   full OpenGL, but not in OpenGL ES 2.0.
+   full OpenGL, but not in Core OpenGL 3.2.
 
    The point of these macros is to make the software compile. At the same time they will give out
    a warning about where these illegal functions are used.
