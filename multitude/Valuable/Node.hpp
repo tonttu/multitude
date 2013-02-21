@@ -307,19 +307,6 @@ namespace Valuable
       return eventAddListener(eventId, messageId, listener, DIRECT, defaultData);
     }
 
-#ifdef CORNERSTONE_JS
-    long eventAddListener(const QByteArray & eventId,
-                          const QByteArray & messageId,
-                          v8::Persistent<v8::Function> func,
-                          const Radiant::BinaryData * defaultData = 0);
-    long eventAddListener(const QByteArray & eventId,
-                          v8::Persistent<v8::Function> func,
-                          const Radiant::BinaryData * defaultData = 0)
-    {
-      return eventAddListener(eventId, eventId, func, defaultData);
-    }
-#endif
-
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
@@ -519,9 +506,6 @@ namespace Valuable
       Valuable::Node * m_listener;
       ListenerFuncVoid m_func;
       ListenerFuncBd m_func2;
-#ifdef CORNERSTONE_JS
-      v8::Persistent<v8::Function> m_funcv8;
-#endif
       Radiant::BinaryData   m_defaultData;
       QByteArray m_from;
       QByteArray m_to;

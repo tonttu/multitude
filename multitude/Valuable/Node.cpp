@@ -133,11 +133,7 @@ namespace Valuable
   inline bool Node::ValuePass::operator == (const ValuePass & that) const
   {
     return (m_listener == that.m_listener) && (m_from == that.m_from) &&
-           (m_to == that.m_to)
-    #ifdef CORNERSTONE_JS
-        && (*m_funcv8 == *that.m_funcv8)
-    #endif
-        ;
+           (m_to == that.m_to);
   }
 
   Node::Node()
@@ -180,10 +176,6 @@ namespace Valuable
 
       if(it->m_listener)
         it->m_listener->eventRemoveSource(this);
-#ifdef CORNERSTONE_JS
-      else if(!it->m_funcv8.IsEmpty())
-        it->m_funcv8.Dispose();
-#endif
 
     }
 
@@ -567,33 +559,6 @@ namespace Valuable
     return vp.m_listenerId;
   }
 
-#ifdef CORNERSTONE_JS
-  long Node::eventAddListener(const QByteArray & fromIn,
-                              const QByteArray & to,
-                              v8::Persistent<v8::Function> func,
-                              const Radiant::BinaryData * defaultData)
-  {
-    const QByteArray from = validateEvent(fromIn);
-
-    ValuePass vp(++m_listenersId);
-    vp.m_funcv8 = func;
-    vp.m_from = from;
-    vp.m_to = to;
-
-    if(defaultData)
-      vp.m_defaultData = *defaultData;
-
-    if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
-       m_elisteners.end())
-      Radiant::debug("Widget::eventAddListener # Already got item %s -> %s",
-            from.data(), to.data());
-    else {
-      m_elisteners.push_back(vp);
-    }
-    return vp.m_listenerId;
-  }
-#endif
-
   long Node::eventAddListener(const QByteArray & fromIn, ListenerFuncVoid func,
                               ListenerType listenerType)
   {
@@ -906,19 +871,6 @@ namespace Valuable
             vp.m_listener->processMessage(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
           }
-#ifdef CORNERSTONE_JS
-        } else if(!vp.m_funcv8.IsEmpty()) {
-          /// @todo what is the correct receiver ("this" in the callback)?
-          /// @todo should we set m_sender or something similar?
-          /// @todo queueEvent?
-          /// @todo Instead of HandleScope use Scripting::Lock
-          v8::HandleScope handle_scope;
-          v8::Local<v8::Value> argv[10];
-          argv[0] = v8::String::New(vp.m_to.data(), vp.m_to.size());
-          int argc = 9;
-          bdsend.readTo(argc, argv + 1);
-          vp.m_funcv8->Call(v8::Context::GetCurrent()->Global(), argc+1, argv);
-#endif
         } else if(vp.m_func) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
             queueEvent(this, vp.m_func, &vp);
