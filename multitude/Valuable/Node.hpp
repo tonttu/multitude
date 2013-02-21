@@ -54,8 +54,8 @@ namespace Valuable
     /// Universally unique identifier type
     typedef int64_t Uuid;
 
-    typedef std::function<void ()> ListenerFunc;
-    typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
+    typedef std::function<void ()> ListenerFuncVoid;
+    typedef std::function<void (Radiant::BinaryData &)> ListenerFuncBd;
     typedef std::function<void(Valuable::Node*)> CallbackType;
 
     /// Types of event listeners
@@ -320,10 +320,10 @@ namespace Valuable
     }
 #endif
 
-    long eventAddListener(const QByteArray & eventId, ListenerFunc func,
+    long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
-    long eventAddListenerBd(const QByteArray & eventId, ListenerFunc2 func,
+    long eventAddListenerBd(const QByteArray & eventId, ListenerFuncBd func,
                             ListenerType listenerType = DIRECT);
 
     template <typename Widget>
@@ -425,7 +425,7 @@ namespace Valuable
     static bool copyValues(const Node & from, Node & to);
 
     /// Queue function to be called in the main thread after the next update()
-    static void invokeAfterUpdate(ListenerFunc function);
+    static void invokeAfterUpdate(ListenerFuncVoid function);
 
     virtual void setAsDefaults() OVERRIDE;
 
@@ -517,8 +517,8 @@ namespace Valuable
       inline bool operator == (const ValuePass & that) const;
 
       Valuable::Node * m_listener;
-      ListenerFunc m_func;
-      ListenerFunc2 m_func2;
+      ListenerFuncVoid m_func;
+      ListenerFuncBd m_func2;
 #ifdef CORNERSTONE_JS
       v8::Persistent<v8::Function> m_funcv8;
 #endif

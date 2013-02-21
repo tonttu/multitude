@@ -32,7 +32,7 @@ namespace
 {
   struct QueueItem
   {
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFunc2 func_,
+    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncBd func_,
               const Radiant::BinaryData & data_)
       : sender(sender_)
       , func2(func_)
@@ -40,7 +40,7 @@ namespace
       , data(data_)
     {}
 
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFunc func_)
+    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncVoid func_)
       : sender(sender_)
       , func(func_)
       , func2()
@@ -58,8 +58,8 @@ namespace
     {}
 
     Valuable::Node * sender;
-    Valuable::Node::ListenerFunc func;
-    Valuable::Node::ListenerFunc2 func2;
+    Valuable::Node::ListenerFuncVoid func;
+    Valuable::Node::ListenerFuncBd func2;
     Valuable::Node * target;
     const QByteArray to;
     Radiant::BinaryData data;
@@ -110,13 +110,13 @@ namespace
     queueEvent(new QueueItem(sender, target, to, data), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc func,
+  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncVoid func,
                   void * once)
   {
     queueEvent(new QueueItem(sender, func), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFunc2 func,
+  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
     queueEvent(new QueueItem(sender, func, data), once);
@@ -594,7 +594,7 @@ namespace Valuable
   }
 #endif
 
-  long Node::eventAddListener(const QByteArray & fromIn, ListenerFunc func,
+  long Node::eventAddListener(const QByteArray & fromIn, ListenerFuncVoid func,
                               ListenerType listenerType)
   {
     const QByteArray from = validateEvent(fromIn);
@@ -609,7 +609,7 @@ namespace Valuable
     return vp.m_listenerId;
   }
 
-  long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFunc2 func,
+  long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
     const QByteArray from = validateEvent(fromIn);
@@ -864,7 +864,7 @@ namespace Valuable
     return false;
   }
 
-  void Node::invokeAfterUpdate(Node::ListenerFunc function)
+  void Node::invokeAfterUpdate(Node::ListenerFuncVoid function)
   {
     queueEvent(nullptr, function, nullptr);
   }
