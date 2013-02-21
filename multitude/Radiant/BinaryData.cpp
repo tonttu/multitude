@@ -39,19 +39,19 @@ namespace Radiant {
     return a | (b << 8) | (c << 16) | (d << 24);
   }
 
-  const int32_t FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
-  const int32_t DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
-  const int32_t VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
-  const int32_t VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
-  const int32_t VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
-  const int32_t VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
-  const int32_t VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
-  const int32_t VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
-  const int32_t INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
-  const int32_t INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
-  const int32_t TS_MARKER     = makeMarker(',', 't', '\0', '\0');
-  const int32_t STRING_MARKER = makeMarker(',', 's', '\0', '\0');
-  const int32_t BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
+  const int32_t BinaryData::FLOAT_MARKER  = makeMarker(',', 'f', '\0', '\0');
+  const int32_t BinaryData::DOUBLE_MARKER  = makeMarker(',', 'd', '\0', '\0');
+  const int32_t BinaryData::VECTOR2F_MARKER  = makeMarker(',', 'f', '2', '\0');
+  const int32_t BinaryData::VECTOR2I_MARKER  = makeMarker(',', 'i', '2', '\0');
+  const int32_t BinaryData::VECTOR3F_MARKER  = makeMarker(',', 'f', '3', '\0');
+  const int32_t BinaryData::VECTOR3I_MARKER  = makeMarker(',', 'i', '3', '\0');
+  const int32_t BinaryData::VECTOR4F_MARKER  = makeMarker(',', 'f', '4', '\0');
+  const int32_t BinaryData::VECTOR4I_MARKER  = makeMarker(',', 'i', '4', '\0');
+  const int32_t BinaryData::INT32_MARKER  = makeMarker(',', 'i', '\0', '\0');
+  const int32_t BinaryData::INT64_MARKER  = makeMarker(',', 'l', '\0', '\0');
+  const int32_t BinaryData::TS_MARKER     = makeMarker(',', 't', '\0', '\0');
+  const int32_t BinaryData::STRING_MARKER = makeMarker(',', 's', '\0', '\0');
+  const int32_t BinaryData::BLOB_MARKER   = makeMarker(',', 'b', '\0', '\0');
 
   BinaryData::BinaryData()
     : m_current(0),
@@ -744,6 +744,18 @@ namespace Radiant {
 
   }
 
+  int32_t BinaryData::peekMarker(bool * ok) const
+  {
+    if (!available(4)) {
+      if (ok)
+        *ok = false;
+      return 0;
+    }
+    if (ok)
+      *ok = true;
+    return *reinterpret_cast<int32_t*>(&m_buf[m_current]);
+  }
+
   bool BinaryData::write(Radiant::BinaryStream & stream) const
   {
     int32_t s = pos();
@@ -822,37 +834,6 @@ namespace Radiant {
     memset(data(), 0, m_size);
   }
 
-#ifdef CORNERSTONE_JS
-
-  bool BinaryData::readTo(int & argc, v8::Handle<v8::Value> argv[])
-  {
-    int i = 0;
-    while(i < argc) {
-      bool ok = false;
-      if(!available(4)) break;
-      // peek marker
-      int32_t marker = *getPtr<int32_t>(0);
-      if(marker == FLOAT_MARKER || marker == DOUBLE_MARKER) {
-        double v = readFloat64(&ok);
-        if(ok) argv[i++] = v8::Number::New(v);
-      } else if(marker == INT32_MARKER || marker == INT64_MARKER) {
-        int v = readInt32(&ok);
-        if(ok) argv[i++] = v8::Integer::New(v);
-      } else if(marker == STRING_MARKER) {
-        QString v;
-        if(readString(v)) argv[i++] = v8::String::New(v.utf16());
-      } else {
-        Radiant::warning("BinaryData::readTo # Type with marker %d is not implemented", marker);
-        break;
-      }
-      /// @todo VECTOR2F_MARKER VECTOR2I_MARKER VECTOR3F_MARKER VECTOR3I_MARKER
-      ///       VECTOR4F_MARKER VECTOR4I_MARKER TS_MARKER BLOB_MARKER
-    }
-
-    argc = i;
-    return m_current == m_total;
-  }
-#endif
   bool BinaryData::saveToFile(const char * filename) const
   {
     FILE * f = fopen(filename, "wb");
@@ -918,7 +899,7 @@ namespace Radiant {
     }
   }
 
-  size_t BinaryData::stringSpace(const char * str)
+  size_t BinaryData::stringSpace(const char * str) const
   {
     size_t len = strlen(str) + 1;
 
@@ -928,7 +909,7 @@ namespace Radiant {
     return len + pad;
   }
 
-  void BinaryData::unavailable(const char * func)
+  void BinaryData::unavailable(const char * func) const
   {
     if(!__verbose)
       return;

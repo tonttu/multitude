@@ -54,6 +54,53 @@ namespace Radiant {
   {
     return Y::null();
   }
+
+  class BGThread;
+  class BinaryData;
+  class BinaryStream;
+  class CSVDocument;
+  class CameraDriver;
+  class Condition;
+  class DateTime;
+  class Directory;
+  class DropEvent;
+  class DropListener;
+  class FT2xxStream;
+  class FileUtils;
+  class FileWriter;
+  class FunctionTask;
+  class ImageConversion;
+  class KeyEvent;
+  class LockFile;
+  class Log;
+  class MemChecker;
+  class MimeManager;
+  class MimeType;
+  class MouseEvent;
+  class Mutex;
+  class Plane;
+  class ResourceLocator;
+  class SMRingBuffer;
+  class Semaphore;
+  class SerialPort;
+  class Sleep;
+  class SleepSync;
+  class SocketUtilPosix;
+  class TCPServerSocket;
+  class TCPSocket;
+  class Task;
+  class Thread;
+  class ThreadPool;
+  class TimeStamp;
+  class UDPSocket;
+  class Variant;
+  class VideoCamera;
+  class VideoCamera1394;
+  class VideoCameraCMU;
+  class VideoCameraPTGrey;
+  class VideoImage;
+  class VideoInput;
+  class WatchDog;
 }
 
 #define debugRadiant(...) (Radiant::trace("Radiant", Radiant::DEBUG, __VA_ARGS__))

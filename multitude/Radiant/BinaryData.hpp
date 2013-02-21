@@ -29,15 +29,6 @@
 
 #include <QString>
 
-#ifdef CORNERSTONE_JS
-#include <v8.h>
-
-namespace v8 {
-  class Value;
-  template <class T> class Handle;
-}
-#endif
-
 namespace Radiant {
   class BinaryStream;
 }
@@ -86,6 +77,21 @@ namespace Radiant {
 
   class RADIANT_API BinaryData
   {
+  public:
+    static const int32_t FLOAT_MARKER;
+    static const int32_t DOUBLE_MARKER;
+    static const int32_t VECTOR2F_MARKER;
+    static const int32_t VECTOR2I_MARKER;
+    static const int32_t VECTOR3F_MARKER;
+    static const int32_t VECTOR3I_MARKER;
+    static const int32_t VECTOR4F_MARKER;
+    static const int32_t VECTOR4I_MARKER;
+    static const int32_t INT32_MARKER;
+    static const int32_t INT64_MARKER;
+    static const int32_t TS_MARKER;
+    static const int32_t STRING_MARKER;
+    static const int32_t BLOB_MARKER;
+
   public:
     BinaryData();
     /// Copy constructor
@@ -240,6 +246,9 @@ namespace Radiant {
     /// Reads a 4D 32-bit float vector from the buffer
     Nimble::Vector4f readVector4Float32(bool * ok = 0);
 
+    /// Extracts the next marker code from the stream
+    int32_t peekMarker(bool * ok = 0) const;
+
     /// Tells the current position of the read/write pointer
     inline int pos() const { return m_current; }
     /// Sets the position of the read/write pointer
@@ -273,13 +282,6 @@ namespace Radiant {
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
     { rewind(); append(that); return * this;}
-#ifdef CORNERSTONE_JS
-    /// Copies the binary data stream to v8 value array
-    /// v8 values have to be defined in stack, so we can't use std::vector etc
-    /// @param argc in = size of argv, out = number of values filled
-    /// @todo isn't implemented fully
-    bool readTo(int & argc, v8::Handle<v8::Value> argv[]);
-#endif
     /// Saves this buffer to the given file
     bool saveToFile(const char * filename) const;
     /// Reads data from a file
@@ -294,12 +296,12 @@ namespace Radiant {
     inline T & getRef()
     { T * tmp = (T*) & m_buf[m_current]; m_current += sizeof(T); return *tmp; }
 
-    inline bool available(unsigned bytes)
+    inline bool available(unsigned bytes) const
     { return (m_current + bytes) <= m_total; }
     void skipParameter(int marker);
-    size_t stringSpace(const char * str);
+    size_t stringSpace(const char * str) const;
 
-    void unavailable(const char * func);
+    void unavailable(const char * func) const;
 
     unsigned m_current;
     // number of bytes used in the buffer

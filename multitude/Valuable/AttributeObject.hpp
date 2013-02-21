@@ -25,6 +25,10 @@
 
 #include <functional>
 
+#ifdef CORNERSTONE_JS
+#include <v8.h>
+#endif
+
 // new behavior: elements of array 'array' will be default initialized
 #if RADIANT_WINDOWS
 # if _MSC_VER >= 1310
