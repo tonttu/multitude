@@ -21,8 +21,6 @@ DESTDIR = ../../lib
 
 include(../../library.pri)
 
-TARGET = glew
-
 # Override default installation
 src_code.path = /src/multitude/ThirdParty/glew/src
 src_code.files = $$SOURCES
