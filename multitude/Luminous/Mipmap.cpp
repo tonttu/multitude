@@ -133,16 +133,16 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
-    void mipmapReady();
+    void mipmapReady(Luminous::Mipmap & mipmap);
 
   private:
-    bool recursiveLoad(int level);
-    bool recursiveLoad(MipmapLevel & imageTex, int level);
-    void lock(int);
-    void unlock(int);
+    bool recursiveLoad(Luminous::Mipmap & mipmap, int level);
+    bool recursiveLoad(Luminous::Mipmap & mipmap, MipmapLevel & imageTex, int level);
+    void lock(Luminous::Mipmap & mipmap, int);
+    void unlock(Luminous::Mipmap & mipmap, int);
 
   protected:
-    Luminous::MipmapPtr m_mipmap;
+    std::weak_ptr<Luminous::Mipmap> m_mipmap;
     const QString & m_filename;
     int m_level;
   };
@@ -265,22 +265,27 @@ namespace Luminous
 
   void LoadImageTask::doTask()
   {
-    lock(m_level);
-    recursiveLoad(m_level);
-    mipmapReady();
-    unlock(m_level);
+    Luminous::MipmapPtr mipmap = m_mipmap.lock();
+    if (!mipmap) {
+      setFinished();
+      return;
+    }
+    lock(*mipmap, m_level);
+    recursiveLoad(*mipmap, m_level);
+    mipmapReady(*mipmap);
+    unlock(*mipmap, m_level);
     setFinished();
   }
 
-  void LoadImageTask::mipmapReady()
+  void LoadImageTask::mipmapReady(Luminous::Mipmap & mipmap)
   {
-    assert(m_mipmap->m_d->m_headerReady);
-    m_mipmap->m_d->m_ready = true;
+    assert(mipmap.m_d->m_headerReady);
+    mipmap.m_d->m_ready = true;
   }
 
-  void LoadImageTask::lock(int level)
+  void LoadImageTask::lock(Luminous::Mipmap & mipmap, int level)
   {
-    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = mipmap.m_d->m_levels[level];
 
     /// If this fails, then another task is just creating a mipmap for this level,
     /// or MipmapReleaseTask is releasing it
@@ -289,15 +294,15 @@ namespace Luminous
       Radiant::Sleep::sleepMs(std::min(20, ++i));
   }
 
-  void LoadImageTask::unlock(int level)
+  void LoadImageTask::unlock(Luminous::Mipmap & mipmap, int level)
   {
-    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = mipmap.m_d->m_levels[level];
     imageTex.locked = 0;
   }
 
-  bool LoadImageTask::recursiveLoad(int level)
+  bool LoadImageTask::recursiveLoad(Luminous::Mipmap & mipmap, int level)
   {
-    MipmapLevel & imageTex = m_mipmap->m_d->m_levels[level];
+    MipmapLevel & imageTex = mipmap.m_d->m_levels[level];
 
     int lastUsed = imageTex.lastUsed;
     if (lastUsed == LoadError) {
@@ -308,7 +313,7 @@ namespace Luminous
       return true;
     }
 
-    bool ok = recursiveLoad(imageTex, level);
+    bool ok = recursiveLoad(mipmap, imageTex, level);
     if (ok) {
       /// @todo use Image::texture
       imageTex.texture.setData(imageTex.image->width(), imageTex.image->height(),
@@ -322,7 +327,7 @@ namespace Luminous
     return ok;
   }
 
-  bool LoadImageTask::recursiveLoad(MipmapLevel & imageTex, int level)
+  bool LoadImageTask::recursiveLoad(Luminous::Mipmap & mipmap, MipmapLevel & imageTex, int level)
   {
     if (level == 0) {
       // Load original
@@ -338,7 +343,7 @@ namespace Luminous
     }
 
     // Could the mipmap be already saved on disk?
-    if (m_mipmap->m_d->m_shouldSave.find(level) != m_mipmap->m_d->m_shouldSave.end()) {
+    if (mipmap.m_d->m_shouldSave.find(level) != mipmap.m_d->m_shouldSave.end()) {
 
       // Try loading a pre-generated smaller-scale mipmap
       const QString filename = Mipmap::cacheFileName(m_filename, level);
@@ -352,11 +357,11 @@ namespace Luminous
 
         if (!imageTex.image->read(filename.toUtf8().data())) {
           Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
-        } else if (m_mipmap->mipmapSize(level) != imageTex.image->size()) {
+        } else if (mipmap.mipmapSize(level) != imageTex.image->size()) {
           // unexpected size (corrupted or just old image)
           Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
                 filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
-                         m_mipmap->mipmapSize(level).x, m_mipmap->mipmapSize(level).y);
+                         mipmap.mipmapSize(level).x, mipmap.mipmapSize(level).y);
         } else {
           return true;
         }
@@ -365,36 +370,36 @@ namespace Luminous
 
 
     {
-      lock(level - 1);
+      lock(mipmap, level - 1);
 
       // Load the bigger image from lower level, and scale down from that:
-      if (!recursiveLoad(level - 1)) {
-        unlock(level - 1);
+      if (!recursiveLoad(mipmap, level - 1)) {
+        unlock(mipmap, level - 1);
         return false;
       }
 
-      Image & imsrc = *m_mipmap->m_d->m_levels[level - 1].image;
+      Image & imsrc = *mipmap.m_d->m_levels[level - 1].image;
 
       // Scale down from bigger mipmap
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
       Nimble::Vector2i ss = imsrc.size();
-      Nimble::Vector2i is = m_mipmap->mipmapSize(level);
+      Nimble::Vector2i is = mipmap.mipmapSize(level);
 
       if (is * 2 == ss) {
         if (!imageTex.image->quarterSize(imsrc)) {
           Radiant::error("LoadImageTask::recursiveLoad # failed to resize image");
-          unlock(level - 1);
+          unlock(mipmap, level - 1);
           return false;
         }
       } else {
         imageTex.image->minify(imsrc, is.x, is.y);
       }
-      unlock(level - 1);
+      unlock(mipmap, level - 1);
     }
 
-    if (m_mipmap->m_d->m_shouldSave.find(level) != m_mipmap->m_d->m_shouldSave.end()) {
+    if (mipmap.m_d->m_shouldSave.find(level) != mipmap.m_d->m_shouldSave.end()) {
       const QString filename = Mipmap::cacheFileName(m_filename, level);
       QDir().mkpath(Radiant::FileUtils::path(filename));
       imageTex.image->write(filename.toUtf8().data());
@@ -415,6 +420,12 @@ namespace Luminous
 
   void LoadCompressedImageTask::doTask()
   {
+    Luminous::MipmapPtr mipmap = m_mipmap.lock();
+    if (!mipmap) {
+      setFinished();
+      return;
+    }
+
     std::unique_ptr<Luminous::CompressedImage> im(new Luminous::CompressedImage);
     if(!im->read(m_filename, m_level)) {
       Radiant::error("LoadCompressedImageTask::doTask # Could not read %s level %d", m_filename.toUtf8().data(), m_level);
@@ -423,7 +434,7 @@ namespace Luminous
       m_tex.cimage = std::move(im);
       int now = frameTime();
       m_tex.lastUsed.testAndSetOrdered(Loading, now);
-      mipmapReady();
+      mipmapReady(*mipmap);
     }
     setFinished();
   }
@@ -444,11 +455,13 @@ namespace Luminous
     m_users.acquire();
   }
 
-  // Mipmap guarantees that m_mipmap wont get deleted during doTask()
   void PingTask::doTask()
   {
     auto mipmap = m_mipmap.lock();
-    assert(mipmap);
+    if (!mipmap) {
+      setFinished();
+      return;
+    }
 
     if(!m_users.tryAcquire()) {
       // The only explanation for this is that Mipmap already called finishAndWait()
@@ -524,8 +537,12 @@ namespace Luminous
       }
       if(!compressedMipmapTs.isValid()) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
-        auto ptr = mipmap.m_mipmap.shared_from_this();
-        mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) { ptr->mipmapReady(imginfo); } );
+        auto weak = m_mipmap;
+        mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) {
+          auto ptr = weak.lock();
+          if (ptr)
+            ptr->mipmapReady(imginfo);
+        });
       }
     }
     else
@@ -647,9 +664,11 @@ namespace Luminous
     // Make a local copy, if PingTask is just finishing and removes m_d->m_ping
     std::shared_ptr<PingTask> ping = m_ping;
     if(ping) {
-      Radiant::BGThread::instance()->removeTask(ping);
+      Radiant::BGThread::instance()->removeTask(ping, true, true);
       ping->finishAndWait();
     }
+    if (m_mipmapGenerator)
+      Radiant::BGThread::instance()->removeTask(m_mipmapGenerator);
   }
 
   /////////////////////////////////////////////////////////////////////////////
