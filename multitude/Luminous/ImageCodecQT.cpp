@@ -71,13 +71,29 @@ namespace Luminous
 
     QSize s = r.size();
 
-    if(fmt == QImage::Format_RGB32)
+    switch (fmt) {
+    case QImage::Format_Mono:
+    case QImage::Format_MonoLSB:
+    case QImage::Format_RGB32:
+    case QImage::Format_RGB16:
+    case QImage::Format_RGB666:
+    case QImage::Format_RGB555:
+    case QImage::Format_RGB888:
+    case QImage::Format_RGB444:
       info.pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_Indexed8)
-      info.pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_ARGB32)
+      break;
+    /// @todo Indexed8 might have a alpha channel, we don't know without actually opening the image.
+    ///       Should we open it?
+    case QImage::Format_Indexed8:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+    case QImage::Format_ARGB8565_Premultiplied:
+    case QImage::Format_ARGB6666_Premultiplied:
+    case QImage::Format_ARGB8555_Premultiplied:
+    case QImage::Format_ARGB4444_Premultiplied:
       info.pf = PixelFormat::rgbaUByte();
-    else {
+      break;
+    default:
       Radiant::error("ImageCodecQT::ping # image has unsupported pixel format (%d: %dx%d)", fmt, s.width(), s.height());
       return false;
     }
@@ -93,48 +109,38 @@ namespace Luminous
     QFile f;
     if(!f.open(file, QIODevice::ReadOnly))
       return false;
-    QImageReader r(&f);
-
-    if(!r.canRead())
-      return false;
-
-    QImage::Format fmt = r.imageFormat();
-    PixelFormat pf;
-
-    if(fmt == QImage::Format_RGB32)
-      pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_Indexed8)
-      pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_ARGB32)
-      pf = PixelFormat::rgbaUByte();
-    else
-      return false;
 
     QImage qi;
-    if(!r.read(&qi))
+    if (!qi.load(&f, nullptr))
       return false;
 
-    if(fmt == QImage::Format_Indexed8) {
-      QImage tmp = qi.convertToFormat(QImage::Format_RGB32);
-      qi = tmp;
-      fmt = QImage::Format_RGB32;
+    QImage::Format fmt = qi.format();
+
+    if ((fmt != QImage::Format_ARGB32 && fmt != QImage::Format_RGB32) ||
+        (qi.depth() != 32 && qi.depth() != 24 && qi.depth() != 8)) {
+      qi = qi.convertToFormat(qi.hasAlphaChannel() ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+      fmt = qi.format();
     }
 
-    image.allocate(qi.width(), qi.height(), pf);
+    if ((fmt != QImage::Format_ARGB32 && fmt != QImage::Format_RGB32) ||
+        (qi.depth() != 32 && qi.depth() != 24 && qi.depth() != 8))
+      return false;
+
+    const int bytesPerPixel = qi.depth() / 8;
+    image.allocate(qi.width(), qi.height(), fmt == QImage::Format_ARGB32 ? PixelFormat::rgbaUByte() : PixelFormat::rgbUByte());
 
     const uint8_t * src = qi.bits();
-    const uint32_t  chl = qi.depth() == 8? 1 : 4;
-    const uint8_t * sentinel = src + chl * qi.width() * qi.height();
+    const uint8_t * sentinel = src + bytesPerPixel * qi.width() * qi.height();
     uint8_t * dest = image.data();
 
     if(fmt == QImage::Format_ARGB32) {
-      if(qi.depth() != 8) {
+      if (bytesPerPixel != 1) {
         while(src < sentinel) {
           dest[0] = src[2];
           dest[1] = src[1];
           dest[2] = src[0];
           dest[3] = src[3];
-          src += 4;
+          src += bytesPerPixel;
           dest += 4;
         }
       } else {
@@ -153,7 +159,7 @@ namespace Luminous
         dest[0] = src[2];
         dest[1] = src[1];
         dest[2] = src[0];
-        src += 4;
+        src += bytesPerPixel;
         dest += 3;
       }
     }
