@@ -10,6 +10,7 @@ namespace Radiant
   class FutureBoolI
   {
   public:
+    virtual ~FutureBoolI() {}
     /// Are all Radiant::Tasks finished that are associated with this object
     /// If the job we are waiting for doesn't use tasks, return true
     virtual bool isReady() const = 0;
