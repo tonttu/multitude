@@ -651,8 +651,12 @@ namespace Luminous
 
     auto codec = codecs()->getCodec(filename, file);
     if(codec) {
-      result = codec->read(*this, file);
-      // m_dataReady = result;
+      try {
+        result = codec->read(*this, file);
+      } catch (std::bad_alloc & err) {
+        Radiant::error("Image::read # %s: %s", filename.toUtf8().data(), err.what());
+        result = false;
+      }
     } else {
       Radiant::error("Image::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
