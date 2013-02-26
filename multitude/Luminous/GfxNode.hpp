@@ -32,6 +32,10 @@ namespace Luminous
     /// @return true for the default implementation
     virtual bool isReady() const;
 
+    /// Is the object size known.
+    /// @sa isReady
+    virtual bool isHeaderReady() const;
+
     /// Callback is called when the node is ready or immediately if the node is already ready
     /// This is needed for ensuring that callbacks get called. For example the following
     /// code is not thread-safe:
@@ -55,14 +59,33 @@ namespace Luminous
       }, once, type);
     }
 
+    template <typename T>
+    void onHeaderReady(std::function<void(T*)> readyCallback, bool once = true, ListenerType type = AFTER_UPDATE)
+    {
+      onHeaderReady([readyCallback](Luminous::GfxNode * n) { readyCallback(static_cast<T*>(n)); }, once, type);
+    }
+
+    template <typename T, template <typename> class Ptr >
+    void onHeaderReady(std::function<void(Ptr<T>)> readyCallback, bool once = true, ListenerType type = AFTER_UPDATE)
+    {
+      onHeaderReady([readyCallback](Luminous::GfxNode * n) {
+        T* ptr = static_cast<T*>(n);
+        readyCallback(Ptr<T>(ptr));
+      }, once, type);
+    }
+
     void clearReadyCallbacks();
 
     void onReady(CallbackType readyCallback, bool once = true, ListenerType type = AFTER_UPDATE);
+
+    void onHeaderReady(CallbackType readyCallback, bool once = true, ListenerType type = AFTER_UPDATE);
 
     /// Same as other onReady-functions but supports functions taking none parameters
     //  In perfect world compiler could deduce the types more correctly but at least g++ 4.6.3
     //  had serious problems with type inference when function below was named "onReady"
     void onReadyVoid(std::function<void(void)> readyCallback, bool once = true, ListenerType type = AFTER_UPDATE);
+
+    void onHeaderReadyVoid(std::function<void(void)> callback, bool once = true, ListenerType type = AFTER_UPDATE);
 
   private:
     class D;

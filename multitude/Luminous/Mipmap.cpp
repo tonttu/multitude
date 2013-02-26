@@ -249,11 +249,6 @@ namespace Luminous
     std::shared_ptr<PingTask> m_ping;
     std::shared_ptr<MipMapGenerator> m_mipmapGenerator;
 
-    Radiant::Mutex m_headerReadyCallbacksMutex;
-    QList<QPair<std::function<void(void)>, ListenerType>> m_headerReadyCallbacks;
-    QList<QPair<std::function<void(void)>, ListenerType>> m_headerReadyOnceCallbacks;
-    int m_hasHeaderReadyListener;
-
     QString m_mipmapFormat;
 
     std::vector<MipmapLevel> m_levels;
@@ -657,7 +652,6 @@ namespace Luminous
     , m_maxLevel(0)
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
-    , m_hasHeaderReadyListener(0)
     , m_mipmapFormat("png")
     , m_expireSeconds(3.0f)
     , m_headerReady(nullptr, "", false)
@@ -669,11 +663,6 @@ namespace Luminous
 
   Mipmap::D::~D()
   {
-    {
-      Radiant::Guard g(m_headerReadyCallbacksMutex);
-      m_headerReadyCallbacks.clear();
-      m_headerReadyOnceCallbacks.clear();
-    }
     // Make a local copy, if PingTask is just finishing and removes m_d->m_ping
     std::shared_ptr<PingTask> ping = m_ping;
     if(ping) {
@@ -816,40 +805,6 @@ namespace Luminous
     float sx = Nimble::Vector2f(transform[0][0], transform[0][1]).length();
     float sy = Nimble::Vector2f(transform[1][0], transform[1][1]).length();
     return level(std::max(sx, sy) * pixelSize, trilinearBlending);
-  }
-
-  void Mipmap::onHeaderReady(std::function<void(void)> callback, bool once, ListenerType type)
-  {
-    std::weak_ptr<Mipmap> weak = shared_from_this();
-
-    Radiant::Guard g(m_d->m_headerReadyCallbacksMutex);
-
-    if((m_d->m_hasHeaderReadyListener & type) == 0) {
-      m_d->m_hasHeaderReadyListener |= type;
-      eventAddListener("header-ready", [=] {
-        //This might get called after dtor
-        std::shared_ptr<Mipmap> ptr = weak.lock();
-        if(!ptr) return;
-        assert(ptr->isHeaderReady());
-        Radiant::Guard g(ptr->m_d->m_headerReadyCallbacksMutex);
-        for (auto p : ptr->m_d->m_headerReadyCallbacks)
-          if (p.second == type)
-            p.first();
-        for (auto it = ptr->m_d->m_headerReadyOnceCallbacks.begin(); it != ptr->m_d->m_headerReadyOnceCallbacks.end();) {
-          if (it->second == type) {
-            it->first();
-            it = ptr->m_d->m_headerReadyOnceCallbacks.erase(it);
-          } else ++it;
-        }
-      }, type);
-    }
-
-    if(isHeaderReady()) {
-      callback();
-    } else if(once) {
-      m_d->m_headerReadyOnceCallbacks << qMakePair(callback, type);
-    }
-    if(!once) m_d->m_headerReadyCallbacks << qMakePair(callback, type);
   }
 
   unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending) const
