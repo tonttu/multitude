@@ -762,7 +762,7 @@ namespace Valuable
       }, type);
     }
 
-    if(isReady(false)) {
+    if(isReady()) {
       callback(this);
     } else if(once) {
       m_readyOnceCallbacks << qMakePair(callback, type);
@@ -776,7 +776,7 @@ namespace Valuable
     onReady([readyCallback](Valuable::Node*) { readyCallback();}, once, type);
   }
 
-  bool Node::isReady(bool) const
+  bool Node::isReady() const
   {
     return true;
   }

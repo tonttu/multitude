@@ -74,7 +74,7 @@ namespace Luminous
     LUMINOUS_API bool isHeaderReady() const;
 
     /// Mipmap is not ready, if it still has PingTask or MipmapGeneratorTask running/waiting
-    LUMINOUS_API bool isReady(bool f=false) const OVERRIDE;
+    LUMINOUS_API bool isReady() const OVERRIDE;
 
     LUMINOUS_API bool isValid() const;
 

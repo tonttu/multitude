@@ -102,7 +102,7 @@ namespace Valuable
       return addAttribute(name, &*attribute);
     }
 
-    virtual bool isReady(bool recursive) const;
+    virtual bool isReady() const;
 
     /// Callback is called when the node is ready or immediately if the node is already ready
     /// This is needed for ensuring that callbacks get called. For example the following

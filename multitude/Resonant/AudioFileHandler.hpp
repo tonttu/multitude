@@ -93,7 +93,7 @@ namespace Resonant {
       /// Rewinds the file to a given frame
       void rewind(long frame);
       /// Check if the file is ready for using.
-      bool isReady();
+      bool isReady() const;
 
     private:
 

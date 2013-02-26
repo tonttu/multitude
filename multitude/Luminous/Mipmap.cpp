@@ -905,7 +905,7 @@ namespace Luminous
     return native.y ? native.x / (float) native.y : 1.0f;
   }
 
-  bool Mipmap::isReady(bool) const
+  bool Mipmap::isReady() const
   {
     return m_d->m_ready;
   }

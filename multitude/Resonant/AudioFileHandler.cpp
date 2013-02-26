@@ -153,7 +153,7 @@ namespace Resonant {
     m_ready = false;
   }
 
-  bool AudioFileHandler::Handle::isReady()
+  bool AudioFileHandler::Handle::isReady() const
   {
     return m_ready && m_rewindTo < 0;
   }
