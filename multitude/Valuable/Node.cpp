@@ -139,8 +139,6 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
-      m_readyCallbacksMutex(new Radiant::Mutex()),
-      m_hasReadyListener(0),
       m_frame(0),
       m_listenersId(0)
   {}
@@ -150,8 +148,6 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(this, "id", generateId()),
-      m_readyCallbacksMutex(new Radiant::Mutex()),
-      m_hasReadyListener(0),
       m_frame(0),
       m_listenersId(0)
   {
@@ -159,9 +155,6 @@ namespace Valuable
 
   Node::~Node()
   {
-    // Make sure that any of the callbacks doesn't get access to this
-    clearReadyCallbacks();
-    m_readyCallbacksMutex.reset();
     // Host of HasValues class member ValueObjects must be zeroed to avoid double-delete
     m_id.removeHost();
 
@@ -218,10 +211,6 @@ namespace Valuable
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_valueListening(std::move(node.m_valueListening))
     , m_id(std::move(node.m_id))
-    , m_readyCallbacks(std::move(node.m_readyCallbacks))
-    , m_readyOnceCallbacks(std::move(node.m_readyOnceCallbacks))
-    , m_readyCallbacksMutex(std::move(node.m_readyCallbacksMutex))
-    , m_hasReadyListener(std::move(node.m_hasReadyListener))
     , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
@@ -239,10 +228,6 @@ namespace Valuable
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_valueListening = std::move(node.m_valueListening);
     m_id = std::move(node.m_id);
-    m_readyCallbacks = std::move(node.m_readyCallbacks);
-    m_readyOnceCallbacks = std::move(node.m_readyOnceCallbacks);
-    m_readyCallbacksMutex = std::move(node.m_readyCallbacksMutex);
-    m_hasReadyListener = std::move(node.m_hasReadyListener);
     m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
@@ -731,56 +716,6 @@ namespace Valuable
     return attr->addListener(func, role);
   }
 #endif
-
-  void Node::clearReadyCallbacks()
-  {
-    Radiant::Guard g(*m_readyCallbacksMutex);
-    m_readyCallbacks.clear();
-    m_readyOnceCallbacks.clear();
-  }
-
-  void Node::onReady(CallbackType callback, bool once, ListenerType type)
-  {
-    Radiant::Guard g(*m_readyCallbacksMutex);
-    std::weak_ptr<Radiant::Mutex> weak = m_readyCallbacksMutex;
-
-    if ((m_hasReadyListener & type) == 0) {
-      m_hasReadyListener |= type;
-      eventAddListener("ready", [=] {
-        std::shared_ptr<Radiant::Mutex> mptr = weak.lock();
-        if(!mptr) return;
-        Radiant::Guard g(*mptr);
-        for (auto p: m_readyCallbacks)
-          if (p.second == type)
-            p.first(this);
-        for (auto it = m_readyOnceCallbacks.begin(); it != m_readyOnceCallbacks.end();) {
-          if (it->second == type) {
-            it->first(this);
-            it = m_readyOnceCallbacks.erase(it);
-          } else ++it;
-        }
-      }, type);
-    }
-
-    if(isReady()) {
-      callback(this);
-    } else if(once) {
-      m_readyOnceCallbacks << qMakePair(callback, type);
-    }
-    if(!once) m_readyCallbacks << qMakePair(callback, type);
-  }
-
-
-  void Node::onReadyVoid(std::function<void(void)> readyCallback, bool once, ListenerType type)
-  {
-    onReady([readyCallback](Valuable::Node*) { readyCallback();}, once, type);
-  }
-
-  bool Node::isReady() const
-  {
-    return true;
-  }
-
   int Node::processQueue()
   {
     {

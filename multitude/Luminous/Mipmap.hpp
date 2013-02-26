@@ -14,7 +14,9 @@
 #ifndef LUMINOUS_MIPMAP_HPP
 #define LUMINOUS_MIPMAP_HPP
 
-#include "Luminous/Luminous.hpp"
+#include "Luminous.hpp"
+#include "GfxNode.hpp"
+
 #include "Radiant/Task.hpp"
 
 #include <Nimble/Vector2.hpp>
@@ -30,7 +32,7 @@ namespace Luminous
 
   /// This class provides a custom mipmap management for images loaded from
   /// disk.
-  class Mipmap : public Valuable::Node,
+  class Mipmap : public GfxNode,
                  public std::enable_shared_from_this<Mipmap>
   {
   public:
