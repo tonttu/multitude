@@ -320,6 +320,7 @@ namespace Valuable
 
     m_values[value->name()] = value;
     value->m_host  = this;
+    attributeAdded(value);
 
     return true;
   }
@@ -343,6 +344,7 @@ namespace Valuable
 
     m_values.erase(it);
     value->m_host = 0;
+    attributeRemoved(value);
   }
 
 #ifdef CORNERSTONE_JS
@@ -624,6 +626,14 @@ namespace Valuable
       }
     }
     return false;
+  }
+
+  void Node::attributeAdded(Attribute *)
+  {
+  }
+
+  void Node::attributeRemoved(Attribute *)
+  {
   }
 
   void Node::eventAddSource(Valuable::Node * source)

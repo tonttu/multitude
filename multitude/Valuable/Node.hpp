@@ -474,6 +474,11 @@ namespace Valuable
     /// The sender of the event, can be read in processMessage()
     Node * sender() { return m_sender; }
 
+    /// This is called when new attribute is added to Node
+    virtual void attributeAdded(Attribute * attribute);
+    /// This is called when attribute is removed from Node
+    virtual void attributeRemoved(Attribute * attribute);
+
   private:
     /// Adds an event source
     void eventAddSource(Valuable::Node * source);
