@@ -19,6 +19,8 @@
 
 #if defined(RADIANT_OSX)
 
+#include <Radiant/Trace.hpp>
+
 /* Dummy implementations of various OpenGL functions/macros which are present in
    full OpenGL, but not in Core OpenGL 3.2.
 
@@ -28,7 +30,11 @@
 
 namespace Luminous
 {
-  LUMINOUS_API void dummyWarn(const char * funcname, const char * file, int line);
+  inline void dummyWarn(const char * funcname, const char * file, int line)
+  {
+    Radiant::error("Unimplemented OpenGL call: %s in %s:%d", funcname, file, line);
+  }
+
   LUMINOUS_API int dummyEnum(const char * file, int line);
 }
 
