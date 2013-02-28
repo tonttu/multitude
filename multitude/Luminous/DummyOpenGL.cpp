@@ -18,7 +18,7 @@
 namespace Luminous
 {
 
-  void dumymWarn(const char * funcname, const char * file, int line)
+  void dummyWarn(const char * funcname, const char * file, int line)
   {
     Radiant::error("Unimplemented OpenGL call: %s in %s:%d", funcname, file, line);
   }

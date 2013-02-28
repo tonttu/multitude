@@ -28,19 +28,19 @@
 
 namespace Luminous
 {
-  LUMINOUS_API void dumymWarn(const char * funcname, const char * file, int line);
+  LUMINOUS_API void dummyWarn(const char * funcname, const char * file, int line);
   LUMINOUS_API int dummyEnum(const char * file, int line);
 }
 
 #define DUMMY_OPENGL_E(enu) Luminous::dummyEnum(__FILE__, __LINE__)
 
 #define DUMMY_OPENGL_M(macro) \
-    Luminous::dumymWarn(#macro, __FILE__, __LINE__)
+    Luminous::dummyWarn(#macro, __FILE__, __LINE__)
 
 #define DUMMY_OPENGL_0(func) inline void func()\
-    { Luminous::dumymWarn(#func, __FILE__, __LINE__); }
+    { Luminous::dummyWarn(#func, __FILE__, __LINE__); }
 #define DUMMY_OPENGL_1(func) inline void func(int) \
-    { Luminous::dumymWarn(#func, __FILE__, __LINE__); }
+    { Luminous::dummyWarn(#func, __FILE__, __LINE__); }
 
 // #define GL_QUADS
 
