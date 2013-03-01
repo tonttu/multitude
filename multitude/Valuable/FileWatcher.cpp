@@ -300,20 +300,18 @@ namespace Valuable
     // Files and directories behave differently
     const QString absolutePath = fi.isDir() ? fi.absoluteFilePath() : fi.absolutePath();
 
-    if (!m_d->m_directoryRefCounts.contains(absoluteFilePath)) {
-      // Nothing to remove
-      return;
+    if (m_d->m_directoryRefCounts.contains(absolutePath)) {
+
+      // Decrement reference count
+      int & refs = m_d->m_directoryRefCounts[absolutePath];
+      assert(refs > 0);
+      --refs;
+
+      // Remove the path if ref count is zero. If the argument is a directory,
+      // this will remove it
+      if(refs == 0)
+        m_d->m_watcher.removePath(absolutePath);
     }
-
-    // Decrement reference count
-    int & refs = m_d->m_directoryRefCounts[absolutePath];
-    assert(refs > 0);
-    --refs;
-
-    // Remove the path if ref count is zero. If the argument is a directory,
-    // this will remove it
-    if(refs == 0)
-      m_d->m_watcher.removePath(absolutePath);
 
     if(!fi.isDir()) {
       // If the argument is not a directory, the above check will not remove it
