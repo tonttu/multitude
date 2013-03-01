@@ -29,6 +29,7 @@ namespace Radiant
 
   BGThread::BGThread()
     : m_idle(0)
+    , m_runningTasksCount(0)
     , m_isShuttingDown(false)
   {
   }
@@ -319,6 +320,7 @@ namespace Radiant
       // Cancel all tasks
       for(auto & task : m_taskQueue)
         task.second->cancel();
+
 
       for(auto & task : m_reserved)
         task->cancel();
