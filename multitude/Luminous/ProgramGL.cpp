@@ -31,7 +31,7 @@ namespace Luminous
 
   ShaderGL::~ShaderGL()
   {
-    if(!m_handle)
+    if(m_handle)
       glDeleteShader(m_handle);
   }
 
@@ -169,7 +169,7 @@ namespace Luminous
     }
 
     glLinkProgram(m_handle);
-    //GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
+    GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
     // Check for linking errors
     GLint status;
     glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
