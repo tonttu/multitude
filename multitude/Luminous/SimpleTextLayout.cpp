@@ -115,6 +115,7 @@ namespace Luminous
     Valuable::StyleValue m_lineHeight;
     Valuable::StyleValue m_letterSpacing;
     QTextLayout m_layout;
+    QRectF m_boundingBox;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -169,6 +170,7 @@ namespace Luminous
     QFontMetricsF fontMetrics(font);
     const float leading = fontMetrics.leading();
 
+    m_boundingBox = QRectF();
     m_layout.beginLayout();
     while (true) {
       QTextLine line = m_layout.createLine();
@@ -182,8 +184,11 @@ namespace Luminous
         y += height;
       else
         y += line.height() * heightFactor;
+      m_boundingBox |= line.naturalTextRect();
     }
     m_layout.endLayout();
+    if (m_layout.text().isEmpty())
+      m_boundingBox = QRectF();
 
 #if 0
     static QAtomicInt id;
@@ -359,14 +364,13 @@ namespace Luminous
     if (!isLayoutReady()) {
       m_d->layout(maximumSize());
       // We need to avoid calling bounding box here, becourse it calls generateInternal
-      QRectF boundingBox = m_d->m_layout.boundingRect();
-      nonConst->setBoundingBox(boundingBox);
+      nonConst->setBoundingBox(m_d->m_boundingBox);
       auto align = m_d->m_layout.textOption().alignment();
 
       if (align & Qt::AlignBottom) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - boundingBox.height()));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - m_d->m_boundingBox.height()));
       } else if (align & Qt::AlignVCenter) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - boundingBox.height())));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - m_d->m_boundingBox.height())));
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }
