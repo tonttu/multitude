@@ -63,8 +63,8 @@ namespace Luminous
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_bufferIndex(0)
-        , m_defaultRenderTarget(RenderTarget::WINDOW)
-        , m_defaultOffScreenRenderTarget(RenderTarget::NORMAL)
+        , m_finalRenderTarget(RenderTarget::WINDOW)
+        , m_offScreenRenderTarget(RenderTarget::NORMAL)
         , m_currentRenderTarget(0)
         , m_postProcessFilters(0)
     {
@@ -73,15 +73,15 @@ namespace Luminous
 
       // Initialize default render target size
       assert(win);
-      m_defaultRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_finalRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
 
       // Set initial data for an off-screen render target
       // The hardware resource is not created if this is actually never bound
-      m_defaultOffScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
-      m_defaultOffScreenRenderTarget.setSamples(win->antiAliasingSamples());
+      m_offScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_offScreenRenderTarget.setSamples(win->antiAliasingSamples());
 
-      m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-      m_defaultOffScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+      m_offScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+      m_offScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", ShaderGLSL::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", ShaderGLSL::Fragment);
@@ -154,8 +154,8 @@ namespace Luminous
     RenderTarget & defaultRenderTarget()
     {
       return m_window->directRendering() ?
-            m_defaultRenderTarget :
-            m_defaultOffScreenRenderTarget;
+            m_finalRenderTarget :
+            m_offScreenRenderTarget;
     }
 
     size_t m_recursionLimit;
@@ -266,9 +266,10 @@ namespace Luminous
     BufferPool m_indexBuffers[BUFFERSETS];
     int m_bufferIndex;
 
-    // Default window framebuffer
-    RenderTarget m_defaultRenderTarget;
-    RenderTarget m_defaultOffScreenRenderTarget;
+    // Default window framebuffer. Eventually the result of the rendering pipeline end ups here
+    RenderTarget m_finalRenderTarget;
+    // Used when rendering non-directly/with postprocessing
+    RenderTarget m_offScreenRenderTarget;
     const RenderTarget * m_currentRenderTarget;
 
     // owned by Application
@@ -1392,7 +1393,7 @@ namespace Luminous
     // to avoid the guard.
     const Luminous::RenderTarget & renderTarget =
         m_data->m_postProcessChain.numEnabledFilters() > 0 ?
-          m_data->m_defaultOffScreenRenderTarget :
+          m_data->m_offScreenRenderTarget :
           m_data->defaultRenderTarget();
 
     assert(renderTarget.targetType() != RenderTarget::INVALID);
@@ -1408,22 +1409,24 @@ namespace Luminous
   {
     if(!m_data->m_window->directRendering()) {
       // Push window render target
-      m_data->m_defaultRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
-      m_data->m_driverGL->pushRenderTarget(m_data->m_defaultRenderTarget);
-      m_data->m_currentRenderTarget = &m_data->m_defaultRenderTarget;
+      m_data->m_finalRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
+      m_data->m_driverGL->pushRenderTarget(m_data->m_finalRenderTarget);
 
+      m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
       // Blit individual areas (from currently bound FBO)
       for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
         const Luminous::MultiHead::Area & area = m_data->m_window->area(i);
         blit(area.viewport(), area.viewport());
       }
+
+      m_data->m_driverGL->popRenderTarget();
     }
 
+    //Actual drawing
     flush();
     m_data->m_bufferIndex = (m_data->m_bufferIndex + 1) % RenderContext::Internal::BUFFERSETS;
 
     m_data->m_driver.postFrame();
-
     /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
     m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 10000);
     assert(m_data->m_renderCalls.size() == 1);
