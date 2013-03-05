@@ -36,6 +36,7 @@ HEADERS += AttributeRect.hpp
 HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
 HEADERS += XMLArchive.hpp
+HEADERS += State.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
@@ -55,6 +56,7 @@ SOURCES += AttributeBool.cpp
 SOURCES += AttributeObject.cpp
 SOURCES += AttributeString.cpp
 SOURCES += XMLArchive.cpp
+SOURCES += State.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 
