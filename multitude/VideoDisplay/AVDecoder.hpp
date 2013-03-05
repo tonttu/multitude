@@ -12,6 +12,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <Valuable/Node.hpp>
+#include <Valuable/State.hpp>
 
 #include <QMap>
 #include <QString>
@@ -88,9 +89,19 @@ namespace VideoDisplay
   };
 
   /// This class provices the actual audio/video decoder for the video player.
-  class VIDEODISPLAY_API AVDecoder : public Radiant::Thread, public Valuable::Node
+  class VIDEODISPLAY_API AVDecoder : public Radiant::Thread
   {
   public:
+    enum State
+    {
+      LOADING          = 1 << 1,
+      HEADER_READY     = 1 << 2,
+      READY            = 1 << 3,
+      ERROR            = 1 << 4,
+      FINISHED         = 1 << 5
+    };
+    typedef Valuable::State<State> VideoState;
+
     enum SeekType
     {
       SeekNone = 0,
@@ -291,6 +302,12 @@ namespace VideoDisplay
   public:
     virtual ~AVDecoder();
 
+    VideoState & state();
+    const VideoState & state() const;
+    bool finished() const;
+    bool isHeaderReady() const;
+    bool hasError() const;
+
     virtual void close() = 0;
 
     virtual PlayMode playMode() const = 0;
@@ -317,19 +334,21 @@ namespace VideoDisplay
     virtual VideoFrame * getFrame(const Timestamp & ts) const = 0;
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) = 0;
 
-    static std::unique_ptr<AVDecoder> create(const Options & options,
+    static std::shared_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");
 
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
     virtual void panAudioTo(Nimble::Vector2f location) const = 0;
 
-    virtual bool isReady() const = 0;
-    virtual bool hasError() const = 0;
 
   protected:
     AVDecoder();
     virtual void load(const Options & options) = 0;
+
+  private:
+    class D;
+    std::unique_ptr<D> m_d;
   };
   typedef std::shared_ptr<AVDecoder> AVDecoderPtr;
 }

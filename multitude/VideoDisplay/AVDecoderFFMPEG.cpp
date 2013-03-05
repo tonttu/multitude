@@ -28,6 +28,7 @@
 #include <Resonant/DSPNetwork.hpp>
 
 #include <Valuable/AttributeBool.hpp>
+#include <Valuable/State.hpp>
 
 #include <QSet>
 #include <QString>
@@ -276,9 +277,7 @@ namespace VideoDisplay
       : m_host(host)
       , m_seekGeneration(0)
       , m_running(true)
-      , m_finished(nullptr, "finished", false)
-      , m_error(nullptr, "error", false)
-      , m_ready(nullptr, "ready", false)
+      , m_state(Valuable::NEW)
       , m_av()
       , m_ptsCorrection()
       , m_realTimeSeeking(false)
@@ -302,9 +301,7 @@ namespace VideoDisplay
     int m_seekGeneration;
 
     bool m_running;
-    Valuable::AttributeBool m_finished;
-    Valuable::AttributeBool m_error;
-    Valuable::AttributeBool m_ready;
+    Valuable::LoadingState m_state;
 
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
@@ -1597,10 +1594,6 @@ namespace VideoDisplay
     : m_d(new D(this))
   {
     Thread::setName("AVDecoderFFMPEG");
-    eventAddOut("header-ready");
-    m_d->m_finished.addListener([=] { if (m_d->m_finished) eventSend("finished"); });
-    m_d->m_error.addListener([=] { if (m_d->m_error) eventSend("error"); });
-    m_d->m_ready.addListener([=] { if (m_d->m_ready) eventSend("ready"); });
   }
 
   AVDecoderFFMPEG::~AVDecoderFFMPEG()
@@ -1728,7 +1721,7 @@ namespace VideoDisplay
     }
 
     if(eof) {
-      *eof = m_d->m_finished && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
+      *eof = finished() && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->m_decodedVideoFrames.itemCount() <= 1;
     }
 
@@ -1780,16 +1773,6 @@ namespace VideoDisplay
 
       Resonant::DSPNetwork::instance()->send(control);
     }
-  }
-
-  bool AVDecoderFFMPEG::isReady() const
-  {
-    return m_d->m_ready;
-  }
-
-  bool AVDecoderFFMPEG::hasError() const
-  {
-    return m_d->m_error;
   }
 
   void AVDecoderFFMPEG::audioTransferDeleted()
@@ -1848,12 +1831,10 @@ namespace VideoDisplay
     ffmpegInit();
 
     if(!m_d->open()) {
-      m_d->m_ready = true;
-      m_d->m_finished = true;
-      m_d->m_error = true;
+      state() = ERROR;
       return;
     }
-    eventSend("header-ready");
+    state() = HEADER_READY;
 
     enum EofState {
       Normal,
@@ -1902,8 +1883,9 @@ namespace VideoDisplay
         ///       read_packet to make sure we actually are at eof
         if(err != AVERROR_EOF) {
           avError(QString("%1 Read error").arg(errorMsg.data()), err);
-          m_d->m_error = true;
-          break;
+          state() = ERROR;
+          s_src = nullptr;
+          return;
         }
 
         if(av.needFlushAtEof) {
@@ -1991,7 +1973,7 @@ namespace VideoDisplay
       av_free_packet(&av.packet);
 
       if (gotFrames)
-        m_d->m_ready = true;
+        state() = READY;
 
       if (m_d->m_audioTransfer) {
         if (!Nimble::Math::isNAN(audioDpts))
@@ -2021,8 +2003,7 @@ namespace VideoDisplay
       }
     }
 
-    m_d->m_ready = true;
-    m_d->m_finished = true;
+    state() = FINISHED;
     s_src = nullptr;
   }
 
