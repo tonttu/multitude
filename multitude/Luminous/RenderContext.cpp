@@ -1503,7 +1503,7 @@ namespace Luminous
     first->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
     {
       auto g = pushRenderTarget(first->renderTarget());
-      blit(viewport, viewport);
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
     first->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
 
