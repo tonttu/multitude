@@ -277,7 +277,7 @@ namespace VideoDisplay
       : m_host(host)
       , m_seekGeneration(0)
       , m_running(true)
-      , m_state(Valuable::NEW)
+      , m_state(Valuable::STATE_NEW)
       , m_av()
       , m_ptsCorrection()
       , m_realTimeSeeking(false)

@@ -9,11 +9,11 @@
 namespace Valuable
 {
   enum LoadingEnum {
-    NEW             = 1 << 0,
-    LOADING         = 1 << 1,
-    HEADER_READY    = 1 << 2,
-    READY           = 1 << 3,
-    ERROR           = 1 << 4
+    STATE_NEW             = 1 << 0,
+    STATE_LOADING         = 1 << 1,
+    STATE_HEADER_READY    = 1 << 2,
+    STATE_READY           = 1 << 3,
+    STATE_ERROR           = 1 << 4
   };
 
   /// @cond

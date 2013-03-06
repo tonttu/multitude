@@ -62,7 +62,7 @@ namespace VideoDisplay
 
   bool AVDecoder::hasError() const
   {
-    return m_d->m_state == Valuable::ERROR;
+    return m_d->m_state == Valuable::STATE_ERROR;
   }
 
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)

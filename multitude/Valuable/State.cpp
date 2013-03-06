@@ -84,14 +84,14 @@ namespace Valuable
 
     for (auto it = m_onceCallbacks.begin(); it != m_onceCallbacks.end();) {
       auto & c = it->second;
-      if (c.m_direct == direct && (c.m_stateMask & newState)) {
+      if (c.m_direct == direct && ((c.m_stateMask & newState) == newState)) {
         c.m_callback(newState);
         it = m_onceCallbacks.erase(it);
       } else ++it;
     }
 
     for (auto & p: m_callbacks)
-      if (p.second.m_direct == direct && (p.second.m_stateMask & newState))
+      if (p.second.m_direct == direct && ((p.second.m_stateMask & newState) == newState))
         p.second.m_callback(newState);
   }
 
@@ -149,7 +149,7 @@ namespace Valuable
   {
     Radiant::Guard g(m_d->m_stateMutex);
     int state = m_d->m_state;
-    if (state & stateMask) {
+    if ((state & stateMask) == state) {
       if (direct) {
         callback(state);
       } else {

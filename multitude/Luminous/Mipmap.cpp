@@ -278,9 +278,9 @@ namespace Luminous
     }
     lock(*mipmap, m_level);
     if (recursiveLoad(*mipmap, m_level)) {
-      setState(*mipmap, Valuable::READY);
+      setState(*mipmap, Valuable::STATE_READY);
     } else {
-      setState(*mipmap, Valuable::ERROR);
+      setState(*mipmap, Valuable::STATE_ERROR);
     }
     unlock(*mipmap, m_level);
     setFinished();
@@ -438,13 +438,13 @@ namespace Luminous
     if(!im->read(m_filename, m_level)) {
       Radiant::error("LoadCompressedImageTask::doTask # Could not read %s level %d", m_filename.toUtf8().data(), m_level);
       m_tex.lastUsed = LoadError;
-      setState(*mipmap, Valuable::ERROR);
+      setState(*mipmap, Valuable::STATE_ERROR);
     } else {
       m_tex.texture.setData(im->width(), im->height(), im->compression(), im->data());
       m_tex.cimage = std::move(im);
       int now = frameTime();
       m_tex.lastUsed.testAndSetOrdered(Loading, now);
-      setState(*mipmap, Valuable::READY);
+      setState(*mipmap, Valuable::STATE_READY);
     }
     setFinished();
   }
@@ -499,14 +499,14 @@ namespace Luminous
     if(!Luminous::Image::ping(mipmap.m_filenameAbs, mipmap.m_sourceInfo)) {
       Radiant::error("PingTask::doPing # failed to query image size for %s",
                      mipmap.m_filenameAbs.toUtf8().data());
-      mipmap.m_state = Valuable::ERROR;
+      mipmap.m_state = Valuable::STATE_ERROR;
       return false;
     }
 
     if(!s_dxtSupported && mipmap.m_sourceInfo.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
       Radiant::error("PingTask::doPing # Image %s has unsupported format",
                      mipmap.m_filenameAbs.toUtf8().data());
-      mipmap.m_state = Valuable::ERROR;
+      mipmap.m_state = Valuable::STATE_ERROR;
       return false;
     }
 
@@ -574,7 +574,7 @@ namespace Luminous
     }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
-    mipmap.m_state = Valuable::HEADER_READY;
+    mipmap.m_state = Valuable::STATE_HEADER_READY;
 
 #ifndef LUMINOUS_OPENGLES
     if(mipmap.m_mipmapGenerator) {
@@ -649,7 +649,7 @@ namespace Luminous
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
     , m_mipmapFormat("png")
     , m_expireSeconds(3.0f)
-    , m_state(Valuable::NEW)
+    , m_state(Valuable::STATE_NEW)
   {
     MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
   }
@@ -848,18 +848,18 @@ namespace Luminous
 
   bool Mipmap::isReady() const
   {
-    return m_d->m_state.state() == Valuable::READY;
+    return m_d->m_state.state() == Valuable::STATE_READY;
   }
 
   bool Mipmap::isHeaderReady() const
   {
     auto s = m_d->m_state.state();
-    return s == Valuable::READY || s == Valuable::HEADER_READY;
+    return s == Valuable::STATE_READY || s == Valuable::STATE_HEADER_READY;
   }
 
   bool Mipmap::isValid() const
   {
-    return m_d->m_state != Valuable::ERROR;
+    return m_d->m_state != Valuable::STATE_ERROR;
   }
 
   bool Mipmap::hasAlpha() const
@@ -969,7 +969,7 @@ namespace Luminous
     m_d->m_compressedMipmapInfo = imginfo;
 
     m_d->m_mipmapGenerator.reset();
-    m_d->m_state = Valuable::READY;
+    m_d->m_state = Valuable::STATE_READY;
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);
   }
@@ -1035,7 +1035,7 @@ namespace Luminous
   void Mipmap::startLoading(bool compressedMipmaps)
   {
     assert(!m_d->m_ping);
-    m_d->m_state = Valuable::LOADING;
+    m_d->m_state = Valuable::STATE_LOADING;
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
   }
