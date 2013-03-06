@@ -201,6 +201,7 @@ namespace Luminous
   {
   public:
     FontGenerator(FontCache::D & cache);
+    virtual ~FontGenerator();
 
   protected:
     virtual void initialize() OVERRIDE;
@@ -283,6 +284,11 @@ namespace Luminous
     }, AFTER_UPDATE);
   }
 
+  FontCache::FontGenerator::~FontGenerator()
+  {
+    finished();
+  }
+
   void FontCache::FontGenerator::initialize()
   {
     if (!m_cache.m_fileCacheLoaded)
@@ -335,7 +341,12 @@ namespace Luminous
     // delete these in this thread
     m_painter.reset();
     m_painterImg.reset();
-    m_cache.m_cacheCondition.wakeAll(m_cache.m_cacheMutex);
+    {
+      Radiant::Guard g(m_cache.m_cacheMutex);
+      m_cache.m_request.clear();
+      m_cache.m_cacheCondition.wakeAll();
+      m_cache.m_taskCreated = false;
+    }
   }
 
   FontCache::Glyph * FontCache::FontGenerator::generateGlyph(QPainterPath path, quint32 glyphIndex)
@@ -607,16 +618,21 @@ namespace Luminous
 
   FontCache::Glyph * FontCache::glyph(quint32 glyph)
   {
-    Radiant::Guard g(m_d->m_cacheMutex);
-    auto it = m_d->m_cache.find(glyph);
-    if (it != m_d->m_cache.end())
-      return it->second;
+    bool createTask = false;
+    {
+      Radiant::Guard g(m_d->m_cacheMutex);
+      auto it = m_d->m_cache.find(glyph);
+      if (it != m_d->m_cache.end())
+        return it->second;
 
-    m_d->m_request.insert(glyph);
-    if (!m_d->m_taskCreated) {
-      m_d->m_taskCreated = true;
-      Radiant::BGThread::instance()->addTask(std::make_shared<FontGenerator>(*m_d));
+      m_d->m_request.insert(glyph);
+      if (!m_d->m_taskCreated) {
+        m_d->m_taskCreated = true;
+        createTask = true;
+      }
     }
+    if (createTask)
+      Radiant::BGThread::instance()->addTask(std::make_shared<FontGenerator>(*m_d));
     return nullptr;
   }
 
