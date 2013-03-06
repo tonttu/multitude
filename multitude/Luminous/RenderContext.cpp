@@ -665,7 +665,7 @@ namespace Luminous
     SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
 
     char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE |
-                                  Buffer::MAP_INVALIDATE_RANGE | Buffer::MAP_FLUSH_EXPLICIT);
+                                  Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
@@ -761,7 +761,7 @@ namespace Luminous
     if(indexCount > 0) {
       // Now we are ready to bind index buffer (driver made sure that VAO is bound)
       char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE |
-                                    Buffer::MAP_INVALIDATE_RANGE | Buffer::MAP_FLUSH_EXPLICIT);
+                                    Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
       mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
       indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
       ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
