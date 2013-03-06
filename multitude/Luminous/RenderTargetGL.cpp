@@ -144,7 +144,7 @@ namespace Luminous
 
   void RenderTargetGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
   {
-    glFramebufferRenderbuffer(bindTarget(m_bind), attachment, GL_RENDERBUFFER, renderBuffer.handle());
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
     GLERROR("RenderTargetGL::attach # glFramebufferRenderbuffer");
   }
 
@@ -155,14 +155,14 @@ namespace Luminous
     texture.bind(0);
     GLERROR("RenderTargetGL::attach # mmoo");
 
-    glFramebufferTexture(bindTarget(m_bind), attachment, texture.handle(), 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
     GLERROR("RenderTargetGL::attach # glFramebufferTexture");
   }
 
   void RenderTargetGL::detach(GLenum attachment)
   {
     /// @todo what about textures?
-    glFramebufferRenderbuffer(bindTarget(m_bind), attachment, GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
     GLERROR("RenderTargetGL::deattach # glFramebufferRenderbuffer");
   }
 
