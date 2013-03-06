@@ -277,7 +277,6 @@ namespace VideoDisplay
       : m_host(host)
       , m_seekGeneration(0)
       , m_running(true)
-      , m_state(Valuable::STATE_NEW)
       , m_av()
       , m_ptsCorrection()
       , m_realTimeSeeking(false)
@@ -301,7 +300,6 @@ namespace VideoDisplay
     int m_seekGeneration;
 
     bool m_running;
-    Valuable::LoadingState m_state;
 
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
@@ -1831,10 +1829,10 @@ namespace VideoDisplay
     ffmpegInit();
 
     if(!m_d->open()) {
-      state() = ERROR;
+      state() = STATE_ERROR;
       return;
     }
-    state() = HEADER_READY;
+    state() = STATE_HEADER_READY;
 
     enum EofState {
       Normal,
@@ -1883,7 +1881,7 @@ namespace VideoDisplay
         ///       read_packet to make sure we actually are at eof
         if(err != AVERROR_EOF) {
           avError(QString("%1 Read error").arg(errorMsg.data()), err);
-          state() = ERROR;
+          state() = STATE_ERROR;
           s_src = nullptr;
           return;
         }
@@ -1973,7 +1971,7 @@ namespace VideoDisplay
       av_free_packet(&av.packet);
 
       if (gotFrames)
-        state() = READY;
+        state() = STATE_READY;
 
       if (m_d->m_audioTransfer) {
         if (!Nimble::Math::isNAN(audioDpts))
@@ -2003,7 +2001,7 @@ namespace VideoDisplay
       }
     }
 
-    state() = FINISHED;
+    state() = STATE_FINISHED;
     s_src = nullptr;
   }
 

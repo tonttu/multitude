@@ -94,11 +94,11 @@ namespace VideoDisplay
   public:
     enum State
     {
-      LOADING          = 1 << 1,
-      HEADER_READY     = 1 << 2,
-      READY            = 1 << 3,
-      ERROR            = 1 << 4,
-      FINISHED         = 1 << 5
+      STATE_LOADING          = 1 << 1,
+      STATE_HEADER_READY     = 1 << 2,
+      STATE_READY            = 1 << 3,
+      STATE_ERROR            = 1 << 4,
+      STATE_FINISHED         = 1 << 5
     };
     typedef Valuable::State<State> VideoState;
 

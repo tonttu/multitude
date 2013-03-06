@@ -28,7 +28,7 @@ namespace VideoDisplay
   };
 
   AVDecoder::D::D()
-    : m_state(AVDecoder::LOADING)
+    : m_state(AVDecoder::STATE_LOADING)
   {}
 
   AVDecoder::AVDecoder()
@@ -52,17 +52,17 @@ namespace VideoDisplay
 
   bool AVDecoder::finished() const
   {
-    return m_d->m_state == ERROR || m_d->m_state == FINISHED;
+    return m_d->m_state == STATE_ERROR || m_d->m_state == STATE_FINISHED;
   }
 
   bool AVDecoder::isHeaderReady() const
   {
-    return m_d->m_state == HEADER_READY || m_d->m_state == READY || m_d->m_state == FINISHED;
+    return m_d->m_state == STATE_HEADER_READY || m_d->m_state == STATE_READY || m_d->m_state == STATE_FINISHED;
   }
 
   bool AVDecoder::hasError() const
   {
-    return m_d->m_state == Valuable::STATE_ERROR;
+    return m_d->m_state == STATE_ERROR;
   }
 
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
