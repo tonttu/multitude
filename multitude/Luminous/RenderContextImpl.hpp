@@ -104,6 +104,27 @@ namespace Luminous
 
     return b;
   }
+
+  template <typename InputIterator>
+  void RenderContext::drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style)
+  {
+    /// @todo Can't rely on supported point sizes. Should this just call drawCircle instead for values > 1
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_POINT, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
+    for (size_t i = 0; i < numPoints; ++i, ++begin)
+      b.vertex[i].location = *begin;
+  }
+
+  template <typename InputIterator>
+  void RenderContext::drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style)
+  {
+    assert(style.strokeWidth() > 0.f);
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    /// @todo Can't rely on supported line sizes. Should just make triangle strips for values > 1
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, numVertices, program, style.strokeColor(), style.strokeWidth(), style);
+    for (size_t i = 0; i < numVertices; ++i, ++begin)
+      b.vertex[i].location = *begin;
+  }
 }
 
 #endif // LUMINOUS_RENDER_CONTEXT_IMPL_HPP

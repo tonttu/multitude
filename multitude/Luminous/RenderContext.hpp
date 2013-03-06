@@ -195,27 +195,32 @@ namespace Luminous
 
     // Render utility functions:
 
-    /** Draw an arc
-      @param center center of the arc
-      @param radius radius of the arc
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      @param style color and other parameters for the arc
-      @param lineSegments number of steps
-      */
+    /// Draw an arc defined as a segment of circle
+    /// @param center Center of the arc
+    /// @param radius Radius of the arc
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
+    /// @param style Stroke definition of the arc (color, width)
+    /// @param lineSegments Number of steps (precision)
     void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, const Luminous::Style & style, unsigned int lineSegments = 0);
 
-    /** Draw a circle
-      @param center center of the circle
-      @param radius radius of the circle
-      @param style color and other parameters for the circle
-      @param lineSegments number of steps
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      */
+    /// Draw a possibly filled circle
+    /// @param center Center of the circle
+    /// @param radius Radius of the circle
+    /// @param style Stroke and fill definitions of the circle (colors and stroke width)
+    /// @param lineSegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
     void drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
-
+    /// Draws an ellipse
+    /// @param center Center of the ellipse
+    /// @param axis Axis of the ellipse (orientation and size)
+    /// @param otherAxisLength The length of the other axis
+    /// @param style Stroke and fill definitions similar to circle
+    /// @param lineSegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
     void drawEllipse(Nimble::Vector2f center,
                      Nimble::Vector2f axis,
                      float otherAxisLength,
@@ -223,16 +228,15 @@ namespace Luminous
                      unsigned int lineSegments = 0,
                      float fromRadians = 0, float toRadians = Nimble::Math::TWO_PI);
 
-    /** Draws a constant width donut.
-      @param center center of the donut
-      @param axis axis of the ellipse
-      @param otherAxisLength axis of the ellipse
-      @param width width of the donut
-      @param style color and other parameters for the donut
-      @param linesegments number of steps to use
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-     */
+    /// Draws a constant width donut defined as an ellipse and a hole in the center.
+    /// @param center Center of the donut
+    /// @param axis Axis of the ellipse (orientation and size)
+    /// @param otherAxisLength Other axis legth of the ellipse.
+    /// @param width The width of the donut.
+    /// @param style Stroke and fill definitions. Can be textured as well.
+    /// @param linesegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
     void drawDonut(const Nimble::Vector2f & center,
                    Nimble::Vector2 axis,
                    float otherAxisLength,
@@ -247,7 +251,7 @@ namespace Luminous
       @param radius2 outer radius
       @param fromRadians start angle in radians
       @param toRadians end angle in radians
-      @param segments number of segments to use
+      @param segments number of segments (precision)
       @param style color and other parameters for the wedge
       */
     void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, Style & style, int segments);
@@ -285,9 +289,27 @@ namespace Luminous
       const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
 
     void drawRectWithHole(const Nimble::Rectf & area, const Nimble::Rect & hole, const Luminous::Style & style);
+
+    /// Draws a line
+    /// @param p1 Start point of the line
+    /// @param p2 End point of the line
+    /// @param style Stroke definition of a line.
     void drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style);
-    void drawPolyLine(const Nimble::Vector2f * vertices, unsigned int numVertices, const Luminous::Style & style);
-    void drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style);
+
+    /// Draws a polyline
+    /// @param begin Initial position of sequence
+    /// @param numVertices Number of vertices (one more than lines in polyline)
+    /// @param style Stroke definition of a line.
+    template <typename InputIterator>
+    void drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style);
+
+    /// Draws a set of points
+    /// @param begin Initial position of sequence
+    /// @param numPoints Number of points
+    /// @param style Color and size passed as stroke parameters
+    template <typename InputIterator>
+    void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
+
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
     void drawRect(const Nimble::Rectf & rect, const Style & style);
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);

@@ -1019,26 +1019,6 @@ namespace Luminous
     }
   }
 
-  //
-  void RenderContext::drawPolyLine(const Nimble::Vector2f * points, unsigned int numPoints, const Luminous::Style & style)
-  {
-    assert(style.strokeWidth() > 0.f);
-    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    /// @todo Can't rely on supported line sizes. Should just make triangle strips for values > 1
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
-    for (size_t i = 0; i < numPoints; ++i)
-      b.vertex[i].location = points[i];
-  }
-
-  void RenderContext::drawPoints(const Nimble::Vector2f * points, size_t numPoints, const Luminous::Style & style)
-  {
-    /// @todo Can't rely on supported point sizes. Should this just call drawCircle instead for values > 1
-    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_POINT, 0, numPoints, program, style.strokeColor(), style.strokeWidth(), style);
-    for (size_t i = 0; i < numPoints; ++i)
-      b.vertex[i].location = points[i];
-  }
-
   void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
                                const Nimble::Rectf & viewRect, const TextStyle & style)
   {
