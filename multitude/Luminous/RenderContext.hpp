@@ -330,7 +330,18 @@ namespace Luminous
     void drawQuad(const Nimble::Vector2 * v, const Nimble::Vector2 * uvs, const Style & style);
 
 
+    /// Draws text
+    /// @param layout Text object to render
+    /// @param location Text location in viewRect
+    /// @param viewRect Where the text is located
+    /// @param style Text style properties
     void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const TextStyle & style);
+
+    /// Draws given string
+    /// @param text String to render
+    /// @param rect Where to render, acts also as a clipping rectangle
+    /// @param style Text style properties
+    /// @param flags Will text layout be dynamic or static
     void drawText(const QString & text, const Nimble::Rectf & rect, const TextStyle & style, TextFlags flags = TextStatic);
 
     /// Adds the render counter by one

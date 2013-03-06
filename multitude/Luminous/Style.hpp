@@ -41,19 +41,38 @@ namespace Luminous
   public:
     Stroke() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_width(0.f) {}
 
-    Luminous::Program * program() const { return m_program; }
+    /// Shader program to be used for stroke
+    const Luminous::Program * program() const { return m_program; }
+
+    /// Sets the shader program
+    /// @param program Program to use
     void setProgram(Luminous::Program & program) { m_program = &program; }
+
+    /// Sets the stroke program to defautl
     void setDefaultProgram() { m_program = nullptr; }
 
+    /// Sets the width of the stroke
     void setWidth(float width) { m_width = width; }
+
+    /// Returns the width of the stroke
     float width() const { return m_width; }
 
+    /// Sets the color of the stroke
     void setColor(const Radiant::Color & color) { m_color = color; }
+    /// Returns the color of the stroke
     const Radiant::Color & color() const { return m_color; }
 
     // Shader uniforms
+    /// Add shader uniform
+    /// @param name Name for the uniform
+    /// @param value Value of the uniform
     template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+
+    /// Remove shader uniform
+    /// @param name Name of the uniform to be removed
     void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+
+    /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
 
   private:
@@ -70,26 +89,53 @@ namespace Luminous
   public:
     Fill() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_translucentTextures(false) {}
 
+    /// Returns the color of the fill
     const Radiant::Color & color() const { return m_color; }
+    /// Sets the color of the fill
     void setColor(const Radiant::Color & c) { m_color = c; }
 
+    /// Shader program to be used for fill
     const Luminous::Program * program() const { return m_program; }
+
+    /// Sets the shader program
+    /// @param program Program to use
     void setProgram(const Luminous::Program & program) { m_program = &program; }
+
+    /// Sets the fill program to default
     void setDefaultProgram() { m_program = nullptr; }
 
+    /// Returns the texture tied to given name
+    /// @param name Name to search from textures
+    /// @return Pointer to texture. nullptr if not found.
     inline const Luminous::Texture * texture(const QByteArray & name);
-    inline void findTexture(const QByteArray & name, const Texture *&texture);
 
+    /// Sets default fill texture.
+    /// Internally this ties the given texture to the identifier "tex".
+    /// @param texture Texture to be used for filling
     inline void setTexture(const Luminous::Texture & texture) { setTexture("tex", texture); }
+
+    /// Sets fill texture with name
+    /// @param name Name to use in shader to refer to texture
+    /// @param texture Texture to be tied with the name
     inline void setTexture(const QByteArray & name, const Texture &texture);
 
+    /// Returns the mapping from names to fill textures
     const std::map<QByteArray, const Texture *> & textures() const { return m_textures; }
 
+    /// Does the object contain translucent textures
     bool hasTranslucentTextures() const { return m_translucentTextures; }
 
     // Shader uniforms
+    /// Add shader uniform
+    /// @param name Name for the uniform
+    /// @param value Value of the uniform
     template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+
+    /// Remove shader uniform
+    /// @param name Name of the uniform to be removed
     void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+
+    /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
 
   private:
@@ -104,43 +150,91 @@ namespace Luminous
   };
 
   /// Style object for giving rendering parameters to the RenderContext
+  /// Style objects acts as a collection of fill and stroke parameters and
+  /// shader uniforms.
   class Style
   {
   public:
     Style() {}
 
+    /// Stroke object of the style
     Stroke & stroke() { return m_stroke; }
+    /// Stroke object of the style
     const Stroke & stroke() const { return m_stroke; }
 
+    /// Fill object of the style
     Fill & fill() { return m_fill; }
+    /// Fill object of the style
     const Fill & fill() const { return m_fill; }
 
-    /// Returns the color of the object to be drawn
+    /// Returns the fill color
     const Radiant::Color & fillColor() const { return m_fill.color(); }
-    /// Sets the color of the object to be drawn
+
+    /// Sets the fill color
+    /// @param c Fill color
     void setFillColor(const Radiant::Color & c) { m_fill.setColor(c); }
-    /// Sets the color of the object to be drawn
+
+    /// Sets the fill color
+    /// @param r Red intensity
+    /// @param g Green intensity
+    /// @param b Blue intensity
+    /// @param a Opacity (alpha)
     void setFillColor(float r, float g, float b, float a) { m_fill.setColor(Radiant::Color(r, g, b, a)); }
 
+    /// Returns the shader program used for fill
     const Luminous::Program * fillProgram() const { return m_fill.program(); }
+
+    /// Sets the shader program used for fill
     void setFillProgram(const Luminous::Program & program) { m_fill.setProgram(program); }
+
+    /// Sets the fill program to default
     void setDefaultFillProgram() { m_fill.setDefaultProgram(); }
 
+    /// Sets fill shader uniform
+    /// @param name Name of the uniform
+    /// @param value Value of the uniform
     template <typename T> void setFillShaderUniform(const QByteArray & name, const T & value) { m_fill.setShaderUniform(name, value); }
+
+    /// Sets stroke shader uniform
+    /// @param name Name of the uniform
+    /// @param value Value of the uniform
     template <typename T> void setStrokeShaderUniform(const QByteArray & name, const T & value) { m_stroke.setShaderUniform(name, value); }
 
-    Luminous::Program * strokeProgram() const { return m_stroke.program(); }
+    /// Returns the shader program used for stroke
+    const Luminous::Program * strokeProgram() const { return m_stroke.program(); }
+
+    /// Sets the shader program used for stroke
     void setStrokeProgram(Luminous::Program & program) { m_stroke.setProgram(program); }
+
+    /// Sets the stroke program to default
     void setDefaultStrokeProgram() { m_stroke.setDefaultProgram(); }
 
+    /// Sets the stroke color
+    /// @param r Red intensity
+    /// @param g Green intensity
+    /// @param b Blue intensity
+    /// @param a Opacity (alpha)
     void setStrokeColor(float r, float g, float b, float a) { m_stroke.setColor(Radiant::Color(r, g, b, a)); }
+
+    /// Sets the stroke color
+    /// @param color Stroke color
     void setStrokeColor(const Radiant::Color & color) { m_stroke.setColor(color); }
+
+    /// Returns the stroke color of the
     const Radiant::Color & strokeColor() const { return m_stroke.color(); }
 
+    /// Sets the width of the stroke
+    /// @param width The stroke width
     void setStrokeWidth(float width) { m_stroke.setWidth(width); }
+    /// Returns the width of the stroke
     float strokeWidth() const { return m_stroke.width(); }
 
+    /// @copydoc Fill::setTexture
     void setTexture(const Luminous::Texture & texture) { m_fill.setTexture(texture); }
+
+    /// Sets fill texture with name
+    /// @param name Name to use in shader to refer to texture
+    /// @param texture Texture to be tied with the name
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
   private:
@@ -266,16 +360,6 @@ namespace Luminous
   {
     auto it = m_textures.find(name);
     return it == m_textures.end() ? nullptr : it->second;
-  }
-
-  void Fill::findTexture(const QByteArray & name, const Luminous::Texture *& texture)
-  {
-    auto it = m_textures.find(name);
-    if(it == m_textures.end()) {
-      texture = nullptr;
-    } else {
-      texture = it->second;
-    }
   }
 
   void Fill::setTexture(const QByteArray & name, const Luminous::Texture & texture)
