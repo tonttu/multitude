@@ -585,33 +585,6 @@ namespace Luminous
     popTransform();
   }
 
-  void RenderContext::drawWedge(const Nimble::Vector2f & center, float radius1,
-                                float radius2, float fromRadians, float toRadians,
-                                Style & style,
-                                int segments)
-  {
-    // @todo Create fill geometry
-
-    // Draw two arcs
-    drawArc(center, radius1, fromRadians, toRadians, style, segments);
-    drawArc(center, radius2, fromRadians, toRadians, style, segments);
-
-    // Draw sector edges
-    /// @todo these look a bit crappy as the blending doesn't match  the arcs properly
-    Nimble::Vector2f p0 =
-        center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-    Nimble::Vector2f p1 =
-        center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-
-    Nimble::Vector2f p2 =
-        center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
-    Nimble::Vector2f p3 =
-        center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
-
-    drawLine(p0, p1, style);
-    drawLine(p2, p3, style);
-  }
-
   void RenderContext::addRenderCounter()
   {
     m_data->m_renderCount++;

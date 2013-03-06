@@ -233,7 +233,7 @@ namespace Luminous
     /// @param axis Axis of the ellipse (orientation and size)
     /// @param otherAxisLength Other axis legth of the ellipse.
     /// @param width The width of the donut.
-    /// @param style Stroke and fill definitions. Can be textured as well.
+    /// @param style Stroke, fill and texturing definitions.
     /// @param linesegments Number of steps (precision)
     /// @param fromRadians Start angle in radians
     /// @param toRadians End angle in radians
@@ -244,17 +244,6 @@ namespace Luminous
                    const Luminous::Style & style,
                    unsigned int linesegments = 0,
                    float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
-
-    /** Draws a cut sector in a circle or a wedge.
-      @param center center of the circle
-      @param radius1 inner radius
-      @param radius2 outer radius
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      @param segments number of segments (precision)
-      @param style color and other parameters for the wedge
-      */
-    void drawWedge(const Nimble::Vector2f & center, float radius1, float radius2, float fromRadians, float toRadians, Style & style, int segments);
 
     /// Push the given opacity to render context. The resulting opacity will be
     /// the current opacity multiplied by the given value.
