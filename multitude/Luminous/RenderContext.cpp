@@ -883,7 +883,29 @@ namespace Luminous
 
     // Draw the outline
     if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
-      Radiant::warning("RenderContext::drawQuad # Stroke is not implemented");
+      Luminous::Style s;
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      int order[] = {0, 1, 3, 2, 0};
+      std::vector<Nimble::Vector2> outline;
+      outline.resize(4);
+      float w = style.strokeWidth();
+      for(size_t i = 0; i < sizeof(order)/sizeof(int) - 1; ++i) {
+        const Nimble::Vector2& p0 = vertices[order[i]];
+        const Nimble::Vector2& p1 = vertices[order[i+1]];
+        const Nimble::Vector2 nDiff = (p1 - p0).normalized();
+        const Nimble::Vector2 perp(-nDiff.y, nDiff.x);
+
+        outline[0] = p0 - w*(nDiff + perp);
+        outline[1] = p0 - w*(nDiff - perp);
+        outline[2] = p1 + w*(nDiff - perp);
+        outline[3] = p1 + w*(nDiff + perp);
+        drawQuad(outline.data(), nullptr, s);
+      }
     }
   }
 

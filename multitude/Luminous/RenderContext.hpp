@@ -288,6 +288,10 @@ namespace Luminous
     RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
       const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
 
+    /// Draws a rectangle with rectangular hole
+    /// @param area Outer rectangle
+    /// @param hole Inner rectangle defining the hole
+    /// @param style Stroke, fill and texturing options
     void drawRectWithHole(const Nimble::Rectf & area, const Nimble::Rect & hole, const Luminous::Style & style);
 
     /// Draws a line
@@ -310,12 +314,33 @@ namespace Luminous
     template <typename InputIterator>
     void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
 
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param max Top right corner of a rectangle
+    /// @param style Stroke, fill and texturing options
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
+
+    /// Draws a rectangle
+    /// @param rext Rectangle to draw
+    /// @param style Stroke, fill and texturing options
     void drawRect(const Nimble::Rectf & rect, const Style & style);
+
+    /// Draws a rectangle
+    /// @param rect Rectangle to draw
+    /// @param uvs Texture coordinates
+    /// @param style Stroke, fill and texturing options
     void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
-    /// Renders a quad
-    /// Stroke is not implemented for quads at the moment
-    void drawQuad(const Nimble::Vector2 * vertices, const Nimble::Vector2 * uvs, const Style & style);
+
+    /// Draws a quad with two triangles.
+    /// The vertices of the first triangle are v[0], v[1], v[2]. The second triangle is
+    /// defined by vertices v[1], v[3] and v[2]. Both of the triangles are assumed to have a
+    /// counterclockwise orientation.
+    /// @param v Vertices of a quad
+    /// @param uvs Texture coordinates for the vertices
+    /// @param style Stroke, fill and texturing options
+    void drawQuad(const Nimble::Vector2 * v, const Nimble::Vector2 * uvs, const Style & style);
+
+
     void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const TextStyle & style);
     void drawText(const QString & text, const Nimble::Rectf & rect, const TextStyle & style, TextFlags flags = TextStatic);
 
