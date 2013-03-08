@@ -27,31 +27,47 @@ namespace Luminous
     /// See http://www.opengl.org/sdk/docs/man3/xhtml/glDepthFunc.xml for details.
     enum Function
     {
+      /// Never pass comparison of depth test
       NEVER         = GL_NEVER,
+      /// Pass the incoming value if it is less than the stored value
       LESS          = GL_LESS,
+      /// Pass if the values are equal
       EQUAL         = GL_EQUAL,
+      /// Pass if the incoming value is less or equal
       LESS_EQUAL    = GL_LEQUAL,
+      /// Pass the incoming value if it is greeater than the stored value
       GREATER       = GL_GREATER,
+      /// Pass if the values are not equal
       NOT_EQUAL     = GL_NOTEQUAL,
+      /// Pass if the incoming value is greater or equal
       GREATER_EQUAL = GL_GEQUAL,
+      /// Pass always
       ALWAYS        = GL_ALWAYS
     };
 
   public:
+    /// Default depth mode
+    /// @return DepthMode with default settings
     static DepthMode Default() { return DepthMode(); }
 
     /// Construct a default depth mode. The default mode consists of LESS
     /// function with range set to (0, 1).
     LUMINOUS_API DepthMode();
 
+    /// Set function for depth comparisons
+    /// @paran function Function to use in comparisons
     void setFunction(Function function) { m_function = function; }
+    /// Returns the function used in depth comparisons
+    /// @return Function to use in comparisons
     Function function() const { return m_function; }
 
     /// Specify the mapping of depth values from normalized device coordinates to window coordinates.
     /// See http://www.opengl.org/sdk/docs/man3/xhtml/glDepthRange.xml for details.
+    /// @param range Depth range to use in window coordinates
     void setRange(const Nimble::Rangef & range) { m_range = range; }
     /// Get the mapping of depth values
     /// @sa setRange
+    /// @return Current range used for depth values
     const Nimble::Rangef & range() const { return m_range; }
 
   private:
@@ -59,6 +75,9 @@ namespace Luminous
     Nimble::Rangef m_range;
   };
 
+  /// Inequality comparison of DepthMode objects
+  /// @param lhs Left side operand
+  /// @param rhs Right side operand
   inline bool operator!=(const DepthMode & lhs, const DepthMode & rhs)
   {
     return
@@ -66,6 +85,9 @@ namespace Luminous
       || lhs.range() != rhs.range();
   }
 
+  /// Equality comparison of DepthMode objects
+  /// @param lhs Left side operand
+  /// @param rhs Right side operand
   inline bool operator==(const DepthMode & lhs, const DepthMode & rhs) { return !(lhs!=rhs); }
 }
 

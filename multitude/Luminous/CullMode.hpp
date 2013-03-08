@@ -26,15 +26,18 @@ namespace Luminous
     /// Returns the default culling mode. The mode will cull back-facing primitives.
     static CullMode Default() { return CullMode(); }
 
+    /// Default constructor for cull mode
     LUMINOUS_API CullMode();
     /// Construct a new CullMode
-    /// @param enabled is culling enabled or not
-    /// @param face which faces are culled
+    /// @param enabled Is culling enabled or not
+    /// @param face Which faces are culled
     LUMINOUS_API CullMode(bool enabled, Luminous::Face face);
 
     /// Check if culling is enabled
+    /// @return True if enabled
     bool enabled() const { return m_enabled; }
     /// Check which faces are culled
+    /// @return Face to be culled
     Luminous::Face face() const { return m_face; }
 
   private:

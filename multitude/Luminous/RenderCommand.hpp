@@ -29,9 +29,9 @@
 #include <array>
 #include <utility>
 
-/// @cond
 namespace Luminous
 {
+/// @cond
   struct RenderCommand
   {
     PrimitiveType primitiveType;
@@ -49,31 +49,46 @@ namespace Luminous
     std::array<std::pair<int, int>, 8> samplers;
     std::array<std::pair<int, ShaderUniform>, 8> uniforms;
   };
+/// @endcond
   
+  /// The most basic type of vertex to use with shader programs.
+  /// Contains only 2D location of the vertex.
   struct BasicVertex
   {
+    /// The location of the vertex.
     Nimble::Vector2f location;
   };
 
+  /// Vertex to use with shader programs that use texturing.
   struct BasicVertexUV
   {
+    /// The location of the vertex
     Nimble::Vector2f location;
+    /// The texture coordinate of the vertex.
     Nimble::Vector2f texCoord;
   };
 
+/// @cond
   struct FontVertex : public BasicVertexUV
   {
     float invsize;
   };
+/// @endocde
 
+  /// Uniform block to use with most of the shaders included in Luminous.
   struct BasicUniformBlock
   {
+    /// Projection matrix for the geometry. Transforms vertices from world to clip coordinates.
     Nimble::Matrix4f projMatrix;
+    /// Model matrix for the geometry. Transforms vertices from model to world coordinates.
     Nimble::Matrix4f modelMatrix;
+    /// Color of the vertices.
     Nimble::Vector4f color;
+    /// Depth of the vertices.
     float depth;
   };
 
+/// @cond
   struct FontUniformBlock
   {
     Nimble::Matrix4f projMatrix;
@@ -94,7 +109,7 @@ namespace Luminous
     float split;
     float depth;
   };
+/// @endcond
 }
 
-/// @endcond
 #endif // LUMINOUS_RENDERCOMMAND_HPP

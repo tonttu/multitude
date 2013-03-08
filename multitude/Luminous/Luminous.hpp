@@ -68,11 +68,17 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   enum PrimitiveType
   {
+    /// Primitive corresponding to separate triangles
     PRIMITIVE_TRIANGLE       = GL_TRIANGLES,
+    /// Primitive corresponding to triangle strips
     PRIMITIVE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
+    /// Primitive corresponding to triangle fan
     PRIMITIVE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
+    /// Primitive corresponding to line
     PRIMITIVE_LINE           = GL_LINES,
+    /// Primitive corresponding to line strip
     PRIMITIVE_LINE_STRIP     = GL_LINE_STRIP,
+    /// Primitive corresponding to points
     PRIMITIVE_POINT          = GL_POINTS
   };
 

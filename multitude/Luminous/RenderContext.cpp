@@ -604,16 +604,16 @@ namespace Luminous
   }
 
   RenderContext::SharedBuffer* RenderContext::findAvailableBuffer(
-      std::size_t vertexSize, std::size_t vertexCount, Buffer::Type type)
+      std::size_t elementSize, std::size_t elementCount, Buffer::Type type)
   {
     int bufferIndex = m_data->m_bufferIndex;
     Internal::BufferPool & pool = type == Buffer::INDEX
         ? m_data->m_indexBuffers[bufferIndex]
         : type == Buffer::VERTEX
-          ? m_data->m_vertexBuffers[bufferIndex][vertexSize]
-          : m_data->m_uniformBuffers[bufferIndex][vertexSize];
+          ? m_data->m_vertexBuffers[bufferIndex][elementSize]
+          : m_data->m_uniformBuffers[bufferIndex][elementSize];
 
-    const std::size_t requiredBytes = vertexSize * vertexCount;
+    const std::size_t requiredBytes = elementSize * elementCount;
 
     SharedBuffer * buffer = nullptr;
     std::size_t nextSize = 1 << 20;
@@ -1283,9 +1283,9 @@ namespace Luminous
   // All these commands generate a RenderCommand that can be reordered
   //
   //////////////////////////////////////////////////////////////////////////
-  void RenderContext::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
+  void RenderContext::clear(ClearMask mask, const Radiant::Color & clearColor, double clearDepth, int clearStencil)
   {
-    m_data->m_driver.clear(mask, color, depth, stencil);
+    m_data->m_driver.clear(mask, clearColor, clearDepth, clearStencil);
   }
 
   const Program & RenderContext::basicShader() const
