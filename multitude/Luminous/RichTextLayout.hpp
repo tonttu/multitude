@@ -23,7 +23,7 @@ class QTextDocument;
 namespace Luminous
 {
   /// Rich text document layout
-  class RichTextLayout : public TextLayout, public Patterns::NotCopyable
+  class RichTextLayout : public TextLayout
   {
   public:
     LUMINOUS_API RichTextLayout(const Nimble::Vector2f & size = Nimble::Vector2f(100, 100));

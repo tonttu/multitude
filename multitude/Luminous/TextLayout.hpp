@@ -14,6 +14,8 @@
 #ifndef LUMINOUS_TEXTLAYOUT_HPP
 #define LUMINOUS_TEXTLAYOUT_HPP
 
+#include <Valuable/Node.hpp>
+
 #include <Luminous/RenderCommand.hpp>
 
 #include <Nimble/Rect.hpp>
@@ -24,8 +26,11 @@
 class QGlyphRun;
 
 namespace Luminous {
-  
-  class TextLayout
+  /// TextLayout is the base class for different implementations of text layouting.
+  /// It is a node since it sends layout-event
+  /// @event[out] layout New layout has been made - boundingBox and other
+  ///                    things might have changed.
+  class TextLayout : public Valuable::Node
   {
   public:
     /// The bounds for a single glyph in the layout

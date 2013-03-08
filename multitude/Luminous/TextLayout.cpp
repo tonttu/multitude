@@ -126,7 +126,9 @@ namespace Luminous
 
   TextLayout::TextLayout(const Nimble::Vector2f & maximumSize)
     : m_d(new D(maximumSize))
-  {}
+  {
+    eventAddOut("layout");
+  }
 
   TextLayout::~TextLayout()
   {
@@ -136,11 +138,13 @@ namespace Luminous
   TextLayout::TextLayout(const TextLayout & t)
     : m_d(new D(*t.m_d))
   {
+    eventAddOut("layout");
   }
 
   TextLayout::TextLayout(TextLayout && t)
     : m_d(t.m_d)
   {
+    eventAddOut("layout");
     t.m_d = nullptr;
   }
 
@@ -236,7 +240,11 @@ namespace Luminous
 
   void TextLayout::setLayoutReady(bool v)
   {
+    if (v == m_d->m_layoutReady)
+      return;
     m_d->m_layoutReady = v;
+    if (v)
+      eventSend("layout");
   }
 
   bool TextLayout::isLayoutReady() const
