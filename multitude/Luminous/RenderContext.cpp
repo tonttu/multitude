@@ -48,7 +48,7 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
-    enum { MAX_TEXTURES = 64, BUFFERSETS = 2 };
+    enum { MAX_TEXTURES = 64, BUFFERSETS = 4 };
 
     Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
@@ -641,7 +641,7 @@ namespace Luminous
   {
     SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
 
-    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE |
+    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
                                   Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
     assert(data);
     data += buffer->reservedBytes;
@@ -737,7 +737,7 @@ namespace Luminous
           translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
     if(indexCount > 0) {
       // Now we are ready to bind index buffer (driver made sure that VAO is bound)
-      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE |
+      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
                                     Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
       mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
       indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
