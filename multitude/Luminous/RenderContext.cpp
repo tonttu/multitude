@@ -63,6 +63,7 @@ namespace Luminous
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_bufferIndex(0)
+        , m_useOffScreenRenderTarget(false)
         , m_finalRenderTarget(RenderTarget::WINDOW)
         , m_offScreenRenderTarget(RenderTarget::NORMAL)
         , m_currentRenderTarget(0)
@@ -265,6 +266,9 @@ namespace Luminous
     std::map<std::size_t, BufferPool> m_uniformBuffers[BUFFERSETS];
     BufferPool m_indexBuffers[BUFFERSETS];
     int m_bufferIndex;
+
+    // Updated before each frame
+    bool m_useOffScreenRenderTarget;
 
     // Default window framebuffer. Eventually the result of the rendering pipeline end ups here
     RenderTarget m_finalRenderTarget;
@@ -1363,17 +1367,22 @@ namespace Luminous
 
     m_data->m_driver.preFrame();
 
-    // Push the render target for drawing the scene. Use an off-screen render
-    // target if we have post-process filters. Don't use the RenderContext API
+    // Push render target attached to back buffer. Don't use the RenderContext API
     // to avoid the guard.
-    const Luminous::RenderTarget & renderTarget =
-        m_data->m_postProcessChain.numEnabledFilters() > 0 ?
-          m_data->m_offScreenRenderTarget :
-          m_data->defaultRenderTarget();
+    m_data->m_driverGL->pushRenderTarget(m_data->m_finalRenderTarget);
+    m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
 
-    assert(renderTarget.targetType() != RenderTarget::INVALID);
-    m_data->m_driverGL->pushRenderTarget(renderTarget);
-    m_data->m_currentRenderTarget = &renderTarget;
+    // Check if we need an auxiliary render target (save this so we can pop when we are done)
+    m_data->m_useOffScreenRenderTarget = !m_data->m_window->directRendering() ||
+        m_data->m_postProcessChain.numEnabledFilters() > 0;
+
+    // Push auxiliary render target if needed
+    if(m_data->m_useOffScreenRenderTarget) {
+      m_data->m_driverGL->pushRenderTarget(m_data->m_offScreenRenderTarget);
+      m_data->m_currentRenderTarget = &m_data->m_offScreenRenderTarget;
+    }
+
+    assert(m_data->m_currentRenderTarget->targetType() != RenderTarget::INVALID);
 
     // Push default opacity
     assert(m_data->m_opacityStack.empty());
@@ -1386,8 +1395,8 @@ namespace Luminous
       // Push window render target
       m_data->m_finalRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
       m_data->m_driverGL->pushRenderTarget(m_data->m_finalRenderTarget);
-
       m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
+
       // Blit individual areas (from currently bound FBO)
       for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
         const Luminous::MultiHead::Area & area = m_data->m_window->area(i);
@@ -1395,6 +1404,12 @@ namespace Luminous
       }
 
       m_data->m_driverGL->popRenderTarget();
+    }
+
+    // Pop our auxiliary render target if we have used it
+    if(m_data->m_useOffScreenRenderTarget) {
+      m_data->m_driverGL->popRenderTarget();
+      m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
     }
 
     //Actual drawing
