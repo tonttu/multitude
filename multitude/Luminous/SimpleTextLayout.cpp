@@ -238,6 +238,8 @@ namespace Luminous
     : TextLayout(that.maximumSize())
     , m_d(new D(that.m_d->m_layout))
   {
+    m_d->m_letterSpacing = that.m_d->m_letterSpacing;
+    m_d->m_lineHeight = that.m_d->m_lineHeight;
   }
 
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,

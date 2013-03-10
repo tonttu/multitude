@@ -135,27 +135,17 @@ namespace Luminous
     delete m_d;
   }
 
-  TextLayout::TextLayout(const TextLayout & t)
-    : m_d(new D(*t.m_d))
-  {
-    eventAddOut("layout");
-  }
-
   TextLayout::TextLayout(TextLayout && t)
-    : m_d(t.m_d)
+    : Node(std::move(t))
+    , m_d(t.m_d)
   {
     eventAddOut("layout");
     t.m_d = nullptr;
   }
 
-  TextLayout & TextLayout::operator=(const TextLayout & t)
-  {
-    *m_d = *t.m_d;
-    return *this;
-  }
-
   TextLayout & TextLayout::operator=(TextLayout && t)
   {
+    Node::operator=(std::move(t));
     std::swap(m_d, t.m_d);
     return *this;
   }

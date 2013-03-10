@@ -28,6 +28,8 @@ namespace Luminous
   {
   public:
     LUMINOUS_API SimpleTextLayout();
+    /// Makes a new layout object based on another SimpleTextLayout,
+    /// doesn't copy anything from Valuable::Node
     LUMINOUS_API SimpleTextLayout(const SimpleTextLayout & that);
     LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
                                   const QFont & font, const QTextOption & textOption);
