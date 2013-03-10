@@ -223,13 +223,14 @@ namespace Nimble
 
   Nimble::Rect Rectangle::boundingBox() const
   {
-    std::vector<Nimble::Vector2f> points;
-    computeCorners(points);
+    const Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
+    const Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
 
-    Nimble::Rect bb;
-
-    for(size_t i = 0; i < points.size(); ++i)
-      bb.expand(points[i]);
+    Nimble::Rectf bb;
+    bb.expand(m_origin - extAxis0 - extAxis1);
+    bb.expand(m_origin + extAxis0 - extAxis1);
+    bb.expand(m_origin + extAxis0 + extAxis1);
+    bb.expand(m_origin - extAxis0 + extAxis1);
 
     return bb;
   }
