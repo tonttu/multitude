@@ -78,7 +78,12 @@ namespace Luminous
       , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
-    {}
+    {
+      m_state.program = nullptr;
+      m_state.textures[0] = nullptr;
+      m_state.uniformBuffer = nullptr;
+      m_state.vertexArray = nullptr;
+    }
 
     typedef std::vector<GLuint> AttributeList;
     AttributeList m_activeAttributes;
