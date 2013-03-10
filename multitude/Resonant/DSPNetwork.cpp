@@ -811,10 +811,16 @@ namespace Resonant {
 
   Module * DSPNetwork::findModule(const QByteArray & id)
   {
+    Radiant::Guard g(m_newMutex);
     Item * item = findItem(id);
 
-    if(!item)
+    if(!item) {
+      for (Item & item: m_newItems)
+        if (item.m_module->id() == id)
+          return item.module();
+
       return 0;
+    }
 
     return item->m_module;
   }
