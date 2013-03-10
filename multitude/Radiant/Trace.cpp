@@ -184,41 +184,47 @@ namespace Radiant {
 
     Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
-    {
+    // Skip duplicates
+    if(enabledDuplicateFilter()) {
       Guard lock(g_mutex);
+      std::string tmp(storage);
+      if(g_lastLogLine == tmp)
+        return;
 
-      // Skip duplicates
-      if(enabledDuplicateFilter()) {
-        std::string tmp(storage);
-        if(g_lastLogLine == tmp)
-          return;
+      g_lastLogLine = tmp;
+    }
 
-        g_lastLogLine = tmp;
-      }
+    time_t t = now.value() >> 24;
+    /// localtime is not thread-safe on unix, and localtime_r isn't defined in windows
+#ifdef RADIANT_WINDOWS
+    struct tm * ts = localtime(&t);
+#else
+    struct tm tmp;
+    struct tm * ts = localtime_r(&t, &tmp);
+#endif
 
-      time_t t = now.value() >> 24;
-      /// localtime is not thread-safe
-      struct tm * ts = localtime(&t);
-
-      fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
-              ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
-              ts->tm_hour, ts->tm_min, ts->tm_sec,
-              int(now.subSecondsUS()) / 1000, colors_end, storage,
-              colors_end);
+    fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
+            ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+            ts->tm_hour, ts->tm_min, ts->tm_sec,
+            int(now.subSecondsUS()) / 1000, colors_end, storage,
+            colors_end);
 
 #ifdef _WIN32
     // Log to the Windows debug-console as well
     char logmsg[256];
-    vsnprintf(logmsg, 256, msg, args);
+    int len = _snprintf(logmsg, 16, "[thr:%d] ", GetCurrentThreadId());
 
-    char threadId[16];
-    _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
-
-    OutputDebugStringA(threadId);
-    OutputDebugStringA(logmsg);
-    OutputDebugStringA("\n");
-#endif
+    int len2 = vsnprintf(logmsg+len, 256-len, msg, args);
+    if (len + len2 > 254 || len2 < 0) {
+      logmsg[254] = '\n';
+      logmsg[255] = '\0';
+    } else {
+      logmsg[len+len2] = '\n';
+      logmsg[len+len2+1] = '\0';
     }
+
+    OutputDebugStringA(logmsg);
+#endif
     fflush(out);
   }
 
