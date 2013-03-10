@@ -58,7 +58,13 @@ namespace Valuable
       return true;
     }
 
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    void set(const Nimble::Vector2f & v, Layer layer = USER)
+    {
+      m_factors[layer][0] = m_factors[layer][1] = std::numeric_limits<float>::quiet_NaN();
+      setValue(v, layer);
+    }
+
+    virtual bool set(const Nimble::Vector2f & v, Layer layer, QList<ValueUnit> units) OVERRIDE
     {
       Nimble::Vector2f f(v);
       for(int j = 0; j < m_factors[layer].Elements; ++j) {
