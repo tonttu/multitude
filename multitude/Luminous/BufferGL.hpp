@@ -30,6 +30,7 @@ namespace Luminous
 
     LUMINOUS_API void bind(Buffer::Type type);
     LUMINOUS_API void upload(const Buffer &buffer, Buffer::Type type);
+    LUMINOUS_API void upload(Buffer::Type type, int offset, std::size_t length, const void * data);
 
     LUMINOUS_API void * map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
     LUMINOUS_API void unmap(Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));

@@ -72,7 +72,7 @@ namespace Luminous
       if(buffer.size() != m_allocatedSize || buffer.usage() != m_usage) {
         glBufferData(type, buffer.size(), buffer.data(), buffer.usage());
         GLERROR("BufferGL::upload # glBufferData");
-      } else {
+      } else if (buffer.data()) {
         glBufferSubData(type, 0, buffer.size(), buffer.data());
         GLERROR("BufferGL::upload # glBufferSubData");
       }
@@ -83,6 +83,18 @@ namespace Luminous
       m_uploaded = buffer.size();
       m_usage = buffer.usage();
     }
+  }
+
+  void BufferGL::upload(Buffer::Type type, int offset, std::size_t length, const void * data)
+  {
+    touch();
+    bind(type);
+    if (length + offset > m_size)
+      m_size = length + offset;
+    if (m_allocatedSize < m_size)
+      allocate(type);
+    glBufferSubData(type, offset, length, data);
+    GLERROR("BufferGL::upload # glBufferSubData");
   }
 
   void * BufferGL::map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access)

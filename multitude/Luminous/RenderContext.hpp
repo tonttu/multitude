@@ -39,6 +39,8 @@
 
 #include <QRectF>
 
+// #define RENDERCONTEXT_SHAREDBUFFER_MAP
+
 namespace Luminous
 {
   class GLSLProgramObject;
@@ -117,26 +119,37 @@ namespace Luminous
     };
 
 /// @cond
+
     struct SharedBuffer
     {
       SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
       SharedBuffer(SharedBuffer && shared)
         : buffer(std::move(shared.buffer)),
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+          data(std::move(shared.data)),
+#endif
           type(shared.type),
           reservedBytes(shared.reservedBytes)
       {}
       SharedBuffer & operator=(SharedBuffer && shared)
       {
         buffer = std::move(shared.buffer);
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+        std::swap(data, shared.data);
+#endif
         type = shared.type;
         reservedBytes = shared.reservedBytes;
         return *this;
       }
 
       Buffer buffer;
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+      std::vector<char> data;
+#endif
       Buffer::Type type;
       std::size_t reservedBytes;
     };
+
 /// @endcond
 
     /// Constructs a new render context and associates the given resources to it

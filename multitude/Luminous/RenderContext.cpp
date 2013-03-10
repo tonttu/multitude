@@ -254,7 +254,12 @@ namespace Luminous
           if (it->reservedBytes > 0) {
             // @todo Investigate if orphaning is any faster on multi-screen/multi-GPU setups
             // it->buffer.setData(nullptr, it->buffer.size(), Buffer::STREAM_DRAW);
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
             ctx.unmapBuffer(it->buffer, it->type, 0, it->reservedBytes);
+#else
+            BufferGL & b = ctx.handle(it->buffer);
+            b.upload(it->type, 0, it->reservedBytes, it->data.data());
+#endif
             it->reservedBytes = 0;
           }
         }
@@ -624,6 +629,9 @@ namespace Luminous
         buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::STREAM_DRAW);
         /// Fix the generation so it doesn't get automatically overwritten by an upload()
         buffer->buffer.setGeneration(0);
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+        buffer->data.resize(buffer->buffer.size());
+#endif
         break;
       }
 
@@ -641,8 +649,12 @@ namespace Luminous
   {
     SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
 
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
     char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
                                   Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
+#else
+    char * data = buffer->data.data();
+#endif
     assert(data);
     data += buffer->reservedBytes;
     offset = buffer->reservedBytes / vertexSize;
@@ -737,8 +749,12 @@ namespace Luminous
           translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
     if(indexCount > 0) {
       // Now we are ready to bind index buffer (driver made sure that VAO is bound)
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
       char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
                                     Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
+#else
+      char * data = ibuffer->data.data();
+#endif
       mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
       indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
       ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
