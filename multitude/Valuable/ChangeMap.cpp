@@ -11,6 +11,8 @@
  * 
  */
 
+#if 0
+
 #include "ChangeMap.hpp"
 
 #include <Radiant/Trace.hpp>
@@ -51,3 +53,5 @@ namespace Valuable
   }
 
 }
+
+#endif

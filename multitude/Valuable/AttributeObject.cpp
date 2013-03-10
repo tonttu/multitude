@@ -230,7 +230,7 @@ namespace Valuable
         } else l.func();
       }
     }
-    ChangeMap::addChange(this);
+    //ChangeMap::addChange(this);
   }
 
   void Attribute::emitDelete()
@@ -251,7 +251,7 @@ namespace Valuable
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
     m_listeners.clear();
-    ChangeMap::addDelete(this);
+    //ChangeMap::addDelete(this);
   }
 
   void Attribute::removeHost()

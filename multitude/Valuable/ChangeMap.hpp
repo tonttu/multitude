@@ -14,6 +14,7 @@
 #ifndef VALUABLE_CHANGEMAP_HPP
 #define VALUABLE_CHANGEMAP_HPP
 
+#if 0
 #include <Valuable/Export.hpp>
 
 #include <set>
@@ -51,5 +52,6 @@ namespace Valuable
   };
 
 }
+#endif
 
 #endif
