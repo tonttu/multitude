@@ -40,6 +40,12 @@ namespace Luminous
   {
   public:
     Stroke() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_width(0.f) {}
+    Stroke(Stroke && s) : m_color(s.m_color), m_program(s.m_program), m_uniforms(std::move(s.m_uniforms)), m_width(s.m_width) {}
+    Stroke(const Stroke & s) : m_color(s.m_color), m_program(s.m_program), m_width(s.m_width)
+    {
+      if (s.m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*s.m_uniforms));
+    }
 
     /// Shader program to be used for stroke
     const Luminous::Program * program() const { return m_program; }
@@ -66,19 +72,23 @@ namespace Luminous
     /// Add shader uniform
     /// @param name Name for the uniform
     /// @param value Value of the uniform
-    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) {
+      if (!m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>());
+      (*m_uniforms)[name] = ShaderUniform(value);
+    }
 
     /// Remove shader uniform
     /// @param name Name of the uniform to be removed
-    void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+    void removeShaderUniform(const QByteArray & name) { if (m_uniforms) m_uniforms->erase(name); }
 
     /// Returns the mapping from names to shader uniforms
-    const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
+    const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
   private:
     Radiant::Color m_color;
     Luminous::Program * m_program;
-    std::map<QByteArray, ShaderUniform> m_uniforms;
+    std::unique_ptr<std::map<QByteArray, ShaderUniform> > m_uniforms;
     float m_width;
   };
 
@@ -88,6 +98,15 @@ namespace Luminous
   {
   public:
     Fill() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_translucentTextures(false) {}
+    Fill(Fill && f) : m_color(f.m_color), m_program(f.m_program), m_textures(std::move(f.m_textures)),
+      m_uniforms(std::move(f.m_uniforms)), m_translucentTextures(f.m_translucentTextures) {}
+    Fill(const Fill & f) : m_color(f.m_color), m_program(f.m_program), m_translucentTextures(f.m_translucentTextures)
+    {
+      if (f.m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*f.m_uniforms));
+      if (f.m_textures)
+        m_textures.reset(new std::map<QByteArray, const Texture *>(*f.m_textures));
+    }
 
     /// Returns the color of the fill
     const Radiant::Color & color() const { return m_color; }
@@ -120,30 +139,36 @@ namespace Luminous
     inline void setTexture(const QByteArray & name, const Texture &texture);
 
     /// Returns the mapping from names to fill textures
-    const std::map<QByteArray, const Texture *> & textures() const { return m_textures; }
+    const std::map<QByteArray, const Texture *> * textures() const { return m_textures.get(); }
 
     /// Does the object contain translucent textures
     bool hasTranslucentTextures() const { return m_translucentTextures; }
+
+    bool hasTextures() const { return m_textures && !m_textures->empty(); }
 
     // Shader uniforms
     /// Add shader uniform
     /// @param name Name for the uniform
     /// @param value Value of the uniform
-    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) { m_uniforms[name] = ShaderUniform(value); }
+    template <typename T> void setShaderUniform(const QByteArray & name, const T & value) {
+      if (!m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>());
+      (*m_uniforms)[name] = ShaderUniform(value);
+    }
 
     /// Remove shader uniform
     /// @param name Name of the uniform to be removed
-    void removeShaderUniform(const QByteArray & name) { m_uniforms.erase(name); }
+    void removeShaderUniform(const QByteArray & name) { if (m_uniforms) m_uniforms->erase(name); }
 
     /// Returns the mapping from names to shader uniforms
-    const std::map<QByteArray, ShaderUniform> & uniforms() const { return m_uniforms; }
+    const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
   private:
     Radiant::Color m_color;
     const Luminous::Program * m_program;
 
-    std::map<QByteArray, const Texture *> m_textures;
-    std::map<QByteArray, ShaderUniform> m_uniforms;
+    std::unique_ptr<std::map<QByteArray, const Texture *> > m_textures;
+    std::unique_ptr<std::map<QByteArray, ShaderUniform> > m_uniforms;
     bool m_translucentTextures;
 
     friend class Style;
@@ -156,6 +181,8 @@ namespace Luminous
   {
   public:
     Style() {}
+    Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)) {}
+    Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke) {}
 
     /// Stroke object of the style
     Stroke & stroke() { return m_stroke; }
@@ -238,9 +265,6 @@ namespace Luminous
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
   private:
-    typedef std::vector< std::shared_ptr<ShaderUniform> > UniformList;
-    UniformList m_uniforms;
-
     Fill m_fill;
     Stroke m_stroke;
   };
@@ -358,13 +382,17 @@ namespace Luminous
 
   const Texture *Fill::texture(const QByteArray & name)
   {
-    auto it = m_textures.find(name);
-    return it == m_textures.end() ? nullptr : it->second;
+    if (!m_textures)
+      return nullptr;
+    auto it = m_textures->find(name);
+    return it == m_textures->end() ? nullptr : it->second;
   }
 
   void Fill::setTexture(const QByteArray & name, const Luminous::Texture & texture)
   {
-    m_textures[name] = &texture;
+    if (!m_textures)
+      m_textures.reset(new std::map<QByteArray, const Texture *>());
+    (*m_textures)[name] = &texture;
     m_translucentTextures = m_translucentTextures || texture.translucent();
   }
 }

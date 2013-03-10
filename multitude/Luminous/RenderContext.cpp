@@ -518,7 +518,7 @@ namespace Luminous
     /// Generate the fill builders
     bool isTextured = false;
     if(isFilled) {
-      if (style.fill().textures().empty()) {
+      if (!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         fill = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
       }
@@ -774,7 +774,7 @@ namespace Luminous
   void RenderContext::drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style)
   {
     if (style.fillColor().w > 0.f) {
-      if(style.fill().textures().empty()) {
+      if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
         b.vertex[0].location = rect.low();
@@ -832,7 +832,7 @@ namespace Luminous
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
     if (style.fillColor().w > 0.f) {
-      if(style.fill().textures().empty()) {
+      if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
         b.vertex[0].location = vertices[0];
@@ -892,7 +892,7 @@ namespace Luminous
                                        const Luminous::Style & style)
   {
     if (style.fillColor().w > 0.f) {
-      if (style.fill().textures().empty()) {
+      if (!style.fill().hasTextures()) {
         // Untextured
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 10, program, style.fillColor(), 1.f, style);
@@ -1073,7 +1073,9 @@ namespace Luminous
   {
     const int maxGlyphsPerCmd = 1000;
 
-    std::map<QByteArray, const Texture *> textures = style.fill().textures();
+    std::map<QByteArray, const Texture *> textures;
+    if (style.fill().textures())
+      textures = *style.fill().textures();
     DepthMode d;
     d.setFunction(DepthMode::LESS_EQUAL);
     setDepthMode(d);

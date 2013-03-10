@@ -92,8 +92,8 @@ namespace Luminous
         style.fill().hasTranslucentTextures();
 
     RenderBuilder<Vertex,UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader,
-                                          &style.fill().textures(),
-                                          &style.fill().uniforms());
+                                          style.fill().textures(),
+                                          style.fill().uniforms());
 
     // Set the color
     b.uniform->color = color;
