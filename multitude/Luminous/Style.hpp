@@ -47,6 +47,25 @@ namespace Luminous
         m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*s.m_uniforms));
     }
 
+    Stroke & operator=(Stroke && s)
+    {
+      m_color = s.m_color;
+      m_program = s.m_program;
+      m_width = s.m_width;
+      m_uniforms = std::move(s.m_uniforms);
+      return *this;
+    }
+
+    Stroke & operator=(const Stroke & s)
+    {
+      m_color = s.m_color;
+      m_program = s.m_program;
+      m_width = s.m_width;
+      if (s.m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*s.m_uniforms));
+      return *this;
+    }
+
     /// Shader program to be used for stroke
     const Luminous::Program * program() const { return m_program; }
 
@@ -85,6 +104,14 @@ namespace Luminous
     /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
+    void clear()
+    {
+      m_color.make(0.f, 0.f, 0.f, 0.f);
+      m_program = nullptr;
+      m_uniforms.reset();
+      m_width = 0.f;
+    }
+
   private:
     Radiant::Color m_color;
     Luminous::Program * m_program;
@@ -106,6 +133,28 @@ namespace Luminous
         m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*f.m_uniforms));
       if (f.m_textures)
         m_textures.reset(new std::map<QByteArray, const Texture *>(*f.m_textures));
+    }
+
+    Fill & operator=(Fill && f)
+    {
+      m_color = f.m_color;
+      m_program = f.m_program;
+      m_translucentTextures = f.m_translucentTextures;
+      m_uniforms = std::move(f.m_uniforms);
+      m_textures = std::move(f.m_textures);
+      return *this;
+    }
+
+    Fill & operator=(const Fill & f)
+    {
+      m_color = f.m_color;
+      m_program = f.m_program;
+      m_translucentTextures = f.m_translucentTextures;
+      if (f.m_uniforms)
+        m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*f.m_uniforms));
+      if (f.m_textures)
+        m_textures.reset(new std::map<QByteArray, const Texture *>(*f.m_textures));
+      return *this;
     }
 
     /// Returns the color of the fill
@@ -163,6 +212,15 @@ namespace Luminous
     /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
+    void clear()
+    {
+      m_color.make(0.f, 0.f, 0.f, 0.f);
+      m_program = nullptr;
+      m_textures.reset();
+      m_uniforms.reset();
+      m_translucentTextures = false;
+    }
+
   private:
     Radiant::Color m_color;
     const Luminous::Program * m_program;
@@ -183,6 +241,20 @@ namespace Luminous
     Style() {}
     Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)) {}
     Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke) {}
+
+    Style & operator=(Style && s)
+    {
+      m_fill = std::move(s.m_fill);
+      m_stroke = std::move(s.m_stroke);
+      return *this;
+    }
+
+    Style & operator=(const Style & s)
+    {
+      m_fill = s.m_fill;
+      m_stroke = s.m_stroke;
+      return *this;
+    }
 
     /// Stroke object of the style
     Stroke & stroke() { return m_stroke; }

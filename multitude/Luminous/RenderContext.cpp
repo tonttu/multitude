@@ -460,7 +460,7 @@ namespace Luminous
     // Draw stroke
     if(style.strokeWidth() > 0.f && style.strokeColor().alpha() > 0.f) {
       Luminous::Style s = style;
-      s.stroke() = Stroke();
+      s.stroke().clear();
       s.setFillColor(style.strokeColor());
       if(style.strokeProgram())
         s.setFillProgram(*style.strokeProgram());
@@ -820,7 +820,7 @@ namespace Luminous
     if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
 
       Luminous::Style s = style;
-      s.stroke() = Stroke();
+      s.stroke().clear();
       s.setFillColor(style.strokeColor());
       if(style.strokeProgram())
         s.setFillProgram(*style.strokeProgram());
@@ -964,7 +964,7 @@ namespace Luminous
     // Draw the stroke
     if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
       Luminous::Style s = style;
-      s.stroke() = Stroke();
+      s.stroke().clear();
       s.setFillColor(style.strokeColor());
       if(style.strokeProgram())
         s.setFillProgram(*style.strokeProgram());
@@ -1013,7 +1013,7 @@ namespace Luminous
                       0, 0, 1);
 
     Luminous::Style s = style;
-    s.stroke() = Stroke();
+    s.stroke().clear();
 
     // Fill is an affine transform of a circle
     pushTransformRightMul(Nimble::Matrix3::makeTranslation(center) * m);
