@@ -28,6 +28,7 @@ namespace Luminous
   /// about a texture. This class does not own the memory it handles. All
   /// pointers given to this class must remain valid during the lifetime of
   /// this object.
+  /// GPU correspondent of this class is TextureGL
   class Texture : public RenderResource
   {
   public:

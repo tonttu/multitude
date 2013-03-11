@@ -25,7 +25,7 @@
 
 namespace Luminous
 {
-  /// A single shader (vertex, fragment, etc) written GLSL
+  /// A single shader (vertex, fragment, etc) written GLSL.
   class ShaderGLSL
   {
   public:
@@ -85,7 +85,8 @@ namespace Luminous
     D * m_d;
   };
 
-  /// A shader program, combining multiple ShaderGLSL objects into one runnable program
+  /// A shader program, combining multiple ShaderGLSL objects into one runnable program.
+  /// GPU correspondent of this class is ProgramGL.
   /// @todo implement copying
   class Program
     : public RenderResource
