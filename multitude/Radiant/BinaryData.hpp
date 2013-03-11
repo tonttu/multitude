@@ -279,7 +279,7 @@ namespace Radiant {
 
     /// Copy a buffer object
     inline BinaryData & operator = (const BinaryData & that)
-    { rewind(); append(that); return * this;}
+    { rewind(); append(that); m_current = that.m_current; return * this;}
     /// Saves this buffer to the given file
     bool saveToFile(const char * filename) const;
     /// Reads data from a file

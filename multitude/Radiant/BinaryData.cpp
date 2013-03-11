@@ -79,7 +79,7 @@ namespace Radiant {
     m_buf(0)
   {
     *this = that;
-    m_current = that.m_current;
+    // m_current = that.m_current;
   }
 
   BinaryData::~BinaryData()
