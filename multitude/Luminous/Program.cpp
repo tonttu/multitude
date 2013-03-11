@@ -102,9 +102,9 @@ namespace Luminous
     return *this;
   }
 
-  void ShaderGLSL::setText(const QByteArray & text)
+  void ShaderGLSL::setText(const QByteArray & src)
   {
-    m_d->code = loadFromText(text);
+    m_d->code = loadFromText(src);
     m_d->filename = QString();
   }
 

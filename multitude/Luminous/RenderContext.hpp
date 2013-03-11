@@ -369,6 +369,7 @@ namespace Luminous
     /// @param begin Initial position of sequence
     /// @param numVertices Number of vertices (one more than lines in polyline)
     /// @param style Stroke definition of a line.
+    /// @tparam InputIterator Iterator to vertices. Needs to have operator++ and operator*
     template <typename InputIterator>
     void drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style);
 
@@ -376,6 +377,7 @@ namespace Luminous
     /// @param begin Initial position of sequence
     /// @param numPoints Number of points
     /// @param style Color and size passed as stroke parameters
+    /// @tparam InputIterator Iterator to vertices. Needs to have operator++ and operator*
     template <typename InputIterator>
     void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
 
@@ -408,7 +410,7 @@ namespace Luminous
 
     /// Draws text
     /// @param layout Text object to render
-    /// @param location Text location in viewRect
+    /// @param location Text location in viewRect. Anything outside will be clipped.
     /// @param viewRect Where the text is located
     /// @param style Text style properties
     void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const TextStyle & style);

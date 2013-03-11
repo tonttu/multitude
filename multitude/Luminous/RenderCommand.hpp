@@ -73,7 +73,7 @@ namespace Luminous
   {
     float invsize;
   };
-/// @endocde
+/// @endcond
 
   /// Uniform block to use with most of the shaders included in Luminous.
   struct BasicUniformBlock
