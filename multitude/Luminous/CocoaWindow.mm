@@ -639,7 +639,7 @@ namespace Luminous
 
 class CocoaWindow::D {
 public:
-  D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window) {
+  D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window), m_cursorVisibility(true) {
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
     controller = [[Controller alloc] initialize:m_window:hint ];
@@ -653,7 +653,7 @@ public:
   Controller * controller;
 
   CocoaWindow * m_window;
-
+  bool m_cursorVisibility;
 };
 
 CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
@@ -702,11 +702,15 @@ void CocoaWindow::restore()
 
 void CocoaWindow::showCursor(bool visible)
 {
-    if(visible)
+  if(m_d->m_cursorVisibility == visible)
+    return;
+
+  if(visible)
         [NSCursor unhide];
     else
         [NSCursor hide];
-  //Radiant::error("CocoaWindow::showCursor # unimplemented");
+    Radiant::info("CocoaWindow::showCursor # %d", (int) visible);
+    m_d->m_cursorVisibility = visible;
 }
 
 }
