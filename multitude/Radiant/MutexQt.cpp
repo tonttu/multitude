@@ -24,8 +24,6 @@
 
 namespace Radiant {
 
-  Mutex s_onceMutex(true);
-
   // static bool mutexDebug = false;
 
   class Mutex::D : public QMutex
