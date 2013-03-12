@@ -218,6 +218,11 @@ namespace Luminous
     /// @return border color
     LUMINOUS_API const Radiant::Color & borderColor() const;
 
+    /// Get the generation number for texture parameters. This is increased
+    /// every time border color, wrap mode or min/mag filters are changed
+    /// @return generation number, starting from 0
+    LUMINOUS_API int paramsGeneration() const;
+
   private:
     class D;
     D * m_d;

@@ -38,6 +38,7 @@ namespace Luminous
 
   private:
     int m_generation;
+    int m_paramsGeneration;
     int m_internalFormat;
     GLenum m_target;
     QRegion m_dirtyRegion2D;
@@ -58,8 +59,8 @@ namespace Luminous
 
   void TextureGL::bind(int textureUnit)
   {
-    /// @todo add active texture unit to StateGL
-    glActiveTexture(GL_TEXTURE0 + textureUnit);
+    if (m_state.setTextureUnit(textureUnit))
+      glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(m_target, m_handle);
 
     touch();

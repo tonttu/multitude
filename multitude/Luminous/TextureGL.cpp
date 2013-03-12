@@ -36,6 +36,7 @@ namespace Luminous
   TextureGL::TextureGL(StateGL & state)
     : ResourceHandleGL(state)
     , m_generation(0)
+    , m_paramsGeneration(-1)
     , m_internalFormat(0)
     , m_target(0)
     , m_size(0, 0, 0)
@@ -53,6 +54,7 @@ namespace Luminous
   TextureGL::TextureGL(TextureGL && t)
     : ResourceHandleGL(std::move(t))
     , m_generation(t.m_generation)
+    , m_paramsGeneration(t.m_paramsGeneration)
     , m_internalFormat(t.m_internalFormat)
     , m_target(t.m_target)
     , m_dirtyRegion2D(t.m_dirtyRegion2D)
@@ -66,6 +68,7 @@ namespace Luminous
     ResourceHandleGL::operator=(std::move(t));
     m_target = t.m_target;
     m_generation = t.m_generation;
+    m_paramsGeneration = t.m_paramsGeneration;
     m_internalFormat = t.m_internalFormat;
     m_dirtyRegion2D = t.m_dirtyRegion2D;
     m_size = t.m_size;
@@ -83,12 +86,16 @@ namespace Luminous
     const bool compressedFormat = texture.dataFormat().compression() != PixelFormat::COMPRESSION_NONE;
 
     const bool dirty = m_generation != texture.generation();
+    const bool paramsDirty = m_paramsGeneration != texture.paramsGeneration();
 
-    // Set parameters of tex unit
-    texture.getWrap(m_wrap[0], m_wrap[1], m_wrap[2]);
-    m_minFilter = texture.getMinFilter();
-    m_magFilter = texture.getMagFilter();
-    m_borderColor = texture.borderColor();
+    if (paramsDirty) {
+      m_paramsGeneration = texture.paramsGeneration();
+      // Set parameters of tex unit
+      texture.getWrap(m_wrap[0], m_wrap[1], m_wrap[2]);
+      m_minFilter = texture.getMinFilter();
+      m_magFilter = texture.getMagFilter();
+      m_borderColor = texture.borderColor();
+    }
 
     if (dirty) {
       m_generation = texture.generation();
@@ -261,6 +268,12 @@ namespace Luminous
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
+    }
+
+    if (paramsDirty) {
+      if (!bound)
+        bind(textureUnit);
+      setTexParameters();
     }
   }
 

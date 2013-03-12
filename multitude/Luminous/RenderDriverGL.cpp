@@ -245,7 +245,6 @@ namespace Luminous
       if(!state.textures[t]) break;
       else {
         state.textures[t]->bind(t);
-        state.textures[t]->setTexParameters();
       }
     }
 

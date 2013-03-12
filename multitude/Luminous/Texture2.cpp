@@ -36,6 +36,7 @@ namespace Luminous
       , m_minFilter(FILTER_LINEAR)
       , m_magFilter(FILTER_LINEAR)
       , m_borderColor(0, 0, 0, 0)
+      , m_paramsGeneration(0)
     {
       // Set default texture wrap modes
       m_wrap[0] = WRAP_CLAMP;
@@ -59,6 +60,8 @@ namespace Luminous
     Filter m_minFilter, m_magFilter;
     Wrap m_wrap[3];
     Radiant::Color m_borderColor;
+    // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
+    int m_paramsGeneration;
 
   public:
     void rehash();
@@ -271,9 +274,10 @@ namespace Luminous
 
   void Texture::setMinFilter(Filter filter)
   {
+    if (m_d->m_minFilter == filter)
+      return;
     m_d->m_minFilter = filter;
-    // This is tied into sampler unit not to the texture so no need to invalidate tex
-    // invalidate();
+    ++m_d->m_paramsGeneration;
   }
 
   Texture::Filter Texture::getMagFilter() const
@@ -283,18 +287,20 @@ namespace Luminous
 
   void Texture::setMagFilter(Filter filter)
   {
+    if (m_d->m_magFilter == filter)
+      return;
     m_d->m_magFilter = filter;
-    // This is tied into sampler unit not to the texture so no need to invalidate tex
-    // invalidate();
+    ++m_d->m_paramsGeneration;
   }
 
   void Texture::setWrap(Wrap s, Wrap t, Wrap r)
   {
+    if (m_d->m_wrap[0] == s && m_d->m_wrap[1] == t && m_d->m_wrap[2] == r)
+      return;
     m_d->m_wrap[0] = s;
     m_d->m_wrap[1] = t;
     m_d->m_wrap[2] = r;
-    // These are tied into sampler unit not to the texture so no need to invalidate tex
-    // invalidate();
+    ++m_d->m_paramsGeneration;
   }
 
   void Texture::getWrap(Wrap & s, Wrap & t, Wrap & r) const
@@ -309,12 +315,17 @@ namespace Luminous
     if (m_d->m_borderColor == color)
       return;
     m_d->m_borderColor = color;
-    invalidate();
+    ++m_d->m_paramsGeneration;
   }
 
   const Radiant::Color & Texture::borderColor() const
   {
     return m_d->m_borderColor;
+  }
+
+  int Texture::paramsGeneration() const
+  {
+    return m_d->m_paramsGeneration;
   }
 
 }

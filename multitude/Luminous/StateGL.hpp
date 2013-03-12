@@ -72,6 +72,11 @@ namespace Luminous
     inline GLuint readFramebuffer() const;
     inline GLuint drawFramebuffer() const;
 
+    /// Indexing starts from zero
+    inline bool setTextureUnit(int index);
+    /// Indexing starts from zero
+    inline int textureUnit() const;
+
     void setFrameTime(Radiant::TimeStamp t) { m_frameTime = t; }
     Radiant::TimeStamp frameTime() const { return m_frameTime; }
 
@@ -94,6 +99,8 @@ namespace Luminous
     GLuint m_currentReadFrameBuffer;
     GLuint m_currentDrawFrameBuffer;
 
+    int m_currentTextureUnit;
+
     Radiant::TimeStamp m_frameTime;
   };
 
@@ -107,6 +114,7 @@ namespace Luminous
     , m_driver(driver)
     , m_currentReadFrameBuffer(0)
     , m_currentDrawFrameBuffer(0)
+    , m_currentTextureUnit(0)
   {}
 
   bool StateGL::setProgram(GLuint handle)
@@ -189,6 +197,18 @@ namespace Luminous
   GLuint StateGL::drawFramebuffer() const
   {
     return m_currentDrawFrameBuffer;
+  }
+
+  bool StateGL::setTextureUnit(int unit)
+  {
+    bool changed = unit != m_currentTextureUnit;
+    m_currentTextureUnit = unit;
+    return changed;
+  }
+
+  int StateGL::textureUnit() const
+  {
+    return m_currentTextureUnit;
   }
 
 }
