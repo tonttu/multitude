@@ -1,13 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others, 2007-2013
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -143,10 +140,6 @@ namespace Luminous {
       /// @return vector in graphics coordinates.
       Nimble::Vector2f graphicsToWindow(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
-      void setActive(bool isActive);
-      /// Is the area active (i.e. is it rendered)
-      bool active() const;
-
       /// Sets the width of a single pixel in centimeters
       /// @param sizeCm pixel size in centimeters
       void setPixelSizeCm(float sizeCm);
@@ -215,9 +208,7 @@ namespace Luminous {
       Valuable::AttributeVector2f   m_graphicsLocation;
       Valuable::AttributeVector2f   m_graphicsSize;
       Valuable::AttributeVector4f   m_seams;
-      Valuable::AttributeBool        m_active;
       Valuable::AttributeInt        m_method;
-      Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;
