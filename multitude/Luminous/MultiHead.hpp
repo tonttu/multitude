@@ -143,10 +143,6 @@ namespace Luminous {
       /// @return vector in graphics coordinates.
       Nimble::Vector2f graphicsToWindow(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
-      void setActive(bool isActive);
-      /// Is the area active (i.e. is it rendered)
-      bool active() const;
-
       /// Sets the width of a single pixel in centimeters
       /// @param sizeCm pixel size in centimeters
       void setPixelSizeCm(float sizeCm);
@@ -215,9 +211,7 @@ namespace Luminous {
       Valuable::AttributeVector2f   m_graphicsLocation;
       Valuable::AttributeVector2f   m_graphicsSize;
       Valuable::AttributeVector4f   m_seams;
-      Valuable::AttributeBool        m_active;
       Valuable::AttributeInt        m_method;
-      Valuable::AttributeString m_comment;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
       Shader * m_colorCorrectionShader;

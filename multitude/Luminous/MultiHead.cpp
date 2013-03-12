@@ -60,9 +60,7 @@ namespace Luminous
       m_graphicsLocation(this, "graphicslocation", Nimble::Vector2f(0, 0)),
       m_graphicsSize(this, "graphicssize", Nimble::Vector2f(100, 100)),
       m_seams(this, "seams", Nimble::Vector4f(0, 0, 0, 0)),
-      m_active(this, "active", true),
       m_method(this, "method", METHOD_MATRIX_TRICK),
-      m_comment(this, "comment"),
       m_graphicsBounds(0, 0, 100, 100),
       m_pixelSizeCm(0.1f),
       m_colorCorrection(this, "colorcorrection"),
@@ -373,16 +371,6 @@ namespace Luminous
     loc.x += m_location[0];
 
     return loc;
-  }
-
-  void MultiHead::Area::setActive(bool isActive)
-  {
-    m_active = isActive;
-  }
-
-  bool MultiHead::Area::active() const
-  {
-    return m_active;
   }
 
   void MultiHead::Area::setPixelSizeCm(float sizeCm)
@@ -731,9 +719,6 @@ namespace Luminous
 
     for(size_t i = 0; i < n; i++) {
       Area & a = area(i);
-
-      if(!a.active())
-        continue;
 
       float wleft  = a.graphicsLocation().x;
       float wright = wleft + a.graphicsSize().x;
