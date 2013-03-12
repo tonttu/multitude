@@ -194,7 +194,7 @@ namespace Radiant
   /// float delayedValue = delay.getNewest(1);// delayedValue = 0.4
   /// \endcode
   template <class TElem>
-  class RADIANT_API RingBufferDelay : public RingBuffer<TElem>
+  class RingBufferDelay : public RingBuffer<TElem>
   {
   public:
     /// Construct an empty buffer
