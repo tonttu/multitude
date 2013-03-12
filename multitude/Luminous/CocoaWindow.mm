@@ -709,7 +709,7 @@ void CocoaWindow::showCursor(bool visible)
         [NSCursor unhide];
     else
         [NSCursor hide];
-    Radiant::info("CocoaWindow::showCursor # %d", (int) visible);
+    Radiant::debug("CocoaWindow::showCursor # %d", (int) visible);
     m_d->m_cursorVisibility = visible;
 }
 
