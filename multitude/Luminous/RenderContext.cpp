@@ -1089,9 +1089,6 @@ namespace Luminous
     std::map<QByteArray, const Texture *> textures;
     if (style.fill().textures())
       textures = *style.fill().textures();
-    DepthMode d;
-    d.setFunction(DepthMode::LESS_EQUAL);
-    setDepthMode(d);
 
     Nimble::Matrix4f m;
     m.identity();
@@ -1149,9 +1146,6 @@ namespace Luminous
         }
       }
     }
-
-    // Restore depth mode
-    setDepthMode(DepthMode::Default());
   }
 
   void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect,

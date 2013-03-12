@@ -13,7 +13,7 @@
 namespace Luminous
 {
   DepthMode::DepthMode()
-    : m_function(LESS)
+    : m_function(LESS_EQUAL)
     , m_range(0.f, 1.f)
   {
   }
