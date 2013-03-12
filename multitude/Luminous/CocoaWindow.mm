@@ -643,6 +643,7 @@ public:
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
     controller = [[Controller alloc] initialize:m_window:hint ];
+    m_frameless = hint.frameless();
   }
 
   ~D()
@@ -654,6 +655,7 @@ public:
 
   CocoaWindow * m_window;
   bool m_cursorVisibility;
+  bool m_frameless;
 };
 
 CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
@@ -702,7 +704,7 @@ void CocoaWindow::restore()
 
 void CocoaWindow::showCursor(bool visible)
 {
-  if(m_d->m_cursorVisibility == visible)
+  if(m_d->m_cursorVisibility == visible || !m_d->m_frameless)
     return;
 
   if(visible)
