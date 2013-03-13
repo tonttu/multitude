@@ -719,9 +719,10 @@ namespace Luminous
       } else {
         MipmapLevel & imageTex = m_d->m_levels[level];
 
-        int now = time;
         int old = imageTex.lastUsed;
+
         while(true) {
+          int now = time;
           if(now == old) {
             if(returnedLevel)
               *returnedLevel = level;
