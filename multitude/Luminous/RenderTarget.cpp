@@ -329,7 +329,7 @@ namespace Luminous
     if(m_d->m_textureAttachments.contains(attachment))
       return RenderManager::getResource<Luminous::Texture>(m_d->m_textureAttachments.value(attachment));
 
-    return 0;
+    return nullptr;
   }
 
   Luminous::RenderBuffer * RenderTarget::renderBuffer(GLenum attachment) const
@@ -337,7 +337,7 @@ namespace Luminous
     if(m_d->m_renderBufferAttachments.contains(attachment))
       return RenderManager::getResource<Luminous::RenderBuffer>(m_d->m_renderBufferAttachments.value(attachment));
 
-    return 0;
+    return nullptr;
   }
 
   QList<GLenum> RenderTarget::textureAttachments() const
