@@ -86,11 +86,6 @@ linux-*{
     INCLUDEPATH += /opt/multitouch-libav1/include
   }
 
-  CONFIG(debug,debug|release) {
-    # Debug builds run with Electric Fence for extra memory testing
-    # Check the efence manpages for using different environment variables
-    LIBS += -lefence
-  }
   contains(DOCUMENTER,yes) {
     message(Enabling document generator)
     DEFINES += MULTI_DOCUMENTER=1
