@@ -145,9 +145,16 @@ namespace Radiant
   {
   }
 
-  void CallStack::print() const
+  QStringList CallStack::toStringList() const
   {
-      Radiant::Guard lock(s_dbgHelpMutex);
+    if (!m_cache.isEmpty())
+      return m_cache;
+
+    QStringList tmp;
+    Radiant::Guard lock(s_dbgHelpMutex);
+
+    if (!m_cache.isEmpty())
+      return m_cache;
 
     HANDLE handle = GetCurrentProcess();
     DWORD64 offset;
@@ -179,8 +186,17 @@ namespace Radiant
         if (GetLastError() != ERROR_INVALID_ADDRESS)
           Radiant::warning("Unable to get symbol line information: err %d\n", GetLastError());
       }
-      Radiant::info("#%d %s at %s:%d", i, pSymbol->Name, sym_line.FileName, sym_line.LineNumber);
+      tmp << QString("#%1 %3 at %4:%2").arg(i, -2).arg(sym_line.LineNumber).arg(pSymbol->Name, sym_line.FileName);
     }
+
+    m_cache = tmp;
+    return tmp;
+  }
+
+  void CallStack::print() const
+  {
+    for (auto & str: toStringList())
+      Radiant::error("%s", str.toUtf8().data());
   }
 }
 

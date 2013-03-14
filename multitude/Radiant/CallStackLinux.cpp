@@ -74,9 +74,14 @@ namespace Radiant
   {
   }
 
-  void CallStack::print() const
+  QStringList CallStack::toStringList() const
   {
+    if (!m_cache.isEmpty())
+      return m_cache;
+
     char ** strings = backtrace_symbols(stack(), size());
+
+    QStringList tmp;
 
     /// strings[i] can be something like:
     /// /home/riku/cornerstone/multitude/lib/libRadiant.so.1(_ZN7Radiant8MemCheckC2Ev+0x40) [0x7fe3fd420c64]
@@ -102,14 +107,22 @@ namespace Radiant
           file = r.cap(1);
 
         if(func.isEmpty())
-          Radiant::error("#%-2d %p at %s", int(i), m_frames[i], file.toUtf8().data());
+          tmp << QString("#%1 0x%2 at %3").arg(i, -2).arg((intptr_t)m_frames[i], 0, 16).arg(file);
         else
-          Radiant::error("#%-2d %s at %s", int(i), func.data(), file.toUtf8().data());
+          tmp << QString("#%1 %2 at %3").arg(i, -2).arg(func.data(), file);
       } else {
-        Radiant::error("#%-2d %s", int(i), strings[i]);
+        tmp << QString("#%1 %3").arg(i, -2).arg(strings[i]);
       }
     }
     free (strings);
+    m_cache = tmp;
+    return tmp;
+  }
+
+  void CallStack::print() const
+  {
+    for (auto & str: toStringList())
+      Radiant::error("%s", str.toUtf8().data());
   }
 }
 
