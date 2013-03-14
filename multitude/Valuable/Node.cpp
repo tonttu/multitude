@@ -746,6 +746,9 @@ namespace Valuable
     // s_processingQueueMutex before s_queueMutex. That is why we need to
     // release the lock, otherwise we will get deadlock if queueEvent has
     // already locked s_processingQueueMutex and is waiting for s_queueMutex.
+    // Also remember to clear s_queue, otherwise ~Node() could be reading old
+    // deleted values from it
+    s_queue.clear();
     s_queueMutex.unlock();
     Radiant::Guard g2(s_processingQueueMutex);
     s_queueMutex.lock();
