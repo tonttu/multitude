@@ -14,6 +14,8 @@
 #include "Export.hpp"
 #include "Platform.hpp"
 
+#include <QStringList>
+
 #include <iostream>
 #include <cassert>
 #include <cstdint>
@@ -44,6 +46,9 @@ namespace Radiant
     /// @returns the number of frames in the callstack
     size_t size() const { return m_frameCount; }
 
+    /// Returns a human-readable version of the stack
+    RADIANT_API QStringList toStringList() const;
+
     /// Prints a human-readable version of the stack to the log
     RADIANT_API void print() const;
 
@@ -51,6 +56,7 @@ namespace Radiant
     enum { max_frames = 32 };
     stackptr_t m_frames[max_frames];
     size_t m_frameCount;
+    mutable QStringList m_cache;
   };
 }
 

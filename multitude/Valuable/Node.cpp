@@ -314,19 +314,17 @@ namespace Valuable
 
   void Node::removeAttribute(Attribute * const value)
   {
-    const QByteArray & cname = value->name();
-
-    container::iterator it = m_values.find(cname);
-    if(it == m_values.end()) {
-      Radiant::error(
-          "Node::removeValue # '%s' is not a child value of '%s'.",
-          cname.data(), m_name.data());
-      return;
+    for (auto it = m_values.begin(), end = m_values.end(); it != end; ++it) {
+      if (it->second == value) {
+        m_values.erase(it);
+        value->m_host = nullptr;
+        attributeRemoved(value);
+        return;
+      }
     }
 
-    m_values.erase(it);
-    value->m_host = 0;
-    attributeRemoved(value);
+    Radiant::error("Node::removeValue # '%s' is not a child value of '%s'.",
+                   value->name().data(), m_name.data());
   }
 
 #ifdef CORNERSTONE_JS
@@ -748,6 +746,9 @@ namespace Valuable
     // s_processingQueueMutex before s_queueMutex. That is why we need to
     // release the lock, otherwise we will get deadlock if queueEvent has
     // already locked s_processingQueueMutex and is waiting for s_queueMutex.
+    // Also remember to clear s_queue, otherwise ~Node() could be reading old
+    // deleted values from it
+    s_queue.clear();
     s_queueMutex.unlock();
     Radiant::Guard g2(s_processingQueueMutex);
     s_queueMutex.lock();
