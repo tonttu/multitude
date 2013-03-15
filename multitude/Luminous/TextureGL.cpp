@@ -195,8 +195,14 @@ namespace Luminous
     }
 
     /// @todo should we touch the dirty region if data is null?
-    if(!texture.data())
+    if(!texture.data()) {
+      if (paramsDirty) {
+        if (!bound)
+          bind(textureUnit);
+        setTexParameters();
+      }
       return;
+    }
 
     if(texture.samples() > 0) {
       Radiant::error("TextureGL::upload # Trying to upload data to multisampled texture");
