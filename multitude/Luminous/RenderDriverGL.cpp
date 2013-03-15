@@ -367,8 +367,8 @@ namespace Luminous
 
         m_state.textures[unit++] = textureGL;
       }
-      m_state.textures[unit] = nullptr;
     }
+    m_state.textures[unit] = nullptr;
 
     RenderQueueSegment & rt = currentRenderQueueSegment();
 
