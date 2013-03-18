@@ -371,8 +371,6 @@ namespace Resonant {
     {
       Radiant::Guard g( m_inMutex);
       m_incopy = m_incoming;
-      /// @todo remove this line when this is fixed: https://redmine.multitouch.fi/issues/3462
-      m_incopy.setPos(m_incoming.pos());
       m_incoming.rewind();
     }
 
