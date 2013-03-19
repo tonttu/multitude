@@ -70,9 +70,9 @@ namespace Valuable
 
     Node();
     /** Constructs a new Node and adds it under the given host
-      @param host host
-      @param name name of the object
-      @param transit should the object changes be transmitted
+      @param host Host of this node. Parent in node-hierarchy
+      @param name Name of this object.
+      @param transit Should the object changes be transmitted.
     */
     Node(Node * host, const QByteArray &name = "", bool transit = false);
     virtual ~Node();
