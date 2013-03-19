@@ -117,8 +117,6 @@ namespace Luminous
         m_initialized = true;
 
         m_uniformBufferOffsetAlignment = m_driver.uniformBufferOffsetAlignment();
-
-        Radiant::info("RenderContext::Internal # init ok");
       }
     }
 
