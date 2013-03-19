@@ -38,11 +38,11 @@ withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
 
-CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}
+CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}
 
 # On Windows, add _d for debug builds
 build_pass:CONFIG(debug,debug|release) {
-  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION}_d
+  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}_d
 }
 
 # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
