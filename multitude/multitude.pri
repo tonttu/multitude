@@ -165,7 +165,8 @@ win32 {
     INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
 
-    DDK_PATH="C:\\WinDDK\\7600.16385.1"
+    exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
+    exists("C:\Program Files (x86)\Windows Kits\8.0\Include"):DDK_PATH="C:\Program Files (x86)\Windows Kits\8.0\Include"
 
     LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
     # Make VS a bit less spammy
