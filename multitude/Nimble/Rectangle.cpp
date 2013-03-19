@@ -213,8 +213,8 @@ namespace Nimble
     m_extent0 = 0.5f * m_axis0.length();
     m_axis0.normalize();
 
-    m_extent1 = 0.5f * (vertex[3] - vertex[0]).length();
-    m_axis1 = m_axis0.perpendicular();
+    m_axis1 = vertex[3] - vertex[0];
+    m_extent1 = 0.5f * m_axis1.length();
     m_axis1.normalize();
   }
 
