@@ -164,12 +164,35 @@ return self;
     return;
   }
 
-  unichar key;
+  int key;
   key = [ [ theEvent characters ] characterAtIndex:0 ];
 
   QChar qc(key);
   QString qstr(qc);
   key = qc.toUpper().toAscii();
+
+  if ([theEvent modifierFlags] & NSNumericPadKeyMask) { // arrow keys have this mask
+    // https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html
+    NSString *theArrow = [theEvent charactersIgnoringModifiers];
+    unichar keyChar = 0;
+    if ( [theArrow length] == 0 )
+      return;            // reject dead keys
+    if ( [theArrow length] == 1 ) {
+      keyChar = [theArrow characterAtIndex:0];
+      if ( keyChar == NSLeftArrowFunctionKey ) {
+        key = Qt::Key_Left;
+      }
+      else if ( keyChar == NSRightArrowFunctionKey ) {
+        key = Qt::Key_Right;
+      }
+      else if ( keyChar == NSUpArrowFunctionKey ) {
+        key = Qt::Key_Up;
+      }
+      else if ( keyChar == NSDownArrowFunctionKey ) {
+        key = Qt::Key_Down;
+      }
+    }
+  }
 
   bool repeat = [ theEvent isARepeat ];
 
@@ -190,7 +213,9 @@ return self;
 
   default:
   {
-    Radiant::debug("CocoaWindow::keyDown (ObjC) # %d %c", (int) key, (char) key);
+    // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
+    if(key == 0xffef)
+      return; // Unhandled conversion
     // hook->handleKeyboardEvent(key, true, 0, repeat);
     hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
   }
@@ -207,12 +232,35 @@ return self;
     return;
   }
 
-  unichar key;
+  int key;
   key = [ [ theEvent characters ] characterAtIndex:0 ];
 
   QChar qc(key);
   QString qstr(qc);
   key = qc.toUpper().toAscii();
+
+  if ([theEvent modifierFlags] & NSNumericPadKeyMask) { // arrow keys have this mask
+    // https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html
+    NSString *theArrow = [theEvent charactersIgnoringModifiers];
+    unichar keyChar = 0;
+    if ( [theArrow length] == 0 )
+      return;            // reject dead keys
+    if ( [theArrow length] == 1 ) {
+      keyChar = [theArrow characterAtIndex:0];
+      if ( keyChar == NSLeftArrowFunctionKey ) {
+        key = Qt::Key_Left;
+      }
+      else if ( keyChar == NSRightArrowFunctionKey ) {
+        key = Qt::Key_Right;
+      }
+      else if ( keyChar == NSUpArrowFunctionKey ) {
+        key = Qt::Key_Up;
+      }
+      else if ( keyChar == NSDownArrowFunctionKey ) {
+        key = Qt::Key_Down;
+      }
+    }
+  }
 
   switch(key) {
 
