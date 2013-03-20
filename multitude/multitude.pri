@@ -166,7 +166,7 @@ win32 {
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
 
     exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
-    exists("C:\Program Files (x86)\Windows Kits\8.0\Include"):DDK_PATH="C:\Program Files (x86)\Windows Kits\8.0\Include"
+    exists("C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"):DDK_PATH="C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"
 
     LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
     # Make VS a bit less spammy
