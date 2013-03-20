@@ -210,9 +210,12 @@ namespace Luminous
   public:
     MipmapReleaseTask();
 
+    static void check(float wait);
+
   protected:
     virtual void doTask() OVERRIDE;
   };
+  std::weak_ptr<MipmapReleaseTask> s_releaseTask;
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -315,6 +318,8 @@ namespace Luminous
     }
 
     if (lastUsed >= StateCount) {
+      if (level == m_level)
+        imageTex.lastUsed = frameTime();
       return true;
     }
 
@@ -324,7 +329,13 @@ namespace Luminous
       imageTex.texture.setData(imageTex.image->width(), imageTex.image->height(),
                                imageTex.image->pixelFormat(), imageTex.image->data());
       imageTex.texture.setLineSizePixels(0);
-      imageTex.lastUsed = frameTime();
+      int now = frameTime();
+      if (m_level == level) {
+        imageTex.lastUsed = now;
+      } else {
+        imageTex.lastUsed = Nimble::Math::Clamp<int>(now - 10.0f * mipmap.m_d->m_expireSeconds + 0.3f, StateCount, now);
+        MipmapReleaseTask::check(0.31f);
+      }
     } else {
       imageTex.image.reset();
       imageTex.lastUsed = LoadError;
@@ -589,14 +600,17 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////////////////
 
   MipmapReleaseTask::MipmapReleaseTask()
+    : Task(PRIORITY_URGENT)
   {
-    scheduleFromNowSecs(5.0);
+    scheduleFromNowSecs(10.0f);
   }
 
   void MipmapReleaseTask::doTask()
   {
     Radiant::Guard g(s_mipmapStoreMutex);
     const int now = frameTime();
+
+    float delay = 10.0;
     for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {
       Luminous::MipmapPtr ptr = it->second.lock();
       if(ptr) {
@@ -607,7 +621,9 @@ namespace Luminous
           for(int level = 0, s = levels.size() - 1; level < s; ++level) {
             MipmapLevel & imageTex = levels[level];
             int lastUsed = imageTex.lastUsed;
-            if(lastUsed > Loading && now > lastUsed + expire) {
+            if (lastUsed <= Loading)
+              continue;
+            if(now > lastUsed + expire) {
               if(imageTex.locked.testAndSetOrdered(0, 1)) {
                 if(imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
                   imageTex.texture.reset();
@@ -616,7 +632,11 @@ namespace Luminous
                   imageTex.lastUsed = New;
                 }
                 imageTex.locked = 0;
+              } else {
+                delay = 0;
               }
+            } else {
+              delay = std::min(delay, (lastUsed + expire - now) / 10.0f);
             }
           }
         }
@@ -629,8 +649,18 @@ namespace Luminous
       s_mipmapStoreMutex.unlock();
       s_mipmapStoreMutex.lock();
     }
+    delay = std::max(delay, 0.1f);
 
-    scheduleFromNowSecs(5.0);
+    scheduleFromNowSecs(delay);
+  }
+
+  void MipmapReleaseTask::check(float wait)
+  {
+    auto task = s_releaseTask.lock();
+    if (task && (task->scheduled() - Radiant::TimeStamp::currentTime()).secondsD() > wait) {
+      task->scheduleFromNowSecs(wait);
+      Radiant::BGThread::instance()->reschedule(task);
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -648,7 +678,11 @@ namespace Luminous
     , m_expireSeconds(3.0f)
     , m_state(Valuable::STATE_NEW)
   {
-    MULTI_ONCE { Radiant::BGThread::instance()->addTask(std::make_shared<MipmapReleaseTask>()); }
+    MULTI_ONCE {
+      auto releaseTask = std::make_shared<MipmapReleaseTask>();
+      s_releaseTask = releaseTask;
+      Radiant::BGThread::instance()->addTask(releaseTask);
+    }
   }
 
   Mipmap::D::~D()
