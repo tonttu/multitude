@@ -553,6 +553,13 @@ namespace Luminous
     return res;
   }
 
+  QPointF MultiHead::Window::windowToGraphics(QPointF loc, bool &convOk) const
+  {
+    Nimble::Vector2 nloc(loc.x(), loc.y());
+    nloc = windowToGraphics(nloc, convOk);
+    return QPointF(nloc.x, nloc.y);
+  }
+
   void MultiHead::Window::setPixelSizeCm(float sizeCm)
   {
     assert(sizeCm > 0.0f);

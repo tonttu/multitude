@@ -287,6 +287,7 @@ namespace Luminous {
           @return the point in graphics coordinates
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, bool & convOk) const;
+      LUMINOUS_API QPointF windowToGraphics(QPointF loc, bool & convOk) const;
 
       /// Should the window be frameless
       bool frameless() const { return m_frameless; }

@@ -190,6 +190,23 @@ namespace Luminous
       // We accept all kinds of drops
       e->acceptProposedAction();
     }
+
+    virtual bool event(QEvent * e) OVERRIDE
+    {
+      QTouchEvent * te = dynamic_cast<QTouchEvent *>(e);
+
+      if(!te) {
+        return QGLWidget::event(e);
+      }
+
+      const QList<QTouchEvent::TouchPoint> & points = te->touchPoints();
+
+      for(auto it = points.begin(); it != points.end(); it++) {
+
+      }
+
+      return true;
+    }
   };
 
   ////////////////////////////////////////////////////////////

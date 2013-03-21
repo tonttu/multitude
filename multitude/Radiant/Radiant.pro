@@ -1,7 +1,8 @@
 
 include(../multitude.pri)
 
-HEADERS += Flags.hpp
+HEADERS += Flags.hpp \
+    TouchEvent.hpp
 HEADERS += FutureBool.hpp
 HEADERS += DropEvent.hpp
 HEADERS += TabletEvent.hpp
@@ -78,7 +79,8 @@ HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    TouchEvent.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
