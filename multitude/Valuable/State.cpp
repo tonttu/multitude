@@ -147,11 +147,27 @@ namespace Valuable
     });
   }
 
-  long StateInt::onChange(StateInt::CallbackType callback, bool direct)
+  long StateInt::onChange(StateInt::CallbackType callback, bool direct, bool initialInvoke)
   {
     Radiant::Guard g(m_d->m_stateMutex);
     long id = m_d->m_nextCallbackId++;
     m_d->m_changeCallbacks[id] = Callback(callback, direct, 0);
+
+    if (initialInvoke) {
+      if (direct) {
+        callback(m_d->m_state);
+      } else {
+        auto weak = m_d->m_weak;
+        Node::invokeAfterUpdate([=] {
+          auto self = weak.lock();
+          if (!self) return;
+
+          Radiant::Guard g(self->m_d->m_stateMutex);
+          callback(m_d->m_state);
+        });
+      }
+    }
+
     return id;
   }
 

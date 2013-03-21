@@ -43,7 +43,7 @@ namespace Valuable
     int state() const;
     void setState(int state);
 
-    long onChange(CallbackType callback, bool direct);
+    long onChange(CallbackType callback, bool direct, bool initialInvoke);
     long onStateMask(int state, CallbackType callback, bool once, bool direct);
 
     bool removeListener(long id);
@@ -100,8 +100,10 @@ namespace Valuable
     /// This function is thread-safe
     /// @param callback called when ever the state changes
     /// @param type Listener type, allowed values: DIRECT or AFTER_UPDATE
+    /// @param initialInvoke call the callback once in the beginning with the current state
     /// @returns a listener id
-    inline long onChange(CallbackType callback, Node::ListenerType type = Node::AFTER_UPDATE);
+    inline long onChange(CallbackType callback, Node::ListenerType type = Node::AFTER_UPDATE,
+                         bool initialInvoke = false);
 
     /// Adds a monitor to the state with given stateMask. If the current state
     /// already matches to the monitored state, the callback is triggered
@@ -178,9 +180,9 @@ namespace Valuable
   }
 
   template <typename Enum>
-  long State<Enum>::onChange(CallbackType callback, Node::ListenerType type)
+  long State<Enum>::onChange(CallbackType callback, Node::ListenerType type, bool initialInvoke)
   {
-    return m_state->onChange([=] (int v) { callback(Enum(v)); }, type == Node::DIRECT);
+    return m_state->onChange([=] (int v) { callback(Enum(v)); }, type == Node::DIRECT, initialInvoke);
   }
 
   template <typename Enum>
