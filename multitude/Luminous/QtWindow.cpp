@@ -18,6 +18,7 @@
 #include <Radiant/TabletEvent.hpp>
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Thread.hpp>
+#include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/TimeStamp.hpp>
 
@@ -53,6 +54,9 @@ namespace Luminous
 
       // Display some debug information if requested
       const auto f = this->format();
+
+      setAttribute(Qt::WA_AcceptTouchEvents);
+
       debugLuminous("OpenGL Context Debug:");
       debugLuminous("\tValid OpenGL Context: %d", isValid());
       debugLuminous("\tAccum Buffer Size: %d", f.accumBufferSize());
@@ -199,12 +203,15 @@ namespace Luminous
         return QGLWidget::event(e);
       }
 
-      const QList<QTouchEvent::TouchPoint> & points = te->touchPoints();
+      /*const QList<QTouchEvent::TouchPoint> & points = te->touchPoints();
 
       for(auto it = points.begin(); it != points.end(); it++) {
 
       }
+      */
 
+      m_window.eventHook()->handleTouchEvent(Radiant::TouchEvent(*te));
+      te->accept();
       return true;
     }
   };

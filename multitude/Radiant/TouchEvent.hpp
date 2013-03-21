@@ -13,6 +13,11 @@ namespace Radiant
   {
   public:
 
+    enum Type {
+      TOUCH_BEGIN,
+      TOUCH_UPDATE,
+      TOUCH_END
+    };
 
     typedef QList<QTouchEvent::TouchPoint> TouchPointList;
 
@@ -24,6 +29,8 @@ namespace Radiant
 
     const TouchPointList & touchPoints() const;
     TouchPointList & touchPoints();
+
+    Type type() const;
 
   private:
     class D;
