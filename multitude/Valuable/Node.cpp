@@ -520,9 +520,17 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!obj->m_eventListenNames.contains(to)) {
-      const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
-      Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
-              klass.data(), obj->name().data(), obj, to.data());
+      if(!obj->getValue(to)) {
+        /* If the to value is not a known listener, or an attribute we output a warning.
+          */
+        /** @todo We could still check that the "to" is not a hierarchical path, for example
+           "widget1/color".
+        */
+
+        const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+        Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
+                         klass.data(), obj->name().data(), obj, to.data());
+      }
     }
 
     if(defaultData)
