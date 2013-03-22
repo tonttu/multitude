@@ -1504,10 +1504,6 @@ namespace Luminous
     }
     first->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
 
-    // Set viewport to context size
-    pushViewport(viewport);
-    pushScissorRect(viewport);
-
     if(numFilters > 100) {
       Radiant::warning("Using over 100 post processing filters.");
     }
@@ -1546,10 +1542,39 @@ namespace Luminous
         ppf->doFilter(*this);
       }
     }
+  }
 
-    // Remember to restore the viewport
+  void RenderContext::processFilter(Luminous::PostProcessFilterPtr filter)
+  {
+    auto filterCtx = m_data->m_postProcessChain.get(filter);
+
+    // Create the context for the filter if necessary
+    if(!filterCtx) {
+      filterCtx = std::make_shared<PostProcessContext>(filter);
+      filterCtx->initialize(*this);
+
+      m_data->m_postProcessChain.insert(filterCtx);
+    }
+
+    const Nimble::Recti viewport = area()->viewport();
+
+    assert(m_data->m_currentRenderTarget);
+    const RenderTarget & sourceRenderTarget = *m_data->m_currentRenderTarget;
+
+    // Blit from current render target to filter's auxiliary render target
+    filterCtx->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
+    {
+      auto g = pushRenderTarget(filterCtx->renderTarget());
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+    }
+    filterCtx->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
+
+    // Push the original render target
+    auto g = pushRenderTarget(sourceRenderTarget);
+
+    pushScissorRect(viewport);
+    filterCtx->doFilter(*this);
     popScissorRect();
-    popViewport();
   }
 
   bool RenderContext::initialize()

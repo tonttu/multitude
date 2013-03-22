@@ -187,6 +187,8 @@ namespace Luminous
     /// @cond
     void initPostProcess(Luminous::PostProcessFilters & filters);
     void postProcess();
+
+    void processFilter(Luminous::PostProcessFilterPtr filter);
     /// @endcond
 
     /// Returns transformation from the world coordinates (pixels) to projected eye
