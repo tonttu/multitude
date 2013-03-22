@@ -1009,6 +1009,9 @@ namespace Luminous
   std::shared_ptr<Mipmap> Mipmap::acquire(const QString & filename,
                                           bool compressedMipmaps)
   {
+    if (filename.isEmpty())
+      return nullptr;
+
     QFileInfo fi(filename);
     QPair<QByteArray, bool> key = qMakePair(fi.absoluteFilePath().toUtf8(), compressedMipmaps);
 
