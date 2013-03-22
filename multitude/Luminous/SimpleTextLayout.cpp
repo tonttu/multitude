@@ -19,6 +19,8 @@
 #include <QFontMetricsF>
 #include <QTextLayout>
 #include <QRegExp>
+#include <QThread>
+#include <QApplication>
 //#include <QPainter>
 
 #include <unordered_map>
@@ -373,7 +375,7 @@ namespace Luminous
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }
-      nonConst->setLayoutReady(true);
+      nonConst->setLayoutReady(QThread::currentThread() == QApplication::instance()->thread());
       nonConst->clearGlyphs();
     }
 
@@ -382,12 +384,15 @@ namespace Luminous
 
     nonConst->clearGlyphs();
 
-    bool missingGlyphs = false;
-    const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
+    if (QThread::currentThread() == QApplication::instance()->thread()) {
 
-    foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
-      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
-
-    nonConst->setGlyphsReady(!missingGlyphs);
+      bool missingGlyphs = false;
+      const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
+      foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
+        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
+      nonConst->setGlyphsReady(!missingGlyphs);
+    } else {
+      nonConst->setGlyphsReady(false);
+    }
   }
 } // namespace Luminous
