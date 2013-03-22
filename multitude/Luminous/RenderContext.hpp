@@ -592,8 +592,9 @@ namespace Luminous
     void clear(ClearMask mask, const Radiant::Color & clearColor = Radiant::Color(0,0,0,0),
                double clearDepth = 1.0, int clearStencil = 0);
 
-    /// Adds rendering command to the rendering queue. The difference between another version of
-    /// this function is that this version enables manual management of vertex data with the
+    /// Adds rendering command to the rendering queue. The difference between this and
+    /// @ref render(bool, Luminous::PrimitiveType, int, int, float, const Luminous::Program&, const std::map< QByteArray, const Texture * > * , const std::map< QByteArray, ShaderUniform > *) "render"
+    /// is that this version enables manual management of vertex data with the
     /// vertex array. In addition the used uniform block has free form. User needs to do
     /// his/hers own geometry transformations when using this function.
     /// @sa drawPrimitiveT
