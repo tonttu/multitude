@@ -282,6 +282,7 @@ namespace Valuable
     void removeListener(long id);
 
     /// Returns true if the current value of the object is different from the default value.
+    /// Default implementation always returns true
     virtual bool isChanged() const;
 
     virtual void clearValue(Layer layout);
@@ -327,7 +328,6 @@ namespace Valuable
   private:
     // The object that holds this object
     Node * m_host;
-    bool m_changed;
     bool m_serializable;
     QByteArray m_name;
     bool m_transit;
@@ -428,6 +428,11 @@ namespace Valuable
     {
       setValue(t);
       return *this;
+    }
+
+    virtual bool isChanged() const
+    {
+      return m_current > DEFAULT;
     }
 
     virtual void clearValue(Layer layout = USER)

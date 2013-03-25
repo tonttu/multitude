@@ -34,7 +34,6 @@ namespace Valuable
 
   Attribute::Attribute()
   : m_host(0),
-    m_changed(false),
     m_serializable(true),
     m_transit(false),
     m_listenersId(0)
@@ -42,7 +41,6 @@ namespace Valuable
 
   Attribute::Attribute(Node * host, const QByteArray & name, bool transit)
     : m_host(0),
-      m_changed(false),
       m_serializable(true),
       m_name(name),
       m_transit(transit),
@@ -62,7 +60,6 @@ namespace Valuable
 
   Attribute::Attribute(const Attribute & o)
     : m_host(0)
-    , m_changed(false)
     , m_serializable(true)
     , m_listenersId(0)
   {
@@ -211,7 +208,6 @@ namespace Valuable
   void Attribute::emitChange()
   {
 //    Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
-    m_changed = true;
     // We use foreach here because the callback functions might
     // remove themselves from the listeners. Since foreach makes a
     // copy of the containers this doesn't present a problem
@@ -314,7 +310,7 @@ namespace Valuable
 
   bool Attribute::isChanged() const
   {
-    return m_changed;
+    return true;
   }
 
   void Attribute::clearValue(Layer)
