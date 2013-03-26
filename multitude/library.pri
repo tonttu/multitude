@@ -4,7 +4,7 @@ TEMPLATE = lib
 # This will disable generation of .so version symlinks on Linux
 unix:CONFIG += plugin
 
-PROJECT_FILE = $$join(TARGET, "", "", ".pro")
+PROJECT_FILE = $$_PRO_FILE_
 
 # Make sure we don't override this if it has been set already
 isEmpty(DESTDIR):DESTDIR = $$PWD/lib
