@@ -162,7 +162,7 @@ namespace Luminous
         QRectF rect = layout->blockBoundingRect(block);
         const bool rtl = block.layout()->textOption().textDirection() == Qt::RightToLeft;
 
-        QTextLayout textLayout("", block.charFormat().font());
+        QTextLayout textLayout("∙", block.charFormat().font());
         int size = textLayout.font().pixelSize();
 
         textLayout.beginLayout();
