@@ -31,21 +31,23 @@ namespace Luminous
     LUMINOUS_API VertexDescription();
 
     /// Add an attribute at the end of the description
-    /// @param attrName vertex attribute name
+    /// @param attrName Vertex attribute name
+    /// @tparam AttrType Type of the vertex attribute
     template <typename AttrType>
     void addAttribute(const QString & attrName);
     /// Add an attribute at specific offset
-    /// @param attrName vertex attribute name
-    /// @param offset offset in bytes from the start of the vertex
+    /// @param attrName Vertex attribute name
+    /// @param offset Offset in bytes from the start of the vertex
+    /// @tparam AttrType Type of the vertex attribute
     template <typename AttrType>
     void addAttribute(const QString & attrName, uint offset);
 
     /// Find a named attribute
-    /// @param attrName vertex attribute name
-    /// @return vertex attribute if the attribute is found; otherwise nullptr
+    /// @param attrName Vertex attribute name
+    /// @return vertex Attribute if the attribute is found; otherwise nullptr
     LUMINOUS_API const VertexAttribute * findAttribute(const QString & attrName) const;
     /// Remove a named attribute
-    /// @param attrName vertex attribute name
+    /// @param attrName Vertex attribute name to be removed
     LUMINOUS_API void removeAttribute(const QString & attrName);
 
     /// Returns the number of attributes in this description

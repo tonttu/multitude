@@ -74,7 +74,7 @@ namespace Radiant {
       /* A single long sleep might get interrupted by system calls and
 	 return early. The method below should be more robust. */
 
-      for(int i = 0; i < n && m_continue; i++)
+      for(int i = 0; i < n && m_continue && !m_paused; i++)
         Radiant::Sleep::sleepMs(100);
 
       bool ok = true;
@@ -88,6 +88,9 @@ namespace Radiant {
           item.m_check = false;
         }
       }
+
+      if (m_paused)
+        continue;
 
       if(!ok && m_continue) {
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"

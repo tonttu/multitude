@@ -138,6 +138,11 @@ namespace Luminous
     /// Checks if a filter instance already exists in the chain
     bool contains(const PostProcessFilterPtr & filter) const;
 
+    /// Gets the context related to the given filter
+    /// @param filter filter to search for
+    /// @return context for the given filter
+    PostProcessContextPtr get(const PostProcessFilterPtr & filter) const;
+
     /// Checks if the chain is empty
     /// @return true if chain is empty or only contains disabled filters
     bool empty() const;

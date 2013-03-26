@@ -55,6 +55,17 @@ namespace Luminous
     return false;
   }
 
+  PostProcessContextPtr PostProcessChain::get(const PostProcessFilterPtr & filter) const
+  {
+    for(FilterChain::const_iterator it = m_d->m_chain.begin(); it != m_d->m_chain.end(); ++it)
+    {
+      const PostProcessContextPtr ptr = it->second;
+      if(ptr->filter() == filter)
+         return ptr;
+    }
+    return nullptr;
+  }
+
   PostProcessChain::FilterIterator PostProcessChain::begin()
   {
     return FilterIterator(m_d->m_chain.begin(), m_d->m_chain.end());
