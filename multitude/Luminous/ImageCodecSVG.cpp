@@ -37,12 +37,10 @@ namespace Luminous {
   ImageCodecSVG::~ImageCodecSVG()
   {}
 
-  bool ImageCodecSVG::canRead(FILE * file)
+  bool ImageCodecSVG::canRead(QFile & file)
   {
-    QFile f;
-    qint64 old = f.pos();
-    f.open(file, QIODevice::ReadOnly);
-    QXmlStreamReader reader(&f);
+    auto old = file.pos();
+    QXmlStreamReader reader(&file);
     QXmlStreamReader::TokenType token;
 
     // sniff the start element
@@ -57,7 +55,7 @@ namespace Luminous {
       }
     } while (token != QXmlStreamReader::Invalid);
 
-    f.seek(old);
+    file.seek(old);
     return seems_valid;
   }
 
@@ -71,7 +69,7 @@ namespace Luminous {
     return QString("svg");
   }
 
-  bool ImageCodecSVG::ping(ImageInfo & info, FILE * file)
+  bool ImageCodecSVG::ping(ImageInfo & info, QFile & file)
   {
 
     QSvgRenderer * r = updateSVG(file);
@@ -84,7 +82,7 @@ namespace Luminous {
     return true;
   }
 
-  bool ImageCodecSVG::read(Image & image, FILE * file)
+  bool ImageCodecSVG::read(Image & image, QFile & file)
   {
     QSvgRenderer * r = updateSVG(file);
 
@@ -116,19 +114,17 @@ namespace Luminous {
   }
 
   /// Not supported (could use QSvgGenerator to render bitmap as SVG, but why?)
-  bool ImageCodecSVG::write(const Image & /*image*/, FILE * /*file*/)
+  bool ImageCodecSVG::write(const Image & /*image*/, QFile & /*file*/)
   {
     return false;
   }
 
-  QSvgRenderer * ImageCodecSVG::updateSVG(FILE * file)
+  QSvgRenderer * ImageCodecSVG::updateSVG(QFile & file)
   {
-    QFile qFile;
-    qFile.open(file, QIODevice::ReadOnly);
-    qint64 old = qFile.pos();
-    QXmlStreamReader reader(&qFile);
+    qint64 old = file.pos();
+    QXmlStreamReader reader(&file);
     QSvgRenderer * renderer = new QSvgRenderer(&reader);
-    qFile.seek(old);
+    file.seek(old);
     return renderer;
   }
 

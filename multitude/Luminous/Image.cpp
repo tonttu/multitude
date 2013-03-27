@@ -29,6 +29,7 @@
 #include <string.h>
 #include <typeinfo>
 #include <errno.h>
+#include <QFile>
 
 #ifdef RADIANT_LINUX
 #include <sys/stat.h>
@@ -637,15 +638,15 @@ namespace Luminous
 
     clear();
 
-    FILE * file = fopen(filename.toUtf8().data(), "rb");
-    if(!file) {
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly)) {
       Radiant::error("Image::read # failed to open file '%s'", filename.toUtf8().data());
       // m_ready = true;
       return false;
     }
 
-    auto codec = codecs()->getCodec(filename, file);
-    if(codec) {
+    auto codec = codecs()->getCodec(filename, &file);
+    if (codec) {
       try {
         result = codec->read(*this, file);
       } catch (std::bad_alloc & err) {
@@ -655,8 +656,7 @@ namespace Luminous
     } else {
       Radiant::error("Image::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
-
-    fclose(file);
+    file.close();
 
     changed();
 
@@ -674,8 +674,8 @@ namespace Luminous
 
     bool ret = false;
 
-    FILE * file = fopen(filename.toUtf8().data(), "wb");
-    if(!file) {
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly)) {
       Radiant::error("Image::write # failed to open file '%s'", filename.toUtf8().data());
       return false;
     }
@@ -690,8 +690,7 @@ namespace Luminous
       ret = codec->write(*this, file);
     }
 
-    fclose(file);
-
+    file.close();
     return ret;
   }
 
@@ -773,20 +772,21 @@ namespace Luminous
   {
     bool result = false;
 
-    FILE * file = fopen(filename.toUtf8().data(), "rb");
-    if(!file) {
+    QFile file(filename);
+    
+    if(!file.open(QIODevice::ReadOnly)) {
       Radiant::error("Image::ping # failed to open file '%s' for reading.", filename.toUtf8().data());
       return result;
     }
 
-    auto codec = Luminous::Image::codecs()->getCodec(filename, file);
+    auto codec = Luminous::Image::codecs()->getCodec(filename, &file);
     if(codec) {
       result = codec->ping(info, file);
     } else {
       Radiant::error("No suitable image codec found for '%s'", filename.toUtf8().data());
     }
 
-    fclose(file);
+    file.close();
 
     return result;
   }
@@ -1004,24 +1004,25 @@ namespace Luminous
 
     bool result = false;
 
-    FILE * file = fopen(filename.toUtf8().data(), "rb");
-    if(!file) {
+    QFile file(filename);
+    if(!file.open(QIODevice::ReadOnly)) {
       Radiant::error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
       return false;
     }
 
-    auto codec = Image::codecs()->getCodec(filename, file);
+    auto codec = Image::codecs()->getCodec(filename, &file);
     if(codec) {
       result = codec->read(*this, file, level);
     } else {
       Radiant::error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
-    fclose(file);
+
+    file.close();
 
     return result;
   }
 
-  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int size)
+  bool CompressedImage::loadImage(QFile & file, const ImageInfo & info, int size)
   {
     clear();
 #if 0
@@ -1046,7 +1047,8 @@ namespace Luminous
 #endif
     m_d->ptr = new char[size];
 
-    if (fread(m_d->ptr, size, 1, file) != 1) {
+    auto bytesRead = file.read(m_d->ptr, size);
+    if (bytesRead != size) {
       Radiant::error("CompressedImage::loadImage # Failed to read image");
       delete m_d->ptr;
       m_d->ptr = 0;

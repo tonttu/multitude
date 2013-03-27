@@ -16,6 +16,8 @@
 #include <Luminous/PixelFormat.hpp>
 #include <Luminous/Texture.hpp>
 
+#include <QFile>
+
 #include <cstdio>
 #include <vector>
 
@@ -301,7 +303,7 @@ namespace Luminous
     /// @param info image info
     /// @param size bytes to read
     /// @return true if the reading succeeded, false otherwise
-    bool loadImage(FILE * file, const ImageInfo & info, int size);
+    bool loadImage(QFile & file, const ImageInfo & info, int size);
     /// Returns a pointer to the raw image data
     void * data() const;
     /// Returns the size of the image data in bytes

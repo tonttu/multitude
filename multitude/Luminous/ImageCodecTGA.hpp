@@ -24,13 +24,13 @@ namespace Luminous
   {
     public:
       virtual ~ImageCodecTGA();
-      virtual bool canRead(FILE * file);
+      virtual bool canRead(QFile & file);
 
       virtual QString extensions() const;
       virtual QString name() const;
-      virtual bool ping(ImageInfo & info, FILE * file);
-      virtual bool read(Image & image, FILE * file);
-      virtual bool write(const Image & image, FILE * file);
+      virtual bool ping(ImageInfo & info, QFile & file);
+      virtual bool read(Image & image, QFile & file);
+      virtual bool write(const Image & image, QFile & file);
   };
 
 }

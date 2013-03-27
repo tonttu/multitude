@@ -145,12 +145,12 @@ union DDS_header {
   char data[ 128 ];
 };
 
-bool parse(FILE * file, DDS_header & header, ImageInfo & info)
+bool parse(QFile & file, DDS_header & header, ImageInfo & info)
 {
-  long pos = ftell(file);
-  int ok = (int) fread(&header, sizeof(DDS_header), 1, file);
-  fseek(file, pos, SEEK_SET);
-  if(!ok) return false;
+  auto pos = file.pos();
+  auto bytesRead = file.read(reinterpret_cast<char *>(&header), sizeof(DDS_header));
+  file.seek(pos);
+  if(bytesRead != sizeof(DDS_header)) return false;
 
   /// @todo seek to the end of the file, check that dwPitchOrLinearSize is correct
 
@@ -178,7 +178,7 @@ ImageCodecDDS::ImageCodecDDS()
 {
 }
 
-bool ImageCodecDDS::canRead(FILE * file)
+bool ImageCodecDDS::canRead(QFile & file)
 {
   DDS_header header;
   ImageInfo info;
@@ -195,18 +195,18 @@ QString ImageCodecDDS::name() const
   return "dds";
 }
 
-bool ImageCodecDDS::ping(ImageInfo & info, FILE * file)
+bool ImageCodecDDS::ping(ImageInfo & info, QFile & file)
 {
   DDS_header header;
   return parse(file, header, info);
 }
 
-bool ImageCodecDDS::read(Image &, FILE *)
+bool ImageCodecDDS::read(Image &, QFile &)
 {
   return false;
 }
 
-bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
+bool ImageCodecDDS::read(CompressedImage & image, QFile & file, int level)
 {
   DDS_header header;
   ImageInfo info;
@@ -229,7 +229,7 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
   int offset = sizeof(header);
 
   if(level == 0) {
-    fseek(file, offset, SEEK_SET);
+    file.seek(offset);
     return image.loadImage(file, info, size);
   }
 
@@ -243,7 +243,7 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
     info.height = std::max(1, info.height >> 1);
   }
 
-  fseek(file, offset, SEEK_SET);
+  file.seek(offset);
   return image.loadImage(file, info, size);
 }
 
@@ -291,7 +291,7 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   }
 }
 
-bool ImageCodecDDS::write(const Image &, FILE *)
+bool ImageCodecDDS::write(const Image &, QFile &)
 {
   return false;
 }

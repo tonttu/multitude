@@ -29,13 +29,13 @@ class ImageCodecDDS : public ImageCodec
 {
 public:
   ImageCodecDDS();
-  bool canRead(FILE * file);
+  bool canRead(QFile & file);
   QString extensions() const;
   QString name() const;
-  bool ping(ImageInfo & info, FILE * file);
-  bool read(Image & image, FILE * file);
-  bool write(const Image & image, FILE * file);
-  bool read(CompressedImage & image, FILE * file, int level = 0);
+  bool ping(ImageInfo & info, QFile & file);
+  bool read(Image & image, QFile & file);
+  bool write(const Image & image, QFile & file);
+  bool read(CompressedImage & image, QFile & file, int level = 0);
 
   /// Save the DXT compressed image data to a DDS file.
   /// @param filename file to save to

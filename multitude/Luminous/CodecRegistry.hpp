@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <QString>
+#include <QFile>
 #include <memory>
 
 namespace Luminous
@@ -35,7 +36,7 @@ namespace Luminous
     /// @param file the file to query
     /// @return returns a pointer to a codec that reports it can load the given
     /// file or NULL if no codec is found.
-    std::shared_ptr<ImageCodec> getCodec(const QString & filename, FILE * file = 0);
+    std::shared_ptr<ImageCodec> getCodec(const QString & filename, QFile * file = nullptr);
     /// Register a new codec that can be used to load images
     /// @param codec the new codec
     void registerCodec(std::shared_ptr<ImageCodec> codec);
