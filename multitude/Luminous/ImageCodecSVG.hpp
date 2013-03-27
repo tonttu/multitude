@@ -25,16 +25,16 @@ class LUMINOUS_API ImageCodecSVG : public Luminous::ImageCodec
 public:
   ImageCodecSVG();
   virtual ~ImageCodecSVG();
-  virtual bool canRead(FILE * file) OVERRIDE;
+  virtual bool canRead(QFile & file) OVERRIDE;
 
   virtual QString extensions() const OVERRIDE;
   virtual QString name() const OVERRIDE;
-  virtual bool ping(ImageInfo & info, FILE * file) OVERRIDE;
-  virtual bool read(Image & image, FILE * file) OVERRIDE;
+  virtual bool ping(ImageInfo & info, QFile & file) OVERRIDE;
+  virtual bool read(Image & image, QFile & file) OVERRIDE;
   /// not supported
-  virtual bool write(const Image & image, FILE * file) OVERRIDE;
+  virtual bool write(const Image & image, QFile & file) OVERRIDE;
 private:
-  QSvgRenderer * updateSVG(FILE * file);
+  QSvgRenderer * updateSVG(QFile & file);
 };
 
 } // namespace Luminous

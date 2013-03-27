@@ -29,7 +29,7 @@ namespace Luminous
   CodecRegistry::~CodecRegistry()
   {}
 
-  std::shared_ptr<ImageCodec> CodecRegistry::getCodec(const QString & filename, FILE * file)
+  std::shared_ptr<ImageCodec> CodecRegistry::getCodec(const QString & filename, QFile * file)
   {
     Luminous::initDefaultImageCodecs();
 
@@ -45,7 +45,7 @@ namespace Luminous
     if(file) {
      
       // Verify our choice
-      if(codec && codec->canRead(file))
+      if(codec && codec->canRead(*file))
         return codec;
 
       // No codec matched the extension, go through all registered codecs and
@@ -57,7 +57,7 @@ namespace Luminous
         if(candidate == codec)
           continue;
 
-        if(candidate->canRead(file)) 
+        if(candidate->canRead(*file)) 
           return candidate;
       }
     }

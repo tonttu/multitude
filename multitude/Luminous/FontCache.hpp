@@ -68,7 +68,9 @@ namespace Luminous
     FontCache(const QRawFont & rawFont);
 
   private:
-    class FontGenerator;
+    class GlyphGenerator;
+    class FileCacheIndexLoader;
+    class FileCacheLoader;
     class D;
     D * m_d;
   };

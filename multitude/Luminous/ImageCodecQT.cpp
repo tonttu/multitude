@@ -29,11 +29,9 @@ namespace Luminous
   ImageCodecQT::~ImageCodecQT()
   {}
 
-  bool ImageCodecQT::canRead(FILE * file)
+  bool ImageCodecQT::canRead(QFile & file)
   {
-    QFile f;
-    f.open(file, QIODevice::ReadOnly);
-    QImageReader r(&f);
+    QImageReader r(&file);
     return r.canRead();
   }
 
@@ -47,15 +45,9 @@ namespace Luminous
     return QString("ImageCodecQT");
   }
 
-  bool ImageCodecQT::ping(ImageInfo & info, FILE * file)
+  bool ImageCodecQT::ping(ImageInfo & info, QFile & file)
   {
-    QFile f;
-    if(!f.open(file, QIODevice::ReadOnly)) {
-      Radiant::error("ImageCodecQT::ping # failed to open file");
-      return false;
-    }
-
-    QImageReader r(&f);
+    QImageReader r(&file);
 
     if(!r.canRead()) {
       Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
@@ -99,14 +91,10 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::read(Image & image, FILE * file)
+  bool ImageCodecQT::read(Image & image, QFile & file)
   {
-    QFile f;
-    if(!f.open(file, QIODevice::ReadOnly))
-      return false;
-
     QImage qi;
-    if (!qi.load(&f, nullptr))
+    if (!qi.load(&file, nullptr))
       return false;
 
     QImage::Format fmt = qi.format();
@@ -162,7 +150,7 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::write(const Image & image, FILE * file)
+  bool ImageCodecQT::write(const Image & image, QFile & file)
   {
     QImage qi;
 
@@ -239,16 +227,7 @@ namespace Luminous
     }
 
     // Radiant::info("File is almost written");
-
-    QFile f;
-    bool ok = f.open(file, QIODevice::ReadWrite);
-
-    if(!ok) {
-      // Radiant::error("Error in QFile.open()");
-      return false;
-    }
-
-    return qi.save(&f, m_suffix.toUtf8().data());
+    return qi.save(&file, m_suffix.toUtf8().data());
   }
 
 }

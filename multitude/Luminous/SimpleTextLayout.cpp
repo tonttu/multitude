@@ -19,6 +19,7 @@
 #include <QFontMetricsF>
 #include <QTextLayout>
 #include <QRegExp>
+#include <QThread>
 //#include <QPainter>
 
 #include <unordered_map>
@@ -113,12 +114,14 @@ namespace Luminous
     Valuable::StyleValue m_letterSpacing;
     QTextLayout m_layout;
     QRectF m_boundingBox;
+    QThread * m_layoutThread;
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   SimpleTextLayout::D::D()
+    : m_layoutThread(nullptr)
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
@@ -127,6 +130,7 @@ namespace Luminous
 
   SimpleTextLayout::D::D(const QTextLayout & copy)
     : m_layout(copy.text(), copy.font())
+    , m_layoutThread(nullptr)
   {
     m_layout.setTextOption(copy.textOption());
   }
@@ -186,6 +190,8 @@ namespace Luminous
     m_layout.endLayout();
     if (m_layout.text().isEmpty())
       m_boundingBox = QRectF();
+
+    m_layoutThread = QThread::currentThread();
 
 #if 0
     static QAtomicInt id;
@@ -379,6 +385,9 @@ namespace Luminous
 
     if (isComplete())
       return;
+
+    if (m_d->m_layoutThread != QThread::currentThread())
+      m_d->layout(maximumSize());
 
     nonConst->clearGlyphs();
 
