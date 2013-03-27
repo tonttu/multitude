@@ -55,6 +55,7 @@ namespace Luminous
       // Display some debug information if requested
       const auto f = this->format();
 
+      // Accept touch events
       setAttribute(Qt::WA_AcceptTouchEvents);
 
       debugLuminous("OpenGL Context Debug:");
