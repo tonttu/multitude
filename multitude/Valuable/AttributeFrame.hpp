@@ -103,25 +103,28 @@ namespace Valuable
       return true;
     }
 
-    /// @todo all of the set() functions will crash if you call them with default arguments (units is empty)
+    /// v.x goes to top and bottom, v.y goes to right and left
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       beginChangeTransaction();
 
       for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v[i % 2], layer, units[i % 2]);
+        m_values[i]->set(v[i % 2], layer, i >= units.size() ? VU_UNKNOWN : units[i % 2]);
 
       endChangeTransaction();
 
       return true;
     }
 
+    /// v.x = top, v.y = right and left, v.z = bottom
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
     {
       beginChangeTransaction();
 
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v[i % 3], layer, units[i % 3]);
+      for (int i = 0; i < 4; ++i) {
+        const int j = i == 3 ? 1 : i;
+        m_values[i]->set(v[j], layer, j >= units.size() ? VU_UNKNOWN : units[j]);
+      }
 
       endChangeTransaction();
 
@@ -133,7 +136,7 @@ namespace Valuable
       beginChangeTransaction();
 
       for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v[i], layer, units[i]);
+        m_values[i]->set(v[i], layer, i >= units.size() ? VU_UNKNOWN : units[i]);
 
       endChangeTransaction();
 
