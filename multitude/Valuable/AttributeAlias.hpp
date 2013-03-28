@@ -16,7 +16,6 @@
 namespace Valuable
 {
   /// Alias to another Attribute object
-  /// @todo this class shouldn't be serialized. Add isSerializable() in Attribute
   class VALUABLE_API AttributeAlias : public Attribute
   {
   public:

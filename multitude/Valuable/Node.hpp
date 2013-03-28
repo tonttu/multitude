@@ -149,8 +149,8 @@ namespace Valuable
         next = name;
       }
 
-      container::iterator it = m_values.find(next);
-      if(it == m_values.end()) {
+      container::iterator it = m_attributes.find(next);
+      if(it == m_attributes.end()) {
         Radiant::error(
             "Node::setValue # property '%s' not found", next.data());
         return false;
@@ -204,13 +204,13 @@ namespace Valuable
     typedef container::const_iterator const_iterator;
 
     /// Returns an iterator to the beginning of the values
-    iterator valuesBegin() { return m_values.begin(); }
-    const_iterator valuesBegin() const { return m_values.begin(); }
+    iterator valuesBegin() { return m_attributes.begin(); }
+    const_iterator valuesBegin() const { return m_attributes.begin(); }
     /// Returns an iterator to the end of the values
-    iterator valuesEnd() { return m_values.end(); }
-    const_iterator valuesEnd() const { return m_values.end(); }
+    iterator valuesEnd() { return m_attributes.end(); }
+    const_iterator valuesEnd() const { return m_attributes.end(); }
 
-    const container & values() { return m_values; }
+    const container & values() { return m_attributes; }
 
     /** Add an event listener to this object.
 
@@ -461,7 +461,7 @@ namespace Valuable
     void valueRenamed(const QByteArray &was, const QByteArray &now);
 
     /// @todo rename to m_attributes
-    container m_values;
+    container m_attributes;
 
     class ValuePass {
     public:

@@ -123,7 +123,6 @@ namespace Valuable
 
     /// Returns NULL if the iterator is not valid anymore. Can be used like
     /// for(it = foo.children(); it; ++it) {}
-    /// @todo should be replaced with safe bool
     /// @return true if the iterator is still valid
     operator bool () const;
 

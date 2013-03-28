@@ -195,14 +195,14 @@ namespace Valuable
 
     // Release memory for any value objects that are left (should be only
     // heap-allocated at this point)
-    while(!m_values.empty())
-      delete m_values.begin()->second;
+    while(!m_attributes.empty())
+      delete m_attributes.begin()->second;
   }
 
   Node::Node(Node && node)
     : Attribute(std::move(*this))
     , m_sender(std::move(node.m_sender))
-    , m_values(std::move(node.m_values))
+    , m_attributes(std::move(node.m_attributes))
     , m_elisteners(std::move(node.m_elisteners))
     , m_eventSources(std::move(node.m_eventSources))
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
@@ -219,7 +219,7 @@ namespace Valuable
   {
     Attribute::operator=(std::move(*this));
     m_sender = std::move(node.m_sender);
-    m_values = std::move(node.m_values);
+    m_attributes = std::move(node.m_attributes);
     m_elisteners = std::move(node.m_elisteners);
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
@@ -242,9 +242,9 @@ namespace Valuable
     size_t slashIndex = name.indexOf('/');
 
     if(slashIndex == std::string::npos) {
-      container::const_iterator it = m_values.find(name);
+      container::const_iterator it = m_attributes.find(name);
 
-      return it == m_values.end() ? 0 : it->second;
+      return it == m_attributes.end() ? 0 : it->second;
     }
     else {
       const QByteArray part1 = name.left(slashIndex);
@@ -279,7 +279,7 @@ namespace Valuable
     //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
 
     // Check values
-    if(m_values.find(cname) != m_values.end()) {
+    if(m_attributes.find(cname) != m_attributes.end()) {
       Radiant::error(
           "Node::addAttribute # can not add value '%s' as '%s' "
           "already has a value with the same name.",
@@ -300,7 +300,7 @@ namespace Valuable
     // Change the value name
     value->setName(cname);
 
-    m_values[value->name()] = value;
+    m_attributes[value->name()] = value;
     value->m_host  = this;
     attributeAdded(value);
 
@@ -314,9 +314,9 @@ namespace Valuable
 
   void Node::removeAttribute(Attribute * const value)
   {
-    for (auto it = m_values.begin(), end = m_values.end(); it != end; ++it) {
+    for (auto it = m_attributes.begin(), end = m_attributes.end(); it != end; ++it) {
       if (it->second == value) {
-        m_values.erase(it);
+        m_attributes.erase(it);
         value->m_host = nullptr;
         attributeRemoved(value);
         return;
@@ -440,7 +440,7 @@ namespace Valuable
 
     elem.add("type", type());
 
-    for(container::const_iterator it = m_values.begin(); it != m_values.end(); ++it) {
+    for(container::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it) {
       Attribute * vo = it->second;
 
       /// @todo need to add new flag to Archive that controls how Attribute::serializable works
@@ -490,7 +490,7 @@ namespace Valuable
   void Node::debugDump() {
     Radiant::trace(Radiant::DEBUG, "%s {", m_name.data());
 
-    for(container::iterator it = m_values.begin(); it != m_values.end(); ++it) {
+    for(container::iterator it = m_attributes.begin(); it != m_attributes.end(); ++it) {
       Attribute * vo = it->second;
 
       Node * hv = dynamic_cast<Node *> (vo);
@@ -851,21 +851,21 @@ namespace Valuable
   void Node::valueRenamed(const QByteArray & was, const QByteArray & now)
   {
     // Check that the value does not exist already
-    iterator it = m_values.find(now);
-    if(it != m_values.end()) {
+    iterator it = m_attributes.find(now);
+    if(it != m_attributes.end()) {
       Radiant::error("Node::valueRenamed # Value '%s' already exist", now.data());
       return;
     }
 
-    it = m_values.find(was);
-    if(it == m_values.end()) {
+    it = m_attributes.find(was);
+    if(it == m_attributes.end()) {
       Radiant::error("Node::valueRenamed # No such value: %s", was.data());
       return;
     }
 
     Attribute * vo = (*it).second;
-    m_values.erase(it);
-    m_values[now] = vo;
+    m_attributes.erase(it);
+    m_attributes[now] = vo;
   }
 
   bool Node::readElement(const ArchiveElement &)
@@ -875,13 +875,13 @@ namespace Valuable
 
   void Node::clearValues(Layer layer)
   {
-    for(auto i = m_values.begin(); i != m_values.end(); ++i)
+    for(auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
       i->second->clearValue(layer);
   }
 
   void Node::setAsDefaults()
   {
-    for(auto i = m_values.begin(); i != m_values.end(); ++i)
+    for(auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
       i->second->setAsDefaults();
   }
 

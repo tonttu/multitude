@@ -423,7 +423,6 @@ namespace Valuable
       if (sendSignal) this->emitChange();
     }
 
-    /// @todo should return the derived type, not AttributeT
     inline AttributeT<T> & operator = (const T & t)
     {
       setValue(t);

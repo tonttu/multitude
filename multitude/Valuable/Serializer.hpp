@@ -214,7 +214,6 @@ namespace Valuable
           if ((*it).name() == "string") {
             lst << (*it).get();
           } else {
-            /// @todo ArchiveElement should have some deserialization flags, like "warnings as errors" or similar
             Radiant::warning("deserialize # Unknown tag %s", (*it).name().toUtf8().data());
           }
         }

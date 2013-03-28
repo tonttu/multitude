@@ -63,9 +63,11 @@ namespace Valuable
   {
     bool ok;
     assert(m_values.size() > idx && idx >= 0);
-    int ret = m_values[idx].toInt(&ok);
-    /// @todo should not allow implicit type casting between numeric and string values
-    if(ok) return ret;
+    auto t = m_values[idx].type();
+    if (t != QVariant::ByteArray && t != QVariant::Char && t != QVariant::String) {
+      int ret = m_values[idx].toInt(&ok);
+      if(ok) return ret;
+    }
 
     Radiant::error("StyleValue::asInt # cannot convert %s to int", m_values[idx].typeName());
     return 0;
@@ -75,8 +77,11 @@ namespace Valuable
   {
     bool ok;
     assert(m_values.size() > idx && idx >= 0);
-    float ret = m_values[idx].toFloat(&ok);
-    if(ok) return ret;
+    auto t = m_values[idx].type();
+    if (t != QVariant::ByteArray && t != QVariant::Char && t != QVariant::String) {
+      float ret = m_values[idx].toFloat(&ok);
+      if(ok) return ret;
+    }
 
     Radiant::error("StyleValue::asFloat # cannot convert %s to float", m_values[idx].typeName());
     return 0.f;
@@ -85,11 +90,12 @@ namespace Valuable
   QString StyleValue::asString(int idx) const
   {
     assert(m_values.size() > idx && idx >= 0);
-    return m_values[idx].toString();
-
-    /// @todo
-    //Radiant::error("StyleValue::asString # cannot convert %s to string", m_values[idx].typeName());
-    //return "";
+    if (m_values[idx].canConvert(QVariant::String)) {
+      return m_values[idx].toString();
+    } else {
+      Radiant::error("StyleValue::asString # cannot convert %s to string", m_values[idx].typeName());
+      return QString();
+    }
   }
 
   Radiant::Color StyleValue::asColor(int idx) const

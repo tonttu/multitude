@@ -34,7 +34,6 @@ namespace Valuable
 
   DefineTypeT(int, AttributeIntT);
   DefineTypeT(float, AttributeFloatT);
-  /// @todo do these correctly, that is, with some more generic thing
   DefineType(Nimble::Vector2f, AttributeVector2f);
   DefineType(Nimble::Vector3f, AttributeVector3f);
   DefineType(Nimble::Vector4f, AttributeVector4f);

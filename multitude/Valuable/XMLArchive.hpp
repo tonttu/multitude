@@ -59,7 +59,6 @@ namespace Valuable
     QString get() const;
 
     QString name() const;
-    /// @todo add virtual/OVERRIDE to all functions that need it
     virtual void setName(const QString & name) OVERRIDE;
 
     /// Returns a pointer to the wrapped DOMElement
