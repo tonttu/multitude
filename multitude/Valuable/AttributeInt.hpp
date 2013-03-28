@@ -28,9 +28,9 @@ namespace Valuable
       @see AttributeInt*/
 
   template<class T>
-  class AttributeIntT : public AttributeNumeric<T>
+  class AttributeIntT : public AttributeNumericT<T>
   {
-    typedef AttributeNumeric<T> Base;
+    typedef AttributeNumericT<T> Base;
   public:
     using Base::value;
     using Base::m_current;
@@ -46,7 +46,7 @@ namespace Valuable
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
     AttributeIntT(Node * host, const QByteArray & name, T v, bool transit = false)
-        : AttributeNumeric<T>(host, name, v, transit)
+        : AttributeNumericT<T>(host, name, v, transit)
     {}
 
     /// Assignment by subtraction

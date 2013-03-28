@@ -73,16 +73,16 @@ namespace Valuable
    */
   // We can't inherit from AttributeIntT, since T might be an enum
   template <typename T>
-  class AttributeEnumT : public AttributeNumeric<T>
+  class AttributeEnumT : public AttributeNumericT<T>
   {
-    typedef AttributeNumeric<T> Base;
+    typedef AttributeNumericT<T> Base;
 
   public:
     using Base::operator =;
 
     AttributeEnumT(Node * host, const QByteArray & name, const FlagNames * names,
                   const T & v, bool transit = false)
-      : AttributeNumeric<T>(host, name, v, transit)
+      : AttributeNumericT<T>(host, name, v, transit)
       , m_allowIntegers(false)
     {
       for (const FlagNames * it = names; it->name; ++it) {

@@ -24,9 +24,9 @@ namespace Valuable
 
       @see AttributeFloat. */
   template<class T>
-  class AttributeFloatT : public AttributeNumeric<T>
+  class AttributeFloatT : public AttributeNumericT<T>
   {
-    typedef AttributeNumeric<T> Base;
+    typedef AttributeNumericT<T> Base;
 
     public:
       using Base::value;
@@ -40,7 +40,7 @@ namespace Valuable
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object
       AttributeFloatT(Node * host, const QByteArray & name, T v = T(0), bool transit = false)
-      : AttributeNumeric<T>(host, name, v, transit),
+      : AttributeNumericT<T>(host, name, v, transit),
         m_src(1)
       {
         for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
