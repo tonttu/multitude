@@ -14,7 +14,7 @@
 
 #include "Export.hpp"
 #include "AttributeInt.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 

@@ -8,8 +8,8 @@
  * 
  */
 
-#ifndef VALUABLE_ATTRIBUTE_OBJECT_HPP
-#define VALUABLE_ATTRIBUTE_OBJECT_HPP
+#ifndef VALUABLE_ATTRIBUTE_HPP
+#define VALUABLE_ATTRIBUTE_HPP
 
 #include "Export.hpp"
 #include "Archive.hpp"
@@ -108,7 +108,6 @@ namespace Valuable
       @see Node
   */
 
-  /// @todo the "set" functions are duplicating the processMessage functionality
   /// @todo processMessage should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
   class VALUABLE_API Attribute : public Serializable

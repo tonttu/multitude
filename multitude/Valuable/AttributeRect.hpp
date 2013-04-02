@@ -13,7 +13,7 @@
 
 #include <Radiant/StringUtils.hpp>
 #include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
 
 #include <Nimble/Rect.hpp>
 

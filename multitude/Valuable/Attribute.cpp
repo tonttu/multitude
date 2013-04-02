@@ -8,7 +8,7 @@
  * 
  */
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include "Node.hpp"
 #include "ChangeMap.hpp"
 
@@ -217,7 +217,6 @@ namespace Valuable
 #ifdef CORNERSTONE_JS
           /// @todo what is the correct receiver ("this" in the callback)?
           /// @todo is this legal without v8::HandleScope handle_scope;
-          /// @todo is it legal to give null pointer to argv parameter?
           l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
 #endif
         } else l.func();

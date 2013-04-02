@@ -11,7 +11,7 @@
 #ifndef VALUABLE_VALUEFLAGS_HPP
 #define VALUABLE_VALUEFLAGS_HPP
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include "StyleValue.hpp"
 
 #include <Radiant/Flags.hpp>

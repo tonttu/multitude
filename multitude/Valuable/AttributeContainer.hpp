@@ -12,7 +12,7 @@
 #define VALUABLE_VALUE_CONTAINER_HPP
 
 #include "Serializer.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include <iterator>
 
 namespace

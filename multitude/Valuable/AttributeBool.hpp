@@ -11,7 +11,7 @@
 #ifndef VALUABLE_VALUE_BOOL_HPP
 #define VALUABLE_VALUE_BOOL_HPP
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 namespace Valuable
 {

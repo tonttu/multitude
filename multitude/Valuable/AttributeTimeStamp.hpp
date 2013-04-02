@@ -12,7 +12,7 @@
 #define ATTRIBUTETIMESTAMP_HPP
 
 #include "Export.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 #include <Radiant/TimeStamp.hpp>
 

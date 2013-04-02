@@ -12,7 +12,7 @@
 #define VALUABLE_ATTRIBUTESTRINGLIST_HPP
 
 #include "Export.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 #include <QStringList>
 

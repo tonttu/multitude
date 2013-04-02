@@ -12,7 +12,7 @@
 #define VALUABLE_VALUE_VECTOR_HPP
 
 #include "Export.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include "StyleValue.hpp"
 
 #include <Nimble/Vector4.hpp>

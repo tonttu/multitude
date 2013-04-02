@@ -14,7 +14,7 @@
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
 
 namespace Valuable
 {

@@ -12,7 +12,7 @@
 #define VALUABLE_VALUE_STRING_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
 
 #include <QString>
 

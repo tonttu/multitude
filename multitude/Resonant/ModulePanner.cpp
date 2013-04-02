@@ -18,7 +18,7 @@
 
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/DOMDocument.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
 
 #include <assert.h>
 #include <string.h>

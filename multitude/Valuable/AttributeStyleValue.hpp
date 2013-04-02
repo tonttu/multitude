@@ -11,7 +11,7 @@
 #ifndef VALUABLE_ATTRIBUTESTYLEVALUE_HPP
 #define VALUABLE_ATTRIBUTESTYLEVALUE_HPP
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include "StyleValue.hpp"
 
 namespace Valuable

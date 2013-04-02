@@ -11,7 +11,7 @@
 #ifndef VALUABLE_ATTRIBUTE_ALIAS_HPP
 #define VALUABLE_ATTRIBUTE_ALIAS_HPP
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 namespace Valuable
 {

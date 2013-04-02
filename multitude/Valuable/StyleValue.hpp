@@ -12,7 +12,7 @@
 #define VALUABLE_STYLE_VALUE_HPP
 
 #include "Export.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 #include <QString>
 #include <Radiant/Color.hpp>

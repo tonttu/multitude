@@ -12,7 +12,7 @@
 #define LUMINOUS_SHADERUNIFORM_HPP
 
 #include "Luminous/Luminous.hpp"
-#include "Valuable/AttributeObject.hpp"
+#include "Valuable/Attribute.hpp"
 #include "Valuable/AttributeColor.hpp"
 #include "Valuable/AttributeInt.hpp"
 #include "Valuable/AttributeFloat.hpp"
