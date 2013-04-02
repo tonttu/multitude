@@ -147,16 +147,6 @@ namespace Luminous
     return *this;
   }
 
-  void TextLayout::check() const
-  {
-    if(!correctAtlas()) {
-      TextLayout * nc = const_cast<TextLayout*>(this);
-      nc->setLayoutReady(false);
-      nc->clearGlyphs();
-      nc->generate();
-    }
-  }
-
   int TextLayout::groupCount() const
   {
     return m_d->m_groups.size();
@@ -174,7 +164,7 @@ namespace Luminous
 
   bool TextLayout::isComplete() const
   {
-    return m_d->m_glyphsReady && m_d->m_layoutReady;
+    return m_d->m_glyphsReady && m_d->m_layoutReady && correctAtlas();
   }
 
   void TextLayout::invalidate()
@@ -184,10 +174,8 @@ namespace Luminous
 
   void TextLayout::generate()
   {
-    if(!isComplete()) {
-      m_d->m_atlasGeneration = FontCache::generation();
+    if(!isComplete())
       generateInternal();
-    }
   }
 
   void TextLayout::setMaximumSize(const Nimble::Vector2f & size)
@@ -206,7 +194,8 @@ namespace Luminous
   {
     // Updates the internal state if needed so the user gets
     // always the current state
-    generateInternal();
+    if (!isLayoutReady())
+      generateInternal();
     return m_d->m_boundingBox;
   }
 
@@ -249,6 +238,7 @@ namespace Luminous
     m_d->m_groupCache.clear();
     m_d->m_groups.clear();
     m_d->m_glyphsReady = false;
+    m_d->m_atlasGeneration = FontCache::generation();
   }
 
   bool TextLayout::correctAtlas() const

@@ -48,14 +48,11 @@ namespace Luminous {
 
     LUMINOUS_API bool isLayoutReady() const;
     LUMINOUS_API bool isComplete() const;
-    /// Not thread safe
     LUMINOUS_API void generate();
 
     LUMINOUS_API bool correctAtlas() const;
 
     LUMINOUS_API void invalidate();
-
-    LUMINOUS_API void check() const;
 
     LUMINOUS_API virtual void setMaximumSize(const Nimble::Vector2f & size);
     LUMINOUS_API Nimble::Vector2f maximumSize() const;

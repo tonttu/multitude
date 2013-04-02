@@ -110,6 +110,7 @@ namespace Luminous
     void layout(const Nimble::Vector2f & size);
 
   public:
+    Radiant::Mutex m_generateMutex;
     Valuable::StyleValue m_lineHeight;
     Valuable::StyleValue m_letterSpacing;
     QTextLayout m_layout;
@@ -365,8 +366,9 @@ namespace Luminous
 
   void SimpleTextLayout::generateInternal() const
   {
+    Radiant::Guard g(m_d->m_generateMutex);
     SimpleTextLayout *nonConst = const_cast<SimpleTextLayout*>(this);
-    if (!isLayoutReady()) {
+    if (!isLayoutReady() || m_d->m_layoutThread != QThread::currentThread()) {
       m_d->layout(maximumSize());
       // We need to avoid calling bounding box here, becourse it calls generateInternal
       nonConst->setBoundingBox(m_d->m_boundingBox);
@@ -385,9 +387,6 @@ namespace Luminous
 
     if (isComplete())
       return;
-
-    if (m_d->m_layoutThread != QThread::currentThread())
-      m_d->layout(maximumSize());
 
     nonConst->clearGlyphs();
 

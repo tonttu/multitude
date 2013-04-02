@@ -28,12 +28,12 @@ namespace Luminous
     D(RichTextLayout & host);
 
     void disableHinting();
+    QTextDocument & doc();
 
   public:
     RichTextLayout & m_host;
     std::unique_ptr<QTextDocument> m_doc;
-
-    QTextDocument & doc();
+    Radiant::Mutex m_generateMutex;
 
   private slots:
     void changed();
@@ -114,11 +114,12 @@ namespace Luminous
 
   void RichTextLayout::generateInternal() const
   {
+    Radiant::Guard g(m_d->m_generateMutex);
     RichTextLayout *nonConst = const_cast<RichTextLayout*>(this);
     if (!isLayoutReady()) {
-      // trigger relayout in Qt
       m_d->disableHinting();
       m_d->doc().setTextWidth(maximumSize().x);
+      // trigger relayout in Qt
       QSizeF size = m_d->doc().documentLayout()->documentSize();
       nonConst->setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
 
