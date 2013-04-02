@@ -377,7 +377,14 @@ namespace Luminous
       if (align & Qt::AlignBottom) {
         nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - m_d->m_boundingBox.height()));
       } else if (align & Qt::AlignVCenter) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - m_d->m_boundingBox.height())));
+        float contentHeigth = m_d->m_boundingBox.height();
+        // Align empty text so that the first line is in the vertical middle.
+        if(m_d->m_layout.text().isEmpty()) {
+          QTextLine line = m_d->m_layout.lineAt(0);
+          if(line.isValid())
+            contentHeigth = line.height();
+        }
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - contentHeigth)));
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }
