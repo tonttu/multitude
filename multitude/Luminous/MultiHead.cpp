@@ -85,16 +85,17 @@ namespace Luminous
     }
   }
 
-  void MultiHead::Area::setSize(Vector2i size)
-  {
-    m_size = size;
-  }
-
   const Vector2i & MultiHead::Area::size() const
   {
     return m_size.asVector();
   }
 
+  void MultiHead::Area::setSize(Nimble::Vector2i size)
+  {
+    m_size = size;
+  }
+
+  // @getter graphicslocation
   const Nimble::Vector2f MultiHead::Area::graphicsLocation(bool withseams) const
   {
     return withseams ?
@@ -102,12 +103,26 @@ namespace Luminous
         m_graphicsLocation.asVector();
   }
 
+  // @setter graphicslocation
+  void MultiHead::Area::setGraphicsLocation(Nimble::Vector2f l)
+  {
+    m_graphicsLocation = l;
+    updateBBox();
+  }
+
+  // @getter graphicssize
   const Nimble::Vector2f MultiHead::Area::graphicsSize(bool withseams) const
   {
     return withseams ?
         m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],
                                                      m_seams[2] + m_seams[3]) :
         m_graphicsSize.asVector();
+  }
+
+  // @setter graphicssize
+  void MultiHead::Area::setGraphicsSize(Nimble::Vector2f size)
+  {
+    m_graphicsSize = size;
   }
 
   const Rect & MultiHead::Area::graphicsBounds() const
@@ -123,10 +138,16 @@ namespace Luminous
     updateBBox();
   }
 
-  void MultiHead::Area::setSeams(float left, float right, float bottom, float top)
+  // @setter seams
+  void MultiHead::Area::setSeams(Nimble::Vector4f seams)
   {
-    m_seams = Nimble::Vector4f(left, right, bottom, top);
+    m_seams = seams;
     updateBBox();
+  }
+
+  Nimble::Vector4f MultiHead::Area::seams() const
+  {
+    return m_seams;
   }
 
   float MultiHead::Area::maxSeam() const
@@ -313,9 +334,13 @@ namespace Luminous
 
   const Vector2i & MultiHead::Area::location() const
   {
-    return m_location.asVector();
+    return m_location;
   }
 
+  void MultiHead::Area::setLocation(Nimble::Vector2i loc)
+  {
+    m_location = loc;
+  }
 
   Nimble::Vector2f MultiHead::Area::windowToGraphics
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const
@@ -513,9 +538,9 @@ namespace Luminous
   void MultiHead::Window::setSeam(float seam)
   {
     for(size_t i = 0; i < m_areas.size(); i++) {
-      m_areas[i]->setSeams(i == 0 ? 0 : seam,
+      m_areas[i]->setSeams(Nimble::Vector4f(i == 0 ? 0 : seam,
                                  i + 1 >= m_areas.size() ? 0 : seam,
-                                 0, 0);
+                                 0, 0));
     }
   }
 

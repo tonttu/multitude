@@ -78,10 +78,6 @@ namespace Luminous {
       /// @param copyToGraphics if true, the settings are copied to graphics coordinates
       void setGeometry(int x, int y, int w, int h, bool copyToGraphics = true);
 
-      /// Sets the size of the area
-      /// @param size area size in pixels
-      void setSize(Vector2i size);
-
       /// Sets the graphics geometry of the area
       /// @param x x coordinate of the graphics area
       /// @param y y coordinate of the graphics area
@@ -89,9 +85,11 @@ namespace Luminous {
       /// @param h height of the graphics area
       void setGraphicsGeometry(int x, int y, int w, int h);
 
-      /// Sets the seams for the area. Seams are used by projector setups to
-      /// define areas (seams) that are edge-blended together.
-      void setSeams(float left, float right, float bottom, float top);
+      void setSeams(Nimble::Vector4f seams);
+
+      /// Area seams are used by projector setups to define regions that are
+      /// edge-blended together.
+      Nimble::Vector4f seams() const;
 
       /// Returns the width of the largest seam
       float maxSeam() const;
@@ -107,14 +105,18 @@ namespace Luminous {
 
       /// Location of the area origin in pixels in window coordinates
       const Vector2i & location() const;
+      void setLocation(Nimble::Vector2i loc);
       /// Size of the area inside the window in pixels
       const Vector2i & size() const;
+      void setSize(Vector2i size);
 
       /// Origin of the graphics coordinates in the area
       const Nimble::Vector2f graphicsLocation(bool withseams = true) const;
+      void setGraphicsLocation(Nimble::Vector2f l);
 
       /// The size of the graphics inside this area (virtual pixels)
       const Nimble::Vector2f graphicsSize(bool withseams = true) const;
+      void setGraphicsSize(Nimble::Vector2f size);
 
       /// The bounds of the graphics. In principle this method only combines
       /// the information you get with graphicsLocation() and graphicsSize().
@@ -234,9 +236,6 @@ namespace Luminous {
         m_location = Nimble::Vector2i(x, y);
         m_size = Nimble::Vector2i(w, h);
       }
-
-      /// Sets the size of this Window
-      void setSize(const Nimble::Vector2i &newSize) { m_size = newSize; }
 
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child
