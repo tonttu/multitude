@@ -25,18 +25,47 @@ namespace Luminous
   class Buffer : public RenderResource
   {
   public:
+
+    /// Hint indicating the expected application usage pattern of the buffer. A
+    /// buffer’s data store is sourced when it is read from as a result of
+    /// OpenGL commands which specify images, or invoke shaders accessing
+    /// buffer data as a result of drawing commands or compute shader dispatch.
     enum Usage
     {
+      /// The data store contents will be speciﬁed once by the application, and
+      /// sourced many times
       STATIC_DRAW = GL_STATIC_DRAW,
+
+      /// The data store contents will be speciﬁed once by reading data from
+      /// the GL, and queried many times by the application
       STATIC_READ = GL_STATIC_READ,
+
+      /// The data store contents will be speciﬁed once by reading data from
+      /// the GL, and sourced many times
       STATIC_COPY = GL_STATIC_COPY,
 
+      /// The data store contents will be speciﬁed once by the application, and
+      /// sourced at most a few times.
       STREAM_DRAW = GL_STREAM_DRAW,
+
+      /// The data store contents will be speciﬁed once by reading data from
+      /// the GL, and queried at most a few times by the application
       STREAM_READ = GL_STREAM_READ,
+
+      /// The data store contents will be speciﬁed once by reading data from
+      /// the GL, and sourced at most a few times
       STREAM_COPY = GL_STREAM_COPY,
 
+      /// The data store contents will be respeciﬁed repeatedly by the
+      /// application, and sourced many times
       DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
+
+      /// The data store contents will be respeciﬁed repeatedly by reading data
+      /// from the GL, and queried many times by the application
       DYNAMIC_READ = GL_DYNAMIC_READ,
+
+      /// The data store contents will be respeciﬁed repeatedly by reading data
+      /// from the GL, and sourced many times
       DYNAMIC_COPY = GL_DYNAMIC_COPY
     };
 

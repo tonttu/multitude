@@ -127,7 +127,10 @@ namespace Luminous
     class D;
     D * m_d;
   };
+
+  /// Shared pointer to Mipmap
   typedef std::shared_ptr<Mipmap> MipmapPtr;
+
 }
 
 #endif // LUMINOUS_MIPMAP_HPP

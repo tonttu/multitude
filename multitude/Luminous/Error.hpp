@@ -22,9 +22,10 @@
 
 namespace Luminous
 {
-  /// Converts OpenGL error into a human-readalbe string
+  /// Converts OpenGL error into a human-readable string. This function gets
+  /// the current error code from OpenGL and displays it using Radiant::error.
   /// @param msg message prefix
-  /// @param msg line number
+  /// @param line line number
   LUMINOUS_API void glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
 }
 

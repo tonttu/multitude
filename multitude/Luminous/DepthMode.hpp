@@ -72,9 +72,10 @@ namespace Luminous
     Nimble::Rangef m_range;
   };
 
-  /// Inequality comparison of DepthMode objects
+  /// Inequality comparison of DepthMode objects.
   /// @param lhs Left side operand
   /// @param rhs Right side operand
+  /// @return true if the modes are not equal; otherwise false
   inline bool operator!=(const DepthMode & lhs, const DepthMode & rhs)
   {
     return
@@ -82,9 +83,11 @@ namespace Luminous
       || lhs.range() != rhs.range();
   }
 
-  /// Equality comparison of DepthMode objects
+  /// Equality comparison of DepthMode objects.  For depth modes to be equal,
+  /// both the function and range must be the same.
   /// @param lhs Left side operand
   /// @param rhs Right side operand
+  /// @return true if the modes are equal; otherwise false
   inline bool operator==(const DepthMode & lhs, const DepthMode & rhs) { return !(lhs!=rhs); }
 }
 

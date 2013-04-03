@@ -486,6 +486,7 @@ namespace Luminous
     void setFrontFace(enum FaceWinding winding);
 
 /// @cond
+
     /// @todo REMOVE US
     /// Sets given render context for the current thread
     /// @param rsc Context to set
@@ -499,6 +500,7 @@ namespace Luminous
     void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
     void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
     void bindProgram(GLSLProgramObject *) {}
+
 /// @endcond
 
     /// Reset the OpenGL state to default. The usage of this function by manually

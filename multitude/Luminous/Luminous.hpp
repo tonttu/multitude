@@ -63,6 +63,8 @@ namespace Luminous
   LUMINOUS_API bool isSampleShadingSupported();
 
   //////////////////////////////////////////////////////////////////////////
+
+  /// Primitive type used for rendering
   enum PrimitiveType
   {
     /// Primitive corresponding to separate triangles
@@ -79,14 +81,22 @@ namespace Luminous
     PRIMITIVE_POINT          = GL_POINTS
   };
 
+  /// Mask to define which rendering buffers are cleared
   enum ClearMask
   {
+    /// Indicates color buffer
     CLEARMASK_COLOR                = (1 << 0),
+    /// Indicates depth buffer
     CLEARMASK_DEPTH                = (1 << 1),
+    /// Indicates stencil buffer
     CLEARMASK_STENCIL              = (1 << 2),
+    /// Shorthand for color and depth buffer
     CLEARMASK_COLOR_DEPTH          = CLEARMASK_COLOR | CLEARMASK_DEPTH,
+    /// Shorthand for color and stencil buffer
     CLEARMASK_COLOR_STENCIL        = CLEARMASK_COLOR | CLEARMASK_STENCIL,
+    /// Shorthand for depth and stencil buffer
     CLEARMASK_DEPTH_STENCIL        = CLEARMASK_DEPTH | CLEARMASK_STENCIL,
+    /// Shorthand for color, depth, and stencil buffer
     CLEARMASK_COLOR_DEPTH_STENCIL  = CLEARMASK_COLOR | CLEARMASK_DEPTH | CLEARMASK_STENCIL
   };
 
