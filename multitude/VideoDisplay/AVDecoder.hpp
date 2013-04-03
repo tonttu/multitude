@@ -139,22 +139,21 @@ namespace VideoDisplay
       SeekDirection direction;
     };
 
-    /// @todo This documentation (and struct) is very ffmpeg-specific. In
-    ///       theory we could support also other engines, so maybe fine-tune
-    ///       the documentation a bit
+    /// Video and audio parameters for AVDecoder when opening a new media file.
     struct Options
     {
+      /// Creates an empty parameter set. You must set at least source().
       Options()
-        : channelLayout("downmix")
-        , loop(false)
-        , audio(true)
-        , video(true)
-        , playMode(Pause)
-        , videoStreamIndex(-1)
-        , audioStreamIndex(-1)
-        , audioBufferSeconds(2.0)
-        , videoBufferFrames(10)
-        , pixelFormat(VideoFrame::UNKNOWN)
+        : m_channelLayout("downmix")
+        , m_looping(false)
+        , m_audioEnabled(true)
+        , m_videoEnabled(true)
+        , m_playMode(Pause)
+        , m_videoStreamIndex(-1)
+        , m_audioStreamIndex(-1)
+        , m_audioBufferSeconds(2.0)
+        , m_videoBufferFrames(10)
+        , m_pixelFormat(VideoFrame::UNKNOWN)
       {}
 
       /// Input file, device, URL or special parameter to input format.
@@ -167,11 +166,14 @@ namespace VideoDisplay
       ///                "/dev/video0"      (video4linux2)
       ///                "/dev/video1394/0" (libdc1394)
       ///
-      /// For detailed information, see ffmpeg documentation. To list all
-      /// available protocols, run ffmpeg -protocols
-      ///
-      /// Required field
-      QString src;
+      /// For detailed information, see libav documentation. To list all
+      /// available protocols, run avconv -protocols
+      /// @sa setSource
+      /// @return media source
+      const QString & source() const { return m_source; }
+      /// @param source media source
+      /// @sa source
+      void setSource(const QString & source) { m_source = source; }
 
       /// Input format.
       ///
@@ -181,7 +183,12 @@ namespace VideoDisplay
       /// List all available formats (demuxers): ffmpeg -formats
       ///
       /// Default: auto detect (empty string)
-      QString format;
+      /// @sa setFormat
+      /// @return explicitly set input format
+      const QString & format() const { return m_format; }
+      /// @sa format
+      /// @param format input format
+      void setFormat(const QString & format) { m_format = format; }
 
       /// Down-mix or up-mix to given number of audio channels, eg. 5.1 -> stereo
       ///
@@ -194,42 +201,128 @@ namespace VideoDisplay
       /// Empty string means disabled down/up-mix
       ///
       /// Default: "downmix"
-      QByteArray channelLayout;
+      /// @sa channelLayout
+      /// @return target channel layout
+      const QByteArray & channelLayout() const { return m_channelLayout; }
+      /// @sa channelLayout
+      /// @param channelLayout target channel layout
+      void setChannelLayout(const QByteArray & channelLayout) { m_channelLayout = channelLayout; }
 
       /// Seek to this position before starting the playback
-      SeekRequest seek;
+      /// @sa setsetSeekRequest
+      /// @return initial seek request
+      SeekRequest seekRequest() const { return m_seekRequest; }
+      /// @sa seekRequest
+      /// @param seekRequest Initial seek request
+      void setSeekRequest(SeekRequest seekRequest) { m_seekRequest = seekRequest; }
 
       /// Play media in loop, can be changed with AVDecoder::setLooping()
       /// Default: false
-      bool loop;
+      /// @sa setLooping
+      /// @return looping mode
+      bool isLooping() const { return m_looping; }
+      /// @sa isLooping
+      /// @param looping looping mode
+      void setLooping(bool looping) { m_looping = looping; }
 
-      /// Enable audio
+      /// Should any audio tracks be opened and decoded
+      /// You need to have at least one track enabled
       /// Default: true
-      bool audio;
+      /// @sa setAudioEnabled
+      /// @return true if audio is enabled
+      bool isAudioEnabled() const { return m_audioEnabled; }
+      /// @sa isAudioEnabled
+      /// @param audioEnabled should audio tracks be enabled
+      void setAudioEnabled(bool audioEnabled) { m_audioEnabled = audioEnabled; }
 
-      /// Enable video
+      /// Should any video tracks be opened and decoded
+      /// You need to have at least one track enabled
       /// Default: true
-      bool video;
+      /// @sa setVideoEnabled
+      /// @return true if video is enabled
+      bool isVideoEnabled() const { return m_videoEnabled; }
+      /// @sa isVideoEnabled
+      /// @param videoEnabled should video tracks be enabled
+      void setVideoEnabled(bool videoEnabled) { m_videoEnabled = videoEnabled; }
 
       /// Initial play mode
-      PlayMode playMode;
+      /// @sa setPlayMode
+      /// @return initial play mode
+      PlayMode playMode() const { return m_playMode; }
+      /// @sa playMode
+      /// @param playMode initial play mode
+      void setPlayMode(PlayMode playMode) { m_playMode = playMode; }
 
-      /// Demuxer and AVFormatContext options, see ffmpeg -help for full list.
+      /// Demuxer and AVFormatContext options, see avconv -h full for full list.
       ///
       /// Examples: "fflags": "ignidx" to ignore index
       ///           "cryptokey": "<binary>" specify decryption key
       ///
       /// Default: empty
-      QMap<QString, QString> demuxerOptions;
+      /// @return demuxer options map
+      const QMap<QString, QString> & demuxerOptions() const { return m_demuxerOptions; }
+      /// Sets all demuxer options
+      /// @param demuxerOptions demuxer options
+      /// @sa setDemuxerOption
+      /// @sa demuxerOptions
+      void setDemuxerOptions(const QMap<QString, QString> & demuxerOptions)
+      {
+        m_demuxerOptions = demuxerOptions;
+      }
+      /// Sets value for one demuxer option
+      /// @param key name for the option
+      /// @param value value for the option
+      /// @sa setDemuxerOptions
+      /// @sa demuxerOptions
+      void setDemuxerOption(const QString & key, const QString & value)
+      {
+        m_demuxerOptions[key] = value;
+      }
 
-      /// Codec and AVCodecContext options, see ffmpeg -help for full list
+      /// Codec and AVCodecContext options, see avconv -h full for full list
       /// Examples: "threads": "3" use multi-threaded decoding
       ///           "lowres": "2" decode in 1/4 resolution
       ///
       /// Default: empty
-      QMap<QString, QString> videoOptions;
+      /// @return video/audio options map
+      const QMap<QString, QString> & videoOptions() const { return m_videoOptions; }
+      /// Sets all video options
+      /// @param videoOptions video and video codec options
+      /// @sa setVideoOption
+      /// @sa videoOptions
+      void setVideoOptions(const QMap<QString, QString> & videoOptions)
+      {
+        m_videoOptions = videoOptions;
+      }
+      /// Sets value for one video option
+      /// @param key name for the option
+      /// @param value value for the option
+      /// @sa setVideoOptions
+      /// @sa videoOptions
+      void setVideoOption(const QString & key, const QString & value)
+      {
+        m_videoOptions[key] = value;
+      }
+
       /// @copydoc videoOptions
-      QMap<QString, QString> audioOptions;
+      const QMap<QString, QString> & audioOptions() const { return m_audioOptions; }
+      /// Sets all audio options
+      /// @param audioOptions audio and audio codec options
+      /// @sa setAudioOption
+      /// @sa audioOptions
+      void setAudioOptions(const QMap<QString, QString> & audioOptions)
+      {
+        m_audioOptions = audioOptions;
+      }
+      /// Sets value for one audio option
+      /// @param key name for the option
+      /// @param value value for the option
+      /// @sa setAudioOptions
+      /// @sa audioOptions
+      void setAudioOption(const QString & key, const QString & value)
+      {
+        m_audioOptions[key] = value;
+      }
 
       /// Ask for a specific stream index for video/audio.
       /// For example if media file has two video or audio tracks, setting 1
@@ -237,9 +330,18 @@ namespace VideoDisplay
       ///
       /// Default: select "best" stream (-1)
       ///          (How "best" is defined is implementation specific detail)
-      int videoStreamIndex;
+      /// @return stream index number
+      int videoStreamIndex() const { return m_videoStreamIndex; }
+      /// @param videoStreamIndex selected video stream index number
+      /// @sa videoStreamIndex
+      void setVideoStreamIndex(int videoStreamIndex) { m_videoStreamIndex = videoStreamIndex; }
+
       /// @copydoc videoStreamIndex
-      int audioStreamIndex;
+      /// @sa setAudioStreamIndex
+      int audioStreamIndex() const { return m_audioStreamIndex; }
+      /// @param audioStreamIndex selected audio stream index number
+      /// @sa audioStreamIndex
+      void setAudioStreamIndex(int audioStreamIndex) { m_audioStreamIndex = audioStreamIndex; }
 
       /// Libavfilter video and audio filters.
       ///
@@ -275,28 +377,74 @@ namespace VideoDisplay
       ///       filters are added automatically, for example to resample audio
       ///       to Resonant sample rate or convert the pixel format to any of
       ///       the supported formats.
-      /// @see http://ffmpeg.org/libavfilter.html
+      /// @see http://libav.org/libavfilter.html
       ///
       /// Default: No extra filters added (empty string)
-      QString videoFilters;
+      /// @return video / audio filter string
+      const QString & videoFilters() const { return m_videoFilters; }
+      /// @sa videoFilters
+      /// @param videoFilters video filter string
+      void setVideoFilters(const QString & videoFilters) { m_videoFilters = videoFilters; }
+
       /// @copydoc videoFilters
-      QString audioFilters;
+      const QString & audioFilters() const { return m_audioFilters; }
+      /// @sa audioFilters
+      /// @param audioFilters audio filter string
+      void setAudioFilters(const QString & audioFilters) { m_audioFilters = audioFilters; }
 
       /// Preferred decoded audio buffer size in seconds. Note that this has
       /// nothing to do with latency. Implementation might not obey this.
       /// Normally there is no reason to touch this.
       /// Default: 2.0 seconds
-      double audioBufferSeconds;
+      /// @sa setAudioBufferSeconds
+      /// @return preferred decoded audio buffer size in seconds
+      double audioBufferSeconds() const { return m_audioBufferSeconds; }
+      /// @sa audioBufferSeconds
+      /// @param audioBufferSeconds preferred decoded audio buffer size in seconds
+      void setAudioBufferSeconds(double audioBufferSeconds)
+      {
+        m_audioBufferSeconds = audioBufferSeconds;
+      }
 
       /// Preferred decoded video buffer size in frames.
-      /// @see audioBufferSeconds
       /// Default: 10
-      int videoBufferFrames;
+      /// @see audioBufferSeconds
+      /// @sa setVideoBufferFrames
+      /// @return preferred decoded video buffer size in frames
+      int videoBufferFrames() const { return m_videoBufferFrames; }
+      /// @sa videoBufferFrames
+      /// @param videoBufferFrames Preferred decoded video buffer size in frames
+      void setVideoBufferFrames(int videoBufferFrames) { m_videoBufferFrames = videoBufferFrames; }
 
       /// Preferred output pixel format, by default choose the best pixel format
       /// to remove or at least minimize the conversion overhead.
       /// Do not touch this unless you have a good reason.
-      VideoFrame::Format pixelFormat;
+      /// @sa setPixelFormat
+      /// @return preferred output pixel format
+      VideoFrame::Format pixelFormat() const { return m_pixelFormat; }
+      /// @sa pixelFormat
+      /// @param pixelFormat preferred output pixel format
+      void setPixelFormat(VideoFrame::Format pixelFormat) { m_pixelFormat = pixelFormat; }
+
+    private:
+      QString m_source;
+      QString m_format;
+      QByteArray m_channelLayout;
+      SeekRequest m_seekRequest;
+      bool m_looping;
+      bool m_audioEnabled;
+      bool m_videoEnabled;
+      PlayMode m_playMode;
+      QMap<QString, QString> m_demuxerOptions;
+      QMap<QString, QString> m_videoOptions;
+      QMap<QString, QString> m_audioOptions;
+      int m_videoStreamIndex;
+      int m_audioStreamIndex;
+      QString m_videoFilters;
+      QString m_audioFilters;
+      double m_audioBufferSeconds;
+      int m_videoBufferFrames;
+      VideoFrame::Format m_pixelFormat;
     };
 
   public:

@@ -388,15 +388,15 @@ namespace VideoDisplay
     //   - nv12 / nv21 (first plane for Y, second plane for UV) - rendering would be slow and weird
     m_pixelFormats.clear();
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::GRAY) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::GRAY) {
       m_pixelFormats << AV_PIX_FMT_GRAY8;     ///<        Y        ,  8bpp
     }
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::GRAY_ALPHA) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::GRAY_ALPHA) {
       m_pixelFormats << AV_PIX_FMT_Y400A;     ///< 8bit gray, 8bit alpha
     }
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::RGB) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::RGB) {
 #ifdef LUMINOUS_OPENGLES
       pixelFormats << AV_PIX_FMT_RGB24;     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
 #else
@@ -404,7 +404,7 @@ namespace VideoDisplay
 #endif
     }
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::RGBA) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::RGBA) {
 #ifdef LUMINOUS_OPENGLES
       pixelFormats << AV_PIX_FMT_RGBA;      ///< packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
 #else
@@ -412,7 +412,7 @@ namespace VideoDisplay
 #endif
     }
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::YUV) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::YUV) {
       m_pixelFormats << AV_PIX_FMT_YUV420P;   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
       m_pixelFormats << AV_PIX_FMT_YUV422P;   ///< planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
       m_pixelFormats << AV_PIX_FMT_YUV444P;   ///< planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
@@ -425,7 +425,7 @@ namespace VideoDisplay
       m_pixelFormats << AV_PIX_FMT_YUVJ440P;  ///< planar YUV 4:4:0 full scale (JPEG), deprecated in favor of PIX_FMT_YUV440P and setting color_range
     }
 
-    if (m_options.pixelFormat == VideoFrame::UNKNOWN || m_options.pixelFormat == VideoFrame::YUVA) {
+    if (m_options.pixelFormat() == VideoFrame::UNKNOWN || m_options.pixelFormat() == VideoFrame::YUVA) {
       m_pixelFormats << AV_PIX_FMT_YUVA420P;  ///< planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
       m_pixelFormats << AV_PIX_FMT_YUVA444P;  ///< planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
       m_pixelFormats << AV_PIX_FMT_YUVA422P;  ///< planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
@@ -451,7 +451,7 @@ namespace VideoDisplay
   bool AVDecoderFFMPEG::D::initFilters(FilterGraph & filterGraph,
                                        const QString & description, bool video)
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::initFilters # " + m_options.src.toUtf8() +
+    QByteArray errorMsg("AVDecoderFFMPEG::D::initFilters # " + m_options.source().toUtf8() +
                         " " + (video ? "video" : "audio") +":");
 
     AVFilter * buffersrc = nullptr;
@@ -520,7 +520,7 @@ namespace VideoDisplay
         if(err < 0) throw "Failed to create audio buffer sink";
 
         args.sprintf("sample_fmts=fltp:sample_rates=44100:channel_layouts=%s",
-                     m_options.channelLayout.data());
+                     m_options.channelLayout().data());
         err = avfilter_graph_create_filter(&filterGraph.formatFilter, format, "format",
                                            args.toUtf8().data(), nullptr, filterGraph.graph);
         if(err < 0) throw "Failed to create audio format filter";
@@ -575,8 +575,8 @@ namespace VideoDisplay
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
 
-    QString src(m_options.src);
-    QStringList srcs = Radiant::ResourceLocator::instance()->locate(m_options.src);
+    QString src(m_options.source());
+    QStringList srcs = Radiant::ResourceLocator::instance()->locate(m_options.source());
 
     if(!srcs.empty())
       src = srcs.front();
@@ -584,8 +584,8 @@ namespace VideoDisplay
 
     QByteArray errorMsg("AVDecoderFFMPEG::D::open # " + src.toUtf8() + ":");
 
-    if(!m_options.demuxerOptions.isEmpty()) {
-      for(auto it = m_options.demuxerOptions.begin(); it != m_options.demuxerOptions.end(); ++it) {
+    if(!m_options.demuxerOptions().isEmpty()) {
+      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
         int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
         if(err < 0) {
           Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -596,13 +596,13 @@ namespace VideoDisplay
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
-    if(!m_options.format.isEmpty()) {
-      inputFormat = av_find_input_format(m_options.format.toUtf8().data());
+    if(!m_options.format().isEmpty()) {
+      inputFormat = av_find_input_format(m_options.format().toUtf8().data());
       if(!inputFormat)
-        Radiant::warning("%s Failed to find input format '%s'", errorMsg.data(), m_options.format.toUtf8().data());
+        Radiant::warning("%s Failed to find input format '%s'", errorMsg.data(), m_options.format().toUtf8().data());
     }
 
-    // Open the actual video, should be thread-safe
+    // Open the actual video
     int err = avformat_open_input(&m_av.formatContext, src.toUtf8().data(),
                                   inputFormat, &avoptions);
 
@@ -628,10 +628,10 @@ namespace VideoDisplay
     if(err < 0)
       avError(QString("%1 Failed to find stream info").arg(errorMsg.data()), err);
 
-    if(m_options.video) {
+    if(m_options.isVideoEnabled()) {
       m_av.videoStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_VIDEO,
-                                                m_options.videoStreamIndex, -1,
-                                                &m_av.videoCodec, 0);
+                                                  m_options.videoStreamIndex(), -1,
+                                                  &m_av.videoCodec, 0);
       if(m_av.videoStreamIndex < 0) {
         if(m_av.videoStreamIndex == AVERROR_STREAM_NOT_FOUND) {
           Radiant::warning("%s Video stream not found", errorMsg.data());
@@ -655,10 +655,10 @@ namespace VideoDisplay
       }
     }
 
-    if(m_options.audio) {
+    if(m_options.isAudioEnabled()) {
       m_av.audioStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_AUDIO,
-                                                m_options.audioStreamIndex, -1,
-                                                &m_av.audioCodec, 0);
+                                                  m_options.audioStreamIndex(), -1,
+                                                  &m_av.audioCodec, 0);
       if(m_av.audioStreamIndex < 0) {
         if(m_av.audioStreamIndex == AVERROR_STREAM_NOT_FOUND) {
           Radiant::debug("%s Audio stream not found", errorMsg.data());
@@ -684,8 +684,8 @@ namespace VideoDisplay
 
     // Open codecs
     if(m_av.videoCodec) {
-      if(!m_options.videoOptions.isEmpty()) {
-        for(auto it = m_options.videoOptions.begin(); it != m_options.videoOptions.end(); ++it) {
+      if(!m_options.videoOptions().isEmpty()) {
+        for(auto it = m_options.videoOptions().begin(); it != m_options.videoOptions().end(); ++it) {
           int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
           if(err < 0) {
             Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -714,8 +714,8 @@ namespace VideoDisplay
     }
 
     if(m_av.audioCodec) {
-      if(!m_options.audioOptions.isEmpty()) {
-        for(auto it = m_options.audioOptions.begin(); it != m_options.audioOptions.end(); ++it) {
+      if(!m_options.audioOptions().isEmpty()) {
+        for(auto it = m_options.audioOptions().begin(); it != m_options.audioOptions().end(); ++it) {
           int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
           if(err < 0) {
             Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
@@ -772,19 +772,19 @@ namespace VideoDisplay
           break;
         }
       }
-      const bool useVideoFilters = !pixelFormatSupported || !m_options.videoFilters.isEmpty();
+      const bool useVideoFilters = !pixelFormatSupported || !m_options.videoFilters().isEmpty();
 
       if(useVideoFilters)
-        initFilters(m_videoFilter, m_options.videoFilters, true);
+        initFilters(m_videoFilter, m_options.videoFilters(), true);
     }
 
     if(m_av.audioCodecContext) {
-      if (m_options.channelLayout.isEmpty()) {
+      if (m_options.channelLayout().isEmpty()) {
         QByteArray channelLayout(255, '\0');
         av_get_channel_layout_string(channelLayout.data(), channelLayout.size(),
                                      m_av.audioCodecContext->channels,
                                      m_av.audioCodecContext->channel_layout);
-        m_options.channelLayout = channelLayout.data();
+        m_options.setChannelLayout(channelLayout);
       }
 
       bool audioFormatSupported = false;
@@ -797,12 +797,12 @@ namespace VideoDisplay
       /// @todo shouldn't be hard-coded
       const int targetSampleRate = 44100;
       const bool useAudioFilters = !audioFormatSupported ||
-          !m_options.audioFilters.isEmpty() ||
+          !m_options.audioFilters().isEmpty() ||
           m_av.audioCodecContext->sample_rate != targetSampleRate ||
-          m_av.audioCodecContext->channel_layout != av_get_channel_layout(m_options.channelLayout.data());
+          m_av.audioCodecContext->channel_layout != av_get_channel_layout(m_options.channelLayout().data());
 
       if(useAudioFilters)
-        initFilters(m_audioFilter, m_options.audioFilters, false);
+        initFilters(m_audioFilter, m_options.audioFilters(), false);
     }
 
     // pts/dts x video/audioTsToSecs == timestamp in seconds
@@ -822,7 +822,7 @@ namespace VideoDisplay
 
     // Size of the decoded audio buffer, in samples (~44100 samples means one second buffer)
     m_av.decodedAudioBufferSamples = m_av.audioCodecContext ?
-          m_options.audioBufferSeconds * m_av.audioCodecContext->sample_rate : 0;
+          m_options.audioBufferSeconds() * m_av.audioCodecContext->sample_rate : 0;
 
     m_av.needFlushAtEof = (m_av.audioCodec && (m_av.audioCodec->capabilities & CODEC_CAP_DELAY)) ||
         (m_av.videoCodec && (m_av.videoCodec->capabilities & CODEC_CAP_DELAY));
@@ -866,10 +866,10 @@ namespace VideoDisplay
     }
 
     if(m_av.audioCodec) {
-      int channelLayout = av_get_channel_layout(m_options.channelLayout);
+      int channelLayout = av_get_channel_layout(m_options.channelLayout());
       m_audioTransfer = new AudioTransfer(m_host, av_get_channel_layout_nb_channels(channelLayout));
       m_audioTransfer->setSeekGeneration(m_seekGeneration);
-      m_audioTransfer->setPlayMode(m_options.playMode);
+      m_audioTransfer->setPlayMode(m_options.playMode());
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
@@ -937,7 +937,7 @@ namespace VideoDisplay
                                  std::numeric_limits<int64_t>::max(), 0);
       }
       if(err < 0) {
-        avError(QString("AVDecoderFFMPEG::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.src), err);
+        avError(QString("AVDecoderFFMPEG::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.source()), err);
         close();
         return open();
       } else {
@@ -960,7 +960,7 @@ namespace VideoDisplay
 
   bool AVDecoderFFMPEG::D::seek()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + m_options.src.toUtf8() + ":");
+    QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + m_options.source().toUtf8() + ":");
 
     if(m_seekRequest.value <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
@@ -969,7 +969,7 @@ namespace VideoDisplay
         if(m_audioTransfer)
           m_audioTransfer->setSeekGeneration(m_seekGeneration);
         m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-        if(m_options.playMode == Pause)
+        if(m_options.playMode() == Pause)
           m_pauseTimestamp = Radiant::TimeStamp::currentTime();
       }
       return ok;
@@ -1054,7 +1054,7 @@ namespace VideoDisplay
     if(m_audioTransfer)
       m_audioTransfer->setSeekGeneration(m_seekGeneration);
     m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-    if(m_options.playMode == Pause)
+    if(m_options.playMode() == Pause)
       m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     m_audioTrackHasEnded = false;
     m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
@@ -1080,9 +1080,9 @@ namespace VideoDisplay
       // we need to resize the video buffer, otherwise we could starve.
       // Growing the video buffer is safe, as long as the buffer size
       // doesn't grow over the hard-limit (setSize checks that)
-      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds * 0.15f) {
+      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f) {
         if(m_decodedVideoFrames.setSize(m_decodedVideoFrames.size() + 1)) {
-          m_options.videoBufferFrames = m_decodedVideoFrames.size();
+          m_options.setVideoBufferFrames(m_decodedVideoFrames.size());
           continue;
         }
       }
@@ -1171,7 +1171,7 @@ namespace VideoDisplay
     int err = avcodec_decode_video2(m_av.videoCodecContext, m_av.frame, &gotPicture, &m_av.packet);
     if(err < 0) {
       avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: Failed to decode a video frame").
-              arg(m_options.src), err);
+              arg(m_options.source()), err);
       return false;
     }
 
@@ -1208,7 +1208,7 @@ namespace VideoDisplay
       int err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
       if(err < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
-                arg(m_options.src), err);
+                arg(m_options.source()), err);
         avfilter_unref_buffer(ref);
       } else {
         while (true) {
@@ -1223,7 +1223,7 @@ namespace VideoDisplay
             break;
           if (err < 0) {
             avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_read failed").
-                    arg(m_options.src), err);
+                    arg(m_options.source()), err);
             break;
           }
 
@@ -1286,7 +1286,7 @@ namespace VideoDisplay
         buffer = m_imageBuffers.get();
         if(!buffer) {
           Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
-                         m_options.src.toUtf8().data());
+                         m_options.source().toUtf8().data());
           for(int i = 0; i < frame->planes; ++i)
             frame->data[i] = nullptr;
           frame->planes = 0;
@@ -1337,7 +1337,7 @@ namespace VideoDisplay
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
         avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: Audio decoding error").
-                arg(m_options.src), consumedBytes);
+                arg(m_options.source()), consumedBytes);
         break;
       }
 
@@ -1356,7 +1356,7 @@ namespace VideoDisplay
           ref->buf->free = [](AVFilterBuffer *ptr) { av_free(ptr); };
           if (!ref) {
             Radiant::error("AVDecoderFFMPEG::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
-                           m_options.src.toUtf8().data());
+                           m_options.source().toUtf8().data());
           } else {
             avfilter_copy_frame_props(ref, m_av.frame);
             av_buffersrc_buffer(m_audioFilter.bufferSourceFilter, ref);
@@ -1368,7 +1368,7 @@ namespace VideoDisplay
 
               if (err < 0) {
                 avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersink_read failed").
-                        arg(m_options.src), err);
+                        arg(m_options.source()), err);
                 break;
               }
 
@@ -1489,7 +1489,7 @@ namespace VideoDisplay
     DecodedImageBuffer * buffer = d.m_imageBuffers.get();
     if(!buffer) {
       Radiant::error("AVDecoderFFMPEG::D::getBuffer # %s: not enough ImageBuffers",
-                     d.m_options.src.toUtf8().data());
+                     d.m_options.source().toUtf8().data());
       return -1;
     }
 
@@ -1608,7 +1608,6 @@ namespace VideoDisplay
 
   AVDecoderFFMPEG::~AVDecoderFFMPEG()
   {
-    /// @todo We might be forgetting something here, some buffers might leak?
     close();
     while(true) {
       AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
@@ -1624,15 +1623,15 @@ namespace VideoDisplay
 
   AVDecoder::PlayMode AVDecoderFFMPEG::playMode() const
   {
-    return m_d->m_options.playMode;
+    return m_d->m_options.playMode();
   }
 
   void AVDecoderFFMPEG::setPlayMode(AVDecoder::PlayMode mode)
   {
-    if(m_d->m_options.playMode == mode)
+    if(m_d->m_options.playMode() == mode)
       return;
 
-    m_d->m_options.playMode = mode;
+    m_d->m_options.setPlayMode(mode);
     if(m_d->m_audioTransfer)
       m_d->m_audioTransfer->setPlayMode(mode);
     if(mode == Pause)
@@ -1659,7 +1658,7 @@ namespace VideoDisplay
     if(Nimble::Math::isNAN(m_d->m_radiantTimestampToPts))
       return Timestamp();
 
-    if(m_d->m_options.playMode == Pause)
+    if(m_d->m_options.playMode() == Pause)
       return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
 
     return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
@@ -1795,7 +1794,7 @@ namespace VideoDisplay
     assert(!isRunning());
     m_d->m_options = options;
     m_d->updateSupportedPixFormats();
-    seek(m_d->m_options.seek);
+    seek(m_d->m_options.seekRequest());
   }
 
   void AVDecoderFFMPEG::close()
@@ -1810,7 +1809,7 @@ namespace VideoDisplay
 
   void AVDecoderFFMPEG::setLooping(bool doLoop)
   {
-    m_d->m_options.loop = doLoop;
+    m_d->m_options.setLooping(doLoop);
   }
 
   double AVDecoderFFMPEG::duration() const
@@ -1832,10 +1831,10 @@ namespace VideoDisplay
 
   void AVDecoderFFMPEG::childLoop()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->m_options.src.toUtf8() + ":");
+    QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->m_options.source().toUtf8() + ":");
     QThread::currentThread()->setPriority(QThread::LowPriority);
 
-    QByteArray src = m_d->m_options.src.toUtf8();
+    QByteArray src = m_d->m_options.source().toUtf8();
     s_src = src.data();
 
     ffmpegInit();
@@ -1861,7 +1860,7 @@ namespace VideoDisplay
     m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
     while(m_d->m_running) {
-      m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames);
+      m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames());
 
       while(true) {
         AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
@@ -1911,7 +1910,7 @@ namespace VideoDisplay
           Radiant::Sleep::sleepMs(1);
           continue;
         }
-        if(m_d->m_options.loop) {
+        if(m_d->m_options.isLooping()) {
           m_d->seekToBeginning();
           eof = EofState::Normal;
 
