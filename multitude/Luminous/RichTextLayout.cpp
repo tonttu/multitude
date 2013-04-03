@@ -34,6 +34,7 @@ namespace Luminous
     RichTextLayout & m_host;
     std::unique_ptr<QTextDocument> m_doc;
     Radiant::Mutex m_generateMutex;
+    QString m_listBullet; // Bullet used in QTextLists
 
   private slots:
     void changed();
@@ -44,6 +45,7 @@ namespace Luminous
 
   RichTextLayout::D::D(RichTextLayout & host)
     : m_host(host)
+    , m_listBullet("∙")
   {
   }
 
@@ -163,7 +165,7 @@ namespace Luminous
         QRectF rect = layout->blockBoundingRect(block);
         const bool rtl = block.layout()->textOption().textDirection() == Qt::RightToLeft;
 
-        QTextLayout textLayout("∙", block.charFormat().font());
+        QTextLayout textLayout(m_d->m_listBullet, block.charFormat().font());
         int size = textLayout.font().pixelSize();
 
         textLayout.beginLayout();
@@ -198,6 +200,16 @@ namespace Luminous
   const QTextDocument & RichTextLayout::document() const
   {
     return m_d->doc();
+  }
+
+  void RichTextLayout::setListBullet(const QString &bullet)
+  {
+    m_d->m_listBullet = bullet;
+  }
+
+  const QString& RichTextLayout::listBullet() const
+  {
+    return m_d->m_listBullet;
   }
 
 } // namespace Luminous

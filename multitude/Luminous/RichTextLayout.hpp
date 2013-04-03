@@ -34,6 +34,13 @@ namespace Luminous
     LUMINOUS_API QTextDocument & document();
     LUMINOUS_API const QTextDocument & document() const;
 
+    /// Sets list bullet that is used in front of list elements
+    /// @param bullet Bullet string for the list elements
+    LUMINOUS_API void setListBullet(const QString& bullet);
+    /// Returns the string used as bullet for list elements
+    /// @return String used as bullet for list elements
+    LUMINOUS_API const QString& listBullet() const;
+
   private:
     class D;
     D * m_d;
