@@ -367,6 +367,7 @@ namespace Luminous
   void SimpleTextLayout::generateInternal() const
   {
     Radiant::Guard g(m_d->m_generateMutex);
+
     SimpleTextLayout *nonConst = const_cast<SimpleTextLayout*>(this);
     if (!isLayoutReady() || m_d->m_layoutThread != QThread::currentThread()) {
       m_d->layout(maximumSize());
@@ -374,16 +375,17 @@ namespace Luminous
       nonConst->setBoundingBox(m_d->m_boundingBox);
       auto align = m_d->m_layout.textOption().alignment();
 
+      float contentHeigth = m_d->m_boundingBox.height();
+      if(m_d->m_layout.text().isEmpty()) {
+        QTextLine line = m_d->m_layout.lineAt(0);
+        if(line.isValid())
+          contentHeigth = line.height();
+      }
+
       if (align & Qt::AlignBottom) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - m_d->m_boundingBox.height()));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - contentHeigth));
       } else if (align & Qt::AlignVCenter) {
-        float contentHeigth = m_d->m_boundingBox.height();
         // Align empty text so that the first line is in the vertical middle.
-        if(m_d->m_layout.text().isEmpty()) {
-          QTextLine line = m_d->m_layout.lineAt(0);
-          if(line.isValid())
-            contentHeigth = line.height();
-        }
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - contentHeigth)));
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
