@@ -552,7 +552,7 @@ namespace Luminous
     if (m_screen) {
       a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
       Radiant::BinaryData bd;
-      m_screen->processMessage("graphics-bounds-changed", bd);
+      m_screen->eventProcess("graphics-bounds-changed", bd);
     }
   }
 
@@ -615,7 +615,7 @@ namespace Luminous
       m_areas.push_back(std::shared_ptr<Area>(area));
       if (m_screen) {
         Radiant::BinaryData bd;
-        m_screen->processMessage("graphics-bounds-changed", bd);
+        m_screen->eventProcess("graphics-bounds-changed", bd);
       }
     } else {
       Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", name.data());
@@ -828,11 +828,11 @@ namespace Luminous
     eventSend("graphics-bounds-changed");
   }
 
-  void MultiHead::processMessage(const QByteArray & messageId, Radiant::BinaryData & data)
+  void MultiHead::eventProcess(const QByteArray & messageId, Radiant::BinaryData & data)
   {
     if (messageId == "graphics-bounds-changed") {
       eventSend("graphics-bounds-changed");
-    } else Node::processMessage(messageId, data);
+    } else Node::eventProcess(messageId, data);
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)

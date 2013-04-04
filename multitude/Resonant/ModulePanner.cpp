@@ -67,7 +67,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModulePanner::processMessage(const QByteArray & id,
+  void ModulePanner::eventProcess(const QByteArray & id,
                                     Radiant::BinaryData & data)
   {
     debugResonant("ModulePanner::control # %s", id.data());

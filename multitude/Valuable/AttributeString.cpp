@@ -18,7 +18,7 @@ namespace Valuable
     : Base(parent, name, v, transit)
   {}
 
-  void AttributeString::processMessage(const QByteArray & /*id*/, Radiant::BinaryData & data)
+  void AttributeString::eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data)
   {
     bool ok = true;
     QString tmp = data.read<QString>(&ok);

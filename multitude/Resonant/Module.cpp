@@ -30,7 +30,7 @@ namespace Resonant {
     return true;
   }
 
-  void Module::processMessage(const QByteArray &, Radiant::BinaryData &)
+  void Module::eventProcess(const QByteArray &, Radiant::BinaryData &)
   {}
 
   bool Module::stop()

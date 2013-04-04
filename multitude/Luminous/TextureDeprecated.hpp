@@ -45,7 +45,7 @@ namespace Luminous
   {
   public:
     /// Accepts "frame" event, resets all limits for a new frame.
-    void processMessage(const QByteArray & type, Radiant::BinaryData & data);
+    void eventProcess(const QByteArray & type, Radiant::BinaryData & data);
 
     /// Get the singleton instance. Usually not used, since all the important
     /// functions are already static.

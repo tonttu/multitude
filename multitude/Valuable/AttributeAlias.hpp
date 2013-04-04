@@ -22,8 +22,8 @@ namespace Valuable
     AttributeAlias(Node * host, const QByteArray & name, Attribute * attribute);
     virtual ~AttributeAlias();
 
-    /// Calls the target processMessage-function
-    virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data);
+    /// Calls the target eventProcess-function
+    virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
 
     /// Converts the target object to a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error

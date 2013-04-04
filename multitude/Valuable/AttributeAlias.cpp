@@ -25,10 +25,10 @@ namespace Valuable
     setAttribute(nullptr);
   }
 
-  void AttributeAlias::processMessage(const QByteArray & id, Radiant::BinaryData & data)
+  void AttributeAlias::eventProcess(const QByteArray & id, Radiant::BinaryData & data)
   {
     if(m_attribute)
-      m_attribute->processMessage(id, data);
+      m_attribute->eventProcess(id, data);
   }
 
   float AttributeAlias::asFloat(bool * const ok) const

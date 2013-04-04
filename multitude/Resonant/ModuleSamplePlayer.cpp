@@ -425,7 +425,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleSamplePlayer::processMessage(const QByteArray & id, Radiant::BinaryData & data)
+  void ModuleSamplePlayer::eventProcess(const QByteArray & id, Radiant::BinaryData & data)
   {
     const int bufsize = 256;
     char buf[bufsize];

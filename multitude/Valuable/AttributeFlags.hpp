@@ -275,7 +275,7 @@ namespace Valuable {
       return value().asInt();
     }
 
-    virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));

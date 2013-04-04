@@ -72,7 +72,7 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
+      virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
       /// Sets the value
       virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE;
@@ -169,10 +169,10 @@ namespace Valuable
   {}
 
   template <class T>
-  void AttributeVector<T>::processMessage(const QByteArray & id,
+  void AttributeVector<T>::eventProcess(const QByteArray & id,
     Radiant::BinaryData & data)
   {
-    /// @todo this isn't how processMessage should be used
+    /// @todo this isn't how eventProcess should be used
     if(!id.isEmpty()) {
       int index = id.toInt();
       if(index >= N || index < 0) {

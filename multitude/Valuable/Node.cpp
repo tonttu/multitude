@@ -637,28 +637,28 @@ namespace Valuable
       m_eventSources.erase(it);
   }
 
-  void Node::processMessage(const QByteArray & id, Radiant::BinaryData & data)
+  void Node::eventProcess(const QByteArray & id, Radiant::BinaryData & data)
   {
-    // Radiant::info("Node::processMessage # %s %s", typeid(*this).name(), id);
+    // Radiant::info("Node::eventProcess # %s %s", typeid(*this).name(), id);
 
     int idx = id.indexOf('/');
     QByteArray n = idx == -1 ? id : id.left(idx);
 
-    // Radiant::info("Node::processMessage # Child id = %s", key.c_str());
+    // Radiant::info("Node::eventProcess # Child id = %s", key.c_str());
 
     Attribute * vo = getValue(n);
 
     if(vo) {
-      // Radiant::info("Node::processMessage # Sending message \"%s\" to %s",
+      // Radiant::info("Node::eventProcess # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
-      vo->processMessage(idx == -1 ? "" : id.mid(idx + 1), data);
+      vo->eventProcess(idx == -1 ? "" : id.mid(idx + 1), data);
     } else {
       if(!m_eventListenNames.contains(n)) {
-        /*warning("Node::processMessage # %s (%s %p) doesn't accept event '%s'",
+        /*warning("Node::eventProcess # %s (%s %p) doesn't accept event '%s'",
                   klass.c_str(), name().c_str(), this, id);*/
       } else {
         const QByteArray klass = Radiant::StringUtils::demangle(typeid(*this).name());
-        Radiant::warning("Node::processMessage # %s (%s %p): unhandled event '%s'",
+        Radiant::warning("Node::eventProcess # %s (%s %p): unhandled event '%s'",
                 klass.data(), name().data(), this, id.data());
       }
     }
@@ -735,14 +735,14 @@ namespace Valuable
       auto item = *i;
       if(item->target) {
         std::swap(item->target->m_sender, item->sender);
-        item->target->processMessage(item->to, item->data);
+        item->target->eventProcess(item->to, item->data);
         std::swap(item->target->m_sender, item->sender);
       } else if(item->func) {
         item->func();
       } else if(item->func2) {
         item->func2(item->data);
       }
-      // can't call "delete item" here, because that processMessage call could
+      // can't call "delete item" here, because that eventProcess call could
       // call some destructors that iterate s_queue
     }
     for(QueueItem* item : s_queue)
@@ -814,10 +814,10 @@ namespace Valuable
           } else if(vp.m_type == AFTER_UPDATE) {
             queueEvent(this, vp.m_listener, vp.m_to, bdsend, 0);
           } else {
-            // m_sender is valid only at the beginning of processMessage call
+            // m_sender is valid only at the beginning of eventProcess call
             Node * sender = this;
             std::swap(vp.m_listener->m_sender, sender);
-            vp.m_listener->processMessage(vp.m_to, bdsend);
+            vp.m_listener->eventProcess(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
           }
         } else if(vp.m_func) {

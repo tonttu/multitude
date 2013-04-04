@@ -44,7 +44,7 @@ namespace Valuable
     const ElementType * data() const
     { return this->value().data(); }
 
-    // virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data);
+    // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
     virtual QString asString(bool * const ok = 0) const OVERRIDE;
   };
 
@@ -56,7 +56,7 @@ namespace Valuable
 
   /*
   template <class T, typename S, int N>
-  void AttributeMatrix<T,S,N>::processMessage(const QByteArray & id,
+  void AttributeMatrix<T,S,N>::eventProcess(const QByteArray & id,
                       Radiant::BinaryData & data)
   {
     if(id && strlen(id)) {

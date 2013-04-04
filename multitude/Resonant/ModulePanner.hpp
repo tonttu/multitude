@@ -60,7 +60,7 @@ namespace Resonant {
     virtual bool deserialize(const Valuable::ArchiveElement & element);
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const CallbackTime &);
 
     /** Creates a loudspeaker/headphone setup for full-HD displays.

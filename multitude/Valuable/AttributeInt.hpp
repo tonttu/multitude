@@ -122,7 +122,7 @@ namespace Valuable
     /// Compares greater or equal than
     bool operator >= (const T & i) const { return value() >= i; }
 
-    virtual void processMessage(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    virtual void eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       T v = data.read<T>( & ok);

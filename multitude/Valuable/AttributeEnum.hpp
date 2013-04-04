@@ -114,7 +114,7 @@ namespace Valuable
       return true;
     }
 
-    virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       QString str;
       if (data.readString(str)) {

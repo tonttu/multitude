@@ -104,7 +104,7 @@ namespace Valuable
         Base::clearValue(layer);
       }
 
-      virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
+      virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
       {
         bool ok = true;
         T v = data.read<T>( & ok);

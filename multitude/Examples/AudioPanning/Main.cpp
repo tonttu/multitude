@@ -82,10 +82,10 @@ int main(int argc, char ** argv)
     control.writeInt32(2);
     control.rewind();
     
-    pitem.module()->processMessage("channels", & control);
+    pitem.module()->eventProcess("channels", & control);
 
     control.rewind();
-    pitem.module()->processMessage("fullhdstereo", & control);
+    pitem.module()->eventProcess("fullhdstereo", & control);
     
     dsp->addModule(pitem);
   }
@@ -97,7 +97,7 @@ int main(int argc, char ** argv)
   control.writeInt32(2);
   control.rewind();
 
-  item.module()->processMessage("channels", & control);
+  item.module()->eventProcess("channels", & control);
   
   dsp->addModule(item);
 

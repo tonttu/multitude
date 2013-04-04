@@ -46,7 +46,7 @@ namespace Resonant {
     virtual ~ModuleOutCollect();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &);
 
     /// Access the collected frames, which have been interleaved

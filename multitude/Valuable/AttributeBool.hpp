@@ -28,7 +28,7 @@ namespace Valuable
     virtual ~AttributeBool();
 
     /// @cond
-    virtual void processMessage(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;
     /// @endcond
 
     /// Boolean values can be set as integers in CSS files

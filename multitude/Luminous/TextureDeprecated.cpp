@@ -86,7 +86,7 @@ namespace Luminous
   }
 
 
-  void UploadLimiter::processMessage(const QByteArray & type, Radiant::BinaryData &)
+  void UploadLimiter::eventProcess(const QByteArray & type, Radiant::BinaryData &)
   {
     if(type == "frame") {
       m_inited = true;

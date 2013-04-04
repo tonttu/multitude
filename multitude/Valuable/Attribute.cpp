@@ -102,63 +102,63 @@ namespace Valuable
     return "/" + m_name;
   }
 
-  void Attribute::processMessage(const QByteArray &, Radiant::BinaryData & )
+  void Attribute::eventProcess(const QByteArray &, Radiant::BinaryData & )
   {
-    Radiant::error("Attribute::processMessage # Unimplemented for %s",
+    Radiant::error("Attribute::eventProcess # Unimplemented for %s",
                    typeid(*this).name());
   }
 
-  void Attribute::processMessageString(const char * id, const QString & str)
+  void Attribute::eventProcessString(const char * id, const QString & str)
   {
     Radiant::BinaryData bd;
     bd.writeString(str);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
-  void Attribute::processMessageString(const char *id, const char *str)
+  void Attribute::eventProcessString(const char *id, const char *str)
   {
-    processMessageString(id, QString(str));
+    eventProcessString(id, QString(str));
   }
 
-  void Attribute::processMessageFloat(const char * id, float v)
+  void Attribute::eventProcessFloat(const char * id, float v)
   {
     Radiant::BinaryData bd;
     bd.writeFloat32(v);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
-  void Attribute::processMessageInt(const char * id, int v)
+  void Attribute::eventProcessInt(const char * id, int v)
   {
     Radiant::BinaryData bd;
     bd.writeInt32(v);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
-  void Attribute::processMessageVector2(const char * id, Nimble::Vector2 v)
+  void Attribute::eventProcessVector2(const char * id, Nimble::Vector2 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector2Float32(v);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
-  void Attribute::processMessageVector3(const char * id, Nimble::Vector3 v)
+  void Attribute::eventProcessVector3(const char * id, Nimble::Vector3 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector3Float32(v);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
-  void Attribute::processMessageVector4(const char * id, Nimble::Vector4 v)
+  void Attribute::eventProcessVector4(const char * id, Nimble::Vector4 v)
   {
     Radiant::BinaryData bd;
     bd.writeVector4Float32(v);
     bd.rewind();
-    processMessage(id, bd);
+    eventProcess(id, bd);
   }
 
   float Attribute::asFloat(bool * ok) const

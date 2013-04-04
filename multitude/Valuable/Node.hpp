@@ -218,10 +218,10 @@ namespace Valuable
                        to the first parameter in @ref eventSend.
 
         @param messageId The event id to use when delivering the event to listener.
-                         This is the first parameter in @ref processMessage.
+                         This is the first parameter in @ref eventProcess.
 
         @param listener The listening object. Receives events and handles them
-                        in @ref processMessage -function.
+                        in @ref eventProcess -function.
 
         @param listenerType Defines when to send events to listener.
 
@@ -329,7 +329,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void processMessage(const QByteArray & messageId, Radiant::BinaryData & data);
+    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
     /// @endcond
 
@@ -342,7 +342,7 @@ namespace Valuable
     /// Registers a new event this class can send with eventSend
     void eventAddOut(const QByteArray & eventId);
 
-    /// Registers a new event that this class handles in processMessage
+    /// Registers a new event that this class handles in eventProcess
     void eventAddIn(const QByteArray & messageId);
 
     /// Register a deprecated event that is automatically converted to new
@@ -351,7 +351,7 @@ namespace Valuable
     /// @param newId replacing event id
     void eventAddDeprecated(const QByteArray & deprecatedId, const QByteArray & newId);
 
-    /// Returns true if this object accepts event 'id' in processMessage
+    /// Returns true if this object accepts event 'id' in eventProcess
     bool acceptsEvent(const QByteArray & messageId) const;
 
     /// Returns set of all registered OUT events
@@ -430,7 +430,7 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
-    /// The sender of the event, can be read in processMessage()
+    /// The sender of the event, can be read in eventProcess()
     Node * sender() { return m_sender; }
 
     /// This is called when new attribute is added to Node

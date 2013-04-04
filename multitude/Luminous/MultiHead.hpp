@@ -443,7 +443,7 @@ namespace Luminous {
     float dpi() const;
     void setDpi(float dpi);
 
-    virtual void processMessage(const QByteArray & messageId, Radiant::BinaryData & data);
+    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);

@@ -67,7 +67,7 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleOutCollect::processMessage(const QByteArray & id, Radiant::BinaryData & control)
+  void ModuleOutCollect::eventProcess(const QByteArray & id, Radiant::BinaryData & control)
   {
     bool ok = true;
     Move tmp;

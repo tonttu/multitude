@@ -108,7 +108,7 @@ namespace Valuable
       @see Node
   */
 
-  /// @todo processMessage should be renamed to eventProcess (can be tricky to do)
+  /// @todo eventProcess should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
   class VALUABLE_API Attribute : public Serializable
   {
@@ -187,7 +187,7 @@ namespace Valuable
         either process the message, or call the function of the parent class.
 
         \code
-        void MyClass::processMessage(const QByteArray & type, Radiant::BinaryData & data)
+        void MyClass::eventProcess(const QByteArray & type, Radiant::BinaryData & data)
         {
           if(type == "jump")
             doJump();
@@ -198,7 +198,7 @@ namespace Valuable
               doCrawl(speed);
           }
           else
-            Parent::processMessage(type, data);
+            Parent::eventProcess(type, data);
         }
         \endcode
 
@@ -207,21 +207,21 @@ namespace Valuable
         @param data Binary blob that contains the argument data in easily parseable format.
 
     */
-    virtual void processMessage(const QByteArray &id, Radiant::BinaryData &data);
+    virtual void eventProcess(const QByteArray &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
-    void processMessageString(const char * id, const QString &str);
+    void eventProcessString(const char * id, const QString &str);
     /// Utility function for sending string message to the object
-    void processMessageString(const char * id, const char * str);
+    void eventProcessString(const char * id, const char * str);
     /// Utility function for sending a float message to the object
-    void processMessageFloat(const char * id, float v);
+    void eventProcessFloat(const char * id, float v);
     /// Utility function for sending an int message to the object
-    void processMessageInt(const char * id, int v);
+    void eventProcessInt(const char * id, int v);
     /// Utility function for sending a Nimble::Vector2f message to the object
-    void processMessageVector2(const char * id, Nimble::Vector2);
+    void eventProcessVector2(const char * id, Nimble::Vector2);
     /// Utility function for sending a Vector3 message to the object
-    void processMessageVector3(const char * id, Nimble::Vector3);
+    void eventProcessVector3(const char * id, Nimble::Vector3);
     /// Utility function for sending a Vector4 message to the object
-    void processMessageVector4(const char * id, Nimble::Vector4);
+    void eventProcessVector4(const char * id, Nimble::Vector4);
 
     /// Converts the value object in a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error

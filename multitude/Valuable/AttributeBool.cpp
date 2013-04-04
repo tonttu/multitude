@@ -23,7 +23,7 @@ namespace Valuable
 
   AttributeBool::~AttributeBool() {}
 
-  void AttributeBool::processMessage(const QByteArray &, Radiant::BinaryData & data)
+  void AttributeBool::eventProcess(const QByteArray &, Radiant::BinaryData & data)
   {
     bool ok = true;
     int32_t v = data.readInt32(&ok);
