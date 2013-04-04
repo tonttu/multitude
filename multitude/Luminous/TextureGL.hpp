@@ -12,7 +12,7 @@
 #define LUMINOUS_TEXTUREGL_HPP
 
 #include "ResourceHandleGL.hpp"
-#include "Texture2.hpp"
+#include "Texture.hpp"
 
 #include <Nimble/Vector3.hpp>
 

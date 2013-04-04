@@ -12,7 +12,7 @@
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
-#include "Texture2.hpp"
+#include "Texture.hpp"
 
 #include <Nimble/Math.hpp>
 

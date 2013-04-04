@@ -20,7 +20,7 @@
 #include <Luminous/BlendMode.hpp>
 #include <Luminous/DepthMode.hpp>
 #include <Luminous/StencilMode.hpp>
-#include <Luminous/Texture2.hpp>
+#include <Luminous/Texture.hpp>
 #include <Luminous/ShaderUniform.hpp>
 
 #include <QFont>

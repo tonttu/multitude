@@ -13,7 +13,7 @@
 
 #include "Export.hpp"
 #include "RenderResource.hpp"
-#include "Texture2.hpp"
+#include "Texture.hpp"
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Size.hpp>

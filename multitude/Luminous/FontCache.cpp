@@ -10,7 +10,7 @@
 
 #include "FontCache.hpp"
 
-#include <Luminous/Texture2.hpp>
+#include <Luminous/Texture.hpp>
 
 #include <Luminous/Image.hpp>
 #include <Luminous/DistanceFieldGenerator.hpp>

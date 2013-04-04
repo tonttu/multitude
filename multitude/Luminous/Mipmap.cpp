@@ -11,7 +11,7 @@
 #include "Mipmap.hpp"
 
 #include "Luminous/Image.hpp"
-#include "Luminous/Texture2.hpp"
+#include "Luminous/Texture.hpp"
 #include "Luminous/MipMapGenerator.hpp"
 #include "Luminous/RenderManager.hpp"
 

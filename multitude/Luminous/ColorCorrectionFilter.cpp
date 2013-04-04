@@ -12,7 +12,7 @@
 
 #include <Luminous/RenderContext.hpp>
 #include <Luminous/RGBCube.hpp>
-#include <Luminous/Texture2.hpp>
+#include <Luminous/Texture.hpp>
 #include <Luminous/VertexDescription.hpp>
 
 namespace Luminous

@@ -8,7 +8,7 @@
  * 
  */
 
-#include "Luminous/Texture2.hpp"
+#include "Luminous/Texture.hpp"
 #include "Luminous/PixelFormat.hpp"
 #include "Luminous/ContextArray.hpp"
 

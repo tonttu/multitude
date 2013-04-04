@@ -10,7 +10,7 @@
 
 #include "TextureAtlas.hpp"
 
-#include "Texture2.hpp"
+#include "Texture.hpp"
 
 #include <memory>
 #include <cassert>

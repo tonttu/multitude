@@ -9,7 +9,7 @@
  */
 
 #include "TextureGL.hpp"
-#include "Luminous/Texture2.hpp"
+#include "Luminous/Texture.hpp"
 #include "Luminous/PixelFormat.hpp"
 
 #include <QVector>

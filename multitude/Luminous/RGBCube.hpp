@@ -11,7 +11,7 @@
 #ifndef RGBCUBE_HPP
 #define RGBCUBE_HPP
 
-#include <Luminous/Texture2.hpp>
+#include <Luminous/Texture.hpp>
 
 #include <Nimble/Vector3.hpp>
 

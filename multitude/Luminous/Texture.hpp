@@ -8,8 +8,8 @@
  * 
  */
 
-#if !defined (LUMINOUS_TEXTURE2_HPP)
-#define LUMINOUS_TEXTURE2_HPP
+#if !defined (LUMINOUS_TEXTURE_HPP)
+#define LUMINOUS_TEXTURE_HPP
 
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
@@ -228,4 +228,4 @@ namespace Luminous
     D * m_d;
   };
 }
-#endif // LUMINOUS_TEXTURE2_HPP
+#endif // LUMINOUS_TEXTURE_HPP
