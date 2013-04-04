@@ -20,7 +20,8 @@ namespace Valuable
 {
 
   /// An element in DOMDocument
-  /// @todo why does this class exist? Remove and replace with Qt version
+  /// @todo this class and other DOM classes could be removed and replaced with
+  ///       some helper functions that work directly with pure Qt classes
   class VALUABLE_API DOMElement
   {
   public:

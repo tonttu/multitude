@@ -56,7 +56,7 @@ namespace Luminous {
 
     LUMINOUS_API virtual void setMaximumSize(const Nimble::Vector2f & size);
     LUMINOUS_API Nimble::Vector2f maximumSize() const;
-    /// Returns the bounding box of the text. Not thread safe.
+    /// Returns the bounding box of the text.
     LUMINOUS_API const Nimble::Rectf & boundingBox() const;
 
     LUMINOUS_API const Nimble::Vector2f & renderLocation() const;

@@ -114,10 +114,6 @@ namespace Valuable
     /// @param layer layer to clear
     void clearValues(Layer layer);
 
-    /// @todo add 'shortcut' API
-    // float getAttributeFloat(const QString & name, bool * ok = 0, float default = 0.f)
-    // ...
-
     /// Uses a query string to find a Attribute, and sets a new value to that if found.
     /// @param query The path to the Attribute. This is a '/'-separated list
     ///        of Attribute names, forming a path inside a Attribute tree.
@@ -460,7 +456,6 @@ namespace Valuable
 
     void valueRenamed(const QByteArray &was, const QByteArray &now);
 
-    /// @todo rename to m_attributes
     container m_attributes;
 
     class ValuePass {
