@@ -25,7 +25,7 @@ namespace Luminous
 
     const Luminous::PostProcessFilterPtr m_filter;
 
-    Luminous::RenderTarget m_renderTarget;
+    Luminous::FrameBuffer m_frameBuffer;
 
     Luminous::Texture m_framebuffer;
     Luminous::RenderBuffer m_depthBuffer;
@@ -46,10 +46,10 @@ namespace Luminous
 
   void PostProcessContext::initialize(RenderContext & rc)
   {
-    m_d->m_renderTarget.attach(GL_COLOR_ATTACHMENT0, m_d->m_framebuffer);
-    m_d->m_renderTarget.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
+    m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_framebuffer);
+    m_d->m_frameBuffer.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
 
-    m_d->m_renderTarget.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
+    m_d->m_frameBuffer.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
 
     m_d->m_filter->initialize(rc, *this);
   }
@@ -79,14 +79,14 @@ namespace Luminous
     return m_d->m_filter;
   }
 
-  Luminous::RenderTarget & PostProcessContext::renderTarget()
+  Luminous::FrameBuffer & PostProcessContext::frameBuffer()
   {
-    return m_d->m_renderTarget;
+    return m_d->m_frameBuffer;
   }
 
-  const Luminous::RenderTarget & PostProcessContext::renderTarget() const
+  const Luminous::FrameBuffer & PostProcessContext::frameBuffer() const
   {
-    return m_d->m_renderTarget;
+    return m_d->m_frameBuffer;
   }
 
   const Luminous::Texture & PostProcessContext::texture() const

@@ -151,7 +151,7 @@ namespace Luminous
 
     ~RenderQueueSegment();
 
-    //RenderTargetGL * renderTarget;
+    //FrameBufferGL * frameBuffer;
     PipelineCommand * pipelineCommand;
     OpaqueRenderQueuePool& m_opaquePool;
     TranslucentRenderQueuePool& m_translucentPool;

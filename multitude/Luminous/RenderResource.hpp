@@ -56,7 +56,7 @@ namespace Luminous
       Texture,
       /// Render buffer @sa RenderBuffer
       RenderBuffer,
-      /// Frame buffer @sa RenderTarget
+      /// Frame buffer @sa FrameBuffer
       FrameBuffer
     };
 

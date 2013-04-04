@@ -75,36 +75,36 @@ namespace Luminous
 
   /// This class is an abstraction of a generic render target. It provides an
   /// abstraction of the OpenGL FrameBufferObject API.
-  /// GPU correspondent of this class is RenderTargetGL.
+  /// GPU correspondent of this class is FrameBufferGL.
   /// @todo add API to detach attachments, rename to framebuffer
-  class LUMINOUS_API RenderTarget
+  class LUMINOUS_API FrameBuffer
       : public RenderResource, public Patterns::NotCopyable
   {
   private:
     class D;
     D * m_d;
 
-    /// This class is a helper used to implement copying RenderTarget classes.
+    /// This class is a helper used to implement copying FrameBuffer classes.
     /// You should never manually instantiate this class. It is also meant to be
-    /// used with RenderTarget::deepCopy, RenderTarget::shallowCopy, and
-    /// RenderTarget::shallowCopyNoAttachments functions.
-    /// @sa RenderTarget
-    class LUMINOUS_API RenderTargetCopy
+    /// used with FrameBuffer::deepCopy, FrameBuffer::shallowCopy, and
+    /// FrameBuffer::shallowCopyNoAttachments functions.
+    /// @sa FrameBuffer
+    class LUMINOUS_API FrameBufferCopy
     {
     private:
-      RenderTargetCopy(D * d) : m_d(d) {}
+      FrameBufferCopy(D * d) : m_d(d) {}
 
       D * m_d;
 
-      friend class RenderTarget;
+      friend class FrameBuffer;
     };
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
   public:
-    /// Type of RenderTarget
-    enum RenderTargetType
+    /// Type of FrameBuffer
+    enum FrameBufferType
     {
       /// Invalid is used in case of error
       INVALID,
@@ -114,8 +114,8 @@ namespace Luminous
       NORMAL
     };
 
-    /// How RenderTarget is bound. Determines what to do when target is bound
-    enum RenderTargetBind
+    /// How FrameBuffer is bound. Determines what to do when target is bound
+    enum FrameBufferBind
     {
       /// Bind into both read and draw targets
       BIND_DEFAULT,
@@ -125,42 +125,42 @@ namespace Luminous
       BIND_DRAW
     };
 
-    /// Constructor of RenderTarget
+    /// Constructor of FrameBuffer
     /// @param type Type of the render target
-    RenderTarget(RenderTargetType type = NORMAL);
+    FrameBuffer(FrameBufferType type = NORMAL);
     /// Destructor
-    ~RenderTarget();
+    ~FrameBuffer();
 
     /// Construct render target from proxy object returned by one of copy functions
     /// @sa shallowCopyNoAttachments, shallowCopy, deepCopy
-    /// @param rt RenderTargetCopy of the copied render target
-    RenderTarget(const RenderTargetCopy & rt);
+    /// @param rt FrameBufferCopy of the copied render target
+    FrameBuffer(const FrameBufferCopy & rt);
     /// Assign proxy object to render target
     /// @sa shallowCopyNoAttachments, shallowCopy, deepCopy
-    /// @param rt RenderTargetCopy of the copied render target
+    /// @param rt FrameBufferCopy of the copied render target
     /// @return Reference to this
-    RenderTarget & operator=(const RenderTargetCopy & rt);
+    FrameBuffer & operator=(const FrameBufferCopy & rt);
 
     /// Move constructor
     /// @param rt Render target to move
-    RenderTarget(RenderTarget && rt);
+    FrameBuffer(FrameBuffer && rt);
     /// Move assignment operator
-    /// @param rt RenderTarget to move
+    /// @param rt FrameBuffer to move
     /// @return Reference to this
-    RenderTarget & operator=(RenderTarget && rt);
+    FrameBuffer & operator=(FrameBuffer && rt);
 
     /// Shallow copy without attachments. Copes only target type, size and sampling
     /// options.
-    /// @return Proxy object for constructing new RenderTarget
-    RenderTargetCopy shallowCopyNoAttachments() const;
-    /// Shallow copy with attachments. The copied RenderTarget will use the same render
+    /// @return Proxy object for constructing new FrameBuffer
+    FrameBufferCopy shallowCopyNoAttachments() const;
+    /// Shallow copy with attachments. The copied FrameBuffer will use the same render
     /// buffers and textures as attachments.
-    /// @return Proxy object for constructing new RenderTarget
-    RenderTargetCopy shallowCopy() const;
+    /// @return Proxy object for constructing new FrameBuffer
+    FrameBufferCopy shallowCopy() const;
     /// Deep copy creates an identical render target to the copied one. Copied object
     /// has its own attachments whose values are copied from this.
-    /// @return Proxy object for constructing new RenderTarget
-    RenderTargetCopy deepCopy() const;
+    /// @return Proxy object for constructing new FrameBuffer
+    FrameBufferCopy deepCopy() const;
 
     /// Size of the render target. Each attachment has this as theirs size
     /// @sa setSize
@@ -218,16 +218,16 @@ namespace Luminous
 
     /// Returns type of this render target.
     /// @return Type of this target.
-    RenderTargetType targetType() const;
+    FrameBufferType targetType() const;
 
     /// Returns the current binding type for this target.
     /// @sa setTargetBind
     /// @return How to bind this target.
-    RenderTargetBind targetBind() const;
+    FrameBufferBind targetBind() const;
     /// Sets the binding type for this target.
     /// @sa bind
     /// @param How to bind this target.
-    void setTargetBind(RenderTargetBind bind);
+    void setTargetBind(FrameBufferBind bind);
   };
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -237,14 +237,14 @@ namespace Luminous
 
   /// This class is an utility class that automatically pops a render target
   /// from the given RenderContext when destroyed.
-  class LUMINOUS_API RenderTargetGuard
+  class LUMINOUS_API FrameBufferGuard
   {
   public:
     /// Construct a new guard
     /// @param r render context to pop a target from
-    RenderTargetGuard(RenderContext & r);
+    FrameBufferGuard(RenderContext & r);
     /// Destructor. Pops the current render target.
-    ~RenderTargetGuard();
+    ~FrameBufferGuard();
 
   private:
     RenderContext & m_renderContext;

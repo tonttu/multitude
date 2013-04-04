@@ -17,7 +17,7 @@
 #include "Luminous/RenderDriver.hpp"
 #include "Luminous/BufferGL.hpp"
 #include "Luminous/VertexArrayGL.hpp"
-#include "Luminous/RenderTargetGL.hpp"
+#include "Luminous/FrameBufferGL.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -64,10 +64,10 @@ namespace Luminous
     LUMINOUS_API BufferGL & handle(const Buffer & buffer);
     LUMINOUS_API VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program);
     LUMINOUS_API RenderBufferGL & handle(const RenderBuffer & buffer);
-    LUMINOUS_API RenderTargetGL & handle(const RenderTarget & target);
+    LUMINOUS_API FrameBufferGL & handle(const FrameBuffer & target);
 
-    LUMINOUS_API void pushRenderTarget(const RenderTarget & target);
-    LUMINOUS_API void popRenderTarget();
+    LUMINOUS_API void pushFrameBuffer(const FrameBuffer & target);
+    LUMINOUS_API void popFrameBuffer();
 
     /// @todo Add function wrapper(s) for:
     /// * glLogicOp

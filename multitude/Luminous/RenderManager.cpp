@@ -135,5 +135,5 @@ namespace Luminous
   template <> LUMINOUS_API Program * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Program>(id); }
   template <> LUMINOUS_API Shader * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Shader>(id); }
   template <> LUMINOUS_API RenderBuffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderBuffer>(id); }
-  template <> LUMINOUS_API RenderTarget * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderTarget>(id); }
+  template <> LUMINOUS_API FrameBuffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<FrameBuffer>(id); }
 }

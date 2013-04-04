@@ -59,26 +59,26 @@ namespace Luminous
         , m_driver(renderDriver)
         , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
         , m_bufferIndex(0)
-        , m_useOffScreenRenderTarget(false)
-        , m_finalRenderTarget(RenderTarget::WINDOW)
-        , m_offScreenRenderTarget(RenderTarget::NORMAL)
-        , m_currentRenderTarget(0)
+        , m_useOffScreenFrameBuffer(false)
+        , m_finalFrameBuffer(FrameBuffer::WINDOW)
+        , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
+        , m_currentFrameBuffer(0)
         , m_postProcessFilters(0)
     {
       // Reset render call count
       m_renderCalls.push(0);
 
-      // Initialize default render target size
+      // Initialize default frame buffer size
       assert(win);
-      m_finalRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_finalFrameBuffer.setSize(Nimble::Size(win->size().x, win->size().y));
 
-      // Set initial data for an off-screen render target
+      // Set initial data for an off-screen frame buffer
       // The hardware resource is not created if this is actually never bound
-      m_offScreenRenderTarget.setSize(Nimble::Size(win->size().x, win->size().y));
-      m_offScreenRenderTarget.setSamples(win->antiAliasingSamples());
+      m_offScreenFrameBuffer.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
 
-      m_offScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-      m_offScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
@@ -139,18 +139,18 @@ namespace Luminous
         auto context = std::make_shared<PostProcessContext>(*it);
 
         if(context) {
-          // By default resizes new render targets to current context size
+          // By default resizes new frame buffers to current context size
           context->initialize(rc);
           m_postProcessChain.insert(context);
         }
       }
     }
 
-    RenderTarget & defaultRenderTarget()
+    FrameBuffer & defaultFrameBuffer()
     {
       return m_window->directRendering() ?
-            m_finalRenderTarget :
-            m_offScreenRenderTarget;
+            m_finalFrameBuffer :
+            m_offScreenFrameBuffer;
     }
 
     size_t m_recursionLimit;
@@ -267,13 +267,13 @@ namespace Luminous
     int m_bufferIndex;
 
     // Updated before each frame
-    bool m_useOffScreenRenderTarget;
+    bool m_useOffScreenFrameBuffer;
 
     // Default window framebuffer. Eventually the result of the rendering pipeline end ups here
-    RenderTarget m_finalRenderTarget;
+    FrameBuffer m_finalFrameBuffer;
     // Used when rendering non-directly/with postprocessing
-    RenderTarget m_offScreenRenderTarget;
-    const RenderTarget * m_currentRenderTarget;
+    FrameBuffer m_offScreenFrameBuffer;
+    const FrameBuffer * m_currentFrameBuffer;
 
     // owned by Application
     const Luminous::PostProcessFilters * m_postProcessFilters;
@@ -333,11 +333,11 @@ namespace Luminous
     return m_data->m_viewTransformer.transform();
   }
 
-  const RenderTarget & RenderContext::currentRenderTarget() const
+  const FrameBuffer & RenderContext::currentFrameBuffer() const
   {
-    assert(m_data->m_currentRenderTarget);
+    assert(m_data->m_currentFrameBuffer);
 
-    return *m_data->m_currentRenderTarget;
+    return *m_data->m_currentFrameBuffer;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -1202,12 +1202,12 @@ namespace Luminous
   }
 
 /*
-  RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
-    return m_data->m_rtm.pushRenderTarget(size, scale);
+  FrameBufferObject RenderContext::pushFrameBuffer(Nimble::Vector2 size, float scale) {
+    return m_data->m_rtm.pushFrameBuffer(size, scale);
   }
 
-  Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
-    return m_data->m_rtm.popRenderTarget(trt);
+  Luminous::Texture2D & RenderContext::popFrameBuffer(FrameBufferObject & trt) {
+    return m_data->m_rtm.popFrameBuffer(trt);
   }
 */
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
@@ -1262,7 +1262,7 @@ namespace Luminous
     return m_data->m_driverGL->handle(buffer);
   }
 
-  RenderTargetGL & RenderContext::handle(const RenderTarget & target)
+  FrameBufferGL & RenderContext::handle(const FrameBuffer & target)
   {
     assert(m_data->m_driverGL);
     return m_data->m_driverGL->handle(target);
@@ -1317,11 +1317,11 @@ namespace Luminous
     return m_data->m_uniformBufferOffsetAlignment;
   }
 
-  RenderTargetGuard RenderContext::pushRenderTarget(const RenderTarget &target)
+  FrameBufferGuard RenderContext::pushFrameBuffer(const FrameBuffer &target)
   {
-    m_data->m_driverGL->pushRenderTarget(target);
+    m_data->m_driverGL->pushFrameBuffer(target);
 
-    m_data->m_currentRenderTarget = &target;
+    m_data->m_currentFrameBuffer = &target;
 
     // Push new projection matrix
     pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), 0.f, target.size().height(), -1.f, 1.f));
@@ -1332,9 +1332,9 @@ namespace Luminous
 
     const Nimble::Recti viewport(0, 0, target.size().width(), target.size().height());
 
-    // Push a scissor area that is the size of the render target. This is done
+    // Push a scissor area that is the size of the frame buffer. This is done
     // because the currently defined scissor area might be smaller the viewport
-    // defined by the render target.
+    // defined by the frame buffer.
     pushScissorRect(viewport);
 
     // Push viewport
@@ -1343,10 +1343,10 @@ namespace Luminous
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
 
-    return RenderTargetGuard(*this);
+    return FrameBufferGuard(*this);
   }
 
-  void RenderContext::popRenderTarget()
+  void RenderContext::popFrameBuffer()
   {
     // Restore viewport
     popViewport();
@@ -1359,7 +1359,7 @@ namespace Luminous
     popViewTransform();
 
     m_data->m_renderCalls.pop();
-    m_data->m_driverGL->popRenderTarget();
+    m_data->m_driverGL->popFrameBuffer();
   }
 
   void RenderContext::beginFrame()
@@ -1376,22 +1376,22 @@ namespace Luminous
 
     m_data->m_driver.preFrame();
 
-    // Push render target attached to back buffer. Don't use the RenderContext API
+    // Push frame buffer attached to back buffer. Don't use the RenderContext API
     // to avoid the guard.
-    m_data->m_driverGL->pushRenderTarget(m_data->m_finalRenderTarget);
-    m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
+    m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
+    m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
 
-    // Check if we need an auxiliary render target (save this so we can pop when we are done)
-    m_data->m_useOffScreenRenderTarget = !m_data->m_window->directRendering() ||
+    // Check if we need an auxiliary frame buffer (save this so we can pop when we are done)
+    m_data->m_useOffScreenFrameBuffer = !m_data->m_window->directRendering() ||
         m_data->m_postProcessChain.numEnabledFilters() > 0;
 
-    // Push auxiliary render target if needed
-    if(m_data->m_useOffScreenRenderTarget) {
-      m_data->m_driverGL->pushRenderTarget(m_data->m_offScreenRenderTarget);
-      m_data->m_currentRenderTarget = &m_data->m_offScreenRenderTarget;
+    // Push auxiliary frame buffer if needed
+    if(m_data->m_useOffScreenFrameBuffer) {
+      m_data->m_driverGL->pushFrameBuffer(m_data->m_offScreenFrameBuffer);
+      m_data->m_currentFrameBuffer = &m_data->m_offScreenFrameBuffer;
     }
 
-    assert(m_data->m_currentRenderTarget->targetType() != RenderTarget::INVALID);
+    assert(m_data->m_currentFrameBuffer->targetType() != FrameBuffer::INVALID);
 
     // Push default opacity
     assert(m_data->m_opacityStack.empty());
@@ -1401,10 +1401,10 @@ namespace Luminous
   void RenderContext::endFrame()
   {
     if(!m_data->m_window->directRendering()) {
-      // Push window render target
-      m_data->m_finalRenderTarget.setTargetBind(RenderTarget::BIND_DRAW);
-      m_data->m_driverGL->pushRenderTarget(m_data->m_finalRenderTarget);
-      m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
+      // Push window frame buffer
+      m_data->m_finalFrameBuffer.setTargetBind(FrameBuffer::BIND_DRAW);
+      m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
+      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
 
       // Blit individual areas (from currently bound FBO)
       for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
@@ -1412,13 +1412,13 @@ namespace Luminous
         blit(area.viewport(), area.viewport());
       }
 
-      m_data->m_driverGL->popRenderTarget();
+      m_data->m_driverGL->popFrameBuffer();
     }
 
-    // Pop our auxiliary render target if we have used it
-    if(m_data->m_useOffScreenRenderTarget) {
-      m_data->m_driverGL->popRenderTarget();
-      m_data->m_currentRenderTarget = &m_data->m_finalRenderTarget;
+    // Pop our auxiliary frame buffer if we have used it
+    if(m_data->m_useOffScreenFrameBuffer) {
+      m_data->m_driverGL->popFrameBuffer();
+      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
     }
 
     //Actual drawing
@@ -1436,7 +1436,7 @@ namespace Luminous
     m_data->m_opacityStack.pop();
 
     // Pop the default target
-    m_data->m_driverGL->popRenderTarget();
+    m_data->m_driverGL->popFrameBuffer();
 
     assert(stackSize() == 1);
 
@@ -1499,12 +1499,12 @@ namespace Luminous
     // color data. By blitting to an FBO that only contains a non-multisampled
     // color buffer (default) the multisample resolution happens automatically.
     PostProcessContextPtr first = *chain.begin();
-    first->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
+    first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
-      auto g = pushRenderTarget(first->renderTarget());
+      auto g = pushFrameBuffer(first->frameBuffer());
       blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
-    first->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
+    first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
     if(numFilters > 100) {
       Radiant::warning("Using over 100 post processing filters.");
@@ -1522,14 +1522,14 @@ namespace Luminous
       // Note: if isLast is true, next is invalid
       bool isLast = (next == chain.end());
 
-      // If this is the last filter, use the default render target,
-      // otherwise use the auxiliary off-screen render target of the next filter
-      const RenderTarget & renderTarget = isLast ?
-            m_data->defaultRenderTarget() :
-            next->renderTarget();
+      // If this is the last filter, use the default frame buffer,
+      // otherwise use the auxiliary off-screen frame buffer of the next filter
+      const FrameBuffer & frameBuffer = isLast ?
+            m_data->defaultFrameBuffer() :
+            next->frameBuffer();
 
-      // Push the next auxilary render target
-      auto g = pushRenderTarget(renderTarget);
+      // Push the next auxilary frame buffer
+      auto g = pushFrameBuffer(frameBuffer);
 
       // Run each area through the filter
       for(unsigned j = 0; j < m_data->m_window->areaCount(); j++) {
@@ -1560,19 +1560,19 @@ namespace Luminous
 
     const Nimble::Recti viewport = area()->viewport();
 
-    assert(m_data->m_currentRenderTarget);
-    const RenderTarget & sourceRenderTarget = *m_data->m_currentRenderTarget;
+    assert(m_data->m_currentFrameBuffer);
+    const FrameBuffer & sourceFrameBuffer = *m_data->m_currentFrameBuffer;
 
-    // Blit from current render target to filter's auxiliary render target
-    filterCtx->renderTarget().setTargetBind(RenderTarget::BIND_DRAW);
+    // Blit from current frame buffer to filter's auxiliary frame buffer
+    filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
-      auto g = pushRenderTarget(filterCtx->renderTarget());
+      auto g = pushFrameBuffer(filterCtx->frameBuffer());
       blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
-    filterCtx->renderTarget().setTargetBind(RenderTarget::BIND_DEFAULT);
+    filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
-    // Push the original render target
-    auto g = pushRenderTarget(sourceRenderTarget);
+    // Push the original frame buffer
+    auto g = pushFrameBuffer(sourceFrameBuffer);
 
     pushScissorRect(viewport);
     filterCtx->doFilter(*this);

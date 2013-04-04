@@ -13,7 +13,7 @@
 
 /// @cond
 
-#include "RenderTargetGL.hpp"
+#include "FrameBufferGL.hpp"
 #include "RenderDriverGL.hpp"
 #include "CullMode.hpp"
 
@@ -33,7 +33,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  /// This command clears the render target.
+  /// This command clears the frame buffer.
   class CommandClearGL : public PipelineCommand
   {
   public:
@@ -51,16 +51,16 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  /// This command changes the active render target.
-  class CommandChangeRenderTargetGL : public PipelineCommand
+  /// This command changes the active frame buffer
+  class CommandChangeFrameBufferGL : public PipelineCommand
   {
   public:
-    CommandChangeRenderTargetGL(RenderTargetGL & rt);
+    CommandChangeFrameBufferGL(FrameBufferGL & rt);
 
     virtual void execute() OVERRIDE;
 
   private:
-    RenderTargetGL & m_renderTarget;
+    FrameBufferGL & m_frameBuffer;
   };
 
   //////////////////////////////////////////////////////////////////////////
@@ -150,7 +150,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  /// Performs a blit operation from render target bound as READ to render
+  /// Performs a blit operation from frame buffer bound as READ to render
   /// target bound as DRAW.
   class CommandBlitGL : public PipelineCommand
   {

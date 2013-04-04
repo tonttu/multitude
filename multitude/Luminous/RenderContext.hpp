@@ -24,7 +24,7 @@
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcessFilter.hpp>
-#include "RenderTargetGL.hpp"
+#include "FrameBufferGL.hpp"
 #include "BufferGL.hpp"
 #include "CullMode.hpp"
 
@@ -202,8 +202,8 @@ namespace Luminous
     void popViewTransform();
 
     /// Returns the target framebuffer for the current rendering operations.
-    /// @return Draw render target
-    const RenderTarget & currentRenderTarget() const;
+    /// @return Draw frame buffer
+    const FrameBuffer & currentFrameBuffer() const;
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
@@ -299,12 +299,12 @@ namespace Luminous
     /// @return the current opacity
     float opacity() const;
 
-    /// Pushes new render target to the stack.
-    /// @param target Render target for rendering commands.
-    /// @return Guard which pops this render target automatically on its destruction.
-    RenderTargetGuard pushRenderTarget(const RenderTarget & target);
-    /// Pops the current render target from the stack.
-    void popRenderTarget();
+    /// Pushes new frame buffer to the stack.
+    /// @param target frame buffer for rendering commands.
+    /// @return Guard which pops this frame buffer automatically on its destruction.
+    FrameBufferGuard pushFrameBuffer(const FrameBuffer & target);
+    /// Pops the current frame buffer from the stack.
+    void popFrameBuffer();
 
     //////////////////////////////////////////////////////////////////////////
     // Implementation
@@ -449,10 +449,10 @@ namespace Luminous
     /// @return Current scissor area
     const Nimble::Recti & currentScissorArea() const;
 
-    /// Copies pixels from the read render target to the draw render target
-    /// @sa RenderTarget::setTargetBind
-    /// @param src Rectangle defining source area in the read render target
-    /// @param dst Rectangle defining destination are in the draw render target
+    /// Copies pixels from the read frame buffer to the draw frame buffer
+    /// @sa FrameBuffer::setTargetBind
+    /// @param src Rectangle defining source area in the read frame buffer
+    /// @param dst Rectangle defining destination are in the draw frame buffer
     /// @param mask Buffers to blit
     /// @param filter Filtering mode for sampling
     void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
@@ -533,10 +533,10 @@ namespace Luminous
     /// @return Handle to OpenGL resources of given texture
     TextureGL & handle(const Texture & texture);
 
-    /// Returns the GL resources handle corresponding to given render target.
-    /// @param target CPU side object representing the render target
-    /// @return Handle to OpenGL resources of given render target
-    RenderTargetGL & handle(const RenderTarget & target);
+    /// Returns the GL resources handle corresponding to given frame buffer.
+    /// @param target CPU side object representing the frame buffer
+    /// @return Handle to OpenGL resources of given frame buffer
+    FrameBufferGL & handle(const FrameBuffer & target);
 
     /// Returns the GL resources handle corresponding to given render buffer.
     /// @param buffer CPU side object representing the render buffer
@@ -588,7 +588,7 @@ namespace Luminous
     void unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
 
   public:
-    /// Clears the buffers of current render target
+    /// Clears the buffers of current frame buffer
     /// @param mask Mask to define what buffers to clear
     /// @param clearColor All values in color buffer will be initialized to this if it is cleared
     /// @param clearDepth All values in depth buffer will be initialized to this if it is cleared
@@ -781,10 +781,10 @@ namespace Luminous
     /// @return Handle to OpenGL resources of given render buffer
     inline RenderBufferGL & handle(const RenderBuffer & buffer) { return m_r.handle(buffer); }
 
-    /// Returns the GL resources handle corresponding to given render target.
-    /// @param target CPU side object representing the render target
-    /// @return Handle to OpenGL resources of given render target
-    inline RenderTargetGL & handle(const RenderTarget & target) { return m_r.handle(target); }
+    /// Returns the GL resources handle corresponding to given frame buffer.
+    /// @param target CPU side object representing the frame buffer
+    /// @return Handle to OpenGL resources of given frame buffer
+    inline FrameBufferGL & handle(const FrameBuffer & target) { return m_r.handle(target); }
 
   private:
     RenderContext & m_r;

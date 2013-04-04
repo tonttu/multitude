@@ -95,7 +95,7 @@ namespace Luminous
     typedef std::map<RenderResource::Id, std::shared_ptr<BufferGL> > BufferList;
     typedef std::map<RenderResource::Id, VertexArrayGL> VertexArrayList;
     typedef std::map<RenderResource::Id, RenderBufferGL> RenderBufferList;
-    typedef std::map<RenderResource::Id, RenderTargetGL> RenderTargetList;
+    typedef std::map<RenderResource::Id, FrameBufferGL> FrameBufferList;
 
     /// Resources, different maps for each type because it eliminates the need
     /// for dynamic_cast or similar, and also makes resource sharing possible
@@ -105,12 +105,12 @@ namespace Luminous
     BufferList m_buffers;
     VertexArrayList m_vertexArrays;
     RenderBufferList m_renderBuffers;
-    RenderTargetList m_renderTargets;
+    FrameBufferList m_frameBuffers;
 
     RenderState m_state;
 
-    // Stack of active render targets
-    std::stack<RenderTargetGL*, std::vector<RenderTargetGL*> > m_rtStack;
+    // Stack of active frame buffers
+    std::stack<FrameBufferGL*, std::vector<FrameBufferGL*> > m_fboStack;
     // Master rendering queue that consists of segments of rendering commands
     std::deque<RenderQueueSegment> m_masterRenderQueue;
 
@@ -165,7 +165,7 @@ namespace Luminous
     void removeBufferResource(BufferList & buffers, const ReleaseQueue & releaseQueue);
 
     /// Get the current render queue segment where draw calls are to be added
-    //RenderQueueSegment & currentRenderQueueSegment() { assert(!m_renderTargetStack.empty()); return m_renderTargetStack.top(); }
+    //RenderQueueSegment & currentRenderQueueSegment() { assert(!m_frameBufferStack.empty()); return m_frameBufferStack.top(); }
     RenderQueueSegment & currentRenderQueueSegment() { assert(!m_masterRenderQueue.empty()); return m_masterRenderQueue.back(); }
 
     /// Allocate a new render queue segment defined by the given pipeline command
@@ -233,7 +233,7 @@ namespace Luminous
     removeResource(m_textures, m_releaseQueue);
     removeResource(m_programs);
     removeResource(m_renderBuffers, m_releaseQueue);
-    removeResource(m_renderTargets, m_releaseQueue);
+    removeResource(m_frameBuffers, m_releaseQueue);
     m_releaseQueue.clear();
   }
 
@@ -538,10 +538,10 @@ namespace Luminous
     m_d->m_buffers.clear();
     m_d->m_vertexArrays.clear();
     m_d->m_renderBuffers.clear();
-    m_d->m_renderTargets.clear();
+    m_d->m_frameBuffers.clear();
 
-    while(!m_d->m_rtStack.empty())
-      m_d->m_rtStack.pop();
+    while(!m_d->m_fboStack.empty())
+      m_d->m_fboStack.pop();
 
     m_d->m_masterRenderQueue.clear();
   }
@@ -799,11 +799,11 @@ namespace Luminous
     return it->second;
   }
 
-  RenderTargetGL & RenderDriverGL::handle(const RenderTarget &target)
+  FrameBufferGL & RenderDriverGL::handle(const FrameBuffer &target)
   {
-    auto it = m_d->m_renderTargets.find(target.resourceId());
-    if(it == m_d->m_renderTargets.end()) {
-      it = m_d->m_renderTargets.insert(std::make_pair(target.resourceId(), RenderTargetGL(m_d->m_stateGL))).first;
+    auto it = m_d->m_frameBuffers.find(target.resourceId());
+    if(it == m_d->m_frameBuffers.end()) {
+      it = m_d->m_frameBuffers.insert(std::make_pair(target.resourceId(), FrameBufferGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(target.expiration());
     }
 
@@ -814,30 +814,30 @@ namespace Luminous
     return it->second;
   }
 
-  void RenderDriverGL::pushRenderTarget(const RenderTarget &target)
+  void RenderDriverGL::pushFrameBuffer(const FrameBuffer &target)
   {
-    RenderTargetGL & rtGL = handle(target);
+    FrameBufferGL & rtGL = handle(target);
 
-    m_d->m_rtStack.push(&rtGL);
+    m_d->m_fboStack.push(&rtGL);
 
-    auto cmd = new CommandChangeRenderTargetGL(rtGL);
+    auto cmd = new CommandChangeFrameBufferGL(rtGL);
 
     m_d->newRenderQueueSegment(cmd);
   }
 
-  void RenderDriverGL::popRenderTarget()
+  void RenderDriverGL::popFrameBuffer()
   {
-    assert(!m_d->m_rtStack.empty());
+    assert(!m_d->m_fboStack.empty());
 
-    m_d->m_rtStack.pop();
+    m_d->m_fboStack.pop();
 
-    // We might have emptied the stack if this was the default render target
+    // We might have emptied the stack if this was the default frame buffer
     // popped from endFrame(). In that case, just don't activate a new target.
-    if(!m_d->m_rtStack.empty()) {
+    if(!m_d->m_fboStack.empty()) {
 
-      auto rt = m_d->m_rtStack.top();
+      auto rt = m_d->m_fboStack.top();
 
-      auto cmd = new CommandChangeRenderTargetGL(*rt);
+      auto cmd = new CommandChangeFrameBufferGL(*rt);
 
       m_d->newRenderQueueSegment(cmd);
     }

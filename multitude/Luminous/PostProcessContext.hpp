@@ -12,7 +12,7 @@
 #define POSTPROCESSCONTEXT_HPP
 
 #include <Luminous/RenderContext.hpp>
-#include <Luminous/RenderTarget.hpp>
+#include <Luminous/FrameBuffer.hpp>
 #include <Luminous/Style.hpp>
 #include <Luminous/PostProcessFilter.hpp>
 
@@ -30,7 +30,7 @@ namespace Luminous
     virtual ~PostProcessContext();
 
     /// Initializes the filter. By default attaches a color and depth attachments
-    /// to the render target and resizes the render target and attachments.
+    /// to the frame buffer and resizes the frame buffer and attachments.
     /// @param rc Context of the current render thread
     void initialize(Luminous::RenderContext & rc);
 
@@ -51,10 +51,10 @@ namespace Luminous
     /// @return filter pointer to post-process filter
     const PostProcessFilterPtr & filter() const;
 
-    /// Returns the render target used for rendering the scene
-    Luminous::RenderTarget & renderTarget();
-    /// @copydoc renderTarget
-    const Luminous::RenderTarget & renderTarget() const;
+    /// Returns the frame buffer used for rendering the scene
+    Luminous::FrameBuffer & frameBuffer();
+    /// @copydoc frameBuffer
+    const Luminous::FrameBuffer & frameBuffer() const;
 
     /// Color buffer texture used for rendering the scene.
     /// Use this texture as the source for the post processing filter.

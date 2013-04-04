@@ -8,7 +8,7 @@
  * 
  */
 
-#include "RenderTarget.hpp"
+#include "FrameBuffer.hpp"
 #include "RenderContext.hpp"
 #include "RenderManager.hpp"
 
@@ -102,11 +102,11 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  class RenderTarget::D
+  class FrameBuffer::D
   {
   public:
-    RenderTargetType m_targetType;
-    RenderTargetBind m_targetBind;
+    FrameBufferType m_targetType;
+    FrameBufferBind m_targetBind;
     Nimble::Size m_size;
     unsigned m_samples;
     QMap<GLenum, RenderResource::Id> m_textureAttachments;
@@ -116,7 +116,7 @@ namespace Luminous
     std::vector<std::unique_ptr<Luminous::RenderBuffer> > m_ownedRenderBufferAttachments;
 
     D()
-      : m_targetBind(RenderTarget::BIND_DEFAULT)
+      : m_targetBind(FrameBuffer::BIND_DEFAULT)
       , m_samples(0)
     {}
 
@@ -132,7 +132,7 @@ namespace Luminous
 
     void attach(GLenum attachment, Luminous::Texture &texture)
     {
-      assert(m_targetType == RenderTarget::NORMAL);
+      assert(m_targetType == FrameBuffer::NORMAL);
 
       texture.setData(m_size.width(), m_size.height(), texture.dataFormat(), 0);
 
@@ -141,7 +141,7 @@ namespace Luminous
 
     void attach(GLenum attachment, Luminous::RenderBuffer &buffer)
     {
-      assert(m_targetType == RenderTarget::NORMAL);
+      assert(m_targetType == FrameBuffer::NORMAL);
 
       // If no format is specified, try to use something sensible based on attachment
       auto format = buffer.format();
@@ -187,36 +187,36 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  RenderTarget::RenderTarget(RenderTarget::RenderTargetType type)
+  FrameBuffer::FrameBuffer(FrameBuffer::FrameBufferType type)
     : RenderResource(RenderResource::FrameBuffer)
     , m_d(new D())
   {
     m_d->m_targetType = type;
   }
 
-  RenderTarget::~RenderTarget()
+  FrameBuffer::~FrameBuffer()
   {
     delete m_d;
   }
 
-  RenderTarget::RenderTarget(const RenderTargetCopy &rt)
+  FrameBuffer::FrameBuffer(const FrameBufferCopy &rt)
     : RenderResource(RenderResource::FrameBuffer)
     , m_d(rt.m_d)
   {
   }
 
-  RenderTarget::RenderTargetCopy RenderTarget::shallowCopyNoAttachments() const
+  FrameBuffer::FrameBufferCopy FrameBuffer::shallowCopyNoAttachments() const
   {
-    auto d = new RenderTarget::D();
+    auto d = new FrameBuffer::D();
 
     d->m_targetType = m_d->m_targetType;
     d->m_size = m_d->m_size;
     d->m_samples = m_d->m_samples;
 
-    return RenderTargetCopy(d);
+    return FrameBufferCopy(d);
   }
 
-  RenderTarget::RenderTargetCopy RenderTarget::shallowCopy() const
+  FrameBuffer::FrameBufferCopy FrameBuffer::shallowCopy() const
   {
     // First, make a shallow copy with no attachments
     auto d = shallowCopyNoAttachments();
@@ -225,10 +225,10 @@ namespace Luminous
     d.m_d->m_textureAttachments = m_d->m_textureAttachments;
     d.m_d->m_renderBufferAttachments = m_d->m_renderBufferAttachments;
 
-    return RenderTargetCopy(d);
+    return FrameBufferCopy(d);
   }
 
-  RenderTarget::RenderTargetCopy RenderTarget::deepCopy() const
+  FrameBuffer::FrameBufferCopy FrameBuffer::deepCopy() const
   {
     // First, make a shallow copy with no attachments
     auto d = shallowCopyNoAttachments();
@@ -254,29 +254,29 @@ namespace Luminous
       d.m_d->createRenderBufferAttachment(attachment, buf->format());
     }
 
-    return RenderTargetCopy(d);
+    return FrameBufferCopy(d);
   }
 
-  RenderTarget::RenderTarget(RenderTarget &&rt)
+  FrameBuffer::FrameBuffer(FrameBuffer &&rt)
     : RenderResource(std::move(rt))
     , m_d(rt.m_d)
   {
     rt.m_d = nullptr;
   }
 
-  RenderTarget & RenderTarget::operator=(RenderTarget && rt)
+  FrameBuffer & FrameBuffer::operator=(FrameBuffer && rt)
   {
     RenderResource::operator=(std::move(rt));
     std::swap(m_d, rt.m_d);
     return *this;
   }
 
-  const Nimble::Size &RenderTarget::size() const
+  const Nimble::Size &FrameBuffer::size() const
   {
     return m_d->m_size;
   }
 
-  void RenderTarget::setSize(const Nimble::Size &size)
+  void FrameBuffer::setSize(const Nimble::Size &size)
   {
     m_d->m_size= size;
 
@@ -292,12 +292,12 @@ namespace Luminous
     }
   }
 
-  unsigned RenderTarget::samples() const
+  unsigned FrameBuffer::samples() const
   {
     return m_d->m_samples;
   }
 
-  void RenderTarget::setSamples(unsigned int samples)
+  void FrameBuffer::setSamples(unsigned int samples)
   {
     m_d->m_samples = samples;
 
@@ -314,17 +314,17 @@ namespace Luminous
     }
   }
 
-  void RenderTarget::attach(GLenum attachment, Luminous::RenderBuffer &buffer)
+  void FrameBuffer::attach(GLenum attachment, Luminous::RenderBuffer &buffer)
   {
     m_d->attach(attachment, buffer);
   }
 
-  void RenderTarget::attach(GLenum attachment, Luminous::Texture &texture)
+  void FrameBuffer::attach(GLenum attachment, Luminous::Texture &texture)
   {
     m_d->attach(attachment, texture);
   }
 
-  Luminous::Texture * RenderTarget::texture(GLenum attachment) const
+  Luminous::Texture * FrameBuffer::texture(GLenum attachment) const
   {
     if(m_d->m_textureAttachments.contains(attachment))
       return RenderManager::getResource<Luminous::Texture>(m_d->m_textureAttachments.value(attachment));
@@ -332,7 +332,7 @@ namespace Luminous
     return nullptr;
   }
 
-  Luminous::RenderBuffer * RenderTarget::renderBuffer(GLenum attachment) const
+  Luminous::RenderBuffer * FrameBuffer::renderBuffer(GLenum attachment) const
   {
     if(m_d->m_renderBufferAttachments.contains(attachment))
       return RenderManager::getResource<Luminous::RenderBuffer>(m_d->m_renderBufferAttachments.value(attachment));
@@ -340,37 +340,37 @@ namespace Luminous
     return nullptr;
   }
 
-  QList<GLenum> RenderTarget::textureAttachments() const
+  QList<GLenum> FrameBuffer::textureAttachments() const
   {
     return m_d->m_textureAttachments.keys();
   }
 
-  QList<GLenum> RenderTarget::renderBufferAttachments() const
+  QList<GLenum> FrameBuffer::renderBufferAttachments() const
   {
     return m_d->m_renderBufferAttachments.keys();
   }
 
-  RenderTarget::RenderTargetType RenderTarget::targetType() const
+  FrameBuffer::FrameBufferType FrameBuffer::targetType() const
   {
     return m_d->m_targetType;
   }
 
-  RenderTarget::RenderTargetBind RenderTarget::targetBind() const
+  FrameBuffer::FrameBufferBind FrameBuffer::targetBind() const
   {
     return m_d->m_targetBind;
   }
 
-  void RenderTarget::setTargetBind(RenderTargetBind target)
+  void FrameBuffer::setTargetBind(FrameBufferBind target)
   {
     m_d->m_targetBind = target;
   }
 
-  Texture & RenderTarget::createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)
+  Texture & FrameBuffer::createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)
   {
     return m_d->createTextureAttachment(attachment, format);
   }
 
-  RenderBuffer & RenderTarget::createRenderBufferAttachment(GLenum attachment, GLenum storageFormat)
+  RenderBuffer & FrameBuffer::createRenderBufferAttachment(GLenum attachment, GLenum storageFormat)
   {
     return m_d->createRenderBufferAttachment(attachment, storageFormat);
   }
@@ -378,15 +378,15 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  RenderTargetGuard::RenderTargetGuard(RenderContext &r)
+  FrameBufferGuard::FrameBufferGuard(RenderContext &r)
     : m_renderContext(r)
   {}
 
-  RenderTargetGuard::~RenderTargetGuard()
+  FrameBufferGuard::~FrameBufferGuard()
   {
     /// @todo this should check that the current target is still valid (someone
     /// might manually pop it before)
-    m_renderContext.popRenderTarget();
+    m_renderContext.popFrameBuffer();
   }
 
 }

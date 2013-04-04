@@ -8,10 +8,10 @@
  * 
  */
 
-#include "RenderTargetGL.hpp"
+#include "FrameBufferGL.hpp"
 #include "RenderDriverGL.hpp"
 
-#include <Luminous/RenderTarget.hpp>
+#include <Luminous/FrameBuffer.hpp>
 
 #include <Radiant/Mutex.hpp>
 
@@ -79,15 +79,15 @@ namespace Luminous
 
   namespace
   {
-    GLenum bindTarget(RenderTarget::RenderTargetBind target)
+    GLenum bindTarget(FrameBuffer::FrameBufferBind target)
     {
       switch(target)
       {
-      case RenderTarget::BIND_DEFAULT:
+      case FrameBuffer::BIND_DEFAULT:
         return GL_FRAMEBUFFER;
-      case RenderTarget::BIND_DRAW:
+      case FrameBuffer::BIND_DRAW:
         return GL_DRAW_FRAMEBUFFER;
-      case RenderTarget::BIND_READ:
+      case FrameBuffer::BIND_READ:
         return GL_READ_FRAMEBUFFER;
       default:
         assert(false);
@@ -96,74 +96,74 @@ namespace Luminous
     }
   }
 
-  RenderTargetGL::RenderTargetGL(StateGL &state)
+  FrameBufferGL::FrameBufferGL(StateGL &state)
     : ResourceHandleGL(state)
-    , m_type(RenderTarget::INVALID)
-    , m_bind(RenderTarget::BIND_DEFAULT)
+    , m_type(FrameBuffer::INVALID)
+    , m_bind(FrameBuffer::BIND_DEFAULT)
   {
     glGenFramebuffers(1, &m_handle);
-    GLERROR("RenderTargetGL::RenderTargetGL # glGenFramebuffers");
+    GLERROR("FrameBufferGL::FrameBufferGL # glGenFramebuffers");
   }
 
-  RenderTargetGL::RenderTargetGL(RenderTargetGL && target)
+  FrameBufferGL::FrameBufferGL(FrameBufferGL && target)
     : ResourceHandleGL(std::move(target))
     , m_type(std::move(target.m_type))
     , m_bind(std::move(target.m_bind))
   {
   }
 
-  RenderTargetGL::~RenderTargetGL()
+  FrameBufferGL::~FrameBufferGL()
   {
     glDeleteFramebuffers(1, &m_handle);
-    GLERROR("RenderTargetGL::~RenderTargetGL # glDeleteFramebuffers");
+    GLERROR("FrameBufferGL::~FrameBufferGL # glDeleteFramebuffers");
   }
 
-  void RenderTargetGL::bind()
+  void FrameBufferGL::bind()
   {
-    assert(m_type != RenderTarget::INVALID);
+    assert(m_type != FrameBuffer::INVALID);
 
-    if(m_type == RenderTarget::WINDOW)
+    if(m_type == FrameBuffer::WINDOW)
       unbind();
     else if(m_state.setFramebuffer(bindTarget(m_bind), m_handle)) {
       glBindFramebuffer(bindTarget(m_bind), m_handle);
-      GLERROR("RenderTargetGL::bind # glBindFramebuffer");
+      GLERROR("FrameBufferGL::bind # glBindFramebuffer");
     }
 
     touch();
   }
 
-  void RenderTargetGL::unbind()
+  void FrameBufferGL::unbind()
   {
     if(m_state.setFramebuffer(bindTarget(m_bind), 0))
       glBindFramebuffer(bindTarget(m_bind), 0);
-    GLERROR("RenderTargetGL::unbind # glBindFramebuffer");
+    GLERROR("FrameBufferGL::unbind # glBindFramebuffer");
   }
 
-  void RenderTargetGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
+  void FrameBufferGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
   {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
-    GLERROR("RenderTargetGL::attach # glFramebufferRenderbuffer");
+    GLERROR("FrameBufferGL::attach # glFramebufferRenderbuffer");
   }
 
-  void RenderTargetGL::attach(GLenum attachment, TextureGL &texture)
+  void FrameBufferGL::attach(GLenum attachment, TextureGL &texture)
   {
-    GLERROR("RenderTargetGL::attach # foo");
+    GLERROR("FrameBufferGL::attach # foo");
 
     texture.bind(0);
-    GLERROR("RenderTargetGL::attach # mmoo");
+    GLERROR("FrameBufferGL::attach # mmoo");
 
     glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
-    GLERROR("RenderTargetGL::attach # glFramebufferTexture");
+    GLERROR("FrameBufferGL::attach # glFramebufferTexture");
   }
 
-  void RenderTargetGL::detach(GLenum attachment)
+  void FrameBufferGL::detach(GLenum attachment)
   {
     /// @todo what about textures?
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
-    GLERROR("RenderTargetGL::deattach # glFramebufferRenderbuffer");
+    GLERROR("FrameBufferGL::deattach # glFramebufferRenderbuffer");
   }
 
-  bool RenderTargetGL::check()
+  bool FrameBufferGL::check()
   {
     // Only do actual checking in debug mode since this apparently slows things down quite a bit (10% in twinkle)
 #if RADIANT_DEBUG
@@ -183,12 +183,12 @@ namespace Luminous
     }
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    GLERROR("RenderTargetGL::check # glCheckFramebufferStatus");
+    GLERROR("FrameBufferGL::check # glCheckFramebufferStatus");
 
     if(status == GL_FRAMEBUFFER_COMPLETE)
       return true;
 
-    Radiant::warning("RenderTargetGL::check # %s", errors.value(status).toUtf8().data());
+    Radiant::warning("FrameBufferGL::check # %s", errors.value(status).toUtf8().data());
 
     return false;
 #else
@@ -196,7 +196,7 @@ namespace Luminous
 #endif
   }
 
-  void RenderTargetGL::sync(const RenderTarget &target)
+  void FrameBufferGL::sync(const FrameBuffer &target)
   {
     m_type = target.targetType();
     m_bind = target.targetBind();

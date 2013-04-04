@@ -50,14 +50,14 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  CommandChangeRenderTargetGL::CommandChangeRenderTargetGL(RenderTargetGL & rt)
-    : m_renderTarget(rt)
+  CommandChangeFrameBufferGL::CommandChangeFrameBufferGL(FrameBufferGL & rt)
+    : m_frameBuffer(rt)
   {
   }
 
-  void CommandChangeRenderTargetGL::execute()
+  void CommandChangeFrameBufferGL::execute()
   {
-    m_renderTarget.bind();
+    m_frameBuffer.bind();
   }
 
   //////////////////////////////////////////////////////////////////////

@@ -13,7 +13,7 @@
 
 #include "ResourceHandleGL.hpp"
 #include "TextureGL.hpp"
-#include "Luminous/RenderTarget.hpp"
+#include "Luminous/FrameBuffer.hpp"
 
 #include <QSize>
 
@@ -41,15 +41,15 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  class RenderTargetGL : public ResourceHandleGL
+  class FrameBufferGL : public ResourceHandleGL
   {
   public:
-    LUMINOUS_API RenderTargetGL(StateGL & state);
-    LUMINOUS_API RenderTargetGL(RenderTargetGL && target);
+    LUMINOUS_API FrameBufferGL(StateGL & state);
+    LUMINOUS_API FrameBufferGL(FrameBufferGL && target);
 
-    LUMINOUS_API ~RenderTargetGL();
+    LUMINOUS_API ~FrameBufferGL();
 
-    LUMINOUS_API void sync(const RenderTarget & target);
+    LUMINOUS_API void sync(const FrameBuffer & target);
 
     LUMINOUS_API void attach(GLenum attachment, RenderBufferGL & renderBuffer);
     LUMINOUS_API void attach(GLenum attachment, TextureGL & texture);
@@ -62,8 +62,8 @@ namespace Luminous
     LUMINOUS_API bool check();
 
   private:
-    RenderTarget::RenderTargetType m_type;
-    RenderTarget::RenderTargetBind m_bind;
+    FrameBuffer::FrameBufferType m_type;
+    FrameBuffer::FrameBufferBind m_bind;
     Nimble::Size m_size;
   };
 

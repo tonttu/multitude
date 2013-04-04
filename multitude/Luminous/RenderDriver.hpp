@@ -18,7 +18,7 @@
 #include "Luminous/RenderCommand.hpp"
 #include "Luminous/Style.hpp"
 #include "Luminous/Buffer.hpp"
-#include "Luminous/RenderTarget.hpp"
+#include "Luminous/FrameBuffer.hpp"
 #include "CullMode.hpp"
 
 #include <Radiant/Color.hpp>
@@ -43,7 +43,7 @@ namespace Luminous
   public:
     virtual ~RenderDriver() {}
 
-    // Clear the current rendertarget
+    // Clear the current framebuffer
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) = 0;
 
     // Draw primitives
