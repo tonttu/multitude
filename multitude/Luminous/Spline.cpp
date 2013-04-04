@@ -84,8 +84,8 @@ namespace Luminous {
       , m_generation(0)
     {
       /// @todo should share these among instances of the spline   
-      m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::ShaderGLSL::Fragment);
-      m_shader.loadShader("Luminous/GLSL150/spline.vs", Luminous::ShaderGLSL::Vertex);
+      m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
+      m_shader.loadShader("Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
 
       m_descr.addAttribute<Nimble::Vector2f>("vertex_position");
       m_descr.addAttribute<Nimble::Vector2f>("vertex_range");

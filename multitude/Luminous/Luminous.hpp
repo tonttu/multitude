@@ -113,7 +113,7 @@ namespace Luminous
   class BufferGL;
   class Program;
   class ProgramGL;
-  class ShaderGLSL;
+  class Shader;
   struct ShaderUniform;
   class Texture;
   class TextureGL;

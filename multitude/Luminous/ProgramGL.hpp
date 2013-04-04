@@ -22,8 +22,6 @@
 
 namespace Luminous
 {
-  /// @todo ShaderGLSL class has a bit confusing name, since actually this class
-  ///       should be "ShaderGLSLGL"... ShaderGLSL should be renamed to Shader
   class ShaderGL
   {
   public:
@@ -34,7 +32,7 @@ namespace Luminous
     LUMINOUS_API ShaderGL & operator=(ShaderGL && shader);
 
     LUMINOUS_API inline GLuint handle() const { return m_handle; }
-    LUMINOUS_API bool compile(const ShaderGLSL & shader);
+    LUMINOUS_API bool compile(const Shader & shader);
 
   private:
     GLuint m_handle;

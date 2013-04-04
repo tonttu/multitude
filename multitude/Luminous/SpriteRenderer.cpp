@@ -101,9 +101,9 @@ namespace Luminous {
     }
     else {
       const QString shaderPath = shaderPaths.front();
-      m_d->m_program.loadShader(shaderPath + "/sprites.fs", Luminous::ShaderGLSL::Fragment);
-      m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::ShaderGLSL::Vertex);
-      m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::ShaderGLSL::Geometry);
+      m_d->m_program.loadShader(shaderPath + "/sprites.fs", Luminous::Shader::Fragment);
+      m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::Shader::Vertex);
+      m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::Shader::Geometry);
 
       m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
       m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");

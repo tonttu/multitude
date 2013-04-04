@@ -44,14 +44,14 @@ namespace Luminous
     return *this;
   }
 
-  bool ShaderGL::compile(const ShaderGLSL & shader)
+  bool ShaderGL::compile(const Shader & shader)
   {
     if(!m_handle) {
-      if(shader.type() == ShaderGLSL::Vertex) {
+      if(shader.type() == Shader::Vertex) {
         m_handle = glCreateShader(GL_VERTEX_SHADER);
-      } else if(shader.type() == ShaderGLSL::Fragment) {
+      } else if(shader.type() == Shader::Fragment) {
         m_handle = glCreateShader(GL_FRAGMENT_SHADER);
-      } else if(shader.type() == ShaderGLSL::Geometry) {
+      } else if(shader.type() == Shader::Geometry) {
         m_handle = glCreateShader(GL_GEOMETRY_SHADER);
       } else {
         Radiant::error("Unknown shader type");
@@ -155,7 +155,7 @@ namespace Luminous
     m_shaders.clear();
 
     for(std::size_t i = 0; i < program.shaderCount(); ++i) {
-      ShaderGLSL & shader = program.shader(i);
+      Shader & shader = program.shader(i);
       m_shaders.push_back(std::move(ShaderGL()));
       ShaderGL & shadergl = m_shaders.back();
       shadergl.compile(shader);

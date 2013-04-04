@@ -133,7 +133,7 @@ namespace Luminous
   template <> LUMINOUS_API VertexDescription * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<VertexDescription>(id); }
   template <> LUMINOUS_API Texture * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Texture>(id); }
   template <> LUMINOUS_API Program * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Program>(id); }
-  template <> LUMINOUS_API ShaderGLSL * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<ShaderGLSL>(id); }
+  template <> LUMINOUS_API Shader * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<Shader>(id); }
   template <> LUMINOUS_API RenderBuffer * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderBuffer>(id); }
   template <> LUMINOUS_API RenderTarget * RenderManager::getResource( RenderResource::Id id ) { return Luminous::getResource<RenderTarget>(id); }
 }

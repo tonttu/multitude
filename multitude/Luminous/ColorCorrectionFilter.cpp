@@ -22,8 +22,8 @@ namespace Luminous
   public:
     D()
     {
-      m_shader.loadShader("Luminous/GLSL150/tex.vs", Luminous::ShaderGLSL::Vertex);
-      m_shader.loadShader("Luminous/GLSL150/cc_rgb.fs", Luminous::ShaderGLSL::Fragment);
+      m_shader.loadShader("Luminous/GLSL150/tex.vs", Luminous::Shader::Vertex);
+      m_shader.loadShader("Luminous/GLSL150/cc_rgb.fs", Luminous::Shader::Fragment);
 
       Luminous::VertexDescription desc;
 

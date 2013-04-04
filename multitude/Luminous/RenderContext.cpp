@@ -80,21 +80,21 @@ namespace Luminous
       m_offScreenRenderTarget.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
       m_offScreenRenderTarget.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
 
-      m_basicShader.loadShader("Luminous/GLSL150/basic.vs", ShaderGLSL::Vertex);
-      m_basicShader.loadShader("Luminous/GLSL150/basic.fs", ShaderGLSL::Fragment);
+      m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
+      m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
       Luminous::VertexDescription desc;
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       m_basicShader.setVertexDescription(desc);
 
-      m_texShader.loadShader("Luminous/GLSL150/tex.vs", ShaderGLSL::Vertex);
-      m_texShader.loadShader("Luminous/GLSL150/tex.fs", ShaderGLSL::Fragment);
+      m_texShader.loadShader("Luminous/GLSL150/tex.vs", Shader::Vertex);
+      m_texShader.loadShader("Luminous/GLSL150/tex.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
 
-      m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", ShaderGLSL::Vertex);
-      m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", ShaderGLSL::Fragment);
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", Shader::Vertex);
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
