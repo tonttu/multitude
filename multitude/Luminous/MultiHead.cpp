@@ -12,9 +12,7 @@
 
 #include "GLResources.hpp"
 #include "RenderContext.hpp"
-#include "Texture.hpp"
 #include "ShaderDeprecated.hpp"
-#include "Texture.hpp"
 #include "PixelFormat.hpp"
 #include "DummyOpenGL.hpp"
 

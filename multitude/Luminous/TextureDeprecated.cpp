@@ -8,7 +8,7 @@
  * 
  */
 
-#include "Texture.hpp"
+#include "TextureDeprecated.hpp"
 #include "DummyOpenGL.hpp"
 #include "Image.hpp"
 #include "PixelFormat.hpp"

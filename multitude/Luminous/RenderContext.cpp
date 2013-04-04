@@ -11,7 +11,6 @@
 #include "RenderContext.hpp"
 
 #include "Error.hpp"
-#include "Texture.hpp"
 
 #include "RenderCommand.hpp"
 

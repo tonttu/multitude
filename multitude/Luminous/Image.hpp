@@ -14,7 +14,7 @@
 #include <Luminous/ContextVariable.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/PixelFormat.hpp>
-#include <Luminous/Texture.hpp>
+#include <Luminous/TextureDeprecated.hpp>
 
 #include <QFile>
 

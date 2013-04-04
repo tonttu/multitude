@@ -8,8 +8,8 @@
  * 
  */
 
-#ifndef LUMINOUS_TEXTURE_HPP
-#define LUMINOUS_TEXTURE_HPP
+#ifndef LUMINOUS_TEXTURE_DEPRECATED_HPP
+#define LUMINOUS_TEXTURE_DEPRECATED_HPP
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/GLResource.hpp>
