@@ -9,7 +9,6 @@ HEADERS += Archive.hpp \
     AttributeStyleValue.hpp \
     AttributeSize.hpp
 HEADERS += AttributeFlags.hpp
-HEADERS += ChangeMap.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
 HEADERS += ConfigElement.hpp
@@ -41,7 +40,6 @@ HEADERS += State.hpp
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
     AttributeStringList.cpp
-SOURCES += ChangeMap.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp

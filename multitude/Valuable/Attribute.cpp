@@ -10,7 +10,6 @@
 
 #include "Attribute.hpp"
 #include "Node.hpp"
-#include "ChangeMap.hpp"
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
@@ -207,7 +206,7 @@ namespace Valuable
 
   void Attribute::emitChange()
   {
-//    Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
+    // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
     // We use foreach here because the callback functions might
     // remove themselves from the listeners. Since foreach makes a
     // copy of the containers this doesn't present a problem
@@ -222,7 +221,6 @@ namespace Valuable
         } else l.func();
       }
     }
-    //ChangeMap::addChange(this);
   }
 
   void Attribute::emitDelete()
@@ -243,7 +241,6 @@ namespace Valuable
       if(l.listener) l.listener->m_valueListening.remove(this);
     }
     m_listeners.clear();
-    //ChangeMap::addDelete(this);
   }
 
   void Attribute::removeHost()

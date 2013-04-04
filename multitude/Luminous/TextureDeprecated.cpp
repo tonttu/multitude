@@ -30,7 +30,6 @@ namespace
 {
   static RADIANT_TLS(int) t_frame(0);
   static RADIANT_TLS(long) t_available(0);
-  /// @todo Fix UploadLimiter.. #1982
   static RADIANT_TLS(bool) t_enabled(true);
 }
 

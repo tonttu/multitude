@@ -1379,6 +1379,7 @@ namespace VideoDisplay
                 }
 
                 /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
+                /// @todo should we care?
                 /*if(output->pts != (int64_t) AV_NOPTS_VALUE) {
                   pts = output->pts;
                   dpts = av.audioTsToSecs * output->pts;

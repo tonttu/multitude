@@ -42,15 +42,6 @@ namespace Valuable
 
   /// @endcond
 
-  // Value<int> or Value<Vector4> are just better ways to say Numeric<int> or Vector<Vector4>.
-  // Attributes with type T can be defined by Value<T>.
-  /*template <typename T> class Value : public Type<T>::klass
-  {
-  public:
-    Value(Node * parent, const QString & name, const T & v = T(), bool transit = false)
-      : Type<T>::klass(parent, name, v, transit) {}
-  };*/
-
 }
 
 #undef DefineTypeT
