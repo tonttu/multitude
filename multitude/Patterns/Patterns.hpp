@@ -11,17 +11,7 @@
 #ifndef PATTERNS_PATTERNS_HPP
 #define PATTERNS_PATTERNS_HPP
 
-/// Patterns template library is a collection of templated design patterns. 
-
-/** \b Copyright: The Patterns library has been developed by MultiTouch 
-    Oy (2007).
-        
-    Patterns is released under the GNU Lesser General Public License
-    (LGPL), version 2.1.
-
-    @author Esa Nuuros
-*/
-
+/// Patterns template library is a collection of design patterns.
 namespace Patterns {
 
 }
