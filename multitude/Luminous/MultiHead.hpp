@@ -39,7 +39,7 @@ namespace Luminous {
   using Nimble::Vector4f;
 
   class RenderContext;
-  class Shader;
+  class ShaderDeprecated;
   class Texture1D;
 
   /// Class for managing information on multiple OpenGL vindows/viewports.
@@ -213,7 +213,7 @@ namespace Luminous {
       Valuable::AttributeInt        m_method;
       Rect m_graphicsBounds;
       float      m_pixelSizeCm;
-      Shader * m_colorCorrectionShader;
+      ShaderDeprecated * m_colorCorrectionShader;
       Collectable m_colorCorrectionTextureKey;
       ColorCorrection m_colorCorrection;
       RGBCube m_rgbCube;

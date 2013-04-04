@@ -8,8 +8,8 @@
  * 
  */
 
-#ifndef LUMINOUS_SHADER_HPP
-#define LUMINOUS_SHADER_HPP
+#ifndef LUMINOUS_SHADER_DEPRECATED_HPP
+#define LUMINOUS_SHADER_DEPRECATED_HPP
 
 #include <Luminous/Luminous.hpp> // First for GLEW
 
@@ -30,16 +30,16 @@ namespace Luminous {
       @see ShaderExample demo application
       /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1. Use Luminous::Program instead.
 */
-  class LUMINOUS_API Shader : public ContextVariableT<GLSLProgramObject>,
+  class LUMINOUS_API ShaderDeprecated : public ContextVariableT<GLSLProgramObject>,
   public Valuable::Node
   {
     MEMCHECKED_USING(Valuable::Node);
   public:
-    Shader();
+    ShaderDeprecated();
     /// Constructs a shader
-    Shader(Valuable::Node * host, const char * name);
+    ShaderDeprecated(Valuable::Node * host, const char * name);
     /// Deletes the shader
-    virtual ~Shader();
+    virtual ~ShaderDeprecated();
 
     /** Sets the source code for the fragment (aka pixel) shader.
 
@@ -129,4 +129,4 @@ namespace Luminous {
 
 /// @endcond
 
-#endif // SHADER_HPP
+#endif // LUMINOUS_SHADER_DEPRECATED_HPP

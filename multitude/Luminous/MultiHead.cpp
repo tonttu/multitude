@@ -13,7 +13,7 @@
 #include "GLResources.hpp"
 #include "RenderContext.hpp"
 #include "Texture.hpp"
-#include "Shader.hpp"
+#include "ShaderDeprecated.hpp"
 #include "Texture.hpp"
 #include "PixelFormat.hpp"
 #include "DummyOpenGL.hpp"
@@ -63,7 +63,7 @@ namespace Luminous
       m_colorCorrection(this, "colorcorrection"),
       m_rgbCube(this, "rgbcube")
   {
-    m_colorCorrectionShader = new Luminous::Shader();
+    m_colorCorrectionShader = new Luminous::ShaderDeprecated();
     m_colorCorrectionShader->setFragmentShader(s_colorCorrectionShader);
 
     eventAddOut("graphics-bounds-changed");

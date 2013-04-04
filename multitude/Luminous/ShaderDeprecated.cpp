@@ -8,7 +8,7 @@
  * 
  */
 
-#include "Shader.hpp"
+#include "ShaderDeprecated.hpp"
 
 #include <Radiant/FileUtils.hpp>
 
@@ -94,7 +94,7 @@ namespace Luminous {
     } \
   }
 
-  class Shader::Params
+  class ShaderDeprecated::Params
   {
   public:
 
@@ -149,7 +149,7 @@ namespace Luminous {
     std::vector<Item> m_mat4f;
   };
 
-  class Shader::Self
+  class ShaderDeprecated::Self
   {
   public:
     Self() : m_generation(0) {}
@@ -166,27 +166,27 @@ namespace Luminous {
   };
 
 
-  Shader::Shader()
+  ShaderDeprecated::ShaderDeprecated()
       : m_self(new Self)
   {}
 
-  Shader::Shader(Valuable::Node * host, const char * name)
+  ShaderDeprecated::ShaderDeprecated(Valuable::Node * host, const char * name)
       : Valuable::Node(host, name, true),
       m_self(new Self)
   {}
 
-  Shader::~Shader()
+  ShaderDeprecated::~ShaderDeprecated()
   {
     delete m_self;
   }
 
-  void Shader::setFragmentShader(const char * shadercode)
+  void ShaderDeprecated::setFragmentShader(const char * shadercode)
   {
     m_self->m_fragmentShader = shadercode;
     m_self->m_generation++;
   }
 
-  bool Shader::loadFragmentShader(const char * filename)
+  bool ShaderDeprecated::loadFragmentShader(const char * filename)
   {
     if(m_self->m_label.isEmpty()) {
       m_self->m_label = filename;
@@ -202,13 +202,13 @@ namespace Luminous {
     return true;
   }
 
-  void Shader::setVertexShader(const char * shadercode)
+  void ShaderDeprecated::setVertexShader(const char * shadercode)
   {
     m_self->m_vertexShader = shadercode;
     m_self->m_generation++;
   }
 
-  bool Shader::loadVertexShader(const char * filename)
+  bool ShaderDeprecated::loadVertexShader(const char * filename)
   {
     if(m_self->m_label.isEmpty()) {
       m_self->m_label = filename;
@@ -224,13 +224,13 @@ namespace Luminous {
     return true;
   }
 
-  void Shader::setGeometryShader(const char * shadercode)
+  void ShaderDeprecated::setGeometryShader(const char * shadercode)
   {
     m_self->m_geometryShader = shadercode;
     m_self->m_generation++;
   }
 
-  bool Shader::loadGeometryShader(const char * filename)
+  bool ShaderDeprecated::loadGeometryShader(const char * filename)
   {
     const QByteArray str = Radiant::FileUtils::loadTextFile(filename);
 
@@ -248,12 +248,12 @@ namespace Luminous {
     m_self->m_varyings.add(obj);
   }*/
 
-  void Shader::addShaderUniform(const Valuable::Attribute * obj)
+  void ShaderDeprecated::addShaderUniform(const Valuable::Attribute * obj)
   {
     m_self->m_uniforms.add(obj);
   }
 
-  GLSLProgramObject * Shader::bind() const
+  GLSLProgramObject * ShaderDeprecated::bind() const
   {
     //Luminous::Utils::glCheck("Shader::bind # Before entry");
 
@@ -293,14 +293,14 @@ namespace Luminous {
     return prog;
   }
 
-  void Shader::unbind() const
+  void ShaderDeprecated::unbind() const
   {
     GLSLProgramObject * p = program();
     if(p)
       p->unbind();
   }
 
-  GLSLProgramObject * Shader::program(Luminous::RenderContext * res) const
+  GLSLProgramObject * ShaderDeprecated::program(Luminous::RenderContext * res) const
   {
     GLSLProgramObject & prog = ref(res);
 
@@ -335,7 +335,7 @@ namespace Luminous {
     return & prog;
   }
 
-  bool Shader::isDefined() const
+  bool ShaderDeprecated::isDefined() const
   {
     return !m_self->m_fragmentShader.isEmpty() &&
         !m_self->m_vertexShader.isEmpty();

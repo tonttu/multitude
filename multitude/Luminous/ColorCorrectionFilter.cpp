@@ -10,8 +10,8 @@
 
 #include "ColorCorrectionFilter.hpp"
 
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/RGBCube.hpp>
-#include <Luminous/Shader.hpp>
 #include <Luminous/Texture2.hpp>
 #include <Luminous/VertexDescription.hpp>
 
