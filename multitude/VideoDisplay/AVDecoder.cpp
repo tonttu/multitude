@@ -21,7 +21,7 @@ namespace VideoDisplay
     D();
 
   public:
-    AVDecoder::VideoState m_state;
+    AVDecoder::DecoderState m_state;
   };
 
   AVDecoder::D::D()
@@ -37,12 +37,12 @@ namespace VideoDisplay
   {
   }
 
-  AVDecoder::VideoState & AVDecoder::state()
+  AVDecoder::DecoderState & AVDecoder::state()
   {
     return m_d->m_state;
   }
 
-  const AVDecoder::VideoState & AVDecoder::state() const
+  const AVDecoder::DecoderState & AVDecoder::state() const
   {
     return m_d->m_state;
   }

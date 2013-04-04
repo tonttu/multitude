@@ -31,23 +31,55 @@
 
 namespace VideoDisplay
 {
-  struct Timestamp
+
+  /// @cond
+
+  class Timestamp
   {
-    Timestamp (double p = 0.0, int sg = 0) : pts(p), seekGeneration(sg) {}
-    double pts;
-    int seekGeneration;
+  public:
+    Timestamp(double pts = 0.0, int seekGeneration = 0)
+      : m_pts(pts),
+        m_seekGeneration(seekGeneration)
+    {}
+
+    double pts() const { return m_pts; }
+    void setPts(double pts) { m_pts = pts; }
+
+    int seekGeneration() const { return m_seekGeneration; }
+    void setSeekGeneration(int seekGeneration) { m_seekGeneration = seekGeneration; }
+
     bool operator<(const Timestamp & ts) const
     {
-      return seekGeneration == ts.seekGeneration ?
-            pts < ts.pts : seekGeneration < ts.seekGeneration;
+      return m_seekGeneration == ts.m_seekGeneration ?
+            m_pts < ts.m_pts : m_seekGeneration < ts.m_seekGeneration;
     }
+
+  private:
+    double m_pts;
+    int m_seekGeneration;
   };
 
-  struct DecodedImageBuffer
+  class DecodedImageBuffer
   {
+  public:
+    typedef std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> AlignedData;
+
+  public:
     DecodedImageBuffer() {}
-    QAtomicInt refcount;
-    std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> data;
+
+    void ref() { m_refcount.ref(); }
+    bool deref() { return m_refcount.deref(); }
+
+    QAtomicInt & refcount() { return m_refcount; }
+    const QAtomicInt & refcount() const { return m_refcount; }
+
+    AlignedData & data() { return m_data; }
+    const AlignedData & data() const { return m_data; }
+
+  private:
+    QAtomicInt m_refcount;
+    AlignedData m_data;
+
   private:
     DecodedImageBuffer(const DecodedImageBuffer &);
     DecodedImageBuffer & operator=(DecodedImageBuffer &);
@@ -56,18 +88,6 @@ namespace VideoDisplay
   class VideoFrame
   {
   public:
-    VideoFrame() : imageSize(0, 0), imageBuffer(nullptr), format(UNKNOWN), planes(0) {}
-
-    Timestamp timestamp;
-
-    Nimble::Vector2i imageSize;
-
-    std::array<Nimble::Vector2i, 4> planeSize;
-    std::array<int, 4> lineSize;
-    std::array<const uint8_t *, 4> data;
-
-    DecodedImageBuffer * imageBuffer;
-
     enum Format
     {
       UNKNOWN,
@@ -78,8 +98,65 @@ namespace VideoDisplay
       YUV,
       YUVA
     };
-    Format format;
-    int planes;
+
+  public:
+    VideoFrame()
+      : m_imageSize(0, 0),
+        m_imageBuffer(nullptr),
+        m_format(UNKNOWN),
+        m_planes(0)
+    {}
+
+    Timestamp timestamp() const { return m_timestamp; }
+    void setTimestamp(Timestamp ts) { m_timestamp = ts; }
+
+    Nimble::Vector2i imageSize() const { return m_imageSize; }
+    void setImageSize(Nimble::Vector2i size) { m_imageSize = size; }
+
+    Nimble::Vector2i planeSize(int plane) const { return m_planeSize[plane]; }
+    void setPlaneSize(int plane, Nimble::Vector2i size) { m_planeSize[plane] = size; }
+
+    int lineSize(int plane) const { return m_lineSize[plane]; }
+    void setLineSize(int plane, int size) { m_lineSize[plane] = size; }
+
+    const uint8_t * data(int plane) const { return m_data[plane]; }
+    void setData(int plane, uint8_t * data) { m_data[plane] = data; }
+
+    void clear(int plane)
+    {
+      m_planeSize[plane] = Nimble::Vector2i(0, 0);
+      m_lineSize[plane] = 0;
+      m_data[plane] = nullptr;
+    }
+
+    int bytes(int plane)
+    {
+      return m_lineSize[plane] * m_planeSize[plane].y;
+    }
+
+    DecodedImageBuffer * imageBuffer() { return m_imageBuffer; }
+    const DecodedImageBuffer * imageBuffer() const { return m_imageBuffer; }
+    void setImageBuffer(DecodedImageBuffer * imageBuffer) { m_imageBuffer = imageBuffer; }
+
+    Format format() const { return m_format; }
+    void setFormat(Format format) { m_format = format; }
+
+    int planes() const { return m_planes; }
+    void setPlanes(int planes) { m_planes = planes; }
+
+  private:
+    Timestamp m_timestamp;
+
+    Nimble::Vector2i m_imageSize;
+
+    std::array<Nimble::Vector2i, 4> m_planeSize;
+    std::array<int, 4> m_lineSize;
+    std::array<const uint8_t *, 4> m_data;
+
+    DecodedImageBuffer * m_imageBuffer;
+
+    Format m_format;
+    int m_planes;
 
   private:
     VideoFrame(const VideoFrame &);
@@ -88,67 +165,107 @@ namespace VideoDisplay
     VideoFrame& operator=(VideoFrame &&);
   };
 
+  /// @endcond
+
   /// This class provices the actual audio/video decoder for the video player.
+  /// To use this class, first make a new instance with create() and then start
+  /// the decoder thread with run().
   class VIDEODISPLAY_API AVDecoder : public Radiant::Thread
   {
   public:
+    /// AVDecoder loading state
     enum State
     {
-      STATE_LOADING          = 1 << 1,
-      STATE_HEADER_READY     = 1 << 2,
-      STATE_READY            = 1 << 3,
-      STATE_ERROR            = 1 << 4,
-      STATE_FINISHED         = 1 << 5
+      STATE_LOADING          = 1 << 1, ///< Decoder is opening the source
+      STATE_HEADER_READY     = 1 << 2, ///< Decoder has opened the source and codecs,
+                                       ///  file meta info like video size is known
+      STATE_READY            = 1 << 3, ///< First frame has been decoded successfully
+      STATE_ERROR            = 1 << 4, ///< There was an error while opening/decoding the source
+      STATE_FINISHED         = 1 << 5  ///< Playback was finished without errors
     };
-    typedef Valuable::State<State> VideoState;
+    /// State class used in the decoder
+    typedef Valuable::State<State> DecoderState;
 
+    /// Describes the unit used in SeekRequest. Not all of these might be
+    /// supported by the demuxer or video / audio codecs.
     enum SeekType
     {
-      SeekNone = 0,
-      SeekBySeconds,
-      SeekRelative,
-      SeekByBytes
+      SEEK_NONE = 0,     ///< No seeking requested
+      SEEK_BY_SECONDS,   ///< Timestamp is specified in seconds
+      SEEK_RELATIVE,     ///< Timestamp is between 0 and 1, 0 meaning the beginning
+                         ///  of the video, 1 is the end of the video
+      SEEK_BY_BYTES      ///< Raw byte seek in the data stream. This is fast,
+                         ///  but might cause rendering artifacts
     };
 
+    /// Seeking direction constraint for SeekRequest.
+    /// This eliminates twitching while seeking.
     enum SeekDirection
     {
-      SeekAnyDirection = 0,
-      SeekOnlyForward,
-      SeekOnlyBackward
+      SEEK_ANY_DIRECTION = 0, ///< No limitations on the seeking
+      SEEK_ONLY_FORWARD,      ///< Only seek forward in the stream
+      SEEK_ONLY_BACKWARD      ///< Only seek backward in the stream
     };
 
+    /// Seeking flags
     enum SeekFlags
     {
-      SeekFlagsNone = 0,
-      SeekRealTime
+      SEEK_FLAGS_NONE = 0,    ///< No special seeking flags
+      SEEK_REAL_TIME          ///< Low-latency seeking mode, no buffering, special audio handling
+                              ///  Use this if you want to make continuous seek requests
     };
 
+    /// Decoder playing state
     enum PlayMode
     {
-      Pause,
-      Play
+      PAUSE,                  ///< Media is playing
+      PLAY                    ///< Media is paused
     };
 
-    struct SeekRequest
+    /// Seeking request that can be sent to the decoder
+    class SeekRequest
     {
-      SeekRequest(double value = 0.0, SeekType type = SeekNone,
-                  SeekDirection direction = SeekAnyDirection)
-        : value(value), type(type), direction(direction) {}
-      double value;
-      SeekType type;
-      SeekDirection direction;
+    public:
+      /// Construct a new request
+      /// @param value media timestamp, value interpretation depends on selected SeekType
+      /// @param type unit of the timestamp
+      /// @param direction seek direction constraint
+      SeekRequest(double value = 0.0, SeekType type = SEEK_NONE,
+                  SeekDirection direction = SEEK_ANY_DIRECTION)
+        : m_value(value), m_type(type), m_direction(direction) {}
+
+      /// @returns media timestamp, value interpretation depends on selected SeekType
+      double value() const { return m_value; }
+      /// @param value seek timestamp
+      void setValue(double value) { m_value = value; }
+
+      /// @returns unit of the timestamp
+      SeekType type() const { return m_type; }
+      /// @param type unit of the timestamp
+      void setType(SeekType type) { m_type = type; }
+
+      /// @returns seek direction constraint
+      SeekDirection direction() const { return m_direction; }
+      /// @param direction seek direction constraint
+      void setDirection(SeekDirection direction) { m_direction = direction; }
+
+    private:
+      double m_value;
+      SeekType m_type;
+      SeekDirection m_direction;
     };
 
     /// Video and audio parameters for AVDecoder when opening a new media file.
-    struct Options
+    class Options
     {
+    public:
       /// Creates an empty parameter set. You must set at least source().
       Options()
         : m_channelLayout("downmix")
         , m_looping(false)
         , m_audioEnabled(true)
         , m_videoEnabled(true)
-        , m_playMode(Pause)
+        , m_playMode(PAUSE)
         , m_videoStreamIndex(-1)
         , m_audioStreamIndex(-1)
         , m_audioBufferSeconds(2.0)
@@ -156,6 +273,7 @@ namespace VideoDisplay
         , m_pixelFormat(VideoFrame::UNKNOWN)
       {}
 
+    public:
       /// Input file, device, URL or special parameter to input format.
       ///
       /// Some examples: "/home/multi/Videos/video.mkv"
@@ -448,50 +566,111 @@ namespace VideoDisplay
     };
 
   public:
+    /// Deletes the decoder, blocks until all decoder threads have died
     virtual ~AVDecoder();
 
-    VideoState & state();
-    const VideoState & state() const;
+    /// Current decoder state
+    /// @returns the current state of the decoder
+    DecoderState & state();
+    const DecoderState & state() const;
+    /// Checks if decoder has done running
+    /// @returns true if the decoder in any of the final states (STATE_ERROR or STATE_FINISHED)
     bool finished() const;
+    /// Has the decoder opened the media file correctly. When this is true,
+    /// videoSize() will return valid size
+    /// @returns true if the decoder is in STATE_HEADER_READY, STATE_READY or STATE_FINISHED
     bool isHeaderReady() const;
+    /// Checks if there has been an unrecoverable error
+    /// @return true if the decoder is in STATE_ERROR
     bool hasError() const;
 
+    /// Marks the decoder for shutting down, doesn't block
     virtual void close() = 0;
 
+    /// @returns decoder current playing mode
     virtual PlayMode playMode() const = 0;
+    /// @param mode new play mode
     virtual void setPlayMode(PlayMode mode) = 0;
+
+    /// Schedules a seek. If the previous request is still waiting, new request will replace the old one
+    /// @param req new seek request
     virtual void seek(const SeekRequest & req) = 0;
     /// Special mode for low-latency seeking without buffering. This should be
     /// used only with certain UI elements, where the seeking target
     /// might change in real-time.
     /// When in real-time seeking mode, the video acts like it's paused
+    virtual bool realTimeSeeking() const = 0;
+    /// @sa realTimeSeeking
+    /// @param value true if real-time seeking is asked
     virtual void setRealTimeSeeking(bool value) = 0;
 
+    /// Shorthand for making a relative seek request
+    /// @param pos relative position, value should be between 0 and 1
+    void seekRelative(double pos) { seek(SeekRequest(pos, SEEK_RELATIVE, SEEK_ANY_DIRECTION)); }
+    /// Shorthand for making absolute seeking request
+    /// @param seconds timestamp in seconds
+    void seek(double seconds) { seek(SeekRequest(seconds, SEEK_BY_SECONDS, SEEK_ANY_DIRECTION)); }
+
+    /// Decoded video resolution. Will return invalid Nimble::Size if
+    /// isHeaderReady returns false, we are not decoding a video stream,
+    /// or if video decoding is disabled.
+    /// @returns video resolution
     virtual Nimble::Size videoSize() const = 0;
 
-    void seekRelative(double pos) { seek(SeekRequest(pos, SeekRelative, SeekAnyDirection)); }
-    void seek(double seconds) { seek(SeekRequest(seconds, SeekBySeconds, SeekAnyDirection)); }
-
+    /// @returns looping mode
+    virtual bool isLooping() const = 0;
+    /// @param doLoop new looping mode
     virtual void setLooping(bool doLoop) = 0;
 
-    /// Media duration in seconds
+    /// First this value is based on stream headers, but might be fine-tuned
+    /// after the stream reaches to the end / maybe starts a new loop cycle.
+    /// @returns media duration in seconds.
     virtual double duration() const = 0;
 
+    /// Based on the current playback and audio state, converts an absolute
+    /// wall-clock timestamp to video timestamp. This is most useful for
+    /// video/audio synchronization
+    /// @param ts real (wall-clock) timestamp
+    /// @returns video timestamp
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const = 0;
-    virtual Timestamp latestDecodedTimestamp() const = 0;
+    /// Decoder might have many frames in a buffer, this is the video timestamp
+    /// of the latest decoded frame in that buffer.
+    /// @returns video timestamp
+    virtual Timestamp latestDecodedVideoTimestamp() const = 0;
+
+    /// Gets a video frame from buffer that should be visible at the given timestamp.
+    /// If this frame can't be found, then the closest frame will be used.
+    /// @param ts video timestamp
+    /// @returns decoded video frame from a buffer, or null if the buffer is empty
     virtual VideoFrame * getFrame(const Timestamp & ts) const = 0;
+    /// Deletes older video frames from the buffer, this needs to be called after
+    /// the frame has been consumed, otherwise the buffer will fill quickly.
+    /// @param ts timestamp of the previous consumed frame
+    /// @param eof null or pointer to bool that will be set to true if the stream is at EOF
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) = 0;
 
+    /// YUV to RGB conversion matrix using the active video color profile.
+    /// This can be used directly in GLSL: vec4 rgb = m * vec4(y, u, v, 1.0);
+    /// @param YUV to RGB conversion matrix
+    virtual Nimble::Matrix4f yuvMatrix() const = 0;
+
+    /// Sets audio panning to specific location
+    /// @param location 2D location of the audio
+    virtual void panAudioTo(Nimble::Vector2f location) const = 0;
+
+    /// Creates a new decoder and loads it with given options
+    /// @param options options given to load()
+    /// @param backend use empty string for automatic backend
+    /// @returns new decoder
     static std::shared_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");
 
-    virtual Nimble::Matrix4f yuvMatrix() const = 0;
-
-    virtual void panAudioTo(Nimble::Vector2f location) const = 0;
-
-
   protected:
+    /// Constructs a new empty decoder, load() function will always be called after this
     AVDecoder();
+
+    /// Initializes the decoder, but doesn't start the decoder thread.
+    /// @param options opening options
     virtual void load(const Options & options) = 0;
 
   private:

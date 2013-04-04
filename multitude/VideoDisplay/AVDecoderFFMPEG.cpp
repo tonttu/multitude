@@ -962,14 +962,14 @@ namespace VideoDisplay
   {
     QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + m_options.source().toUtf8() + ":");
 
-    if(m_seekRequest.value <= std::numeric_limits<double>::epsilon()) {
+    if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
       if(ok) {
         ++m_seekGeneration;
         if(m_audioTransfer)
           m_audioTransfer->setSeekGeneration(m_seekGeneration);
         m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-        if(m_options.playMode() == Pause)
+        if(m_options.playMode() == PAUSE)
           m_pauseTimestamp = Radiant::TimeStamp::currentTime();
       }
       return ok;
@@ -978,9 +978,9 @@ namespace VideoDisplay
     if(!m_av.seekingSupported)
       return false;
 
-    bool seekByBytes = m_av.seekByBytes || m_seekRequest.type == SeekByBytes;
+    bool seekByBytes = m_av.seekByBytes || m_seekRequest.type() == SEEK_BY_BYTES;
 
-    if(m_seekRequest.type == SeekByBytes &&
+    if(m_seekRequest.type() == SEEK_BY_BYTES &&
        (m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK)) {
       Radiant::error("%s Seek failed, media doesn't support byte seeking",
                      errorMsg.data());
@@ -989,12 +989,12 @@ namespace VideoDisplay
 
     int64_t pos = 0;
     if(!seekByBytes) {
-      if(m_seekRequest.type == SeekBySeconds) {
-        pos = m_seekRequest.value * AV_TIME_BASE;
+      if(m_seekRequest.type() == SEEK_BY_SECONDS) {
+        pos = m_seekRequest.value() * AV_TIME_BASE;
       } else {
-        assert(m_seekRequest.type == SeekRelative);
+        assert(m_seekRequest.type() == SEEK_RELATIVE);
         if(m_av.formatContext->duration > 0) {
-          pos = m_seekRequest.value * m_av.formatContext->duration;
+          pos = m_seekRequest.value() * m_av.formatContext->duration;
         } else {
           if(m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK) {
             Radiant::error("%s Seek failed, couldn't get the content duration"
@@ -1010,9 +1010,9 @@ namespace VideoDisplay
     }
 
     if(seekByBytes) {
-      if(m_seekRequest.type == SeekByBytes) {
-        pos = m_seekRequest.value;
-      } else if(m_seekRequest.type == SeekBySeconds) {
+      if(m_seekRequest.type() == SEEK_BY_BYTES) {
+        pos = m_seekRequest.value();
+      } else if(m_seekRequest.type() == SEEK_BY_SECONDS) {
         int64_t size = avio_size(m_av.formatContext->pb);
         if(m_av.formatContext->duration <= 0 || size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media duration/size",
@@ -1020,23 +1020,23 @@ namespace VideoDisplay
           return false;
         }
         // This is just a guess, since there is no byte size and time 1:1 mapping
-        pos = size * m_seekRequest.value / m_av.duration;
+        pos = size * m_seekRequest.value() / m_av.duration;
 
       } else {
-        assert(m_seekRequest.type == SeekRelative);
+        assert(m_seekRequest.type() == SEEK_RELATIVE);
         int64_t size = avio_size(m_av.formatContext->pb);
         if(size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media size",
                          errorMsg.data());
           return false;
         }
-        pos = m_seekRequest.value * size;
+        pos = m_seekRequest.value() * size;
       }
     }
 
-    int64_t minTs = m_seekRequest.direction == SeekOnlyForward
+    int64_t minTs = m_seekRequest.direction() == SEEK_ONLY_FORWARD
         ? pos : std::numeric_limits<int64_t>::min();
-    int64_t maxTs = m_seekRequest.direction == SeekOnlyBackward
+    int64_t maxTs = m_seekRequest.direction() == SEEK_ONLY_BACKWARD
         ? pos : std::numeric_limits<int64_t>::max();
 
     int err = avformat_seek_file(m_av.formatContext, -1, minTs, pos, maxTs,
@@ -1054,7 +1054,7 @@ namespace VideoDisplay
     if(m_audioTransfer)
       m_audioTransfer->setSeekGeneration(m_seekGeneration);
     m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-    if(m_options.playMode() == Pause)
+    if(m_options.playMode() == PAUSE)
       m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     m_audioTrackHasEnded = false;
     m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
@@ -1096,40 +1096,37 @@ namespace VideoDisplay
                                      Nimble::Vector2i size)
   {
     // not exactly true for all formats, but it is true for all formats that we support
-    frame.planes = (fmtDescriptor.flags & PIX_FMT_PLANAR) ? fmtDescriptor.nb_components : 1;
+    frame.setPlanes((fmtDescriptor.flags & PIX_FMT_PLANAR) ? fmtDescriptor.nb_components : 1);
 
     if(fmtDescriptor.nb_components == 1)
-      frame.format = VideoFrame::GRAY;
+      frame.setFormat(VideoFrame::GRAY);
     else if(fmtDescriptor.nb_components == 2)
-      frame.format = VideoFrame::GRAY_ALPHA;
+      frame.setFormat(VideoFrame::GRAY_ALPHA);
     else if(fmtDescriptor.nb_components == 3 && (fmtDescriptor.flags & PIX_FMT_RGB))
-      frame.format = VideoFrame::RGB;
+      frame.setFormat(VideoFrame::RGB);
     else if(fmtDescriptor.nb_components == 3)
-      frame.format = VideoFrame::YUV;
+      frame.setFormat(VideoFrame::YUV);
     else if(fmtDescriptor.nb_components == 4 && (fmtDescriptor.flags & PIX_FMT_RGB))
-      frame.format = VideoFrame::RGBA;
+      frame.setFormat(VideoFrame::RGBA);
     else if(fmtDescriptor.nb_components == 4)
-      frame.format = VideoFrame::YUVA;
+      frame.setFormat(VideoFrame::YUVA);
     else {
-      frame.format = VideoFrame::UNKNOWN;
-      frame.planes = 0;
+      frame.setFormat(VideoFrame::UNKNOWN);
+      frame.setPlanes(0);
     }
 
-    for(int i = 0; i < frame.planes; ++i) {
-      frame.planeSize[i] = size;
-      if((frame.format == VideoFrame::YUV || frame.format == VideoFrame::YUVA) && (i == 1 || i == 2)) {
-        frame.planeSize[i] = Nimble::Vector2i(
+    for(int i = 0; i < frame.planes(); ++i) {
+      frame.setPlaneSize(i, size);
+      if((frame.format() == VideoFrame::YUV || frame.format() == VideoFrame::YUVA) && (i == 1 || i == 2)) {
+        frame.setPlaneSize(i, Nimble::Vector2i(
               -((-size.x) >> fmtDescriptor.log2_chroma_w),
-              -((-size.y) >> fmtDescriptor.log2_chroma_h));
+              -((-size.y) >> fmtDescriptor.log2_chroma_h)));
       }
-      frame.lineSize[i] = 0;
-      frame.data[i] = nullptr;
+      frame.setLineSize(i, 0);
+      frame.setData(i, nullptr);
     }
-    for(int i = frame.planes; i < 4; ++i) {
-      frame.planeSize[i] = Nimble::Vector2i(0, 0);
-      frame.lineSize[i] = 0;
-      frame.data[i] = nullptr;
-    }
+    for(int i = frame.planes(); i < 4; ++i)
+      frame.clear(i);
   }
 
   int64_t AVDecoderFFMPEG::D::guessCorrectPts(AVFrame * frame)
@@ -1188,7 +1185,7 @@ namespace VideoDisplay
     DecodedImageBuffer * buffer = nullptr;
     if(m_av.dr1 && m_av.frame->opaque) {
       buffer = static_cast<DecodedImageBuffer*>(m_av.frame->opaque);
-      buffer->refcount.ref();
+      buffer->ref();
     }
 
     if(m_videoFilter.graph) {
@@ -1233,22 +1230,22 @@ namespace VideoDisplay
               return false;
 
             frame->bufferRef = output;
-            frame->imageBuffer = nullptr;
+            frame->setImageBuffer(nullptr);
 
             auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(output->format));
             setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
-            for (int i = 0; i < frame->planes; ++i) {
+            for (int i = 0; i < frame->planes(); ++i) {
               if (output->linesize[i] < 0) {
                 /// @todo if we have a negative linesize, we should just make a copy of the data,
                 ///       since OpenGL doesn't support negative linesizes (GL_UNPACK_ROW_LENGTH
                 ///       needs to be positive). For now some formats and filters (like vflip)
                 ///       won't work.
               } else {
-                frame->lineSize[i] = output->buf->linesize[i];
-                frame->data[i] = output->buf->data[i];
+                frame->setLineSize(i, output->buf->linesize[i]);
+                frame->setData(i, output->buf->data[i]);
               }
-              frame->lineSize[i] = output->linesize[i];
-              frame->data[i] = output->data[i];
+              frame->setLineSize(i, output->linesize[i]);
+              frame->setData(i, output->data[i]);
             }
 
             /// output->pts should be AV_NOPTS_VALUE if not defined,
@@ -1258,8 +1255,8 @@ namespace VideoDisplay
               dpts = m_av.videoTsToSecs * output->pts;
             }
 
-            frame->imageSize = Nimble::Vector2i(output->video->w, output->video->h);
-            frame->timestamp = Timestamp(dpts + m_loopOffset, m_seekGeneration);
+            frame->setImageSize(Nimble::Vector2i(output->video->w, output->video->h));
+            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
 
             m_decodedVideoFrames.put();
           }
@@ -1271,15 +1268,15 @@ namespace VideoDisplay
         return false;
 
       frame->bufferRef = nullptr;
-      frame->imageBuffer = buffer;
+      frame->setImageBuffer(buffer);
 
       auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(m_av.frame->format));
       int bytes = 0;
       setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
-      for(int i = 0; i < frame->planes; ++i) {
-        frame->lineSize[i] = m_av.frame->linesize[i];
-        frame->data[i] = m_av.frame->data[i];
-        bytes += frame->lineSize[i] * frame->planeSize[i].y;
+      for(int i = 0; i < frame->planes(); ++i) {
+        frame->setLineSize(i, m_av.frame->linesize[i]);
+        frame->setData(i, m_av.frame->data[i]);
+        bytes += frame->bytes(i);
       }
 
       if(!buffer) {
@@ -1287,25 +1284,25 @@ namespace VideoDisplay
         if(!buffer) {
           Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
                          m_options.source().toUtf8().data());
-          for(int i = 0; i < frame->planes; ++i)
-            frame->data[i] = nullptr;
-          frame->planes = 0;
+          for(int i = 0; i < frame->planes(); ++i)
+            frame->setData(i, nullptr);
+          frame->setPlanes(0);
         } else {
-          buffer->refcount = 1;
-          frame->imageBuffer = buffer;
-          buffer->data.resize(bytes);
-          for(int offset = 0, i = 0; i < frame->planes; ++i) {
-            uint8_t * dst = buffer->data.data() + offset;
-            bytes = frame->lineSize[i] * frame->planeSize[i].y;
+          buffer->refcount() = 1;
+          frame->setImageBuffer(buffer);
+          buffer->data().resize(bytes);
+          for(int offset = 0, i = 0; i < frame->planes(); ++i) {
+            uint8_t * dst = buffer->data().data() + offset;
+            bytes = frame->bytes(i);
             offset += bytes;
             memcpy(dst, m_av.frame->data[i], bytes);
-            frame->data[i] = dst;
+            frame->setData(i, dst);
           }
         }
       }
 
-      frame->imageSize = Nimble::Vector2i(m_av.frame->width, m_av.frame->height);
-      frame->timestamp = Timestamp(dpts + m_loopOffset, m_seekGeneration);
+      frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
+      frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
       m_decodedVideoFrames.put();
     }
 
@@ -1493,10 +1490,9 @@ namespace VideoDisplay
       return -1;
     }
 
-    buffer->refcount = 0;
-    buffer->refcount.ref();
+    buffer->refcount() = 1;
     frame->opaque = buffer;
-    buffer->data.resize(totalsize);
+    buffer->data().resize(totalsize);
 
     int offset = 0;
     int plane = 0;
@@ -1506,7 +1502,7 @@ namespace VideoDisplay
 
       frame->linesize[plane] = picture.linesize[plane];
 
-      frame->base[plane] = buffer->data.data() + offset;
+      frame->base[plane] = buffer->data().data() + offset;
       offset += size[plane] + 16;
 
       // no edge if EDGE EMU or not planar YUV
@@ -1568,7 +1564,7 @@ namespace VideoDisplay
     assert(frame->type == FF_BUFFER_TYPE_USER);
 
     DecodedImageBuffer & buffer = *static_cast<DecodedImageBuffer*>(frame->opaque);
-    if(!buffer.refcount.deref()) {
+    if(!buffer.deref()) {
       AVDecoderFFMPEG::D & d = *static_cast<AVDecoderFFMPEG::D *>(context->opaque);
       d.m_imageBuffers.put(buffer);
     }
@@ -1580,7 +1576,7 @@ namespace VideoDisplay
   {
     auto * param = static_cast<std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *> *>(filterBuffer->priv);
 
-    if(!param->second->refcount.deref())
+    if(!param->second->deref())
       param->first->m_imageBuffers.put(*param->second);
 
     av_free(filterBuffer);
@@ -1589,14 +1585,14 @@ namespace VideoDisplay
 
   void AVDecoderFFMPEG::D::checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts)
   {
-    if((m_seekRequest.type != SeekNone)) {
+    if((m_seekRequest.type() != SEEK_NONE)) {
       if(seek()) {
         m_loopOffset = 0;
         nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
         nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
         videoDpts = std::numeric_limits<double>::quiet_NaN();
       }
-      m_seekRequest.type = SeekNone;
+      m_seekRequest.setType(SEEK_NONE);
     }
   }
 
@@ -1634,9 +1630,9 @@ namespace VideoDisplay
     m_d->m_options.setPlayMode(mode);
     if(m_d->m_audioTransfer)
       m_d->m_audioTransfer->setPlayMode(mode);
-    if(mode == Pause)
+    if(mode == PAUSE)
       m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
-    if(mode == Play)
+    if(mode == PLAY)
       m_d->m_radiantTimestampToPts -= m_d->m_pauseTimestamp.sinceSecondsD();
   }
 
@@ -1645,12 +1641,12 @@ namespace VideoDisplay
     if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
       VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
       if(frame)
-        return Timestamp(frame->timestamp.pts + 0.0001, m_d->m_seekGeneration);
+        return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
     }
 
     if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded) {
       Timestamp t = m_d->m_audioTransfer->toPts(ts);
-      if(t.seekGeneration < m_d->m_seekGeneration)
+      if(t.seekGeneration() < m_d->m_seekGeneration)
         return Timestamp();
       return t;
     }
@@ -1658,17 +1654,17 @@ namespace VideoDisplay
     if(Nimble::Math::isNAN(m_d->m_radiantTimestampToPts))
       return Timestamp();
 
-    if(m_d->m_options.playMode() == Pause)
+    if(m_d->m_options.playMode() == PAUSE)
       return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
 
     return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
   }
 
-  Timestamp AVDecoderFFMPEG::latestDecodedTimestamp() const
+  Timestamp AVDecoderFFMPEG::latestDecodedVideoTimestamp() const
   {
     VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
     if (frame) {
-      return frame->timestamp;
+      return frame->timestamp();
     } else return Timestamp();
   }
 
@@ -1679,10 +1675,10 @@ namespace VideoDisplay
       VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(i);
       if(!frame) break;
 
-      if(frame->timestamp.seekGeneration < ts.seekGeneration)
+      if(frame->timestamp().seekGeneration() < ts.seekGeneration())
         continue;
 
-      if(frame->timestamp.pts > ts.pts) {
+      if(frame->timestamp().pts() > ts.pts()) {
         if(ret) return ret;
         return frame;
       }
@@ -1699,8 +1695,8 @@ namespace VideoDisplay
       VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(frameIndex);
       if(!frame) break;
 
-      if(frame->timestamp.seekGeneration >= ts.seekGeneration &&
-         frame->timestamp.pts > ts.pts)
+      if(frame->timestamp().seekGeneration() >= ts.seekGeneration() &&
+         frame->timestamp().pts() > ts.pts())
         break;
     }
 
@@ -1711,8 +1707,8 @@ namespace VideoDisplay
       VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem();
       assert(frame);
 
-      DecodedImageBuffer * buffer = frame->imageBuffer;
-      if(buffer && !buffer->refcount.deref())
+      DecodedImageBuffer * buffer = frame->imageBuffer();
+      if(buffer && !buffer->deref())
         m_d->m_imageBuffers.put(*buffer);
 
       if(frame->bufferRef) {
@@ -1807,6 +1803,11 @@ namespace VideoDisplay
     return m_d->m_av.videoSize;
   }
 
+  bool AVDecoderFFMPEG::isLooping() const
+  {
+    return m_d->m_options.isLooping();
+  }
+
   void AVDecoderFFMPEG::setLooping(bool doLoop)
   {
     m_d->m_options.setLooping(doLoop);
@@ -1820,6 +1821,11 @@ namespace VideoDisplay
   void AVDecoderFFMPEG::seek(const SeekRequest & req)
   {
     m_d->m_seekRequest = req;
+  }
+
+  bool AVDecoderFFMPEG::realTimeSeeking() const
+  {
+    return m_d->m_realTimeSeeking;
   }
 
   void AVDecoderFFMPEG::setRealTimeSeeking(bool value)
@@ -1876,7 +1882,7 @@ namespace VideoDisplay
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
         VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
-        if(frame && frame->timestamp.seekGeneration == m_d->m_seekGeneration) {
+        if(frame && frame->timestamp().seekGeneration() == m_d->m_seekGeneration) {
           Radiant::Sleep::sleepMs(1);
           continue;
         }
@@ -2001,7 +2007,7 @@ namespace VideoDisplay
           m_d->m_audioTrackHasEnded = ended;
           if (ended) {
             // Radiant::info("%s Audio/Video decoding delay: %lf, assuming that the audio track has ended", errorMsg.data(), delay);
-            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->toPts(Radiant::TimeStamp(0)).pts;
+            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->toPts(Radiant::TimeStamp(0)).pts();
           } else {
             // Radiant::info("%s Got audio packet, restoring audio sync. Delay: %lf", errorMsg.data(), delay);
             // This is a file specific feature, there seems to be no other way

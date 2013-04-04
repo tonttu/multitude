@@ -29,16 +29,18 @@ namespace VideoDisplay
     virtual void setPlayMode(PlayMode mode) OVERRIDE;
 
     virtual void seek(const SeekRequest & req) OVERRIDE;
+    virtual bool realTimeSeeking() const OVERRIDE;
     virtual void setRealTimeSeeking(bool value) OVERRIDE;
 
     virtual Nimble::Size videoSize() const OVERRIDE;
 
+    virtual bool isLooping() const OVERRIDE;
     virtual void setLooping(bool doLoop) OVERRIDE;
 
     virtual double duration() const OVERRIDE;
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
-    virtual Timestamp latestDecodedTimestamp() const OVERRIDE;
+    virtual Timestamp latestDecodedVideoTimestamp() const OVERRIDE;
     virtual VideoFrame * getFrame(const Timestamp & ts) const OVERRIDE;
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 

@@ -71,7 +71,7 @@ namespace VideoDisplay
       : m_avff(avff)
       , m_channels(channels)
       , m_seekGeneration(0)
-      , m_playMode(AVDecoder::Pause)
+      , m_playMode(AVDecoder::PAUSE)
       , m_seeking(false)
       , m_decodedBuffers(s_decodedBufferCount)
       , m_buffersReader(0)
@@ -117,9 +117,9 @@ namespace VideoDisplay
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
   {
-    while((m_playMode == AVDecoder::Play || m_seeking) && m_readyBuffers > 0) {
+    while((m_playMode == AVDecoder::PLAY || m_seeking) && m_readyBuffers > 0) {
       DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
-      if(buffer->timestamp().seekGeneration < m_seekGeneration) {
+      if(buffer->timestamp().seekGeneration() < m_seekGeneration) {
         m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
         m_readyBuffers.deref();
         ++m_buffersReader;
@@ -192,15 +192,15 @@ namespace VideoDisplay
 
         // Presentation time of the decoded audio buffer, at the time
         // when currently processed audio will be written to audio hardware
-        const double pts = ts.pts + offset / 44100.0;
+        const double pts = ts.pts() + offset / 44100.0;
 
         m_d->m_pts = ts;
-        m_d->m_pts.pts = pts + samples / 44100.0;
+        m_d->m_pts.setPts(pts + samples / 44100.0);
 
         if(first) {
           // We can convert Resonant times to pts with this offset
           m_d->m_resonantToPts = pts - time.outputTime.secondsD();
-          m_d->m_usedSeekGeneration = ts.seekGeneration;
+          m_d->m_usedSeekGeneration = ts.seekGeneration();
 
           first = false;
         }
