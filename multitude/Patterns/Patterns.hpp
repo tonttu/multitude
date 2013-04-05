@@ -11,10 +11,9 @@
 #ifndef PATTERNS_PATTERNS_HPP
 #define PATTERNS_PATTERNS_HPP
 
-/// Patterns template library is a collection of design patterns.
-namespace Patterns {
-
+/// Patterns is a library of design patterns.
+namespace Patterns
+{
 }
 
 #endif
-
