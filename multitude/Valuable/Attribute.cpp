@@ -161,6 +161,11 @@ namespace Valuable
     eventProcess(id, bd);
   }
 
+  void Attribute::processMessage(const QByteArray & id, Radiant::BinaryData & data)
+  {
+    eventProcess(id, data);
+  }
+
   float Attribute::asFloat(bool * ok) const
   {
     if(ok) *ok = false;
