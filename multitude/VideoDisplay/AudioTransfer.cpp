@@ -10,7 +10,7 @@
 
 #include "AudioTransfer.hpp"
 
-#include "AVDecoderFFMPEG.hpp"
+#include "LibavDecoder.hpp"
 
 #include <Resonant/AudioLoop.hpp>
 
@@ -50,7 +50,7 @@ namespace VideoDisplay
     }
   }
 
-  /// @todo should do this without copying any data! (using ffmpeg buffer refs)
+  /// @todo should do this without copying any data! (using libav buffer refs)
   void DecodedAudioBuffer::fillPlanar(Timestamp timestamp, int channels,
                                       int samples, const float ** src)
   {
@@ -67,7 +67,7 @@ namespace VideoDisplay
   class AudioTransfer::D
   {
   public:
-    D(AVDecoderFFMPEG * avff, int channels)
+    D(LibavDecoder * avff, int channels)
       : m_avff(avff)
       , m_channels(channels)
       , m_seekGeneration(0)
@@ -83,7 +83,7 @@ namespace VideoDisplay
       /*, samplesProcessed(0)*/
     {}
 
-    AVDecoderFFMPEG * m_avff;
+    LibavDecoder * m_avff;
     const int m_channels;
     int m_seekGeneration;
     AVDecoder::PlayMode m_playMode;
@@ -140,7 +140,7 @@ namespace VideoDisplay
     ++m_buffersReader;
   }
 
-  AudioTransfer::AudioTransfer(AVDecoderFFMPEG * avff, int channels)
+  AudioTransfer::AudioTransfer(LibavDecoder * avff, int channels)
     : m_d(new D(avff, channels))
   {
     assert(channels > 0);

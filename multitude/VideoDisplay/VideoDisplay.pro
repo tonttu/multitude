@@ -6,8 +6,8 @@ HEADERS += VideoDisplay.hpp
 
 SOURCES += SubTitles.cpp
 
-HEADERS += AudioTransfer.hpp AVDecoder.hpp AVDecoderFFMPEG.hpp MemoryPool.hpp
-SOURCES += AudioTransfer.cpp AVDecoder.cpp AVDecoderFFMPEG.cpp
+HEADERS += AudioTransfer.hpp AVDecoder.hpp LibavDecoder.hpp MemoryPool.hpp
+SOURCES += AudioTransfer.cpp AVDecoder.cpp LibavDecoder.cpp
 
 LIBS += $$MULTI_FFMPEG_LIBS
 

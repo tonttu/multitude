@@ -14,6 +14,8 @@
 #include <array>
 #include <cassert>
 
+/// @cond
+
 namespace VideoDisplay
 {
   template <typename T, std::size_t N>
@@ -59,5 +61,7 @@ namespace VideoDisplay
     assert(false);
   }
 }
+
+/// @endcond
 
 #endif // VIDEODISPLAY_MEMORYPOOL_H

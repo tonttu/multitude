@@ -162,7 +162,6 @@ win32 {
 
     WINPORT_INCLUDE = $$PWD\\Win64x\\include
     INCLUDEPATH += $$PWD\\Win64x\\include
-    INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
 
     exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
