@@ -15,7 +15,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <cstdint>
 
@@ -43,10 +43,8 @@ namespace Luminous
   class StateGL
   {
   public:
-    //This would probably be more efficient if using plain array, with some
-    //safe-mechanisms, since keys are usually something like: 0,1,2,3,...
-    struct IdHash { std::size_t operator()(const GLuint& i) const { return i; } };
-    typedef std::unordered_map<GLuint, BufferMapping, IdHash> BufferMaps;
+    /// Cache to keep track of mapped buffers
+    typedef std::map<GLuint, BufferMapping> BufferMaps;
 
     inline StateGL(unsigned int threadIndex, RenderDriverGL & driver);
 
