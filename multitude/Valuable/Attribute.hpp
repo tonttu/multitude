@@ -108,7 +108,6 @@ namespace Valuable
       @see Node
   */
 
-  /// @todo eventProcess should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
   class VALUABLE_API Attribute : public Serializable
   {
