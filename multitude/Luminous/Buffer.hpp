@@ -94,6 +94,8 @@ namespace Luminous
 
     LUMINOUS_API Buffer(Buffer & b);
     LUMINOUS_API Buffer & operator=(Buffer & b);
+    LUMINOUS_API Buffer(const Buffer & b);
+    LUMINOUS_API Buffer & operator=(const Buffer & b);
 
     LUMINOUS_API Buffer(Buffer && b);
     LUMINOUS_API Buffer & operator=(Buffer && b);

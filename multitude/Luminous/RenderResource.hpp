@@ -101,8 +101,13 @@ namespace Luminous
     inline unsigned int expiration() const { return m_expiration; }
 
   protected:
-    RenderResource(RenderResource & rr);
-    RenderResource & operator=(RenderResource & rr);
+    /// Copy constructor
+    /// @param rr resource to copy
+    RenderResource(const RenderResource & rr);
+    /// Assignment operator
+    /// @param rr resource to copy
+    /// @return reference to this
+    RenderResource & operator=(const RenderResource & rr);
 
   private:
     int m_generation;

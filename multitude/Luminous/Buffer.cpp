@@ -41,13 +41,13 @@ namespace Luminous
     delete m_d;
   }
 
-  Buffer::Buffer(Buffer & b)
+  Buffer::Buffer(const Buffer & b)
     : RenderResource(b)
     , m_d(new Buffer::D(*b.m_d))
   {
   }
 
-  Buffer & Buffer::operator=(Buffer & b)
+  Buffer & Buffer::operator=(const Buffer & b)
   {
     if(this != &b)
     {
