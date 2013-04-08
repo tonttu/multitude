@@ -117,7 +117,8 @@ namespace Luminous
     void clear();
 
     /// Returns true if the image does not contain any data.
-    bool empty() const { return (m_data == 0); }
+    /// @return true if the data is nullptr; otherwise false
+    bool isEmpty() const { return (m_data == 0); }
 
     /// Flip the image upside down
     void flipVertical();
