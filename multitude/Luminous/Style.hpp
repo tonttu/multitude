@@ -36,14 +36,21 @@ namespace Luminous
   class Stroke
   {
   public:
+    /// Construct default stroke (black, zero width)
     Stroke() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_width(0.f) {}
+    /// Move constructor
+    /// @param s stroke to move
     Stroke(Stroke && s) : m_color(s.m_color), m_program(s.m_program), m_uniforms(std::move(s.m_uniforms)), m_width(s.m_width) {}
+    /// Copy constructor
+    /// @param s stroke to copy
     Stroke(const Stroke & s) : m_color(s.m_color), m_program(s.m_program), m_width(s.m_width)
     {
       if (s.m_uniforms)
         m_uniforms.reset(new std::map<QByteArray, ShaderUniform>(*s.m_uniforms));
     }
 
+    /// Move assignment operator
+    /// @param s stroke to move
     Stroke & operator=(Stroke && s)
     {
       m_color = s.m_color;
@@ -53,6 +60,8 @@ namespace Luminous
       return *this;
     }
 
+    /// Assignment operator
+    /// @param s stroke to copy
     Stroke & operator=(const Stroke & s)
     {
       m_color = s.m_color;
@@ -64,28 +73,33 @@ namespace Luminous
     }
 
     /// Shader program to be used for stroke
+    /// @return program used for the stroke
     const Luminous::Program * program() const { return m_program; }
 
     /// Sets the shader program
     /// @param program Program to use
     void setProgram(Luminous::Program & program) { m_program = &program; }
 
-    /// Sets the stroke program to defautl
+    /// Sets the stroke program to default. This functions sets the stroke to
+    /// use the default stroke shader for Cornerstone.
     void setDefaultProgram() { m_program = nullptr; }
 
     /// Sets the width of the stroke
+    /// @param width stroke width
     void setWidth(float width) { m_width = width; }
 
     /// Returns the width of the stroke
+    /// @return stroke width
     float width() const { return m_width; }
 
     /// Sets the color of the stroke
+    /// @param color stroke color
     void setColor(const Radiant::Color & color) { m_color = color; }
     /// Returns the color of the stroke
+    /// @return stroke color
     const Radiant::Color & color() const { return m_color; }
 
-    // Shader uniforms
-    /// Add shader uniform
+    /// Set the value of a shader uniform for the stroke program
     /// @param name Name for the uniform
     /// @param value Value of the uniform
     template <typename T> void setShaderUniform(const QByteArray & name, const T & value) {
@@ -94,13 +108,14 @@ namespace Luminous
       (*m_uniforms)[name] = ShaderUniform(value);
     }
 
-    /// Remove shader uniform
+    /// Remove a shader uniform
     /// @param name Name of the uniform to be removed
     void removeShaderUniform(const QByteArray & name) { if (m_uniforms) m_uniforms->erase(name); }
 
     /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
+    /// Clear the stroke to default state (black, zero width)
     void clear()
     {
       m_color.make(0.f, 0.f, 0.f, 0.f);
@@ -121,9 +136,14 @@ namespace Luminous
   class Fill
   {
   public:
+    /// Create a default fill (black)
     Fill() : m_color(0.f, 0.f, 0.f, 0.f), m_program(nullptr), m_translucentTextures(false) {}
+    /// Move constructor
+    /// @param f fill to move
     Fill(Fill && f) : m_color(f.m_color), m_program(f.m_program), m_textures(std::move(f.m_textures)),
       m_uniforms(std::move(f.m_uniforms)), m_translucentTextures(f.m_translucentTextures) {}
+    /// Copy constructor
+    /// @param f fill to copy
     Fill(const Fill & f) : m_color(f.m_color), m_program(f.m_program), m_translucentTextures(f.m_translucentTextures)
     {
       if (f.m_uniforms)
@@ -132,6 +152,9 @@ namespace Luminous
         m_textures.reset(new std::map<QByteArray, const Texture *>(*f.m_textures));
     }
 
+    /// Move assignment operator
+    /// @param f fill to move
+    /// @return reference to this
     Fill & operator=(Fill && f)
     {
       m_color = f.m_color;
@@ -142,6 +165,9 @@ namespace Luminous
       return *this;
     }
 
+    /// Assignment operator
+    /// @param f fill to copy
+    /// @return reference to this
     Fill & operator=(const Fill & f)
     {
       m_color = f.m_color;
@@ -154,24 +180,28 @@ namespace Luminous
       return *this;
     }
 
-    /// Returns the color of the fill
+    /// Get the fill color
+    /// @return fill color
     const Radiant::Color & color() const { return m_color; }
     /// Sets the color of the fill
+    /// @param c fill color
     void setColor(const Radiant::Color & c) { m_color = c; }
 
     /// Shader program to be used for fill
+    /// @return fill shader program
     const Luminous::Program * program() const { return m_program; }
 
     /// Sets the shader program
     /// @param program Program to use
     void setProgram(const Luminous::Program & program) { m_program = &program; }
 
-    /// Sets the fill program to default
+    /// Sets the fill program to default. This function sets the fill shader to
+    /// the default Cornerstone shader.
     void setDefaultProgram() { m_program = nullptr; }
 
     /// Returns the texture tied to given name
     /// @param name Name to search from textures
-    /// @return Pointer to texture. nullptr if not found.
+    /// @return Pointer to texture or nullptr if not found.
     inline const Luminous::Texture * texture(const QByteArray & name);
 
     /// Sets default fill texture.
@@ -187,12 +217,16 @@ namespace Luminous
     /// Returns the mapping from names to fill textures
     const std::map<QByteArray, const Texture *> * textures() const { return m_textures.get(); }
 
-    /// Does the object contain translucent textures
+    /// Does the style contain translucent textures. Translucent textures cause
+    /// that any drawing operations using the style will not be re-ordered for
+    /// performance.
+    /// @return true if the style has translucent textures; otherwise false
     bool hasTranslucentTextures() const { return m_translucentTextures; }
 
+    /// Does the style contain any textures.
+    /// @return true if the style has textures; otherwise false
     bool hasTextures() const { return m_textures && !m_textures->empty(); }
 
-    // Shader uniforms
     /// Add shader uniform
     /// @param name Name for the uniform
     /// @param value Value of the uniform
@@ -209,6 +243,7 @@ namespace Luminous
     /// Returns the mapping from names to shader uniforms
     const std::map<QByteArray, ShaderUniform> * uniforms() const { return m_uniforms.get(); }
 
+    /// Clear the style to default values (black)
     void clear()
     {
       m_color.make(0.f, 0.f, 0.f, 0.f);

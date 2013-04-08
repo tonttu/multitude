@@ -16,46 +16,16 @@
 
 namespace Luminous {
 
-  /** Optimized 2D sprite renderer.
-
-      This class can be used to draw a great number of sprites on the screen. SpriteRenderer relies on
-      geometry-, vertex-, and pixels shaders to to increase its performance. Consequently it may not run on outdated or
-      very low-end hardware.
-
-      The maximum number of sprites depends on the hardware, and the sprite update logic. Typically
-      the limiting factor is the CPU-based calculation of the sprite parameters. Usually
-      the maximum number of particles would be between 100 000 and 1000 0000.
-
-      The typical use pattern of SpriteRenderer is as follows:
-
-      @code
-
-      class MyClass
-      {
-
-      void update()
-      {
-        m_sprites.resize(100);
-        Luminous::SpriteRenderer::Sprite * sprite = m_sprites.sprites();
-
-        for(int i = 0; i < 100; i++)
-          updateSprite(sprite); // Fill the sprite with proper values
-          sprite++;
-        }
-      }
-
-      void render(Luminous::RenderContext & r)
-      {
-        m_sprites.uploadSpritesToGPU(r);
-        m_sprites.renderSprites(r);
-      }
-
-      private:
-        Luminous::SpriteRenderer m_sprites;
-      };
-
-      @endcode
-  */
+  /// This class implements a simple particle system.
+  ///
+  /// This class can be used to draw a great number of sprites on the screen.
+  /// It relies on geometry, vertex, and pixels shaders to to increase its
+  /// performance. Consequently it may not run on outdated or very low-end
+  /// hardware.
+  ///
+  /// The maximum number of particles depends on the hardware, and the particle
+  /// update logic. Typically the limiting factor is the CPU-based calculation
+  /// of the particle parameters.
   class LUMINOUS_API SpriteRenderer : public Patterns::NotCopyable
   {
   public:
@@ -71,7 +41,7 @@ namespace Luminous {
         , size(10.f)
       {}
 
-      // Location of the sprite
+      /// Location of the sprite
       Nimble::Vector2f location;
       /// The velocity of the sprite
       /** The velocity information is used to implement motion blur/stretching. */
@@ -84,7 +54,9 @@ namespace Luminous {
       float size;
     };
 
+    /// Constructor
     SpriteRenderer();
+    /// Destructor
     ~SpriteRenderer();
 
     /// Resize the sprite buffer
@@ -105,8 +77,6 @@ namespace Luminous {
     /// Sets the texture that is used in the rendering process
     void setImage(const Luminous::Image & image);
 
-    // const Luminous::Image & image() const;
-
     /// Create a blurry texture
     /// Creates a basic square texture with radial gradient pattern
     /// @param dim texture dimensions
@@ -116,20 +86,26 @@ namespace Luminous {
     void createFuzzyTexture(int dim, float centerDotSize = 0.25f,
                             float haloweight = 0.75f, float halodescent = 1.0f);
 
-    /// Selects the blending function used for the sprites
+    /// Set the blend mode used for rendering the particles.
+    /// @param mode blend mode
     void setBlendMode(const Luminous::BlendMode & mode);
 
+    /// Blend mode used during rendering.
+    /// @return blend mode used
     const BlendMode & blendMode() const;
 
-    /// Sets the velocity scaling factor
-    /** @param velscale The scaling factor to be used for stretching sprites along the
-        velocity vector during rendering. Value zero inhibits the velocity stretching. Default value
-        is zero. */
+    /// Set the velocity scaling factor.
+    /// @param velscale velocity scaling
+    /// @sa velocityScale
     void setVelocityScale(float velscale);
 
+    /// Velocity scaling factor is used to stretch the particles along the
+    /// velocity vector during rendering. Set to zero to disable stretching.
+    /// Default value is zero.
+    /// @return velocity scaling factor
     float velocityScale() const;
-  private:
 
+  private:
     class D;
     D * m_d;
   };

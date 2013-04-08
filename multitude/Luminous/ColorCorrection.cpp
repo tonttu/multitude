@@ -297,7 +297,7 @@ namespace Luminous
     eventAddOut("changed");
 
     setIdentity();
-    eventSend("changed");
+
     m_d->m_gamma.addListener(std::bind(&ColorCorrection::changed, this));
     m_d->m_contrast.addListener(std::bind(&ColorCorrection::changed, this));
     m_d->m_brightness.addListener(std::bind(&ColorCorrection::changed, this));

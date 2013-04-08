@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef WINDOW_HPP
@@ -23,8 +23,9 @@ namespace Luminous
   class LUMINOUS_API Window
   {
   public:
-    /// Creates the base definitions for windows
+    /// Construct an empty window with zero size
     Window();
+    /// Destructor
     virtual ~Window();
 
     /// Queries if the window is closed.
@@ -33,6 +34,7 @@ namespace Luminous
     bool isFinished() const;
 
     /// Sets the full-screen mode of the window
+    /// @param fullscreen true to enable fullscreen mode; false to disable it
     void setFullscreen(bool fullscreen);
 
     /// Update window system (mouse & keyboard) events
@@ -44,34 +46,52 @@ namespace Luminous
     virtual void makeCurrent() = 0;
 
     /// Returns the width of the window
+    /// @return width of the window in pixels
     int width() const;
     /// Returns the height of the window
+    /// @return height of the window in pixels
     int height() const;
 
+    /// Set the width of the window
+    /// @param w window width in pixels
     void setWidth(int w) { m_width = w; }
+    /// Set the height of the window
+    /// @param h window height in pixels
     void setHeight(int h) { m_height = h; }
 
-    /// Sets the object for sending window events
+    /// Set the event handler for window events. The event handler must remain
+    /// valid for the lifetime of the window.
+    /// @param hook event handler
     virtual void setEventHook(WindowEventHook * hook);
-    /// A pointer to the window event callback listener
+    /// Get the event handler for the window
+    /// @return pointer to the event handler
     WindowEventHook * eventHook() const;
 
+    /// Initialize the window. Default implementation does nothing.
     virtual void init() {}
 
-    /// Virtual function for cleaning up window resources
+    /// Cleanup any window resources. Default implementation does nothing.
     virtual void deinit() {}
 
+    /// Minimize the window
     virtual void minimize() = 0;
+    /// Maximize the window
     virtual void maximize() = 0;
+    /// Restore the window from minimized state
     virtual void restore() = 0;
 
+    /// Get the window position
+    /// @return window position
     Nimble::Vector2i position() const { return m_pos; }
+    /// Set the window position
+    /// @param pos window position
     void setPosition(Nimble::Vector2i pos) { m_pos = pos; }
 
+    /// Control mouse cursor visibility
+    /// @param visible true to show cursor; false to hide it
     virtual void showCursor(bool visible) = 0;
 
   private:
-    ///@cond
     bool m_finished;
     bool m_fullscreen;
     int m_width;
@@ -79,7 +99,6 @@ namespace Luminous
     Nimble::Vector2i m_pos;
 
     WindowEventHook * m_eventHook;
-    ///@endcond
   };
 
 }

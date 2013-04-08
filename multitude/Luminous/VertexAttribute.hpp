@@ -21,6 +21,7 @@ namespace Luminous
   /// @sa VertexDescription
   struct VertexAttribute
   {
+    /// Data type for a component
     enum Type
     {
       Byte          = GL_BYTE,
@@ -33,6 +34,7 @@ namespace Luminous
       UnsignedInt   = GL_UNSIGNED_INT,
     };
 
+    /// Construct an empty vertex attribute
     VertexAttribute()
       : type(VertexAttribute::Float)
       , count(0)
@@ -42,11 +44,17 @@ namespace Luminous
     {
     }
 
+    /// Vertex attribute name
     QByteArray name;
+    /// Data-type
     Type type;
+    /// Data count
     uint count;
+    /// Offset in bytes from the beginning of VertexArray
     uint offset;
+    /// Size of the vertex attribute in bytes
     uint size;
+    /// Is the attribute normalized
     bool normalized;
   };
 }

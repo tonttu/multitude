@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_RENDER_TARGET_HPP
@@ -176,17 +176,17 @@ namespace Luminous
     /// @return Number of samples
     unsigned samples() const;
     /// Sets number of samples for multisampling. Zero disables multisampling
+    /// @param samples Number of samples to take
     /// @sa samples
-    /// @param Number of samples to take
     void setSamples(unsigned int samples);
 
-    /// Attachs Texture to this render target
+    /// Attach a Texture to this render target
     /// @param attachment Attachment point (f. ex. GL_COLOR_ATTACHMENT0)
     /// @param texture Texture for attachment
     void attach(GLenum attachment, Luminous::Texture & texture);
-    /// Attachs RenderBuffer to this render target
+    /// Attach a RenderBuffer to this render target
     /// @param attachment Attachment point (f. ex. GL_COLOR_ATTACHMENT0)
-    /// @param texture Texture for attac
+    /// @param buffer RenderBuffer to attach
     void attach(GLenum attachment, Luminous::RenderBuffer & buffer);
 
     /// Creates Texture and attaches it to given slot
@@ -196,7 +196,7 @@ namespace Luminous
     Luminous::Texture & createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format);
     /// Creates RenderBuffer and attaches it to given slot
     /// @param attachment Slot to attach newly created render buffer
-    /// @param format Format of the render buffer to be created
+    /// @param storageFormat Format of the render buffer to be created
     /// @return Reference to the created render buffer
     Luminous::RenderBuffer & createRenderBufferAttachment(GLenum attachment, GLenum storageFormat);
 
@@ -225,8 +225,8 @@ namespace Luminous
     /// @return How to bind this target.
     FrameBufferBind targetBind() const;
     /// Sets the binding type for this target.
+    /// @param bind How to bind this target.
     /// @sa bind
-    /// @param How to bind this target.
     void setTargetBind(FrameBufferBind bind);
   };
 

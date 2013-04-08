@@ -89,6 +89,9 @@ namespace Luminous
     size_t stackSize() const { return m_stack.size(); }
 
   protected:
+
+    /// This function gets called just before the transformation matrix is
+    /// changed.
     virtual void beforeTransformChange();
 
     /// The transformation stack

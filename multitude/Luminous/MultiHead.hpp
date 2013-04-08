@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 
@@ -42,13 +42,14 @@ namespace Luminous {
   class ShaderDeprecated;
   class Texture1D;
 
-  /// Class for managing information on multiple OpenGL vindows/viewports.
-  /** This class stores information about the layout of multiple
-      OpenGL windows and viewports. This information is used in
-      systems that render OpenGL into several windows at
-      once. MultiHead also includes keystone information, so that
-      keystoning can be done by using skewed OpenGL transformation
-      matrices. */
+  /// Class for managing information on multiple OpenGL vindows/viewports. This
+  /// class stores information about the layout of multiple OpenGL windows and
+  /// viewports. This information is used in systems that render OpenGL into
+  /// several windows at once. MultiHead also includes keystone information, so
+  /// that keystoning can be done by using skewed OpenGL transformation
+  /// matrices. Multihead only stores the information of the configuration.
+  /// Changing any of the values during runtime will have no effect unless the
+  /// windows are restarted.
   class LUMINOUS_API MultiHead : public Valuable::Node
   {
   public:
@@ -142,17 +143,6 @@ namespace Luminous {
       /// @return vector in graphics coordinates.
       Nimble::Vector2f graphicsToWindow(Nimble::Vector2f loc, int windowheight, bool & insideArea) const;
 
-      /// Sets the width of a single pixel in centimeters
-      /// @param sizeCm pixel size in centimeters
-      void setPixelSizeCm(float sizeCm);
-      /// Get the pixel size in centimeters
-      /// @return pixel size in centimeters
-      float pixelSizeCm() const;
-      /// Converts centimeters to pixels
-      /// @param cm length in centimeters to convert
-      /// @return number of pixels
-      float cmToPixels(float cm);
-
       /// Get the view transformation (projection) matrix defined by the area
       /// @return view transformation defined by the area
       Nimble::Matrix4 viewTransform() const;
@@ -187,6 +177,8 @@ namespace Luminous {
       /// @return the viewport defined by the area
       Nimble::Recti viewport() const;
 
+      /// Element type used for serialization
+      /// @return "area"
       QByteArray type() const OVERRIDE { return "area"; }
 
       bool readElement(const Valuable::ArchiveElement & element) OVERRIDE;
@@ -212,7 +204,7 @@ namespace Luminous {
       Valuable::AttributeVector4f   m_seams;
       Valuable::AttributeInt        m_method;
       Rect m_graphicsBounds;
-      float      m_pixelSizeCm;
+
       ShaderDeprecated * m_colorCorrectionShader;
       Collectable m_colorCorrectionTextureKey;
       ColorCorrection m_colorCorrection;
@@ -260,10 +252,13 @@ namespace Luminous {
       /// Adds an area to the window
       LUMINOUS_API void addArea(Area * a);
 
-      /// Location of the window on the computer display
-      const Vector2i & location() const { return m_location.asVector(); }
+      /// Location of the window in desktop coordinates
+      const Vector2i & location() const { return m_location; }
+      void setLocation(Nimble::Vector2i loc) { m_location = loc; }
+
       /// Size of the window on the computer display
-      const Vector2i & size() const { return m_size.asVector(); }
+      const Vector2i & size() const { return m_size; }
+      void setSize(Nimble::Vector2i size) { m_size = size; }
 
       /// Returns the width of this window in pixels
       /// @return width of the window
@@ -286,20 +281,23 @@ namespace Luminous {
           @return the point in graphics coordinates
       */
       LUMINOUS_API Nimble::Vector2f windowToGraphics(Nimble::Vector2f loc, bool & convOk) const;
+      /// @copydoc windowToGraphics
       LUMINOUS_API QPointF windowToGraphics(QPointF loc, bool & convOk) const;
 
       /// Should the window be frameless
       bool frameless() const { return m_frameless; }
+      void setFrameless(bool frameless) { m_frameless = frameless; }
+
       /// Should the window be full-screen
       bool fullscreen() const { return m_fullscreen; }
       /// Sets the fullscreen flag
       void setFullscreen(bool f) { m_fullscreen = f; }
       /// Should the window be resizeable
       bool resizeable() const { return m_resizeable; }
+      void setResizeable(bool resizeable) { m_resizeable = resizeable; }
 
-      /// X11 screen number for threaded rendering, -1 if not specified
-      int screennumber() const { return m_screennumber.asInt(); }
-      /// Sets X11 screen number for threaded rendering, -1 disables
+      /// X11 screen number for threaded rendering, -1 if not specified. Linux only.
+      int screennumber() const { return m_screennumber; }
       void setScreennumber(int s) { m_screennumber = s; }
 
       /// Number of samples per pixel for full-screen anti-aliasing
@@ -316,12 +314,10 @@ namespace Luminous {
       /// Set direct rendering mode
       void setDirectRendering(bool enable) { m_directRendering = enable; }
 
-      /// Sets the width of a pixel in centimeters to each area inside this window
-      LUMINOUS_API void setPixelSizeCm(float sizeCm);
-
       /// Return the screen configuration that this Window belongs to
       const MultiHead * screen() const { return m_screen; }
 
+      /// Remove all areas for all windows.
       void deleteAreas()
       {
         for (auto area: m_areas) {
@@ -332,6 +328,8 @@ namespace Luminous {
         eventSend("graphics-bounds-changed");
       }
 
+      /// Get the window rectangle
+      /// @return window rectangle
       Nimble::Recti getRect() const {
         return Nimble::Recti(location().x,
                              location().y,
@@ -339,6 +337,8 @@ namespace Luminous {
                              location().y + height());
       }
 
+      /// Element type used during serialization
+      /// @return "window"
       QByteArray type() const { return "window"; }
 
     private:
@@ -353,26 +353,28 @@ namespace Luminous {
       Valuable::AttributeInt        m_fsaaSamplesPerPixel;
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
-      /// Pixel size in centimeters
-      float      m_pixelSizeCm;
 
       std::vector<std::shared_ptr<Area> > m_areas;
     };
 
+    /// Construct an empty configuration
     MultiHead();
+    /// Destructor
     virtual ~MultiHead();
 
-    /// The number of areas
+    /// Get the number of areas
+    /// @return number of areas
     size_t areaCount();
-    /// Access the areas
-    /** This method traverses all the windows to find the area with
-    given index.
-    @param index window index to look for
-    @param winptr pointer to a window if the area is found
-    @return area with the given index or the first area if no match is found */
+
+    /// Get an area. This method traverses all the windows to find the area
+    /// with given index.
+    /// @param index window index to look for
+    /// @param[out] winptr pointer to a window if the area is found
+    /// @return area with the given index or the first area if no match is found
     Area & area(size_t index, Window ** winptr = 0);
 
-    /// Returns the number of windows
+    /// Get the number of windows
+    /// @return number of windows in the configuration
     size_t windowCount() const { return m_windows.size(); }
     /// Access the ith window
     /// @param i window index
@@ -380,9 +382,6 @@ namespace Luminous {
     Window & window(size_t i);
     /// @copydoc window
     const Window & window(size_t i) const;
-
-    /// Total size of all the windows
-    Nimble::Vector2i totalSize();
 
     /// Returns the total graphics size
     Rect graphicsBounds() const;
@@ -396,7 +395,15 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
+    /// Get the DPMS settings. This function returns a triplet of values
+    /// corresponding to the DPMS settings. The values are in seconds for
+    /// 'standby', 'suspend', and 'power off'.
+    /// @return DPMS settings
+    /// @sa setDpms
     Nimble::Vector3i dpms() const { return m_dpms; }
+    /// Set the DPMS settings.
+    /// @param dpms dpms settings
+    /// @sa dpms
     void setDpms(const Nimble::Vector3i & dpms);
 
     bool deserialize(const Valuable::ArchiveElement & element);
@@ -404,18 +411,24 @@ namespace Luminous {
     /// Adds a window to the collection
     void addWindow(Window * w);
 
-    /// Sets the edited flag
+    /// Raise the edited flag for the configuration. Typically used to check if
+    /// the settings need to be saved when exiting an application.
+    /// @param edited true to set the flag; false to disable it
     void setEdited(bool edited) { m_edited = edited; }
-    /// Returns true if the edited flag has been set
+
+    /// Check if the edited flag has been set. This function checks if the
+    /// configuration has been modified.
+    /// @return true if the configuration was changed; otherwise false
     bool isEdited() const { return m_edited; }
 
-    /// Sets the iconify flag
-    void setIconify(bool iconify) { m_iconify = iconify; }
-    /// Returns true if the iconify flag has been set
+    /// Check if all windows should be iconified.
+    /// @return true if the windows should be iconified; otherwise false
     bool iconify() const { return m_iconify; }
+    /// Set the iconify flag for windows
+    /// @param iconify true to iconify windows
+    void setIconify(bool iconify) { m_iconify = iconify; }
 
-    /// Returns the gamma value used for edge blending with projector setups.
-    float gamma() const { return m_gamma; }
+    /// @cond
 
     const HardwareColorCorrection & hwColorCorrection() const
     {
@@ -427,9 +440,12 @@ namespace Luminous {
       return m_hwColorCorrection;
     }
 
+    /// @endcond
+
+    /// Remove all windows from the configuration
     void deleteWindows()
     {
-      //this should remove listeners that refer to Areas within the windows
+      /// @todo this should remove listeners that refer to Areas within the windows
       m_hwColorCorrection.syncWith(0);
       for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
       {
@@ -440,18 +456,25 @@ namespace Luminous {
       m_windows.clear();
     }
 
+    /// Get the dots-per-inch
+    /// @return the DPI of the display
     float dpi() const;
+    /// Set the DPI of the display
+    /// @param dpi dots-per-inch of the display
     void setDpi(float dpi);
 
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
+
+    /// Is the hardware color-correction enabled. Hardware color-correction is
+    /// implemented with the video-multiplex hardware inside MultiTaction Cells.
+    bool isHardwareColorCorrectionEnabled() const { return m_hwColorCorrectionEnabled; }
+    void setHardwareColorCorrection(bool enabled) { m_hwColorCorrectionEnabled = enabled; }
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
     virtual void dpmsChanged();
 
     std::vector<std::shared_ptr<Window> > m_windows;
-    Valuable::AttributeFloat m_widthcm;
-    Valuable::AttributeFloat m_gamma;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;

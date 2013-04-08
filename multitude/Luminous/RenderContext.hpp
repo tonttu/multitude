@@ -771,7 +771,7 @@ namespace Luminous
     inline BufferGL & handle(const Buffer & buffer) { return m_r.handle(buffer); }
 
     /// Returns the GL resources handle corresponding to given vertex array.
-    /// @param vertexarray CPU side object representing the vertex array
+    /// @param vertexArray CPU side object representing the vertex array
     /// @param program Handle to OpenGL program associated with vertexarray
     /// @return Handle to OpenGL resources of queried vertex array
     inline VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program) { return m_r.handle(vertexArray, program); }

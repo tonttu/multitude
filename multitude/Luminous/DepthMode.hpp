@@ -52,7 +52,7 @@ namespace Luminous
     LUMINOUS_API DepthMode();
 
     /// Set function for depth comparisons
-    /// @paran function Function to use in comparisons
+    /// @param function Function to use in comparisons
     void setFunction(Function function) { m_function = function; }
     /// Returns the function used in depth comparisons
     /// @return Function to use in comparisons

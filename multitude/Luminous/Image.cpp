@@ -828,13 +828,7 @@ namespace Luminous
 
   Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
   {
-    if(empty())
-      return Nimble::Vector4(0, 0, 0, 1);
-
-    if(int(x) >= width())
-      x = width() - 1;
-    if(int(y) >= height())
-      y = height() - 1;
+    assert(m_data);
 
     const uint8_t * px = line(y);
     px += m_pixelFormat.bytesPerPixel() * x;

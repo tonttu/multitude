@@ -105,6 +105,8 @@ namespace Luminous
     /// Returns the number of bytes in a single pixel
     int bytesPerPixel() const;
 
+    /// Check if the format specifies an alpha channel
+    /// @return true if alpha channel is specified; otherwise false
     bool hasAlpha() const;
 
     /// Constructs an 8-bit RGB pixel format

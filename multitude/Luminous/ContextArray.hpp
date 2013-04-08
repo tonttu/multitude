@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_CONTEXTARRAY_HPP
@@ -25,13 +25,16 @@ namespace Luminous
   class ContextArray
   {
   public:
+    /// Constructor
     inline ContextArray();
+    /// Destructor
     inline virtual ~ContextArray();
 
   private:
     /// Resize the context array to the given number of threads
     /// @param threadCount number of threads
     virtual void resize(unsigned int threadCount) = 0;
+
     friend class RenderManager;
   };
 
@@ -41,12 +44,21 @@ namespace Luminous
   class ContextArrayT : public QVector<T>, public ContextArray
   {
   public:
+    /// Constructor
     inline ContextArrayT();
 
+    /// Get a pointer to an object instance associated with the calling thread
+    /// @return pointer to object in the calling thread
     T * operator->() { return &(*this)[RenderManager::threadIndex()]; }
+    /// Get a pointer to an object instance associated with the calling thread
+    /// @return pointer to object in the calling thread
     const T * operator->() const { return &(*this)[RenderManager::threadIndex()]; }
 
+    /// Get a reference to an object instance associated with the calling thread
+    /// @return reference to object in the calling thread
     T & operator*() { return (*this)[RenderManager::threadIndex()]; }
+    /// Get a reference to an object instance associated with the calling thread
+    /// @return reference to object in the calling thread
     const T & operator*() const { return (*this)[RenderManager::threadIndex()]; }
 
   private:

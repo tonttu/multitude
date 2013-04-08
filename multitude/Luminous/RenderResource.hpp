@@ -30,17 +30,27 @@ namespace Luminous
     /// Hash used to identify rendering resources
     struct Hash
     {
+      /// Hash data
       uint64_t data[2];
+
+      /// Compare the order of hashes
+      /// @param h hash to compare
+      /// @return true if this hash is smaller than the given hash
       inline bool operator<(const Hash & h) const
       {
         return data[0] == h.data[0] ? data[1] < h.data[1] : data[0] < h.data[0];
       }
+
+      /// Compare two hashes for equality
+      /// @param h hash to compare
+      /// @return true if the hashes are equal; otherwise false
       inline bool operator==(const Hash & h) const
       {
         return data[0] == h.data[0] && data[1] == h.data[1];
       }
     };
 
+    /// Id of a resource
     typedef uint64_t Id;
 
     /// Different types of render resources
@@ -118,6 +128,7 @@ namespace Luminous
 }
 
 /// @cond
+
 namespace std
 {
   template<> struct hash<Luminous::RenderResource::Hash>
@@ -129,6 +140,7 @@ namespace std
     }
   };
 }
+
 /// @endcond
 
 #endif // LUMINOUS_RENDERRESOURCE_HPP
