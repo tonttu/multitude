@@ -678,6 +678,7 @@ namespace VideoDisplay
     class D;
     std::unique_ptr<D> m_d;
   };
+  /// Smart pointer to AVDecoder
   typedef std::shared_ptr<AVDecoder> AVDecoderPtr;
 }
 

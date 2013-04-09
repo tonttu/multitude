@@ -20,7 +20,9 @@
 
 namespace Valuable
 {
-  /// The base interface for different value types
+  /// Variant class for attribute value.
+  /// CSS parser will generate a StyleValue instance from a value in CSS declaration.
+  /// @link http://www.w3.org/TR/CSS21/syndata.html#values
   class VALUABLE_API StyleValue
   {
   public:
@@ -41,8 +43,11 @@ namespace Valuable
     };
 
   public:
+    /// Creates an empty StyleValue
     StyleValue();
+    /// Creates a new StyleValue with one float value
     StyleValue(float v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
+    /// Creates a new StyleValue with one int value
     StyleValue(int v);
     StyleValue(QVariant v, Attribute::ValueUnit unit = Attribute::VU_UNKNOWN);
     StyleValue(const QMap<QString, QString> & map);
@@ -67,6 +72,8 @@ namespace Valuable
     /// String representation that can be used in a CSS
     QString stringify() const;
 
+    /// @param idx index of the value in the list
+    /// @return true if value is integer or floating point number
     bool isNumber(int idx = 0) const;
 
     /// Makes a copy of one individual value

@@ -95,9 +95,21 @@ namespace Valuable
 
     void setRoot(const ArchiveElement & element);
 
-    bool writeToFile(const QString & file) const;
+    /// Serialize archive as XML to a file
+    /// @param filename file to open
+    /// @return true if writing was successful
+    bool writeToFile(const QString & filename) const;
+    /// Serialize archive as XML to a buffer
+    /// @param buffer that will be overwritten with the new data
+    /// @return true if writing was successful
     bool writeToMem(QByteArray & buffer) const;
+    /// Read archive contents from a file
+    /// @param filename file to open
+    /// @returns true if reading was successful
     bool readFromFile(const QString & filename);
+    /// Read archive contents from a buffer
+    /// @param buffer data buffer to read the data from
+    /// @returns true if reading was successful
     bool readFromMem(const QByteArray & buffer);
 
     /// Returns a pointer to wrapped DOMDocument
