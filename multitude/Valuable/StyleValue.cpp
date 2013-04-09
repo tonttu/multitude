@@ -27,30 +27,30 @@ namespace Valuable
   {
     m_values << v;
     m_units << unit;
-    m_separators << WhiteSpace;
+    m_separators << WHITE_SPACE;
   }
 
   StyleValue::StyleValue(int v) : m_uniform(true)
   {
     m_values << v;
     m_units << Attribute::VU_UNKNOWN;
-    m_separators << WhiteSpace;
+    m_separators << WHITE_SPACE;
   }
 
   StyleValue::StyleValue(QVariant v, Attribute::ValueUnit unit) : m_uniform(true)
   {
     m_values << v;
     m_units << unit;
-    m_separators << WhiteSpace;
+    m_separators << WHITE_SPACE;
   }
 
   StyleValue::StyleValue(const QMap<QString, QString> & map)
   {
     for (auto it = map.begin(); it != map.end(); ++it) {
       if (m_values.size() == 0)
-        m_separators << WhiteSpace << WhiteSpace;
+        m_separators << WHITE_SPACE << WHITE_SPACE;
       else
-        m_separators << Comma << WhiteSpace;
+        m_separators << COMMA << WHITE_SPACE;
       m_values << it.key() << it.value();
       m_units << Attribute::VU_UNKNOWN << Attribute::VU_UNKNOWN;
     }
@@ -195,9 +195,9 @@ namespace Valuable
         Radiant::error("StyleValue::stringify # Unknown variant type %d (%s)", t, v.typeName());
         continue;
       }
-      if (separator == Comma) {
+      if (separator == COMMA) {
         out << ",";
-      } else if (separator == Slash) {
+      } else if (separator == SLASH) {
         out << "/";
       }
     }
@@ -249,7 +249,7 @@ namespace Valuable
   QMap<QString, QString> StyleValue::asMap() const
   {
     QMap<QString, QString> map;
-    for (auto group: groups(Comma)) {
+    for (auto group: groups(COMMA)) {
       QStringList tmp;
       for (auto v: group.values.mid(1))
         tmp << v.toString();

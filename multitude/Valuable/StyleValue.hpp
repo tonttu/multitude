@@ -27,9 +27,9 @@ namespace Valuable
     /// A separator in a string
     enum Separator
     {
-      WhiteSpace,
-      Comma,
-      Slash
+      WHITE_SPACE,
+      COMMA,
+      SLASH
     };
 
     /// Utility class used when parsing lists separated by tokens
