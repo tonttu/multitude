@@ -208,7 +208,7 @@ namespace Valuable
   bool StyleValue::isNumber(int idx) const
   {
     int t = type(idx);
-    return t == QVariant::Int || t == QMetaType::Float;
+    return t == QVariant::Int || t == QMetaType::Float || t == QVariant::Double;
   }
 
   StyleValue StyleValue::operator[](int idx) const
