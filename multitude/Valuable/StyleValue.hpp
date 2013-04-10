@@ -48,7 +48,7 @@ namespace Valuable
     };
 
     /// One part of StyleValue list, variant / tagged union type with some convertions
-    class Component
+    class VALUABLE_API Component
     {
     public:
       /// Create a null component
