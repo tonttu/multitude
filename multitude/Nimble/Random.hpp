@@ -136,14 +136,16 @@ namespace Nimble {
                               randMinMax(r.low().y, r.high().y));
     }
 
-    /// Random 2d vector on a unit circle
+    /// Random 2d vector on a circle
+    /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecOnCircle(float radius = 1.0f)
     {
       float a = rand0X(Math::TWO_PI);
       return Nimble::Vector2f(cosf(a) * radius, sinf(a) * radius);
     }
 
-    /// Random 2d vector on or inside a unit circle
+    /// Random 2d vector on or inside a circle
+    /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecInCircle(float radius = 1.0f)
     {
       while(true) {
@@ -153,6 +155,33 @@ namespace Nimble {
 
         v *= radius;
         return v;
+      }
+    }
+
+    /// Random 3d vector on a sphere
+    /// @param radius The radius of the sphere
+    inline Nimble::Vector3f randVecOnSphere(float radius = 1.0f)
+    {
+      while(true) {
+        Nimble::Vector3f v(rand11(), rand11(), rand11());
+        if(v.lengthSqr() > 1.0f)
+          continue;
+
+        v.normalize(radius);
+        return v;
+      }
+    }
+
+    /// Random 3d vector inside or on a sphere
+    /// @param radius The radius of the sphere
+    inline Nimble::Vector3f randVecInSphere(float radius = 1.0f)
+    {
+      while(true) {
+        Nimble::Vector3f v(rand11(), rand11(), rand11());
+        if(v.lengthSqr() > 1.0f)
+          continue;
+
+        return v * radius;
       }
     }
 
