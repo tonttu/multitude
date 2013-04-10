@@ -21,6 +21,9 @@ namespace Valuable
 
   /// FileWatcher provides an interface for monitoring files and directories
   /// for modifications.
+  /// @event[out] file-created(QString path) New file was created to monitored directory
+  /// @event[out] file-changed(QString path) Monitored file was modified
+  /// @event[out] file-removed(QString path) Monitored file was removed
   class VALUABLE_API FileWatcher : public Node
   {
   public:

@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #include "MultiHead.hpp"
@@ -57,7 +57,6 @@ namespace Luminous
       m_seams(this, "seams", Nimble::Vector4f(0, 0, 0, 0)),
       m_method(this, "method", METHOD_MATRIX_TRICK),
       m_graphicsBounds(0, 0, 100, 100),
-      m_pixelSizeCm(0.1f),
       m_colorCorrection(this, "colorcorrection"),
       m_rgbCube(this, "rgbcube")
   {
@@ -85,7 +84,7 @@ namespace Luminous
 
   const Vector2i & MultiHead::Area::size() const
   {
-    return m_size.asVector();
+    return m_size;
   }
 
   void MultiHead::Area::setSize(Nimble::Vector2i size)
@@ -393,21 +392,6 @@ namespace Luminous
     return loc;
   }
 
-  void MultiHead::Area::setPixelSizeCm(float sizeCm)
-  {
-    m_pixelSizeCm = sizeCm;
-  }
-
-  float MultiHead::Area::pixelSizeCm() const
-  {
-    return m_pixelSizeCm;
-  }
-
-  float MultiHead::Area::cmToPixels(float cm)
-  {
-    return cm / m_pixelSizeCm;
-  }
-
   Nimble::Matrix4 MultiHead::Area::viewTransform() const
   {
     Nimble::Rect b = graphicsBounds();
@@ -500,8 +484,7 @@ namespace Luminous
       m_resizeable(this, "resizeable", false),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
       m_directRendering(this, "direct-rendering", true),
-      m_screennumber(this, "screennumber", 0),
-      m_pixelSizeCm(0.1f)
+      m_screennumber(this, "screennumber", 0)
   {
       eventAddOut("graphics-bounds-changed");
   }
@@ -583,16 +566,6 @@ namespace Luminous
     return QPointF(nloc.x, nloc.y);
   }
 
-  void MultiHead::Window::setPixelSizeCm(float sizeCm)
-  {
-    assert(sizeCm > 0.0f);
-
-    m_pixelSizeCm = sizeCm;
-
-    for(size_t i = 0; i < m_areas.size(); i++)
-      m_areas[i]->setPixelSizeCm(sizeCm);
-  }
-
   bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
     /// @todo Remove this function and use the correct serialization API
@@ -629,8 +602,6 @@ namespace Luminous
 
   MultiHead::MultiHead()
       : Node(0, "MultiHead", false),
-      m_widthcm(this, "widthcm", 100, true),
-      m_gamma(this, "gamma", 1.1f, true),
       m_iconify(this, "iconify", false),
       m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
@@ -692,33 +663,6 @@ namespace Luminous
     assert(false); // Out of range
 
     return m_windows[0]->area(0); // Unreachable
-  }
-
-  Nimble::Vector2i MultiHead::totalSize()
-  {
-    if(!windowCount())
-      return Nimble::Vector2i(0, 0);
-
-    Window * w = & window(0);
-
-    Nimble::Vector2i low = w->location();
-    Nimble::Vector2i high = w->location() + w->size();
-
-    for(size_t i = 0; i < windowCount(); i++) {
-
-      w = & window(i);
-
-      Nimble::Vector2i low2 = w->location();
-      Nimble::Vector2i high2 = w->location() + w->size();
-
-      low.x = std::min(low.x, low2.x);
-      low.y = std::min(low.y, low2.y);
-
-      high.x = std::max(high.x, high2.x);
-      high.y = std::max(high.y, high2.y);
-    }
-
-    return high - low;
   }
 
   Rect MultiHead::graphicsBounds() const
@@ -803,11 +747,6 @@ namespace Luminous
 
     bool ok = Node::deserialize(element);
     if(ok) {
-      const float pixelSizeCm = m_widthcm.asFloat() / width();
-
-      for(size_t i = 0; i < windowCount(); i++)
-        window(i).setPixelSizeCm(pixelSizeCm);
-
       m_edited = false;
     }
 

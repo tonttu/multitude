@@ -8,20 +8,28 @@
  * 
  */
 
-#ifndef VIDEODISPLAY_AVDECODER_FFMPEG_HPP
-#define VIDEODISPLAY_AVDECODER_FFMPEG_HPP
+#ifndef VIDEODISPLAY_LIBAV_DECODER_HPP
+#define VIDEODISPLAY_LIBAV_DECODER_HPP
 
 #include "AVDecoder.hpp"
 
 namespace VideoDisplay
 {
-  VIDEODISPLAY_API void ffmpegInit();
+  /// Initialize Libav. This is called automatically from LibavDecoder, but
+  /// should also be called manually if there is a need to call raw Libav
+  /// functions outside VideoDisplay library.
+  /// This will:
+  ///  * Register Cornerstone log handlers
+  ///  * Register Cornerstone lock manager
+  ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
+  VIDEODISPLAY_API void libavInit();
 
-  class AVDecoderFFMPEG : public AVDecoder
+  /// Audio/Video decoder implementation that uses Libav as a backend
+  class LibavDecoder : public AVDecoder
   {
   public:
-    AVDecoderFFMPEG();
-    ~AVDecoderFFMPEG();
+    LibavDecoder();
+    ~LibavDecoder();
 
     virtual void close() OVERRIDE;
 
@@ -48,7 +56,14 @@ namespace VideoDisplay
 
     virtual void panAudioTo(Nimble::Vector2f location) const OVERRIDE;
 
+    /// @cond
+
+    /// Called from AudioTransfer::~AudioTransfer
+    /// @todo we should make non-intrusive AudioTransfer monitoring instead of this
     void audioTransferDeleted();
+
+    /// @endcond
+
   protected:
     virtual void load(const Options & options) OVERRIDE;
 
@@ -60,4 +75,4 @@ namespace VideoDisplay
   };
 }
 
-#endif // VIDEODISPLAY_AVDECODER_FFMPEG_HPP
+#endif // VIDEODISPLAY_LIBAV_DECODER_HPP

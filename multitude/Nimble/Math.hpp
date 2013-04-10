@@ -21,6 +21,8 @@
 # include <float.h>
 #endif
 
+#include <QtGlobal>
+
 #include <cstdint>
 #include <limits>
 #include <cstdlib>
@@ -150,7 +152,13 @@ namespace Nimble {
     template<typename T>
     bool fuzzyCompare(const T & a, const T & b)
     {
-      return std::abs(a - b) < std::numeric_limits<T>::epsilon();
+      return qFuzzyCompare(a, b);
+    }
+
+    template<>
+    inline bool fuzzyCompare(const int & a, const int & b)
+    {
+      return a == b;
     }
 
     /// Rounds the given number to nearest integer

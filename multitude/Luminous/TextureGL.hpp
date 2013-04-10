@@ -20,20 +20,38 @@
 
 namespace Luminous
 {
+
+  /// This class represents a Texture object in GPU memory.
   class TextureGL : public ResourceHandleGL
   {
   public:
+    /// Constructor
+    /// @param state OpenGL state
     LUMINOUS_API TextureGL(StateGL & state);
+    /// Destructor
     LUMINOUS_API ~TextureGL();
 
+    /// Move constructor
+    /// @param t texture object to move
     LUMINOUS_API TextureGL(TextureGL && t);
+    /// Move assignment operator
+    /// @param t texture object to move
     LUMINOUS_API TextureGL & operator=(TextureGL && t);
 
+    /// Get the dirty region of the texture. The dirty region keeps track of
+    /// regions in the texture that must be re-uploaded.
+    /// @return texture dirty region
     inline QRegion & dirtyRegion2D();
 
+    /// Apply the texture parameters to OpenGL state
     LUMINOUS_API void setTexParameters() const;
+    /// Upload texture data from CPU object
+    /// @param texture texture to upload from
     /// @param textureUnit Texture unit, starting from 0
-    LUMINOUS_API void upload(const Texture & texture, int textureUnit, bool alwaysBind);
+    /// @param forceBind force binding of texture even if it is already active
+    LUMINOUS_API void upload(const Texture & texture, int textureUnit, bool forceBind);
+    /// Bind the texture to the given texture unit
+    /// @param textureUnit texture unit to bind to
     inline void bind(int textureUnit);
 
   private:

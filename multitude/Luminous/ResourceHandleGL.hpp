@@ -26,22 +26,48 @@
 
 namespace Luminous
 {
+
+  /// Base class for all OpenGL resources that reside in GPU memory.
   class ResourceHandleGL
   {
   public:
+    /// Constructor
+    /// @param state OpenGL state of the graphics driver
     inline ResourceHandleGL(StateGL & state);
-    inline ResourceHandleGL(ResourceHandleGL &&);
-    inline ResourceHandleGL & operator=(ResourceHandleGL &&);
+    /// Move constructor
+    /// @param r resource handle to move
+    inline ResourceHandleGL(ResourceHandleGL && r);
+    /// Move assignment operator
+    /// @param r resource handle to move
+    inline ResourceHandleGL & operator=(ResourceHandleGL && r);
 
+    /// Update the last used timestamp to current frame-time. Every time the
+    /// resource is accessed, this should be updated.
+    /// @sa expired
     inline void touch();
+
+    /// Check if the resource has expired. Resource is considered expired if
+    /// the time since it was last accessed exceeds the defined expiration
+    /// time. Expired resources are released by the graphics driver to conserve
+    /// GPU memory.
+    /// @sa setExpirationSeconds
+    /// @sa touch
     inline bool expired() const;
 
+    /// Set the expiration time in seconds for the resource.
+    /// @param secs expiration time in seconds
+    /// @sa touch
+    /// @sa expired
     inline void setExpirationSeconds(unsigned int secs);
 
+    /// Get the raw OpenGL handle for the resource
+    /// @return raw OpenGL handle
     GLuint handle() const { return m_handle; }
 
   protected:
+    /// OpenGL state owned by the graphics driver
     StateGL & m_state;
+    /// Raw OpenGL handle of the resource
     GLuint m_handle;
 
   private:

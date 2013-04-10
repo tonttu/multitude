@@ -11,7 +11,7 @@
 #include "AVDecoder.hpp"
 
 /// @todo this include is just for create(), should be removed
-#include "AVDecoderFFMPEG.hpp"
+#include "LibavDecoder.hpp"
 
 namespace VideoDisplay
 {
@@ -65,7 +65,7 @@ namespace VideoDisplay
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
   {
     /// @todo add some great factory registry thing here
-    std::shared_ptr<AVDecoder> decoder(new AVDecoderFFMPEG());
+    std::shared_ptr<AVDecoder> decoder(new LibavDecoder());
     decoder->load(options);
     return decoder;
   }

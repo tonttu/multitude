@@ -53,6 +53,14 @@ exists("C:/Cornerstone-deps/libav/bin") {
   INSTALLS += win64_libav_headers2
 }
 
+exists("C:/Cornerstone-deps/ghostscript/gswin64c.exe") {
+
+  win64_ghostscript.path = /bin
+  win64_ghostscript.files = C:/Cornerstone-deps/ghostscript/*
+  
+  INSTALLS += win64_ghostscript
+}
+
 exists("C:/Cornerstone-deps/node/bin") {
   win64_node_dlls1.path = /bin
   win64_node_dlls1.files = C:/Cornerstone-deps/node/bin/node.exe

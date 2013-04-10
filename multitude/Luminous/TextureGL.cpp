@@ -76,7 +76,7 @@ namespace Luminous
     return *this;
   }
 
-  void TextureGL::upload(const Texture & texture, int textureUnit, bool alwaysBind)
+  void TextureGL::upload(const Texture & texture, int textureUnit, bool forceBind)
   {
     // Reset usage timer
     touch();
@@ -189,7 +189,7 @@ namespace Luminous
       }
     }
 
-    if(!bound && alwaysBind) {
+    if(!bound && forceBind) {
       bind(textureUnit);
       bound = true;
     }

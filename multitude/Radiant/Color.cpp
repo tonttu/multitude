@@ -191,6 +191,13 @@ namespace Radiant
       Radiant::warning("Color::Color # Failed to parse color '%s'", color.data());
   }
 
+  Color::Color(const char * color)
+    : Nimble::Vector4f(0.0f, 0.0f, 0.0f, 1.0f)
+  {
+    if (!set(color))
+      Radiant::warning("Color::Color # Failed to parse color '%s'", color);
+  }
+
   Color::Color(float r, float g, float b, float a)
   {
     setRGBA(r, g, b, a);
@@ -202,6 +209,10 @@ namespace Radiant
   }
 
   Color::~Color()
+  {}
+
+  Color::Color(const QColor & c)
+    : Nimble::Vector4f(c.redF(), c.greenF(), c.blueF(), c.alphaF())
   {}
 
   void Color::setRGBA(float r, float g, float b, float a)

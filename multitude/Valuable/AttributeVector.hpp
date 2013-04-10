@@ -153,7 +153,7 @@ namespace Valuable
   template<class VectorType>
   bool AttributeVector<VectorType>::set(const StyleValue & value, Attribute::Layer layer)
   {
-    if (value.size() != N || !value.uniform() || !value.isNumber())
+    if (value.size() != N || !value.isUniform() || !value.isNumber())
       return false;
 
     VectorType vector;

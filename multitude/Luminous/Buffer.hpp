@@ -69,6 +69,7 @@ namespace Luminous
       DYNAMIC_COPY = GL_DYNAMIC_COPY
     };
 
+    /// Map access modifiers
     enum MapAccess
     {
       MAP_READ               = GL_MAP_READ_BIT,
@@ -80,6 +81,7 @@ namespace Luminous
       MAP_UNSYNCHRONIZED     = GL_MAP_UNSYNCHRONIZED_BIT
     };
 
+    /// Buffer object type
     enum Type
     {
       UNKNOWN  = 0,
@@ -89,19 +91,40 @@ namespace Luminous
     };
 
   public:
+    /// Constructor
     LUMINOUS_API Buffer();
+    /// Destructor
     LUMINOUS_API ~Buffer();
 
-    LUMINOUS_API Buffer(Buffer & b);
-    LUMINOUS_API Buffer & operator=(Buffer & b);
+    /// Copy constructor
+    /// @param b buffer to copy
+    LUMINOUS_API Buffer(const Buffer & b);
+    /// Assignment operator
+    /// @param b buffer to copy
+    LUMINOUS_API Buffer & operator=(const Buffer & b);
 
+    /// Move constructor
+    /// @param b buffer to move
     LUMINOUS_API Buffer(Buffer && b);
+    /// Move assignment operator
+    /// @param b buffer to move
     LUMINOUS_API Buffer & operator=(Buffer && b);
 
+    /// Set the buffer contents. Does not copy the data. The pointer must
+    /// remain valid as long as the buffer is in use.
+    /// @param data pointer to data
+    /// @param size size of the data in bytes
+    /// @param usage usage hint
     LUMINOUS_API void setData(const void * data, size_t size, Usage usage);
 
+    /// Get the size of the buffer
+    /// @return size of the buffer in bytes
     LUMINOUS_API size_t size() const;
+    /// Get a pointer to the buffer data
+    /// @return data pointer
     LUMINOUS_API const void * data() const;
+    /// Get the usage hints for the buffer
+    /// @return usage hints
     LUMINOUS_API Usage usage() const;
 
   private:

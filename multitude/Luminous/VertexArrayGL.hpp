@@ -20,19 +20,35 @@
 
 namespace Luminous
 {
+  /// This class represents the VertexArray in GPU memory.
+  /// @sa VertexArray
   class VertexArrayGL : public ResourceHandleGL
   {
   public:
+    /// Constructor
+    /// @param state OpenGL state
     LUMINOUS_API VertexArrayGL(StateGL & state);
+    /// Destructor
     LUMINOUS_API ~VertexArrayGL();
 
+    /// Move constructor
+    /// @param t vertex array to move
     LUMINOUS_API VertexArrayGL(VertexArrayGL && t);
+    /// Move assignment operator
+    /// @param t vertex array to move
     LUMINOUS_API VertexArrayGL & operator=(VertexArrayGL && t);
 
+    /// Bind the vertex array
     LUMINOUS_API void bind();
 
+    /// Upload he vertex array given specification to the GPU.
+    /// @param vertexArray vertex array
+    /// @param program shader program to use with the vertex array
     LUMINOUS_API void upload(const VertexArray & vertexArray, ProgramGL * program);
 
+    /// Get the generation count of the vertex array. This counter is used to
+    /// keep the CPU and GPU objects synchronized.
+    /// @return generation count
     LUMINOUS_API int generation() const { return m_generation; }
 
   private:

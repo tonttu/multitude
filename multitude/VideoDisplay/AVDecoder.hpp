@@ -298,7 +298,7 @@ namespace VideoDisplay
       /// Specify the input format. Usually this is not needed, but for example
       /// "video4linux2" isn't automatically detected.
       ///
-      /// List all available formats (demuxers): ffmpeg -formats
+      /// List all available formats (demuxers): avconv -formats
       ///
       /// Default: auto detect (empty string)
       /// @sa setFormat
@@ -572,6 +572,7 @@ namespace VideoDisplay
     /// Current decoder state
     /// @returns the current state of the decoder
     DecoderState & state();
+    /// @copydoc state()
     const DecoderState & state() const;
     /// Checks if decoder has done running
     /// @returns true if the decoder in any of the final states (STATE_ERROR or STATE_FINISHED)
@@ -651,7 +652,7 @@ namespace VideoDisplay
 
     /// YUV to RGB conversion matrix using the active video color profile.
     /// This can be used directly in GLSL: vec4 rgb = m * vec4(y, u, v, 1.0);
-    /// @param YUV to RGB conversion matrix
+    /// @returns YUV to RGB conversion matrix
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
     /// Sets audio panning to specific location
@@ -677,6 +678,7 @@ namespace VideoDisplay
     class D;
     std::unique_ptr<D> m_d;
   };
+  /// Smart pointer to AVDecoder
   typedef std::shared_ptr<AVDecoder> AVDecoderPtr;
 }
 

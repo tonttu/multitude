@@ -102,6 +102,17 @@ namespace Valuable {
       return false;
     }
 
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
+    {
+      bool ok = true;
+      Nimble::Vector2 s = data.readVector2Float32(&ok);
+      if (ok) {
+        set(s);
+      } else {
+        Radiant::warning("AttributeSizeT::eventProcess # Failed to parse data");
+      }
+    }
+
     virtual bool set(ElementType v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
     {
       beginChangeTransaction();

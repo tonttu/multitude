@@ -64,8 +64,8 @@ namespace Valuable {
 
     bool set(const StyleValue & v, Layer layer) OVERRIDE
     {
-      if(v.size() != 1 || v.units()[0] != VU_UNKNOWN) return false;
-      QString p = v.values()[0].toString().toLower();
+      if(v.size() != 1 || v.unit() != VU_UNKNOWN) return false;
+      QByteArray p = v.asKeyword().toLower();
       bool on = p == "true" || p == "on" || p == "yes";
       if(on || p == "false" || p == "off" || p == "no") {
         m_master.setFlags(m_flags, on, layer);
@@ -292,13 +292,12 @@ namespace Valuable {
 
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
     {
-      for(const ValueUnit & vu : v.units())
-        if(vu != VU_UNKNOWN) return false;
+      if (!v.isUniform() || !v[0].canConvert(StyleValue::TYPE_KEYWORD))
+        return false;
 
       Flags newValue;
-      for(const QVariant & var : v.values()) {
-        if(var.type() != QVariant::ByteArray) return false;
-        auto it = m_flags.find(var.toByteArray().toLower());
+      for(const auto & var : v.components()) {
+        auto it = m_flags.find(var.asKeyword().toLower());
         if (it == m_flags.end()) return false;
         newValue |= *it;
       }

@@ -41,10 +41,13 @@ namespace Radiant
       /// Construct a color from a string
       /// @sa set
       RADIANT_API Color(const QByteArray & color);
+      RADIANT_API Color(const char * color);
       /// Constructs a color from the given floats. The values are expected to be [0,1]
       RADIANT_API Color(float r, float g, float b, float a = 1.f);
       /// Constructs a color from the given vector. The component values are expected to be [0,1]
       RADIANT_API Color(const Nimble::Vector4f & v);
+      /// Constructs a color from the given QColor
+      RADIANT_API Color(const QColor & color);
       RADIANT_API ~Color();
 
       /// Make RGBA color from floats. Valid range is [0, 1]

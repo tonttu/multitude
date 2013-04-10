@@ -19,40 +19,318 @@
 
 namespace Valuable
 {
+  bool canConvertType(StyleValue::ValueType a, StyleValue::ValueType b)
+  {
+    if (a == b)
+      return true;
 
-  StyleValue::StyleValue() : m_uniform(true)
+    if (a > b)
+      std::swap(a, b);
+
+    switch (a) {
+    case StyleValue::TYPE_FLOAT:
+      return b == StyleValue::TYPE_INT;
+    case StyleValue::TYPE_STRING:
+      return b == StyleValue::TYPE_KEYWORD;
+    default:
+      return false;
+    }
+  }
+
+  StyleValue::Component::Component()
+    : m_data()
+    , m_type(TYPE_NONE)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
   {}
 
-  StyleValue::StyleValue(float v, Attribute::ValueUnit unit) : m_uniform(true)
+  StyleValue::Component::Component(float f, Attribute::ValueUnit unit)
+    : m_data()
+    , m_type(TYPE_FLOAT)
+    , m_unit(unit)
+    , m_separator(StyleValue::WHITE_SPACE)
   {
-    m_values << v;
-    m_units << unit;
-    m_separators << WhiteSpace;
+    m_data.m_float = f;
   }
 
-  StyleValue::StyleValue(int v) : m_uniform(true)
+  StyleValue::Component::Component(int i)
+    : m_data()
+    , m_type(TYPE_INT)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
   {
-    m_values << v;
-    m_units << Attribute::VU_UNKNOWN;
-    m_separators << WhiteSpace;
+    m_data.m_int = i;
   }
 
-  StyleValue::StyleValue(QVariant v, Attribute::ValueUnit unit) : m_uniform(true)
+  StyleValue::Component::Component(const Radiant::Color & color)
+    : m_data()
+    , m_type(TYPE_COLOR)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
   {
-    m_values << v;
-    m_units << unit;
-    m_separators << WhiteSpace;
+    m_data.m_color = new Radiant::Color(color);
+  }
+
+  StyleValue::Component::Component(const QString & string)
+    : m_data()
+    , m_type(TYPE_STRING)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
+  {
+    m_data.m_string = new QString(string);
+  }
+
+  StyleValue::Component::Component(const QByteArray & keyword)
+    : m_data()
+    , m_type(TYPE_KEYWORD)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
+  {
+    m_data.m_keyword = new QByteArray(keyword);
+  }
+
+  StyleValue::Component::~Component()
+  {
+    switch (m_type) {
+    case TYPE_COLOR:
+      delete m_data.m_color;
+      break;
+    case TYPE_STRING:
+      delete m_data.m_string;
+      break;
+    case TYPE_KEYWORD:
+      delete m_data.m_keyword;
+      break;
+    default:
+      break;
+    }
+  }
+
+  StyleValue::Component::Component(const Component & component)
+    : m_data()
+    , m_type(TYPE_NONE)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::WHITE_SPACE)
+  {
+    operator=(component);
+  }
+
+  StyleValue::Component & StyleValue::Component::operator=(const Component & component)
+  {
+    this->~Component();
+    m_type = component.m_type;
+    m_unit = component.m_unit;
+    m_separator = component.m_separator;
+    switch (m_type) {
+    case TYPE_FLOAT:
+    case TYPE_INT:
+      m_data = component.m_data;
+      break;
+    case TYPE_COLOR:
+      m_data.m_color = new Radiant::Color(*component.m_data.m_color);
+      break;
+    case TYPE_STRING:
+      m_data.m_string = new QString(*component.m_data.m_string);
+      break;
+    case TYPE_KEYWORD:
+      m_data.m_keyword = new QByteArray(*component.m_data.m_keyword);
+      break;
+    default:
+      break;
+    }
+    return *this;
+  }
+
+  StyleValue::Component::Component(Component && component)
+    : m_data(component.m_data)
+    , m_type(component.m_type)
+    , m_unit(component.m_unit)
+    , m_separator(component.m_separator)
+  {
+    component.m_type = TYPE_NONE;
+  }
+
+  StyleValue::Component & StyleValue::Component::operator=(Component && component)
+  {
+    std::swap(m_type, component.m_type);
+    std::swap(m_data, component.m_data);
+    m_unit = component.m_unit;
+    m_separator = component.m_separator;
+    return *this;
+  }
+
+  int StyleValue::Component::asInt() const
+  {
+    switch (m_type) {
+    case TYPE_INT:
+      return m_data.m_int;
+    case TYPE_FLOAT:
+      return m_data.m_float;
+    default:
+      Radiant::error("StyleValue::Component::asInt # cannot convert %s to int", typeName());
+      return 0;
+    }
+  }
+
+  float StyleValue::Component::asFloat() const
+  {
+    switch (m_type) {
+    case TYPE_FLOAT:
+      return m_data.m_float;
+    case TYPE_INT:
+      return m_data.m_int;
+    default:
+      Radiant::error("StyleValue::Component::asFloat # cannot convert %s to float", typeName());
+      return 0.f;
+    }
+  }
+
+  QString StyleValue::Component::asString() const
+  {
+    switch (m_type) {
+    case TYPE_STRING:
+      return *m_data.m_string;
+    case TYPE_KEYWORD:
+      return *m_data.m_keyword;
+    default:
+      Radiant::error("StyleValue::Component::asString # cannot convert %s to string", typeName());
+      return QString();
+    }
+  }
+
+  QByteArray StyleValue::Component::asKeyword() const
+  {
+    switch (m_type) {
+    case TYPE_KEYWORD:
+      return *m_data.m_keyword;
+    case TYPE_STRING:
+      return m_data.m_string->toUtf8();
+    default:
+      Radiant::error("StyleValue::Component::asKeyword # cannot convert %s to keyword", typeName());
+      return QByteArray();
+    }
+  }
+
+  Radiant::Color StyleValue::Component::asColor() const
+  {
+    if (m_type == TYPE_COLOR)
+      return *m_data.m_color;
+    Radiant::error("StyleValue::Component::asColor # cannot convert %s to color", typeName());
+    return Radiant::Color();
+  }
+
+  bool StyleValue::Component::canConvert(StyleValue::ValueType t) const
+  {
+    return canConvertType(m_type, t);
+  }
+
+  bool StyleValue::Component::isNumber() const
+  {
+    return m_type == TYPE_FLOAT || m_type == TYPE_INT;
+  }
+
+  const char * StyleValue::Component::typeName() const
+  {
+    switch (m_type) {
+    case TYPE_FLOAT:
+      return "float";
+    case TYPE_INT:
+      return "int";
+    case TYPE_COLOR:
+      return "color";
+    case TYPE_STRING:
+      return "string";
+    case TYPE_KEYWORD:
+      return "keyword";
+    default:
+      return "none";
+    }
+  }
+
+  bool StyleValue::Component::operator==(const Component & v) const
+  {
+    if (m_type != v.m_type || m_unit != v.m_unit || m_separator != v.m_separator)
+      return false;
+
+    switch (m_type) {
+    case TYPE_NONE:
+      return true;
+    case TYPE_FLOAT:
+      return m_data.m_float == v.m_data.m_float;
+    case TYPE_INT:
+      return m_data.m_int == v.m_data.m_int;
+    case TYPE_COLOR:
+      return *m_data.m_color == *v.m_data.m_color;
+    case TYPE_STRING:
+      return *m_data.m_string == *v.m_data.m_string;
+    case TYPE_KEYWORD:
+      return *m_data.m_keyword == *v.m_data.m_keyword;
+    default:
+      return false;
+    }
+  }
+
+  bool StyleValue::Component::operator==(const QByteArray & str) const
+  {
+    switch (m_type) {
+    case TYPE_STRING:
+      return m_data.m_string->toUtf8() == str;
+    case TYPE_KEYWORD:
+      return *m_data.m_keyword == str;
+    default:
+      return false;
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  StyleValue::StyleValue() : m_isUniform(true)
+  {}
+
+  StyleValue::StyleValue(float v, Attribute::ValueUnit unit) : m_isUniform(true)
+  {
+    m_components << Component(v, unit);
+  }
+
+  StyleValue::StyleValue(int v) : m_isUniform(true)
+  {
+    m_components << v;
+  }
+
+  StyleValue::StyleValue(const Radiant::Color & color)
+    : m_isUniform(true)
+  {
+    m_components << color;
+  }
+
+  StyleValue::StyleValue(const QString & string)
+    : m_isUniform(true)
+  {
+    m_components << string;
+  }
+
+  StyleValue::StyleValue(const QByteArray & keyword)
+    : m_isUniform(true)
+  {
+    m_components << keyword;
+  }
+
+  StyleValue::StyleValue(const Component & component)
+    : m_isUniform(true)
+  {
+    m_components << component;
   }
 
   StyleValue::StyleValue(const QMap<QString, QString> & map)
   {
     for (auto it = map.begin(); it != map.end(); ++it) {
-      if (m_values.size() == 0)
-        m_separators << WhiteSpace << WhiteSpace;
-      else
-        m_separators << Comma << WhiteSpace;
-      m_values << it.key() << it.value();
-      m_units << Attribute::VU_UNKNOWN << Attribute::VU_UNKNOWN;
+      Component key(it.key().toUtf8());
+      Component value(it.value());
+      if (m_components.size() > 0)
+        key.setSeparator(COMMA);
+      append(key);
+      append(value);
     }
   }
 
@@ -61,112 +339,100 @@ namespace Valuable
 
   int StyleValue::asInt(int idx) const
   {
-    bool ok;
-    assert(m_values.size() > idx && idx >= 0);
-    auto t = m_values[idx].type();
-    if (t != QVariant::ByteArray && t != QVariant::Char && t != QVariant::String) {
-      int ret = m_values[idx].toInt(&ok);
-      if(ok) return ret;
-    }
-
-    Radiant::error("StyleValue::asInt # cannot convert %s to int", m_values[idx].typeName());
-    return 0;
+    return m_components[idx].asInt();
   }
 
   float StyleValue::asFloat(int idx) const
   {
-    bool ok;
-    assert(m_values.size() > idx && idx >= 0);
-    auto t = m_values[idx].type();
-    if (t != QVariant::ByteArray && t != QVariant::Char && t != QVariant::String) {
-      float ret = m_values[idx].toFloat(&ok);
-      if(ok) return ret;
-    }
-
-    Radiant::error("StyleValue::asFloat # cannot convert %s to float", m_values[idx].typeName());
-    return 0.f;
+    return m_components[idx].asFloat();
   }
 
   QString StyleValue::asString(int idx) const
   {
-    assert(m_values.size() > idx && idx >= 0);
-    if (m_values[idx].canConvert(QVariant::String)) {
-      return m_values[idx].toString();
-    } else {
-      Radiant::error("StyleValue::asString # cannot convert %s to string", m_values[idx].typeName());
-      return QString();
-    }
+    return m_components[idx].asString();
+  }
+
+  QByteArray StyleValue::asKeyword(int idx) const
+  {
+    return m_components[idx].asKeyword();
   }
 
   Radiant::Color StyleValue::asColor(int idx) const
   {
-    assert(m_values.size() > idx && idx >= 0);
-    if(m_values[idx].type() == QVariant::Color) {
-      QColor color = m_values[idx].value<QColor>();
-      return Radiant::Color(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    }
-
-    Radiant::error("StyleValue::asColor # cannot convert %s to color", m_values[idx].typeName());
-    return Radiant::Color(0, 0, 0, 0);
+    return m_components[idx].asColor();
   }
 
-  int StyleValue::type(int idx) const
+  StyleValue::ValueType StyleValue::type(int idx) const
   {
-    assert(m_values.size() > idx && idx >= 0);
-    return m_values[idx].type();
+    return m_components[idx].type();
   }
 
   Attribute::ValueUnit StyleValue::unit(int idx) const
   {
-    assert(m_values.size() > idx && idx >= 0);
-    return m_units[idx];
+    return m_components[idx].unit();
   }
 
-  void StyleValue::append(const StyleValue & v, Separator sep)
+  void StyleValue::append(const StyleValue & v)
   {
     assert(v.size() >= 1);
 
-    if (m_values.isEmpty()) {
-      m_uniform = v.m_uniform;
-      m_values = v.m_values;
-      m_units = v.m_units;
-      m_separators = v.m_separators;
-      m_separators[0] = sep;
+    if (m_components.isEmpty()) {
+      m_isUniform = v.m_isUniform;
+      m_components = v.m_components;
       return;
     }
 
-    const QVariant & v1 = v.m_values[0];
-    if(m_uniform && v.m_uniform) {
-      const QVariant & v2 = m_values.last();
-      m_uniform = v2.canConvert(v1.type()) && (isNumber(m_values.size() - 1) == v.isNumber());
-    } else {
-      m_uniform = false;
+    for (const auto & c: v.m_components)
+      append(c);
+  }
+
+  void StyleValue::append(const StyleValue & v, StyleValue::Separator separator)
+  {
+    StyleValue styleValue(v);
+    styleValue.m_components[0].setSeparator(separator);
+    append(styleValue);
+  }
+
+  void StyleValue::append(const StyleValue::Component & c)
+  {
+    if (m_isUniform && m_components.size() > 0) {
+      m_isUniform = m_components.back().unit() == c.unit() &&
+          m_components.back().separator() == c.separator() &&
+          canConvertType(m_components.back().type(), c.type());
     }
-    for (int i = 0; i < v.m_values.size(); ++i) {
-      m_values << v.m_values[i];
-      m_units << v.m_units[i];
-      m_separators << (i == 0 ? sep : v.m_separators[i]);
-    }
+    m_components << c;
+  }
+
+  void StyleValue::append(const StyleValue::Component & c, StyleValue::Separator separator)
+  {
+    StyleValue::Component component(c);
+    component.setSeparator(separator);
+    append(component);
   }
 
   int StyleValue::size() const
   {
-    return m_values.size();
+    return m_components.size();
   }
 
-  bool StyleValue::uniform() const
+  bool StyleValue::isEmpty() const
   {
-    return m_uniform;
+    return m_components.isEmpty();
+  }
+
+  bool StyleValue::isUniform() const
+  {
+    return m_isUniform;
   }
 
   QString StyleValue::stringify() const
   {
     QStringList out;
 
-    for(int i = 0, s = m_values.size(); i < s; ++i) {
-      const QVariant v = m_values[i];
-      const int unit = m_units[i];
-      const Separator separator = m_separators[i];
+    for(int i = 0, s = m_components.size(); i < s; ++i) {
+      const auto & v = m_components[i];
+      const int unit = v.unit();
+      const Separator separator = v.separator();
 
       QString unitstr;
       if(unit == Attribute::VU_PXS)
@@ -176,28 +442,29 @@ namespace Valuable
       else if(unit == Attribute::VU_EXS)
         unitstr = "ex";
 
-      QVariant::Type t = v.type();
+      auto t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
-        out << QString::number(v.toDouble() * 100.0) + "%";
-      } else if(t == QVariant::Bool || t == QVariant::Int || t == QVariant::Double || int(t) == QMetaType::Float) {
-        out << v.toString() + unitstr;
-      } else if(t == QVariant::ByteArray) {
-        out << v.toByteArray();
-      } else if(t == QVariant::String) {
-        out << "\"" + v.toString() + "\"";
-      } else if(t == QVariant::Color) {
-        QColor c = v.value<QColor>();
+        out << QString("%1%%").arg(v.asFloat() * 100.0);
+      } else if(t == TYPE_INT || t == TYPE_FLOAT) {
+        out << QString::number(v.asFloat()) + unitstr;
+      } else if(t == TYPE_KEYWORD) {
+        out << v.asKeyword();
+      } else if(t == TYPE_STRING) {
+        out << "\"" + v.asString() + "\"";
+      } else if(t == TYPE_COLOR) {
+        /// @todo we lose information here
+        auto c = v.asColor().toQColor();
         out << QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
                arg(c.green(), 2, 16, QLatin1Char('0')).
                arg(c.blue(), 2, 16, QLatin1Char('0')).
                arg(c.alpha(), 2, 16, QLatin1Char('0'));
       } else {
-        Radiant::error("StyleValue::stringify # Unknown variant type %d (%s)", t, v.typeName());
+        Radiant::error("StyleValue::stringify # Unknown component type %d (%s)", t, v.typeName());
         continue;
       }
-      if (separator == Comma) {
+      if (separator == COMMA) {
         out << ",";
-      } else if (separator == Slash) {
+      } else if (separator == SLASH) {
         out << "/";
       }
     }
@@ -207,40 +474,30 @@ namespace Valuable
 
   bool StyleValue::isNumber(int idx) const
   {
-    int t = type(idx);
-    return t == QVariant::Int || t == QMetaType::Float;
+    auto t = type(idx);
+    return t == TYPE_INT || t == TYPE_FLOAT;
   }
 
-  StyleValue StyleValue::operator[](int idx) const
+  const StyleValue::Component & StyleValue::operator[](int idx) const
   {
-    assert(m_values.size() > idx && idx >= 0);
-    StyleValue v(m_values[idx]);
-    v.m_units[0] = m_units[idx];
-    return v;
+    return m_components[idx];
   }
 
   bool StyleValue::operator==(const StyleValue & v) const
   {
-    return m_uniform == v.m_uniform &&
-        m_values == v.m_values &&
-        m_units == v.m_units &&
-        m_separators == v.m_separators;
+    return m_isUniform == v.m_isUniform &&
+        m_components == v.m_components;
   }
 
-  QList<StyleValue::Group> StyleValue::groups(Separator sep) const
+  QList<StyleValue> StyleValue::split(Separator sep) const
   {
-    QList<Group> all;
-    for (int i = 0; i < m_values.size(); ++i) {
-      if (i == 0 || m_separators[i] == sep) {
-        Group g;
-        g.units << m_units[i];
-        g.values << m_values[i];
-        g.separators << m_separators[i];
-        all << g;
+    QList<StyleValue> all;
+    for (int i = 0; i < m_components.size(); ++i) {
+      const Component & c = m_components[i];
+      if (i == 0 || c.separator() == sep) {
+        all << c;
       } else {
-        all.back().units << m_units[i];
-        all.back().values << m_values[i];
-        all.back().separators << m_separators[i];
+        all.back().append(c);
       }
     }
     return all;
@@ -249,17 +506,26 @@ namespace Valuable
   QMap<QString, QString> StyleValue::asMap() const
   {
     QMap<QString, QString> map;
-    for (auto group: groups(Comma)) {
+    for (auto group: split(COMMA)) {
       QStringList tmp;
-      for (auto v: group.values.mid(1))
-        tmp << v.toString();
-      map[group.values[0].toString()] = tmp.join(" ");
+      for (auto v: group.components().mid(1))
+        tmp << v.asString();
+      map[group[0].asString()] = tmp.join(" ");
     }
     return map;
+  }
+
+  QList<Attribute::ValueUnit> StyleValue::units() const
+  {
+    QList<Attribute::ValueUnit> tmp;
+    for (auto & c: m_components)
+      tmp << c.unit();
+    return tmp;
   }
 
   std::ostream & operator<<(std::ostream & os, const StyleValue & value)
   {
     return os << value.stringify().toUtf8().data();
   }
+
 }

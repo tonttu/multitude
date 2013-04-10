@@ -47,7 +47,7 @@ win32 {
     DLLDESTDIR = $$PWD/bin
 
   # Optimized debug libraries
-  build_pass:CONFIG(debug,debug|release) {
+  CONFIG(debug,debug|release) {
     CONFIG(optimized) {
       # Set optimization level
       QMAKE_CFLAGS_DEBUG += -O2

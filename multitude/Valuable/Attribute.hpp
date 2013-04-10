@@ -108,7 +108,6 @@ namespace Valuable
       @see Node
   */
 
-  /// @todo eventProcess should be renamed to eventProcess (can be tricky to do)
   /// @todo Doc
   class VALUABLE_API Attribute : public Serializable
   {
@@ -222,6 +221,10 @@ namespace Valuable
     void eventProcessVector3(const char * id, Nimble::Vector3);
     /// Utility function for sending a Vector4 message to the object
     void eventProcessVector4(const char * id, Nimble::Vector4);
+
+    /// @deprecated use eventProcess instead
+    MULTI_ATTR_DEPRECATED("processMessage was renamed to eventProcess",
+                          virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) FINAL);
 
     /// Converts the value object in a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error

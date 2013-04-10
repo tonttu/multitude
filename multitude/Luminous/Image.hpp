@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_IMAGE_HPP
@@ -48,53 +48,72 @@ namespace Luminous
   class LUMINOUS_API Image
   {
   public:
+    /// Construct an empty image
     Image();
-    /// Constructs a deep copy
+    /// Copy constructor
+    /// @param img image to copy
     Image(const Image& img);
     /// Move constructor
+    /// @param img image to move
     Image(Image && img);
+    /// Destructor
     virtual ~Image();
 
     /// Allocates memory, for an image of given size and format
+    /// @param width width in pixels
+    /// @param height height in pixels
+    /// @param pf pixel format
     void allocate(int width, int height, const PixelFormat & pf);
 
-    /// Returns the aspect ration of the image (if defined)
+    /// Get the aspect ratio (width / height) of the image
+    /// @return aspect ratio
     float aspect() const { return (float)m_width / (float)m_height; }
 
-    /// The width ofthe image in pixels
+    /// Get the image width
+    /// @return width in pixels
     int width() const { return m_width; }
-    /// The height of the image in pixels
+    /// Get the image height
+    /// @return height in pixels
     int height() const { return m_height; }
-    /// The size of the image in pixels
+    /// Get the image size
+    /// @return image size in pixels
     Nimble::Vector2i size() const
     { return Nimble::Vector2i(m_width, m_height); }
     /// The number of bytes a single line in the image takes
+    /// @return line size in bytes
     int lineSize() const { return m_width * m_pixelFormat.bytesPerPixel(); }
-    /// Returns a pointer to a specific line
+    /// Get a pointer to image data on specific line
+    /// @param y line to query for
+    /// @return pointer to beginning of the line
     unsigned char* line(unsigned y) { return &m_data[y * lineSize()]; }
-
+    /// @copydoc line
     const unsigned char* line(unsigned y) const { return &m_data[y * lineSize()]; }
 
-    /// Returns a pointer to the image data
+    /// Get a pointer to image data
+    /// @return pointer to image data
     unsigned char * bytes() { return & m_data[0]; }
-    /// Returns a const pointer to the image data
+    /// @copydoc bytes
     const unsigned char * bytes() const { return & m_data[0]; }
 
-    /// Returns a pointer to the image data
+    /// @copydoc bytes
     unsigned char * data() { return & m_data[0]; }
-    /// Returns a const pointer to the image data
+    /// @copydoc bytes
     const unsigned char * data() const { return & m_data[0]; }
 
-    /// Check if a file is readable, and returns its core information
+    /// Get basic image information from a file. This function does not decode
+    /// the actual image data, typically just the header.
+    /// @param filename filename to query
+    /// @param[out] info image information
+    /// @return true if the operation was successful; otherwise false
     static bool ping(const QString & filename, ImageInfo & info);
 
-    /** Read a file to this Image object.
-    @param filename name of the file to read from
-    @return true if the image was successfully read */
+    /// Load an image from the given filename.
+    /// @param filename name of the file to read from
+    /// @return true if the image was successfully read
     bool read(const QString & filename);
-    /** Write this Image to a file.
-    @param filename name of the file to write to
-    @return true if the image was successfully written*/
+    /// Save the image to a file
+    /// @param filename name of the file to write to
+    /// @return true if the image was successfully written
     bool write(const QString & filename) const;
 
     /** Create an image object from data provided by the user.
@@ -117,7 +136,8 @@ namespace Luminous
     void clear();
 
     /// Returns true if the image does not contain any data.
-    bool empty() const { return (m_data == 0); }
+    /// @return true if the data is nullptr; otherwise false
+    bool isEmpty() const { return (m_data == 0); }
 
     /// Flip the image upside down
     void flipVertical();
@@ -131,6 +151,11 @@ namespace Luminous
     */
     bool copyResample(const Image & source, int w, int h);
 
+    /// Scale an image to a smaller size. The given width and height should be
+    /// smaller than in the source image.
+    /// @param src source image
+    /// @param w new width
+    /// @param h new height
     void minify(const Image & src, int w, int h);
 
     /** Down-sample the given image to quarter size.
@@ -177,24 +202,36 @@ namespace Luminous
     /// Fills the image with zeros
     void zero();
 
-    /// Gets the color of a given pixel.
-    /** The color is normalized, with each component in range 0-1.
-    @param x pixel x coordinate
-    @param y pixel y coordinate
-    @return color at the given pixel */
+    /// Gets the color of a given pixel. The color is normalized, with each
+    /// component in range 0-1.
+    /// @param x pixel x coordinate
+    /// @param y pixel y coordinate
+    /// @return color at the given pixel
     Nimble::Vector4 pixel(unsigned x, unsigned y) const;
 
+    /// Get a pixel from the image. This function does additional checks for
+    /// make sure the requested pixels are within the image. If the requested
+    /// pixel falls outside the image, transparent color is returned. The color
+    /// is normalized.
+    /// @param x pixel x coordinate
+    /// @param y pixel y coordinate
+    /// @return pixel color
     Nimble::Vector4 safePixel(int x, int y) const;
 
+    /// Set a pixel to given color. The color must be normalized.
+    /// @param x x coordinate of the pixel
+    /// @param y y coordinate of the pixel
+    /// @param pixel pixel color
     void setPixel(unsigned x, unsigned y, const Nimble::Vector4 & pixel);
 
     /// Increments the generation count.
     /// This function should be called when the image has been modified.
     void changed() { m_generation++; }
-    /** The generation count of the image object The generation count can be
-    used to indicate that the image has changed, and one should update the
-    corresponding OpenGL texture wo match the same generation. @return current
-    generation count*/
+
+    /// The generation count of the image object The generation count can be used
+    /// to indicate that the image has changed, and one should update the
+    /// corresponding OpenGL texture wo match the same generation.
+    /// @return current generation count
     size_t generation() const { return m_generation; }
 
     /// Get a texture object based on the image

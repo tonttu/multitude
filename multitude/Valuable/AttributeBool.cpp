@@ -50,8 +50,8 @@ namespace Valuable
 
   bool AttributeBool::set(const StyleValue & v, Layer layer)
   {
-    if(v.size() == 1 && v.units()[0] == VU_UNKNOWN && v.values()[0].type() == QVariant::ByteArray) {
-      QByteArray ba = v.values()[0].toByteArray().toLower();
+    if(v.size() == 1 && v.type() == StyleValue::TYPE_KEYWORD) {
+      QByteArray ba = v.asKeyword().toLower();
       if(ba == "true") setValue(true, layer);
       else if(ba == "false") setValue(false, layer);
       else return false;

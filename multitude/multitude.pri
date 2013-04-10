@@ -41,8 +41,10 @@ MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscal
 CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}
 
 # On Windows, add _d for debug builds
-build_pass:CONFIG(debug,debug|release) {
-  CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}_d
+win32 {
+  CONFIG(debug,debug|release) {
+    CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}_d
+  }
 }
 
 # exists(/usr/local/lib/libftd2xx.so)|exists(/opt/multitouch-$$CORNERSTONE_VERSION_STR/lib/libftd2xx.dylib) {
@@ -162,7 +164,6 @@ win32 {
 
     WINPORT_INCLUDE = $$PWD\\Win64x\\include
     INCLUDEPATH += $$PWD\\Win64x\\include
-    INCLUDEPATH += $$PWD/../multitude/Win64x/include/ffmpeg
     QMAKE_LIBDIR += $$PWD/Win64x/lib64
 
     exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
@@ -201,7 +202,7 @@ win32 {
     }
 
     # These libs have an extra extension for debug builds
-    build_pass:CONFIG(debug,debug|release) {
+    CONFIG(debug,debug|release) {
       LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
       enable-js:LIB_V8 = -lv8_d -lnode_d
     }

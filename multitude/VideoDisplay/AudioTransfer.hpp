@@ -18,6 +18,8 @@
 
 #include <Resonant/Module.hpp>
 
+/// @cond
+
 namespace VideoDisplay
 {
   class DecodedAudioBuffer
@@ -53,12 +55,12 @@ namespace VideoDisplay
     std::vector<AlignedFloatVector> m_data;
   };
 
-  class AVDecoderFFMPEG;
+  class LibavDecoder;
 
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(AVDecoderFFMPEG *, int channels);
+    AudioTransfer(LibavDecoder *, int channels);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
@@ -88,5 +90,7 @@ namespace VideoDisplay
     D * m_d;
   };
 }
+
+/// @endcond
 
 #endif // VIDEODISPLAY_AUDIO_TRANSFER2_HPP

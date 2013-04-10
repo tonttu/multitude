@@ -11,7 +11,7 @@
 // For PRIx64
 #define __STDC_FORMAT_MACROS
 
-#include "AVDecoderFFMPEG.hpp"
+#include "LibavDecoder.hpp"
 #include "MemoryPool.hpp"
 #include "AudioTransfer.hpp"
 
@@ -150,7 +150,7 @@ namespace
     ++m_reader;
   }
 
-  int ffmpegLock(void ** mutexPtr, enum AVLockOp op)
+  int libavLock(void ** mutexPtr, enum AVLockOp op)
   {
     Radiant::Mutex *& mutex = reinterpret_cast<Radiant::Mutex *&>(*mutexPtr);
 
@@ -177,7 +177,7 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
-  void ffmpegLog(void *, int level, const char * fmt, va_list vl)
+  void libavLog(void *, int level, const char * fmt, va_list vl)
   {
     if(level > AV_LOG_INFO) return;
     //AVClass ** avclass = reinterpret_cast<AVClass**>(ptr);
@@ -220,14 +220,14 @@ namespace
 
 namespace VideoDisplay
 {
-  class VideoFrameFFMPEG : public VideoFrame
+  class VideoFrameLibav : public VideoFrame
   {
   public:
-    VideoFrameFFMPEG() : VideoFrame(), bufferRef(nullptr) {}
+    VideoFrameLibav() : VideoFrame(), bufferRef(nullptr) {}
     AVFilterBufferRef * bufferRef;
   };
 
-  class AVDecoderFFMPEG::D
+  class LibavDecoder::D
   {
   public:
 
@@ -270,7 +270,7 @@ namespace VideoDisplay
       int64_t last_dts;       /// DTS of the last frame
     };
 
-    D(AVDecoderFFMPEG * host)
+    D(LibavDecoder * host)
       : m_host(host)
       , m_seekGeneration(0)
       , m_running(true)
@@ -293,7 +293,7 @@ namespace VideoDisplay
       m_av.videoSize = Nimble::Size();
     }
 
-    AVDecoderFFMPEG * m_host;
+    LibavDecoder * m_host;
     int m_seekGeneration;
 
     bool m_running;
@@ -341,7 +341,7 @@ namespace VideoDisplay
     /// released. Can't run that in the main thread without locking.
     LockFreeQueue<AVFilterBufferRef*, 40> m_consumedBufferRefs;
 
-    LockFreeQueue<VideoFrameFFMPEG, 40> m_decodedVideoFrames;
+    LockFreeQueue<VideoFrameLibav, 40> m_decodedVideoFrames;
 
   public:
     bool initFilters(FilterGraph & filterGraph, const QString & description,
@@ -360,18 +360,18 @@ namespace VideoDisplay
 
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
-    VideoFrameFFMPEG * getFreeFrame(bool & setTimestampToPts, double & dpts);
+    VideoFrameLibav * getFreeFrame(bool & setTimestampToPts, double & dpts);
     void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
 
     static int getBuffer(AVCodecContext * context, AVFrame * frame);
     ///static int regetBuffer(struct AVCodecContext * context, AVFrame * frame);
     static void releaseBuffer(AVCodecContext * context, AVFrame * frame);
     static void releaseFilterBuffer(AVFilterBuffer * filterBuffer);
-    void setFormat(VideoFrameFFMPEG & frame, const AVPixFmtDescriptor & fmtDescriptor,
+    void setFormat(VideoFrameLibav & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
   };
 
-  void AVDecoderFFMPEG::D::updateSupportedPixFormats()
+  void LibavDecoder::D::updateSupportedPixFormats()
   {
     // Supported video formats
     // We support:
@@ -432,7 +432,7 @@ namespace VideoDisplay
     }
   }
 
-  QByteArray AVDecoderFFMPEG::D::supportedPixFormatsStr()
+  QByteArray LibavDecoder::D::supportedPixFormatsStr()
   {
     QByteArray lst;
     for (auto format: m_pixelFormats) {
@@ -448,10 +448,10 @@ namespace VideoDisplay
     return lst;
   }
 
-  bool AVDecoderFFMPEG::D::initFilters(FilterGraph & filterGraph,
+  bool LibavDecoder::D::initFilters(FilterGraph & filterGraph,
                                        const QString & description, bool video)
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::initFilters # " + m_options.source().toUtf8() +
+    QByteArray errorMsg("LibavDecoder::D::initFilters # " + m_options.source().toUtf8() +
                         " " + (video ? "video" : "audio") +":");
 
     AVFilter * buffersrc = nullptr;
@@ -503,7 +503,7 @@ namespace VideoDisplay
         av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
                                      m_av.audioCodecContext->channels, m_av.audioCodecContext->channel_layout);
 
-        /// @todo ffmpeg application uses AVStream instead of codec context to
+        /// @todo "ffmpeg" application uses AVStream instead of codec context to
         ///       read time_base, is this wrong?
         args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
                      m_av.audioCodecContext->time_base.num,
@@ -570,7 +570,7 @@ namespace VideoDisplay
     return false;
   }
 
-  bool AVDecoderFFMPEG::D::open()
+  bool LibavDecoder::D::open()
   {
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
@@ -582,7 +582,7 @@ namespace VideoDisplay
       src = srcs.front();
 
 
-    QByteArray errorMsg("AVDecoderFFMPEG::D::open # " + src.toUtf8() + ":");
+    QByteArray errorMsg("LibavDecoder::D::open # " + src.toUtf8() + ":");
 
     if(!m_options.demuxerOptions().isEmpty()) {
       for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
@@ -757,7 +757,7 @@ namespace VideoDisplay
     if(m_av.videoCodecContext) {
       if(m_av.videoCodecContext && (m_av.videoCodec->capabilities & CODEC_CAP_DR1)) {
         m_av.videoCodecContext->get_buffer = getBuffer;
-        //videoCodecContext->reget_buffer = AVDecoderFFMPEG::D::regetBuffer;
+        //videoCodecContext->reget_buffer = LibavDecoder::D::regetBuffer;
         m_av.videoCodecContext->release_buffer = releaseBuffer;
         m_av.dr1 = true;
       } else {
@@ -840,7 +840,7 @@ namespace VideoDisplay
     av_init_packet(&m_av.packet);
 
     // In theory we could write this, but we wouldn't be binary-compatible with
-    // different ffmpeg versions:
+    // different libav versions:
     // AVFrame avFrame;
     // avcodec_get_frame_defaults(&avFrame);
     m_av.frame = avcodec_alloc_frame();
@@ -893,7 +893,7 @@ namespace VideoDisplay
     return true;
   }
 
-  void AVDecoderFFMPEG::D::close()
+  void LibavDecoder::D::close()
   {
     m_av.duration = 0;
     m_av.videoSize = Nimble::Size();
@@ -920,7 +920,7 @@ namespace VideoDisplay
     m_audioTransfer = nullptr;
   }
 
-  bool AVDecoderFFMPEG::D::seekToBeginning()
+  bool LibavDecoder::D::seekToBeginning()
   {
     int err = 0;
     if(m_av.seekingSupported) {
@@ -937,7 +937,7 @@ namespace VideoDisplay
                                  std::numeric_limits<int64_t>::max(), 0);
       }
       if(err < 0) {
-        avError(QString("AVDecoderFFMPEG::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.source()), err);
+        avError(QString("LibavDecoder::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.source()), err);
         close();
         return open();
       } else {
@@ -958,9 +958,9 @@ namespace VideoDisplay
     return true;
   }
 
-  bool AVDecoderFFMPEG::D::seek()
+  bool LibavDecoder::D::seek()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::seek # " + m_options.source().toUtf8() + ":");
+    QByteArray errorMsg("LibavDecoder::D::seek # " + m_options.source().toUtf8() + ":");
 
     if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
@@ -1063,10 +1063,10 @@ namespace VideoDisplay
     return true;
   }
 
-  VideoFrameFFMPEG * AVDecoderFFMPEG::D::getFreeFrame(bool & setTimestampToPts, double & dpts)
+  VideoFrameLibav * LibavDecoder::D::getFreeFrame(bool & setTimestampToPts, double & dpts)
   {
     while(m_running) {
-      VideoFrameFFMPEG * frame = m_decodedVideoFrames.takeFree();
+      VideoFrameLibav * frame = m_decodedVideoFrames.takeFree();
       if(frame) return frame;
       // Set this here, because another frame might be waiting for us
       // However, if we have a filter that changes pts, this might not be right.
@@ -1092,7 +1092,7 @@ namespace VideoDisplay
     return nullptr;
   }
 
-  void AVDecoderFFMPEG::D::setFormat(VideoFrameFFMPEG & frame, const AVPixFmtDescriptor & fmtDescriptor,
+  void LibavDecoder::D::setFormat(VideoFrameLibav & frame, const AVPixFmtDescriptor & fmtDescriptor,
                                      Nimble::Vector2i size)
   {
     // not exactly true for all formats, but it is true for all formats that we support
@@ -1129,7 +1129,7 @@ namespace VideoDisplay
       frame.clear(i);
   }
 
-  int64_t AVDecoderFFMPEG::D::guessCorrectPts(AVFrame * frame)
+  int64_t LibavDecoder::D::guessCorrectPts(AVFrame * frame)
   {
     int64_t reordered_pts = frame->pkt_pts;
     int64_t dts = frame->pkt_dts;
@@ -1158,7 +1158,7 @@ namespace VideoDisplay
     return pts;
   }
 
-  bool AVDecoderFFMPEG::D::decodeVideoPacket(double & dpts, double & nextDpts)
+  bool LibavDecoder::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
     const double prevDpts = dpts;
     dpts = std::numeric_limits<double>::quiet_NaN();
@@ -1167,7 +1167,7 @@ namespace VideoDisplay
     avcodec_get_frame_defaults(m_av.frame);
     int err = avcodec_decode_video2(m_av.videoCodecContext, m_av.frame, &gotPicture, &m_av.packet);
     if(err < 0) {
-      avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: Failed to decode a video frame").
+      avError(QString("LibavDecoder::D::decodeVideoPacket # %1: Failed to decode a video frame").
               arg(m_options.source()), err);
       return false;
     }
@@ -1179,7 +1179,7 @@ namespace VideoDisplay
 
     dpts = m_av.videoTsToSecs * pts;
 
-    VideoFrameFFMPEG * frame = 0;
+    VideoFrameLibav * frame = 0;
     bool setTimestampToPts = false;
 
     DecodedImageBuffer * buffer = nullptr;
@@ -1198,13 +1198,13 @@ namespace VideoDisplay
         avfilter_copy_frame_props(ref, m_av.frame);
 
       if(buffer) {
-        ref->buf->priv = new std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *>(this, buffer);
+        ref->buf->priv = new std::pair<LibavDecoder::D *, DecodedImageBuffer *>(this, buffer);
         ref->buf->free = releaseFilterBuffer;
       }
 
       int err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
       if(err < 0) {
-        avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
+        avError(QString("LibavDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
                 arg(m_options.source()), err);
         avfilter_unref_buffer(ref);
       } else {
@@ -1219,7 +1219,7 @@ namespace VideoDisplay
           if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
             break;
           if (err < 0) {
-            avError(QString("AVDecoderFFMPEG::D::decodeVideoPacket # %1: av_buffersink_read failed").
+            avError(QString("LibavDecoder::D::decodeVideoPacket # %1: av_buffersink_read failed").
                     arg(m_options.source()), err);
             break;
           }
@@ -1282,7 +1282,7 @@ namespace VideoDisplay
       if(!buffer) {
         buffer = m_imageBuffers.get();
         if(!buffer) {
-          Radiant::error("AVDecoderFFMPEG::D::decodeVideoPacket # %s: Not enough ImageBuffers",
+          Radiant::error("LibavDecoder::D::decodeVideoPacket # %s: Not enough ImageBuffers",
                          m_options.source().toUtf8().data());
           for(int i = 0; i < frame->planes(); ++i)
             frame->setData(i, nullptr);
@@ -1321,7 +1321,7 @@ namespace VideoDisplay
     return true;
   }
 
-  bool AVDecoderFFMPEG::D::decodeAudioPacket(double & dpts, double & nextDpts)
+  bool LibavDecoder::D::decodeAudioPacket(double & dpts, double & nextDpts)
   {
     AVPacket packet = m_av.packet;
     bool gotFrames = false;
@@ -1333,7 +1333,7 @@ namespace VideoDisplay
       const int consumedBytes = avcodec_decode_audio4(m_av.audioCodecContext, m_av.frame,
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
-        avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: Audio decoding error").
+        avError(QString("LibavDecoder::D::decodeAudioPacket # %1: Audio decoding error").
                 arg(m_options.source()), consumedBytes);
         break;
       }
@@ -1352,7 +1352,7 @@ namespace VideoDisplay
               m_av.frame->nb_samples, (AVSampleFormat)m_av.frame->format, m_av.frame->channel_layout);
           ref->buf->free = [](AVFilterBuffer *ptr) { av_free(ptr); };
           if (!ref) {
-            Radiant::error("AVDecoderFFMPEG::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
+            Radiant::error("LibavDecoder::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
                            m_options.source().toUtf8().data());
           } else {
             avfilter_copy_frame_props(ref, m_av.frame);
@@ -1364,7 +1364,7 @@ namespace VideoDisplay
                 break;
 
               if (err < 0) {
-                avError(QString("AVDecoderFFMPEG::D::decodeAudioPacket # %1: av_buffersink_read failed").
+                avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
                         arg(m_options.source()), err);
                 break;
               }
@@ -1419,7 +1419,7 @@ namespace VideoDisplay
 
   // This function basically follows the same pattern that is used inside ffmpeg,
   // with some fixes and our custom buffer memory management
-  int AVDecoderFFMPEG::D::getBuffer(AVCodecContext * context, AVFrame * frame)
+  int LibavDecoder::D::getBuffer(AVCodecContext * context, AVFrame * frame)
   {
     frame->opaque = nullptr;
 
@@ -1483,10 +1483,10 @@ namespace VideoDisplay
     const int totalsize = size[0] + size[1] + size[2] + size[3] + (lastPlane+1)*16;
 
     assert(context->opaque);
-    AVDecoderFFMPEG::D & d = *static_cast<AVDecoderFFMPEG::D*>(context->opaque);
+    LibavDecoder::D & d = *static_cast<LibavDecoder::D*>(context->opaque);
     DecodedImageBuffer * buffer = d.m_imageBuffers.get();
     if(!buffer) {
-      Radiant::error("AVDecoderFFMPEG::D::getBuffer # %s: not enough ImageBuffers",
+      Radiant::error("LibavDecoder::D::getBuffer # %s: not enough ImageBuffers",
                      d.m_options.source().toUtf8().data());
       return -1;
     }
@@ -1522,7 +1522,7 @@ namespace VideoDisplay
     if(size[1] && !size[2])
       avpriv_set_systematic_pal2((uint32_t*)frame->data[1], context->pix_fmt);
 
-    // Tell ffmpeg not to do anything weird with this buffer, since this is ours
+    // Tell libav not to do anything weird with this buffer, since this is ours
     frame->type = FF_BUFFER_TYPE_USER;
 
     frame->extended_data = frame->data;
@@ -1548,7 +1548,7 @@ namespace VideoDisplay
   ///       a) make a copy, b) increase use count, c) do nothing with the
   ///       actual ImageBuffer or d) use base implementation.
   ///       We don't know if releaseBuffer will be called twice or once.
-  /*int AVDecoderFFMPEG::D::regetBuffer(AVCodecContext * context, AVFrame * frame)
+  /*int LibavDecoder::D::regetBuffer(AVCodecContext * context, AVFrame * frame)
   {
     if(!frame->data[0])
       return context->get_buffer(context, frame);
@@ -1558,7 +1558,7 @@ namespace VideoDisplay
     return 0;
   }*/
 
-  void AVDecoderFFMPEG::D::releaseBuffer(struct AVCodecContext * context, AVFrame * frame)
+  void LibavDecoder::D::releaseBuffer(struct AVCodecContext * context, AVFrame * frame)
   {
     assert(context->opaque);
     assert(frame->opaque);
@@ -1566,16 +1566,16 @@ namespace VideoDisplay
 
     DecodedImageBuffer & buffer = *static_cast<DecodedImageBuffer*>(frame->opaque);
     if(!buffer.deref()) {
-      AVDecoderFFMPEG::D & d = *static_cast<AVDecoderFFMPEG::D *>(context->opaque);
+      LibavDecoder::D & d = *static_cast<LibavDecoder::D *>(context->opaque);
       d.m_imageBuffers.put(buffer);
     }
     frame->opaque = nullptr;
     memset(frame->data, 0, sizeof(frame->data));
   }
 
-  void AVDecoderFFMPEG::D::releaseFilterBuffer(AVFilterBuffer * filterBuffer)
+  void LibavDecoder::D::releaseFilterBuffer(AVFilterBuffer * filterBuffer)
   {
-    auto * param = static_cast<std::pair<AVDecoderFFMPEG::D *, DecodedImageBuffer *> *>(filterBuffer->priv);
+    auto * param = static_cast<std::pair<LibavDecoder::D *, DecodedImageBuffer *> *>(filterBuffer->priv);
 
     if(!param->second->deref())
       param->first->m_imageBuffers.put(*param->second);
@@ -1584,7 +1584,7 @@ namespace VideoDisplay
     delete param;
   }
 
-  void AVDecoderFFMPEG::D::checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts)
+  void LibavDecoder::D::checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts)
   {
     if((m_seekRequest.type() != SEEK_NONE)) {
       if(seek()) {
@@ -1597,13 +1597,13 @@ namespace VideoDisplay
     }
   }
 
-  AVDecoderFFMPEG::AVDecoderFFMPEG()
+  LibavDecoder::LibavDecoder()
     : m_d(new D(this))
   {
-    Thread::setName("AVDecoderFFMPEG");
+    Thread::setName("LibavDecoder");
   }
 
-  AVDecoderFFMPEG::~AVDecoderFFMPEG()
+  LibavDecoder::~LibavDecoder()
   {
     close();
     while(true) {
@@ -1618,12 +1618,12 @@ namespace VideoDisplay
     delete m_d;
   }
 
-  AVDecoder::PlayMode AVDecoderFFMPEG::playMode() const
+  AVDecoder::PlayMode LibavDecoder::playMode() const
   {
     return m_d->m_options.playMode();
   }
 
-  void AVDecoderFFMPEG::setPlayMode(AVDecoder::PlayMode mode)
+  void LibavDecoder::setPlayMode(AVDecoder::PlayMode mode)
   {
     if(m_d->m_options.playMode() == mode)
       return;
@@ -1637,10 +1637,10 @@ namespace VideoDisplay
       m_d->m_radiantTimestampToPts -= m_d->m_pauseTimestamp.sinceSecondsD();
   }
 
-  Timestamp AVDecoderFFMPEG::getTimestampAt(const Radiant::TimeStamp & ts) const
+  Timestamp LibavDecoder::getTimestampAt(const Radiant::TimeStamp & ts) const
   {
     if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
-      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
+      VideoFrameLibav * frame = m_d->m_decodedVideoFrames.lastReadyItem();
       if(frame)
         return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
     }
@@ -1661,19 +1661,19 @@ namespace VideoDisplay
     return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
   }
 
-  Timestamp AVDecoderFFMPEG::latestDecodedVideoTimestamp() const
+  Timestamp LibavDecoder::latestDecodedVideoTimestamp() const
   {
-    VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
+    VideoFrameLibav * frame = m_d->m_decodedVideoFrames.lastReadyItem();
     if (frame) {
       return frame->timestamp();
     } else return Timestamp();
   }
 
-  VideoFrame * AVDecoderFFMPEG::getFrame(const Timestamp & ts) const
+  VideoFrame * LibavDecoder::getFrame(const Timestamp & ts) const
   {
-    VideoFrameFFMPEG * ret = 0;
+    VideoFrameLibav * ret = 0;
     for(int i = 0;; ++i) {
-      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(i);
+      VideoFrameLibav * frame = m_d->m_decodedVideoFrames.readyItem(i);
       if(!frame) break;
 
       if(frame->timestamp().seekGeneration() < ts.seekGeneration())
@@ -1689,11 +1689,11 @@ namespace VideoDisplay
     return ret;
   }
 
-  int AVDecoderFFMPEG::releaseOldVideoFrames(const Timestamp & ts, bool * eof)
+  int LibavDecoder::releaseOldVideoFrames(const Timestamp & ts, bool * eof)
   {
     int frameIndex = 0;
     for(;; ++frameIndex) {
-      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem(frameIndex);
+      VideoFrameLibav * frame = m_d->m_decodedVideoFrames.readyItem(frameIndex);
       if(!frame) break;
 
       if(frame->timestamp().seekGeneration() >= ts.seekGeneration() &&
@@ -1705,7 +1705,7 @@ namespace VideoDisplay
     --frameIndex;
 
     for(int i = 0; i < frameIndex; ++i) {
-      VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.readyItem();
+      VideoFrameLibav * frame = m_d->m_decodedVideoFrames.readyItem();
       assert(frame);
 
       DecodedImageBuffer * buffer = frame->imageBuffer();
@@ -1718,7 +1718,7 @@ namespace VideoDisplay
           *ref = frame->bufferRef;
           m_d->m_consumedBufferRefs.put();
         } else {
-          Radiant::error("AVDecoderFFMPEG::releaseOldVideoFrames # consumedBufferRefs is full, leaking memory");
+          Radiant::error("LibavDecoder::releaseOldVideoFrames # consumedBufferRefs is full, leaking memory");
         }
         frame->bufferRef = nullptr;
       }
@@ -1734,7 +1734,7 @@ namespace VideoDisplay
     return frameIndex;
   }
 
-  Nimble::Matrix4f AVDecoderFFMPEG::yuvMatrix() const
+  Nimble::Matrix4f LibavDecoder::yuvMatrix() const
   {
     if(!m_d->m_av.videoCodecContext)
       return Nimble::Matrix4f::IDENTITY;
@@ -1763,7 +1763,7 @@ namespace VideoDisplay
           0,    0,    0, 1);
   }
 
-  void AVDecoderFFMPEG::panAudioTo(Nimble::Vector2f location) const
+  void LibavDecoder::panAudioTo(Nimble::Vector2f location) const
   {
     if (m_d->m_audioTransfer) {
       char buf[128];
@@ -1781,12 +1781,12 @@ namespace VideoDisplay
     }
   }
 
-  void AVDecoderFFMPEG::audioTransferDeleted()
+  void LibavDecoder::audioTransferDeleted()
   {
     m_d->m_audioTransfer = nullptr;
   }
 
-  void AVDecoderFFMPEG::load(const Options & options)
+  void LibavDecoder::load(const Options & options)
   {
     assert(!isRunning());
     m_d->m_options = options;
@@ -1794,57 +1794,57 @@ namespace VideoDisplay
     seek(m_d->m_options.seekRequest());
   }
 
-  void AVDecoderFFMPEG::close()
+  void LibavDecoder::close()
   {
     m_d->m_running = false;
   }
 
-  Nimble::Size AVDecoderFFMPEG::videoSize() const
+  Nimble::Size LibavDecoder::videoSize() const
   {
     return m_d->m_av.videoSize;
   }
 
-  bool AVDecoderFFMPEG::isLooping() const
+  bool LibavDecoder::isLooping() const
   {
     return m_d->m_options.isLooping();
   }
 
-  void AVDecoderFFMPEG::setLooping(bool doLoop)
+  void LibavDecoder::setLooping(bool doLoop)
   {
     m_d->m_options.setLooping(doLoop);
   }
 
-  double AVDecoderFFMPEG::duration() const
+  double LibavDecoder::duration() const
   {
     return m_d->m_av.duration;
   }
 
-  void AVDecoderFFMPEG::seek(const SeekRequest & req)
+  void LibavDecoder::seek(const SeekRequest & req)
   {
     m_d->m_seekRequest = req;
   }
 
-  bool AVDecoderFFMPEG::realTimeSeeking() const
+  bool LibavDecoder::realTimeSeeking() const
   {
     return m_d->m_realTimeSeeking;
   }
 
-  void AVDecoderFFMPEG::setRealTimeSeeking(bool value)
+  void LibavDecoder::setRealTimeSeeking(bool value)
   {
     m_d->m_realTimeSeeking = value;
     if(m_d->m_audioTransfer)
       m_d->m_audioTransfer->setSeeking(value);
   }
 
-  void AVDecoderFFMPEG::childLoop()
+  void LibavDecoder::childLoop()
   {
-    QByteArray errorMsg("AVDecoderFFMPEG::D::childLoop # " + m_d->m_options.source().toUtf8() + ":");
+    QByteArray errorMsg("LibavDecoder::D::childLoop # " + m_d->m_options.source().toUtf8() + ":");
     QThread::currentThread()->setPriority(QThread::LowPriority);
 
     QByteArray src = m_d->m_options.source().toUtf8();
     s_src = src.data();
 
-    ffmpegInit();
+    libavInit();
 
     if(!m_d->open()) {
       state() = STATE_ERROR;
@@ -1882,7 +1882,7 @@ namespace VideoDisplay
         m_d->checkSeek(nextVideoDpts, videoDpts, nextAudioDpts);
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
-        VideoFrameFFMPEG * frame = m_d->m_decodedVideoFrames.lastReadyItem();
+        VideoFrameLibav * frame = m_d->m_decodedVideoFrames.lastReadyItem();
         if(frame && frame->timestamp().seekGeneration() == m_d->m_seekGeneration) {
           Radiant::Sleep::sleepMs(1);
           continue;
@@ -2023,19 +2023,19 @@ namespace VideoDisplay
     s_src = nullptr;
   }
 
-  void ffmpegInit()
+  void libavInit()
   {
     MULTI_ONCE {
-      av_log_set_callback(ffmpegLog);
+      av_log_set_callback(libavLog);
       avcodec_register_all();
       avdevice_register_all();
       av_register_all();
       avformat_network_init();
       avfilter_register_all();
 
-      int err = av_lockmgr_register(ffmpegLock);
+      int err = av_lockmgr_register(libavLock);
       if(err != 0)
-        Radiant::error("ffmpegInit # Failed to register new FFMPEG lock manager");
+        Radiant::error("libavInit # Failed to register new Libav lock manager");
     }
   }
 }

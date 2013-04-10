@@ -15,7 +15,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include <cstdint>
 
@@ -37,47 +37,89 @@ namespace Luminous
 
   /// @endcond
 
-  /// Keeps track of current OpenGL state, one instance is shared between all *GL
-  /// -classes in the same context
-  /// None of these functions actually modify any OpenGL state
+  /// Keeps track of current OpenGL state, one instance is shared between all
+  /// *GL -classes in the same rendering context. None of these functions
+  /// actually modify any OpenGL state. This class is used to minimize OpenGL
+  /// state changes to improve rendering performance.
   class StateGL
   {
   public:
-    //This would probably be more efficient if using plain array, with some
-    //safe-mechanisms, since keys are usually something like: 0,1,2,3,...
-    struct IdHash { std::size_t operator()(const GLuint& i) const { return i; } };
-    typedef std::unordered_map<GLuint, BufferMapping, IdHash> BufferMaps;
+    /// Cache to keep track of mapped buffers
+    typedef std::map<GLuint, BufferMapping> BufferMaps;
 
+    /// Constructor
+    /// @param threadIndex render thread index
+    /// @param driver render driver to use
     inline StateGL(unsigned int threadIndex, RenderDriverGL & driver);
 
-    /// Sets the current program object
+    /// Sets the current program object.
+    /// @param handle handle to the program object
     /// @return true if current program was changed
     inline bool setProgram(GLuint handle);
+    /// Get the current program object handle
+    /// @return current program object handle
     inline GLuint program() const;
 
+    /// Set the current vertex array
+    /// @param handle vertex array handle
+    /// @return true if the current vertex array was changed
     inline bool setVertexArray(GLuint handle);
+    /// Get the current vertex array
+    /// @return current vertex array handle
     inline GLuint vertexArray() const;
 
+    /// Get the render thread index this state object was associated with
+    /// @return render thread index
     inline unsigned int threadIndex() const;
 
+    /// Get the number of bytes available for uploading content to the GPU.
+    /// This limit is used to spread heavy upload operations across multiple
+    /// rendering frames to avoid stalling the application.
+    /// @return number of bytes available
     inline int64_t availableUploadBytes() const;
+
+    /// Consume the given amount of bytes from the upload budget. This function
+    /// decreases the upload budget by the given amount.
+    /// @param bytes number of bytes to consume
+    /// @sa availableUploadBytes
     inline void consumeUploadBytes(int64_t bytes);
+    /// Sets the number of available upload bytes to zero.
+    /// @sa consumeUploadBytes
     inline void clearUploadedBytes();
 
+    /// Get the cache for active buffer mappings
+    /// @return buffer mapping cache
     inline BufferMaps & bufferMaps();
 
+    /// Get the render driver associated with this state
+    /// @return render driver
     inline RenderDriverGL & driver() { return m_driver; }
 
+    /// Set the current framebuffer
+    /// @param target framebuffer target (GL_READ_FRAMEBUFFER, GL_FRAMEBUFFER, GL_DRAW_FRAMEBUFFER)
+    /// @param handle handle to the framebuffer
+    /// @return true if the current framebuffer was changed; otherwise false
     inline bool setFramebuffer(GLenum target, GLuint handle);
+    /// Get the handle to the current read framebuffer
+    /// @return framebuffer handle
     inline GLuint readFramebuffer() const;
+    /// Get the handle to the current draw framebuffer
+    /// @return framebuffer handle
     inline GLuint drawFramebuffer() const;
 
-    /// Indexing starts from zero
+    /// Set the current active texture unit. Indexing starts from zero.
+    /// @param index texture unit index
     inline bool setTextureUnit(int index);
-    /// Indexing starts from zero
+    /// Get the current active texture unit
+    /// @return active texture unit
     inline int textureUnit() const;
 
+    /// Set the frame time. The frame time is used to keep track of resource
+    /// expiration.
+    /// @param t frame time
     void setFrameTime(Radiant::TimeStamp t) { m_frameTime = t; }
+    /// Get the current frame time
+    /// @return frame time
     Radiant::TimeStamp frameTime() const { return m_frameTime; }
 
   private:

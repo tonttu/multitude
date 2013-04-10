@@ -52,7 +52,7 @@ namespace Luminous
     return *this;
   }
 
-  RenderResource::RenderResource(RenderResource & rr)
+  RenderResource::RenderResource(const RenderResource & rr)
     : m_generation(rr.m_generation)
     , m_id(RenderManager::createResource(this))
     , m_type(rr.m_type)
@@ -60,7 +60,7 @@ namespace Luminous
   {
   }
 
-  RenderResource & RenderResource::operator=(RenderResource & rr)
+  RenderResource & RenderResource::operator=(const RenderResource & rr)
   {
     if(this != &rr)
     {
