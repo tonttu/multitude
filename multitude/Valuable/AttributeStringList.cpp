@@ -41,15 +41,14 @@ namespace Valuable
 
   bool AttributeStringList::set(const StyleValue & v, Attribute::Layer layer)
   {
-    for (auto u : v.units())
-      if (u != VU_UNKNOWN)
-        return false;
-
-    QStringList lst;
-    lst.reserve(v.size());
-    for (const QVariant & var : v.values())
-      lst << var.toString();
-    setValue(lst, layer);
-    return true;
+    if (v.isUniform() && v[0].canConvert(StyleValue::TYPE_STRING)) {
+      QStringList lst;
+      lst.reserve(v.size());
+      for (const auto & var : v.components())
+        lst << var.asString();
+      setValue(lst, layer);
+      return true;
+    }
+    return false;
   }
 } // namespace Valuable
