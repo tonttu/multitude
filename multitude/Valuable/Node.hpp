@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef VALUABLE_HASVALUES_HPP
-#define VALUABLE_HASVALUES_HPP
+#ifndef VALUABLE_NODE_HPP
+#define VALUABLE_NODE_HPP
 
 #include "Export.hpp"
 #include "AttributeInt.hpp"
@@ -46,10 +46,13 @@ namespace Valuable
   class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
   {
   public:
-    /// Universally unique identifier type
+    /// Unique identifier type
     typedef int64_t Uuid;
 
+    /// Default listener function type
     typedef std::function<void ()> ListenerFuncVoid;
+    /// Listener function type that takes a BinaryData reference as a parameter,
+    /// similar to @ref eventProcess
     typedef std::function<void (Radiant::BinaryData &)> ListenerFuncBd;
 
     /// Types of event listeners
@@ -77,19 +80,26 @@ namespace Valuable
     Node(Node * host, const QByteArray &name = "", bool transit = false);
     virtual ~Node();
 
+    /// Moves a node, including all its attributes, events etc
+    /// @param node node to move
     Node(Node && node);
+    /// Moves a node, replacing this
+    /// @param node node to move
+    /// @returns reference to this
     Node & operator=(Node && node);
 
     /// Adds a new Attribute to the list of attribute objects.
     /// Copies the name of the attribute from the given object.
     bool addAttribute(Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
-    bool addValue(Attribute * const value);
+    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
+                          bool addValue(Attribute * const value));
 
     /// Adds a new Attribute to the list of attribute objects.
     bool addAttribute(const QByteArray &name, Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
-    bool addValue(const QByteArray &name, Attribute * const value);
+    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
+                          bool addValue(const QByteArray &name, Attribute * const value));
 
     /// @copydoc addAttribute
     template<typename Widget>
@@ -101,26 +111,28 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QByteArray & name) const;
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
-    virtual Attribute * getValue(const QByteArray & name) const;
+    virtual Attribute * attribute(const QByteArray & name) const;
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
+    MULTI_ATTR_DEPRECATED("Node::getValue is deprecated. Use Node::attribute instead.",
+                          virtual Attribute * getValue(const QByteArray & name) const);
 
     /// Removes an Attribute from the list of attribute objects.
     void removeAttribute(Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use removeAttribute instead.
-    void removeValue(Attribute * const value);
+    MULTI_ATTR_DEPRECATED("Node::removeValue is deprecated. Use Node::removeAttribute instead.",
+                          void removeValue(Attribute * const value));
 
     /// Clears all Attribute values of the given layer
     /// @param layer layer to clear
     void clearValues(Layer layer);
 
     /// Uses a query string to find a Attribute, and sets a new value to that if found.
-    /// @param query The path to the Attribute. This is a '/'-separated list
+    /// @param name The path to the Attribute. This is a '/'-separated list
     ///        of Attribute names, forming a path inside a Attribute tree.
     ///        ".." can be used to refer to host element. For example
     ///        setValue("../foo/bar", 4.0f) sets 4.0f to Attribute named "bar"
     ///        under Attribute "foo" that is sibling of this object.
-    /// @param value The new value
+    /// @param v The new value
     /// @return True if object was found and the value was set successfully.
     /// @todo implement similar to getValue (to avoid dynamic_cast)
     template<class T>
@@ -162,11 +174,21 @@ namespace Valuable
     }
 
 #ifdef CORNERSTONE_JS
-
+    /// Set attribute value from JavaScript
+    /// @param name attribute name
+    /// @param v attribute value. Supported types: boolean, number, string,
+    ///          list of two, three or four numbers
+    /// @returns true if conversion from JavaScript was successful, and attribute value was set
     bool setValue(const QByteArray & name, v8::Handle<v8::Value> v);
-    bool setValue(const QByteArray & name, v8::Local<v8::Value> v) {
-      return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
+
+    /// @cond
+
+    inline bool setValue(const QByteArray & name, const v8::Local<v8::Value> & v) {
+      return setValue(name, v8::Handle<v8::Value>(v));
     }
+
+    /// @endcond
+
 #endif
 
     /// Saves this object (and its children) to an XML file
@@ -199,14 +221,7 @@ namespace Valuable
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
-    /// Returns an iterator to the beginning of the values
-    iterator valuesBegin() { return m_attributes.begin(); }
-    const_iterator valuesBegin() const { return m_attributes.begin(); }
-    /// Returns an iterator to the end of the values
-    iterator valuesEnd() { return m_attributes.end(); }
-    const_iterator valuesEnd() const { return m_attributes.end(); }
-
-    const container & values() { return m_attributes; }
+    const container & attributes() { return m_attributes; }
 
     /** Add an event listener to this object.
 
@@ -361,14 +376,30 @@ namespace Valuable
     const QSet<QByteArray> & eventInNames() const { return m_eventListenNames; }
 
 #ifdef CORNERSTONE_JS
-    long addListener(const QByteArray & name, v8::Persistent<v8::Function> func,
+    /// Add a JavaScript attribute listener to attribute belonging this Node.
+    /// @param attribute Attribute name
+    /// @param func JavaScript function to call whenever attribute is changed/deleted
+    /// @param role when should the listener function be called
+    /// @returns listener id that can be used to remove the listener with Attribute::removeListener
+    long addListener(const QByteArray & attribute, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
 #endif
+    /// Triggers any pending AFTER_UPDATE-events.
+    /// This is called automatically from MultiWidgets::Application every frame.
+    /// If you don't have running application instance, or if you want to block
+    /// main thread for a longer period of time, this should be called periodically
+    /// manually to make sure all events are dispatched.
+    /// @returns number of processes items
     static int processQueue();
 
+    /// Copies attribute values from one node to another
+    /// @param from source node
+    /// @param to target node
+    /// @returns true if copying was successful
     static bool copyValues(const Node & from, Node & to);
 
     /// Queue function to be called in the main thread after the next update()
+    /// @param function function to be called
     static void invokeAfterUpdate(ListenerFuncVoid function);
 
     virtual void setAsDefaults() OVERRIDE;
@@ -380,6 +411,9 @@ namespace Valuable
     /// Sends an event to all listeners on this eventId
     void eventSend(const QByteArray & eventId);
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param p1 event parameter
     template <typename P1>
     void eventSend(const QByteArray & eventId, const P1 & p1)
     {
@@ -388,6 +422,9 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param p1,p2 event parameters
     template <typename P1, typename P2>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2)
     {
@@ -397,6 +434,9 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param p1,p2,p3 event parameters
     template <typename P1, typename P2, typename P3>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3)
     {
@@ -407,6 +447,9 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param p1,p2,p3,p4 event parameters
     template <typename P1, typename P2, typename P3, typename P4>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
     {
@@ -418,6 +461,9 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param p1,p2,p3,p4,p5 event parameters
     template <typename P1, typename P2, typename P3, typename P4, typename P5>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
     {
@@ -454,7 +500,7 @@ namespace Valuable
 
     friend class Attribute; // So that Attribute can call the function below.
 
-    void valueRenamed(const QByteArray &was, const QByteArray &now);
+    void attributeRenamed(const QByteArray & was, const QByteArray & now);
 
     container m_attributes;
 
@@ -482,8 +528,8 @@ namespace Valuable
     Sources m_eventSources;
     bool m_eventsEnabled;
 
-    // set of all valueobjects that this Node is listening to
-    QSet<Attribute*> m_valueListening;
+    // set of all attributes that this Node is listening to
+    QSet<Attribute*> m_attributeListening;
 
     Valuable::AttributeIntT<Uuid> m_id;
 

@@ -46,7 +46,7 @@ namespace Valuable
       m_listenersId(0)
   {
     if(host) {
-      host->addValue(name, this);
+      host->addAttribute(name, this);
 #ifdef MULTI_DOCUMENTER
       doc.push_back(Doc());
       Doc & d = doc.back();
@@ -89,7 +89,7 @@ namespace Valuable
   void Attribute::setName(const QByteArray & s)
   {
     if(host())
-      host()->valueRenamed(m_name, s);
+      host()->attributeRenamed(m_name, s);
 
     m_name = s;
   }
@@ -201,10 +201,10 @@ namespace Valuable
 
   Attribute * Attribute::getValue(const QByteArray & name) const
   {
-    return getAttribute(name);
+    return attribute(name);
   }
 
-  Attribute * Attribute::getAttribute(const QByteArray & ) const
+  Attribute * Attribute::attribute(const QByteArray & ) const
   {
     return nullptr;
   }
@@ -243,7 +243,7 @@ namespace Valuable
 #endif
         } else l.func();
       }
-      if(l.listener) l.listener->m_valueListening.remove(this);
+      if(l.listener) l.listener->m_attributeListening.remove(this);
     }
     m_listeners.clear();
   }
@@ -251,7 +251,7 @@ namespace Valuable
   void Attribute::removeHost()
   {
     if(m_host) {
-      m_host->removeValue(this);
+      m_host->removeAttribute(this);
       m_host = 0;
     }
   }
@@ -265,7 +265,7 @@ namespace Valuable
   {
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role, listener);
-    if(listener) listener->m_valueListening << this;
+    if(listener) listener->m_attributeListening << this;
     return id;
   }
 
@@ -297,7 +297,7 @@ namespace Valuable
       for(const AttributeListener & l : m_listeners)
         if(l.listener == listener) { found = true; break; }
       if(!found)
-        listener->m_valueListening.remove(this);
+        listener->m_attributeListening.remove(this);
     }
   }
 
@@ -305,7 +305,7 @@ namespace Valuable
   {
     QMap<long, AttributeListener>::iterator it = m_listeners.find(id);
     if(it == m_listeners.end()) return;
-    if(it->listener) it->listener->m_valueListening.remove(this);
+    if(it->listener) it->listener->m_attributeListening.remove(this);
     m_listeners.erase(it);
   }
 

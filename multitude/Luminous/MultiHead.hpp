@@ -321,7 +321,7 @@ namespace Luminous {
       void deleteAreas()
       {
         for (auto area: m_areas) {
-          removeValue(area.get());
+          removeAttribute(area.get());
           area->eventRemoveListener(m_screen);
         }
         m_areas.clear();
@@ -451,7 +451,7 @@ namespace Luminous {
       {
         //delete window's areas
         it->get()->deleteAreas();
-        removeValue(it->get());
+        removeAttribute(it->get());
       }
       m_windows.clear();
     }

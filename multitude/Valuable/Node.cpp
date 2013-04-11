@@ -152,7 +152,7 @@ namespace Valuable
 
   Node::~Node()
   {
-    // Host of HasValues class member ValueObjects must be zeroed to avoid double-delete
+    // Host of Node class member Attributes must be zeroed to avoid double-delete
     m_id.removeHost();
 
     while(!m_eventSources.empty()) {
@@ -167,7 +167,7 @@ namespace Valuable
 
     }
 
-    foreach(Attribute* vo, m_valueListening) {
+    foreach(Attribute* vo, m_attributeListening) {
       for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
         if(it->listener == this) {
           it = vo->m_listeners.erase(it);
@@ -193,7 +193,7 @@ namespace Valuable
       }
     }
 
-    // Release memory for any value objects that are left (should be only
+    // Release memory for any attributes that are left (should be only
     // heap-allocated at this point)
     while(!m_attributes.empty())
       delete m_attributes.begin()->second;
@@ -206,7 +206,7 @@ namespace Valuable
     , m_elisteners(std::move(node.m_elisteners))
     , m_eventSources(std::move(node.m_eventSources))
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
-    , m_valueListening(std::move(node.m_valueListening))
+    , m_attributeListening(std::move(node.m_attributeListening))
     , m_id(std::move(node.m_id))
     , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
@@ -223,7 +223,7 @@ namespace Valuable
     m_elisteners = std::move(node.m_elisteners);
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
-    m_valueListening = std::move(node.m_valueListening);
+    m_attributeListening = std::move(node.m_attributeListening);
     m_id = std::move(node.m_id);
     m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
@@ -234,10 +234,10 @@ namespace Valuable
 
   Attribute * Node::getValue(const QByteArray & name) const
   {
-    return Node::getAttribute(name);
+    return Node::attribute(name);
   }
 
-  Attribute * Node::getAttribute(const QByteArray & name) const
+  Attribute * Node::attribute(const QByteArray & name) const
   {
     size_t slashIndex = name.indexOf('/');
 
@@ -250,9 +250,9 @@ namespace Valuable
       const QByteArray part1 = name.left(slashIndex);
       const QByteArray part2 = name.mid(slashIndex + 1);
 
-      const Attribute * attribute = getAttribute(part1);
-      if(attribute) {
-        return attribute->getAttribute(part2);
+      const Attribute * attr = attribute(part1);
+      if(attr) {
+        return attr->attribute(part2);
       }
     }
 
@@ -274,35 +274,35 @@ namespace Valuable
     return Node::addAttribute(cname, value);
   }
 
-  bool Node::addAttribute(const QByteArray & cname, Attribute * const value)
+  bool Node::addAttribute(const QByteArray & cname, Attribute * const attribute)
   {
     //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
 
-    // Check values
+    // Check attributes
     if(m_attributes.find(cname) != m_attributes.end()) {
       Radiant::error(
-          "Node::addAttribute # can not add value '%s' as '%s' "
-          "already has a value with the same name.",
+          "Node::addAttribute # can not add attribute '%s' as '%s' "
+          "already has an attribute with the same name.",
           cname.data(), m_name.data());
       return false;
     }
 
     // Unlink host if necessary
-    Node * host = value->host();
+    Node * host = attribute->host();
     if(host) {
       Radiant::error(
           "Node::addAttribute # '%s' already has a host '%s'. "
           "Unlinking it to set new host.",
           cname.data(), host->name().data());
-      value->removeHost();
+      attribute->removeHost();
     }
 
-    // Change the value name
-    value->setName(cname);
+    // Change the attribute name
+    attribute->setName(cname);
 
-    m_attributes[value->name()] = value;
-    value->m_host  = this;
-    attributeAdded(value);
+    m_attributes[attribute->name()] = attribute;
+    attribute->m_host  = this;
+    attributeAdded(attribute);
 
     return true;
   }
@@ -312,19 +312,19 @@ namespace Valuable
     Node::removeAttribute(value);
   }
 
-  void Node::removeAttribute(Attribute * const value)
+  void Node::removeAttribute(Attribute * const attribute)
   {
     for (auto it = m_attributes.begin(), end = m_attributes.end(); it != end; ++it) {
-      if (it->second == value) {
+      if (it->second == attribute) {
         m_attributes.erase(it);
-        value->m_host = nullptr;
-        attributeRemoved(value);
+        attribute->m_host = nullptr;
+        attributeRemoved(attribute);
         return;
       }
     }
 
-    Radiant::error("Node::removeValue # '%s' is not a child value of '%s'.",
-                   value->name().data(), m_name.data());
+    Radiant::error("Node::removeAttribute # '%s' is not a child attribute of '%s'.",
+                   attribute->name().data(), m_name.data());
   }
 
 #ifdef CORNERSTONE_JS
@@ -350,23 +350,33 @@ namespace Valuable
       Handle<Array> arr = v.As<Array>();
       assert(!arr.IsEmpty());
       if(arr->Length() == 2) {
-        Local<Number> x = arr->Get(0)->ToNumber();
-        Local<Number> y = arr->Get(1)->ToNumber();
-        if (x.IsEmpty() || y.IsEmpty()) {
+        if (arr->Get(0)->IsNumber() && arr->Get(1)->IsNumber()) {
+          return setValue(name, Nimble::Vector2f(arr->Get(0)->ToNumber()->Value(),
+                                                 arr->Get(1)->ToNumber()->Value()));
+        } else {
           Radiant::error("Node::setValue # v8::Value should be array of two numbers");
           return false;
         }
-        return setValue(name, Nimble::Vector2f(x->Value(), y->Value()));
+      } else if(arr->Length() == 3) {
+        if (arr->Get(0)->IsNumber() && arr->Get(1)->IsNumber() && arr->Get(2)->IsNumber()) {
+          return setValue(name, Nimble::Vector3f(arr->Get(0)->ToNumber()->Value(),
+                                                 arr->Get(1)->ToNumber()->Value(),
+                                                 arr->Get(2)->ToNumber()->Value()));
+        } else {
+          Radiant::error("Node::setValue # v8::Value should be array of three numbers");
+          return false;
+        }
       } else if(arr->Length() == 4) {
-        Local<Number> r = arr->Get(0)->ToNumber();
-        Local<Number> g = arr->Get(1)->ToNumber();
-        Local<Number> b = arr->Get(2)->ToNumber();
-        Local<Number> a = arr->Get(3)->ToNumber();
-        if (r.IsEmpty() || g.IsEmpty() || b.IsEmpty() || a.IsEmpty()) {
+        if (arr->Get(0)->IsNumber() && arr->Get(1)->IsNumber() &&
+            arr->Get(2)->IsNumber() && arr->Get(3)->IsNumber()) {
+          return setValue(name, Nimble::Vector4f(arr->Get(0)->ToNumber()->Value(),
+                                                 arr->Get(1)->ToNumber()->Value(),
+                                                 arr->Get(2)->ToNumber()->Value(),
+                                                 arr->Get(3)->ToNumber()->Value()));
+        } else {
           Radiant::error("Node::setValue # v8::Value should be array of four numbers");
           return false;
         }
-        return setValue(name, Nimble::Vector4f(r->Value(), g->Value(), b->Value(), a->Value()));
       }
       Radiant::error("Node::setValue # v8::Array with %d elements is not supported", arr->Length());
     } else if (v->IsRegExp()) {
@@ -468,9 +478,9 @@ namespace Valuable
 
       QByteArray name = elem.name().toUtf8();
 
-      Attribute * vo = getValue(name);
+      Attribute * vo = attribute(name);
 
-      // If the value exists, just deserialize it. Otherwise, pass the element
+      // If the attribute exists, just deserialize it. Otherwise, pass the element
       // to readElement()
       bool ok = false;
       if(vo)
@@ -520,8 +530,8 @@ namespace Valuable
     vp.m_type = listenerType;
 
     if(!obj->m_eventListenNames.contains(to)) {
-      if(!obj->getValue(to)) {
-        /* If the to value is not a known listener, or an attribute we output a warning.
+      if(!obj->attribute(to)) {
+        /* If the to attribute is not a known listener, or an attribute we output a warning.
           */
         /** @todo We could still check that the "to" is not a hierarchical path, for example
            "widget1/color".
@@ -646,7 +656,7 @@ namespace Valuable
 
     // Radiant::info("Node::eventProcess # Child id = %s", key.c_str());
 
-    Attribute * vo = getValue(n);
+    Attribute * vo = attribute(n);
 
     if(vo) {
       // Radiant::info("Node::eventProcess # Sending message \"%s\" to %s",
@@ -711,7 +721,7 @@ namespace Valuable
 #ifdef CORNERSTONE_JS
   long Node::addListener(const QByteArray & name, v8::Persistent<v8::Function> func, int role)
   {
-    Attribute * attr = getValue(name);
+    Attribute * attr = attribute(name);
     if(!attr) {
       Radiant::warning("Node::addListener # Failed to find attribute %s", name.data());
       return -1;
@@ -848,18 +858,18 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
-  void Node::valueRenamed(const QByteArray & was, const QByteArray & now)
+  void Node::attributeRenamed(const QByteArray & was, const QByteArray & now)
   {
-    // Check that the value does not exist already
+    // Check that the attribute does not exist already
     iterator it = m_attributes.find(now);
     if(it != m_attributes.end()) {
-      Radiant::error("Node::valueRenamed # Value '%s' already exist", now.data());
+      Radiant::error("Node::attributeRenamed # Attribute '%s' already exist", now.data());
       return;
     }
 
     it = m_attributes.find(was);
     if(it == m_attributes.end()) {
-      Radiant::error("Node::valueRenamed # No such value: %s", was.data());
+      Radiant::error("Node::attributeRenamed # No such attribute: %s", was.data());
       return;
     }
 

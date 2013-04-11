@@ -285,13 +285,11 @@ namespace Valuable
     /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
 
-    /// @cond
-
 #ifdef CORNERSTONE_JS
+    /// Adds a JavaScript listener that is invoked whenever the value is changed
+    /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
 #endif
-
-    /// @endcond
 
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL_ROLES);
@@ -346,8 +344,8 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * getAttribute(const QByteArray & name) const;
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use getAttribute instead.
+    virtual Attribute * attribute(const QByteArray & name) const;
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
     virtual Attribute * getValue(const QByteArray & name) const;
 
     /// Sets the current USER attribute value as the default value
