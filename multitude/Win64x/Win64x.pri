@@ -103,8 +103,18 @@ INSTALLS += win64_sdk_headers2
 INSTALLS += win64_sdk_project
 
 # Install Qt
-# qt_files.path = /qt
-# qt_files.files = $$[QT_INSTALL_LIBS] $$[QT_INSTALL_HEADERS] $$[QT_INSTALL_BINS] $$[QT_INSTALL_PLUGINS] $$[QT_INSTALL_IMPORTS] $$[QT_INSTALL_TRANSLATIONS] $$[QMAKE_MKSPECS]
-# INSTALLS += qt_files
+qt_bin_files.path = /
+qt_bin_files.files = $$[QT_INSTALL_BINS] qt.conf
+
+qt_lib_files.path = /lib
+qt_lib_files.files = $$[QT_INSTALL_LIBS]\\*.lib
+
+qt_include_files.path = /
+qt_include_files.files = $$[QT_INSTALL_HEADERS]
+
+qt_files.path = /qt
+qt_files.files = $$[QT_INSTALL_PLUGINS] $$[QT_INSTALL_IMPORTS] $$[QT_INSTALL_TRANSLATIONS] $$[QMAKE_MKSPECS]
+
+INSTALLS += qt_bin_files qt_lib_files qt_include_files qt_files
 
 message(Including 64-bit Windows Libraries)

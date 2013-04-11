@@ -182,11 +182,6 @@ win32 {
   win64:LIBS += -lnvapi64
   else:LIBS += -lnvapi
   LIBS += -lUser32
-
-  # On Windows we need to install the Qt plugins
-  qt_plugin_install.path += /bin
-  qt_plugin_install.files = $$[QT_INSTALL_PLUGINS]
-  INSTALLS += qt_plugin_install
 }
 
 # Platform specific: Apple OS X
