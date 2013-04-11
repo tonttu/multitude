@@ -397,7 +397,7 @@ namespace Valuable
   {
     if (m_isUniform && m_components.size() > 0) {
       m_isUniform = m_components.back().unit() == c.unit() &&
-          m_components.back().separator() == c.separator() &&
+          (m_components.size() == 1 || m_components.back().separator() == c.separator()) &&
           canConvertType(m_components.back().type(), c.type());
     }
     m_components << c;
