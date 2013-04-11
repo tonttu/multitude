@@ -24,7 +24,7 @@ namespace Valuable
   ///   background: "image.png" top left;
   /// This value is a list of three components, one string and two keywords.
   /// CSS parser will generate a StyleValue instance from a value in CSS declaration.
-  /// @link http://www.w3.org/TR/CSS21/syndata.html#values
+  /// @sa http://www.w3.org/TR/CSS21/syndata.html#values
   class VALUABLE_API StyleValue
   {
   public:

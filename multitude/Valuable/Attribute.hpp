@@ -112,11 +112,17 @@ namespace Valuable
   class VALUABLE_API Attribute : public Serializable
   {
   public:
+    /// Attribute has multiple independent attribute values on LAYER_COUNT
+    /// different layers. The real effective value of the attribute comes
+    /// from an active layer that has the highest priority. By default only
+    /// DEFAULT layer has value (is enabled). Layer numerical value also
+    /// means the layer priority, DEFAULT layer has the lowest
+    /// priority, while STYLE_IMPORTANT has the highest priority.
     enum Layer {
-      DEFAULT = 0,
-      STYLE,
-      USER,
-      STYLE_IMPORTANT,
+      DEFAULT = 0,       ///< Default, usually set in the constructor
+      STYLE,             ///< Set from a CSS file
+      USER,              ///< Set from a C++/JS code or by interaction / animators
+      STYLE_IMPORTANT,   ///< !important rules from CSS file
 
       LAYER_COUNT
     };
@@ -131,7 +137,9 @@ namespace Valuable
       VU_EXS          ///< Length value defined by x-height of the current font
     };
 
+    /// Callback function type in the listener API
     typedef std::function<void ()> ListenerFunc;
+    /// Different listener roles, used when adding a new listener
     enum ListenerRole {
       DELETE_ROLE = 1 << 0,
       CHANGE_ROLE = 1 << 1,
@@ -270,31 +278,57 @@ namespace Valuable
     void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
+    /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(ListenerFunc func, int role = CHANGE_ROLE);
     /// Adds a listener that is invoked whenever the value is changed
     /// The listener is removed when the listener object is deleted
+    /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
+
+    /// @cond
+
 #ifdef CORNERSTONE_JS
     long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
 #endif
+
+    /// @endcond
+
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
     void removeListener(Node * listener, int role = ALL_ROLES);
+    /// Removes a listener from the listener list
+    /// @param id listener id, same as the return value in addListener
     void removeListener(long id);
 
     /// Returns true if the current value of the object is different from the default value.
     /// Default implementation always returns true
     virtual bool isChanged() const;
 
-    virtual void clearValue(Layer layout);
+    /// Unsets the value from a specific layer
+    /// @param layer layer to clear, must not be DEFAULT, since DEFAULT layer should always be set
+    virtual void clearValue(Layer layer);
 
+    /// If attribute supports shorthand properties, this should be used to parse those.
+    /// For example "background: url('image.png') repeat" is a shorhand for setting
+    /// background-image to "url('image.png')" and background-repeat to "repeat".
+    /// @param[in] value shorthand value
+    /// @param[out] expanded shorthand property split to parts. With the previous
+    ///             background-example map should have two values.
+    /// @returns true if shorthand was successfully handled
+    /// @sa http://www.w3.org/TR/CSS21/about.html#shorthand
     virtual bool handleShorthand(const Valuable::StyleValue & value,
                                  QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
 
+
+    /// Check if the given layer defines a value
+    /// @param layer layer to check
+    /// @return true if the given value defines a layer; otherwise false
     virtual bool isValueDefinedOnLayer(Layer layer) const;
 
+    /// @param v should this attribute be serialized with its host
     void setSerializable(bool v);
+    /// @returns true if this attribute should be serialized with its host
     bool serializable() const;
 
 #ifdef MULTI_DOCUMENTER
@@ -476,9 +510,6 @@ namespace Valuable
       return true;
     }
 
-    /// Check if the given layer defines a value
-    /// @param layer layer to check
-    /// @return true if the given value defines a layer; otherwise false
     virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
       return m_valueSet[layer];
