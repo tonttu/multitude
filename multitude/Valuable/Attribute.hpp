@@ -161,7 +161,7 @@ namespace Valuable
     @param host The host object. This object is automatically
     added to the host.
 
-    @param name The name (or id) of this value. Names are typically
+    @param name The name (or id) of this attribute. Names are typically
     human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
 

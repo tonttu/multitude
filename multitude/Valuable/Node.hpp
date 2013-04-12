@@ -510,8 +510,10 @@ namespace Valuable
     Node * sender() { return m_sender; }
 
     /// This is called when new attribute is added to Node
+    /// @param attribute added attribute
     virtual void attributeAdded(Attribute * attribute);
     /// This is called when attribute is removed from Node
+    /// @param attribute removed attribute
     virtual void attributeRemoved(Attribute * attribute);
 
   private:
