@@ -207,7 +207,7 @@ namespace Valuable
     /// @returns true if size() == 0
     bool isEmpty() const;
 
-    /// In uniform StyleValue all components have same separators, same units
+    /// In uniform StyleValue all components have same separators
     /// and types that can be converted to each other. Empty StyleValue is also
     /// uniform type.
     /// @returns true if StyleValue is uniform
