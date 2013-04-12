@@ -530,7 +530,7 @@ namespace Luminous
     if (!a)
       return;
     m_areas.push_back(std::shared_ptr<Area>(a));
-    addValue(a);
+    addAttribute(a);
 
     if (m_screen) {
       a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
@@ -583,7 +583,7 @@ namespace Luminous
     if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
-      addValue(name, area);
+      addAttribute(name, area);
       ok &= area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
       if (m_screen) {
@@ -742,7 +742,7 @@ namespace Luminous
   {
     m_hwColorCorrection.syncWith(0);
     for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      removeValue(it->get());
+      removeAttribute(it->get());
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -755,7 +755,7 @@ namespace Luminous
 
   void MultiHead::addWindow(Window * w)
   {
-    addValue(w);
+    addAttribute(w);
     m_windows.push_back(std::shared_ptr<Window>(w));
     if(m_hwColorCorrectionEnabled) {
       /// @todo this is a wrong assumption that area 0 would contain a color
