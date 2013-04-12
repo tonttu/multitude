@@ -71,21 +71,6 @@ namespace Radiant
       return QString(getenv("HOME"));
     }
 
-    QString getModuleGlobalDataPath(const char * module, bool isapplication)
-    {
-      assert(strlen(module) < 128);
-      char buf[312];
-
-      if(isapplication) {
-        sprintf(buf, "/Applications/%s.app/Contents/Resources", module);
-      }
-      else {
-	/// @todo should this be %s.framework or %s.framework/data ?
-    sprintf(buf, "/Library/Frameworks/%s.framework/data", module);
-      }
-      return buf;
-    }
-
     QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;

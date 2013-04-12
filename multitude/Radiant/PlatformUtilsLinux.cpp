@@ -59,17 +59,6 @@ namespace Radiant
       return QString::fromUtf8(getenv("HOME"));
     }
 
-    QString getModuleGlobalDataPath(const char * module, bool isapplication)
-    {
-      (void) isapplication;
-
-      assert(strlen(module) < 128);
-      char buf[312];
-      sprintf(buf, "/usr/share/%s", module);
-
-      return buf;
-    }
-
     QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
