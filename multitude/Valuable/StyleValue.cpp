@@ -443,7 +443,7 @@ namespace Valuable
 
       auto t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
-        out << QString("%1%%").arg(v.asFloat() * 100.0);
+        out << QString("%1%").arg(v.asFloat() * 100.0);
       } else if(t == TYPE_INT || t == TYPE_FLOAT) {
         out << QString::number(v.asFloat()) + unitstr;
       } else if(t == TYPE_KEYWORD) {
