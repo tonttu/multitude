@@ -215,82 +215,102 @@ namespace Valuable
     /// Prints the contents of this Attribute to the terminal
     void debugDump();
 
-    /// Container for key-value object pairs
+    /// Container for attributes, key is the attribute name
     typedef std::map<QByteArray, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
+    /// @returns attribute container
     const container & attributes() { return m_attributes; }
 
     /** Add an event listener to this object.
-
-        This function is part of the experimental event passing
-        framework. After calling this, @a listener will get the messages
-        with id @a messageId whenever this object has events with @a eventId.
-
-        @param eventId The event id to match when in the @ref eventSend. Corresponds
-                       to the first parameter in @ref eventSend.
-
-        @param messageId The event id to use when delivering the event to listener.
-                         This is the first parameter in @ref eventProcess.
-
-        @param listener The listening object. Receives events and handles them
-                        in @ref eventProcess -function.
-
-        @param listenerType Defines when to send events to listener.
-
-        @param defaultData The default binary data to be used when
-        delivering the message.
-
+        This function is part of the event passing framework. After calling this,
+        @a listener will get the messages with id @a messageId whenever this object
+        has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param messageId the event id to use when delivering the event to listener.
+                         This is the first parameter in @ref eventProcess
+        @param listener the listening widget. Receives events and handles them
+                        in @ref eventProcess -function
+        @param listenerType defines when to send events to listener
+        @param defaultData the default binary data to be used when delivering
+                           the message, used only if @ref eventSend doesn't
+                           include BinaryData
+        @returns event id, can be used with @ref eventRemoveListener(long)
     */
     template <typename Widget>
     long eventAddListener(const QByteArray &eventId,
                           const QByteArray &messageId,
                           Radiant::IntrusivePtr<Widget>& listener,
-                          ListenerType listenerType,
+                          ListenerType listenerType = DIRECT,
                           const Radiant::BinaryData *defaultData = 0)
     {
       return eventAddListener(eventId, messageId, &*listener, listenerType, defaultData);
     }
 
-
-    /// Add an event listener to this object.
-    template <typename Widget>
-    long eventAddListener(const QByteArray &eventId,
-                          const QByteArray &messageId,
-                          Radiant::IntrusivePtr<Widget>& listener,
-                          const Radiant::BinaryData *defaultData = 0)
-    {
-      return eventAddListener(eventId, messageId, &*listener, DIRECT, defaultData);
-    }
-
     /// @todo the raw pointers in these should be fixed!
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a listener will get the messages with id @a messageId whenever this object
+        has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param messageId the event id to use when delivering the event to listener.
+                         This is the first parameter in @ref eventProcess
+        @param listener the listening object. Receives events and handles them
+                        in @ref eventProcess -function
+        @param listenerType defines when to send events to listener
+        @param defaultData the default binary data to be used when delivering
+                           the message, used only if @ref eventSend doesn't
+                           include BinaryData
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
     long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
                           Valuable::Node * listener,
-                          ListenerType listenerType,
+                          ListenerType listenerType = DIRECT,
                           const Radiant::BinaryData * defaultData = 0);
-    long eventAddListener(const QByteArray & eventId,
-                          const QByteArray & messageId,
-                          Valuable::Node * listener,
-                          const Radiant::BinaryData * defaultData = 0)
-    {
-      return eventAddListener(eventId, messageId, listener, DIRECT, defaultData);
-    }
 
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a func will be called whenever this object has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param func the listener callback
+        @param listenerType defines when to call the callback
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a func will be called whenever this object has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param func the listener callback that will get event BinaryData as a parameter
+        @param listenerType defines when to call the callback
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
     long eventAddListenerBd(const QByteArray & eventId, ListenerFuncBd func,
                             ListenerType listenerType = DIRECT);
 
+    /// Removes all events from this object to given listener
+    /// @param listener event listener
+    /// @returns number of events removed
     template <typename Widget>
     int eventRemoveListener(Radiant::IntrusivePtr<Widget>& listener)
     {
       return eventRemoveListener(QByteArray(), QByteArray(), &*listener);
     }
 
+    /// Removes events from this object that match the parameters.
+    /// @param eventId event id or null QByteArray to match all event ids
+    /// @param messageId message id or null QByteArray to match all message ids
+    /// @param listener event listener or nullptr to match all listeners
+    /// @returns number of events removed
     template <typename Widget>
     int eventRemoveListener(const QByteArray & eventId = QByteArray(),
                             const QByteArray & messageId = QByteArray(),
@@ -326,6 +346,10 @@ namespace Valuable
       @return number of event listener links removed
       */
     int eventRemoveListener(const QByteArray & eventId = QByteArray(), const QByteArray & messageId = QByteArray(), Valuable::Node * listener = 0);
+
+    /// Removes all events from this object to given listener
+    /// @param listener event listener
+    /// @returns number of events removed
     int eventRemoveListener(Valuable::Node * listener)
     {
       return eventRemoveListener(QByteArray(), QByteArray(), listener);
@@ -413,6 +437,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this eventId.
     /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
     /// @param p1 event parameter
     template <typename P1>
     void eventSend(const QByteArray & eventId, const P1 & p1)
@@ -424,6 +449,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this eventId.
     /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
     /// @param p1,p2 event parameters
     template <typename P1, typename P2>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2)
@@ -436,6 +462,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this eventId.
     /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
     /// @param p1,p2,p3 event parameters
     template <typename P1, typename P2, typename P3>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3)
@@ -449,6 +476,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this eventId.
     /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
     /// @param p1,p2,p3,p4 event parameters
     template <typename P1, typename P2, typename P3, typename P4>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
@@ -463,6 +491,7 @@ namespace Valuable
 
     /// Sends an event to all listeners on this eventId.
     /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
     /// @param p1,p2,p3,p4,p5 event parameters
     template <typename P1, typename P2, typename P3, typename P4, typename P5>
     void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
@@ -476,7 +505,8 @@ namespace Valuable
       eventSend(eventId, bd);
     }
 
-    /// The sender of the event, can be read in eventProcess()
+    /// Get the sender of the event, only valid in DIRECT events
+    /// @returns the sender of the event, can be read in eventProcess()
     Node * sender() { return m_sender; }
 
     /// This is called when new attribute is added to Node
