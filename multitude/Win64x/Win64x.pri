@@ -109,17 +109,15 @@ qt_bin_files.files = $$[QT_INSTALL_BINS]
 qt_conf_files.path = /bin
 qt_conf_files.files = qt.conf
 
-qt_lib_files.path = /lib
+qt_lib_files.path = /qt/lib
 qt_lib_files.files = $$[QT_INSTALL_LIBS]\\*.lib
-
-qt_include_files.path = /
-qt_include_files.files = $$[QT_INSTALL_HEADERS]
 
 qt_files.path = /qt
 qt_files.files += $$[QT_INSTALL_PLUGINS]
 qt_files.files += $$[QT_INSTALL_IMPORTS]
 qt_files.files += $$[QT_INSTALL_TRANSLATIONS]
 qt_files.files += $$[QMAKE_MKSPECS]
+qt_files.files += $$[QT_INSTALL_HEADERS]
 
 INSTALLS += qt_bin_files qt_lib_files qt_include_files qt_files qt_conf_files
 
