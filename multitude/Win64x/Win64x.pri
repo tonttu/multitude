@@ -108,7 +108,7 @@ qt_bin_files.path = /
 qt_bin_files.files = $$[QT_INSTALL_BINS]
 
 qt_conf_files.path = /bin
-qt_conf_files.files = qt.conf
+qt_conf_files.files = $$PWD/qt.conf
 
 qt_lib_files.path = /qt/lib
 qt_lib_files.files = $$[QT_INSTALL_LIBS]\\*.lib
