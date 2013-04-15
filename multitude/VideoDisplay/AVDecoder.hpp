@@ -344,7 +344,7 @@ namespace VideoDisplay
       void setLooping(bool looping) { m_looping = looping; }
 
       /// Should any audio tracks be opened and decoded
-      /// You need to have at least one track enabled
+      /// You need to have at least one track enabled (audio or video)
       /// Default: true
       /// @sa setAudioEnabled
       /// @return true if audio is enabled
@@ -354,7 +354,7 @@ namespace VideoDisplay
       void setAudioEnabled(bool audioEnabled) { m_audioEnabled = audioEnabled; }
 
       /// Should any video tracks be opened and decoded
-      /// You need to have at least one track enabled
+      /// You need to have at least one track enabled (audio or video)
       /// Default: true
       /// @sa setVideoEnabled
       /// @return true if video is enabled
