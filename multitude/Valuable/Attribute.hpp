@@ -278,6 +278,8 @@ namespace Valuable
     void removeHost();
 
     /// Adds a listener that is invoked whenever the value is changed
+    /// @param func listener function
+    /// @param role when should the listener function be called
     /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(ListenerFunc func, int role = CHANGE_ROLE);
     /// Adds a listener that is invoked whenever the value is changed
@@ -287,6 +289,8 @@ namespace Valuable
 
 #ifdef CORNERSTONE_JS
     /// Adds a JavaScript listener that is invoked whenever the value is changed
+    /// @param func listener function
+    /// @param role when should the listener function be called
     /// @returns listener id that can be used to remove the listener with removeListener
     long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
 #endif
@@ -299,8 +303,8 @@ namespace Valuable
     /// @param id listener id, same as the return value in addListener
     void removeListener(long id);
 
-    /// Returns true if the current value of the object is different from the default value.
-    /// Default implementation always returns true
+    /// @returns true if the current value of the object is different from
+    ///          the default value. Default implementation always returns true
     virtual bool isChanged() const;
 
     /// Unsets the value from a specific layer
@@ -441,12 +445,22 @@ namespace Valuable
     /// The default value (the value given in constructor) of the Attribute.
     inline const T & defaultValue() const { return m_values[DEFAULT]; }
 
+    /// @param layer layer to use
+    /// @returns attribute value on given layer
     inline const T & value(Layer layer) const { return m_values[layer]; }
 
+    /// @returns attribute active value
     inline const T & value() const { return m_values[m_current]; }
 
+    /// @returns the active layer that has the highest priority
     Layer currentLayer() const { return m_current; }
 
+    /// Sets a new value for a specific layer. If currentLayer() is more important
+    /// than the layer given as a parameter, the active value of the attribute
+    /// won't change. Otherwise, if the value does change, this function will
+    /// trigger all listeners callbacks.
+    /// @param t new value for the attribute
+    /// @param layer value will be set to this layer
     inline void setValue(const T & t, Layer layer = USER)
     {
       bool top = layer >= m_current;
@@ -457,18 +471,23 @@ namespace Valuable
       if (sendSignal) this->emitChange();
     }
 
+    /// Calls setValue with USER layer
+    /// @param t new value for the attribute
+    /// @returns reference to this
     inline AttributeT<T> & operator = (const T & t)
     {
       setValue(t);
       return *this;
     }
 
-    virtual bool isChanged() const
+    virtual bool isChanged() const OVERRIDE
     {
       return m_current > DEFAULT;
     }
 
-    virtual void clearValue(Layer layout = USER)
+    /// Unsets the value from a specific layer
+    /// @param layer layer to clear, must not be DEFAULT, since DEFAULT layer should always be set
+    virtual void clearValue(Layer layout = USER) OVERRIDE
     {
       assert(layout > DEFAULT);
       m_valueSet[layout] = false;
@@ -508,6 +527,8 @@ namespace Valuable
       return true;
     }
 
+    /// @param layer layer to check
+    /// @returns true if layer is active
     virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
       return m_valueSet[layer];
