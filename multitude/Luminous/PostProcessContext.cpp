@@ -27,7 +27,7 @@ namespace Luminous
 
     Luminous::FrameBuffer m_frameBuffer;
 
-    Luminous::Texture m_framebuffer;
+    Luminous::Texture m_texture;
     Luminous::RenderBuffer m_depthBuffer;
   };
 
@@ -46,7 +46,7 @@ namespace Luminous
 
   void PostProcessContext::initialize(RenderContext & rc)
   {
-    m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_framebuffer);
+    m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_texture);
     m_d->m_frameBuffer.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
 
     m_d->m_frameBuffer.setSize(rc.contextSize());
@@ -91,7 +91,7 @@ namespace Luminous
 
   const Luminous::Texture & PostProcessContext::texture() const
   {
-    return m_d->m_framebuffer;
+    return m_d->m_texture;
   }
 
   const Luminous::RenderBuffer & PostProcessContext::depthBuffer() const
