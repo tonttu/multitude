@@ -95,9 +95,6 @@ namespace Luminous {
       /// Returns the width of the largest seam
       float maxSeam() const;
 
-      /// Blends the edges defined by seams
-      void cleanEdges() const;
-
       /// Returns the keystone correction object
       /// @return keystone correction
       GLKeyStone & keyStone();
