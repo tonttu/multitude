@@ -7,7 +7,8 @@ HEADERS += Archive.hpp \
     AttributeTimeStamp.hpp \
     AttributeStringList.hpp \
     AttributeStyleValue.hpp \
-    AttributeSize.hpp
+    AttributeSize.hpp \
+    AttributeStringMap.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -39,7 +40,8 @@ HEADERS += State.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
-    AttributeStringList.cpp
+    AttributeStringList.cpp \
+    AttributeStringMap.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp

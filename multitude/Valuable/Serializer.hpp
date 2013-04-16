@@ -19,6 +19,7 @@
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <QMap>
 #include <QStringList>
 
 #include <typeinfo>
@@ -218,6 +219,46 @@ namespace Valuable
           }
         }
         return lst;
+      }
+    };
+
+    /// Template specialization for QMap<QString, QString>.
+    template < >
+    struct Impl<QMap<QString, QString> >
+    {
+      inline static ArchiveElement serialize(Archive & archive, const QMap<QString, QString> & t)
+      {
+        Valuable::ArchiveElement strmap = archive.createElement("string-map");
+        for (auto it = t.constBegin(); it != t.constEnd(); ++it) {
+          Valuable::ArchiveElement e = archive.createElement("pair");
+
+          Valuable::ArchiveElement k = archive.createElement("string");
+          k.set(it.key());
+          e.add(k);
+
+          Valuable::ArchiveElement v = archive.createElement("string");
+          v.set(it.value());
+          e.add(v);
+
+          strmap.add(e);
+        }
+        return strmap;
+      }
+
+      inline static QMap<QString, QString> deserialize(const ArchiveElement & element)
+      {
+        QMap<QString, QString> map;
+        for (auto it = element.children(); it; ++it) {
+          if ((*it).name() == "pair") {
+            auto cIt = (*it).children();
+            QString key = (*cIt).get();
+            ++cIt;
+            map[key] = (*cIt).get();
+          } else {
+            Radiant::warning("deserialize # Unknown tag %s", (*it).name().toUtf8().data());
+          }
+        }
+        return map;
       }
     };
 
