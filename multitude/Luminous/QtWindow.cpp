@@ -303,7 +303,6 @@ namespace Luminous
        m_d->m_mainWindow->setWindowState(Qt::WindowMinimized);
 
     m_d->m_mainWindow->move(m_d->m_mhWindow.location().x, m_d->m_mhWindow.location().y);
-    m_d->m_mainWindow->raise();
     m_d->m_mainWindow->show();
     m_d->m_mainWindow->raise();
     m_d->m_mainWindow->resize(m_d->m_mhWindow.width(), m_d->m_mhWindow.height());
@@ -327,12 +326,13 @@ namespace Luminous
 
   void QtWindow::poll()
   {
+#ifdef RADIANT_LINUX
     // Raising windows is a tough job...
     if(m_d->m_raiseCount < 100) {
       ++m_d->m_raiseCount;
       m_d->m_mainWindow->raise();
     }
-
+#endif
     // Execute any deferred activateWindow() calls
     if(m_d->m_deferredActivateWindow) {
       m_d->m_mainWindow->activateWindow();
