@@ -70,11 +70,11 @@ namespace Luminous
 
       // Initialize default frame buffer size
       assert(win);
-      m_finalFrameBuffer.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_finalFrameBuffer.setSize(win->size());
 
       // Set initial data for an off-screen frame buffer
       // The hardware resource is not created if this is actually never bound
-      m_offScreenFrameBuffer.setSize(Nimble::Size(win->size().x, win->size().y));
+      m_offScreenFrameBuffer.setSize(win->size());
       m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
 
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
@@ -119,13 +119,13 @@ namespace Luminous
       }
     }
 
-    Nimble::Vector2f contextSize() const
+    Nimble::Size contextSize() const
     {
       if(m_window)
-        return Nimble::Vector2f(m_window->size().x, m_window->size().y);
+        return m_window->size();
 
       /// @todo why not zero vector?
-      return Nimble::Vector2f(10, 10);
+      return Nimble::Size(10, 10);
     }
 
     void createPostProcessFilters(RenderContext & rc, const Luminous::PostProcessFilters & filters)
@@ -776,6 +776,11 @@ namespace Luminous
     drawRect(Nimble::Rect(min, max), style);
   }
 
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style)
+  {
+    drawRect(Nimble::Rect(min, size), style);
+  }
+
   void RenderContext::drawRect(const Nimble::Rectf & rect, const Style & style)
   {
     drawRect(rect, Nimble::Rect(0, 0, 1, 1), style);
@@ -1161,7 +1166,7 @@ namespace Luminous
     }
   }
 
-  Nimble::Vector2 RenderContext::contextSize() const
+  Nimble::Size RenderContext::contextSize() const
   {
     return m_data->contextSize();
   }

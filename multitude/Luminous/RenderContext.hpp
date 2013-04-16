@@ -387,6 +387,12 @@ namespace Luminous
     void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
 
     /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param size Rectangle size
+    /// @param style Stroke, fill and texturing options
+    void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style);
+
+    /// Draws a rectangle
     /// @param rext Rectangle to draw
     /// @param style Stroke, fill and texturing options
     void drawRect(const Nimble::Rectf & rect, const Style & style);
@@ -427,8 +433,8 @@ namespace Luminous
     void addRenderCounter();
 
     /// Returns the size of the window of this RenderContext object.
-    /// @return If the window is null, then Nimble::Vector2(10,10) is returned.
-    Nimble::Vector2 contextSize() const;
+    /// @return If the window is null, then Nimble::Size(10,10) is returned.
+    Nimble::Size contextSize() const;
 
     /// Push a viewport to the viewport stack
     /// Pushes a viewport to the top of the viewport stack.

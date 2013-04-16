@@ -58,6 +58,10 @@ namespace Nimble {
     inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
       : m_low(low), m_high(high) {}
 
+    /// Constructs a rectangle and initializes it with the low point and a size
+    inline RectT(const Vector2T<T> & low, const SizeT<T> & size)
+      : m_low(low), m_high(low.x + size.width(), low.y + size.height()) {}
+
     /// Constructs a rectangle and initializes it to the given points
     inline RectT(T xlow, T ylow, T xhigh, T yhigh)
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
@@ -154,9 +158,9 @@ namespace Nimble {
     /// Returns the height of the rectangle
     inline T height() const { return m_high.y - m_low.y; }
     /// Returns the size of the rectangle (= high - low)
-    inline Vector2T<T> size() const { return m_high - m_low; }
+    inline SizeT<T> size() const { return SizeT<T>(m_high - m_low); }
     /// Returns the surface area of the rectangle
-    inline T area() const { Vector2T<T> s(size()); return s.x * s.y; }
+    inline T area() const { auto s(size()); return s.width() * s.height(); }
 
     /// Calculates the intersection area of two rectangles.
     inline RectT intersection(const RectT &) const;

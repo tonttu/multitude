@@ -27,7 +27,7 @@ namespace Luminous
     };
 
   public:
-    D(const Nimble::Vector2f & size);
+    D(const Nimble::SizeF & size);
 
     bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun);
 
@@ -35,7 +35,7 @@ namespace Luminous
     Group & findGroup(Texture & texture);
 
   public:
-    Nimble::Vector2f m_maximumSize;
+    Nimble::SizeF m_maximumSize;
     Nimble::Vector2f m_renderLocation;
     Nimble::Rectf m_boundingBox;
     /// Set to false if we need to do layout again
@@ -51,7 +51,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::D::D(const Nimble::Vector2f & maximumSize)
+  TextLayout::D::D(const Nimble::SizeF & maximumSize)
     : m_maximumSize(maximumSize)
     , m_renderLocation(0, 0)
     , m_layoutReady(false)
@@ -121,7 +121,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  TextLayout::TextLayout(const Nimble::Vector2f & maximumSize)
+  TextLayout::TextLayout(const Nimble::SizeF & maximumSize)
     : m_d(new D(maximumSize))
   {
     eventAddOut("layout");
@@ -178,14 +178,14 @@ namespace Luminous
       generateInternal();
   }
 
-  void TextLayout::setMaximumSize(const Nimble::Vector2f & size)
+  void TextLayout::setMaximumSize(const Nimble::SizeF & size)
   {
     m_d->m_maximumSize = size;
     m_d->m_layoutReady = false;
     m_d->m_glyphsReady = false;
   }
 
-  Nimble::Vector2f TextLayout::maximumSize() const
+  Nimble::SizeF TextLayout::maximumSize() const
   {
     return m_d->m_maximumSize;
   }

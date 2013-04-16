@@ -54,13 +54,13 @@ namespace Luminous
 #endif
 
     /// Calculate the ideal mipmap level
-    LUMINOUS_API unsigned int level(const Nimble::Matrix4 & transform, Nimble::Vector2 pixelSize,
+    LUMINOUS_API unsigned int level(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize,
                                     float * trilinearBlending = nullptr) const;
-    LUMINOUS_API unsigned int level(Nimble::Vector2 pixelSize,
+    LUMINOUS_API unsigned int level(Nimble::SizeF pixelSize,
                                     float * trilinearBlending = nullptr) const;
 
     /** @return Returns the native size of the image, in pixels. */
-    LUMINOUS_API const Nimble::Vector2i & nativeSize() const;
+    LUMINOUS_API const Nimble::Size & nativeSize() const;
     /// Returns the aspect ratio of the image in its native size (width/height)
     /** If the native height is zero (e.g. no file was loaded) this returns 1.*/
     LUMINOUS_API float aspect() const;
@@ -88,7 +88,7 @@ namespace Luminous
     LUMINOUS_API void setLoadingPriority(Radiant::Priority priority);
 
     /// Returns the size of the mipmap level
-    LUMINOUS_API Nimble::Vector2i mipmapSize(unsigned int level);
+    LUMINOUS_API Nimble::Size mipmapSize(unsigned int level);
 
     /// Returns the absolute filename of the image.
     /// @return filename from which the mipmaps have been created

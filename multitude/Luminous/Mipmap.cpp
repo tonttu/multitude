@@ -230,8 +230,8 @@ namespace Luminous
     Mipmap & m_mipmap;
 
     const QString m_filenameAbs;
-    Nimble::Vector2i m_nativeSize;
-    Nimble::Vector2i m_level1Size;
+    Nimble::Size m_nativeSize;
+    Nimble::Size m_level1Size;
     int m_maxLevel;
 
     // what levels should be saved to file
@@ -377,7 +377,7 @@ namespace Luminous
           // unexpected size (corrupted or just old image)
           Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
                 filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
-                         mipmap.mipmapSize(level).x, mipmap.mipmapSize(level).y);
+                         mipmap.mipmapSize(level).width(), mipmap.mipmapSize(level).height());
         } else {
           return true;
         }
@@ -400,8 +400,8 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      Nimble::Vector2i ss = imsrc.size();
-      Nimble::Vector2i is = mipmap.mipmapSize(level);
+      Nimble::Size ss = imsrc.size();
+      Nimble::Size is = mipmap.mipmapSize(level);
 
       if (is * 2 == ss) {
         if (!imageTex.image->quarterSize(imsrc)) {
@@ -410,7 +410,7 @@ namespace Luminous
           return false;
         }
       } else {
-        imageTex.image->minify(imsrc, is.x, is.y);
+        imageTex.image->minify(imsrc, is.width(), is.height());
       }
       unlock(mipmap, level - 1);
     }
@@ -564,19 +564,20 @@ namespace Luminous
       // Make sure that we can make "s_resizes" amount of resizes with quarterSize
       // after first resize
       const int mask = (1 << s_resizes) - 1;
-      mipmap.m_level1Size.x += ((~(mipmap.m_level1Size.x & mask) & mask) + 1) & mask;
-      mipmap.m_level1Size.y += ((~(mipmap.m_level1Size.y & mask) & mask) + 1) & mask;
+      auto w = mipmap.m_level1Size.width(), h = mipmap.m_level1Size.height();
+      mipmap.m_level1Size.setWidth(w + (((~(w & mask) & mask) + 1) & mask));
+      mipmap.m_level1Size.setHeight(h + (((~(h & mask) & mask) + 1) & mask));
 
       // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running level()
-      mipmap.m_maxLevel = mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage));
+      mipmap.m_maxLevel = mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage));
 
-/*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)); ++i)
+/*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage)); ++i)
         m_mipmap.m_shouldSave.insert(i);*/
 
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_smallestImage, s_smallestImage)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize1, s_defaultSaveSize1)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize2, s_defaultSaveSize2)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::Vector2f(s_defaultSaveSize3, s_defaultSaveSize3)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize1, s_defaultSaveSize1)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize2, s_defaultSaveSize2)));
+      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize3, s_defaultSaveSize3)));
       // Don't save the original image as mipmap
       mipmap.m_shouldSave.erase(0);
     }
@@ -815,7 +816,7 @@ namespace Luminous
     return nullptr;
   }
 
-  unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::Vector2f pixelSize,
+  unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize,
                              float * trilinearBlending) const
   {
     // Assume that the view matrix is ortho projection with no scaling
@@ -825,7 +826,7 @@ namespace Luminous
     return level(std::max(sx, sy) * pixelSize, trilinearBlending);
   }
 
-  unsigned int Mipmap::level(Nimble::Vector2f pixelSize, float * trilinearBlending) const
+  unsigned int Mipmap::level(Nimble::SizeF pixelSize, float * trilinearBlending) const
   {
     const float ask = pixelSize.maximum();
 
@@ -866,16 +867,16 @@ namespace Luminous
     return bestlevel;
   }
 
-  const Nimble::Vector2i & Mipmap::nativeSize() const
+  const Nimble::Size & Mipmap::nativeSize() const
   {
     return m_d->m_nativeSize;
   }
 
   float Mipmap::aspect() const
   {
-    Nimble::Vector2i native = m_d->m_nativeSize;
+    Nimble::Size native = m_d->m_nativeSize;
 
-    return native.y ? native.x / (float) native.y : 1.0f;
+    return native.height() ? native.width() / (float) native.height() : 1.0f;
   }
 
   bool Mipmap::isReady() const
@@ -952,20 +953,20 @@ namespace Luminous
     m_d->m_loadingPriority = priority;
   }
 
-  Nimble::Vector2i Mipmap::mipmapSize(unsigned int level)
+  Nimble::Size Mipmap::mipmapSize(unsigned int level)
   {
     if(level == 0) return m_d->m_nativeSize;
     if(level <= s_resizes+1) {
-      return Nimble::Vector2i(m_d->m_level1Size.x >> (level-1),
-                              m_d->m_level1Size.y >> (level-1));
+      return Nimble::Size(m_d->m_level1Size.width() >> (level-1),
+                          m_d->m_level1Size.height() >> (level-1));
     } else {
-      Nimble::Vector2i v(m_d->m_level1Size.x >> s_resizes,
-                         m_d->m_level1Size.y >> s_resizes);
+      Nimble::Size v(m_d->m_level1Size.width() >> s_resizes,
+                     m_d->m_level1Size.height() >> s_resizes);
       level -= s_resizes+1;
       while(level-- > 0) {
         v = v / 2;
-        if (v.x == 0 || v.y == 0)
-          return Nimble::Vector2i(0, 0);
+        if (v.width() == 0 || v.height() == 0)
+          return Nimble::Size(0, 0);
       }
       return v;
     }

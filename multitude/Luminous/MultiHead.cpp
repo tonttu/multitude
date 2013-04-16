@@ -82,14 +82,14 @@ namespace Luminous
     }
   }
 
-  const Vector2i & MultiHead::Area::size() const
+  Nimble::Size MultiHead::Area::size() const
   {
-    return m_size;
+    return Nimble::Size(*m_size);
   }
 
-  void MultiHead::Area::setSize(Nimble::Vector2i size)
+  void MultiHead::Area::setSize(Nimble::Size size)
   {
-    m_size = size;
+    m_size = size.toVector();
   }
 
   // @getter graphicslocation
@@ -108,18 +108,18 @@ namespace Luminous
   }
 
   // @getter graphicssize
-  const Nimble::Vector2f MultiHead::Area::graphicsSize(bool withseams) const
+  const Nimble::SizeF MultiHead::Area::graphicsSize(bool withseams) const
   {
-    return withseams ?
+    return Nimble::SizeF(withseams ?
         m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],
                                                      m_seams[2] + m_seams[3]) :
-        m_graphicsSize.asVector();
+        m_graphicsSize.asVector());
   }
 
   // @setter graphicssize
-  void MultiHead::Area::setGraphicsSize(Nimble::Vector2f size)
+  void MultiHead::Area::setGraphicsSize(Nimble::SizeF size)
   {
-    m_graphicsSize = size;
+    m_graphicsSize = size.toVector();
   }
 
   const Rect & MultiHead::Area::graphicsBounds() const
@@ -213,7 +213,7 @@ namespace Luminous
     isInside = ok;
 
     loc.y = 1.0f - loc.y;
-    loc.scale(graphicsBounds().size());
+    loc.scale(graphicsBounds().size().toVector());
     loc += graphicsBounds().low();
 
     return loc;
@@ -223,7 +223,7 @@ namespace Luminous
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const
   {
     loc -= graphicsBounds().low();
-    loc.descale(graphicsBounds().size());
+    loc.descale(graphicsBounds().size().toVector());
     loc.y = 1.0f - loc.y;
 
     Nimble::Matrix4 m = m_keyStone.matrix();
@@ -342,9 +342,9 @@ namespace Luminous
   MultiHead::Window::~Window()
   {}
 
-  void MultiHead::Window::resizeEvent(Vector2i size)
+  void MultiHead::Window::resizeEvent(Nimble::Size size)
   {
-    m_size = size;
+    m_size = size.toVector();
 
     if(m_areas.size() == 1) {
       debugLuminous("MultiHead::Window::resizeEvent");
@@ -542,7 +542,7 @@ namespace Luminous
       Area & a = area(i);
 
       float wleft  = a.graphicsLocation().x;
-      float wright = wleft + a.graphicsSize().x;
+      float wright = wleft + a.graphicsSize().width();
 
       left  = std::min(left,  wleft);
       right = std::max(right, wright);
@@ -564,7 +564,7 @@ namespace Luminous
       Area & a = area(i);
 
       float wtop = a.graphicsLocation().y;
-      float wbot = wtop + a.graphicsSize().y;
+      float wbot = wtop + a.graphicsSize().height();
 
       top = std::min(top, wtop);
       bottom = std::max(bottom, wbot);

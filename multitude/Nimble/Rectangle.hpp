@@ -40,7 +40,7 @@ namespace Nimble {
       /// Constructs a new rectangle
       /// @param size size (width & height) of the rectangle
       /// @param m transformation matrix defining the center of the rectangle
-      Rectangle(Nimble::Vector2f size, const Nimble::Matrix3 & m);
+      Rectangle(Nimble::SizeF size, const Nimble::Matrix3 & m);
 
       /// Construct a copy of the given rectangle
       /// @param rect rectangle to copy
@@ -73,7 +73,7 @@ namespace Nimble {
       float extent1() const { return m_extent1; }
 
       /// Return the size of the rectangle
-      Nimble::Vector2 size() const;
+      Nimble::SizeF size() const;
 
       /// Computes the corner vertices of the rectangle and appends the to the given array
       /// @param corners vector of points where the four corners are appended

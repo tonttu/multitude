@@ -38,13 +38,13 @@ namespace Luminous
 
     public:
       Nimble::Vector2i m_location;
-      Nimble::Vector2i m_size;
+      Nimble::Size m_size;
       bool m_rotated;
     };
     typedef std::shared_ptr<Node> NodePtr;
 
   public:
-    TextureAtlas(Nimble::Vector2i size, const Luminous::PixelFormat & pixelFormat, int padding = 1);
+    TextureAtlas(Nimble::Size size, const Luminous::PixelFormat & pixelFormat, int padding = 1);
     ~TextureAtlas();
 
     TextureAtlas(TextureAtlas && src);
@@ -52,9 +52,9 @@ namespace Luminous
 
     int padding() const;
 
-    Nimble::Vector2i size() const;
+    Nimble::Size size() const;
 
-    NodePtr insert(Nimble::Vector2i size);
+    NodePtr insert(Nimble::Size size);
     void remove(TextureAtlas::NodePtr node);
 
     Luminous::Image & image();
@@ -102,7 +102,7 @@ namespace Luminous
     /// item that can be used to store a texture of the requested size. If all
     /// current atlas textures are full, a new one is allocated automatically.
     /// @param size requested space
-    Item & insert(Nimble::Vector2i size);
+    Item & insert(Nimble::Size size);
 
     /// Store the texture atlases on disk. This function can be useful for debugging.
     /// @param basename base filename to use for the atlases
@@ -136,7 +136,7 @@ namespace Luminous
   }
 
   template <typename Item>
-  Item & TextureAtlasGroup<Item>::insert(Nimble::Vector2i size)
+  Item & TextureAtlasGroup<Item>::insert(Nimble::Size size)
   {
     /// @todo configure, check for hw limits
     /// @todo does the distance field shader anti-aliasing break if the texture size changes?
@@ -149,7 +149,7 @@ namespace Luminous
     for (int i = 0, s = m_atlases.size(); i <= s; ++i) {
       if (i == s) {
         int size = std::min(maxSize, baseSize << i);
-        m_atlases.emplace_back(new TextureAtlas(Nimble::Vector2i(size, size), m_pixelFormat));
+        m_atlases.emplace_back(new TextureAtlas(Nimble::Size(size, size), m_pixelFormat));
         eventSend("changed");
       }
       TextureAtlas & atlas = *m_atlases[i];
@@ -158,10 +158,10 @@ namespace Luminous
         continue;
       item.m_atlas = &atlas;
       item.m_node = std::move(node);
-      float scalex = 1.0f / item.m_atlas->size().x,
-          scaley = 1.0f / item.m_atlas->size().y;
-      float uvs[4] = { item.m_node->m_location.x * scalex, (item.m_node->m_location.x + item.m_node->m_size.x) * scaley,
-                       item.m_node->m_location.y * scalex, (item.m_node->m_location.y + item.m_node->m_size.y) * scaley };
+      float scalex = 1.0f / item.m_atlas->size().width(),
+          scaley = 1.0f / item.m_atlas->size().height();
+      float uvs[4] = { item.m_node->m_location.x * scalex, (item.m_node->m_location.x + item.m_node->m_size.width()) * scaley,
+                       item.m_node->m_location.y * scalex, (item.m_node->m_location.y + item.m_node->m_size.height()) * scaley };
       if (item.m_node->m_rotated) {
         item.m_uv[0].make(uvs[0], uvs[3]);
         item.m_uv[1].make(uvs[0], uvs[2]);

@@ -63,7 +63,7 @@ bool operator==(const LayoutCacheKey & lhs, const LayoutCacheKey & rhs)
 }
 
 #else
-typedef std::tuple<QString, Nimble::Vector2i, QFont, QTextOption, unsigned> LayoutCacheKey;
+typedef std::tuple<QString, Nimble::Size, QFont, QTextOption, unsigned> LayoutCacheKey;
 
 
 namespace std
@@ -73,8 +73,8 @@ namespace std
     inline size_t operator()(const LayoutCacheKey & tuple) const
     {
       std::hash<uint> hasher;
-      return qHash(std::get<0>(tuple)) ^ hasher(std::get<1>(tuple).x) ^
-          hasher(std::get<1>(tuple).y) ^ qHash(std::get<2>(tuple).key()) ^
+      return qHash(std::get<0>(tuple)) ^ hasher(std::get<1>(tuple).width()) ^
+          hasher(std::get<1>(tuple).height()) ^ qHash(std::get<2>(tuple).key()) ^
           hasher(std::get<3>(tuple).alignment()) ^ hasher(std::get<4>(tuple));
     }
   };
@@ -107,7 +107,7 @@ namespace Luminous
     D();
     D(const QTextLayout & copy);
 
-    void layout(const Nimble::Vector2f & size);
+    void layout(const Nimble::SizeF & size);
 
   public:
     Radiant::Mutex m_generateMutex;
@@ -136,9 +136,9 @@ namespace Luminous
     m_layout.setTextOption(copy.textOption());
   }
 
-  void SimpleTextLayout::D::layout(const Nimble::Vector2f & size)
+  void SimpleTextLayout::D::layout(const Nimble::SizeF & size)
   {
-    const float lineWidth = size.x;
+    const float lineWidth = size.width();
 
     bool forceHeight = false;
     float height = 0.0f;
@@ -233,7 +233,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   SimpleTextLayout::SimpleTextLayout()
-    : TextLayout(Nimble::Vector2f(100, 100))
+    : TextLayout(Nimble::SizeF(100, 100))
     , m_d(new D())
   {
   }
@@ -246,7 +246,7 @@ namespace Luminous
     m_d->m_lineHeight = that.m_d->m_lineHeight;
   }
 
-  SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
+  SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::SizeF & maximumSize,
                                      const QFont & font, const QTextOption & textOption)
     : TextLayout(maximumSize)
     , m_d(new D())
@@ -330,7 +330,7 @@ namespace Luminous
   }
 
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
-                                                          const Nimble::Vector2f & size,
+                                                          const Nimble::SizeF & size,
                                                           const QFont & font,
                                                           const QTextOption & option)
   {
@@ -383,10 +383,10 @@ namespace Luminous
       }
 
       if (align & Qt::AlignBottom) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().y - contentHeigth));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().height() - contentHeigth));
       } else if (align & Qt::AlignVCenter) {
         // Align empty text so that the first line is in the vertical middle.
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().y - contentHeigth)));
+        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().height() - contentHeigth)));
       } else {
         nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
       }

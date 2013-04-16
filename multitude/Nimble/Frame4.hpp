@@ -12,6 +12,7 @@
 
 #include "Vector2.hpp"
 #include "Vector4.hpp"
+#include "Size.hpp"
 
 namespace Nimble
 {
@@ -61,7 +62,7 @@ namespace Nimble
     Nimble::Vector2f rightBottom() const { return Vector2f(right(), bottom()); }
     /// Get the size of the frame
     /// @return the size of the frame
-    Nimble::Vector2f size() const { return Vector2f(width(), height()); }
+    Nimble::SizeF size() const { return SizeF(width(), height()); }
   };
 
 }

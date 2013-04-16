@@ -28,7 +28,7 @@ namespace Luminous
     /// Makes a new layout object based on another SimpleTextLayout,
     /// doesn't copy anything from Valuable::Node
     LUMINOUS_API SimpleTextLayout(const SimpleTextLayout & that);
-    LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::Vector2f & maximumSize,
+    LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::SizeF & maximumSize,
                                   const QFont & font, const QTextOption & textOption);
     LUMINOUS_API virtual ~SimpleTextLayout();
 
@@ -51,7 +51,7 @@ namespace Luminous
     LUMINOUS_API const QTextLayout & layout() const;
 
     LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
-                                                              const Nimble::Vector2f & size,
+                                                              const Nimble::SizeF & size,
                                                               const QFont & font,
                                                               const QTextOption & option);
 

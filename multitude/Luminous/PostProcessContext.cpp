@@ -49,7 +49,7 @@ namespace Luminous
     m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_framebuffer);
     m_d->m_frameBuffer.attach(GL_DEPTH_ATTACHMENT, m_d->m_depthBuffer);
 
-    m_d->m_frameBuffer.setSize(Nimble::Size(rc.contextSize().x, rc.contextSize().y));
+    m_d->m_frameBuffer.setSize(rc.contextSize());
 
     m_d->m_filter->initialize(rc, *this);
   }

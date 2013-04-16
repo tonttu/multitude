@@ -25,12 +25,12 @@ namespace Nimble
       m_extent1(e1)
   {}
 
-  Rectangle::Rectangle(Nimble::Vector2f size, const Nimble::Matrix3f & m)
+  Rectangle::Rectangle(Nimble::SizeF size, const Nimble::Matrix3f & m)
   {
     // Transform the points
     m_origin = m.project(Nimble::Vector2f(0, 0));
-    Nimble::Vector2f c0 = m.project(Vector2f(0.5f * size.x, 0.f));
-    Nimble::Vector2f c1 = m.project(Vector2f(0.f, 0.5f * size.y));
+    Nimble::Vector2f c0 = m.project(Vector2f(0.5f * size.width(), 0.f));
+    Nimble::Vector2f c1 = m.project(Vector2f(0.f, 0.5f * size.height()));
 
     // Compute the axii and extents
     m_axis0 = c0 - m_origin;
@@ -107,9 +107,9 @@ namespace Nimble
     return true;
   }
 
-  Nimble::Vector2 Rectangle::size() const
+  Nimble::SizeF Rectangle::size() const
   {
-    return Nimble::Vector2(2 * m_extent0, 2 * m_extent1);
+    return Nimble::SizeF(2 * m_extent0, 2 * m_extent1);
   }
 
   void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const

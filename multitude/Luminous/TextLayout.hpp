@@ -54,8 +54,8 @@ namespace Luminous {
 
     LUMINOUS_API void invalidate();
 
-    LUMINOUS_API virtual void setMaximumSize(const Nimble::Vector2f & size);
-    LUMINOUS_API Nimble::Vector2f maximumSize() const;
+    LUMINOUS_API virtual void setMaximumSize(const Nimble::SizeF & size);
+    LUMINOUS_API Nimble::SizeF maximumSize() const;
     /// Returns the bounding box of the text.
     LUMINOUS_API const Nimble::Rectf & boundingBox() const;
 
@@ -64,7 +64,7 @@ namespace Luminous {
   protected:
     LUMINOUS_API virtual void generateInternal() const = 0;
 
-    LUMINOUS_API TextLayout(const Nimble::Vector2f & maximumSize);
+    LUMINOUS_API TextLayout(const Nimble::SizeF & maximumSize);
 
     LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
     LUMINOUS_API void setBoundingBox(const Nimble::Rectf & bb);
