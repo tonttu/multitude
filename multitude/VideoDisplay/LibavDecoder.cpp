@@ -1783,6 +1783,10 @@ namespace VideoDisplay
 
   void LibavDecoder::audioTransferDeleted()
   {
+    close();
+    if(isRunning())
+      waitEnd();
+
     m_d->m_audioTransfer = nullptr;
   }
 
