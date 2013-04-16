@@ -27,6 +27,8 @@ namespace Luminous
     QtWindow(const MultiHead::Window & window, const QString & windowTitle);
     ~QtWindow();
 
+    virtual void init() OVERRIDE;
+
     virtual void poll() OVERRIDE;
     virtual void swapBuffers() OVERRIDE;
     virtual void makeCurrent() OVERRIDE;
