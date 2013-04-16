@@ -21,6 +21,8 @@
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
+#include <QSettings>
+
 #include <assert.h>
 
 #include <shlobj.h>
@@ -82,24 +84,12 @@ namespace Radiant
     {
       (void) isapplication;
 
-      assert(strlen(module) < 128);
+      QSettings settings("SOFTWARE\\MultiTouch\\MTSvc", QSettings::NativeFormat);
+      QString root = settings.value("Root").toString();
+      if(!root.isEmpty())
+        return root + QString("\\share");
 
-      // Typically this retrieves "C:\Documents and Settings\All Users\Application Data"
-      // which by most accounts is the safest place to store application data
-
-      QString   path;
-
-      char  buffer[_MAX_PATH] = "";
-      if(SHGetFolderPathA(0, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
-      {
-        path = QString(buffer) + QString("\\") + QString(module);
-      }
-      else
-      {
-        error("PlatformUtils::getModuleGlobalDataPath # SHGetFolderPath() failed");
-      }
-
-      return path;
+      assert(false && "PlatformUtils::GetModuleGlobalDataPath # Root in SOFTWARE\\MultiTouch\\MTSvc not set");
     }
 
     QString getModuleUserDataPath(const char * module, bool isapplication)
