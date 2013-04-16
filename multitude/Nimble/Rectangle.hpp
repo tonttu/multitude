@@ -16,7 +16,7 @@
 #include "Matrix3.hpp"
 #include "Rect.hpp"
 
-#include <vector>
+#include <array>
 
 namespace Nimble {
 
@@ -75,9 +75,9 @@ namespace Nimble {
       /// Return the size of the rectangle
       Nimble::Vector2 size() const;
 
-      /// Computes the corner vertices of the rectangle and appends the to the given vector
+      /// Computes the corner vertices of the rectangle and appends the to the given array
       /// @param corners vector of points where the four corners are appended
-      void computeCorners(std::vector<Nimble::Vector2f> & corners) const;
+      void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const;
 
       /// Returns a rectangle that contains the two given rectangles. The
       /// result is not guaranteed to be the smallest rectangle containing the

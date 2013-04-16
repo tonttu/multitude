@@ -65,10 +65,8 @@ namespace Nimble
   bool Rectangle::isInside(const Nimble::Rectangle & r) const
   {
     // rectangle is inside if all points are inside
-    std::vector<Nimble::Vector2f> corners;
-    corners.reserve(4);
+    std::array<Nimble::Vector2f, 4> corners;
     r.computeCorners(corners);
-    assert(corners.size() == 4);
 
     for(int i = 0; i < 4; ++i)
       if(!isInside(corners[i])) return false;
@@ -114,15 +112,15 @@ namespace Nimble
     return Nimble::Vector2(2 * m_extent0, 2 * m_extent1);
   }
 
-  void Rectangle::computeCorners(std::vector<Nimble::Vector2f> &corners) const
+  void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const
   {
     Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
     Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
 
-    corners.push_back(m_origin - extAxis0 - extAxis1);
-    corners.push_back(m_origin + extAxis0 - extAxis1);
-    corners.push_back(m_origin + extAxis0 + extAxis1);
-    corners.push_back(m_origin - extAxis0 + extAxis1);
+    corners[0] = m_origin - extAxis0 - extAxis1;
+    corners[1] = m_origin + extAxis0 - extAxis1;
+    corners[2] = m_origin + extAxis0 + extAxis1;
+    corners[3] = m_origin - extAxis0 + extAxis1;
   }
 
   Nimble::Rectangle Nimble::Rectangle::merge(const Nimble::Rectangle &a, const Nimble::Rectangle &b)
@@ -145,7 +143,7 @@ namespace Nimble
     box.m_axis1.normalize();
 
     // Project input corner points on the new axii and compute the extents
-    std::vector<Nimble::Vector2f> vertex;
+    std::array<Nimble::Vector2f, 4> vertex;
     Nimble::Vector2f min(0, 0);
     Nimble::Vector2f max(0, 0);
     const Nimble::Vector2f axii[] =  { box.m_axis0, box.m_axis1 };
@@ -167,7 +165,6 @@ namespace Nimble
       }
     }
 
-    vertex.clear();
     b.computeCorners(vertex);
 
     for(int i = 0; i < 4; i++) {
@@ -202,7 +199,7 @@ namespace Nimble
 
   void Rectangle::transform(const Nimble::Matrix3 &m)
   {
-    std::vector<Nimble::Vector2> vertex;
+    std::array<Nimble::Vector2, 4> vertex;
     computeCorners(vertex);
 
     for(size_t i = 0; i < 4; i++)
