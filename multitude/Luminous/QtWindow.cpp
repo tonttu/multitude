@@ -294,7 +294,7 @@ namespace Luminous
       flags |= Qt::X11BypassWindowManagerHint;
     }
 
-    m_d->m_mainWindow = new GLThreadWidget(format, nullptr, *this, flags, m_d->m_mhWindow);
+    m_d->m_mainWindow = new GLThreadWidget(format, parent, *this, flags, m_d->m_mhWindow);
 
     if(!m_d->m_title.isEmpty())
       m_d->m_mainWindow->setWindowTitle(m_d->m_title);
