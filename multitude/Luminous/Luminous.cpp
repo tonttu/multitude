@@ -113,21 +113,6 @@ namespace Luminous
 
     done = true;
 
-#ifdef WIN32
-    // Make sure Qt plugins are found
-    /// @todo does this work when the SDK is not installed? Where does find the plugins?
-    /// @todo should somehow use MultiTouch::cornerstoneRoot(),
-    ///       maybe give it as a parameter to this function
-    char* dir = getenv("CORNERSTONE_ROOT");
-    std::string pluginPath;
-    if(dir) {
-      pluginPath = std::string(dir) + std::string("\\bin\\plugins");
-    } else {
-      pluginPath = std::string("..\\lib\\Plugins");
-    }
-    QCoreApplication::addLibraryPath(pluginPath.c_str());
-#endif
-
     // Debug output supported image formats
     {
       debugLuminous("Qt image support (read):");
