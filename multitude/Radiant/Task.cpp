@@ -18,11 +18,12 @@
 
 namespace
 {
+  static Radiant::Mutex s_sharedMutexMutex;
+
   std::map<void *, std::weak_ptr<Radiant::Mutex> > s_sharedMutexStore;
   std::shared_ptr<Radiant::Mutex> sharedMutex(void * ptr)
   {
-    static Radiant::Mutex s_mutex;
-    Radiant::Guard g(s_mutex);
+    Radiant::Guard g(s_sharedMutexMutex);
 
     auto & weak = s_sharedMutexStore[ptr];
     std::shared_ptr<Radiant::Mutex> mutex = weak.lock();

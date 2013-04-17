@@ -60,8 +60,10 @@ namespace Luminous
     LUMINOUS_API static void init();
 
     /// @cond
+
     LUMINOUS_API static TextureAtlasGroup<Glyph> & atlas();
     LUMINOUS_API static Radiant::Mutex & atlasMutex();
+
     /// @endcond
 
   private:
