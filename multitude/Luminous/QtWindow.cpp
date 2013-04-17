@@ -233,6 +233,7 @@ namespace Luminous
 
     ~D()
     {
+      delete m_mainWindow;
     }
 
     GLThreadWidget * m_mainWindow;
