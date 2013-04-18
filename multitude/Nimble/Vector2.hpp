@@ -78,6 +78,11 @@ namespace Nimble {
     inline Vector2T&	operator*=	(T s)					        { x = (x*s), y = (T)(y*s); return *this; }
     /// Divides a vector with a scalar
     inline Vector2T&	operator/=	(T s)					        { x /= s; y /= s; return *this; }
+    /// Divide a vector by scalar
+    inline Vector2T   operator/ (T s) const { return Vector2T<T>(x / s, y / s); }
+    /// Returns the negation of a vector
+    inline	Vector2T	operator-	() const { return Vector2T<T>(-x, -y); }
+
     /// Checks if both components are one
     inline bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
     /// Checks if both components are zero
@@ -176,11 +181,6 @@ namespace Nimble {
 
   /// Subract two vectors
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v1, const Vector2T<T>& v2) { return Vector2T<T>(v1.x-v2.x, v1.y-v2.y); }
-
-  /// Divide a vector by scalar
-  template <class T> inline Vector2T<T> operator/ (const Vector2T<T>& v, const T s) { return Vector2T<T>(v.x / s, v.y / s); }
-  /// Returns the negation of a vector
-  template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v) { return Vector2T<T>(-v.x, -v.y); }
 
   /// Return the length of the vector
   /// @param t vector whose length to get
