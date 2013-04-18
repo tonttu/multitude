@@ -81,9 +81,9 @@ namespace Nimble {
     inline Vector3T&	operator-=	(const Vector3T& v)		   { x -= v.x; y -= v.y; z -= v.z;  return *this; }
 
     /// Multiplies a vector with a scalar
-    inline Vector3T&	operator*=	(T s)			   { x = (x*s), y = (y*s); z = (z*s); return *this; }
+    inline Vector3T&	operator*=	(T s)			   { x *= s; y *= s; z *= s; return *this; }
     /// Divides a vector with a scalar
-    inline Vector3T&	operator/=	(T s)			   { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); return *this; }
+    inline Vector3T&	operator/=	(T s)			   { x /= s; y /= s; z /= s; return *this; }
 
     /// Check if all components are one
     inline bool		isOne		(void) const			   { return (x == 1.0f && y == 1.0f && z == 1.0f); }

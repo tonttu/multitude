@@ -178,8 +178,6 @@ namespace Nimble {
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v1, const Vector2T<T>& v2) { return Vector2T<T>(v1.x-v2.x, v1.y-v2.y); }
 
   /// Divide a vector by scalar
-  template <class T> inline	Vector2T<T>	operator/	(const Vector2T<T>& v, const double s) { T r = T(1.0/s); return v*r; }
-  /// Divide a vector by scalar
   template <class T> inline Vector2T<T> operator/ (const Vector2T<T>& v, const T s) { return Vector2T<T>(v.x / s, v.y / s); }
   /// Returns the negation of a vector
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v) { return Vector2T<T>(-v.x, -v.y); }
