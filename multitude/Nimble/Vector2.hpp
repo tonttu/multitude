@@ -19,6 +19,9 @@
 
 namespace Nimble {
 
+  template <class T>
+  class SizeT;
+
   /** Two-dimensional vector class for 2D mathematics.
 
       Like all classed in Nimble Vector2T has been optimized for
@@ -42,6 +45,10 @@ namespace Nimble {
     inline Vector2T () {}
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
+
+    /// Constructs vector from the size.
+    /// @param s Size which width and height are copied to x and y values of vector.
+    inline Vector2T(const SizeT<T> & s) : x(s.width()), y(s.height()) {}
 
     /// Fill the vector with zeroes
     inline void clear		(void)					{ x = (T)(0); y = (T)(0); }
