@@ -48,7 +48,7 @@ namespace Nimble {
 
     /// Constructs vector from the size.
     /// @param s Size which width and height are copied to x and y values of vector.
-    inline Vector2T(const SizeT<T> & s) : x(s.width()), y(s.height()) {}
+    inline explicit Vector2T(const SizeT<T> & s) : x(s.width()), y(s.height()) {}
 
     /// Fill the vector with zeroes
     inline void clear		(void)					{ x = (T)(0); y = (T)(0); }
