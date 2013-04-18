@@ -53,14 +53,14 @@ namespace Valuable
    * /// FunnyWidget.cpp
    *
    * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
-   * Valuable::Flags s_modes[] = {"on", FunnyWidget::ON, "enabled", FunnyWidget::ON,
-   *                              "off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF,
-   *                              0, 0};
+   * Valuable::FlagNames s_modes[] = {{"on", FunnyWidget::ON, "enabled", FunnyWidget::ON},
+   *                                  {"off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF},
+   *                                  {0, 0}};
    *
-   * Valuable::Flags s_priorities[] = {"low", FunnyWidget::PriorityLow,
-   *                                   "medium", FunnyWidget::PriorityMedium,
-   *                                   "high", FunnyWidget::PriorityHigh,
-   *                                    0, 0};
+   * Valuable::FlagNames s_priorities[] = {{"low", FunnyWidget::PriorityLow},
+   *                                       {"medium", FunnyWidget::PriorityMedium},
+   *                                       {"high", FunnyWidget::PriorityHigh},
+   *                                       {0, 0}};
    *
    * FunnyWidget::FunnyWidget()
    *  : m_mode(this, "mode", s_modes, ON)
