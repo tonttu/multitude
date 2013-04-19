@@ -272,7 +272,11 @@ namespace Resonant {
               m_syncinfo.framesProcessed / 44100.0);
       }
     } else {
-      latency = time.outputBufferDacTime - time.currentTime;
+      // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
+      if (time.currentTime == 0)
+        latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
+      else
+        latency = time.outputBufferDacTime - time.currentTime;
       if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
          outputError) {
         m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
