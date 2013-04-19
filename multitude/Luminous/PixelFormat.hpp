@@ -141,10 +141,19 @@ namespace Luminous
     /// @return new pixel format
     static PixelFormat alphaUByte()
     { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
-    /// Constructs an 8-bit luminance (grayscale) pixel format
+    /// Constructs an 8-bit red pixel format
+    /** This format is commonly used for storing grayscale images. */
     /// @return new pixel format
     static PixelFormat redUByte()
     { return PixelFormat(LAYOUT_RED, TYPE_UBYTE); }
+    /// Constructs an 8-bit green pixel format
+    /// @return new pixel format
+    static PixelFormat greenUByte()
+    { return PixelFormat(LAYOUT_GREEN, TYPE_UBYTE); }
+    /// Constructs an 8-bit blue pixel format
+    /// @return new pixel format
+    static PixelFormat blueUByte()
+    { return PixelFormat(LAYOUT_BLUE, TYPE_UBYTE); }
     /// Constructs an 8-bit luminance-alpha pixel format
     /// @return new pixel format
     static PixelFormat redGreenUByte()
