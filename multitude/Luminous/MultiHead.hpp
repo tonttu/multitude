@@ -293,7 +293,7 @@ namespace Luminous {
       bool resizeable() const { return m_resizeable; }
       void setResizeable(bool resizeable) { m_resizeable = resizeable; }
 
-      /// X11 screen number for threaded rendering, -1 if not specified. Linux only.
+      /// Screen number for the window. Use -1 for default screen.
       int screennumber() const { return m_screennumber; }
       void setScreennumber(int s) { m_screennumber = s; }
 

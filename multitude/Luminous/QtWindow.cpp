@@ -223,11 +223,10 @@ namespace Luminous
   class QtWindow::D
   {
   public:
-    D(const Luminous::MultiHead::Window & win, const QString & title)
+    D()
       : m_mainWindow(0)
+      , m_glWidget(0)
       , m_deferredActivateWindow(false)
-      , m_mhWindow(win)
-      , m_title(title)
       , m_raiseCount(0)
     {}
 
@@ -236,10 +235,25 @@ namespace Luminous
       delete m_mainWindow;
     }
 
-    GLThreadWidget * m_mainWindow;
+    // Get the host widget for our OpenGL context
+    static QWidget * getHostWidget(int screenNumber, Qt::WindowFlags flags)
+    {
+      QDesktopWidget * desktop = QApplication::desktop();
+
+      // Make sure the screen number is valid. Fall back to default screen if not.
+      if(screenNumber >= desktop->screenCount()) {
+        Radiant::error("Request to create window on screen %d, but only %d screens detected. Using default screen instead.", screenNumber, desktop->screenCount());
+        screenNumber = -1;
+      }
+
+      QWidget * parent = desktop->screen(screenNumber);
+
+      return new QWidget(parent, flags);
+    }
+
+    QWidget * m_mainWindow;
+    GLThreadWidget * m_glWidget;
     bool m_deferredActivateWindow;
-    const Luminous::MultiHead::Window & m_mhWindow;
-    QString m_title;
     int m_raiseCount;
   };
 
@@ -248,70 +262,62 @@ namespace Luminous
 
   QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
     : Window()
-    , m_d(new D(window, windowTitle))
+    , m_d(new D())
   {
-    /* The code below opens a new OpenGL window at desired location. Extra
-       steps are taken to ensure that the window creation happens so that:
 
-       1) A dummy window is created, and moved to the right location, with
-       right size etc.
+    // The code below opens a new OpenGL window at desired location. Extra
+    // steps are taken to ensure that the window creation happens so that:
+    //
+    // 1) A dummy window is created, and moved to the right location, with
+    // right size etc.
+    //
+    // 2) An OpenGL widget is opened at this correct location.
+    //
+    // The purpose of this exercise is that that when using AMD GPUs, then AMD
+    // driver selects the GPU for the OpenGL context based on window location,
+    // when the context is created. Choosing the wrong GPU can cause massive
+    // performance penalty. Similar behavior has been witnessed on OS X.
 
-       2) An OpenGL widget is opened at this correct location.
+    Qt::WindowFlags flags = 0;
 
-       The purpose of this exercise is that that when one is using ATI
-       GPUs, then ATI driver selects the GPU for the OpenGL context
-       based on window location, when the context is created. Choosing
-       wrong GPU can cause massive performance penalty. Similar behavior has been
-       witnessed on OSX.
+    if(window.frameless()) {
+      flags |= Qt::FramelessWindowHint;
+      flags |= Qt::X11BypassWindowManagerHint;
+    }
 
-    */
+    m_d->m_mainWindow = m_d->getHostWidget(window.screennumber(), flags);
 
-    QWidget * parent = 0;
+    if(!windowTitle.isEmpty())
+      m_d->m_mainWindow->setWindowTitle(windowTitle);
 
-#ifdef RADIANT_LINUX
-    // Handle multiple XScreens
-    QDesktopWidget * desktop = QApplication::desktop();
+    if(window.screen()->iconify())
+       m_d->m_mainWindow->setWindowState(Qt::WindowMinimized);
 
-    /// @todo this should be more graceful, what if the requested screen number doesn't exist?
-    const int xScreenNumber = window.screennumber();
-    assert(xScreenNumber <= desktop->screenCount());
+    m_d->m_mainWindow->move(window.location().x, window.location().y);
+    m_d->m_mainWindow->resize(window.width(), window.height());
+    m_d->m_mainWindow->raise();
+    m_d->m_mainWindow->show();
 
-    parent = desktop->screen(xScreenNumber);
-#endif
+    if(window.fullscreen())
+      m_d->m_mainWindow->showFullScreen();
 
     QGLFormat format = QGLFormat::defaultFormat();
 
     // Disable multi-sampling in the default framebuffer if we do our own
     // multi-sampling
-    if(m_d->m_mhWindow.directRendering())
-      format.setSamples(m_d->m_mhWindow.antiAliasingSamples());
+    if(window.directRendering())
+      format.setSamples(window.antiAliasingSamples());
 
     format.setVersion(3, 2);
     format.setProfile(QGLFormat::CompatibilityProfile);
 
-    Qt::WindowFlags flags = 0;
-    if(m_d->m_mhWindow.frameless()) {
-      flags |= Qt::FramelessWindowHint;
-      flags |= Qt::X11BypassWindowManagerHint;
-    }
+    m_d->m_glWidget = new GLThreadWidget(format, m_d->m_mainWindow, *this, flags, window);
 
-    m_d->m_mainWindow = new GLThreadWidget(format, parent, *this, flags, m_d->m_mhWindow);
+    m_d->m_glWidget->resize(window.width(), window.height());
+    m_d->m_glWidget->raise();
+    m_d->m_glWidget->show();
 
-    if(!m_d->m_title.isEmpty())
-      m_d->m_mainWindow->setWindowTitle(m_d->m_title);
-
-    if(m_d->m_mhWindow.screen()->iconify())
-       m_d->m_mainWindow->setWindowState(Qt::WindowMinimized);
-
-    m_d->m_mainWindow->move(m_d->m_mhWindow.location().x, m_d->m_mhWindow.location().y);
-    m_d->m_mainWindow->show();
-    m_d->m_mainWindow->raise();
-    m_d->m_mainWindow->resize(m_d->m_mhWindow.width(), m_d->m_mhWindow.height());
-
-    if(m_d->m_mhWindow.fullscreen())
-      m_d->m_mainWindow->showFullScreen();
-
-    m_d->m_mainWindow->setFocus(Qt::ActiveWindowFocusReason);
+    m_d->m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
 
     // If we bypass the window manager, we must explicitly make the window
     // active to get keyboard focus. We must defer this call so that the event
@@ -328,15 +334,16 @@ namespace Luminous
   void QtWindow::poll()
   {
 #ifdef RADIANT_LINUX
-    // Raising windows is a tough job...
-    if(m_d->m_raiseCount < 100) {
+    // This hack is to get around Unity window manager issues in Ubuntu
+    if(m_d->m_raiseCount < 40) {
       ++m_d->m_raiseCount;
       m_d->m_mainWindow->raise();
     }
 #endif
+
     // Execute any deferred activateWindow() calls
     if(m_d->m_deferredActivateWindow) {
-      m_d->m_mainWindow->activateWindow();
+      m_d->m_glWidget->activateWindow();
       m_d->m_deferredActivateWindow = false;
     }
   }
@@ -344,7 +351,7 @@ namespace Luminous
   void QtWindow::makeCurrent()
   {
     for(int i = 0; i < 100; ++i) {
-      m_d->m_mainWindow->makeCurrent();
+      m_d->m_glWidget->makeCurrent();
       if(glGetError() == GL_NO_ERROR) break;
       Radiant::Sleep::sleepMs(10);
     }
@@ -352,11 +359,11 @@ namespace Luminous
 
   void QtWindow::swapBuffers()
   {
-    m_d->m_mainWindow->swapBuffers();
+    m_d->m_glWidget->swapBuffers();
 
     // Timeout in seconds after which the cursor is hidden
     const float hideCursorLowerLimit = 5.f;
-    float since = m_d->m_mainWindow->m_lastMouseAction.sinceSecondsD();
+    float since = m_d->m_glWidget->m_lastMouseAction.sinceSecondsD();
 
     if(since > hideCursorLowerLimit) {
 
@@ -371,22 +378,22 @@ namespace Luminous
 
   void QtWindow::minimize()
   {
-    m_d->m_mainWindow->showMinimized();
+    m_d->m_glWidget->showMinimized();
   }
 
   void QtWindow::maximize()
   {
-    m_d->m_mainWindow->showMaximized();
+    m_d->m_glWidget->showMaximized();
   }
 
   void QtWindow::restore()
   {
-    m_d->m_mainWindow->showNormal();
+    m_d->m_glWidget->showNormal();
   }
 
   void QtWindow::showCursor(bool visible)
   {
-    m_d->m_mainWindow->showCursor(visible);
+    m_d->m_glWidget->showCursor(visible);
   }
 
 }

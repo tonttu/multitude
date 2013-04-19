@@ -334,7 +334,7 @@ namespace Luminous
       m_resizeable(this, "resizeable", false),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
       m_directRendering(this, "direct-rendering", true),
-      m_screennumber(this, "screennumber", 0)
+      m_screennumber(this, "screennumber", -1)
   {
       eventAddOut("graphics-bounds-changed");
   }
