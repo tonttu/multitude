@@ -294,6 +294,19 @@ namespace Nimble {
                       0, 0, 0, 1);
     }
 
+    /// Create a translation matrix
+    /// @param x Tranlation along X-axis
+    /// @param y Tranlation along Y-axis
+    /// @param z Tranlation along Z-axis
+    /// @return New translation matrix
+    static Matrix4T<T> makeTranslation(T x, T y, T z)
+    {
+      return Matrix4T(1, 0, 0, x,
+                      0, 1, 0, y,
+                      0, 0, 1, z,
+                      0, 0, 0, 1);
+    }
+
     /// Create a non-uniform scaling matrix
     /// @param v XYZ scaling factors
     /// @return new Scaling matrix
