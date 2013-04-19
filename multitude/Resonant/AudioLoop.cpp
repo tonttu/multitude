@@ -116,8 +116,22 @@ namespace Resonant {
 
       s.outParams.device = Pa_GetDefaultOutputDevice();
       if(s.outParams.device == paNoDevice) {
-        Radiant::error("AudioLoop::startReadWrite # No default output device available");
-        return false;
+        for (int i = 0; i < Pa_GetDeviceCount();++ i) {
+          const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
+          if (QByteArray("default") == info->name) {
+            s.outParams.device = i;
+            break;
+          }
+        }
+
+        if (s.outParams.device == paNoDevice) {
+          if (Pa_GetDeviceCount() > 0) {
+            s.outParams.device = 0;
+          } else {
+            Radiant::error("AudioLoop::startReadWrite # No default output device available");
+            return false;
+          }
+        }
       }
 
       devices.push_back(Device("", channels));
