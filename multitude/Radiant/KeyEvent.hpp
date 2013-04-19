@@ -143,6 +143,10 @@ namespace Radiant
     /// @return event type
     QEvent::Type type() const;
 
+    /// Set the type of the event
+    /// @param type new event type
+    void setType(QEvent::Type type);
+
     /// Return the button that generated the event
     /// @return button that generated the event
     Qt::MouseButton button() const;

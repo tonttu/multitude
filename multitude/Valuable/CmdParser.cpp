@@ -82,7 +82,7 @@ namespace Valuable
         continue;
       }
 
-      Valuable::Attribute * obj = opts.getValue(name.toUtf8());
+      Valuable::Attribute * obj = opts.attribute(name.toUtf8());
       if(obj) {
         // check if we have an alias for an AttributeBool
         Valuable::AttributeAlias * alias = dynamic_cast<Valuable::AttributeAlias*>(obj);
@@ -105,7 +105,7 @@ namespace Valuable
       } else {
         if(name.length() > 3 && name.startsWith("no-")) {
           Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(
-              opts.getValue(name.mid(3).toUtf8()));
+              opts.attribute(name.mid(3).toUtf8()));
           if(b) {
             *b = false;
             m_parsedArgs.insert(name);

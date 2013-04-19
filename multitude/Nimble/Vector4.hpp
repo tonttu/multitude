@@ -79,9 +79,9 @@ namespace Nimble {
     /// Subtracts two vectors
     inline Vector4T&	operator-=  (const Vector4T& v)                { x -= v.x; y -= v.y; z -= v.z;  w -= v.w; return *this; }
     /// Multiplies a vector by scalar
-    inline Vector4T&	operator*=  (T s)		               { x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
+    inline Vector4T&	operator*=  (T s)		               { x *= s; y *= s; z *= s; w *= s; return *this; }
     /// Divides a vector by scalar
-    inline Vector4T&	operator/=  (T s)		               { s = T(1)/s; x = (x*s), y = (y*s); z = (z*s); w = (w*s); return *this; }
+    inline Vector4T&	operator/=  (T s)		               { x /= s; y /= s; z /= s; w /= s; return *this; }
 
     /// Checks if all components are one
     inline bool		isOne	    (void) const		       { return (x == 1.0f && y == 1.0f && z == 1.0f && w == 1.0f); }

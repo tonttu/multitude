@@ -86,11 +86,11 @@ namespace Luminous {
     // number of mipmaps, including the original one
     int mipmaps = 0;
 
-    Nimble::Vector2i size = img.size();
+    Nimble::Size size = img.size();
     for(;;) {
       requiredSize += ImageCodecDDS::linearSize(size, m_mipmapFormat.compression());
       ++mipmaps;
-      if(size.x <= 4 && size.y <= 4) break;
+      if(size.width() <= 4 && size.height() <= 4) break;
       size /= 2;
     }
 

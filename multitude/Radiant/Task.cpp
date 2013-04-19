@@ -16,6 +16,36 @@
 
 #include <Radiant/Trace.hpp>
 
+namespace
+{
+  static Radiant::Mutex s_sharedMutexMutex;
+
+  std::map<void *, std::weak_ptr<Radiant::Mutex> > s_sharedMutexStore;
+  std::shared_ptr<Radiant::Mutex> sharedMutex(void * ptr)
+  {
+    Radiant::Guard g(s_sharedMutexMutex);
+
+    auto & weak = s_sharedMutexStore[ptr];
+    std::shared_ptr<Radiant::Mutex> mutex = weak.lock();
+    if (!mutex) {
+      mutex = std::make_shared<Radiant::Mutex>();
+      weak = mutex;
+    }
+    // do some cleanup
+    if (s_sharedMutexStore.size() > 20) {
+      auto it = s_sharedMutexStore.begin();
+      for (int i = 0; i < 10; ++i) {
+        if (it->second.lock()) {
+          ++it;
+        } else {
+          it = s_sharedMutexStore.erase(it);
+        }
+      }
+    }
+    return mutex;
+  }
+}
+
 
 namespace Radiant
 {
@@ -32,6 +62,13 @@ namespace Radiant
   {
     if (m_state == DONE || m_state == CANCELLED)
       return;
+
+    auto mutex = sharedMutex(this);
+    Radiant::Guard g(*mutex);
+
+    if (m_state == DONE || m_state == CANCELLED)
+      return;
+
     if (m_host)
       m_host->removeTask(shared_from_this(), false, true);
 

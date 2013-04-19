@@ -82,14 +82,14 @@ namespace Luminous
     }
   }
 
-  const Vector2i & MultiHead::Area::size() const
+  Nimble::Size MultiHead::Area::size() const
   {
-    return m_size;
+    return Nimble::Size(*m_size);
   }
 
-  void MultiHead::Area::setSize(Nimble::Vector2i size)
+  void MultiHead::Area::setSize(Nimble::Size size)
   {
-    m_size = size;
+    m_size = size.toVector();
   }
 
   // @getter graphicslocation
@@ -108,18 +108,18 @@ namespace Luminous
   }
 
   // @getter graphicssize
-  const Nimble::Vector2f MultiHead::Area::graphicsSize(bool withseams) const
+  const Nimble::SizeF MultiHead::Area::graphicsSize(bool withseams) const
   {
-    return withseams ?
+    return Nimble::SizeF(withseams ?
         m_graphicsSize.asVector() + Nimble::Vector2f(m_seams[0] + m_seams[1],
                                                      m_seams[2] + m_seams[3]) :
-        m_graphicsSize.asVector();
+        m_graphicsSize.asVector());
   }
 
   // @setter graphicssize
-  void MultiHead::Area::setGraphicsSize(Nimble::Vector2f size)
+  void MultiHead::Area::setGraphicsSize(Nimble::SizeF size)
   {
-    m_graphicsSize = size;
+    m_graphicsSize = size.toVector();
   }
 
   const Rect & MultiHead::Area::graphicsBounds() const
@@ -169,156 +169,6 @@ namespace Luminous
     return !isHW && isSW;
   }
 
-  void MultiHead::Area::cleanEdges() const
-  {
-/// @todo this function should still work (the Cornerstone color calibration must work in 2.0)
-#if 0
-    glViewport(m_location[0], m_location[1], m_size[0], m_size[1]);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix(); // From applyGlState
-    glLoadIdentity();
-
-    float totalh, totalw;
-
-    float areaaspect = m_size[0] / m_size[1];
-    float gfxaspect = m_graphicsSize[0] / m_graphicsSize[1];
-
-    if((gfxaspect / areaaspect) > 0.75f) {
-      totalh = m_size[1] + m_seams[2] + m_seams[3];
-      totalw = m_size[0] + m_seams[0] + m_seams[1];
-    }
-    else {
-      totalh = m_size[0] + m_seams[2] + m_seams[3];
-      totalw = m_size[1] + m_seams[0] + m_seams[1];
-    }
-
-    // float relh = totalh / m_size[1];
-    // float relx = totalw / m_size[0];
-
-    if(m_method == METHOD_TEXTURE_READBACK) {
-
-      GLRESOURCE_ENSURE2(Texture2D, tex, this);
-
-      Utils::glUsualBlend();
-
-      if(tex->size() != m_size.asVector()) {
-        Radiant::info("Area GL init");
-        // Initialize the texture to the right size:
-        tex->loadBytes(GL_RGB, width(), height(), 0,
-                       Luminous::PixelFormat::rgbUByte(),
-                       false);
-      }
-
-      bool useColorCorrection = !m_colorCorrection.isIdentity() &&
-          (window()->areaCount() != 1 || window()->screen()->windowCount() != 1 ||
-          !window()->screen()->hwColorCorrection().ok());
-
-      if(useColorCorrection) {
-        std::vector<Nimble::Vector3ub> tmp(256);
-        m_colorCorrection.fill(tmp);
-
-        GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
-        colorCorrectionTexture->loadBytes(GL_RGB, 256,
-                                            &tmp[0],
-                                            PixelFormat::rgbUByte(), false);
-      }
-
-      tex->bind(GL_TEXTURE0);
-
-      glReadBuffer(GL_BACK);
-      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                       m_location.asVector().x, m_location.asVector().y,
-                       tex->width(), tex->height(), 0);
-
-      glDisable(GL_TEXTURE_2D);
-      glColor3f(0, 0, 0);
-      glLoadIdentity();
-      gluOrtho2D(0, 1, 1, 0);
-      Utils::glTexRect(0, 1, 1, 0);
-
-      glLoadIdentity();
-      m_keyStone.applyGlState();
-      gluOrtho2D(0, 1, 1, 0);
-
-      tex->bind(GL_TEXTURE0);
-      glEnable(GL_TEXTURE_2D);
-      glDisable(GL_BLEND);
-
-      glColor3f(1, 1, 1);
-
-      if(m_rgbCube->isDefined() && m_rgbCube->bind(GLResources::getThreadResources(), GL_TEXTURE1)) {
-
-        tex->bind(GL_TEXTURE0);
-
-        // Radiant::info("RGB COLOR FIX");
-
-        GLSLProgramObject * program = s_rgbCorrectionShader.bind();
-        assert(program);
-        program->setUniformInt("tex", 0);
-        program->setUniformInt("lut", 1);
-      }
-      else if(useColorCorrection) {
-        GLRESOURCE_ENSURE2(Texture1D, colorCorrectionTexture, &m_colorCorrectionTextureKey);
-        colorCorrectionTexture->bind(GL_TEXTURE1);
-
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        GLSLProgramObject * program = m_colorCorrectionShader->bind();
-
-        program->setUniformInt("tex", 0);
-        program->setUniformInt("lut", 1);
-
-        Utils::glTexRect(0, 1, 1, 0);
-
-        program->unbind();
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-      } else {
-        Utils::glTexRect(0, 1, 1, 0);
-      }
-
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, 0);
-
-      glDisable(GL_TEXTURE_2D);
-      glDisable(GL_TEXUTRE_3D);
-    }
-    else {
-      glLoadIdentity();
-      m_keyStone.applyGlState();
-      gluOrtho2D(0, 1, 1, 0);
-    }
-
-    float gamma = 1.1f;
-
-    if(m_window)
-      if(m_window->m_screen)
-        gamma = m_window->m_screen->gamma();
-
-    if(m_seams[0] != 0.0f)
-      Utils::fadeEdge(1, 1, 2 * m_seams[0] / totalw,
-                      gamma, Utils::LEFT, false);
-    if(m_seams[1] != 0.0f)
-      Utils::fadeEdge(1, 1, 2 * m_seams[1] / totalw,
-                      gamma, Utils::RIGHT, false);
-    if(m_seams[2] != 0.0f)
-      Utils::fadeEdge(1, 1, 2 * m_seams[2] / totalh,
-                      gamma, Utils::TOP, false);
-    if(m_seams[3] != 0.0f)
-      Utils::fadeEdge(1, 1, 2 * m_seams[3] / totalh,
-                      gamma, Utils::BOTTOM, false);
-
-    if(m_method != METHOD_TEXTURE_READBACK)
-      m_keyStone.cleanExterior();
-#endif
-  }
-
   GLKeyStone & MultiHead::Area::keyStone()
   {
     return m_keyStone;
@@ -363,7 +213,7 @@ namespace Luminous
     isInside = ok;
 
     loc.y = 1.0f - loc.y;
-    loc.scale(graphicsBounds().size());
+    loc.scale(graphicsBounds().size().toVector());
     loc += graphicsBounds().low();
 
     return loc;
@@ -373,7 +223,7 @@ namespace Luminous
       (Nimble::Vector2f loc, int windowheight, bool & isInside) const
   {
     loc -= graphicsBounds().low();
-    loc.descale(graphicsBounds().size());
+    loc.descale(graphicsBounds().size().toVector());
     loc.y = 1.0f - loc.y;
 
     Nimble::Matrix4 m = m_keyStone.matrix();
@@ -492,9 +342,9 @@ namespace Luminous
   MultiHead::Window::~Window()
   {}
 
-  void MultiHead::Window::resizeEvent(Vector2i size)
+  void MultiHead::Window::resizeEvent(Nimble::Size size)
   {
-    m_size = size;
+    m_size = size.toVector();
 
     if(m_areas.size() == 1) {
       debugLuminous("MultiHead::Window::resizeEvent");
@@ -530,7 +380,7 @@ namespace Luminous
     if (!a)
       return;
     m_areas.push_back(std::shared_ptr<Area>(a));
-    addValue(a);
+    addAttribute(a);
 
     if (m_screen) {
       a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
@@ -583,7 +433,7 @@ namespace Luminous
     if(type == QString("area")) {
       Area * area = new Area(this);
       // Add as child & recurse
-      addValue(name, area);
+      addAttribute(name, area);
       ok &= area->deserialize(ce);
       m_areas.push_back(std::shared_ptr<Area>(area));
       if (m_screen) {
@@ -692,7 +542,7 @@ namespace Luminous
       Area & a = area(i);
 
       float wleft  = a.graphicsLocation().x;
-      float wright = wleft + a.graphicsSize().x;
+      float wright = wleft + a.graphicsSize().width();
 
       left  = std::min(left,  wleft);
       right = std::max(right, wright);
@@ -714,7 +564,7 @@ namespace Luminous
       Area & a = area(i);
 
       float wtop = a.graphicsLocation().y;
-      float wbot = wtop + a.graphicsSize().y;
+      float wbot = wtop + a.graphicsSize().height();
 
       top = std::min(top, wtop);
       bottom = std::max(bottom, wbot);
@@ -742,7 +592,7 @@ namespace Luminous
   {
     m_hwColorCorrection.syncWith(0);
     for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      removeValue(it->get());
+      removeAttribute(it->get());
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -755,7 +605,7 @@ namespace Luminous
 
   void MultiHead::addWindow(Window * w)
   {
-    addValue(w);
+    addAttribute(w);
     m_windows.push_back(std::shared_ptr<Window>(w));
     if(m_hwColorCorrectionEnabled) {
       /// @todo this is a wrong assumption that area 0 would contain a color

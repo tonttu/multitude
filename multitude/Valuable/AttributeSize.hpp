@@ -74,6 +74,16 @@ namespace Valuable {
       return true;
     }
 
+    ElementType width() const
+    {
+      return *m_values[0];
+    }
+
+    ElementType height() const
+    {
+      return *m_values[1];
+    }
+
     virtual QString asString(bool * const ok = 0) const OVERRIDE
     {
       if(ok) *ok = true;
@@ -132,6 +142,18 @@ namespace Valuable {
 
       for(int i = 0; i < 2; ++i)
         m_values[i]->set(static_cast<ElementType>(v[i]), layer, i >= units.size() ? VU_UNKNOWN : units[i]);
+
+      endChangeTransaction();
+
+      return true;
+    }
+
+    bool set(const Nimble::SizeF & v, Layer layer = USER, ValueUnit widthUnit = VU_PXS, ValueUnit heightUnit = VU_PXS)
+    {
+      beginChangeTransaction();
+
+      m_values[0]->set(v.width(), layer, widthUnit);
+      m_values[1]->set(v.height(), layer, heightUnit);
 
       endChangeTransaction();
 

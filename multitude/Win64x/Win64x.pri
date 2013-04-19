@@ -27,11 +27,12 @@ win64_sdk_project.path = /src/multitude/Win64x
 win64_sdk_project.files = $$PWD/Win64x.pri
 
 exists("C:/Cornerstone-deps/libav/bin") {
-  win64_libav_dlls1.path = /bin
-  win64_libav_dlls1.files = C:/Cornerstone-deps/libav/bin/*dll
+  win64_libav_bins.path = /bin
+  win64_libav_bins.files = C:/Cornerstone-deps/libav/bin/*dll
+  win64_libav_bins.files += C:/Cornerstone-deps/libav/bin/*exe
 
-  win64_libav_dlls2.path = /src/multitude/Win64x/bin64
-  win64_libav_dlls2.files = C:/Cornerstone-deps/libav/bin/*dll
+  win64_libav_bins2.path = /src/multitude/Win64x/bin64
+  win64_libav_bins2.files = $${win64_libav_bins.files}
 
   win64_libav_libs1.path = /lib
   win64_libav_libs1.files = C:/Cornerstone-deps/libav/bin/*lib
@@ -45,8 +46,8 @@ exists("C:/Cornerstone-deps/libav/bin") {
   win64_libav_headers2.path = /src/multitude/Win64x/include
   win64_libav_headers2.files = C:/Cornerstone-deps/libav/include/*
 
-  INSTALLS += win64_libav_dlls1
-  INSTALLS += win64_libav_dlls2
+  INSTALLS += win64_libav_bins
+  INSTALLS += win64_libav_bins2
   INSTALLS += win64_libav_libs1
   INSTALLS += win64_libav_libs2
   INSTALLS += win64_libav_headers1
@@ -103,8 +104,22 @@ INSTALLS += win64_sdk_headers2
 INSTALLS += win64_sdk_project
 
 # Install Qt
-# qt_files.path = /qt
-# qt_files.files = $$[QT_INSTALL_LIBS] $$[QT_INSTALL_HEADERS] $$[QT_INSTALL_BINS] $$[QT_INSTALL_PLUGINS] $$[QT_INSTALL_IMPORTS] $$[QT_INSTALL_TRANSLATIONS] $$[QMAKE_MKSPECS]
-# INSTALLS += qt_files
+qt_bin_files.path = /
+qt_bin_files.files = $$[QT_INSTALL_BINS]
+
+qt_conf_files.path = /bin
+qt_conf_files.files = $$PWD/qt.conf
+
+qt_lib_files.path = /qt/lib
+qt_lib_files.files = $$[QT_INSTALL_LIBS]\\*.lib
+
+qt_files.path = /qt
+qt_files.files += $$[QT_INSTALL_PLUGINS]
+qt_files.files += $$[QT_INSTALL_IMPORTS]
+qt_files.files += $$[QT_INSTALL_TRANSLATIONS]
+qt_files.files += $$[QMAKE_MKSPECS]
+qt_files.files += $$[QT_INSTALL_HEADERS]
+
+INSTALLS += qt_bin_files qt_lib_files qt_files qt_conf_files
 
 message(Including 64-bit Windows Libraries)

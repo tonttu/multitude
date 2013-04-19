@@ -175,6 +175,11 @@ namespace Radiant
     return m_d->type;
   }
 
+  void MouseEvent::setType(QEvent::Type type)
+  {
+    m_d->type = type;
+  }
+
   Qt::MouseButton MouseEvent::button() const
   {
     return m_d->button;

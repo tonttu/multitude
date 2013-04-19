@@ -139,6 +139,9 @@ namespace Radiant {
   private:
     Mutex & m_mutex;
   };
+
+  /// Shared mutex for all the MULTI_ONCE macros
+  extern RADIANT_API Mutex s_onceMutex;
 }
 
 /**
@@ -167,11 +170,10 @@ namespace Radiant {
  */
 
 #define MULTI_ONCE                                                \
-  static QAtomicInt s_multi_once_ = 0;                            \
-  static Radiant::Mutex s_multi_once_mutex_;                      \
-  if (!s_multi_once_)                                             \
-    for (Radiant::Guard multi_once_guard_(s_multi_once_mutex_);   \
-       !s_multi_once_; s_multi_once_ = 1)
+  static QAtomicInt s_multi_once = 0;                             \
+  if (!s_multi_once)                                              \
+    for (Radiant::Guard multi_once_guard_(Radiant::s_onceMutex);  \
+         !s_multi_once; s_multi_once = 1)
 
 
 #endif

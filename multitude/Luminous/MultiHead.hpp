@@ -95,9 +95,6 @@ namespace Luminous {
       /// Returns the width of the largest seam
       float maxSeam() const;
 
-      /// Blends the edges defined by seams
-      void cleanEdges() const;
-
       /// Returns the keystone correction object
       /// @return keystone correction
       GLKeyStone & keyStone();
@@ -108,16 +105,16 @@ namespace Luminous {
       const Vector2i & location() const;
       void setLocation(Nimble::Vector2i loc);
       /// Size of the area inside the window in pixels
-      const Vector2i & size() const;
-      void setSize(Vector2i size);
+      Nimble::Size size() const;
+      void setSize(Nimble::Size size);
 
       /// Origin of the graphics coordinates in the area
       const Nimble::Vector2f graphicsLocation(bool withseams = true) const;
       void setGraphicsLocation(Nimble::Vector2f l);
 
       /// The size of the graphics inside this area (virtual pixels)
-      const Nimble::Vector2f graphicsSize(bool withseams = true) const;
-      void setGraphicsSize(Nimble::Vector2f size);
+      const Nimble::SizeF graphicsSize(bool withseams = true) const;
+      void setGraphicsSize(Nimble::SizeF size);
 
       /// The bounds of the graphics. In principle this method only combines
       /// the information you get with graphicsLocation() and graphicsSize().
@@ -234,7 +231,7 @@ namespace Luminous {
           area, and automatially changes the size of the area to match
           the area of the window.
       @param size new window size */
-      LUMINOUS_API void resizeEvent(Vector2i size);
+      LUMINOUS_API void resizeEvent(Nimble::Size size);
 
       /// Number of areas that this window holds
       size_t areaCount() const { return m_areas.size(); }
@@ -257,8 +254,8 @@ namespace Luminous {
       void setLocation(Nimble::Vector2i loc) { m_location = loc; }
 
       /// Size of the window on the computer display
-      const Vector2i & size() const { return m_size; }
-      void setSize(Nimble::Vector2i size) { m_size = size; }
+      Nimble::Size size() const { return Nimble::Size(*m_size); }
+      void setSize(Nimble::Size size) { m_size = size.toVector(); }
 
       /// Returns the width of this window in pixels
       /// @return width of the window
@@ -321,7 +318,7 @@ namespace Luminous {
       void deleteAreas()
       {
         for (auto area: m_areas) {
-          removeValue(area.get());
+          removeAttribute(area.get());
           area->eventRemoveListener(m_screen);
         }
         m_areas.clear();
@@ -387,8 +384,8 @@ namespace Luminous {
     Rect graphicsBounds() const;
 
     /// Returns the size of the total display in graphics pixels
-    Nimble::Vector2i size()
-    { return Nimble::Vector2i(width(), height()); }
+    Nimble::SizeF size()
+    { return Nimble::SizeF(width(), height()); }
 
     /// Total width of the display area, in graphics pixels.
     int width();
@@ -451,7 +448,7 @@ namespace Luminous {
       {
         //delete window's areas
         it->get()->deleteAreas();
-        removeValue(it->get());
+        removeAttribute(it->get());
       }
       m_windows.clear();
     }

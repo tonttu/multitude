@@ -81,6 +81,15 @@ namespace Nimble {
     /// @param height new height
     void setHeight(T height);
 
+    /// Set the width and height of the size
+    /// @param width,height new width and height
+    void make(T width, T height);
+
+    /// @returns the smaller component
+    T minimum() const;
+    /// @returns the larger component
+    T maximum() const;
+
     /// Transpose the size, i.e. swap the width and height
     void transpose();
 
@@ -92,12 +101,6 @@ namespace Nimble {
     /// @param s size to subtract
     /// @return reference to this size
     SizeT<T> & operator-=(const SizeT<T> & s);
-
-    /// @todo fix these. for some reason forward declaration doesn't match the definition
-//    template<typename U>
-//    SizeT<T> & operator*=(U c);
-//    template<typename U>
-//    SizeT<T> & operator/=(U c);
 
     /// Return the sum of two sizes. Each component is added separately.
     /// @param o size to add
@@ -122,6 +125,10 @@ namespace Nimble {
     /// and height of the size
     Vector2T<T> toVector() const;
 
+    /// Cast the vector to another type
+    template<typename S>
+    Nimble::SizeT<S> cast() const;
+
   private:
     T m_width;
     T m_height;
@@ -132,10 +139,9 @@ namespace Nimble {
   /// @param scalar value to scale with
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<T> operator*(const SizeT<T> & size, U scalar)
+  inline SizeT<decltype(T()*U())> operator*(const SizeT<T> & size, U scalar)
   {
-    SizeT<T> ret(size);
-    return ret *= scalar;
+    return SizeT<decltype(T()*U())>(size.width() * scalar, size.height() * scalar);
   }
 
   /// Scale size by given scalar
@@ -143,10 +149,9 @@ namespace Nimble {
   /// @param size size to scale
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<T> operator*(U scalar, const SizeT<T> & size)
+  inline SizeT<decltype(U()*T())> operator*(U scalar, const SizeT<T> & size)
   {
-    SizeT<T> ret(size);
-    return ret *= scalar;
+    return SizeT<decltype(T()*U())>(scalar * size.width(), scalar * size.height());
   }
 
   /// Divide the size component-wise by the given scalar
@@ -154,10 +159,9 @@ namespace Nimble {
   /// @return scaled size
   /// @param scalar value to divide with
   template <typename T, typename U>
-  inline SizeT<T> operator/(const SizeT<T> & size, U scalar)
+  inline SizeT<decltype(T()/U())> operator/(const SizeT<T> & size, U scalar)
   {
-    SizeT<T> ret(size);
-    return ret /= scalar;
+    return SizeT<decltype(T()/U())>(size.width() / scalar, size.height() / scalar);
   }
 
   /// Divide the size component-wise by the given scalar
@@ -165,10 +169,9 @@ namespace Nimble {
   /// @param scalar value to divide with
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<T> operator/(U scalar, const SizeT<T> & size)
+  inline SizeT<decltype(U()/T())> operator/(U scalar, const SizeT<T> & size)
   {
-    SizeT<T> ret(size);
-    return ret /= scalar;
+    return SizeT<decltype(U()/T())>(scalar / size.width(), scalar / size.height());
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -274,6 +277,25 @@ namespace Nimble {
   }
 
   template<typename T>
+  void SizeT<T>::make(T width, T height)
+  {
+    m_width = width;
+    m_height = height;
+  }
+
+  template<typename T>
+  T SizeT<T>::minimum() const
+  {
+    return std::min(m_width, m_height);
+  }
+
+  template<typename T>
+  T SizeT<T>::maximum() const
+  {
+    return std::max(m_width, m_height);
+  }
+
+  template<typename T>
   void SizeT<T>::transpose()
   {
     std::swap(m_width, m_height);
@@ -317,26 +339,6 @@ namespace Nimble {
     return lhs;
   }
 
-//  template<typename T, typename U>
-//  SizeT<T> & SizeT<T>::operator*=(U c)
-//  {
-//    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
-
-//    m_width *= c;
-//    m_height *= c;
-//    return *this;
-//  }
-
-//  template<typename T, typename U>
-//  SizeT<T> & SizeT<T>::operator/=(U c)
-//  {
-//    static_assert(std::is_arithmetic<U>::value, "scaling Size is only defined for arithmetic types");
-
-//    m_width /= c;
-//    m_height /= c;
-//    return *this;
-//  }
-
   template<typename T>
   bool SizeT<T>::operator==(const SizeT<T> & o) const
   {
@@ -366,6 +368,13 @@ namespace Nimble {
   Vector2T<T> SizeT<T>::toVector() const
   {
     return Vector2T<T>(m_width, m_height);
+  }
+
+  template<typename T>
+  template<typename S>
+  SizeT<S> SizeT<T>::cast() const
+  {
+    return SizeT<S>(S(m_width), S(m_height));
   }
 
   /// Write a vector into a stream

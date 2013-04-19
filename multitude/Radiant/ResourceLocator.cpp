@@ -167,16 +167,5 @@ namespace Radiant
     return m_d->locate(path, filter);
   }
 
-//  void ResourceLocator::addModuleDataPath(const QString & module,
-//					  bool front)
-//  {
-//    QString p1 =
-//      PlatformUtils::getModuleUserDataPath(module.toUtf8().data(), false);
-//    QString p2 =
-//      PlatformUtils::getModuleGlobalDataPath(module.toUtf8().data(), false);
-
-//    addPath(p1 + separator + p2, front);
-//  }
-
   DEFINE_SINGLETON(ResourceLocator);
 }

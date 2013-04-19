@@ -184,7 +184,7 @@ namespace
 
     Luminous::RenderResource::Id texId = texture.resourceId();
     QRect rect(glyph->m_node->m_location.x, glyph->m_node->m_location.y,
-               glyph->m_node->m_size.x, glyph->m_node->m_size.y);
+               glyph->m_node->m_size.width(), glyph->m_node->m_size.height());
 
     Valuable::Node::invokeAfterUpdate([=] {
       Luminous::Texture * tex = Luminous::RenderManager::getResource<Luminous::Texture>(texId);

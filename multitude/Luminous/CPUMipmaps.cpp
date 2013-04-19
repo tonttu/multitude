@@ -481,7 +481,7 @@ namespace Luminous {
 
       if(!im) continue;
 
-      Nimble::Vector2f locf(im->size().x, im->size().y);
+      Nimble::Vector2f locf(im->size().width(), im->size().height());
       locf.scale(relLoc);
 
       Vector2i loci(locf.x, locf.y);
@@ -703,7 +703,7 @@ namespace Luminous {
         if(!im->read(filename.toUtf8().data())) {
           Radiant::error("CPUMipmaps::recursiveLoad # Could not read %s", filename.toUtf8().data());
           delete im;
-        } else if(mipmapSize(level) != im->size()) {
+        } else if(mipmapSize(level) != im->size().toVector()) {
           // unexpected size (corrupted or just old image)
           Radiant::error("CPUMipmaps::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
                 filename.toUtf8().data(), im->width(), im->height(), mipmapSize(level).x, mipmapSize(level).y);
@@ -740,7 +740,7 @@ namespace Luminous {
     // Scale down from bigger mipmap
     std::shared_ptr<Luminous::ImageTex> imdest(new Luminous::ImageTex());
 
-    Nimble::Vector2i ss = imsrc->size();
+    Nimble::Vector2i ss = imsrc->size().toVector();
     // Nimble::Vector2i is = level == 1 ? m_firstLevelSize : ss / 2;
     Nimble::Vector2i is = mipmapSize(level);
 

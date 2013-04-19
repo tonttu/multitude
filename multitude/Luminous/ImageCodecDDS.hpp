@@ -45,7 +45,7 @@ public:
   /// @param dxt compressed image data
   /// @return true if the writing succeeded
   bool writeMipmaps(const QString & filename, PixelFormat::Compression format,
-                    Nimble::Vector2i size, int mipmaps,
+                    Nimble::Size size, int mipmaps,
                     const std::vector<unsigned char> & dxt);
 
   /// Gets the required buffer size in pixels for the DDS image. DXT
@@ -53,13 +53,13 @@ public:
   /// size in pixels by rounding the size up to nearest one divisible by four.
   /// @param size size of the original image
   /// @return size required for the DXT compression
-  static Nimble::Vector2i bufferSize(Nimble::Vector2i size);
+  static Nimble::Size bufferSize(Nimble::Size size);
 
   /// Gets the size of a single line in bytes.
   /// @param size image dimensions
   /// @param format compression format used
   /// @return size of a line in bytes
-  static int linearSize(Nimble::Vector2i size, PixelFormat::Compression format);
+  static int linearSize(Nimble::Size size, PixelFormat::Compression format);
 };
 
 }

@@ -77,8 +77,8 @@ namespace Luminous
     int height() const { return m_height; }
     /// Get the image size
     /// @return image size in pixels
-    Nimble::Vector2i size() const
-    { return Nimble::Vector2i(m_width, m_height); }
+    Nimble::Size size() const
+    { return Nimble::Size(m_width, m_height); }
     /// The number of bytes a single line in the image takes
     /// @return line size in bytes
     int lineSize() const { return m_width * m_pixelFormat.bytesPerPixel(); }

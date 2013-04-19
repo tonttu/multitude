@@ -19,6 +19,9 @@
 
 namespace Nimble {
 
+  template <class T>
+  class SizeT;
+
   /** Two-dimensional vector class for 2D mathematics.
 
       Like all classed in Nimble Vector2T has been optimized for
@@ -42,6 +45,10 @@ namespace Nimble {
     inline Vector2T () {}
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
+
+    /// Constructs vector from the size.
+    /// @param s Size which width and height are copied to x and y values of vector.
+    inline explicit Vector2T(const SizeT<T> & s) : x(s.width()), y(s.height()) {}
 
     /// Fill the vector with zeroes
     inline void clear		(void)					{ x = (T)(0); y = (T)(0); }
@@ -71,6 +78,11 @@ namespace Nimble {
     inline Vector2T&	operator*=	(T s)					        { x = (x*s), y = (T)(y*s); return *this; }
     /// Divides a vector with a scalar
     inline Vector2T&	operator/=	(T s)					        { x /= s; y /= s; return *this; }
+    /// Divide a vector by scalar
+    inline Vector2T   operator/ (T s) const { return Vector2T<T>(x / s, y / s); }
+    /// Returns the negation of a vector
+    inline	Vector2T	operator-	() const { return Vector2T<T>(-x, -y); }
+
     /// Checks if both components are one
     inline bool	isOne		(void) const					        { return (x == (T) 1 && y == (T) 1); }
     /// Checks if both components are zero
@@ -169,13 +181,6 @@ namespace Nimble {
 
   /// Subract two vectors
   template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v1, const Vector2T<T>& v2) { return Vector2T<T>(v1.x-v2.x, v1.y-v2.y); }
-
-  /// Divide a vector by scalar
-  template <class T> inline	Vector2T<T>	operator/	(const Vector2T<T>& v, const double s) { T r = T(1.0/s); return v*r; }
-  /// Divide a vector by scalar
-  template <class T> inline Vector2T<T> operator/ (const Vector2T<T>& v, const T s) { return Vector2T<T>(v.x / s, v.y / s); }
-  /// Returns the negation of a vector
-  template <class T> inline	Vector2T<T>	operator-	(const Vector2T<T>& v) { return Vector2T<T>(-v.x, -v.y); }
 
   /// Return the length of the vector
   /// @param t vector whose length to get

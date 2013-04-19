@@ -89,7 +89,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  RichTextLayout::RichTextLayout(const Nimble::Vector2f & size)
+  RichTextLayout::RichTextLayout(const Nimble::SizeF & size)
     : TextLayout(size)
     , m_d(new D(*this))
   {
@@ -120,7 +120,7 @@ namespace Luminous
     RichTextLayout *nonConst = const_cast<RichTextLayout*>(this);
     if (!isLayoutReady()) {
       m_d->disableHinting();
-      m_d->doc().setTextWidth(maximumSize().x);
+      m_d->doc().setTextWidth(maximumSize().width());
       // trigger relayout in Qt
       QSizeF size = m_d->doc().documentLayout()->documentSize();
       nonConst->setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));

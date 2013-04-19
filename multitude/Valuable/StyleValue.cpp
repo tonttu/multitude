@@ -396,8 +396,7 @@ namespace Valuable
   void StyleValue::append(const StyleValue::Component & c)
   {
     if (m_isUniform && m_components.size() > 0) {
-      m_isUniform = m_components.back().unit() == c.unit() &&
-          (m_components.size() == 1 || m_components.back().separator() == c.separator()) &&
+      m_isUniform = (m_components.size() == 1 || m_components.back().separator() == c.separator()) &&
           canConvertType(m_components.back().type(), c.type());
     }
     m_components << c;
@@ -444,7 +443,7 @@ namespace Valuable
 
       auto t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
-        out << QString("%1%%").arg(v.asFloat() * 100.0);
+        out << QString("%1%").arg(v.asFloat() * 100.0);
       } else if(t == TYPE_INT || t == TYPE_FLOAT) {
         out << QString::number(v.asFloat()) + unitstr;
       } else if(t == TYPE_KEYWORD) {

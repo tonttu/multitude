@@ -16,7 +16,7 @@
 #include "Matrix3.hpp"
 #include "Rect.hpp"
 
-#include <vector>
+#include <array>
 
 namespace Nimble {
 
@@ -40,7 +40,7 @@ namespace Nimble {
       /// Constructs a new rectangle
       /// @param size size (width & height) of the rectangle
       /// @param m transformation matrix defining the center of the rectangle
-      Rectangle(Nimble::Vector2f size, const Nimble::Matrix3 & m);
+      Rectangle(Nimble::SizeF size, const Nimble::Matrix3 & m);
 
       /// Construct a copy of the given rectangle
       /// @param rect rectangle to copy
@@ -73,11 +73,11 @@ namespace Nimble {
       float extent1() const { return m_extent1; }
 
       /// Return the size of the rectangle
-      Nimble::Vector2 size() const;
+      Nimble::SizeF size() const;
 
-      /// Computes the corner vertices of the rectangle and appends the to the given vector
+      /// Computes the corner vertices of the rectangle and appends the to the given array
       /// @param corners vector of points where the four corners are appended
-      void computeCorners(std::vector<Nimble::Vector2f> & corners) const;
+      void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const;
 
       /// Returns a rectangle that contains the two given rectangles. The
       /// result is not guaranteed to be the smallest rectangle containing the

@@ -81,30 +81,6 @@ namespace Radiant
       return path;
     }
 
-    QString getModuleGlobalDataPath(const char * module, bool isapplication)
-    {
-      (void) isapplication;
-
-      assert(strlen(module) < 128);
-
-      // Typically this retrieves "C:\ProgramData"
-      // which by most accounts is the safest place to store application data
-
-      QString   path;
-
-      char  buffer[_MAX_PATH] = "";
-      if(SHGetFolderPathA(0, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
-      {
-        path = QString(buffer) + QString("\\") + QString(module);
-      }
-      else
-      {
-        error("PlatformUtils::getModuleGlobalDataPath # SHGetFolderPath() failed");
-      }
-
-      return path;
-    }
-
     QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;

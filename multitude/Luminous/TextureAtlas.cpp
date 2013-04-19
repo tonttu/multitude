@@ -28,7 +28,7 @@ namespace
 
   public:
     AtlasNode(std::weak_ptr<AtlasNode> parent);
-    std::shared_ptr<AtlasNode> insert(Nimble::Vector2i size, int padding);
+    std::shared_ptr<AtlasNode> insert(Nimble::Size size, int padding);
 
     inline bool isLeaf() const;
   };
@@ -49,21 +49,21 @@ namespace
     return m_children[0] == m_children[1];
   }
 
-  AtlasNodePtr AtlasNode::insert(Nimble::Vector2i size, int padding)
+  AtlasNodePtr AtlasNode::insert(Nimble::Size size, int padding)
   {
     // This seems to be a leaf and already reserved
     if (m_reserved) return nullptr;
 
     bool rotate;
-    if (size.x <= m_size.x && size.y <= m_size.y) {
+    if (size.width() <= m_size.width() && size.height() <= m_size.height()) {
       // Fits ok without rotation
       rotate = false;
-    } else if (size.x <= m_size.y && size.y <= m_size.x) {
+    } else if (size.width() <= m_size.height() && size.height() <= m_size.width()) {
       // Fits if we rotate the object 90 degrees
       /// @todo not supported yet
       return nullptr;
       rotate = true;
-      std::swap(size.x, size.y);
+      size.transpose();
     } else {
       // Not going to fit, abort
       return nullptr;
@@ -74,7 +74,7 @@ namespace
       // object, or split this to two. We will split iff there is enough space
       // for something else.
 
-      if (m_size.x - size.x <= padding && m_size.y - size.y <= padding) {
+      if (m_size.width() - size.width() <= padding && m_size.height() - size.height() <= padding) {
         // There is no space for anything else, reserve this whole leaf
         m_size = size;
         m_reserved = true;
@@ -84,18 +84,18 @@ namespace
       m_children[0].reset(new AtlasNode(shared_from_this()));
       m_children[1].reset(new AtlasNode(shared_from_this()));
 
-      const Nimble::Vector2i diff = m_size - size;
+      const Nimble::Size diff = m_size - size;
 
-      if (diff.x > diff.y) {
+      if (diff.width() > diff.height()) {
         m_children[0]->m_location = m_location;
-        m_children[0]->m_size.make(size.x, m_size.y);
-        m_children[1]->m_location.make(m_location.x + size.x + padding, m_location.y);
-        m_children[1]->m_size.make(m_size.x - size.x - padding, m_size.y);
+        m_children[0]->m_size.make(size.width(), m_size.height());
+        m_children[1]->m_location.make(m_location.x + size.width() + padding, m_location.y);
+        m_children[1]->m_size.make(m_size.width() - size.width() - padding, m_size.height());
       } else {
         m_children[0]->m_location = m_location;
-        m_children[0]->m_size.make(m_size.x, size.y);
-        m_children[1]->m_location.make(m_location.x, m_location.y + size.y + padding);
-        m_children[1]->m_size.make(m_size.x, m_size.y - size.y - padding);
+        m_children[0]->m_size.make(m_size.width(), size.height());
+        m_children[1]->m_location.make(m_location.x, m_location.y + size.height() + padding);
+        m_children[1]->m_size.make(m_size.width(), m_size.height() - size.height() - padding);
       }
 
       AtlasNodePtr n = m_children[0]->insert(size, padding);
@@ -136,17 +136,17 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
 
-  TextureAtlas::TextureAtlas(Nimble::Vector2i size, const Luminous::PixelFormat & pixelFormat, int padding)
+  TextureAtlas::TextureAtlas(Nimble::Size size, const Luminous::PixelFormat & pixelFormat, int padding)
     : m_d(new D())
   {
     m_d->m_padding = padding;
     m_d->m_root.reset(new AtlasNode(std::weak_ptr<AtlasNode>()));
     m_d->m_root->m_location.make(padding, padding);
-    m_d->m_root->m_size = size - Nimble::Vector2i(padding, padding) * 2;
+    m_d->m_root->m_size = size - Nimble::Size(padding, padding) * 2;
 
-    m_d->m_image.allocate(size.x, size.y, pixelFormat);
+    m_d->m_image.allocate(size.width(), size.height(), pixelFormat);
     m_d->m_image.zero();
-    m_d->m_texture.setData(size.x, size.y, pixelFormat, m_d->m_image.data());
+    m_d->m_texture.setData(size.width(), size.height(), pixelFormat, m_d->m_image.data());
   }
 
   TextureAtlas::~TextureAtlas()
@@ -171,12 +171,12 @@ namespace Luminous
     return m_d->m_padding;
   }
 
-  Nimble::Vector2i TextureAtlas::size() const
+  Nimble::Size TextureAtlas::size() const
   {
     return m_d->m_image.size();
   }
 
-  TextureAtlas::NodePtr TextureAtlas::insert(Nimble::Vector2i size)
+  TextureAtlas::NodePtr TextureAtlas::insert(Nimble::Size size)
   {
     return m_d->m_root->insert(size, padding());
   }

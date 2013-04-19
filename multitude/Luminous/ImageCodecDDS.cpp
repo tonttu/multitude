@@ -217,7 +217,7 @@ bool ImageCodecDDS::read(CompressedImage & image, QFile & file, int level)
     return false;
   }
 
-  int size = linearSize(Nimble::Vector2i(info.width, info.height),
+  int size = linearSize(Nimble::Size(info.width, info.height),
                         info.pf.compression());
 
   if((header.dwFlags & DDSD_LINEARSIZE) && size != int(header.dwPitchOrLinearSize)) {
@@ -234,7 +234,7 @@ bool ImageCodecDDS::read(CompressedImage & image, QFile & file, int level)
   }
 
   for(int l = 0; l <= level; ++l) {
-    size = linearSize(Nimble::Vector2i(info.width, info.height),
+    size = linearSize(Nimble::Size(info.width, info.height),
                       info.pf.compression());
     if(l == level) break;
 
@@ -248,7 +248,7 @@ bool ImageCodecDDS::read(CompressedImage & image, QFile & file, int level)
 }
 
 bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compression format,
-                                 Nimble::Vector2i size, int mipmaps,
+                                 Nimble::Size size, int mipmaps,
                                  const std::vector<unsigned char> & dxt)
 {
   DDS_header header;
@@ -259,8 +259,8 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   header.dwSize = 124; // <- doesn't include magic
   header.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT |
       DDSD_MIPMAPCOUNT | DDSD_LINEARSIZE;
-  header.dwWidth = size.x;
-  header.dwHeight = size.y;
+  header.dwWidth = size.width();
+  header.dwHeight = size.height();
   header.dwMipMapCount = mipmaps;
   header.dwPitchOrLinearSize = linearSize(size, format);
 
@@ -296,24 +296,24 @@ bool ImageCodecDDS::write(const Image &, QFile &)
   return false;
 }
 
-Nimble::Vector2i ImageCodecDDS::bufferSize(Nimble::Vector2i size)
+Nimble::Size ImageCodecDDS::bufferSize(Nimble::Size size)
 {
   // DXT is compressed in 4x4 blocks, this will round the size up to the
   // nearest size diviable by 4
-  if(size.x == 0 || (size.x & 3))
-    size.x = (size.x & ~3) + 4;
-  if(size.y == 0 || (size.y & 3))
-    size.y = (size.y & ~3) + 4;
+  if(size.width() == 0 || (size.width() & 3))
+    size.setWidth((size.width() & ~3) + 4);
+  if(size.height() == 0 || (size.height() & 3))
+    size.setHeight((size.height() & ~3) + 4);
   return size;
 }
 
-int ImageCodecDDS::linearSize(Nimble::Vector2i size, PixelFormat::Compression format)
+int ImageCodecDDS::linearSize(Nimble::Size size, PixelFormat::Compression format)
 {
   bool dxt1 = format == PixelFormat::COMPRESSED_RGB_DXT1 ||
       format == PixelFormat::COMPRESSED_RGBA_DXT1;
   int channels = dxt1 ? 3 : 4;
   int factor = dxt1 ? 6 : 4;
   size = bufferSize(size);
-  return size.x * size.y * channels / factor;
+  return size.width() * size.height() * channels / factor;
 }
 }

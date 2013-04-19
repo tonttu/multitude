@@ -32,9 +32,6 @@ namespace Radiant
     /// Return absolute path to the user's home directory.
     RADIANT_API QString getUserHomePath();
 
-    /// Return path to the global data directory of the given module.
-    RADIANT_API QString getModuleGlobalDataPath(const char * module, bool isapplication);
-
     /// Return path to the user data directory of the given module.
     RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
 
