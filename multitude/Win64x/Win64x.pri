@@ -95,6 +95,13 @@ exists("C:/Cornerstone-deps/node/bin") {
   INSTALLS += win64_node_headers2
 }
 
+exists("C:/Cornerstone-deps/argyll/") {
+  win64_argyll.path = /bin
+  win64_argyll.files = C:/Cornerstone-deps/argyll/spotread.exe
+  
+  INSTALLS += win64_argyll
+}
+
 INSTALLS += win64_runtime_dlls
 INSTALLS += win64_sdk_libs1
 INSTALLS += win64_sdk_libs2
