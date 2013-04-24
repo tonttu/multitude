@@ -186,6 +186,11 @@ namespace Luminous
       sendCommand(ba);
   }
 
+  void VM1::enableGamma(bool state)
+  {
+    sendCommand(state ? "g" : "c");
+  }
+
   void VM1::sendCommand(const QByteArray & ba)
   {
     Radiant::Guard g(m_dataMutex);

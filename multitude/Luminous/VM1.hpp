@@ -23,6 +23,7 @@ namespace Luminous
     void setVideoAutoselect();
     void setVideoInput(int input);
     void setVideoInputPriority(int input);
+    void enableGamma(bool state);
 
     QString info();
 
