@@ -389,7 +389,7 @@ namespace Luminous
     for (int c = 0; c < 3; ++c) {
       const std::vector<Nimble::Vector2f> & tmp = m_d->m_splines[c].points();
       bd.writeInt32(tmp.size());
-      bd.writeBlob(&tmp[0], int(tmp.size() * sizeof(tmp[0])));
+      bd.writeBlob(tmp.empty() ? 0 : &tmp[0], int(tmp.size() * sizeof(tmp[0])));
     }
   }
 
@@ -402,7 +402,7 @@ namespace Luminous
     for (int c = 0; c < 3; ++c) {
       int pointCount = bd.readInt32();
       points[c].resize(pointCount);
-      if (!bd.readBlob(&points[c][0], int(pointCount * sizeof(points[c][0]))))
+      if (!bd.readBlob(pointCount > 0 ? &points[c][0] : 0, int(pointCount * sizeof(points[c][0]))))
         return false;
     }
 
