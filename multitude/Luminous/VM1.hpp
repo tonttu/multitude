@@ -5,6 +5,7 @@
 
 #include <Radiant/SerialPort.hpp>
 #include <Radiant/Mutex.hpp>
+#include <Radiant/RefPtr.hpp>
 
 #include <QMap>
 
@@ -15,6 +16,7 @@ namespace Luminous
   {
   public:
     VM1();
+    ~VM1();
 
     bool detected() const;
     void setColorCorrection(const ColorCorrection & cc);
@@ -29,15 +31,9 @@ namespace Luminous
 
     static QMap<QString, QString> parseInfo(const QString & info);
 
-    QByteArray takeData();
-    Radiant::SerialPort & open(bool & ok);
-
   private:
-    void sendCommand(const QByteArray & ba);
-
-    QByteArray m_data;
-    Radiant::Mutex m_dataMutex;
-    Radiant::SerialPort m_port;
+    class D;
+    std::shared_ptr<D> m_d;
   };
 
 }

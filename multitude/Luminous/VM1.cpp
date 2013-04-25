@@ -18,18 +18,9 @@
 #include <errno.h>
 #endif
 
-namespace {
-  QString findVM1() {
-#ifdef RADIANT_LINUX
-    return "/dev/ttyVM1";
-#else
-    return "";
-#endif
-  }
-
-  Radiant::Mutex s_vm1Mutex;
-
-  int writeAll(const char * data, int len, Radiant::SerialPort & port, int timeoutMS)
+namespace
+{
+  static int writeAll(const char * data, int len, Radiant::SerialPort & port, int timeoutMS)
   {
     int written = 0;
     do {
@@ -53,59 +44,147 @@ namespace {
     } while (len - written > 0);
     return written;
   }
-
-  class BGWriter : public Luminous::Task
-  {
-  public:
-    /// @todo This breaks if VM1 is destroyed before the task is finished
-    /// (for exmaple when it is created from the stack)
-    BGWriter(Luminous::VM1 & vm1) : m_vm1(vm1)
-    {
-      /// VM1 Firmware version 2.4 turns off the "Color gamma" mode
-      /// while reading the new color table, meaning that if we always
-      /// immediately set the new color table when moving a slider in GUI,
-      /// all we get is a blinking screen without the color correction.
-      /// .. with this delay we get slower blinking screen with color correction
-      //scheduleFromNowSecs(0.1);
-
-      /// That is fixed in 2.6, we could check version numbers, but that could
-      /// cause some extra latency. For now just assume that we have a new
-      /// enough version.
-    }
-
-    void doTask()
-    {
-      setFinished();
-      QByteArray ba = m_vm1.takeData();
-      if(ba.isEmpty()) return;
-
-      Radiant::Guard g(s_vm1Mutex);
-
-      bool ok;
-      Radiant::SerialPort & port = m_vm1.open(ok);
-      if(ok)
-        writeAll(ba.data(), ba.size(), port, 300);
-    }
-
-  private:
-    Luminous::VM1 & m_vm1;
-  };
 }
 
 namespace Luminous
 {
+  static Radiant::Mutex s_vm1Mutex;
+
+  class VM1::D : public Luminous::Task, public std::enable_shared_from_this<VM1::D>
+  {
+  public:
+    D();
+    void sendCommand(const QByteArray & ba);
+
+    QString findVM1();
+
+    virtual void doTask() OVERRIDE;
+
+    bool open();
+
+  public:
+    QByteArray m_data;
+    Radiant::Mutex m_dataMutex;
+    Radiant::SerialPort m_port;
+
+    int m_errors;
+  };
+
+  VM1::D::D()
+    : m_errors(0)
+  {
+    setFinished();
+    /// VM1 Firmware version 2.4 turns off the "Color gamma" mode
+    /// while reading the new color table, meaning that if we always
+    /// immediately set the new color table when moving a slider in GUI,
+    /// all we get is a blinking screen without the color correction.
+    /// .. with this delay we get slower blinking screen with color correction
+    //scheduleFromNowSecs(0.1);
+
+    /// That is fixed in 2.6, we could check version numbers, but that could
+    /// cause some extra latency. For now just assume that we have a new
+    /// enough version.
+  }
+
+  QString VM1::D::findVM1()
+  {
+#ifdef RADIANT_LINUX
+    return "/dev/ttyVM1";
+#else
+    return "";
+#endif
+  }
+
+  void VM1::D::doTask()
+  {
+    {
+      Radiant::Guard g(m_dataMutex);
+      if (m_data.isEmpty()) {
+        setFinished();
+        return;
+      }
+    }
+
+    if (!open()) {
+      ++m_errors;
+      if (m_errors > 5) {
+        Radiant::error("VM1 # Failed to open VM1");
+        m_errors = 0;
+        Radiant::Guard g(m_dataMutex);
+        m_data.clear();
+        setFinished();
+        return;
+      }
+      scheduleFromNowSecs(0.5 + m_errors * 0.2);
+      return;
+    }
+
+    QByteArray ba;
+    {
+      Radiant::Guard g(m_dataMutex);
+      if (m_data.isEmpty()) {
+        setFinished();
+        return;
+      }
+      std::swap(ba, m_data);
+    }
+
+    {
+      Radiant::Guard g(s_vm1Mutex);
+      writeAll(ba.data(), ba.size(), m_port, 300);
+    }
+    m_errors = 0;
+
+    Radiant::Guard g(m_dataMutex);
+    if (m_data.isEmpty()) {
+      setFinished();
+    } else {
+      scheduleFromNowSecs(0);
+    }
+  }
+
+  bool VM1::D::open()
+  {
+    if (m_port.isOpen())
+      return true;
+
+    QString dev = findVM1();
+    if (dev.isEmpty())
+      return false;
+
+    if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 10000))
+      return false;
+
+    return true;
+  }
+
+  void VM1::D::sendCommand(const QByteArray & ba)
+  {
+    Radiant::Guard g(m_dataMutex);
+    m_data += ba;
+    if (state() == DONE) {
+      setState(WAITING);
+      Luminous::BGThread::instance()->addTask(shared_from_this());
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   VM1::VM1()
-  {
-  }
+    : m_d(new D())
+  {}
+
+  VM1::~VM1()
+  {}
 
   bool VM1::detected() const
   {
 #ifdef RADIANT_LINUX
     struct stat tmp;
-    return stat(findVM1().toUtf8().data(), &tmp) == 0 && (tmp.st_mode & S_IFCHR);
+    return stat(m_d->findVM1().toUtf8().data(), &tmp) == 0 && (tmp.st_mode & S_IFCHR);
 #else
-    return QFile::exists(findVM1());
+    return QFile::exists(m_d->findVM1());
 #endif
   }
 
@@ -129,20 +208,12 @@ namespace Luminous
     // Enable gamma
     ba += 'g';
 
-    sendCommand(ba);
+    m_d->sendCommand(ba);
   }
 
   void VM1::setLCDPower(bool enable)
   {
-    QByteArray ba;
-    ba.reserve(1);
-
-    if(enable)
-      ba += 'o';
-    else
-      ba += 'f';
-
-    sendCommand(ba);
+    m_d->sendCommand(enable ? "o" : "f");
   }
 
   void VM1::setLogoTimeout(int timeout)
@@ -154,12 +225,12 @@ namespace Luminous
     ba += QByteArray::number(Nimble::Math::Clamp(timeout, 1, 99));
     ba += '\n';
 
-    sendCommand(ba);
+    m_d->sendCommand(ba);
   }
 
   void VM1::setVideoAutoselect()
   {
-    sendCommand("a");
+    m_d->sendCommand("a");
   }
 
   void VM1::setVideoInput(int input)
@@ -167,13 +238,12 @@ namespace Luminous
     if(input <= 0 || input > 4)
       Radiant::error("VM1::setVideoInput # allowed inputs [1-4]");
     else
-      sendCommand(QByteArray::number(input));
+      m_d->sendCommand(QByteArray::number(input));
   }
 
   void VM1::setVideoInputPriority(int input)
   {
     QByteArray ba;
-    ba.reserve(1);
 
     if(input == 1)
       ba += 'y';
@@ -183,43 +253,40 @@ namespace Luminous
       Radiant::error("VM1::setVideoInputPriority # allowed inputs [1-2]");
 
     if(ba.length() > 0)
-      sendCommand(ba);
+      m_d->sendCommand(ba);
   }
 
   void VM1::enableGamma(bool state)
   {
-    sendCommand(state ? "g" : "c");
-  }
-
-  void VM1::sendCommand(const QByteArray & ba)
-  {
-    Radiant::Guard g(m_dataMutex);
-    bool createTask = m_data.isEmpty();
-    m_data = ba;
-    if(createTask)
-      Luminous::BGThread::instance()->addTask(new BGWriter(*this));
+    m_d->sendCommand(state ? "g" : "c");
   }
 
   QString VM1::info()
   {
+    /// @todo there should be a timeout parameter
+    if (!m_d->open()) {
+      if (detected()) {
+        Radiant::Sleep::sleepS(1);
+        if (!m_d->open())
+          return QString();
+      } else {
+        return QString();
+      }
+    }
     Radiant::Guard g(s_vm1Mutex);
 
-    bool ok;
-    Radiant::SerialPort & port = open(ok);
-    if(!ok) return "";
-
     char buffer[256];
-    while(port.read(buffer, 256) > 0) {}
+    while (m_d->m_port.read(buffer, 256) > 0) {}
 
     QByteArray ba("i");
-    if(writeAll(ba.data(), ba.size(), port, 300) != ba.size())
-      return "";
+    if(writeAll(ba.data(), ba.size(), m_d->m_port, 300) != ba.size())
+      return QString();
 
     QByteArray res;
     int prev = 0;
     for (int i = 0; i < 100; ++i) {
       /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
-      int r = port.read(buffer, 256);
+      int r = m_d->m_port.read(buffer, 256);
       if(r > 0) {
         res.append(buffer, r);
         prev = r;
@@ -318,30 +385,4 @@ namespace Luminous
       map["outputs"] = QStringList(outputs.toList()).join("\n");
     return map;
   }
-
-  QByteArray VM1::takeData()
-  {
-    QByteArray ba;
-    Radiant::Guard g(m_dataMutex);
-    std::swap(ba, m_data);
-    return ba;
-  }
-
-  Radiant::SerialPort & VM1::open(bool & ok)
-  {
-    QString dev = findVM1();
-    if (dev.isEmpty()) {
-      ok = false;
-      return m_port;
-    }
-
-    if(!m_port.isOpen() && !m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 10000)) {
-      Radiant::error("Failed to open %s", dev.toUtf8().data());
-      ok = false;
-    } else {
-      ok = true;
-    }
-    return m_port;
-  }
-
 }
