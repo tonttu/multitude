@@ -86,9 +86,6 @@ namespace Radiant {
     @param month month [0-11]
     @param year year number
     @return number of days in the month
-
-    @todo Make the leap-year calculations take the longer cycles
-    into account.
     */
     static int daysInMonth(int month, int year);
 

@@ -149,9 +149,16 @@ namespace Radiant {
 
     int days = table[month];
     if(month == 1) {
-      // February
-      if((year & 0x3) == 0)
+      // February      
+      if ( year % 400 == 0) {
         days = 29;
+      }
+      else if ( year % 100 == 0) {
+        ;
+      }
+      else if (year % 4 == 0) {
+        days = 29;
+      }
     }
 
     return days;
