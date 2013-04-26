@@ -32,7 +32,7 @@ namespace Radiant
    */
 
     /// @todo not really the correct place for this (Luminous would be
-    /// better place, but dependency with Valuable), add HSV support
+    /// better place, but dependency with Valuable)
     class Color : public Nimble::Vector4f
   {
     public:
