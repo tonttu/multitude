@@ -37,6 +37,7 @@ namespace Luminous
     virtual void poll() OVERRIDE;
     virtual void swapBuffers() OVERRIDE;
     virtual void makeCurrent() OVERRIDE;
+    virtual void doneCurrent() OVERRIDE;
 
     virtual void minimize() OVERRIDE;
     virtual void maximize() OVERRIDE;

@@ -50,7 +50,7 @@ namespace Luminous
 
     /// This function can be used to perform any initialization that must be
     /// performed in the main-thread.
-    virtual bool mainThreadInit() = 0;
+    virtual bool mainThreadInit() { return true; }
 
     /// Returns the width of the window
     /// @return width of the window in pixels

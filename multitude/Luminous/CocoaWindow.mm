@@ -728,6 +728,13 @@ void CocoaWindow::makeCurrent()
   [context makeCurrentContext];
 }
 
+void CocoaWindow::doneCurrent()
+{
+  CocoaView * view = [m_d->controller glView];
+  NSOpenGLContext * context = [view openGLContext];
+  [context clearCurrentContext];
+}
+
 void CocoaWindow::swapBuffers()
 {
   CocoaView * view = [m_d->controller glView];
