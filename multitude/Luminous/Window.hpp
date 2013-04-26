@@ -42,8 +42,15 @@ namespace Luminous
     /// Swap OpenGL buffers
     virtual void swapBuffers() = 0;
 
-    /// Sets the OpenGL context for the current thread
+    /// Sets the OpenGL context for the calling thread
     virtual void makeCurrent() = 0;
+
+    /// Clears the OpenGL context for the calling thread
+    virtual void doneCurrent() = 0;
+
+    /// This function can be used to perform any initialization that must be
+    /// performed in the main-thread.
+    virtual bool mainThreadInit() = 0;
 
     /// Returns the width of the window
     /// @return width of the window in pixels
@@ -67,7 +74,8 @@ namespace Luminous
     /// @return pointer to the event handler
     WindowEventHook * eventHook() const;
 
-    /// Initialize the window. Default implementation does nothing.
+    /// This function can be used to perform any initialization that must be
+    /// executed in the render-thread associated with the window.
     virtual void init() {}
 
     /// Cleanup any window resources. Default implementation does nothing.

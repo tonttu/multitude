@@ -29,13 +29,18 @@ namespace Luminous
 
     virtual void poll() OVERRIDE;
     virtual void swapBuffers() OVERRIDE;
+
     virtual void makeCurrent() OVERRIDE;
+
+    virtual bool mainThreadInit() OVERRIDE;
 
     virtual void minimize() OVERRIDE;
     virtual void maximize() OVERRIDE;
     virtual void restore() OVERRIDE;
 
     void showCursor(bool visible) OVERRIDE;
+
+    virtual void doneCurrent() OVERRIDE;
 
   private:
     class D;

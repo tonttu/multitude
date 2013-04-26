@@ -57,28 +57,6 @@ namespace Luminous
 
       // Accept touch events
       setAttribute(Qt::WA_AcceptTouchEvents);
-
-      debugLuminous("OpenGL Context Debug:");
-      debugLuminous("\tValid OpenGL Context: %d", isValid());
-      debugLuminous("\tAccum Buffer Size: %d", f.accumBufferSize());
-      debugLuminous("\tDepth Buffer Size: %d", f.depthBufferSize());
-      debugLuminous("\tStencil Buffer Size: %d", f.stencilBufferSize());
-
-      debugLuminous("\tRed Buffer Size: %d", f.redBufferSize());
-      debugLuminous("\tGreen Buffer Size: %d", f.greenBufferSize());
-      debugLuminous("\tBlue Buffer Size: %d", f.blueBufferSize());
-      debugLuminous("\tAlpha Buffer Size: %d", f.alphaBufferSize());
-
-      debugLuminous("\tDouble Buffering: %d", f.doubleBuffer());
-      debugLuminous("\tDirect Rendering: %d", f.directRendering());
-
-      debugLuminous("\tProfile: %d", f.profile());
-
-      debugLuminous("\tVersion Major: %d", f.majorVersion());
-      debugLuminous("\tVersion Minor: %d", f.minorVersion());
-
-      debugLuminous("\tMultisampling: %d", f.sampleBuffers());
-      debugLuminous("\tSamples: %d", f.samples());
     }
 
     virtual void showCursor(bool visible)
@@ -228,10 +206,18 @@ namespace Luminous
       , m_glWidget(0)
       , m_deferredActivateWindow(false)
       , m_raiseCount(0)
+  #ifdef RADIANT_WINDOWS
+      , m_dc(nullptr)
+      , m_rc(nullptr)
+  #endif
     {}
 
     ~D()
     {
+#ifdef RADIANT_WINDOWS
+      if(m_glWidget)
+        m_glWidget->releaseDC(m_dc);
+#endif
       delete m_mainWindow;
     }
 
@@ -255,6 +241,10 @@ namespace Luminous
     GLThreadWidget * m_glWidget;
     bool m_deferredActivateWindow;
     int m_raiseCount;
+#ifdef RADIANT_WINDOWS
+    HDC m_dc;
+    HGLRC m_rc;
+#endif
   };
 
   ////////////////////////////////////////////////////////////
@@ -350,16 +340,69 @@ namespace Luminous
 
   void QtWindow::makeCurrent()
   {
-    for(int i = 0; i < 100; ++i) {
+    for(int i = 0; i < 10; ++i) {
+#ifdef RADIANT_WINDOWS
+      wglMakeCurrent(m_d->m_dc, m_d->m_rc);
+#else
       m_d->m_glWidget->makeCurrent();
-      if(glGetError() == GL_NO_ERROR) break;
+#endif
+
+      if(glGetError() == GL_NO_ERROR)
+        break;
+
       Radiant::Sleep::sleepMs(10);
+      Radiant::warning("QtWindow::makeCurrent # makeCurrent() failed, retrying... (%d)", i);
     }
+  }
+
+  bool QtWindow::mainThreadInit()
+  {
+    // We must use Qt's version of makeCurrent() to be able to grab a
+    // handle to the OpenGL context.
+    bool currentContextOk = false;
+
+    for(int i = 0; i < 10; ++i) {
+      m_d->m_glWidget->makeCurrent();
+
+      if(glGetError() == GL_NO_ERROR) {
+        currentContextOk = true;
+        break;
+      }
+
+      Radiant::Sleep::sleepMs(10);
+      Radiant::warning("QtWindow::mainThreadInit # makeCurrent() failed, retrying... (%d)", i);
+    }
+
+    if(!currentContextOk)
+      return false;
+
+#ifdef RADIANT_WINDOWS
+    // Grab the OpenGL context handle
+    m_d->m_rc = wglGetCurrentContext();
+    assert(m_d->m_rc);
+
+    if(!m_d->m_rc)
+      return false;
+
+    // Grab the device context handle
+    m_d->m_dc = m_d->m_glWidget->getDC();
+    assert(m_d->m_dc);
+
+    return m_d->m_dc != nullptr;
+#else
+    return currentContextOk;
+#endif
   }
 
   void QtWindow::swapBuffers()
   {
+#ifdef RADIANT_WINDOWS
+    HDC dc = wglGetCurrentDC();
+
+    SwapBuffers(dc);
+#else
     m_d->m_glWidget->swapBuffers();
+#endif
 
     // Timeout in seconds after which the cursor is hidden
     const float hideCursorLowerLimit = 5.f;
@@ -394,6 +437,11 @@ namespace Luminous
   void QtWindow::showCursor(bool visible)
   {
     m_d->m_glWidget->showCursor(visible);
+  }
+
+  void QtWindow::doneCurrent()
+  {
+    m_d->m_glWidget->doneCurrent();
   }
 
 }
