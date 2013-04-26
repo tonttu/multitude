@@ -22,10 +22,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef WIN32
-//# include <WinPort.h>
-#endif
-
 namespace Radiant {
 
   static bool __verbose = true;
@@ -76,7 +72,6 @@ namespace Radiant {
     m_buf(0)
   {
     *this = that;
-    // m_current = that.m_current;
   }
 
   BinaryData::~BinaryData()
@@ -210,6 +205,7 @@ namespace Radiant {
 
     if(!available(8)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readFloat32");
       return 0.0f;
     }
 
@@ -243,20 +239,6 @@ namespace Radiant {
     return 0.0f;
   }
 
-  float BinaryData::readFloat32(float defval, bool *ok)
-  {
-    bool good = true;
-    float tmp = readFloat32( & good);
-
-    if(ok)
-      *ok = good;
-
-    if(good)
-      return tmp;
-    else
-      return defval;
-  }
-
   double BinaryData::readFloat64(bool * ok)
   {
     if(ok)
@@ -264,6 +246,7 @@ namespace Radiant {
 
     if(!available(8)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readFloat64");
       return 0.0f;
     }
 
@@ -377,6 +360,7 @@ namespace Radiant {
 
     if(!available(4)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readTimeStamp");
       return TimeStamp(0);
     }
 
@@ -409,6 +393,7 @@ namespace Radiant {
   {
     if(!available(sizeof(int32_t))) {
       *str = '\0';
+      unavailable("BinaryData::readString");
       return false;
     }
 
@@ -438,6 +423,7 @@ namespace Radiant {
   {
     if(!available(sizeof(int32_t))) {
       str.clear();
+      unavailable("BinaryData::readString");
       return false;
     }
 
@@ -457,6 +443,7 @@ namespace Radiant {
   {
     if(!available(sizeof(int32_t))) {
       str.clear();
+      unavailable("BinaryData::readString");
       return false;
     }
 
@@ -474,8 +461,10 @@ namespace Radiant {
 
   bool BinaryData::readBlob(void * ptr, int n)
   {
-    if(!available(sizeof(int32_t)))
+    if(!available(sizeof(int32_t))) {
+      unavailable("BinaryData::readBlob");
       return false;
+    }
 
     int32_t marker = getRef<int32_t>();
 
@@ -497,8 +486,10 @@ namespace Radiant {
 
   bool BinaryData::readBlob(std::vector<uint8_t> & buf)
   {
-    if(!available(sizeof(int32_t)))
+    if(!available(sizeof(int32_t))) {
+      unavailable("BinaryData::readBlob");
       return false;
+    }
 
     int32_t marker = getRef<int32_t>();
 
@@ -544,6 +535,7 @@ namespace Radiant {
 
     if(!available(4)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector2Float32");
       return Nimble::Vector2f(0, 0);
     }
 
@@ -553,6 +545,7 @@ namespace Radiant {
 
       if(!available(8)) {
         if(ok) * ok = false;
+        unavailable("BinaryData::readVector2Float32");
         return Nimble::Vector2f(0, 0);
       }
 
@@ -562,6 +555,7 @@ namespace Radiant {
 
       if(!available(8)) {
         if(ok) * ok = false;
+        unavailable("BinaryData::readVector2Float32");
         return Nimble::Vector2f(0, 0);
       }
 
@@ -571,18 +565,6 @@ namespace Radiant {
     }
     else if(marker == STRING_MARKER) {
       BD_STR_TO_VEC(Nimble::Vector2f, 2, ok);
-      /*
-      const char * source = & m_buf[m_current];
-      Radiant::Variant v(source);
-      Nimble::Vector2f vect(0,0);
-      if(v.getFloats(vect.data(), 2) == 2)
-        return vect;
-      else {
-        if(ok)
-          *ok = false;
-        return Vector2f(0, 0);
-      }
-      */
     }
     else {
       skipParameter(marker);
@@ -601,6 +583,7 @@ namespace Radiant {
 
     if(!available(16)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector3Float32");
       return Nimble::Vector3f(0, 0, 0);
     }
 
@@ -634,6 +617,7 @@ namespace Radiant {
 
     if(!available(12)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector2Int32");
       return Nimble::Vector2i(0, 0);
     }
 
@@ -664,6 +648,7 @@ namespace Radiant {
 
     if(!available(16)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector3Int32");
       return Nimble::Vector3i(0, 0, 0);
     }
 
@@ -694,6 +679,7 @@ namespace Radiant {
 
     if(!available(12)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector4Int32");
       return Nimble::Vector4i(0, 0, 0, 1);
     }
 
@@ -725,6 +711,7 @@ namespace Radiant {
 
     if(!available(12)) {
       if(ok) * ok = false;
+      unavailable("BinaryData::readVector4Float32");
       return Nimble::Vector4f(0, 0, 0, 1);
     }
 
@@ -791,7 +778,6 @@ namespace Radiant {
         return false;
       }
       ensure(s + 8);
-      // m_size = s;
     }
 
     memset(&m_buf[0], 0, m_size);

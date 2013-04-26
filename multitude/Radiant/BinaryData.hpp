@@ -64,9 +64,8 @@ namespace Radiant {
       \b Wrting functions always put the type marker before the actual
       value.
 
-      \b Reading functions set the optional bool argument "ok" to
-      false if the operation fails. The boolean is never set to true,
-      so you must do that in our own code.
+      \b Reading functions set the optional bool argument "ok" to true
+      if the operation is successful and to false if it fails.
 
   */
 
@@ -190,10 +189,6 @@ namespace Radiant {
     /// @param[out] ok check if the read was successful
     /// @return requested value or zero on failure
     float readFloat32(bool * ok = 0);
-    /// @copydoc readFloat32
-    /// @param defval default value to return in case of failure
-    /// @todo why only this has default value and not the others?
-    float readFloat32(float defval, bool * ok = 0);
     /// @copydoc readFloat32
     double readFloat64(bool * ok = 0);
     /// @copydoc readFloat32
