@@ -99,7 +99,7 @@ namespace Radiant
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  FunctionTask::FunctionTask(std::function<void (FunctionTask &)> func)
+  FunctionTask::FunctionTask(std::function<void (Task &)> func)
     : m_func(func)
   {}
 
