@@ -157,12 +157,12 @@ namespace Radiant
     public:
       /// Construct a new FunctionTask
       /// @param func function to execute
-      FunctionTask(std::function<void ()> func);
+      FunctionTask(std::function<void (FunctionTask &)> func);
 
       virtual void doTask() OVERRIDE;
 
   private:
-      std::function<void ()> m_func;
+      std::function<void (FunctionTask &)> m_func;
   };
 
 }

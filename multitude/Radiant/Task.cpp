@@ -99,16 +99,12 @@ namespace Radiant
   //////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
 
-  FunctionTask::FunctionTask(std::function<void ()> func)
+  FunctionTask::FunctionTask(std::function<void (FunctionTask &)> func)
     : m_func(func)
   {}
 
   void FunctionTask::doTask()
   {
-    m_state = RUNNING;
-
-    m_func();
-
-    setFinished();
+    m_func(*this);
   }
 }
