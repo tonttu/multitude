@@ -28,7 +28,6 @@ namespace Radiant
 {
   /// Aligned memory allocator that can be used for STL containers
   /// @note Alignment should be a power of 2
-  /// @todo static assert(!(alignment & (alignment-1)), "Alignment must be a power of 2")
   template<typename T, unsigned int alignment>
   class aligned_allocator
   {
@@ -55,7 +54,10 @@ namespace Radiant
     pointer address(reference ref) const { return Radiant::addressOf(ref); }
     const_pointer address(const_reference ref) const { return Radiant::addressOf(ref); }
 
-    pointer allocate(size_type n, const void* = 0) { return reinterpret_cast<pointer>(Radiant::alignedMalloc(n * sizeof(T), alignment)); }
+    pointer allocate(size_type n, const void* = 0) {
+      static_assert(!(alignment & (alignment-1)), "Alignment must be a power of 2");
+      return reinterpret_cast<pointer>(Radiant::alignedMalloc(n * sizeof(T), alignment));
+    }
     void deallocate(pointer ptr, size_type) { Radiant::alignedFree(ptr); }
 
     /// @todo this should actually be defined as template<class U, class... Args> void construct(U* p, Args&&... args);
