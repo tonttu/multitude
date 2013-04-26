@@ -12,7 +12,6 @@
 #define RADIANT_CYCLE_RECORD_HPP
 
 #include "Export.hpp"
-#include "Trace.hpp"
 
 #ifdef RADIANT_IOS
 // Dummy implementation
@@ -42,66 +41,41 @@ namespace Radiant {
 
       while(run()) {
         record.getTicks();
-    DoTask1();
-    record.getNewTime(0);
-    DoTask2();
-    record.getNewTime(1);
-    DoTask3();
-    record.getNewTime(2);
+        DoTask1();
+        record.getNewTime(0);
+        DoTask2();
+        record.getNewTime(1);
+        DoTask3();
+        record.getNewTime(2);
       }
 
       record.finalReport();
 
       </PRE>
   */
-  class CycleRecord
+  class RADIANT_API CycleRecord
   {
   public:
     /** @param n The number of bins. */
-    CycleRecord(unsigned n = 50)
-    {
-      m_records.resize(n);
-      reset();
-    }
+    CycleRecord(unsigned n = 50);
+
     /// The number of bins
-    size_t size() const { return m_records.size(); }
+    size_t size() const;
     /// Reset the records to zero
-    void reset() { for(unsigned i = 0; i < size(); i++) m_records[i] = 0.0; }
+    void reset();
     /// Update the tick counter, without putting the value to any bucket
-    void getTicks() { m_latest = getticks(); }
+    void getTicks();
     /// Calculate the number of new ticks, and put the value to the given bucket
-    void getNewTime(unsigned forWhich)
-    {
-      ticks now = getticks();
-      m_records[forWhich] += elapsed(now, m_latest);
-      m_latest = now;
-    }
+    void getNewTime(unsigned forWhich);
 
     /// Normalize the accumulation buffers, so that one can print the report
     /// @return total CPU cycle count.
-    double normalize()
-    {
-      unsigned i;
-      double sum = 0.0;
-
-      for(i = 0; i < m_records.size(); i++)
-        sum += m_records[i];
-
-      for(i = 0; i < m_records.size() && sum != 0.0; i++)
-        m_records[i] /= sum;
-
-      return sum;
-    }
+    double normalize();
 
     /// Print a CPU cycle report to the screen.
-    void finalReport()
-    {
-      normalize();
+    void finalReport();
 
-      for(unsigned i = 0; i < m_records.size(); i++)
-        Radiant::info("CPU cycles  %u   %.2lf", i, m_records[i] * 100.0);
-    }
-
+  private:
     /// The latest CPU cycle counter value
     ticks m_latest;
     /// The CPU record buckets

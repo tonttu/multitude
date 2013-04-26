@@ -1,8 +1,7 @@
 
 include(../multitude.pri)
 
-HEADERS += Flags.hpp \
-    TouchEvent.hpp
+HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
 HEADERS += DropEvent.hpp
 HEADERS += TabletEvent.hpp
@@ -66,6 +65,7 @@ HEADERS += Thread.hpp
 HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp
 HEADERS += Types.hpp
+HEADERS += TouchEvent.hpp
 HEADERS += VectorStorage.hpp
 HEADERS += VideoImage.hpp
 HEADERS += VideoInput.hpp
@@ -79,8 +79,7 @@ HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 
-SOURCES += Mime.cpp \
-    TouchEvent.cpp
+SOURCES += Mime.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
@@ -92,6 +91,7 @@ SOURCES += BinaryData.cpp
 SOURCES += VideoCamera.cpp
 SOURCES += Color.cpp
 SOURCES += ColorUtils.cpp
+SOURCES += CycleRecord.cpp
 SOURCES += MutexQt.cpp
 SOURCES += ThreadQt.cpp
 SOURCES += Task.cpp
@@ -113,6 +113,7 @@ SOURCES += SHMPipe.cpp
 SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
 SOURCES += TimeStamp.cpp
+SOURCES += TouchEvent.cpp
 SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp
