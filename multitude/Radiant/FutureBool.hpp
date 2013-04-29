@@ -32,6 +32,23 @@ namespace Radiant
   };
   typedef std::unique_ptr<FutureBoolI> FutureBoolIPtr;
 
+  class RADIANT_API FutureBoolConjunction : public FutureBoolI
+  {
+  public:
+    FutureBoolConjunction(FutureBoolIPtr lhs, FutureBoolIPtr rhs);
+    virtual ~FutureBoolConjunction();
+    virtual bool isReady() const OVERRIDE;
+    virtual Radiant::TaskPtr task() const OVERRIDE;
+    virtual bool validate() OVERRIDE;
+
+    static FutureBoolIPtr conjunction(FutureBoolI *lhs, FutureBoolI *rhs);
+
+  private:
+    FutureBoolIPtr m_lhs;
+    FutureBoolIPtr m_rhs;
+  };
+
+
   /// This class provides implicit conversion to boolean type. The class is
   /// used to provide asynchronous return values from functions.
   class FutureBool
