@@ -199,10 +199,10 @@ namespace Radiant
         task->m_state = Task::RUNNING;
       }
 
-      if(task->state() != Task::DONE)
+      if(task->state() == Task::RUNNING)
         task->doTask();
 
-      bool done = task->state() == Task::DONE;
+      bool done = (task->state() == Task::DONE || task->state() == Task::CANCELLED);
 
       // Did the task complete?
       if(done) {
@@ -320,6 +320,9 @@ namespace Radiant
 
 
       for(auto & task : m_reserved)
+        task->cancel();
+
+      for (auto & task: m_runningTasks)
         task->cancel();
 
       m_taskQueue.clear();
