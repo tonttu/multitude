@@ -46,11 +46,6 @@ namespace Radiant
 
     virtual ~KeyEvent();
 
-    /// @cond
-    // Not currently used, always returns false
-    bool virtualEvent() const;
-    /// @endcond
-
     /// Key code of the event (from Qt::Key)
     /// @return key code
     int key() const;

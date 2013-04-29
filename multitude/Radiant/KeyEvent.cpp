@@ -45,12 +45,6 @@ namespace Radiant
     delete m_d;
   }
 
-  bool KeyEvent::virtualEvent() const
-  {
-    /// @todo should be removed
-    return false;
-  }
-
   KeyEvent KeyEvent::createKeyPress(int key, bool isautorepeat)
   {
     return KeyEvent(key, QEvent::KeyPress, Qt::NoModifier, QString(), isautorepeat);
