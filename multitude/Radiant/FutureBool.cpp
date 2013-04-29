@@ -23,8 +23,10 @@ namespace Radiant
   {
     if(!m_lhs->isReady()) {
       return m_lhs->task();
-    } else {
+    } else if(m_lhs->validate()) {
       return m_rhs->task();
+    } else {
+      return nullptr;
     }
   }
 
