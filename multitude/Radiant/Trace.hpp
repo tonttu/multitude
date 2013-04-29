@@ -58,7 +58,7 @@ namespace Radiant {
       The terminal output is protected by mutex lock so that multiple
       threads can write to the same terminal without producing corrupted
       output. This was also the reason why the output is done with
-      functions, rather than than std::cout etc. With the std streams one
+      functions, rather than std::cout etc. With the std streams one
       cannot organize a mutex lock around the text output, which easily
       results in corrupted (and rather useless) output.
 
