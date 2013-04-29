@@ -38,7 +38,6 @@ namespace Radiant {
      This design is basically copy of the OSC timing system.
   */
 
-  /// @todo Documentation
   class RADIANT_API TimeStamp
   {
   public:
