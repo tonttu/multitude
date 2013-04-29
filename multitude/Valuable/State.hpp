@@ -33,6 +33,7 @@ namespace Valuable
   {
   public:
     typedef std::function<void(int)> CallbackType;
+    typedef std::function<int(int)> UpdateType;
 
   public:
     StateInt(int initialState);
@@ -47,6 +48,8 @@ namespace Valuable
     long onStateMask(int state, CallbackType callback, bool once, bool direct);
 
     bool removeListener(long id);
+
+    void updateState(UpdateType updateFunc);
 
   private:
     class D;
@@ -72,6 +75,9 @@ namespace Valuable
   public:
     /// Type of the callback used in monitor functions, new state is given as a first parameter
     typedef std::function<void(Enum)> CallbackType;
+    /// Type of the function that updates current state value safely. It gets old
+    /// value of state as a parameter.
+    typedef std::function<Enum(Enum)> UpdateType;
 
   public:
     /// Constructs a new State object
@@ -124,6 +130,11 @@ namespace Valuable
     /// @param id listener id, returned from onChange or onStateMask functions
     /// @returns true if the listener was removed
     inline bool removeListener(long id);
+
+    /// Update state safely
+    /// @param Function that contains logic choosing the next value for the state.
+    ///        Gets old state as a parametes
+    void updateState(UpdateType updateFunc);
 
   private:
     std::shared_ptr<StateInt> m_state;
@@ -196,6 +207,13 @@ namespace Valuable
   {
     return m_state->removeListener(id);
   }
+
+  template <typename Enum>
+  void State<Enum>::updateState(UpdateType updateFunc)
+  {
+    m_state->updateState([=](int v) {return updateFunc(Enum(v));});
+  }
+
 } // namespace Valuable
 
 #endif // VALUABLE_STATE_HPP

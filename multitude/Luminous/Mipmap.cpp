@@ -288,7 +288,7 @@ namespace Luminous
 
   void LoadImageTask::setState(Luminous::Mipmap & mipmap, Valuable::LoadingEnum state)
   {
-    mipmap.m_d->m_state = state;
+    mipmap.m_d->m_state.setState(state);
   }
 
   void LoadImageTask::lock(Luminous::Mipmap & mipmap, int level)
@@ -507,14 +507,14 @@ namespace Luminous
     if(!Luminous::Image::ping(mipmap.m_filenameAbs, mipmap.m_sourceInfo)) {
       Radiant::error("PingTask::doPing # failed to query image size for %s",
                      mipmap.m_filenameAbs.toUtf8().data());
-      mipmap.m_state = Valuable::STATE_ERROR;
+      mipmap.m_state.setState(Valuable::STATE_ERROR);
       return false;
     }
 
     if(!s_dxtSupported && mipmap.m_sourceInfo.pf.compression() != Luminous::PixelFormat::COMPRESSION_NONE) {
       Radiant::error("PingTask::doPing # Image %s has unsupported format",
                      mipmap.m_filenameAbs.toUtf8().data());
-      mipmap.m_state = Valuable::STATE_ERROR;
+      mipmap.m_state.setState(Valuable::STATE_ERROR);
       return false;
     }
 
@@ -583,7 +583,14 @@ namespace Luminous
     }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
-    mipmap.m_state = Valuable::STATE_HEADER_READY;
+    // Need to be specially careful with header ready - we really want to avoid
+    // reverting ready-state to header-ready
+    mipmap.m_state.updateState([=](Valuable::LoadingEnum old) {
+      if(old == Valuable::STATE_READY)
+        return old;
+      else
+        return Valuable::STATE_HEADER_READY;
+    });
 
 #ifndef LUMINOUS_OPENGLES
     if(mipmap.m_mipmapGenerator) {
@@ -1000,9 +1007,8 @@ namespace Luminous
   void Mipmap::setMipmapReady(const ImageInfo & imginfo)
   {
     m_d->m_compressedMipmapInfo = imginfo;
-
     m_d->m_mipmapGenerator.reset();
-    m_d->m_state = Valuable::STATE_READY;
+    m_d->m_state.setState(Valuable::STATE_READY);
     // preload the maximum level mipmap image
     texture(m_d->m_maxLevel);
   }
@@ -1075,7 +1081,7 @@ namespace Luminous
   void Mipmap::startLoading(bool compressedMipmaps)
   {
     assert(!m_d->m_ping);
-    m_d->m_state = Valuable::STATE_LOADING;
+    m_d->m_state.setState(Valuable::STATE_LOADING);
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
   }

@@ -66,6 +66,7 @@ namespace Valuable
     D(int initialState);
 
     void sendCallbacks(int newState, bool direct);
+    void changeState(int state);
 
   public:
     Radiant::Mutex m_stateMutex;
@@ -105,6 +106,25 @@ namespace Valuable
         p.second.m_callback(newState);
   }
 
+  void StateInt::D::changeState(int state)
+  {
+    // Assumes that mutex is locked outside!
+    m_state = state;
+    sendCallbacks(state, true);
+
+    if (m_onceCallbacks.empty() && m_callbacks.empty() && m_changeCallbacks.empty())
+      return;
+
+    auto weak = m_weak;
+    Node::invokeAfterUpdate([=] {
+      auto self = weak.lock();
+      if (!self) return;
+
+      Radiant::Guard g(self->m_d->m_stateMutex);
+      self->m_d->sendCallbacks(state, false);
+    });
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -131,20 +151,17 @@ namespace Valuable
     if (m_d->m_state == state)
       return;
 
-    m_d->m_state = state;
-    m_d->sendCallbacks(state, true);
+    m_d->changeState(state);
+  }
 
-    if (m_d->m_onceCallbacks.empty() && m_d->m_callbacks.empty() && m_d->m_changeCallbacks.empty())
+  void StateInt::updateState(UpdateType updateFunc)
+  {
+    Radiant::Guard g(m_d->m_stateMutex);
+    int state = updateFunc(m_d->m_state);
+    if(m_d->m_state == state)
       return;
 
-    auto weak = m_d->m_weak;
-    Node::invokeAfterUpdate([=] {
-      auto self = weak.lock();
-      if (!self) return;
-
-      Radiant::Guard g(self->m_d->m_stateMutex);
-      self->m_d->sendCallbacks(state, false);
-    });
+    m_d->changeState(state);
   }
 
   long StateInt::onChange(StateInt::CallbackType callback, bool direct, bool initialInvoke)
