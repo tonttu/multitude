@@ -16,14 +16,6 @@
 #include "Matrix3.hpp"
 #include "Vector4.hpp"
 
-#ifdef near
-#undef near
-#endif
-
-#ifdef far
-#undef far
-#endif
-
 namespace Nimble {
 
   /// Compute the product of two matrices
@@ -356,20 +348,20 @@ namespace Nimble {
     /// @param right Right clip plane location
     /// @param bottom Bottom clip plane location
     /// @param top Top clip plane location
-    /// @param near Near clip plane location
-    /// @param far Far clip plane location
+    /// @param nearPlane Near clip plane location
+    /// @param farPlane Far clip plane location
     /// @return New projection matrix
-    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T near, T far)
+    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T nearPlane, T farPlane)
     {
       Nimble::Matrix4T<T> result;
       result.clear();
       result[0][0] = T(2)/(right-left);
       result[1][1] = T(2)/(top-bottom);
-      result[2][2] = -T(2)/(far-near);
+      result[2][2] = -T(2)/(farPlane-nearPlane);
       result[3][3] = T(1);
       result[0][3] = -(right+left)/(right-left);
       result[1][3] = -(top+bottom)/(top-bottom);
-      result[2][3] = -(far+near)/(far-near);
+      result[2][3] = -(farPlane+nearPlane)/(farPlane-nearPlane);
       return result;
     }
 
@@ -380,10 +372,10 @@ namespace Nimble {
     /// @param right right clipping plane
     /// @param bottom bottom clipping plane
     /// @param top top clipping plane
-    /// @param near near clipping plane
-    /// @param far far clipping plane
+    /// @param nearPlane near clipping plane
+    /// @param farPlane far clipping plane
     /// @return orthogonal projection matrix
-    static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T near, T far);
+    static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T nearPlane, T farPlane);
 
     /** Identity matrix. */
     static const Matrix4T<T> IDENTITY;
