@@ -118,9 +118,4 @@ namespace Radiant
   inline Radiant::FlagsT<T> operator|(T a, T b) { return Radiant::FlagsT<T>(a) | b; } \
   inline Radiant::FlagsT<T> operator~(T t) { return ~Radiant::FlagsT<T>(t); }
 
-//  FlagsT<T> operator^(T a, T b) const { return FlagsT<T>(a) ^ b; }
-//  FlagsT<T> operator&(T a, T b) const { return FlagsT<T>(a) & b; }
-
-
-
 #endif // RADIANT_FLAGS_HPP

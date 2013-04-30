@@ -768,18 +768,10 @@ namespace Radiant {
       const uchar * src2 = src1 + lw;
 
       for(long x = 0; x < w; x++) {
-#if 0
-        uint green = (uint) src1[0] + (uint) src2[1];
-        dest[2] = src2[0];
-        dest[0] = src1[1];
-        dest[1] = green >> 1;
-#else
-
         uint green = (uint) src2[0] + (uint) src1[1];
         dest[2] = src2[1];
         dest[0] = src1[0];
         dest[1] = green >> 1;
-#endif
 
         src1 += 2;
         src2 += 2;

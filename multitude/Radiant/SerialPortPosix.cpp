@@ -132,12 +132,6 @@ namespace Radiant
     opts.c_iflag &= ~(INLCR | ICRNL);
     opts.c_oflag &= ~(OCRNL | ONLCR);
 
-#if 0
-    opts.c_iflag = (IGNBRK | IGNPAR);  /* Ignore break & parity errs */
-    opts.c_oflag = 0;                  /* Raw output, leave tabs alone */
-    opts.c_lflag = 0;              /* Raw input (no KILL, etc.), no echo */
-#endif
-
     if(tcsetattr(m_fd, TCSANOW, & opts) < 0) {
       Radiant::error("%s # Failed to set TTY parameters (%s)", fname, strerror(errno));
       close();
