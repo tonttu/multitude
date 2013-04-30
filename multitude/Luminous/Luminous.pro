@@ -12,7 +12,8 @@ HEADERS += ProgramGL.hpp \
     RenderDefines.hpp \
     RenderQueues.hpp \
     PostProcessContext.hpp \
-    PostProcessFilter.hpp
+    PostProcessFilter.hpp \
+    GPUAssociation.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -88,7 +89,8 @@ HEADERS += ImageCodecDDS.hpp
 HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
 SOURCES += ImageCodecDDS.cpp \
-    DummyOpenGL.cpp
+    DummyOpenGL.cpp \
+    GPUAssociation.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
 SOURCES += SpriteRenderer.cpp

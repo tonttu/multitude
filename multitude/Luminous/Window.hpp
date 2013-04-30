@@ -48,6 +48,9 @@ namespace Luminous
     /// Clears the OpenGL context for the calling thread
     virtual void doneCurrent() = 0;
 
+    /// Gets the native GPU id for the OpenGL context of this window
+    virtual unsigned gpuId() const { return 0; };
+
     /// This function can be used to perform any initialization that must be
     /// performed in the main-thread.
     virtual bool mainThreadInit() { return true; }

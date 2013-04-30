@@ -42,6 +42,8 @@ namespace Luminous
 
     virtual void doneCurrent() OVERRIDE;
 
+    virtual unsigned gpuId() const OVERRIDE;
+
   private:
     class D;
     D * m_d;

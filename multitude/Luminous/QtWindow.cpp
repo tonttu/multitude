@@ -28,6 +28,8 @@
 #include <QDesktopWidget>
 #include <QGLFormat>
 
+#include "GPUAssociation.hpp"
+
 namespace Luminous
 {
 
@@ -206,10 +208,11 @@ namespace Luminous
       , m_glWidget(0)
       , m_deferredActivateWindow(false)
       , m_raiseCount(0)
+      , m_rc()
   #ifdef RADIANT_WINDOWS
       , m_dc(nullptr)
-      , m_rc(nullptr)
   #endif
+      , m_gpuId(0)
     {}
 
     ~D()
@@ -243,8 +246,9 @@ namespace Luminous
     int m_raiseCount;
 #ifdef RADIANT_WINDOWS
     HDC m_dc;
-    HGLRC m_rc;
 #endif
+    OpenGLContextHandle m_rc;
+    int m_gpuId;
   };
 
   ////////////////////////////////////////////////////////////
@@ -342,7 +346,7 @@ namespace Luminous
   {
     for(int i = 0; i < 10; ++i) {
 #ifdef RADIANT_WINDOWS
-      wglMakeCurrent(m_d->m_dc, m_d->m_rc);
+      wglMakeCurrent(m_d->m_dc, (HGLRC)m_d->m_rc.getRawHandle());
 #else
       m_d->m_glWidget->makeCurrent();
 #endif
@@ -376,22 +380,20 @@ namespace Luminous
     if(!currentContextOk)
       return false;
 
-#ifdef RADIANT_WINDOWS
-    // Grab the OpenGL context handle
-    m_d->m_rc = wglGetCurrentContext();
-    assert(m_d->m_rc);
-
-    if(!m_d->m_rc)
+    if(!m_d->m_rc.getCurrentContext()) {
+      Radiant::error("QtWindow::mainThreadInit # failed to get current OpenGL context");
       return false;
+    }
 
+#ifdef RADIANT_WINDOWS
     // Grab the device context handle
     m_d->m_dc = m_d->m_glWidget->getDC();
     assert(m_d->m_dc);
 
     return m_d->m_dc != nullptr;
-#else
-    return currentContextOk;
 #endif
+
+    return true;
   }
 
   void QtWindow::swapBuffers()
@@ -442,6 +444,17 @@ namespace Luminous
   void QtWindow::doneCurrent()
   {
     m_d->m_glWidget->doneCurrent();
+  }
+
+  unsigned QtWindow::gpuId() const
+  {
+    if(!m_d->m_gpuId) {
+
+      if(GPUAssociation::isSupported())
+        m_d->m_gpuId = GPUAssociation::gpuId(&m_d->m_rc);
+    }
+
+    return m_d->m_gpuId;
   }
 
 }

@@ -22,6 +22,7 @@
 #include "CPUMipmaps.hpp"
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
+#include "GPUAssociation.hpp"
 
 #include <QImageWriter>
 #include <QImageReader>
@@ -60,6 +61,12 @@ namespace Luminous
           Radiant::error("Failed to initialize GLEW: %s", glewGetErrorString(err));
           s_ok = false;
           return false;
+        }
+
+
+        if(Luminous::GPUAssociation::isSupported()) {
+          unsigned int gpuCount = Luminous::GPUAssociation::numGPUs();
+          Radiant::info("Available GPUs: %ld", gpuCount);
         }
 
         // Check for DXT support

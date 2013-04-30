@@ -46,13 +46,14 @@ namespace Luminous
   public:
     enum { MAX_TEXTURES = 64, BUFFERSETS = 4 };
 
-    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
+    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win, unsigned gpuId)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_recursionDepth(0)
         , m_renderCount(0)
         , m_frameCount(0)
         , m_area(0)
         , m_window(win)
+        , m_gpuId(gpuId)
         , m_initialized(false)
         , m_uniformBufferOffsetAlignment(0)
         , m_automaticDepthDiff(-1.0f/100000.0f)
@@ -163,6 +164,8 @@ namespace Luminous
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
+
+    unsigned m_gpuId;
 
     Transformer m_viewTransformer;
 
@@ -285,9 +288,9 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win)
+  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win, unsigned gpuId)
       : Transformer(),
-      m_data(new Internal(driver, win))
+      m_data(new Internal(driver, win, gpuId))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
@@ -315,6 +318,11 @@ namespace Luminous
   const Luminous::MultiHead::Area * RenderContext::area() const
   {
     return m_data->m_area;
+  }
+
+  unsigned RenderContext::gpuId() const
+  {
+    return m_data->m_gpuId;
   }
 
   void RenderContext::pushViewTransform(const Nimble::Matrix4 & m)
