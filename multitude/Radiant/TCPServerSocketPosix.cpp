@@ -45,6 +45,15 @@ namespace Radiant
     delete m_d;
   }
 
+  const QString TCPServerSocket::host() const {
+    return m_d->m_host;
+  }
+
+  int TCPServerSocket::port() const {
+    return m_d->m_port;
+  }
+
+
   int TCPServerSocket::open(const char * host, int port, int maxconnections)
   {
     close();
@@ -80,6 +89,8 @@ namespace Radiant
       return false;
 
     m_d->m_fd = -1;
+    m_d->m_host = "";
+    m_d->m_port = 0;
 
     if(::shutdown(fd, SHUT_RDWR)) {
       debug("TCPServerSocket::close # Failed to shut down the socket: %s", SocketWrapper::strerror(SocketWrapper::err()));

@@ -15,6 +15,8 @@
 
 #include <Radiant/Export.hpp>
 
+#include <QString>
+
 namespace Radiant {
 
   class TCPSocket;
@@ -42,9 +44,9 @@ namespace Radiant {
     bool isOpen() const;
 
     /// Returns the hostname
-    //const char * host() const;
+    const QString host() const;
     /// Returns the port number
-    //int port() const;
+    int port() const;
 
     /// Check for pending connections
     /// Checks for pending connections and optionally blocks for the given timeout.
