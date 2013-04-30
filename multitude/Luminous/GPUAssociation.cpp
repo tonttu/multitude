@@ -13,6 +13,8 @@
 #elif defined(RADIANT_LINUX)
   #include <GL/glxew.h>
   typedef GLXContext PlatformOpenGLContextHandle;
+#elif defined(RADIANT_OSX)
+  typedef void* PlatformOpenGLContextHandle;
 #endif
 
 namespace Luminous
