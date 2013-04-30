@@ -254,6 +254,9 @@ namespace Radiant
     return suffixMatch(filePath, "png") ||
         suffixMatch(filePath, "jpg") ||
         suffixMatch(filePath, "jpeg") ||
+        suffixMatch(filePath, "bmp") ||
+        suffixMatch(filePath, "svg") ||
+        suffixMatch(filePath, "tiff") ||
         suffixMatch(filePath, "dds");
   }
 
