@@ -32,10 +32,10 @@ namespace Luminous {
     setVertex(2, 1, 1);
     setVertex(3, 0, 1);
 
-    addValue("v1", &m_vertices[0]);
-    addValue("v2", &m_vertices[1]);
-    addValue("v3", &m_vertices[2]);
-    addValue("v4", &m_vertices[3]);
+    addAttribute("v1", &m_vertices[0]);
+    addAttribute("v2", &m_vertices[1]);
+    addAttribute("v3", &m_vertices[2]);
+    addAttribute("v4", &m_vertices[3]);
 
     calculateMatrix();
   }
