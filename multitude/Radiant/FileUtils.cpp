@@ -43,8 +43,6 @@
 
 namespace {
   Radiant::Mutex s_fileWriterMutex;
-  //std::function<void ()> s_fileWriterInit;
-  //std::function<void ()> s_fileWriterDeinit;
   void (*s_fileWriterInit)() = 0;
   void (*s_fileWriterDeinit)() = 0;
   volatile int s_fileWriterCount = 0;
@@ -217,7 +215,7 @@ namespace Radiant
 
   QString FileUtils::findFile(const QString & filename, const QString & paths)
   {
-    QStringList list = paths.split(";", QString::SkipEmptyParts);
+    QStringList list = paths.split(pathSeparator(), QString::SkipEmptyParts);
     /*needed to avoid bug(?) in foreach when there are duplicate values in list*/
     list.removeDuplicates();
     foreach(QString str, list) {
@@ -291,7 +289,11 @@ namespace Radiant
 
   QString FileUtils::pathSeparator()
   {
+#if defined RADIANT_WINDOWS
     return QString(";");
+#else
+    return QString(":");
+#endif
   }
 
 	QString FileUtils::directorySeparator()
