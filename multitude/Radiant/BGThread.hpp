@@ -45,9 +45,6 @@ namespace Radiant
     It is possible to change the number of threads executing tasks on the fly
     in BGThread by using the Radiant::ThreadPool::run function.
 
-  @todo There is currently no way to figure out if a given individual task
-  is running or not. This would be useful information especially when
-  closing the application or if your tasks have external dependencies.
   **/
   class RADIANT_API BGThread : public Radiant::ThreadPool
   {
