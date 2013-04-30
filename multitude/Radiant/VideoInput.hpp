@@ -117,8 +117,8 @@ namespace Radiant {
                                     AudioSampleFormat * format) const;
 
     /// Returns the current width of a frame in the video stream images.
-    // Note that it is quite common for video devices to not report the correct frame
-    // size before at least one frame has been captured.
+    /// Note that it is quite common for video devices to not report the correct frame
+    /// size before at least one frame has been captured.
     virtual int width() const = 0;
     /// Returns the current height of a frame in the video stream images.
     virtual int height() const = 0;
