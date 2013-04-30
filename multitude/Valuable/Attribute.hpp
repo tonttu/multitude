@@ -33,7 +33,7 @@
 #include <functional>
 
 #ifdef CORNERSTONE_JS
-#include <v8.h>
+#include <Valuable/v8.hpp>
 #endif
 
 // new behavior: elements of array 'array' will be default initialized

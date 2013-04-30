@@ -37,6 +37,7 @@ HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
+HEADERS += v8.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \

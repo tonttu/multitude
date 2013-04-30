@@ -23,7 +23,7 @@
 #include <Radiant/Trace.hpp>
 
 #ifdef CORNERSTONE_JS
-#include <v8.h>
+#include <Valuable/v8.hpp>
 #endif
 
 #include <map>
