@@ -41,10 +41,10 @@ namespace Radiant
       /// e.g. for ResourceLocator::locate(). The filter value is specified by
       /// combining values from the following list using bitwise OR operator:
       enum Filter {
-          Files     = (1 << 0)        ///< List files
-        , Dirs      = (1 << 1)        ///< List directories
-        , Writeable = (1 << 2)        ///< List files which the application has write access. Must be combined with Dirs or Files.
-        , AllEntries = Files & Dirs   ///< List directories and files
+          FILES     = (1 << 0)        ///< List files
+        , DIRS      = (1 << 1)        ///< List directories
+        , WRITEABLE = (1 << 2)        ///< List files which the application has write access. Must be combined with Dirs or Files.
+        , ALL_ENTRIES = FILES & DIRS   ///< List directories and files
       };
 
       /// Get the defined search paths in the resource locator
@@ -64,7 +64,7 @@ namespace Radiant
       /// @param path path to search for
       /// @param filter filter the search results
       /// @return list of matching paths or an empty list
-      QStringList locate(const QString & path, Filter filter = AllEntries) const;
+      QStringList locate(const QString & path, Filter filter = ALL_ENTRIES) const;
 
     private:
       class D;

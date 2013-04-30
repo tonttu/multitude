@@ -67,7 +67,7 @@ namespace Radiant
 {
   CallStack::CallStack()
   {
-    m_frameCount = backtrace(m_frames, max_frames);
+    m_frameCount = backtrace(m_frames, MAX_FRAMES);
   }
 
   CallStack::~CallStack()

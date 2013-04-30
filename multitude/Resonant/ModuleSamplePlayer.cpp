@@ -526,7 +526,7 @@ namespace Resonant {
   void ModuleSamplePlayer::createAmbientBackground
       (const char * directory, float gain, int fillchannels, float delay)
   {
-    Radiant::Directory dir(directory, Radiant::Directory::Files);
+    Radiant::Directory dir(directory, Radiant::Directory::FILES);
 
     int n = 0;
 

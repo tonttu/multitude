@@ -43,21 +43,21 @@ namespace Radiant
     /// Flags to filter directory contents
     enum FilterFlags
     {
-      Dirs  = 0x001,
-      Files = 0x002,
-      NoDotAndDotDot = 0x1000,
-      Hidden = 0x100,
-      System = 0x004,
-      AllEntries = Dirs | Files | System
+      DIRS  = 0x001,
+      FILES = 0x002,
+      NO_DOT_AND_DOTDOT = 0x1000,
+      HIDDEN = 0x100,
+      SYSTEM = 0x004,
+      ALL_ENTRIES = DIRS | FILES | SYSTEM
     };
 
     /// Flags to sort files
     enum SortFlag
     {
       /// Sort by name
-      Name = 0x00,
+      NAME = 0x00,
       /// Do not sort
-      NotSorted = 0x03
+      NOT_SORTED = 0x03
     };
 
     /// Construct a directory listing
@@ -70,7 +70,7 @@ namespace Radiant
   @param sortFlag flag indicating how the results should be sorted
     */
     Directory(const QString & pathname,
-        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
+        int filters = ALL_ENTRIES | NO_DOT_AND_DOTDOT, SortFlag sortFlag = NAME);
     /// Construct a directory listing
     /** Creating a Directory object immediately scans the contents
 	of the directory. Entries matching the given filters are
@@ -85,7 +85,7 @@ namespace Radiant
 	@param sortFlag flag indicating how the results should be sorted
     */
     Directory(const QString & pathname, const QString & suffixlist,
-        int filters = AllEntries | NoDotAndDotDot, SortFlag sortFlag = Name);
+        int filters = ALL_ENTRIES | NO_DOT_AND_DOTDOT, SortFlag sortFlag = NAME);
 
     /// Deallocates the list
     virtual ~Directory();
@@ -123,8 +123,8 @@ namespace Radiant
     /// @return directory object with the matching filters
     static Directory findByMimePattern(const QString & pathname,
                                        const QString & mimePattern,
-                                       int filters = AllEntries | NoDotAndDotDot,
-                                       SortFlag sortFlag = Name);
+                                       int filters = ALL_ENTRIES | NO_DOT_AND_DOTDOT,
+                                       SortFlag sortFlag = NAME);
 
   private:
     // This function takes care of the low-level platform

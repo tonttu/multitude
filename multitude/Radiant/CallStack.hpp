@@ -53,8 +53,8 @@ namespace Radiant
     RADIANT_API void print() const;
 
   private:
-    enum { max_frames = 32 };
-    stackptr_t m_frames[max_frames];
+    enum { MAX_FRAMES = 32 };
+    stackptr_t m_frames[MAX_FRAMES];
     size_t m_frameCount;
     mutable QStringList m_cache;
   };

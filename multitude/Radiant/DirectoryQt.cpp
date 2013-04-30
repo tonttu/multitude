@@ -32,14 +32,14 @@ namespace Radiant
 
   void Directory::populate()
   {
-    QDir::SortFlags sf = (m_sortFlag == Name) ? QDir::Name : QDir::Unsorted;
+    QDir::SortFlags sf = (m_sortFlag == NAME) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
 
-    if(m_filterFlags & Dirs) ff |= QDir::Dirs;
-    if(m_filterFlags & Files) ff |= QDir::Files;
-    if(m_filterFlags & NoDotAndDotDot) ff |= QDir::NoDotAndDotDot;
-    if(m_filterFlags & Hidden) ff |= QDir::Hidden;
-    if(m_filterFlags & System) ff |= QDir::System;
+    if(m_filterFlags & DIRS) ff |= QDir::Dirs;
+    if(m_filterFlags & FILES) ff |= QDir::Files;
+    if(m_filterFlags & NO_DOT_AND_DOTDOT) ff |= QDir::NoDotAndDotDot;
+    if(m_filterFlags & HIDDEN) ff |= QDir::Hidden;
+    if(m_filterFlags & SYSTEM) ff |= QDir::System;
  
     QDir dir(m_path, "", sf, ff);
 

@@ -214,7 +214,7 @@ namespace Radiant
       bool tryDeallocate(void * ptr)
       {
         /// Test if we're in range
-        if (m_data.data() <= ptr && ptr < m_data.data() + poolsize_bytes) {
+        if (m_data.data() <= ptr && ptr < m_data.data() + POOLSIZE_BYTES) {
           unsigned int index = (unsigned int)(((char *)ptr - m_data.data())) / sizeof(T);
           unsigned int bit_index = index / 32;
           unsigned int bit = 1 << (index & 31);
@@ -253,14 +253,14 @@ namespace Radiant
     public:
       friend class block_allocator;
       enum {
-        poolsize_bytes = sizeof(T) * BlockCount,
-        freebits_count = BlockCount / sizeof(unsigned int) + 1,
+        POOLSIZE_BYTES = sizeof(T) * BlockCount,
+        FREEBITS_COUNT = BlockCount / sizeof(unsigned int) + 1,
       };
 
-      std::array<char, poolsize_bytes> m_data;
+      std::array<char, POOLSIZE_BYTES> m_data;
 
       unsigned int m_freeCount;
-      std::array<unsigned int, freebits_count> m_freeBits;
+      std::array<unsigned int, FREEBITS_COUNT> m_freeBits;
       std::array<unsigned short, BlockCount> m_freeList;
       std::unique_ptr<chunk> m_nextChunk;
     };

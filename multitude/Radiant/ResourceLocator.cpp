@@ -87,7 +87,7 @@ namespace Radiant
         return 0;
 
       // Search for a match
-      QStringList matches = locate(fileName, ResourceLocator::AllEntries);
+      QStringList matches = locate(fileName, ResourceLocator::ALL_ENTRIES);
 
       // If there was no match, return 0 meaning we can't handle this file;
       // otherwise return the default handler for the new filename
@@ -114,13 +114,13 @@ namespace Radiant
           continue;
 
         // Apply filters
-        if(filter & Files && !rawPathIsFile(candidate))
+        if(filter & FILES && !rawPathIsFile(candidate))
           continue;
 
-        if(filter & Dirs && !rawPathIsDirectory(candidate))
+        if(filter & DIRS && !rawPathIsDirectory(candidate))
           continue;
 
-        if(filter & Writeable && !rawPathIsWriteable(candidate))
+        if(filter & WRITEABLE && !rawPathIsWriteable(candidate))
           continue;
 
         result.append(candidate);

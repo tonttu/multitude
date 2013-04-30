@@ -138,7 +138,7 @@ namespace Radiant
       initialized = true;
     }
 
-    m_frameCount = backtrace(m_frames, max_frames);
+    m_frameCount = backtrace(m_frames, MAX_FRAMES);
   }
 
   CallStack::~CallStack()
