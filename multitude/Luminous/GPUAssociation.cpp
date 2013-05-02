@@ -63,7 +63,6 @@ namespace Luminous
     ok = WGLEW_AMD_gpu_association;
 #elif defined(RADIANT_LINUX)
     ok = GLX_AMD_gpu_association;
-#endif
     //check that extension actually exists
     if (ok) {
       typedef GLuint (GLAPIENTRY * PFNGLXGETGPUIDSAMDPROC) (GLuint maxCount, GLuint* ids);
@@ -73,7 +72,7 @@ namespace Luminous
         ok = false;
       }
     }
-
+#endif    
     Radiant::warning("AMD_GPU_association extension: %s", ok ? "yes" : "no");
 
     return ok;
