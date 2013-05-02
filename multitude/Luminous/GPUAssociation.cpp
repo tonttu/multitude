@@ -64,6 +64,15 @@ namespace Luminous
 #elif defined(RADIANT_LINUX)
     ok = GLX_AMD_gpu_association;
 #endif
+    //check that extension actually exists
+    if (ok) {
+      typedef GLuint (GLAPIENTRY * PFNGLXGETGPUIDSAMDPROC) (GLuint maxCount, GLuint* ids);
+      PFNGLXGETGPUIDSAMDPROC glXGetGPUIDsAMD = nullptr;
+      glXGetGPUIDsAMD = (PFNGLXGETGPUIDSAMDPROC)glXGetProcAddressARB((const GLubyte*)"glXGetGPUIDsAMD");
+      if (!glXGetGPUIDsAMD) {
+        ok = false;
+      }
+    }
 
     Radiant::warning("AMD_GPU_association extension: %s", ok ? "yes" : "no");
 
