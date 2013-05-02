@@ -136,7 +136,7 @@ namespace Radiant
         auto task = m_future->task();
         if (!task)
           break;
-        task->runNow(false);
+        task->runNow(true);
       }
 
       return m_future->validate();

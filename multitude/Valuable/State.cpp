@@ -224,4 +224,18 @@ namespace Valuable
     return n > 0;
   }
 
+  void StateInt::setStateFrom(int a, int b)
+  {
+    Radiant::Guard g(m_d->m_stateMutex);
+    if (m_d->m_state != b) {
+
+      if(m_d->m_state != a) {
+        m_d->changeState(a);
+      }
+
+      m_d->changeState(b);
+
+    }
+  }
+
 } // namespace Valuable

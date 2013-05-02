@@ -50,6 +50,7 @@ namespace Valuable
     bool removeListener(long id);
 
     void updateState(UpdateType updateFunc);
+    void setStateFrom(int a, int b);
 
   private:
     class D;
@@ -136,6 +137,13 @@ namespace Valuable
     ///        Gets old state as a parametes
     void updateState(UpdateType updateFunc);
 
+    /// Sets state to state B through state A. This function ensures that the
+    /// state is first set to A if it is not already in state A or B. The final
+    /// state is B.
+    /// @param A State that is first set (if it is not already in A or B)
+    /// @param B The final state
+    void setStateFrom(Enum A, Enum B);
+
   private:
     std::shared_ptr<StateInt> m_state;
   };
@@ -212,6 +220,12 @@ namespace Valuable
   void State<Enum>::updateState(UpdateType updateFunc)
   {
     m_state->updateState([=](int v) {return updateFunc(Enum(v));});
+  }
+
+  template <typename Enum>
+  void State<Enum>::setStateFrom(Enum A, Enum B)
+  {
+    m_state->setStateFrom(A,B);
   }
 
 } // namespace Valuable

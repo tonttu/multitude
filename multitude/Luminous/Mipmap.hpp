@@ -123,6 +123,7 @@ namespace Luminous
   private:
     friend class PingTask;
     friend class LoadImageTask;
+    friend class LoadCompressedImageTask;
     friend class MipmapReleaseTask;
     class D;
     D * m_d;
