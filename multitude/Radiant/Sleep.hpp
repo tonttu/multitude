@@ -54,10 +54,23 @@ namespace Radiant {
   /////////////////////////////////////////////////////////////////////////////
 
   /// Synchronized sleeping.
-  /** This class can be used to time the execution of a thread. For
-      example if you want a thread not to execute too often.*/
+  /** This class can be used to execute a piece of code in fixed intervals.
+      Here's a simple example where a loop cycle is executed every 100ms:
 
-  /// @todo Add example(s)
+      \code
+      const long loopCycleUs = 100*1000;//100ms
+      Radiant::SleepSync sleep;
+      while (true) {
+         sleep.resetTiming();
+
+         // do something that differs in length between [0..loopCycleUs]
+         // ...
+
+         sleep.sleepSynchroUs(loopCycleUs);
+      }
+      \endcode
+
+  */
   class RADIANT_API SleepSync
   {
   public:
