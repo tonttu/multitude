@@ -22,6 +22,10 @@
 
 namespace Radiant
 {
+#ifdef RADIANT_MSVC
+#  pragma warning (push)
+#  pragma warning (disable: 4100)
+#endif
   /// Aligned memory allocator that can be used for STL containers
   /// @note Alignment should be a power of 2
   template<typename T, unsigned int alignment>
@@ -65,7 +69,9 @@ namespace Radiant
 
     /// @endcond
   };
-
+#ifdef RADIANT_MSVC
+#  pragma warning (pop)
+#endif
   /// @cond
 
   // Allocators are always equal
