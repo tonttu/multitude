@@ -71,28 +71,43 @@ namespace Radiant
 
 
   /// This class provides implicit conversion to boolean type. The class is
-  /// used to provide asynchronous return values from functions.
+  /// used to provide asynchronous return values from functions. By invoking
+  /// a function that returns a FutureBool-instance, the invoker can choose
+  /// if he wants to wait for the return value by evaluating the value of the
+  /// FutureBool. In case the value is never evaluated the function is run
+  /// asynchronously.
+  ///
+  /// This behaviour and usage pattern is very similar to std::future.
+  /// See also @ref MultiWidgets::ImageWidget::load
   class FutureBool
   {
   public:
+    /// Constructs a FutureBool object whose value is already known at this point.
+    /// @param value Value to return when converting this object to boolean
     FutureBool(bool value)
       : m_cached(value)
       , m_cacheSet(true)
     {
     }
 
+    /// Constructs a FutureBool object from FutureBoolIPtr
+    /// @param future Class-specific implementation of FutureBoolI-interface.
     FutureBool(FutureBoolIPtr future)
       : m_future(std::move(future))
       , m_cached(false)
       , m_cacheSet(false)
     {}
 
+    /// Move the given FutureBool object
+    /// @param f FutureBool to move
     FutureBool(FutureBool && f)
       : m_future(std::move(f.m_future))
       , m_cached(f.m_cached)
       , m_cacheSet(f.m_cacheSet)
     {}
 
+    /// Move the given FutureBool object
+    /// @param f FutureBool to move
     FutureBool & operator=(FutureBool && f)
     {
       std::swap(m_future, f.m_future);
