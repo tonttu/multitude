@@ -987,6 +987,17 @@ namespace Luminous
     return m_d->m_mipmapGenerator;
   }
 
+  Radiant::TaskPtr Mipmap::loadingTask()
+  {
+    for(int level = 0; level <= m_d->m_levels.size(); ++level) {
+      MipmapLevel & imageTex = m_d->m_levels[level];
+      auto loader = imageTex.loader.lock();
+      if (loader)
+        return loader;
+    }
+    return nullptr;
+  }
+
   Valuable::LoadingState & Mipmap::state()
   {
     return m_d->m_state;

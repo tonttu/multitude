@@ -96,6 +96,7 @@ namespace Luminous
 
     LUMINOUS_API Radiant::TaskPtr pingTask();
     LUMINOUS_API Radiant::TaskPtr mipmapGeneratorTask();
+    LUMINOUS_API Radiant::TaskPtr loadingTask();
 
     LUMINOUS_API Valuable::LoadingState & state();
     LUMINOUS_API const Valuable::LoadingState & state() const;
