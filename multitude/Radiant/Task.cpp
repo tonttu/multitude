@@ -77,12 +77,15 @@ namespace Radiant
       m_state = RUNNING;
     }
 
-    do {
+    while (m_state != DONE) {
       doTask();
-    } while (finish && m_state != DONE);
 
-    if (m_state == DONE)
-      finished();
+      if (m_state == DONE)
+        finished();
+
+      if (!finish)
+        break;
+    }
   }
 
   Task::~Task()
