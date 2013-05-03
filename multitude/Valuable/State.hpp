@@ -38,7 +38,7 @@ namespace Valuable
   class VALUABLE_API StateInt
   {
   public:
-    typedef std::function<void(int)> CallbackType;
+    typedef std::function<void(int, int)> CallbackType;
 
   public:
     StateInt(int initialState);
@@ -53,6 +53,8 @@ namespace Valuable
     long onStateMask(int state, CallbackType callback, bool once, bool direct);
 
     bool removeListener(long id);
+
+    int generation() const;
 
   private:
     class D;
@@ -77,7 +79,7 @@ namespace Valuable
   {
   public:
     /// Type of the callback used in monitor functions, new state is given as a first parameter
-    typedef std::function<void(Enum)> CallbackType;
+    typedef std::function<void(Enum, int)> CallbackType;
 
   public:
     /// Constructs a new State object
@@ -130,6 +132,9 @@ namespace Valuable
     /// @param id listener id, returned from onChange or onStateMask functions
     /// @returns true if the listener was removed
     inline bool removeListener(long id);
+
+    /// @returns how many times state has changed
+    inline int generation() const;
 
   private:
     std::shared_ptr<StateInt> m_state;
@@ -188,19 +193,25 @@ namespace Valuable
   template <typename Enum>
   long State<Enum>::onChange(CallbackType callback, Node::ListenerType type, bool initialInvoke)
   {
-    return m_state->onChange([=] (int v) { callback(Enum(v)); }, type == Node::DIRECT, initialInvoke);
+    return m_state->onChange([=] (int v, int g) { callback(Enum(v), g); }, type == Node::DIRECT, initialInvoke);
   }
 
   template <typename Enum>
   long State<Enum>::onStateMask(int stateMask, CallbackType callback, bool once, Node::ListenerType type)
   {
-    return m_state->onStateMask(stateMask, [=] (int v) { callback(Enum(v)); }, once, type == Node::DIRECT);
+    return m_state->onStateMask(stateMask, [=] (int v, int g) { callback(Enum(v), g); }, once, type == Node::DIRECT);
   }
 
   template <typename Enum>
   bool State<Enum>::removeListener(long id)
   {
     return m_state->removeListener(id);
+  }
+
+  template <typename Enum>
+  int State<Enum>::generation() const
+  {
+    return m_state->generation();
   }
 } // namespace Valuable
 
