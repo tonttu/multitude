@@ -32,44 +32,6 @@ namespace Radiant
   };
   typedef std::unique_ptr<FutureBoolI> FutureBoolIPtr;
 
-  /// Conjunction of two FutureBool -implementations.
-  /// Enables combining of two FutureBools similar short circuited way
-  /// as logical operators work in C++.
-  class RADIANT_API FutureBoolConjunction : public FutureBoolI
-  {
-  public:
-    /// Constructor of conjunction
-    /// @param lhs Left side operand of 'and'
-    /// @param rhs Right side operand of 'and'
-    FutureBoolConjunction(FutureBoolIPtr lhs, FutureBoolIPtr rhs);
-
-    /// Destructor
-    virtual ~FutureBoolConjunction();
-
-    /// Is ready if all of the tasks associated to left side operand are finished
-    /// and it evaluates to false, or if all of the tasks are finished.
-    /// @param Can boolean value represented by this class be evaluated immediately
-    virtual bool isReady() const OVERRIDE;
-
-    /// Return the next task associated with this value.
-    /// First the tasks of left side operand are returned.
-    /// @param Next task to execute
-    virtual Radiant::TaskPtr task() const OVERRIDE;
-
-    /// Once this object is ready this will return the actual boolean value we want.
-    /// @return Final value of the expression represented this object
-    virtual bool validate() OVERRIDE;
-
-    /// Construct pointer by taking a conjunction of two FutureBool-objects
-    /// @return Pointer to FutureBoolConjunction-object
-    static FutureBoolIPtr conjunction(FutureBoolI *lhs, FutureBoolI *rhs);
-
-  private:
-    FutureBoolIPtr m_lhs;
-    FutureBoolIPtr m_rhs;
-  };
-
-
   /// This class provides implicit conversion to boolean type. The class is
   /// used to provide asynchronous return values from functions. By invoking
   /// a function that returns a FutureBool-instance, the invoker can choose

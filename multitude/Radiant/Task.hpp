@@ -156,7 +156,7 @@ namespace Radiant
   {
     public:
       /// Construct a new FunctionTask
-      /// @param func Function to execute. Gets reference to this task as a parameter.
+      /// @param func function to execute
       FunctionTask(std::function<void (Task &)> func);
 
       virtual void doTask() OVERRIDE;

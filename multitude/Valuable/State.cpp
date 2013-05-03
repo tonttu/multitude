@@ -66,7 +66,6 @@ namespace Valuable
     D(int initialState);
 
     void sendCallbacks(int newState, bool direct);
-    void changeState(int state);
 
   public:
     Radiant::Mutex m_stateMutex;
@@ -106,25 +105,6 @@ namespace Valuable
         p.second.m_callback(newState);
   }
 
-  void StateInt::D::changeState(int state)
-  {
-    // Assumes that mutex is locked outside!
-    m_state = state;
-    sendCallbacks(state, true);
-
-    if (m_onceCallbacks.empty() && m_callbacks.empty() && m_changeCallbacks.empty())
-      return;
-
-    auto weak = m_weak;
-    Node::invokeAfterUpdate([=] {
-      auto self = weak.lock();
-      if (!self) return;
-
-      Radiant::Guard g(self->m_d->m_stateMutex);
-      self->m_d->sendCallbacks(state, false);
-    });
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -151,17 +131,20 @@ namespace Valuable
     if (m_d->m_state == state)
       return;
 
-    m_d->changeState(state);
-  }
+    m_d->m_state = state;
+    m_d->sendCallbacks(state, true);
 
-  void StateInt::updateState(UpdateType updateFunc)
-  {
-    Radiant::Guard g(m_d->m_stateMutex);
-    int state = updateFunc(m_d->m_state);
-    if(m_d->m_state == state)
+    if (m_d->m_onceCallbacks.empty() && m_d->m_callbacks.empty() && m_d->m_changeCallbacks.empty())
       return;
 
-    m_d->changeState(state);
+    auto weak = m_d->m_weak;
+    Node::invokeAfterUpdate([=] {
+      auto self = weak.lock();
+      if (!self) return;
+
+      Radiant::Guard g(self->m_d->m_stateMutex);
+      self->m_d->sendCallbacks(state, false);
+    });
   }
 
   long StateInt::onChange(StateInt::CallbackType callback, bool direct, bool initialInvoke)
@@ -222,20 +205,6 @@ namespace Valuable
     n += m_d->m_callbacks.erase(id);
     n += m_d->m_changeCallbacks.erase(id);
     return n > 0;
-  }
-
-  void StateInt::setStateFrom(int a, int b)
-  {
-    Radiant::Guard g(m_d->m_stateMutex);
-    if (m_d->m_state != b) {
-
-      if(m_d->m_state != a) {
-        m_d->changeState(a);
-      }
-
-      m_d->changeState(b);
-
-    }
   }
 
 } // namespace Valuable

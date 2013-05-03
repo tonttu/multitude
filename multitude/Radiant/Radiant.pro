@@ -135,7 +135,6 @@ SOURCES += VideoCameraCMU.cpp
 SOURCES += VideoCamera1394.cpp
 SOURCES += VideoCameraPTGrey.cpp
 SOURCES += IntrusivePtr.cpp
-SOURCES += FutureBool.cpp
 
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
