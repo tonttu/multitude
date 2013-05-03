@@ -18,11 +18,17 @@
 
 namespace Valuable
 {
+  /// Content-loading states
   enum LoadingEnum {
+    /// Default object state when loading has not yet been initiated
     STATE_NEW             = 1 << 0,
+    /// Loading has been initiated
     STATE_LOADING         = 1 << 1,
+    /// Content meta-data, including size has been loaded
     STATE_HEADER_READY    = 1 << 2,
+    /// Enough content has been loaded to render
     STATE_READY           = 1 << 3,
+    /// An error occured during loading
     STATE_ERROR           = 1 << 4
   };
 
