@@ -44,8 +44,9 @@ namespace Luminous
   class RenderContext::Internal
   {
   public:
-    enum { MAX_TEXTURES = 64, BUFFERSETS = 4 };
-
+    /// Optimal value for BUFFERSETS is actually dependent on glFinish
+    /// in RenderThread, see comment there.
+    enum { MAX_TEXTURES = 64, BUFFERSETS = 1 };
     Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win, unsigned gpuId)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_recursionDepth(0)
