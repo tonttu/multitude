@@ -64,37 +64,23 @@ namespace Radiant {
     /// @param name thread name
     void setName(const QString &name);
 
-    /** Starts the thread */
+    /// Starts the thread
     void run();
 
-    /** Waits until thread is finished. This method does nothing to
-    kill the thread, it simply waits until the thread has run its
-    course. */
+    /// Waits until thread is finished. This method does nothing to
+    /// kill the thread, it simply waits until the thread has run its
+    /// course.
     /// @param timeoutms Time to wait, in milliseconds
     /// @returns true if the thread has terminated within the timeout period
     bool waitEnd(int timeoutms = 0);
-
-    /** Kills the thread. A violent way to shut down a thread. You
-    should only call this method in emergency situations. May result
-    in application crash and other minor problems.*/
-    void kill();
 
     /// Check if the thread is running
     /// @returns true if the thread is running.
     bool isRunning() const;
 
-    /** Drive some self tests. */
-    //static void test();
-
   protected:
-    /// Exits the the calling thread.
-    void threadExit();
-
-    /// Calls childLoop.
-    void mainLoop();
-
-    /** The actual contents of the thread. You need to override this to
-    add functionality to your software. */
+    /// The actual contents of the thread. You need to override this to
+    /// add functionality to your software
     virtual void childLoop() = 0;
 
   private:

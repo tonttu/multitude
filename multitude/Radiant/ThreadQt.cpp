@@ -22,12 +22,6 @@
 
 namespace Radiant {
 
-  enum {
-    STOPPED,
-    STOPPING,
-    RUNNING
-  };
-
   bool Thread::m_threadDebug = false;
   bool Thread::m_threadWarnings = false;
 
@@ -48,7 +42,6 @@ namespace Radiant {
 
   Thread::Thread(const QString &name)
     : m_d(new D(this))
-    , m_state(STOPPED)
   {
     setName(name);
   }
@@ -81,11 +74,6 @@ namespace Radiant {
       return m_d->wait(timeoutms);
     else
       return m_d->wait();
-  }
-
-  void Thread::kill()
-  {
-    // Does nothing
   }
 
   bool Thread::isRunning() const
