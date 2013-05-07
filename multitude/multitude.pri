@@ -247,3 +247,12 @@ contains(MEMCHECK,yes) {
   DEFINES += MULTI_MEMCHECK=1
   linux:LIBS += -rdynamic
 }
+
+disable-deprecation-warnings {
+  *clang* | *g++* {
+    QMAKE_CXXFLAGS += -Wno-deprecated-declarations
+  }
+  *msvc* {
+    QMAKE_CXXFLAGS += -wd4996
+  }
+}
