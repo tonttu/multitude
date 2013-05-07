@@ -209,14 +209,10 @@ namespace Luminous
   private:
     Glyph * generateGlyph(quint32 glyphIndex, QPainterPath path);
 
-    QPainter & createPainter();
-
   private:
     FontCache::D & m_cache;
     Luminous::Image m_src;
-    /// These need to be created in the correct thread, and if all glyphs are
-    /// found in file cache, these aren't created at all
-    std::unique_ptr<QPainter> m_painter;
+    // This is the backend used by QPainter, created lazily
     std::unique_ptr<QImage> m_painterImg;
   };
 
@@ -320,8 +316,7 @@ namespace Luminous
       Radiant::Guard g(m_cache.m_cacheMutex);
       m_cache.m_cache[p.first] = glyph;
     } else {
-      // delete these in this thread
-      m_painter.reset();
+      // delete this in this thread
       m_painterImg.reset();
 
       setFinished();
@@ -330,8 +325,6 @@ namespace Luminous
 
   FontCache::Glyph * FontCache::GlyphGenerator::generateGlyph(quint32 glyphIndex, QPainterPath path)
   {
-    QPainter & painter = createPainter();
-
     if (path.isEmpty()) {
       /// @todo sometimes glyph generation seems to fail, do not ever cache empty glyphs
       /*QSettings settings(indexFileName(), QSettings::IniFormat);
@@ -373,7 +366,20 @@ namespace Luminous
       path.setElementPositionAt(i, e.x * hiresContentScale + translate.x, e.y * hiresContentScale + translate.y);
     }
 
-    QImage & img = *static_cast<QImage*>(painter.device());
+    if (!m_painterImg)
+      m_painterImg.reset(new QImage(s_maxHiresSize, s_maxHiresSize, QImage::Format_ARGB32_Premultiplied));
+
+    if (m_src.width() != s_maxHiresSize)
+      m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
+
+    QImage & img = *m_painterImg;
+    QPainter painter(&img);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QBrush(Qt::black));
+
     img.fill(Qt::transparent);
     painter.drawPath(path);
 
@@ -419,25 +425,6 @@ namespace Luminous
     }
 
     return glyph;
-  }
-
-  QPainter & FontCache::GlyphGenerator::createPainter()
-  {
-    if (m_painter)
-      return *m_painter;
-
-    m_painterImg.reset(new QImage(s_maxHiresSize, s_maxHiresSize, QImage::Format_ARGB32_Premultiplied));
-    m_painter.reset(new QPainter(m_painterImg.get()));
-
-    m_painter->setRenderHint(QPainter::Antialiasing, true);
-    m_painter->setRenderHint(QPainter::TextAntialiasing, true);
-    m_painter->setRenderHint(QPainter::HighQualityAntialiasing, true);
-    m_painter->setPen(Qt::NoPen);
-    m_painter->setBrush(QBrush(Qt::black));
-
-    m_src.allocate(s_maxHiresSize, s_maxHiresSize, Luminous::PixelFormat::alphaUByte());
-
-    return *m_painter;
   }
 
   /////////////////////////////////////////////////////////////////////////////
