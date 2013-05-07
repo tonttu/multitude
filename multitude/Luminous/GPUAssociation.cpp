@@ -72,8 +72,7 @@ namespace Luminous
         ok = false;
       }
     }
-#endif    
-    Radiant::warning("AMD_GPU_association extension: %s", ok ? "yes" : "no");
+#endif
 
     return ok;
   }
