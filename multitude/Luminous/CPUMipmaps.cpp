@@ -331,7 +331,7 @@ namespace Luminous {
 
     m_stack.resize(m_maxLevel+1);
 
-    m_priority = PRIORITY_HIGH;
+    setPriority(PRIORITY_HIGH);
     markImage(m_maxLevel);
     reschedule();
 
@@ -509,7 +509,7 @@ namespace Luminous {
   void CPUMipmaps::finish()
   {
     setState(Task::DONE);
-    m_priority = PRIORITY_LOW;
+    setPriority(PRIORITY_LOW);
     reschedule(0, 0);
   }
 
@@ -545,7 +545,7 @@ namespace Luminous {
       return;
 
     double delay = 3600.0;
-    m_priority = PRIORITY_LOW;
+    setPriority(PRIORITY_LOW);
     // sets the m_scheduled time to somewhere future, it can be decreased later
     reschedule(delay, true);
 

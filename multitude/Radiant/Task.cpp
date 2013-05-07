@@ -52,21 +52,21 @@ namespace Radiant
 
   Task::Task(Priority p)
     : m_state(WAITING),
-    m_priority(p),
-//    m_canDelete(false),
+      m_priority(p),
+      m_canceled(false),
       m_scheduled(0),
       m_host(0)
   {}
 
   void Task::runNow(bool finish)
   {
-    if (m_state == DONE || m_state == CANCELLED)
+    if (m_state == DONE || isCanceled())
       return;
 
     auto mutex = sharedMutex(this);
     Radiant::Guard g(*mutex);
 
-    if (m_state == DONE || m_state == CANCELLED)
+    if (m_state == DONE || isCanceled())
       return;
 
     if (m_host)
@@ -77,7 +77,7 @@ namespace Radiant
       m_state = RUNNING;
     }
 
-    while (m_state != DONE) {
+    while (m_state != DONE && !isCanceled()) {
       doTask();
 
       if (m_state == DONE)
@@ -93,6 +93,11 @@ namespace Radiant
 
   void Task::initialize()
   {}
+
+  void Task::canceled()
+  {
+    // Radiant::trace("Task::canceled # %s", typeid(*this).name());
+  }
 
   void Task::finished()
   {

@@ -60,8 +60,6 @@ namespace Radiant
   {
     MEMCHECKED
   public:
-      virtual ~Task();
-
     /// Standard priorities for tasks
     enum {
       PRIORITY_LOW = 1,
@@ -72,81 +70,96 @@ namespace Radiant
       PRIORITY_OFFSET_BIT_LOWER = -1
     };
 
-      /// Constructs a task with the given priority
-      Task(Priority p = PRIORITY_NORMAL);
+    /// State of the task
+    enum State
+    {
+      WAITING,      ///< Task is waiting in queue to be processed
+      RUNNING,      ///< Task is currently running
+      DONE,         ///< Task has finished
+    };
+  public:
+    /// Constructs a task with the given priority
+    Task(Priority p = PRIORITY_NORMAL);
 
-      /// State of the task
-      enum State
-      {
-        WAITING,      ///< Task is waiting in queue to be processed
-        RUNNING,      ///< Task is currently running
-        DONE,         ///< Task has finished
-        CANCELLED     ///< Task has been cancelled
-      };
+    virtual ~Task();
 
-      /// Get the current priority of the task
-      Priority priority() const { return m_priority; }
+    void setPriority( Priority priority ) { m_priority = priority; }
 
-      /// Get the current state of the task
-      State state() const { return m_state; }
+    /// Get the current priority of the task
+    Priority priority() const { return m_priority; }
 
-      /// The actual work the task does should be implemented in here. Override
-      /// in the derived class
-      virtual void doTask() = 0;
+    /// Get the current state of the task
+    State state() const { return m_state; }
 
-      /// This function gets called if the task is removed from the BGThread
-      /// without executing it.
-      virtual void cancel() { setState(CANCELLED); }
+    /// The actual work the task does should be implemented in here. Override
+    /// in the derived class
+    virtual void doTask() = 0;
 
-      /// Return a timestamp for the next execution of the task
-      Radiant::TimeStamp scheduled() const { return m_scheduled; }
-      /// Schedule the next execution time for this task
-      void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
-      /// Schedule the next execution time for this task
-      void scheduleFromNow(Radiant::TimeStamp wait)
-      { m_scheduled = Radiant::TimeStamp::currentTime() + wait; }
-      /// @copybrief scheduleFromNow
-      /// @param seconds number of seconds before next execution
-      void scheduleFromNowSecs(double seconds)
-      { m_scheduled = Radiant::TimeStamp::currentTime() +
-          Radiant::TimeStamp::createSeconds(seconds); }
+    /// Marks the task as canceled, so it will be removed.
+    void setCanceled() { m_canceled = true; }
 
-      /// Marks the task as finished, so it will be removed.
-      void setFinished() { setState(DONE); }
+    /// Returns whether a task has been canceled
+    bool isCanceled() const { return m_canceled; }
 
-      /// If the task isn't already finished, runs the task immediately in the
-      /// calling thread. If the task is running in a background thread, waits
-      /// until the task is released.
-      /// Will call initialize() and finished() -functions if necessary.
-      /// It's fine to call this function either before or after the task is
-      /// added to BGThread, but this shouldn't be called at the same time as
-      /// BGThread::addTask.
-      /// @param finish run doTask until the task is in DONE state, otherwise
-      ///               just run the task once.
-      void runNow(bool finish);
+    /// Return a timestamp for the next execution of the task
+    Radiant::TimeStamp scheduled() const { return m_scheduled; }
+    /// Schedule the next execution time for this task
+    void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
+    /// Schedule the next execution time for this task
+    void scheduleFromNow(Radiant::TimeStamp wait)
+    { m_scheduled = Radiant::TimeStamp::currentTime() + wait; }
+    /// @copybrief scheduleFromNow
+    /// @param seconds number of seconds before next execution
+    void scheduleFromNowSecs(double seconds)
+    { m_scheduled = Radiant::TimeStamp::currentTime() +
+    Radiant::TimeStamp::createSeconds(seconds); }
 
-    protected:
-       /// Initialize the task. Called by BGThread before the task is processed
-      virtual void initialize();
-      /// Finished the task. Called by BGThread after the task has been
-      /// processed
-      virtual void finished();
+    /// Marks the task as finished, so it will be removed.
+    void setFinished() { setState(DONE); }
 
-      /// Sets the task state
-      void setState(State s) { m_state = s; }
+    /// If the task isn't already finished, runs the task immediately in the
+    /// calling thread. If the task is running in a background thread, waits
+    /// until the task is released.
+    /// Will call initialize() and finished() -functions if necessary.
+    /// It's fine to call this function either before or after the task is
+    /// added to BGThread, but this shouldn't be called at the same time as
+    /// BGThread::addTask.
+    /// @param finish run doTask until the task is in DONE state, otherwise
+    ///               just run the task once.
+    void runNow(bool finish);
 
-      /// State of the task
-      State m_state;
-      /// Priority of the task
-      Priority m_priority;
+  protected:
+     /// Initialize the task. Called by BGThread before the task is processed
+    virtual void initialize();
 
-      /// When is the task scheduled to run
-      Radiant::TimeStamp m_scheduled;
+    /// Cancel the task. Called by BGThread after the task has been
+    /// canceled
+    virtual void canceled();
 
-      /// The background thread where this task is executed
-      BGThread * m_host;
+    /// Finished the task. Called by BGThread after the task has been
+    /// processed
+    virtual void finished();
 
-      friend class BGThread;
+    /// Sets the task state
+    void setState(State s) { m_state = s; }
+
+  private:
+    /// State of the task
+    State m_state;
+
+    /// Whether or not the state has been canceled
+    bool m_canceled;
+
+    /// Priority of the task
+    Priority m_priority;
+
+    /// When is the task scheduled to run
+    Radiant::TimeStamp m_scheduled;
+
+    /// The background thread where this task is executed
+    BGThread * m_host;
+
+    friend class BGThread;
   };
   /// Shared pointer to a Task
   typedef std::shared_ptr<Task> TaskPtr;

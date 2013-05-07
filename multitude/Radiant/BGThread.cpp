@@ -39,7 +39,7 @@ namespace Radiant
   void BGThread::addTask(std::shared_ptr<Task> task)
   {
     if(threads() == 0 || m_isShuttingDown) {
-      task->cancel();
+      task->setCanceled();
       return;
     }
 
@@ -67,7 +67,7 @@ namespace Radiant
       task->m_host = 0;
       m_taskQueue.erase(it);
       if (cancel)
-        task->cancel();
+        task->setCanceled();
       return true;
     }
 
@@ -85,7 +85,7 @@ namespace Radiant
         return false;
       }
       if (cancel)
-        task->cancel();
+        task->setCanceled();
       return true;
     }
 
@@ -126,7 +126,7 @@ namespace Radiant
     Radiant::Guard g(m_mutexWait);
 
     container::iterator it = findTask(task);
-    task->m_priority = p;
+    task->setPriority(p);
 
     if(it != m_taskQueue.end()) {
       // Move the task in the queue and update its priority
@@ -199,10 +199,10 @@ namespace Radiant
         task->m_state = Task::RUNNING;
       }
 
-      if(task->state() == Task::RUNNING)
+      if(task->state() == Task::RUNNING && !task->isCanceled())
         task->doTask();
 
-      bool done = (task->state() == Task::DONE || task->state() == Task::CANCELLED);
+      bool done = (task->state() == Task::DONE || task->isCanceled());
 
       // Did the task complete?
       if(done) {
@@ -316,14 +316,14 @@ namespace Radiant
 
       // Cancel all tasks
       for(auto & task : m_taskQueue)
-        task.second->cancel();
+        task.second->setCanceled();
 
 
       for(auto & task : m_reserved)
-        task->cancel();
+        task->setCanceled();
 
       for (auto & task: m_runningTasks)
-        task->cancel();
+        task->setCanceled();
 
       m_taskQueue.clear();
       m_reserved.clear();
