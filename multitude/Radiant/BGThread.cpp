@@ -196,7 +196,7 @@ namespace Radiant
 
       if(first) {
         task->initialize();
-        task->m_state = Task::RUNNING;
+        task->setState(Task::RUNNING);
       }
 
       if(task->state() == Task::RUNNING && !task->isCanceled())

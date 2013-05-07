@@ -508,9 +508,8 @@ namespace Luminous {
 
   void CPUMipmaps::finish()
   {
-    setState(Task::DONE);
     setPriority(PRIORITY_LOW);
-    reschedule(0, 0);
+    reschedule(0, false);
   }
 
   Nimble::Vector2i CPUMipmaps::mipmapSize(int level)
@@ -541,9 +540,6 @@ namespace Luminous {
 
   void CPUMipmaps::doTask()
   {
-    if(state() == Task::DONE)
-      return;
-
     double delay = 3600.0;
     setPriority(PRIORITY_LOW);
     // sets the m_scheduled time to somewhere future, it can be decreased later
