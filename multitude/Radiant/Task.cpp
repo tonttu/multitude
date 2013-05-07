@@ -80,7 +80,9 @@ namespace Radiant
     while (m_state != DONE && !isCanceled()) {
       doTask();
 
-      if (m_state == DONE)
+      if (isCanceled())
+        canceled();
+      else if (m_state == DONE)
         finished();
 
       if (!finish)

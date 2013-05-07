@@ -203,10 +203,16 @@ namespace Radiant
         task->doTask();
 
       bool done = (task->state() == Task::DONE || task->isCanceled());
+      if (done) {
+        if (task->isCanceled()) {
+          // Task is canceled: notify the task
+          task->canceled();
+        }
+        else if(task->state() == Task::DONE) {
+          // Task is completed: notify the task
+          task->finished();
+        }
 
-      // Did the task complete?
-      if(done) {
-        task->finished();
         task->m_host = 0;
       }
 
