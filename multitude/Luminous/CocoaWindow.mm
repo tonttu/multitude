@@ -48,6 +48,7 @@ m_windowDef:(const Luminous::MultiHead::Window *)windowDef;
 - (void) mouseDragged:(NSEvent *)theEvent;
 - (void) scrollWheel:(NSEvent *)theEvent;
 - (void) mouseMoved:(NSEvent *)theEvent;
+- (void) handleMouseMove:(NSEvent *)theEvent;
 
 - (void) hideCursor:(NSTimer *)theTimer;
 
@@ -422,6 +423,20 @@ return self;
 
 -(void) mouseDragged:(NSEvent *)theEvent
 {
+  [self handleMouseMove:theEvent];
+  [timer invalidate];
+  timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
+}
+
+-(void) mouseMoved:(NSEvent *)theEvent
+{
+  [self handleMouseMove:theEvent];
+  [timer invalidate];
+  timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
+}
+
+- (void) handleMouseMove:(NSEvent *)theEvent
+{
   Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
@@ -435,20 +450,18 @@ return self;
   //invert y
   float y = [self frame].size.height - location.y;
 
+  Qt::MouseButtons buttons;
+  NSUInteger eventButtons = NSEvent.pressedMouseButtons;
+  if (eventButtons & 1)
+    buttons |= Qt::LeftButton;
+  if (eventButtons & 2)
+    buttons |= Qt::RightButton;
+
   hook->handleMouseEvent(Radiant::MouseEvent
                          (QEvent::MouseMove,
                           Nimble::Vector2(x,y),
-                          (Qt::MouseButton) 0, (Qt::MouseButtons) 0,
+                          Qt::NoButton, buttons,
                           0));
-  [timer invalidate];
-  timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
-}
-
--(void) mouseMoved:(NSEvent *)theEvent
-{
- (void) theEvent;
- [timer invalidate];
- timer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(hideCursor:) userInfo:nil repeats:NO];
 }
 
 -(void) scrollWheel:(NSEvent *)theEvent
