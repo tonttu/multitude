@@ -188,6 +188,14 @@ namespace Luminous
         y += line.height() * heightFactor;
       m_boundingBox |= line.naturalTextRect();
     }
+
+    // Move negative bounding box to (0,0). This might happen if the leading
+    // of the font is negative.
+    if(m_boundingBox.left() < 0)
+      m_boundingBox.moveLeft(-m_boundingBox.left());
+    if(m_boundingBox.top() < 0)
+      m_boundingBox.moveTop(-m_boundingBox.top());
+
     m_layout.endLayout();
     if (m_layout.text().isEmpty())
       m_boundingBox = QRectF();
