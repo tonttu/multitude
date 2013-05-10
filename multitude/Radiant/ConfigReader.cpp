@@ -147,9 +147,6 @@ namespace Radiant {
     return m_var;
   }
 
-  /** Reads a number of floats from the string. Returns the number of
-      floats successfully read. */
-
   int Variant::getInts(int *p, int n)
   {
     QByteArray ba = m_var.toUtf8();
@@ -162,12 +159,10 @@ namespace Radiant {
       long tmp = strtol(str, &endStr, 10);
       
       if(endStr <= str)
-	return i;
+        return i;
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = int(tmp);
       i++;
     }
@@ -175,8 +170,6 @@ namespace Radiant {
     return i;
   }
 
-  /** Reads a number of floats from the string. Returns the number of
-      floats successfully read. */
 
   int Variant::getFloats(float *p, int n)
   {
@@ -191,21 +184,16 @@ namespace Radiant {
       double tmp = strtod(str, &endStr);
       
       if(endStr <= str)
-	return i;
+        return i;
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = float(tmp);
       i++;
     }
     
     return i;
   }
-
-  /** Reads a number of doubles from the string. Returns the number of
-      doubles successfully read. */
 
   int Variant::getDoubles(double *p, int n)
   {
@@ -226,8 +214,6 @@ namespace Radiant {
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = tmp;
       i++;
     }

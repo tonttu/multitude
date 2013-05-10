@@ -50,7 +50,9 @@ namespace Radiant {
 	class RADIANT_API Condition : public Patterns::NotCopyable
 	{
 	public:
+    /// Constructor
 		Condition();
+    /// Destructor
 		~Condition();
 
     /// Waits on the wait condition for at most the given time. The mutex must
@@ -72,12 +74,15 @@ namespace Radiant {
 
     /// Wakes all threads waiting on the condition
     void wakeAll();
-    /// Wakes all threads waiting on the condition
+    /// Wakes all threads waiting on the condition, while locking the given mutx
+    /// @param mutex Mutex to lock
     void wakeAll(Mutex &mutex);
 
     /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
     void wakeOne();
     /// Wakes one thread waiting on the condition (the woken thread can not be controlled or predicted)
+    /// while locking the given mutex
+    /// @param mutex Mutex to lock
     void wakeOne(Mutex &mutex);
 
 	private:

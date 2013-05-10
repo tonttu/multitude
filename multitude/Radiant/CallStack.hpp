@@ -32,21 +32,26 @@ namespace Radiant
   class CallStack
   {
   public:
-
+    /// Constructor
     RADIANT_API CallStack();
+    /// Destructor
     RADIANT_API ~CallStack();
 
-    /// @returns the raw callstack
+    /// Returns the pointer to the raw callstack.
+    /// @return Pointer to raw callstack
     const stackptr_t * stack() const { return m_frames; }
 
+    /// Get given frame from the callstack.
     /// @param index The requested element in the callstack
-    /// @returns the requested element in the callstack
+    /// @return the requested element in the callstack
     stackptr_t operator[](size_t index) const { assert(index < m_frameCount); return m_frames[index]; }
 
-    /// @returns the number of frames in the callstack
+    /// Get the size of the callstacks
+    /// @return the number of frames in the callstack
     size_t size() const { return m_frameCount; }
 
     /// Returns a human-readable version of the stack
+    /// @return List of frames' textual representation
     RADIANT_API QStringList toStringList() const;
 
     /// Prints a human-readable version of the stack to the log

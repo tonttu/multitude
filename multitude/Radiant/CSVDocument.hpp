@@ -36,15 +36,18 @@ namespace Radiant {
     /// A list of rows
     typedef std::list<Row> Rows;
 
+    /// Constructor
     CSVDocument();
+    /// Destructor
     ~CSVDocument();
 
     /** Load a file, and return the number of lines read. The file is assumed to be in the
         UTF-8 format.
         @param filename filename to read
         @param delimiter column delimiter
+        @param removeQuotations Are the quotations around the value removed
         @return number of rows read */
-    int load(const QString & filename, const char * delimiter = ",", bool removeQuations = true);
+    int load(const QString & filename, const char * delimiter = ",", bool removeQuotations = true);
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
         matches the argument key.
@@ -58,15 +61,23 @@ namespace Radiant {
     */
     Row * findRow(const QString & key, unsigned col);
 
+    /// Finds column on a given row
+    /// @param key Valy of ccell to be searched
+    /// @param rowIndex Row to search
+    /// @return Number of column where the item was, -1 if not found.
     int findColumnOnRow(const QString & key, unsigned rowIndex);
 
     /// Returns an iterator to the first row in the document
+    /// @return STL-like iterator to the beginning of the rows
     Rows::iterator begin() { return m_rows.begin(); }
     /// Returns an iterator to the first row in the document
+    /// @return STL-like iterator to the beginning of the rows
     Rows::const_iterator begin() const { return m_rows.begin(); }
     /// Returns an iterator after the last row of the document
+    /// @return STL-like iterator to the end of the rows
     Rows::iterator end() { return m_rows.end(); }
     /// Returns an iterator after the last row of the document
+    /// @return STL-like iterator to the end of the rows
     Rows::const_iterator end() const { return m_rows.end(); }
 
     /// Returns the number of rows in the document

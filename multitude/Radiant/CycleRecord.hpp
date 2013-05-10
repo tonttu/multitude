@@ -56,16 +56,22 @@ namespace Radiant {
   class RADIANT_API CycleRecord
   {
   public:
-    /** @param n The number of bins. */
+    /// Constructor
+    /// @param n The number of bins.
     CycleRecord(unsigned n = 50);
 
     /// The number of bins
+    /// @return Number of bins
     size_t size() const;
+
     /// Reset the records to zero
     void reset();
+
     /// Update the tick counter, without putting the value to any bucket
     void getTicks();
+
     /// Calculate the number of new ticks, and put the value to the given bucket
+    /// @param forWich Bin to modify
     void getNewTime(unsigned forWhich);
 
     /// Normalize the accumulation buffers, so that one can print the report

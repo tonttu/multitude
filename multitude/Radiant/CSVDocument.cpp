@@ -26,7 +26,7 @@ namespace Radiant {
   {
   }
 
-  int CSVDocument::load(const QString &filename, const char * delimiter, bool removeQuations)
+  int CSVDocument::load(const QString &filename, const char * delimiter, bool removeQuotations)
   {
     m_rows.clear();
 
@@ -43,7 +43,7 @@ namespace Radiant {
       Row r;
       foreach(QString str, line.split(delim2)) {
 
-        if(removeQuations && str.size() >= 2) {
+        if(removeQuotations && str.size() >= 2) {
           if(str[0] == '\"')
             str.remove(0, 1);
           if(str[str.size()-1] == '\"')
@@ -80,8 +80,6 @@ namespace Radiant {
       return -1;
 
     for(size_t i = 0; i < r->size(); i++) {
-
-      // Radiant::info("CSVDocument::findColumnOnRow (%s)", r->at(i).toUtf8().data());
 
       if(r->at(i) == key)
         return i;
