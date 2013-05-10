@@ -373,10 +373,6 @@ namespace Radiant {
       DateTime dt;
       bool dtok = dt.fromString(source);
 
-      /*
-      info("BinaryData::readTimeStamp # %s %d (%d %d %d)",
-           source, (int) dtok, (int) dt.year(), dt.month(), dt.monthDay());
-*/
       if(!dtok && ok)
         *ok = false;
       else
@@ -755,8 +751,6 @@ namespace Radiant {
     int32_t s = pos();
     if(stream.write(&s, 4) != 4)
       return false;
-
-    // info("BinaryData::write # %d", pos());
 
     return stream.write( & m_buf[0], s) == s;
   }

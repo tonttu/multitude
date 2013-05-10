@@ -96,6 +96,7 @@ namespace Radiant
     typedef std::pair<Priority, TaskPtr > contained;
 
     /// Returns the number of tasks in the BGThread.
+    /// @return Number of tasks.
     unsigned taskCount();
 
     /// Get the number of tasks right now in doTask().
@@ -110,6 +111,8 @@ namespace Radiant
     unsigned int overdueTasks() const;
 
     /// Dump information about the tasks at hand
+    /// @param f File handle for printing. If null this will print to stdout
+    /// @param indent Default intendation level, used internally in recursive calls
     void dumpInfo(FILE * f = 0, int indent = 0);
 
     /// Prepare the BGThread for shutdown. This function will cancel all
