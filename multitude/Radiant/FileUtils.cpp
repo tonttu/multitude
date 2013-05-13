@@ -140,14 +140,13 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-    FileWriter writer;
     uint32_t len = uint32_t(strlen(contents));
 
     QString tmpname = QString(filename)+".cornerstone_tmp";
     QFile tmp(tmpname), file(filename);
     if(tmp.open(QIODevice::WriteOnly)) {
       if(tmp.write(contents, len) != len) {
-        /// @todo does this check actually fail on windows, when doing some line change conversions?
+        /// @todo see #4259
         //return false;
       }
       tmp.close();
@@ -159,7 +158,7 @@ namespace Radiant
                        tmpname.toUtf8().data(), tmp.errorString().toUtf8().data());
       if(file.open(QIODevice::WriteOnly)) {
         if(file.write(contents, len) != len) {
-          /// @todo does this check actually fail on windows, when doing some line change conversions?
+          /// @todo see #4259
           //Radiant::error("FileUtils::writeTextFile # Failed to write to %s", filename);
           //return false;
         }

@@ -165,9 +165,11 @@ namespace Radiant
     static void indent(FILE * f, int levels);
 
 		/// Returns the path separator for the current platform
+    /// @return Path separator for the current platform
     static QString pathSeparator();
 
 		/// Returns the directory separator for the current platform
+    /// @return Directory separator for the current platform
     static QString directorySeparator();
   };
 }

@@ -20,14 +20,18 @@ namespace Radiant
   class FutureBoolI
   {
   public:
+    /// Destructor
     virtual ~FutureBoolI() {}
     /// Are all Radiant::Tasks finished that are associated with this object
     /// If the job we are waiting for doesn't use tasks, return true
+    /// @return True if the value is ready to be evaluated by calling @ref validate
     virtual bool isReady() const = 0;
     /// Return next task that need to be executed to get the job done
+    /// @return Next task needed for evaluating this future boolean
     virtual Radiant::TaskPtr task() const = 0;
     /// Once all tasks are ready, this returns the actual boolean value we want.
     /// This is only called once and might block.
+    /// @return Value wrapped by this object
     virtual bool validate() = 0;
   };
   typedef std::unique_ptr<FutureBoolI> FutureBoolIPtr;

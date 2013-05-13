@@ -24,6 +24,8 @@ namespace Radiant
   /// @endcond
 
   /// This class implements type-safe flags.
+  /// @tparam T Type of the flag type (enum)
+  /// @tparam S Internal type for storing the flags
   template <typename T, typename S = typename IntOfSize<sizeof(T)>::Type>
   class FlagsT
   {

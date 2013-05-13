@@ -128,7 +128,6 @@ namespace Radiant {
 
       if(status == FT_OK) {
         devices.push_back(buffer);
-        // info("FT2xxStream::listDevices # %d: [%s]", (int) i, buffer);
       }
       else {
         error("FT2xxStream::listDevices # Failed to get serial number for %d", (int) i);
