@@ -44,6 +44,7 @@ namespace Radiant
              Qt::KeyboardModifiers modifiers = Qt::NoModifier, const QString & text = "",
              bool autoRepeat = false);
 
+    /// Destructor
     virtual ~KeyEvent();
 
     /// Key code of the event (from Qt::Key)
@@ -67,6 +68,7 @@ namespace Radiant
     QEvent::Type type() const;
 
     /// Returns the unicode text representation of the key event
+    /// @return Unicode represenation of the key event
     QString text() const;
 
     /// Creates a key press KeyEvent object with the specified key code
@@ -114,6 +116,7 @@ namespace Radiant
     /// @return reference to this
     MouseEvent & operator=(const MouseEvent & ev);
 
+    /// Destructor
     virtual ~MouseEvent();
 
     /// @cond

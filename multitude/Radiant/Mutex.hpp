@@ -30,6 +30,7 @@ namespace Radiant {
     /// Construct a mutex
     /// @param recursive if true, create a recursive mutex
     Mutex(bool recursive = false);
+    /// Destructor
     ~Mutex();
 
     /// Lock the mutex    
@@ -82,9 +83,11 @@ namespace Radiant {
   class RADIANT_API Guard : public Patterns::NotCopyable
   {
   public:
-    /// Construct guard
+    /// Construct guard.
+    /// Locks the given mutex.
     /// @param mutex mutex to guard
     Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
+    /// Destructor, unlocks the associated mutex.
     ~Guard() { m_mutex.unlock(); }
 
   private:
@@ -131,7 +134,7 @@ namespace Radiant {
   class ReleaseGuard : public Patterns::NotCopyable
   {
   public:
-    /// Constructs a new guard
+    /// Constructs a new guard. Does not lock the given mutex.
     explicit ReleaseGuard(Mutex & mutex) : m_mutex(mutex) {}
     /// Unlocks the mutex
     ~ReleaseGuard() { m_mutex.unlock(); }

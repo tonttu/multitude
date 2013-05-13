@@ -65,8 +65,6 @@ namespace Radiant {
                     dt.hour(), dt.minute(), dt.second(), dt.milliSecond());
 
             fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.toUtf8().data());
-
-            // info("LOG: %s", m_buf);
           }
         }
 
@@ -93,7 +91,6 @@ namespace Radiant {
     char m_buf[4096];
   };
 
-  // int kjh = 23;
   static LogThread * __logthread = 0;
 
   static void makeThread()
@@ -125,17 +122,6 @@ namespace Radiant {
     sprintf(buf, "%s-%s-log.txt", prefix, buf2);
     return setLogFile(buf);
   }
-
-  /*
-  void Log::log(const char * str)
-  {
-    assert(str != 0);
-
-    makeThread();
-
-    __logthread->add(str);
-  }
-  */
 
   void Log::log(const char * msg, ...)
   {

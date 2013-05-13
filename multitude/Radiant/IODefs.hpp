@@ -11,9 +11,6 @@
 #ifndef RADIANT_IODEFS_HPP
 #define RADIANT_IODEFS_HPP
 
-// @todo move to Resonant (if needed) -> VideoInput uses some of these, so moving to Resonant
-// is not really practical or desireable.
-
 namespace Radiant {
 
   /** Input/output modes. */

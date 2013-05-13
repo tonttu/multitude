@@ -22,7 +22,6 @@ namespace Radiant {
       different image formats.
 
       New format conversion functions will be written as needed. */
-
   class RADIANT_API ImageConversion
   {
   public:

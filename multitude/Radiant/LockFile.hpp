@@ -20,16 +20,16 @@ namespace Radiant
   class RADIANT_API LockFile
   {
   public:
-    /** Tries to acquire an exclusive lock on the given file.
-        No other operations should be done on this file
-        If the file doesn't exist it is created.
-    */
+    /// Tries to acquire an exclusive lock on the given file.
+    /// No other operations should be done on this file
+    /// If the file doesn't exist it is created.
     /// @param filename Filename of lockfile
     LockFile(const char * filename);
 
     /// Releases the lock
     ~LockFile();
 
+    /// Check if the file is locked
     /// @returns true if the file was succesfully locked for exclusive use
     bool isLocked() const;
 
