@@ -76,7 +76,6 @@ namespace Nimble {
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {
-      // nVidia SDK implementation
       Vector3T<Y> qvec(x, y, z);
       Vector3T<Y> uv = cross(qvec, v);
       Vector3T<Y> uuv = cross(qvec, uv);
@@ -221,57 +220,7 @@ namespace Nimble {
       m.setRotation(*this);
       return m;
     }
-/*
-    Matrix33 Rmatrix() const {
-      Matrix33 ret;
-      T leninv = lensq();
-      if(leninv==0)
-        return(Matrix33(0));
-      else
-        leninv=(T)1.0/(T)sqrt(leninv);
 
-      T s2 = s*s, x2 = x*x, y2 = y*y, z2 = z*z;
-      ret.C[0]=(s2+x2-y2-z2);
-      ret.C[4]=(s2-x2+y2-z2);
-      ret.C[8]=(s2-x2-y2+z2);
-
-      T sx = s*x, yz = y*z;
-      ret.C[1*3+2]=2*(yz+sx);
-      ret.C[2*3+1]=2*(yz-sx);
-      T sy = s*y, zx = z*x;
-      ret.C[0*3+2]=2*(zx-sy);
-      ret.C[2*3+0]=2*(zx+sy);
-      T sz = s*z, xy = x*y;
-      ret.C[0*3+1]=2*(xy+sz);
-      ret.C[1*3+0]=2*(xy-sz);
-      return(ret);
-    }
-
-    void fillAffine33(Affine33 &aff) const {
-      T leninv = lensq();
-      if(leninv==0)
-        return;
-      else
-        leninv=(T)1.0/(T)sqrt(leninv);
-
-      T s2 = s*s, x2 = x*x, y2 = y*y, z2 = z*z;
-      aff.C[0] =leninv*(s2+x2-y2-z2);
-      aff.C[5] =leninv*(s2-x2+y2-z2);
-      aff.C[10]=leninv*(s2-x2-y2+z2);
-
-      leninv += leninv;
-
-      T sx = s*x, yz = y*z;
-      aff.C[1*4+2]=leninv*(yz+sx);
-      aff.C[2*4+1]=leninv*(yz-sx);
-      T sy = s*y, zx = z*x;
-      aff.C[0*4+2]=leninv*(zx-sy);
-      aff.C[2*4+0]=leninv*(zx+sy);
-      T sz = s*z, xy = x*y;
-      aff.C[0*4+1]=leninv*(xy+sz);
-      aff.C[1*4+0]=leninv*(xy-sz);
-    }
-*/
     /// Performs slerp interpolation between two quaternions
     static QuaternionT slerp(const QuaternionT & q1, QuaternionT q2, T t)
     {

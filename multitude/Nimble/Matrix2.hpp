@@ -41,7 +41,7 @@ namespace Nimble {
                  const Vector2T<K> & r2)
     { m[0] = r1; m[1] = r2; }
     /// Empty destructor
-    /** This method is defined because otherwise so compilers might
+    /** This method is defined because otherwise some compilers might
       complain. We expect that a decent compiler knows how to
       eliminate this function. */
     ~Matrix2T() {}
@@ -110,14 +110,6 @@ namespace Nimble {
     static Matrix2T makeRotation(T r) { T c = std::cos(r); T s = std::sin(r); return Matrix2T(c, -s, s, c); }
     /// Returns a scaling matrix
     static Matrix2T makeScale(T s)  { return Matrix2T<T>(s, 0, 0, s); }
-
-    /** Identity matrix. */
-    //static Matrix2T IDENTITY(1, 0, 0, 1);
-    //static Matrix2T identity()
-    //{
-    //	static Matrix2T i(1, 0, 0, 1);
-    //	return i;
-    //}
 
     static const Matrix2T<T> IDENTITY;
 

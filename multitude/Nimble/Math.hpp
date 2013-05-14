@@ -34,7 +34,6 @@ namespace Nimble {
       basic functions. **/
   namespace Math
   {
-    // Constants:
     /// Pi
     const double PI         = 3.1415926535897931;
     /// Pi times two
@@ -48,8 +47,6 @@ namespace Nimble {
     const double SQRT2      = 1.41421356237309514547;
     /// Square root of two divided by two
     const double SQRT2_PER2 = 0.70710678118654757273;
-
-    // float & double inlines:
 
     /// Returns the inverse square root
     inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
@@ -102,8 +99,6 @@ namespace Nimble {
     /// Return sign.
     template <class T>
     inline int Sign(T v) { return ((v < T(0)) ? -1 : ((v == T(0)) ? 0 : 1)); }
-
-    // Min & Max inlines:
 
     /// Returns the maximum of the values
     template <class T>
@@ -269,7 +264,6 @@ namespace Nimble {
 
     /// Interpolate smoothly between two values based on third (Texturing and
     /// Modeling, Third Edition: A Procedural Approach, by Ken Perlin)
-
     template<class T>
     T smoothstep(const T & a, const T & b, float t)
     {
@@ -278,10 +272,7 @@ namespace Nimble {
       return t * t * t * (t * (t * T(6) - T(15)) + T(10));
     }
 
-
-
     /// Calculates the mean and variance of a buffer of values
-
     template <class T>
         inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
     {
@@ -313,7 +304,6 @@ namespace Nimble {
 
       return sum;
     }
-
 
     /// Calculate the two principal axes in 2d data
     /// Length of the axes are the corresponding eigenvalues

@@ -65,11 +65,6 @@ namespace Nimble {
     /// Sets the ith column vector
     void               setColumn(int i, const Vector4T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = v[3]; }
 
-    //void               setColumn3(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = 1.0; }
-    //void               setColumn3b(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; }
-    //void               addToColumn(int i, const Vector4T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; m[3][i] += v[3]; }
-    //void               addToColumn(int i, const Vector3T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; }
-
     /// Sets the diagonal to given vector
     void               setDiagonal(const Vector4T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] += v[3]; }
     /// void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
@@ -239,8 +234,6 @@ namespace Nimble {
                                      0, 0, 0, 0,
                                      0, 0, -1, 0);
 
-      // could just change the projection plane in projection matrix,
-      // but maybe this is a bit more clear
       Matrix4T<T> camera = makeTranslation(Vector3T<T>(0, 0, -dist));
 
       Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,

@@ -32,7 +32,7 @@ namespace Nimble
     Nimble::Vector2f c0 = m.project(Vector2f(0.5f * size.width(), 0.f));
     Nimble::Vector2f c1 = m.project(Vector2f(0.f, 0.5f * size.height()));
 
-    // Compute the axii and extents
+    // Compute the axes and extents
     m_axis0 = c0 - m_origin;
     m_axis1 = c1 - m_origin;
 
@@ -130,7 +130,7 @@ namespace Nimble
     // Average the centers
     box.m_origin = 0.5f * (a.center() + b.center());
 
-    // Average the box axii (and negate if necessary)
+    // Average the box axes (and negate if necessary)
     if(dot(a.m_axis0, b.m_axis0) >= 0.f) {
       box.m_axis0 = 0.5f * (a.m_axis0 + b.m_axis0);
       box.m_axis0.normalize();
@@ -146,7 +146,7 @@ namespace Nimble
     std::array<Nimble::Vector2f, 4> vertex;
     Nimble::Vector2f min(0, 0);
     Nimble::Vector2f max(0, 0);
-    const Nimble::Vector2f axii[] =  { box.m_axis0, box.m_axis1 };
+    const Nimble::Vector2f axes[] =  { box.m_axis0, box.m_axis1 };
 
     a.computeCorners(vertex);
 
@@ -156,7 +156,7 @@ namespace Nimble
 
       for(int j = 0; j < 2; j++) {
 
-        float dotp = dot(diff, axii[j]);
+        float dotp = dot(diff, axes[j]);
 
         if(dotp > max[j])
           max[j] = dotp;
@@ -173,7 +173,7 @@ namespace Nimble
 
       for(int j = 0; j < 2; j++) {
 
-        float dotp = dot(diff, axii[j]);
+        float dotp = dot(diff, axes[j]);
 
         if(dotp > max[j])
           max[j] = dotp;
@@ -191,11 +191,6 @@ namespace Nimble
 
     return box;
   }
-
-//  void dumpRectangle(const Rectangle & r)
-//  {
-//    Radiant::info("Rectangle o(%f,%f) a0(%f,%f) e0(%f) a1(%f,%f) e1(%f)", r.center().x, r.center().y, r.axis0().x, r.axis0().y, r.extent0(), r.axis1().x, r.axis1().y, r.extent1());
-//  }
 
   void Rectangle::transform(const Nimble::Matrix3 &m)
   {

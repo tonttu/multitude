@@ -195,9 +195,6 @@ namespace Nimble {
     /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }
 
-    /* Q: odo add static members inside Nimble::Math ?
-       A: There is no need to duplicate random numbers there.
-      */
   private:
     std::mt19937 m_rand;
     std::uniform_int_distribution<uint32_t> m_dist;

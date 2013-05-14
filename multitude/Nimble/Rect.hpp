@@ -33,7 +33,7 @@ namespace Nimble {
 
   /// @todo rename to AARect/RectAA
   template <typename T>
-      class RectT
+  class RectT
   {
   public:
     inline RectT()
@@ -126,8 +126,6 @@ namespace Nimble {
     inline void set(const Vector2T<T> &point)
     { m_low = m_high = point; }
 
-    /*void set(const Vector2T<T> &point, T radius)
-    { m_low = point - radius; m_high = point + radius; }*/
     /// Sets the low corner
     inline void setLow(const Vector2T<T> &low) { m_low = low; }
     /// Sets the high corner
@@ -496,7 +494,7 @@ namespace Nimble {
   /// Rectangle of doubles
   typedef RectT<double> Rectd;
 
-  /// Write a vector into a stream
+  /// Write a rect into a stream
   template <class T>
       inline std::ostream &operator<<(std::ostream &os, const Nimble::RectT<T> &t)
   {
@@ -504,7 +502,7 @@ namespace Nimble {
     return os;
   }
 
-  /// Read a vector from a stream
+  /// Read a rect from a stream
   template <class T>
       inline std::istream &operator>>(std::istream &is, Nimble::RectT<T> &t)
   {

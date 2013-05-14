@@ -313,11 +313,6 @@ namespace Nimble {
     for(i = 0; i < 4; i++) {
       tnorm[i] = backToNorm.project(targets[i]);
       rnorm[i] = backToNorm.project(real[i]);
-      /*
-      printf("KeyStone::calibrateOutput # target = [%f %f] vs "
-             "real = [%f %f]\n",
-       tnorm[i].x, tnorm[i].y, rnorm[i].x, rnorm[i].y);
-      */
     }
 
     // Reverse engineer the center location:
@@ -378,20 +373,10 @@ namespace Nimble {
     float ksw = (tr.x - tl.x + br.x - bl.x) * 0.5f;
     float ksh = (bl.y - tl.y + br.y - tr.y) * 0.5f;
 
-    /*
-    std::cout << tl << " # " << tr << " # " << bl << " # " << br << std::endl;
-
-    printf("tl = [%.1f %.1f] ksw = %f, ksh = %f\n", tl.x, tl.y, ksw, ksh);
-    */
     Vector4 scaledExtra(m_extra[0] / ksw, m_extra[1] / ksw,
                         m_extra[2] / ksh, m_extra[3] / ksh);
 
     updateLimits(m_extraLimits, & scaledExtra);
-    /* m_extraLimits.resize(m_height);
-    for(unsigned i = 0; i < m_height; i++) {
-      m_extraLimits[i] = Nimble::Vector2(0, m_width);
-    }
-    */
   }
 
 
@@ -438,16 +423,6 @@ namespace Nimble {
         else if(test.x == b2.high().x)
           bounds.high().x += (*offsets)[i];
       }
-
-      /*
-      printf("KeyStone::updateLimits # offsets: %f %f %f %f\n",
-             (*offsets)[0], (*offsets)[1], (*offsets)[2], (*offsets)[3]);
-      */
-      /* bounds.low().x -= (*offsets)[0];
-      bounds.low().y -= (*offsets)[2];
-      bounds.high().x += (*offsets)[1];
-      bounds.high().y += (*offsets)[3];
-      */
     }
 
     int count = 0;
@@ -486,10 +461,6 @@ namespace Nimble {
         last = m_width - 1;
 
       int wid = last - first;
-      /* Nimble::Vector2f v = project(Vector2(640, y));
-      printf("Projection limits[%d] = %d - %d (%d %.3f %.3f)\n", y,
-             first, last, wid, v.x, v.y);
-      */
       limits[y].make(first, wid);
     }
 

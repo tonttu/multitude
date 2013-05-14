@@ -75,7 +75,7 @@ namespace Nimble {
     /// Transposes the matrix
     inline void               transpose();
     /// Returns a transposed matrix
-    inline Matrix3T transposed() const; // { Matrix3T m(*this); m.transpose(); return m; }
+    inline Matrix3T transposed() const;
     /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
     /// Makes the matrix an identity matrix
@@ -98,9 +98,6 @@ namespace Nimble {
     inline bool               operator==(const Matrix3T<T>& that) const;
     /// Compares if two matrices are different
     inline bool               operator!=(const Matrix3T<T>& that) const;
-
-    /// Run internal test function.*/
-    inline static void        test();
 
     /// Returns the number of rows in the matrix
     /// This function can be used when you build template-based functions.
@@ -254,77 +251,6 @@ namespace Nimble {
     1, 0, 0,
     0, 1, 0,
     0, 0, 1);
-
-  template <class T>
-  inline void Matrix3T<T>::test()
-  {
-    Matrix3T<T> a;
-    int i,j;
-    /* STORING & INDEXING ELEMENTS */
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[i][j] == 3*i+j);
-
-    /* CLEAR */
-    a.clear();
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[i][j] == 0);
-
-    /* ROW & COLUMN OPERATORS */
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    {
-      assert(a.row(i)[j] == 3*i+j);
-      assert(a.column(j)[i] == 3*i+j);
-    }
-    /* TRANSPOSE */
-    a.transpose();
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[j][i] == 3*i+j);
-
-    /* IDENTITY */
-    a.identity();
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    {
-      if( i == j ) assert(a[i][j] == 1);
-      else assert(a[i][j] == 0);
-    }
-
-    /* COPY OPERATOR, CONSTRUCTOR AND EQUALITY OPERATOR */
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    Matrix3T<T> b(a);
-    assert(a == b);
-    assert(!(a != b));
-
-    /* MATRIX MULTIPLICATION */
-
-    Matrix3T<T> c;
-    c.identity();
-    b *= c;
-    assert(a == b);
-
-    c.clear();
-    b *= c;
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(b[i][j] == 0);
-  }
 
   /// 3x3 matrix of floats
   typedef Matrix3T<float> Matrix3;
@@ -519,32 +445,31 @@ namespace Nimble {
     //       -cx*cz*sy+sx*sz  cz*sx+cx*sy*sz  cx*cy
 
     if ( m[0][2] < 1.0f )
-      {
-    if ( m[0][2] > -1.0f )
+    {
+      if ( m[0][2] > -1.0f )
       {
         xa = std::atan2(-m[1][2],m[2][2]);
         ya = (T)asin(m[0][2]);
         za = std::atan2(-m[0][1],m[0][0]);
         return true;
       }
-        else
+      else
       {
-            // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
-            xa = -std::atan2(m[1][0],m[1][1]);
-            ya = -(T)Math::HALF_PI;
-            za = 0.0f;
-            return false;
+        // Not unique.  XA - ZA = -atan2(r10,r11)
+        xa = -std::atan2(m[1][0],m[1][1]);
+        ya = -(T)Math::HALF_PI;
+        za = 0.0f;
+        return false;
       }
-      }
+    }
     else
-      {
-    // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
-    xa = std::atan2(m[1][0],m[1][1]);
-    ya = (T)Math::HALF_PI;
-    za = 0.0f;
-    return false;
-      }
-
+    {
+      // Not unique.  XAngle + ZAngle = atan2(r10,r11)
+      xa = std::atan2(m[1][0],m[1][1]);
+      ya = (T)Math::HALF_PI;
+      za = 0.0f;
+      return false;
+    }
   }
 
   /// Assign multiplication
@@ -638,7 +563,7 @@ namespace Nimble {
     return res;
   }
 
-  /// Multiply two matrices together
+/// Multiply two matrices together
 template <class T>
 inline Nimble::Matrix3T<T> operator * (const Nimble::Matrix3T<T>& m1,
                      const Nimble::Matrix3T<T>& m2)
@@ -665,17 +590,6 @@ inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<K>& m1,
     res[i] = dot(m1.row(i),m2);
   return res;
 }
-
-///// Multiply a matrix with a vector by implicitly adding one as the third component of the vector
-//template <class T>
-//inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
-//                   const Nimble::Vector2T<T>& m2)
-//{
-//  Nimble::Vector3T<T> res;
-//  for(int i = 0; i < 3; i++)
-//    res[i] = dot(m1.row(i), Nimble::Vector3T<T>(m2.x, m2.y, T(1)));
-//  return res;
-//}
 
 /// Insert a 2x2 matrix to the upper-left corner of the 3x3 matrix
 /// @param b matrix to insert

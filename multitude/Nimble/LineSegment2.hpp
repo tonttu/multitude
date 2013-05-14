@@ -105,44 +105,6 @@ template <typename T>
     inline bool intersectsInfinite(const LineSegment2T & that,
                                    Vector2T<T> * point) const
     {
-      /*
-      Vector2T<T> v1 = begin();
-      Vector2T<T> v2 = v1 + directionNormalized();
-
-      Vector2T<T> v3 = that.begin();
-      Vector2T<T> v4 = v3 + that.directionNormalized();
-
-      float x1 = v1.x;
-      float y1 = v1.y;
-      float x2 = v2.x;
-      float y2 = v2.y;
-
-      float x3 = v3.x;
-      float y3 = v3.y;
-      float x4 = v4.x;
-      float y4 = v4.y;
-
-      float bx = x2 - x1;
-      float by = y2 - y1;
-      float dx = x4 - x3;
-      float dy = y4 - y3;
-      float b_dot_d_perp = bx*dy - by*dx;
-
-      if(b_dot_d_perp == 0) {
-
-        if(point)
-          point->clear();
-        return false;
-      }
-      float cx = x3-x1;
-      float cy = y3-y1;
-      float t = (cx*dy - cy*dx) / b_dot_d_perp;
-
-      if(point)
-        point->make(x1+t*bx, y1+t*by);
-      return true;
-      */
-
       float a1 = this->end().y - this->begin().y;
       float b1 = this->begin().x - this->end().x;
       float c1 = this->end().x * this->begin().y - this->begin().x * this->end().y;

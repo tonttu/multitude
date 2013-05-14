@@ -377,7 +377,7 @@ namespace Nimble {
     return SizeT<S>(S(m_width), S(m_height));
   }
 
-  /// Write a vector into a stream
+  /// Write a size into a stream
   template <class T>
   inline std::ostream &operator<<(std::ostream &os, const Nimble::SizeT<T> &t)
   {
@@ -385,7 +385,7 @@ namespace Nimble {
     return os;
   }
 
-  /// Read a vector from a stream
+  /// Read a size from a stream
   template <class T>
   inline std::istream &operator>>(std::istream &is, Nimble::SizeT<T> &t)
   {

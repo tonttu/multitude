@@ -134,9 +134,6 @@ namespace Nimble {
     /// Sum of all components
     inline T             sum() const { return x + y + z; }
 
-    // reference versions of vector2() were removed because they enabled
-    // really arcane code
-
     /// Returns a copy of the first two components as a Vector2
     /// @return New vector2
     inline Vector2T<T> vector2() const { return Vector2T<T>(x, y); }
