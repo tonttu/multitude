@@ -157,7 +157,6 @@ namespace Radiant
 
     while(pos < bytes) {
       SocketWrapper::clearErr();
-      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
       int tmp;
@@ -284,6 +283,16 @@ namespace Radiant
   unsigned long TCPSocket::txBytes() const
   {
     return m_d->m_txBytes;
+  }
+
+  const QString& TCPSocket::host() const
+  {
+    return m_d->m_host;
+  }
+
+  int TCPSocket::port() const
+  {
+    return m_d->m_port;
   }
 }
 

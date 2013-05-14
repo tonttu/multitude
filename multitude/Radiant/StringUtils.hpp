@@ -22,16 +22,17 @@
 namespace Radiant
 {
   /// StringUtils is a collection of string manipulation functions.
-
   namespace StringUtils
   {
 
     /// Remove non-visible characters from QString.
+    /// @param s String to process
     RADIANT_API void eraseNonVisibles(QString & s);
 
     /// Converts to string
     /// @param x Value to convert
     /// @returns Value as a string
+    /// @tparam T Type of the value to convert
     template<class T>
     inline QString toString(const T & x)
     {
@@ -56,7 +57,10 @@ namespace Radiant
     }
     /// @endcond
 
-    /// Convert string to T
+    /// Convert string to type T
+    /// @param str String to convert
+    /// @return Value converted from string
+    /// @tparam T Type of value returned
     template <typename T>
     inline typename std::enable_if<!std::is_enum<T>::value, T>::type fromString(const QByteArray & str)
     {
@@ -66,6 +70,10 @@ namespace Radiant
       return t;
     }
 
+    /// Convert string to type T
+    /// @param str String to convert
+    /// @return Value converted from string
+    /// @tparam T Type of value returned
     template <typename T>
     inline typename std::enable_if<std::is_enum<T>::value, T>::type fromString(const QByteArray & str)
     {

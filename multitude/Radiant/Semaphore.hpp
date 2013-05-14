@@ -23,6 +23,7 @@ namespace Radiant {
     /// Initialize the semaphore to guard n resources
     /// @param n number of resources to guard (default 0)
     Semaphore(int n = 0);
+    /// Destructor
     ~Semaphore();
 
     /// Try to acquire resources. This will block until available() >= n.

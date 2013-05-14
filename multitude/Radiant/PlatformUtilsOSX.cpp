@@ -50,14 +50,6 @@ namespace Radiant
 
       return buf;
     }
-#else
-  /*
-    QString getExecutablePath()
-    {
-      NSSstring * str = NSHomeDirectory();
-      return QString(NSStringGetFileSystemRepresentation(str));
-    }
-    */
 #endif
 
     /// Returns the current process identifier
@@ -90,7 +82,6 @@ namespace Radiant
 
     uint64_t processMemoryUsage()
     {
-      // task_t task = MACH_PORT_NULL;
       struct task_basic_info t_info;
       mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
 
@@ -100,7 +91,6 @@ namespace Radiant
         return -1;
       }
       return t_info.resident_size;
-      // t_info.virtual_size;
 
     }
 

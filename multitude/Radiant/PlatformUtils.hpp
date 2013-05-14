@@ -19,29 +19,34 @@
 namespace Radiant
 {
   /** Small utility functions to help handle platform-specific functions. */
-
   namespace PlatformUtils
   {
 
     /// Return absolute path to the executable that was used to launch the process.
+    /// @return Absolute path to the executable used to launch the process
     RADIANT_API QString getExecutablePath();
 
     /// Returns the current process identifier
+    /// @return Process id of this process
     RADIANT_API int getProcessId();
 
     /// Return absolute path to the user's home directory.
+    /// @return Absolute path to user's home directory
     RADIANT_API QString getUserHomePath();
 
     /// Return path to the user data directory of the given module.
+    /// @param module Name of the module whose data directory is being queried
+    /// @param isapplication True if the modul is application, false otherwise.
+    /// @return Absolute path of the given module inside user's home directory
     RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
 
     /// Open a dynamic library
     /// @param path Full path to plugin
-    /// @returns Handle to plugin or NULL if failed
+    /// @returns Handle to plugin or nullptr if failed
     RADIANT_API void * openPlugin(const char * path);
 
     /// Returns the memory usage of the process, in bytes
-    /** This function is not implemented for all platforms. */
+    /// This function is not implemented for all platforms.
     /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
 

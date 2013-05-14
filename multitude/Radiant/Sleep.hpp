@@ -21,31 +21,24 @@ namespace Radiant {
 
   class TimeStamp;
 
-  /** Sleeping services. This class contains only static member
-      functions. The constructor and destructor are included to prevent
-      compiler warnings.*/
+  /// Sleeping services. This class contains only static member
+  /// functions.
   class RADIANT_API Sleep
   {
-  public:
-
-    Sleep() { }
-
-    ~Sleep() {}
-
+  public:   
     /// Sleep for n seconds.
     /// @param secs Number of seconds to sleep
     static void sleepS(uint32_t secs);
 
-    /** Sleep for n milliseconds. You cannot sleep more than one second
-    with this function. */
+    /// Sleep for n milliseconds. You cannot sleep more than one second
+    /// with this function.
     /// @param msecs Number of milliseconds to sleep
     static void sleepMs(uint32_t msecs);
 
-    /** Sleep for n microseconds. You cannot sleep more than one
-        second with this function. The resolution of this function is
-        unlikely to be better than one millisecond on any platform,
-        even if the underlying APIs might imply this.
-    */
+    /// Sleep for n microseconds. You cannot sleep more than one
+    /// second with this function. The resolution of this function is
+    /// unlikely to be better than one millisecond on any platform,
+    /// even if the underlying APIs might imply this.
     /// @param usecs Number of microseconds to sleep
     static void sleepUs(uint32_t usecs);
   };

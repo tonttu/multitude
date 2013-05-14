@@ -27,7 +27,7 @@ namespace Radiant
     return m_type;
   }
 
-  void TabletEvent::setLocation(const Nimble::Vector2f & location)
+  void TabletEvent::setLocation(Nimble::Vector2f location)
   {
     m_location = location;
   }

@@ -31,7 +31,7 @@ namespace Radiant
   /// Priority for the tasks
   typedef float Priority;
 
-  /// Task is a base class for tasks that can be executed within BGThread.
+  /// Task is an interface for tasks that can be executed within BGThread.
   /** The purpose of #Task is to make it easy to move time-consuing operations
       away from the main thread of the application. Tasks are placed in the
       #Radiant::BGThread, that schedules and runs them as specified.
@@ -62,12 +62,10 @@ namespace Radiant
   public:
     /// Standard priorities for tasks
     enum {
-      PRIORITY_LOW = 1,
-      PRIORITY_NORMAL = 500,
-      PRIORITY_HIGH = 1000,
-      PRIORITY_URGENT = 1500,
-      PRIORITY_OFFSET_BIT_HIGHER = 1,
-      PRIORITY_OFFSET_BIT_LOWER = -1
+      PRIORITY_LOW = 1,      ///< Low priority
+      PRIORITY_NORMAL = 500, ///< Normal priority
+      PRIORITY_HIGH = 1000,  ///< High priority
+      PRIORITY_URGENT = 1500 ///< Urgent priority
     };
 
     /// State of the task
@@ -79,35 +77,52 @@ namespace Radiant
     };
   public:
     /// Constructs a task with the given priority
+    /// @param p Priority for task
     Task(Priority p = PRIORITY_NORMAL);
 
+    /// Destructor
     virtual ~Task();
 
+    /// Sets priority for task
+    /// @param priority Priority of the task
     void setPriority( Priority priority ) { m_priority = priority; }
 
     /// Get the current priority of the task
+    /// @return Priority of the task
     Priority priority() const { return m_priority; }
 
     /// Get the current state of the task
+    /// @return State of the task
     State state() const { return m_state; }
 
     /// The actual work the task does should be implemented in here. Override
-    /// in the derived class
+    /// in the derived class. When the task is finished it is important to set the
+    /// @ref State of the task to State::DONE (f.ex. calling @ref setFinished)
+    /// so that @ref BGThread can properly release the task. If the state of the task
+    /// is not set to State::DONE after call to this function this task is scheduled to
+    /// be executed later.
     virtual void doTask() = 0;
 
     /// Marks the task as canceled, so it will be removed.
     void setCanceled() { m_canceled = true; }
 
     /// Returns whether a task has been canceled
+    /// @return True if the task has been canceled, false otherwise
     bool isCanceled() const { return m_canceled; }
 
     /// Return a timestamp for the next execution of the task
+    /// @return Time when the task is next executed
     Radiant::TimeStamp scheduled() const { return m_scheduled; }
+
     /// Schedule the next execution time for this task
+    /// @param ts Time when the task is next executed
     void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
+
     /// Schedule the next execution time for this task
+    /// @param wait How long to wait before the execution of the task
     void scheduleFromNow(Radiant::TimeStamp wait)
     { m_scheduled = Radiant::TimeStamp::currentTime() + wait; }
+
     /// @copybrief scheduleFromNow
     /// @param seconds number of seconds before next execution
     void scheduleFromNowSecs(double seconds)
@@ -141,6 +156,7 @@ namespace Radiant
     virtual void finished();
 
     /// Sets the task state
+    /// @param s State to set
     void setState(State s) { m_state = s; }
 
   private:

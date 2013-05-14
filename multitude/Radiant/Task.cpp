@@ -98,12 +98,10 @@ namespace Radiant
 
   void Task::canceled()
   {
-    // Radiant::trace("Task::canceled # %s", typeid(*this).name());
   }
 
   void Task::finished()
   {
-    // Radiant::trace("Task::finished # %s", typeid(*this).name());
   }
 
   //////////////////////////////////////////////////////////////////////
