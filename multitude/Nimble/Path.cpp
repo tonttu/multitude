@@ -48,26 +48,6 @@ namespace {
       if(t < 0 || t > LT) return false;
 
       return true;
-
-      /*
-      Nimble::Vector2f u = p1 - p0;
-      Nimble::Vector2f v = seg.p1 - seg.p0;
-      float d = v.x * u.y - v.y * u.x;
-
-      // Parallel?
-      if(fabs(d) < 1e-5) 
-        return false;
-
-      Nimble::Vector2f w = p0 - seg.p0;
-      
-      float s = v.x * w.y - v.y * w.x;
-      if(s < 0 || s > d) return false;
-
-      float t = u.x * w.y - u.y * w.x;
-      if(t < 0 || t > d) return false;
-
-      return true;
-*/
     }
 
   };

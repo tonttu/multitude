@@ -51,7 +51,6 @@ namespace Nimble {
     /// Convert QRect to Nimble::RectT
     inline RectT(const QRect & qrect)
       : m_low(qrect.left(), qrect.top()),
-        // QRect::right()/bottom() would return wrong value (left() + width() - 1)
         m_high(qrect.left()+qrect.width(), qrect.top()+qrect.height()) {}
 
     /// Constructs a rectangle and initializes it to the given points

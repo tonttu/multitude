@@ -38,9 +38,6 @@ namespace Nimble {
     m_matrixExtension.identity();
 
     setVertices("0 0  640 0  640 480  0 480", 640, 480, 1920, 1080, 0, 0);
-
-    //calculateMatrix();
-    //updateLimits();
   }
 
   void KeyStone::setVertices(const char * str,
@@ -48,8 +45,6 @@ namespace Nimble {
                              int dpyw, int dpyh,
                              int dpyx, int dpyy)
   {
-    // printf("KeyStone::setVertices # (%s) \n%d %d\n", str, dpyw, dpyh);
-
     char * ptr = (char *) str;
 
     Nimble::Vector2f vertices[4];
@@ -85,19 +80,6 @@ namespace Nimble {
     m_height = h;
 
     setOutputGeometry(dpyw, dpyh, dpyx, dpyy);
-
-    /*
-    for(i = 0; i < 4; i++) {
-
-      Nimble::Vector2f vtmp1(vertices[i]);
-      Nimble::Vector2f vtmp2 = project(vtmp1);
-
-      printf("[%.6f %.6f] => [%.6f %.6f]\n",
-       vtmp1.x, vtmp1.y, vtmp2.x, vtmp2.y);
-    }
-    */
-    // printf("KeyStone::setVertices # DONE");
-
   }
 
   void KeyStone::setOutputGeometry(unsigned w, unsigned h, int x, int y)
@@ -118,8 +100,6 @@ namespace Nimble {
 
   void KeyStone::calculateMatrix()
   {
-    // Formula from page 20.
-
     for(int i = 0; i < 4; i++) {
       Nimble::Vector2f tmp = m_lensCorrection.correct(m_originals[i]);
       m_vertices[i].make(tmp.x / m_width, tmp.y / m_height);
@@ -161,8 +141,6 @@ namespace Nimble {
         float weight = 0.5f + 0.5f * cosf(Math::PI * dist / m_centerShiftSpan);
         Nimble::Vector2f move = powf(weight, 1.0f) * m_centerShift;
         res += move;
-
-        // printf("shifting by %f %f (%f)\n", move.x, move.y, weight);
       }
     }
 

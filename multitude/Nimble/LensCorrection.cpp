@@ -17,17 +17,13 @@ namespace Nimble {
       m_radiusInv(1.0f / std::sqrt(320 * 320 + 240 * 240)),
       m_params(0, 0, 0, 1)
   {
-    setParams(0.0f, 0.1f, 0.0f); // Some trash...
+    setParams(0.0f, 0.1f, 0.0f);
   }
 
   void LensCorrection::setCameraResolution(int w, int h)
   {
     m_center.make((w - 1) * 0.5f, (h - 1) * 0.5f);
     m_radiusInv = 1.0f / m_center.length();
-    /*
-    printf("LensCorrection::setCameraResolution # %f %f %f %f",
-	   m_params[0], m_params[1], m_params[2], m_params[3]);
-    */
   }
 
   Nimble::Vector2f LensCorrection::correct(Vector2 loc) const
