@@ -30,16 +30,19 @@ namespace Radiant
       run-time. Usually the maximum packet sizes are in the range
       4-8kb.
 
-      @see TCPSocket
+      @sa TCPSocket
   */
   class RADIANT_API UDPSocket : public Radiant::BinaryStream
   {
   public:
+    /// Constructor
     UDPSocket();
 
-    /** Constructs a new UDP socket and initializes it to the given file
-    descriptor*/
+    /// Constructs a new UDP socket and initializes it to the given file
+    /// descriptor.
+    /// @param fd File descriptor for the socket
     UDPSocket(int fd);
+    /// Destructor
     ~UDPSocket();
 
     /** Opens a local server socket. This socket is generally good for listening to incoming
@@ -61,9 +64,11 @@ namespace Radiant
     int openClient(const char * host, int port);
 
     /// Returns true if the socket is open. Does not make much sense in the case of UDPSockets.
+    /// @return True if the socket is open.
     bool isOpen() const;
 
     /// Closes the socket.
+    /// @return True if the socket was succesfully closed.
     bool close();
 
     /** Reads datagram packets from the socket.
@@ -79,11 +84,15 @@ namespace Radiant
     virtual int read(void * buffer, int bytes, bool waitfordata, bool readAll);    
 
     /** Writes one datagram packet to the socket.
+        @param data Data to write
+        @param bytes How many bytes are requested to write
         @return The number of bytes written is returned.
     */
-    virtual int write(const void *, int );
+    virtual int write(const void *data, int bytes);
 
     /// Sets size of receive buffer
+    /// @param bytes Requested number of bytes for the receiving buffer
+    /// @return True if the size of the receive buffer was succusfully updated
     bool setReceiveBufferSize(size_t bytes);
 
   private:

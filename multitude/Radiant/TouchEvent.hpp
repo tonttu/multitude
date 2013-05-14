@@ -17,26 +17,33 @@ namespace Radiant
   public:
     /// Possible touch event types
     enum Type {
-      TOUCH_BEGIN,
-      TOUCH_UPDATE,
-      TOUCH_END
+      TOUCH_BEGIN, ///< First contact of the touch
+      TOUCH_UPDATE, ///< Update to already detected touch
+      TOUCH_END ///< End of touch
     };
 
+    /// List of touchpoints
     typedef QList<QTouchEvent::TouchPoint> TouchPointList;
 
+    /// Constructor. Type of the event is set as @ref TOUCH_BEGIN
     TouchEvent();
-    TouchEvent(const TouchEvent &);
-    TouchEvent(const QTouchEvent &);
+    /// Copy constructor
+    /// @param te TouchEvent to copy
+    TouchEvent(const TouchEvent &te);
+    /// Construct TouchEvent from QTouchEvent
+    /// @param qte TouchEvent to duplicate
+    TouchEvent(const QTouchEvent &qte);
 
+    /// Destructor
     virtual ~TouchEvent();
 
-    /** Single event can contain multiple touch points attached to it.
-    Returns the list of touch points contained in the touch event.
-    */
+    /// Single event can contain multiple touch points attached to it.
+    /// @return The list of touch points contained in the touch event.
     const TouchPointList & touchPoints() const;
     /// @copydoc touchPoints
     TouchPointList & touchPoints();
-    /// returns the event type.
+    /// Returns the event type.
+    /// @return Type of the event.
     Type type() const;
 
   private:

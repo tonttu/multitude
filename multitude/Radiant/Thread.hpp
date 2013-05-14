@@ -42,6 +42,7 @@ namespace Radiant {
     typedef void* id_t;
 
     /// The id of the calling thread
+    /// @return Id of the calling thread
     static id_t myThreadId();
 
     /// Construct a thread structure. The thread is NOT activated by this
@@ -70,7 +71,7 @@ namespace Radiant {
     /// Waits until thread is finished. This method does nothing to
     /// kill the thread, it simply waits until the thread has run its
     /// course.
-    /// @param timeoutms Time to wait, in milliseconds
+    /// @param timeoutms How many milliseconds this function call will block at most
     /// @returns true if the thread has terminated within the timeout period
     bool waitEnd(int timeoutms = 0);
 
@@ -103,6 +104,7 @@ namespace Radiant {
     typedef std::map<Thread::id_t, T> Map;
 
   public:
+    /// Constructs TLS variable with default constructor
     TLS() {}
     /// Construct a TLS variable with the given default value
     /// @param t default value
@@ -163,6 +165,8 @@ namespace Radiant {
     }
 
     /// Assign the underlying value
+    /// @param t Value to assign
+    /// @return Reference to self
     TLS<T> & operator=(const T& t)
     {
       get() = t;

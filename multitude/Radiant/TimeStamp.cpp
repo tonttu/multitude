@@ -122,8 +122,6 @@ namespace Radiant {
     
     time_t tval = mktime(&tms);
 
-    //trace("tval as ctime = %s (%d %d %d)", ctime( & tval), year, month, day);
-
     return TimeStamp(tval * ticksPerSecond().value());
   }
 

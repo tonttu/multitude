@@ -50,30 +50,44 @@ namespace Radiant {
     };
 
     /// The number of ticks that take place during one second
+    /// @return Number of ticks per second
     static TimeStamp ticksPerSecond() { return TimeStamp(FRACTIONS_PER_SECOND); }
+
     /// The number of ticks that take place during one minute
+    /// @return Number of ticks per minute
     static TimeStamp ticksPerMinute() { return TimeStamp(1006632960); }
+
     /// The number of ticks that take place during one hour
+    /// @return Number of ticks per hour
     static TimeStamp ticksPerHour()   { return TimeStamp(60397977600ll); }
+
     /// The number of ticks that take place during one day
+    /// @return Number of ticks per day
     static TimeStamp ticksPerDay()    { return TimeStamp(1449551462400ll); }
 
-    /// Constructs a timestamp
+    /// Constructs a timestamp dated to 1.1.1970
     TimeStamp() : m_val(0) {}
+
     /// Construct timestamp with the given time internal representation
     /// @param val internal time presentation
     explicit TimeStamp(type val) : m_val(val) {}
     ~TimeStamp() {}
 
     /// Returns a reference to the current timestamp native value
+    /// @return Reference to the timestamp value
     type & value() { return m_val; }
+
     /// Returns the current timestamp native value
+    /// @return Value of the timestamp
     type value() const { return m_val; }
+
     /// Sets the current native timestamp value
+    /// @param val New value of the timestamp
     void setValue(type val) { m_val = val; }
 
     /// Sets the timestamp to s seconds.
     /// @param s number of seconds
+    /// @tparam T Type of parameter for seconds
     template<typename T>
     void setSeconds(T s)
     {
@@ -84,6 +98,7 @@ namespace Radiant {
     /// Create a TimeStamp with the given number of milliseconds
     /// @param s number of milliseconds
     /// @return specified timestamp
+    /// @tparam T Type of parameter for milliseconds
     template<class T>
     static TimeStamp createMilliSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
@@ -104,6 +119,7 @@ namespace Radiant {
     /// Create a TimeStamp with the given number of seconds
     /// @param s number of seconds
     /// @return specified timestamp
+    /// @tparam T Type of parameter for seconds
     template<class T>
     static TimeStamp createSeconds(T s, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
     {
@@ -122,6 +138,7 @@ namespace Radiant {
     /// Create a TimeStamp with the given number of minutes
     /// @param s number of minutes
     /// @return specified timestamp
+    /// @tparam T Type of parameter for minutes
     template<typename T>
     static TimeStamp createMinutes(T s)
     {
@@ -132,6 +149,7 @@ namespace Radiant {
     /// Create a time-stamp with a given number of hours.
     /// @param hours number of hours
     /// @return specified timestamp
+    /// @tparam T Type of parameter for hours
     template<typename T>
     static TimeStamp createHours(T hours)
     {
@@ -142,6 +160,7 @@ namespace Radiant {
     /// Create a time-stamp with a given number of days.
     /// @param days number of days
     /// @return specified timestamp
+    /// @tparam T Type of parameter for days
     template<typename T>
     static TimeStamp createDays(T days)
     {
@@ -163,16 +182,34 @@ namespace Radiant {
       return TimeStamp(tmp + ticksPerDay().value() * (type) days);
     }
 
-    /** Creates a timestamp from date string */
+    /// Creates a timestamp from date string
+    /// @param date String for date
+    /// @param delim Delimiter string between fields
+    /// @param If true the date is formatted as YdMdD, where d is the value of
+    ///        delim. If false the date has format DdMdY. Here each field can have
+    ///        arbitrary integer.
+    /// @return TimeStamp corresponding to given string
     static TimeStamp createDate(const char * date,
                 const char * delim = "-",
                 bool yearfirst = true);
 
-    /** Creates a timestamp from time string */
+    /// Creates a timestamp from time string
+    /// @param time String for time formatted as HdMdS, where d stands for the value of
+    ///        delim, H for hours, M for minutes and S for seconds. Each field can contain
+    ///        arbitrary integer.
+    /// @param delim Delimiter string between fields
+    /// @return TimeStamp corresponding to given string
     static TimeStamp createTime(const char * time,
                 const char * delim = ":");
 
-    /** Creates a timestamp from data and time string */
+    /// Creates a timestamp from date and time string
+    /// @param date String for date
+    /// @param delim Delimiter string between fields of date
+    /// @param If true the date is formatted as YdMdD. Otherwise date has format DdMdY.
+    /// @param time String for time formatted as HdMdS.
+    /// @param timedelim Delimiter string between fields of time
+    /// @return TimeStamp corresponding to given strings
+    /// @sa createDate, createTime
     static TimeStamp createDateTime(const char * date,
                     const char * delim,
                     bool yearfirst,
@@ -180,16 +217,27 @@ namespace Radiant {
                     const char * timedelim);
 
     /// Returns the number of complete days this timestamp spans
+    /// @return Complete days from 1.1.1970
     int64_t days() const { return m_val / ticksPerDay().value(); }
+
     /// Returns the number of complete hours this timestamp spans
+    /// @return Complete hours from 1.1.1970
     int64_t hours() const { return m_val / ticksPerHour().value(); }
+
     /// Returns the number of complete hours this timestamp spans
+    /// @return Complete minutes from 1.1.1970
     int64_t minutes() const { return m_val / ticksPerMinute().value(); }
+
     /// Returns the number of days (including fractions of a day) this timestamp spans
+    /// @return Days (including fractions) from 1.1.1970
     double  daysD() const { return m_val / (double) ticksPerDay().value(); }
+
     /// Returns the number of full seconds that this time-stamp includes
+    /// @return Complete seconds from 1.1.1970
     int64_t seconds() const { return m_val >> 24; }
+
     /// Returns the number of full milliseconds that this time-stamp includes
+    /// @return Complete milliseconds from 1.1.1970
     int64_t milliseconds() const
     {
       type sec = m_val / FRACTIONS_PER_SECOND;
@@ -198,23 +246,30 @@ namespace Radiant {
       return (1000 * sec) + ((1000 * fract) / FRACTIONS_PER_SECOND);
     }
 
-    /// Returns the fractions of second that this timestamp includes.
+    /// Returns the fractions of second that this timestamp includes, in range 0-2^24
+    /// @return Fraction of seconds part from the internal representation (24 lowest bits)
     int64_t fractions() const { return m_val & 0xFFFFFF; }
+
     /// Returns the number of seconds in this time-stamp, as floating point number
+    /// @return Seconds (including fractions) from 1.1.1970
     double secondsD()  const { return m_val / (double) FRACTIONS_PER_SECOND; }
-    /// Returns the fractions of a second in this time-stamp, in range 0.0-1.0
+
+    /// Returns the fraction of a second in this time-stamp, in range 0.0-1.0
+    /// @return The non-integral part of the seconds from 1.1.1970 normalized to unit interval
     double subSecondsD() const
     { return (m_val & 0xFFFFFF) / (double) FRACTIONS_PER_SECOND; }
-    /// Returns the fractions of a second in this time-stamp, in range 0-2^24
-    int64_t subSecondsI() const
-    { return m_val & 0xFFFFFF; }
-    /// Returns the fractions of a second in this time-stamp, in range 0.0-1000000.0
+
+    /// Returns the fraction part of a second in microseconds (in range 0.0-1000000.0)
+    /// @return The non-integral part of the seconds from 1.1.1970 as milliseconds
     double subSecondsUS() const { return 1000000.0 * subSecondsD(); }
 
     /// Returns the number of seconds to the argument time-stamp.
+    /// @return How many seconds that is ahead of this
     double secsTo(const TimeStamp & that) const
     { return (that.m_val - m_val) / (double) FRACTIONS_PER_SECOND; }
+
     /// Returns the number of micro-seconds to the argument time-stamp.
+    /// @return How many microseconds that is ahead of this
     double usecsTo(const TimeStamp & that) const
     { return (that.m_val - m_val) * 1000000.0/(double) FRACTIONS_PER_SECOND; }
 

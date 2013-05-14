@@ -34,18 +34,18 @@ namespace Radiant
   class Timer
   {
   public:
-    /// Construct a new Timer and start it
+    /// Construct a new Timer and @ref start it
     inline Timer();
 
     /// Start the timer
     /// Starts the timer by resetting its clock to zero
     inline void start();
     /// Get start time
-    /// Returns the time of the last start() call.
+    /// Returns the time of the last @ref start call.
     /// @return start time in seconds
     inline double startTime() const;
     /// Get elapsed time
-    /// Returns the elapsed time in seconds since last start() call.
+    /// Returns the elapsed time in seconds since last @ref start call.
     /// @return elapsed time in seconds
     inline double time() const;
     /// Get the timer resolution
@@ -53,9 +53,7 @@ namespace Radiant
     /// @return resolution in ticks per second
     inline int resolution() const;
 
-    /// Operators
-    inline double operator-(const Timer & rhs) const;
-
+    /// Casts timer to double
     /// @return current time in seconds (equivalent to calling time())
     inline operator double() const;
   private:
@@ -96,11 +94,6 @@ namespace Radiant
     double dus = endTime.tv_usec - m_startTime.tv_usec;
 
     return ds + 1e-6 * dus;
-  }
-
-  double Timer::operator-(const Timer & rhs) const
-  {
-    return startTime() - rhs.startTime();
   }
 
   Timer::operator double() const
