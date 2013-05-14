@@ -17,6 +17,7 @@
 #include "Rect.hpp"
 #include "Vector4.hpp"
 
+#include <array>
 #include <cstring>
 #include <vector>
 
@@ -258,7 +259,7 @@ namespace Nimble {
     /// need to invert this.
     /// @param vertices an array of four corner vertices
     /// @return Generated projection matrix
-    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 vertices[4]);
+    static Nimble::Matrix3 projectionMatrix(const std::array<Nimble::Vector2, 4> & vertices);
 
   private:
 
@@ -271,9 +272,9 @@ namespace Nimble {
     LensCorrection  m_lensCorrection;
 
     /// Normalized vertices (from 0 to 1)
-    Nimble::Vector2 m_vertices[4];
+    std::array<Nimble::Vector2, 4> m_vertices;
     /// Original vertices (in camera coordinates)
-    Nimble::Vector2 m_originals[4];
+    std::array<Nimble::Vector2, 4> m_originals;
     /// Convert from camera coordinates to [0,1]-space
     Nimble::Matrix3 m_matrix;
     /// Convert from camera coordinates to output (screen) coordinates

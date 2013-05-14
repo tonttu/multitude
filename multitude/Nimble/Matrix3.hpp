@@ -15,6 +15,7 @@
 #include "Matrix2.hpp"
 #include "Vector3.hpp"
 
+#include <array>
 #include <cassert>
 
 namespace Nimble {
@@ -199,7 +200,7 @@ namespace Nimble {
     }
 
     /// Create a projection matrix which maps the unit square to given vertices
-    static Nimble::Matrix3T<T> makeProjectionMatrix(const Nimble::Vector2T<T> vertices[4])
+    static Nimble::Matrix3T<T> makeProjectionMatrix(const std::array<Nimble::Vector2T<T>, 4> & vertices)
     {
       float dx1 = vertices[1].x - vertices[2].x;
       float dx2 = vertices[3].x - vertices[2].x;
@@ -235,8 +236,8 @@ namespace Nimble {
     /// @param to The four targets points
     /// @param ok if defined; set to true if the projection could be created
     /// @return projection matrix
-    static Nimble::Matrix3T<T> mapCorrespondingPoints(const Nimble::Vector2T<T> from[4],
-                                                  const Nimble::Vector2T<T> to[4],
+    static Nimble::Matrix3T<T> mapCorrespondingPoints(const std::array<Nimble::Vector2T<T>, 4> & from,
+                                                  const std::array<Nimble::Vector2T<T>, 4> & to,
                                                   bool * ok = 0)
     {
       return  makeProjectionMatrix(to) * makeProjectionMatrix(from).inverse(ok);

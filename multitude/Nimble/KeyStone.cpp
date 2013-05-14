@@ -273,8 +273,8 @@ namespace Nimble {
 
     // Do the real matrix calculation
 
-    Nimble::Vector2 tnorm[4]; // Target points in [0-1] space
-    Nimble::Vector2 rnorm[4]; // Real points in [0-1] space
+    std::array<Nimble::Vector2, 4> tnorm; // Target points in [0-1] space
+    std::array<Nimble::Vector2, 4> rnorm; // Real points in [0-1] space
     Nimble::Vector2 rcnorm(0, 0); // Real center point in [0-1] space
 
     Matrix3 tmp;
@@ -361,7 +361,7 @@ namespace Nimble {
   /** Calculates the projection matrix. See Paul Heckbert's master's
    * thesis, pages 19-21. */
 
-  Matrix3 KeyStone::projectionMatrix(const Nimble::Vector2f vertices[4])
+  Matrix3 KeyStone::projectionMatrix(const std::array<Nimble::Vector2f, 4> & vertices)
   {
     return Nimble::Matrix3::makeProjectionMatrix(vertices);
   }
