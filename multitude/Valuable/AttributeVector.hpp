@@ -37,7 +37,7 @@ namespace Valuable
   {
     typedef AttributeT<VectorType> Base;
     typedef typename VectorType::type ElementType;
-    enum { N = VectorType::Elements };
+    enum { N = VectorType::ELEMENTS };
 
     public:
       using Base::operator =;
@@ -107,7 +107,7 @@ namespace Valuable
   {
     typedef VectorT<T> VectorType;
     typedef AttributeVector<VectorType> Base;
-    enum { N = VectorType::Elements };
+    enum { N = VectorType::ELEMENTS };
 
   public:
     using Base::operator =;

@@ -29,7 +29,7 @@ namespace Valuable
       , m_src(0, 0)
     {
       for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
-        for(int j = 0; j < m_factors[i].Elements; ++j)
+        for(int j = 0; j < m_factors[i].ELEMENTS; ++j)
           m_factors[i][j] = std::numeric_limits<float>::quiet_NaN();
     }
 
@@ -40,7 +40,7 @@ namespace Valuable
         m_factors[layer] = f;
         setValue(Nimble::Vector2(f.x * m_src.x, f.y * m_src.y), layer);
       } else {
-        for(int j = 0; j < m_factors[layer].Elements; ++j)
+        for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
           m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
         setValue(f, layer);
       }
@@ -49,7 +49,7 @@ namespace Valuable
 
     virtual bool set(int v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
     {
-      for(int j = 0; j < m_factors[layer].Elements; ++j)
+      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
       setValue(Nimble::Vector2f(v, v), layer);
       return true;
@@ -64,7 +64,7 @@ namespace Valuable
     virtual bool set(const Nimble::Vector2f & v, Layer layer, QList<ValueUnit> units) OVERRIDE
     {
       Nimble::Vector2f f(v);
-      for(int j = 0; j < m_factors[layer].Elements; ++j) {
+      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j) {
         if(j < units.size() && units[j] == VU_PERCENTAGE) {
           m_factors[layer][j] = f[j];
           f[j] *= m_src[j];
@@ -130,7 +130,7 @@ namespace Valuable
 
     virtual void clearValue(Attribute::Layer layer = USER) OVERRIDE
     {
-      for(int j = 0; j < m_factors[layer].Elements; ++j)
+      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
       AttributeVector<Nimble::Vector2f>::clearValue(layer);
     }

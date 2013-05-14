@@ -30,7 +30,7 @@ namespace Nimble {
     /// Data type of the vector
     typedef T type;
 
-    enum { Elements = 3 };
+    enum { ELEMENTS = 3 };
 
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
