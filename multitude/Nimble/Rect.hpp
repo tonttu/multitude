@@ -231,20 +231,19 @@ namespace Nimble {
     T * data() { return m_low.data(); }
 
     /// Convert the rect to floating-point precision
-    /// @return converted rect
-    QRectF toQRectF() const
+    /// @return QRect matching the rect
+    template<typename U = T, typename = typename std::enable_if<std::is_floating_point<U>::value>::type>
+    QRectF toQRect() const
     {
-      return QRectF(float(m_low.x), float(m_low.y), float(width()), float(height()));
+      return QRectF(U(m_low.x), U(m_low.y), U(width()), U(height()));
     }
 
-    /// Convert the rect to QRect
+    /// Convert the rect to integer precision
     /// @return QRect matching the rect
-    /// @todo add some enable_if magic?
-    // typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
-    // doesn't work but maybe something similar?
+    template<typename U = T, typename = typename std::enable_if<std::is_integral<U>::value>::type>
     QRect toQRect() const
     {
-      return QRect(int(m_low.x), int(m_low.y), int(width()), int(height()));
+      return QRect(U(m_low.x), U(m_low.y), U(width()), U(height()));
     }
 
   private:
