@@ -246,7 +246,6 @@ namespace Nimble {
       return window * projection * camera * view;
     }
 
-    /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
     /// @param axis axis to rotate around

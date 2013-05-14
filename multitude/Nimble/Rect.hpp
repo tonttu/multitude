@@ -15,6 +15,8 @@
 #include "Vector2.hpp"
 #include "Frame4.hpp"
 
+#include <Radiant/Defines.hpp>
+
 #include <QRect>
 #include <QRectF>
 
@@ -30,8 +32,6 @@ namespace Nimble {
       (which way is up and so on). Some rare functions assume that one
       is using normal GUI coordinates (Y increases from top to
       bottom). */
-
-  /// @todo rename to AARect/RectAA
   template <typename T>
   class RectT
   {
@@ -94,11 +94,10 @@ namespace Nimble {
     inline void expand(const Vector2T<T> &v, T radius);
     /// Expands this rectangle to include the argument rectangle
     inline void expand(const RectT &b);
-    /// Expands this rectangle with the argument frame
-    inline void expand(const Frame4f & b);
-    /// Contracts the rectangle by v
-    inline void smaller(const T & v)
-    { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
+    /// @deprecated use grow() instead
+    MULTI_ATTR_DEPRECATED("RectT::expand() is deprecated. Use RectT::grow instead.", inline void expand(const Frame4f & frame));
+    /// @deprecated Use shrink() instead
+    MULTI_ATTR_DEPRECATED("RectT::smaller() is deprecated. Use RectT::shrink() instead.", inline void smaller(T v)) { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
 
     /// Returns the low X/Y vector
     inline Vector2T<T> & low() { return m_low; }
@@ -183,11 +182,18 @@ namespace Nimble {
     inline void transform(const Matrix3T<T>& m);
     /// Scales the rectangle
     inline void shrinkRelative(float xs, float ys);
+    /// Uniformly shrinks the rectangle by the specified amount
+    /// @param v amount to shrink
+    inline void shrink(T v)
+    { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
+    /// @deprecated Use grow() instead
+    MULTI_ATTR_DEPRECATED("RectT::increaseSize() is deprecated. Use RectT::grow() instead.", inline void increaseSize(T v)) { m_low.x -= v; m_low.y -= v; m_high.x += v; m_high.y += v; }
     /// Increases the size of the rectangle uniformly
-    /// @todo duplicate with smaller() mostly (make a single function that works with negative values)
-    /// @param add amount to enlarge
-    inline void increaseSize(T add)
-    { m_low.x -= add; m_low.y -= add; m_high.x += add; m_high.y += add; }
+    /// @param v amount to enlarge
+    inline void grow(T v)
+    { m_low.x -= v; m_low.y -= v; m_high.x += v; m_high.y += v; }
+    /// Increases the size of the rectangle with the argument frame
+    inline void grow(const Frame4f & b);
 
     /// Returns one quarter of the rectangle.
     /// @param row The row of the quarter (0-1)
@@ -288,6 +294,12 @@ namespace Nimble {
 
   template <class T>
   void RectT<T>::expand(const Frame4f & b)
+  {
+    grow(b);
+  }
+
+  template <class T>
+  void RectT<T>::grow(const Frame4f & b)
   {
     m_low -= b.leftTop().cast<T>();
     m_high += b.rightBottom().cast<T>();

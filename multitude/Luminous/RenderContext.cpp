@@ -837,8 +837,8 @@ namespace Luminous
 
       Nimble::Rect outer = rect;
       Nimble::Rect inner = rect;
-      outer.increaseSize(0.5f*style.strokeWidth());
-      inner.smaller(0.5f*style.strokeWidth());
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
 
       drawRectWithHole(outer, inner, s);
       /*
@@ -981,14 +981,14 @@ namespace Luminous
 
       Nimble::Rect outer = area;
       Nimble::Rect inner = area;
-      outer.increaseSize(0.5f*style.strokeWidth());
-      inner.smaller(0.5f*style.strokeWidth());
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
       drawRectWithHole(outer, inner, s);
 
       outer = hole;
       inner = hole;
-      outer.increaseSize(0.5f*style.strokeWidth());
-      inner.smaller(0.5f*style.strokeWidth());
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
       drawRectWithHole(outer, inner, s);
     }
   }
