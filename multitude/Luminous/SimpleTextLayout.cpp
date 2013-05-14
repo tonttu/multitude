@@ -20,7 +20,6 @@
 #include <QTextLayout>
 #include <QRegExp>
 #include <QThread>
-//#include <QPainter>
 
 #include <unordered_map>
 #include <memory>

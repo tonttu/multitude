@@ -60,13 +60,13 @@ namespace Luminous {
     LUMINOUS_API const Nimble::Rectf & boundingBox() const;
 
     LUMINOUS_API const Nimble::Vector2f & renderLocation() const;
+    LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
 
   protected:
     LUMINOUS_API virtual void generateInternal() const = 0;
 
     LUMINOUS_API TextLayout(const Nimble::SizeF & maximumSize);
 
-    LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
     LUMINOUS_API void setBoundingBox(const Nimble::Rectf & bb);
     LUMINOUS_API void setLayoutReady(bool v);
     LUMINOUS_API void setGlyphsReady(bool v);
