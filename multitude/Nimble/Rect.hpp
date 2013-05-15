@@ -232,6 +232,10 @@ namespace Nimble {
 
     /// Convert the rect to floating-point precision
     /// @return converted rect
+    /// @todo overload toQRect()
+    // Note: The following doesn't work in VS2012 because it doesn't support
+    // default arguments for function templates
+    // template<typename U = T, typename = typename std::enable_if<std::is_floating_point<U>::value>::type>
     QRectF toQRectF() const
     {
       return QRectF(float(m_low.x), float(m_low.y), float(width()), float(height()));
@@ -239,9 +243,6 @@ namespace Nimble {
 
     /// Convert the rect to QRect
     /// @return QRect matching the rect
-    /// @todo add some enable_if magic?
-    // typename std::enable_if<std::is_integral<T>::value, QRect>::type toQRect() const
-    // doesn't work but maybe something similar?
     QRect toQRect() const
     {
       return QRect(int(m_low.x), int(m_low.y), int(width()), int(height()));
