@@ -112,16 +112,6 @@ namespace Nimble {
   typedef RampT<float, float> Rampff;
   /// Ramp of doubles
   typedef RampT<double, double> Rampdd;
-
-#ifdef WIN32
-#ifdef NIMBLE_EXPORT
-  // In WIN32 template classes must be instantiated to be exported
-  template class RampT<float, unsigned>;
-  template class RampT<double, unsigned>;
-  template class RampT<float, float>;
-  template class RampT<double, double>;
-#endif
-#endif
 }
 
 #endif
