@@ -41,18 +41,17 @@ namespace Radiant {
       while(keepGoing()) {
         items.reset();
 
-    while(fillingTheBuffer())  {
-      Item item;
-      items.append(item);
+        while(fillingTheBuffer())  {
+          Item item;
+          items.append(item);
         }
 
-    doSomeThingWithTheItems(items);
+        doSomeThingWithTheItems(items);
       }
 
       </PRE>
 
   */
-
   /// @todo Remove since std::vector actually is almost the same
   template <typename T> class VectorStorage
   {
@@ -70,6 +69,7 @@ namespace Radiant {
     void clear() { m_count = 0; }
 
     /// Returns true if the vector is empty
+    /// @return True if this is empty
     bool empty() const { return m_points.empty(); }
 
     /// Resets the internal object counter to n.
@@ -77,9 +77,11 @@ namespace Radiant {
     void truncate(size_t n) { m_count = n; }
 
     /// The number of objecs in the array
+    /// @return Number of objects in this object
     size_t size() const { return m_count; }
 
     /// The number of allocated objects
+    /// @return How many elements we are allocated
     size_t reserved() const { return m_points.size(); }
 
     /// Expand the size of the storage buffer to desired size
@@ -123,6 +125,7 @@ namespace Radiant {
     /// @param index Index of element to retrieve
     /// @returns Reference to the index-th element
     T & get(size_t index) { return m_points[index]; }
+    /// Gets reference to the last elemnt
     /// @returns Reference to the last element
     T & getLast() { return m_points[m_count - 1]; }
     /// @copydoc getLast
@@ -161,22 +164,22 @@ namespace Radiant {
     T & append()
     {
       if(m_count >= m_points.size())
-    m_points.resize(m_count + 100);
+        m_points.resize(m_count + 100);
 
       return m_points[m_count++];
     }
 
-    /// Push an objec to the beginning of the array
+    /// Push an object to the beginning of the array
     /** This function call takes some time on larger arrays, so it
     should be used with care. */
     /// @param x Element to prepend
     void prepend(const T & x)
     {
       if(m_count >= m_points.size())
-    m_points.resize(m_count + 100);
+        m_points.resize(m_count + 100);
 
       for(size_t i = m_count; i >= 1; i--) {
-    m_points[i] = m_points[i - 1];
+        m_points[i] = m_points[i - 1];
       }
 
       m_points[0] = x;
@@ -197,7 +200,7 @@ namespace Radiant {
       m_count--;
     }
 
-    /** Merge elements to this from that. */
+    /** Appends elements from that to the end of this. */
     /// @param that Vector to merge with
     void merge(VectorStorage & that)
     {
@@ -218,10 +221,11 @@ namespace Radiant {
         m_points[i] = value;
     }
 
+    /// Pointer to the first element
     /// @returns pointer to the first element
-    T * data() { return & m_points[0]; }
+    T * data() { return m_points.data(); }
     /// @copydoc data
-    const T * data() const { return & m_points[0]; }
+    const T * data() const { return m_points.data(); }
 
     /// Returns iterator to the beginning of the vector
     /// @returns iterator to the beginning of the vector
@@ -272,6 +276,7 @@ namespace Radiant {
         }
     }
     /// Returns the internal data storage area
+    /// @return Vector acting as internal storage
     std::vector<T> & vector() { return m_points; }
 
   private:

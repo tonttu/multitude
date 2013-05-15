@@ -24,19 +24,22 @@ namespace Radiant {
   class CameraDriverFactory;
   class CameraDriver;
 
-  /// VideoCamera provides a common interface for different video cameras. Each new camera driver should implement this interface and also implement the CameraDriver interface as well.
+  /// VideoCamera provides a common interface for different video cameras.
+  /// Each new camera driver should implement this interface and the CameraDriver interface.
   class RADIANT_API VideoCamera : public VideoInput
   {
   public:
-    /// Constructs a new video
+    /// Constructs a new video camera
     /// @param driver camera driver from where the camera was instantiated from
     VideoCamera(CameraDriver * driver);
+    /// Destructor
     virtual ~VideoCamera();
 
     /// A container of basic camera information. CameraInfo objects
     /// are used to store information about a particular camera.
     class CameraInfo {
     public:
+      /// Initializes info object with EUID set to 0
       CameraInfo()
         : m_euid64(0)
       {}
@@ -172,8 +175,10 @@ namespace Radiant {
       */
     virtual bool openFormat7(uint64_t cameraeuid, Nimble::Recti roi, float fps, int mode) = 0;
 
-    /** Gets the different features that the camera supports */ virtual void
-    getFeatures(std::vector<CameraFeature> * features) = 0;
+    /** Gets the different features that the camera supports
+        @param features[out] Vector for features returned
+    */
+    virtual void getFeatures(std::vector<CameraFeature> * features) = 0;
 
     /** Sets the relative value of a feature based on the minimum and maximum
     values. If the value is negative, the feature is set to automatic mode.
@@ -186,58 +191,102 @@ namespace Radiant {
       @param value value of the feature to set
     */
     virtual void setFeatureRaw(FeatureType id, int32_t value) = 0;
-    /** Returns a human-readable name for a feature given the feature id */
+    /** Returns a human-readable name for a feature given the feature id
+        @param id Id of the feature
+        @return Name of the feature
+    */
     static const char * featureName(FeatureType id);
 
-    /** Checks if the given camera feature supports a certain mode */
+    /** Checks if the given camera feature supports a certain mode
+        @param feature Feature to query
+        @param mode Mode to check
+        @return True if the feature has queried mode, false otherwise
+    */
     static bool hasMode(const CameraFeature & feature, FeatureMode mode);
-    /** Checks if the given camera feature supports a automatic mode */
+
+    /** Checks if the given camera feature supports a automatic mode
+        @param feature Feature to check
+        @return True if the feature supports automatic mode, false otherwise
+    */
     static bool hasAutoMode(const CameraFeature & feature)
     { return hasMode(feature, MODE_AUTO); }
-    /** Checks if the given camera feature supports a manual mode */
+
+    /** Checks if the given camera feature supports a manual mode
+        @param feature Feature to check
+        @return True if the feature supports manual mode, false otherwise
+    */
     static bool hasManualMode(const CameraFeature & feature)
     { return hasMode(feature, MODE_MANUAL); }
 
-    /** Sets the value of the PAN feature */
+    /** Sets the value of the PAN feature
+        @param value Value to set
+    */
     virtual void setPan(float value);
-    /** Sets the value of the TILT feature */
+    /** Sets the value of the TILT feature
+        @param value Value to set
+    */
     virtual void setTilt(float value);
-    /** Sets the value of the GAMMA feature */
+    /** Sets the value of the GAMMA feature
+        @param value Value to set
+    */
     virtual void setGamma(float value);
-    /** Sets the value of the SHUTTER feature */
+    /** Sets the value of the SHUTTER feature
+        @param value Value to set
+    */
     virtual void setShutter(float value);
-    /** Sets the value of the GAIN feature */
+    /** Sets the value of the GAIN feature
+        @param value Value to set
+    */
     virtual void setGain(float value);
-    /** Sets the value of the EXPOSURE feature */
+    /** Sets the value of the EXPOSURE feature
+        @param value Value to set
+    */
     virtual void setExposure(float value);
-    /** Sets the value of the BRIGHTNESS feature */
+    /** Sets the value of the BRIGHTNESS feature
+        @param value Value to set
+    */
     virtual void setBrightness(float value);
-    /** Sets the value of the FOCUS feature */
+    /** Sets the value of the FOCUS feature
+        @param value Value to set
+    */
     virtual void setFocus(float value);
-    /** Sets the timeout for waiting for a new frame from the camera */
+    /** Sets the timeout for waiting for a new frame from the camera
+        @param ms Timeout in milliseconds
+    */
     virtual bool setCaptureTimeout(int ms) = 0;
 
-    /// Enables external triggering of the camera
+    /// Sets the external trigger source for the camera
+    /// @param src Source to set
+    /// @return True if succeeded, false otherwise
     virtual bool enableTrigger(TriggerSource src) = 0;
-    /// Sets the triggering mode for the camera
+    /// Sets the external trigger mode for the camera
+    /// @param mode Mode to set
+    /// @return True if succeeded, false otherwise
     virtual bool setTriggerMode(TriggerMode mode) = 0;
-    /// Sets the trigger polarity of the camera
+    /// Sets the polarity of external trigger
+    /// @param polarity Polarity to set
+    /// @return True if succeeded, false otherwise
     virtual bool setTriggerPolarity(TriggerPolarity polarity) = 0;
     /// Disables external trigger for the camera
+    /// @return True is succeeded, false otherwise
     virtual bool disableTrigger() = 0;
     /// Sends a software trigger signal to the camera
     virtual void sendSoftwareTrigger() = 0;
 
     /// Returns information about this particular camera object
+    /// @return Information about this camera
     virtual CameraInfo cameraInfo() = 0;
 
     /// Returns the number of frames that would be immediately readable.
+    /// @return Number of frames
     virtual int framesBehind() const = 0;
 
     /// Returns an instance of the camera driver factory
+    /// @return Factory for creating drivers
     static CameraDriverFactory & drivers();
 
     /// Returns the driver which created this camera
+    /// @return Driver which created this camera
     CameraDriver * driver() { return m_driver; }
     private:
     CameraDriver * m_driver;

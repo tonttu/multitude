@@ -105,7 +105,6 @@ namespace Radiant {
     VideoCamera::CameraFeature feat;
 
     feat.id = featureTypeFromNative(native.id);
-    //    feat.num_modes = native.modes.num;
 
     feat.absolute_capable = native.absolute_capable;
     feat.abs_max = native.abs_max;
@@ -234,12 +233,6 @@ namespace Radiant {
       close();
 
     g_count--;
-
-    /*if(!g_count) {
-      dc1394_free(g_dc);
-      g_dc = 0;
-    }
-    */
   }
 
   ImageFormat VideoCamera1394::imageFormat() const
@@ -284,18 +277,6 @@ namespace Radiant {
     return has_mode(camera, feature, DC1394_FEATURE_MODE_MANUAL, val);
   }
 
-  /**
-   * Try to adjust white balance feature for the camera.
-   * @note NOTE: may fail, if, for example, the camera doesn't
-   * support this feature.
-   * @param u_to_blue manual U to blue ratio, setting either
-   * one of these to below zero sets auto white balance mode.
-   * @param v_to_red manual V to red ratio, setting either one
-   * of these to below zero sets auto white balance mode. These values are
-   * basicly device-dependent. You should test suitable configuration
-   * with for example coriander software. Setting values out-of-range
-   * gives a warning.
-   */
   void VideoCamera1394::setWhiteBalance(float u_to_blue, float v_to_red)
   {
     const char * fname = "VideoCamera1394::setWhiteBalance";
@@ -357,11 +338,6 @@ namespace Radiant {
     }
   }
 
-  /** Set a camera feature (=control parameter) to some value. Possible
-   * features can be found from dc1394_control.h. If the "value" is less
-   * than zero, then the camera will be switched to automatic control of
-   * the feature. */
-
   void VideoCamera1394::setFeature(VideoCamera::FeatureType id, float value)
   {
     const char * fname = "VideoCamera1394::setFeature1394";
@@ -369,8 +345,6 @@ namespace Radiant {
     dc1394feature_t feature = featureTypeToNative(id);
 
     const char * name = dc1394_feature_get_string(feature);
-
-    // trace2("%s # %s %f", fname, name, value);
 
     bool automatic = value < 0.0f;
 
@@ -508,10 +482,6 @@ namespace Radiant {
 
   static Mutex g_mutex;
 
-  /**
-   * Initialize this instance and open connnection to the device to be
-   * controlled.
-   */
   bool VideoCamera1394::open(uint64_t euid,
                              int width,
                              int height,
@@ -545,10 +515,7 @@ namespace Radiant {
 
     dc1394video_mode_t video_mode;
 
-    // if(width >= 500)
     video_mode = DC1394_VIDEO_MODE_640x480_MONO8;
-    // else
-    // video_mode = DC1394_VIDEO_MODE_320x240_MONO8;
 
     dc1394framerates_t framerates;
     framerates.num = 0;
@@ -560,7 +527,6 @@ namespace Radiant {
         != DC1394_SUCCESS) {
         Radiant::error("%s # dc1394_video_get_supported_framerates",
                        fname);
-        // cleanup_and_exit(m_camera);
       }
       if(framerates.num != 0)
         break;
@@ -719,7 +685,7 @@ namespace Radiant {
     /* Tricky to get the frame-rate right:
 
        http://damien.douxchamps.net/ieee1394/libdc1394/v2.x/faq/#How_can_I_work_out_the_packet_size_for_a_wanted_frame_rate
-*/
+    */
 
     float busPeriod; // Bus period in seconds
 
@@ -777,59 +743,7 @@ namespace Radiant {
 
     return true;
   }
-  /*
-  bool VideoCamera1394::printFormat7Modes(const char * cameraeuid)
-  {
-    const char * fname = "VideoCamera1394::printFormat7Modes";
 
-    if(!findCamera(cameraeuid))
-      return false;
-
-    int err;
-    dc1394format7modeset_t modeset;
-
-    memset( & modeset, 0, sizeof(modeset));
-
-    err = dc1394_format7_get_modeset(m_camera, & modeset);
-
-    if(err != DC1394_SUCCESS) {
-      Radiant::error("%s # Could not get modeset", fname);
-      close();
-      return false;
-    }
-
-    CameraInfo ci(cameraInfo());
-
-    info("Format 7 mode information for %s %s (id = %s)",
-   ci.m_vendor.c_str(), ci.m_model.c_str(), cameraeuid);
-
-    for(int i = 0; i < DC1394_VIDEO_MODE_FORMAT7_NUM; i++) {
-
-      dc1394format7mode_t & mode = modeset.mode[i];
-
-      if(!mode.present) {
-  info(" Format7 mode %d not present", i);
-  continue;
-      }
-
-      info(" Format7 mode %d:", i);
-      info("  size    = [%d %d]\n"
-     "  maxsize = [%d %d]\n"
-     "  pos     = [%d %d]",
-     mode.size_x, mode.size_y,
-     mode.max_size_x, mode.max_size_y,
-     mode.pos_x, mode.pos_y);
-      info("  unitsize    = [%d %d]\n"
-     "  unitpos     = [%d %d]",
-     mode.unit_size_x, mode.unit_size_y,
-     mode.unit_pos_x, mode.unit_pos_y);
-      info("  pixum    = %d",
-     mode.pixnum);
-    }
-
-    return close();
-  }
-*/
   bool VideoCamera1394::isInitialized() const
   {
     return m_initialized;
@@ -853,17 +767,12 @@ namespace Radiant {
     return m_fps;
   }
 
-  /**
-   * Starts the camera data transmission.
-   */
   bool VideoCamera1394::start()
   {
     assert(isInitialized());
 
     if(m_started)
       return true;
-
-    // assert(m_started == false);
 
     if (dc1394_video_set_transmission(m_camera, DC1394_ON) != DC1394_SUCCESS) {
       Radiant::error("VideoCamera1394::start # unable to start camera iso transmission");
@@ -881,10 +790,6 @@ namespace Radiant {
     return true;
   }
 
-
-  /**
-   * Starts the camera data transmission.
-   */
   bool VideoCamera1394::stop()
   {
     m_started = false;
@@ -905,13 +810,8 @@ namespace Radiant {
     return true;
   }
 
-  /**
-   * Capture a camera frame.
-   */
   const VideoImage * VideoCamera1394::captureImage()
   {
-    // trace("VideoCamera1394::captureImage");
-
     assert(isInitialized());
 
     if(!m_started && !start())
@@ -941,7 +841,6 @@ namespace Radiant {
         ;
       else {
         FD_ZERO( & fds);
-        // error("VideoCamera1394::captureImage # no image available fd = %d r = %d", fd, r);
         return 0;
       }
       FD_ZERO( & fds);
@@ -967,14 +866,9 @@ namespace Radiant {
     if(!m_frame)
       return 0;
 
-    /* assert(m_frame->size[0] == (uint) m_image.m_width &&
-       m_frame->size[1] == (uint) m_image.m_height); */
-
     m_image.m_planes[0].m_data = (uchar *) m_frame->image;
 
     m_framesBehind = m_frame->frames_behind;
-
-    // trace("VideoCamera1394::captureImage # EXIT");
 
     m_outside++;
 
@@ -997,13 +891,8 @@ namespace Radiant {
     m_frame = 0;
   }
 
-  /**
-   * Shuts down the connection.
-   */
   bool VideoCamera1394::close()
   {
-    // assert(isInitialized());
-
     if(!m_camera)
       return false;
 
@@ -1148,13 +1037,6 @@ namespace Radiant {
 
     debugRadiant("%s # Initializing camera %s \"%s\"",
           fname, m_camera->vendor, m_camera->model);
-
-    /* int isochan = m_cameraNum + 2;
-       if(dc1394_video_specify_iso_channel(m_camera, isochan) !=DC1394_SUCCESS){
-       error(ERR_UNKNOWN, "%s # unable to set ISO channel to %d",
-       fname, isochan);
-       }
-       */
 
     if(dc1394_feature_get_all(m_camera, & m_features)
       != DC1394_SUCCESS) {

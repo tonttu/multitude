@@ -22,7 +22,7 @@ namespace Radiant {
 
   /** A guard that is used to make sure that programs do not get stuck.
 
-      If the program appears to be stuck (not calling #hostIsAlive for
+      If the program appears to be stuck (not calling @ref hostIsAlive for
       given time) then this class simply shuts down the application.
    */
   class RADIANT_API WatchDog FINAL : private Radiant::Thread
@@ -30,7 +30,9 @@ namespace Radiant {
     DECLARE_SINGLETON(WatchDog);
 
   public:
+    /// Constructor
     WatchDog();
+    /// Destructor
     ~WatchDog();
 
     /** Inform the watchdog that the host application is working. You can call this function
@@ -47,6 +49,7 @@ namespace Radiant {
     void forgetHost(void * key);
 
     /// Sets the interval for checking if the host is alive.
+    /// @param seconds Length of the interval in seconds
     void setInterval(float seconds) { m_intervalSeconds = seconds; }
     
     /** Stops the watchdog. */

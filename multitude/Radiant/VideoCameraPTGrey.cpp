@@ -28,6 +28,15 @@
 
 #define NUM_BUFFERS 10
 
+/// @todo Do we need this?
+//#define USE_MUTEX 1
+
+#ifdef USE_MUTEX
+#define GUARD_MUTEX Guard g(s_cameraMutex);
+#else
+#define GUARD_MUTEX
+#endif
+
 namespace Radiant
 {
   /* It seems that ptgrey drivers are not 100% thread-safe. To overcome this we
@@ -188,8 +197,7 @@ namespace Radiant
     config.grabTimeout = 0;
     config.numImageNotifications = 1;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
     if(err != FlyCapture2::PGRERROR_OK) {
@@ -272,8 +280,7 @@ namespace Radiant
 
     FlyCapture2::PGRGuid guid = it->second;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
 
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
@@ -421,8 +428,7 @@ namespace Radiant
       return false;
     }
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     FlyCapture2::Error err = m_camera.StartCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::start # %s", err.GetDescription());
@@ -445,8 +451,7 @@ namespace Radiant
 
     Radiant::info("VideoCameraPTGrey::stop");
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     FlyCapture2::Error err = m_camera.StopCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::stop # %s", err.GetDescription());
@@ -466,8 +471,7 @@ namespace Radiant
     Radiant::info("VideoCameraPTGrey::close");
     m_state = UNINITIALIZED;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     m_camera.Disconnect();
 
     return true;
@@ -492,17 +496,8 @@ namespace Radiant
         return false;
       }
     }
-    /*
-    if(m_image.size() != img.GetDataSize()) {
-      Radiant::info("ALLOCATED %dx%d bytes %d", m_image.width(), m_image.height(), m_image.size());
-      Radiant::info("FRAME %dx%d stride %d bytes %d", img.GetCols(), img.GetRows(), img.GetStride(), img.GetDataSize());
-
-      //assert(m_image.size() == img.GetDataSize());
-    }
-*/
 
     if(m_fakeFormat7 && m_format7Rect.width() > 1) {
-      // info("FAKE FORMAT 7 CAPTURE");
       // Copy only part of the image
       /* The fake format7 mode. This is done so that one can use Format7 ROI even
          when the feature is broken. One many Windows systems this only causes BSODs.
@@ -557,10 +552,7 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
-
-    // debugRadiant("VideoCameraPTGrey::setFeature # %d %f", id, value);
+    GUARD_MUTEX
 
     // If less than zero, use automatic mode
     if(value < 0.f) {
@@ -585,24 +577,11 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeatureRaw(FeatureType id, int32_t value)
   {
-    // debugRadiant("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
-
     FlyCapture2::Property prop;
     prop.type = propertyToFC2(id);
 
     m_camera.GetProperty(&prop);
-    /*
-    Radiant::info("DEBUG: BEFORE ADJUSTMENT");
-    Radiant::info("type %d", prop.type);
-    Radiant::info("present %d", prop.present);
-    Radiant::info("abs control %d", prop.absControl);
-    Radiant::info("one push %d", prop.onePush);
-    Radiant::info("on/off %d", prop.onOff);
-    Radiant::info("autoManual %d", prop.autoManualMode);
-    Radiant::info("value A %d", prop.valueA);
-    Radiant::info("value B %d", prop.valueB);
-    Radiant::info("abs value %f", prop.absValue);
-*/
+
 
     prop.valueA = value;
     prop.valueB = value;
@@ -616,13 +595,6 @@ namespace Radiant
                      err.GetDescription());
       err.PrintErrorTrace();
     }
-    /*
-    m_camera.GetProperty(&prop);
-    Radiant::info("DEBUG: AFTER ADJUSTMENT");
-    Radiant::info("abs control %d", prop.absControl);
-    Radiant::info("value A %d", prop.valueA);
-    Radiant::info("value B %d", prop.valueB);
-*/
   }
 
   bool VideoCameraPTGrey::enableTrigger(TriggerSource src)
@@ -814,8 +786,6 @@ namespace Radiant
     g_guidMap.clear();
 
     if(!g_bus) g_bus = new FlyCapture2::BusManager();
-
-    // g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
 
     // Get the number of available cameras
     unsigned int numCameras;
