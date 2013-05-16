@@ -185,15 +185,9 @@ namespace Luminous
         y += height;
       else
         y += line.height() * heightFactor;
+
       m_boundingBox |= line.naturalTextRect();
     }
-
-    // Move negative bounding box to (0,0). This might happen if the leading
-    // of the font is negative.
-    if(m_boundingBox.left() < 0)
-      m_boundingBox.moveLeft(-m_boundingBox.left());
-    if(m_boundingBox.top() < 0)
-      m_boundingBox.moveTop(-m_boundingBox.top());
 
     m_layout.endLayout();
     if (m_layout.text().isEmpty())
@@ -380,7 +374,6 @@ namespace Luminous
       m_d->layout(maximumSize());
       // We need to avoid calling bounding box here, becourse it calls generateInternal
       nonConst->setBoundingBox(m_d->m_boundingBox);
-      auto align = m_d->m_layout.textOption().alignment();
 
       float contentHeigth = m_d->m_boundingBox.height();
       if(m_d->m_layout.text().isEmpty()) {
@@ -389,14 +382,6 @@ namespace Luminous
           contentHeigth = line.height();
       }
 
-      if (align & Qt::AlignBottom) {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, maximumSize().height() - contentHeigth));
-      } else if (align & Qt::AlignVCenter) {
-        // Align empty text so that the first line is in the vertical middle.
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0.5f * (maximumSize().height() - contentHeigth)));
-      } else {
-        nonConst->setRenderLocation(Nimble::Vector2f(0, 0));
-      }
       nonConst->setLayoutReady(true);
       nonConst->clearGlyphs();
     }
