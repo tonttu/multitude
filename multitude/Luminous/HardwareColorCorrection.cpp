@@ -17,7 +17,7 @@ namespace Luminous
   class HardwareColorCorrection::Private : public Valuable::Node
   {
   public:
-    Private() : m_cc(0), m_ok(true)
+    Private() : m_cc(0), m_ok(false)
     {
       eventAddIn("sync");
     }
