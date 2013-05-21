@@ -52,9 +52,6 @@ namespace Radiant
     /// @return resolution in ticks per second
     inline int resolution() const;
 
-    /// Casts timer to double
-    /// @return current time in seconds (equivalent to calling time())
-    inline operator double() const;
   private:
     LARGE_INTEGER m_performanceFrequency;
     double m_performanceReciprocal;
@@ -88,11 +85,6 @@ namespace Radiant
     LARGE_INTEGER endTime;
     QueryPerformanceCounter(&endTime);
     return double((endTime.QuadPart - m_startTime.QuadPart) * m_performanceReciprocal);
-  }
-
-  Timer::operator double() const
-  {
-    return time();
   }
 }
 
