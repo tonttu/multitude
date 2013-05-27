@@ -10,6 +10,7 @@
 #include <QRegExp>
 #include <QStringList>
 #include <QFile>
+#include <QSettings>
 
 #ifdef RADIANT_UNIX
 #include <sys/types.h>
@@ -44,6 +45,71 @@ namespace
     } while (len - written > 0);
     return written;
   }
+
+#ifdef RADIANT_WINDOWS
+  QString scanPorts(int timeoutMs)
+  {
+    QByteArray buffer(2048, '\0');
+    foreach (const QString dev, Radiant::SerialPort::scan()) {
+      Radiant::SerialPort port;
+      if (port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, timeoutMs*1000)) {
+        if (port.write("?", 1) != 1)
+          continue;
+        // we don't want partial response, so we sleep
+        Radiant::Sleep::sleepMs(timeoutMs);
+        buffer.resize(2048);
+        int bytes = port.read(buffer.data(), buffer.size(), true);
+        if (bytes > 0) {
+          buffer.resize(bytes);
+          if (buffer.contains("VM1") || buffer.contains("LVDS power"))
+            return dev;
+        }
+      }
+    }
+    return QString();
+  }
+
+  static Radiant::Mutex s_scanMutex;
+  QString discover()
+  {
+    const int retries = 10;
+    QSettings settings("SOFTWARE\\MultiTouch\\MTSvc", QSettings::NativeFormat);
+    QString dev = settings.value("VM1").toString();
+    if (dev.isEmpty()) {
+      Radiant::Guard g(s_scanMutex);
+      settings.sync();
+      dev = settings.value("VM1").toString();
+      if (!dev.isEmpty())
+        return dev;
+
+      static int retry = 0;
+      if (retry > retries)
+        return QString();
+      dev = scanPorts(retry++ == 0 ? 500 : 30);
+      if (!dev.isEmpty())
+        settings.setValue("VM1", dev);
+    }
+    return dev;
+  }
+
+  void vm1Opened(bool ok)
+  {
+    static int errors = 0;
+    if (ok) {
+      errors = 0;
+    } else {
+      if (++errors == 5) {
+        Radiant::warning("Too many errors, clearing VM1 device name");
+        QSettings settings("SOFTWARE\\MultiTouch\\MTSvc", QSettings::NativeFormat);
+        settings.setValue("VM1", "");
+      }
+    }
+  }
+
+#else
+  void vm1Opened(bool) {}
+#endif
+
 }
 
 namespace Luminous
@@ -68,7 +134,10 @@ namespace Luminous
     Radiant::SerialPort m_port;
 
     int m_errors;
+
+    static std::weak_ptr<VM1::D> s_d;
   };
+  std::weak_ptr<VM1::D> VM1::D::s_d;
 
   VM1::D::D()
     : m_errors(0)
@@ -90,6 +159,8 @@ namespace Luminous
   {
 #ifdef RADIANT_LINUX
     return "/dev/ttyVM1";
+#elif defined(RADIANT_WINDOWS)
+    return discover();
 #else
     return "";
 #endif
@@ -131,7 +202,7 @@ namespace Luminous
 
     {
       Radiant::Guard g(s_vm1Mutex);
-      writeAll(ba.data(), ba.size(), m_port, 300);
+      writeAll(ba.data(), ba.size(), m_port, 500);
     }
     m_errors = 0;
 
@@ -152,9 +223,12 @@ namespace Luminous
     if (dev.isEmpty())
       return false;
 
-    if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 10000))
+    if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 30000)) {
+      vm1Opened(false);
       return false;
+    }
 
+    vm1Opened(true);
     return true;
   }
 
@@ -172,8 +246,17 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   VM1::VM1()
-    : m_d(new D())
-  {}
+    : m_d(D::s_d.lock())
+  {
+    if (!m_d) {
+      Radiant::Guard g(s_vm1Mutex);
+      m_d = D::s_d.lock();
+      if (!m_d) {
+        m_d.reset(new D());
+        D::s_d = m_d;
+      }
+    }
+  }
 
   VM1::~VM1()
   {}
@@ -184,7 +267,7 @@ namespace Luminous
     struct stat tmp;
     return stat(m_d->findVM1().toUtf8().data(), &tmp) == 0 && (tmp.st_mode & S_IFCHR);
 #else
-    return QFile::exists(m_d->findVM1());
+    return !m_d->findVM1().isEmpty();
 #endif
   }
 
@@ -287,6 +370,20 @@ namespace Luminous
     for (int i = 0; i < 100; ++i) {
       /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
       int r = m_d->m_port.read(buffer, 256);
+#ifdef RADIANT_WINDOWS
+      if (r == 0) {
+        DWORD err = GetLastError();
+        if (err == ERROR_SUCCESS || err == ERROR_IO_PENDING) {
+          if (res.size() > 0 && prev == 0) {
+            break;
+          }
+          prev = 0;
+          Radiant::Sleep::sleepMs(20);
+          continue;
+        }
+        break;
+      } else
+#endif
       if(r > 0) {
         res.append(buffer, r);
         prev = r;
