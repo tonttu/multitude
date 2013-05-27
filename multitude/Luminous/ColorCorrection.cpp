@@ -81,6 +81,8 @@ namespace {
     QByteArray serialize() const;
     bool deserialize(const QByteArray & str);
 
+    void fixEdges();
+
   private:
     void update();
 
@@ -199,6 +201,7 @@ namespace {
     stream.setRealNumberPrecision(3);
     for (size_t i = 0; i < m_points.size(); ++i)
       stream << m_points[i].x << " " << m_points[i].y << " ";
+    stream.flush();
     return out;
   }
 
@@ -215,8 +218,33 @@ namespace {
       m_points.push_back(Nimble::Vector2f(x, y));
     }
 
+    fixEdges();
     update();
     return true;
+  }
+
+  void ColorSpline::fixEdges()
+  {
+    if (m_points.size() == 0) {
+      insert(0, 0);
+      insert(1, 1);
+    } else {
+      Nimble::Vector2f p;
+      nearestControlPoint(0.0f, p);
+      if (p.x != 0.0f) {
+        if (Nimble::Math::Abs(p.x) < 1.0/256.0f)
+          p.x = 0;
+        else
+          insert(0, 0);
+      }
+      nearestControlPoint(1.0f, p);
+      if (p.x != 1.0f) {
+        if (Nimble::Math::Abs(p.x-1.0f) < 1.0/256.0f)
+          p.x = 1;
+        else
+          insert(1, 1);
+      }
+    }
   }
 
   void ColorSpline::update()
@@ -283,6 +311,9 @@ namespace Luminous
       m_d(new D(this))
   {
     eventAddOut("changed");
+
+    for (int c = 0; c < 3; ++c)
+      m_d->m_splines[c].fixEdges();
 
     setIdentity();
     eventSend("changed");
@@ -402,8 +433,10 @@ namespace Luminous
     for (int c = 0; c < 3; ++c) {
       int pointCount = bd.readInt32();
       points[c].resize(pointCount);
-      if (!bd.readBlob(pointCount > 0 ? &points[c][0] : 0, int(pointCount * sizeof(points[c][0]))))
+      if (!bd.readBlob(pointCount > 0 ? &points[c][0] : 0, int(pointCount * sizeof(points[c][0])))) {
+        Radiant::warning("ColorCorrection::decode # read error");
         return false;
+      }
     }
 
     for (int c = 0; c < 3; ++c)
@@ -478,6 +511,8 @@ namespace Luminous
   bool ColorCorrection::deserialize(const Valuable::ArchiveElement & element)
   {
     bool b = Node::deserialize(element);
+    for (int c = 0; c < 3; ++c)
+      m_d->m_splines[c].fixEdges();
     checkChanged();
     return b;
   }
@@ -496,6 +531,8 @@ namespace Luminous
               addControlPoint(i/255.0f, i/255.0f + offsets->at(i)[c], c, false);
           }
         }
+        for (int c = 0; c < 3; ++c)
+          m_d->m_splines[c].fixEdges();
         checkChanged();
         if (m_d->m_identity) {
           for (int c = 0; c < 3; ++c) {

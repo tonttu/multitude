@@ -359,7 +359,10 @@ namespace Luminous
     Radiant::Guard g(s_vm1Mutex);
 
     char buffer[256];
-    while (m_d->m_port.read(buffer, 256) > 0) {}
+    Radiant::Sleep::sleepMs(1);
+    while (m_d->m_port.read(buffer, 256) > 0) {
+      Radiant::Sleep::sleepMs(1);
+    }
 
     QByteArray ba("i");
     if(writeAll(ba.data(), ba.size(), m_d->m_port, 300) != ba.size())
@@ -378,7 +381,7 @@ namespace Luminous
             break;
           }
           prev = 0;
-          Radiant::Sleep::sleepMs(20);
+          Radiant::Sleep::sleepMs(30);
           continue;
         }
         break;
