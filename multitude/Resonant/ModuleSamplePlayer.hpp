@@ -12,6 +12,9 @@
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
 #include <memory>
+
+#include <Nimble/Ramp.hpp>
+
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Condition.hpp>
@@ -48,9 +51,9 @@ namespace Resonant {
     /// Delete the sample player
     virtual ~ModuleSamplePlayer();
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void eventProcess(const QByteArray & address, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &);
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
 
     /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped
@@ -102,8 +105,10 @@ namespace Resonant {
         back for-ever.
 
         @param time optional timestamp when to play the sample
+
+        @return This function returns an integer note id, that can be used to control this note.
     */
-    void playSample(const char * filename,
+    int playSample(const char * filename,
                     float gain,
                     float relpitch,
                     int targetChannel,
@@ -137,13 +142,16 @@ namespace Resonant {
 
         @param time optional timestamp when to play the sample
     */
-    void playSampleAtLocation(const char * filename,
+    int playSampleAtLocation(const char * filename,
                               float gain,
                               float relpitch,
                               Nimble::Vector2 location,
                               int sampleChannel,
                               bool loop = false,
                               Radiant::TimeStamp time = Radiant::TimeStamp(0));
+
+    /// Stops the playback of a given sample
+    void stopSample(int noteId);
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
@@ -166,6 +174,7 @@ namespace Resonant {
     int findSample(const char * );
 
     void loadSamples();
+    void stopSampleInternal(Radiant::BinaryData & data);
 
     class SampleInfo
     {
@@ -208,6 +217,7 @@ namespace Resonant {
     public:
       SampleVoice(Sample * s = 0)
         : m_state(INACTIVE), m_gain(1), m_relPitch(1.0f),
+          m_dpos(0), m_noteId(0), m_finishCounter(-1),
           m_sampleChannel(0), m_targetChannel(0),
           m_sample(s), m_position(0)
       {}
@@ -224,6 +234,9 @@ namespace Resonant {
 
       void clear() { m_state = INACTIVE; m_sample.reset(); }
 
+      void stop(float fadeTime = 0.02f, float sampleRate = 44100.0f);
+
+      int noteId() const { return m_noteId; }
 
     private:
       enum State {
@@ -234,9 +247,11 @@ namespace Resonant {
 
       State m_state;
 
-      float m_gain;
+      Nimble::Rampd m_gain;
       float m_relPitch;
       double m_dpos;
+      int m_noteId;
+      int m_finishCounter;
 
       size_t m_sampleChannel;
       size_t m_targetChannel;
@@ -310,6 +325,8 @@ namespace Resonant {
 
     void dropVoice(size_t index);
 
+    SampleVoice * findVoiceForNoteId(int noteId);
+
     std::list<SampleInfo> m_sampleList;
 
     std::vector<std::shared_ptr<Sample> > m_samples;
@@ -324,6 +341,10 @@ namespace Resonant {
     Radiant::TimeStamp m_time;
 
     BGLoader * m_loader;
+
+    int m_userNoteIdCounter;
+
+    Radiant::Mutex m_mutex;
   };
 
 }
