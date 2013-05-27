@@ -12,7 +12,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <cassert>
-#include <QString>
+#include <QSettings>
 
 namespace Radiant
 {
@@ -197,6 +197,38 @@ namespace Radiant
   bool SerialPort::isOpen() const
   {
     return (m_hPort != 0);
+  }
+
+  QStringList SerialPort::scan()
+  {
+    QStringList ports;
+    HKEY key;
+    /// QSettings doesn't support registry values that have '\' or '/' in
+    /// their names, so we are forced to use raw win api.
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\SERIALCOMM",
+                      0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) {
+      Radiant::error("SerialPort::scan # Failed to open \"HARDWARE\\DEVICEMAP\\SERIALCOMM\"");
+      return ports;
+    }
+
+    for (int i = 0; ; ++i) {
+      QByteArray name(255, '\0');
+      QByteArray value(255, '\0');
+      DWORD nameSize = name.size();
+      DWORD valueSize = value.size();
+      long err = RegEnumValueA(key, i, name.data(), &nameSize, nullptr, nullptr, (LPBYTE)value.data(), &valueSize);
+      if (err == ERROR_NO_MORE_ITEMS)
+        break;
+      if (err == ERROR_SUCCESS) {
+        if (name.startsWith("\\Device\\"))
+          ports << value;
+      } else {
+        Radiant::error("SerialPort::scan # RegEnumValueA error %d", err);
+      }
+    }
+    RegCloseKey(key);
+
+    return ports;
   }
 
 }

@@ -14,7 +14,7 @@
 # include <windows.h>
 #endif
 
-#include <QString>
+#include <QStringList>
 
 namespace Radiant
 {
@@ -70,6 +70,12 @@ namespace Radiant
     bool isOpen() const;
     /// Returns the name of the device
     const QString & deviceName() { return m_device; }
+
+#ifdef RADIANT_WINDOWS
+    /// @todo implement this on all platforms
+    /// @returns list of all found serial ports on the system
+    static QStringList scan();
+#endif
 
   private:
 
