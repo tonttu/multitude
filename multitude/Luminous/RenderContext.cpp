@@ -1110,7 +1110,7 @@ namespace Luminous
     m.identity();
 
 
-    Nimble::Vector2f renderLocation = layout.renderLocation() - viewRect.low() + renderOffset;
+    Nimble::Vector2f renderLocation = renderOffset - viewRect.low();
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
@@ -1132,7 +1132,7 @@ namespace Luminous
                               std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
         } else {
           b.uniform->clip = viewRect;
-          b.uniform->clip.move(-layout.renderLocation() - renderOffset);
+          b.uniform->clip.move(-renderOffset - location);
         }
 
         m.setTranslation(offset);

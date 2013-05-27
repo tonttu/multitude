@@ -53,9 +53,6 @@ namespace Radiant
     /// @return resolution in ticks per second
     inline int resolution() const;
 
-    /// Casts timer to double
-    /// @return current time in seconds (equivalent to calling time())
-    inline operator double() const;
   private:
     struct timeval m_startTime;
   };
@@ -94,11 +91,6 @@ namespace Radiant
     double dus = endTime.tv_usec - m_startTime.tv_usec;
 
     return ds + 1e-6 * dus;
-  }
-
-  Timer::operator double() const
-  {
-    return time();
   }
 }
 
