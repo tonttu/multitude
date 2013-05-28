@@ -34,6 +34,10 @@ namespace Resonant {
       This class implements a basic sample player, which can be used
       as a minimal synthesizer.
 
+      <B>Note management:</B> Playing samples become notes that can be controlled by the user.
+      If you play the same sample many times, each note is treated individually.
+      For this purpose the functions that start sample playback return NoteInfo objects that can
+      be used to query the state of the note.
 
       <B>Memory management:</B> The samples (aka audio files)
       are read from the disk as they are needed. The samples are loaded when they
@@ -72,7 +76,9 @@ namespace Resonant {
   public:
 
     /// Note information container
-    /** This class can be used to track the playback of individual notes. */
+    /** This class can be used to track the playback of individual notes. Instances of this class
+        can be copied freely.
+    */
     class NoteInfo
     {
     public:
@@ -128,7 +134,6 @@ namespace Resonant {
         @param delay Delay time to wait before starting the playback. Short delay times
         may lead to poor synchronization between different channels.
 
-        @return Returns a handle to the note playback information
     */
 
     void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000,
@@ -157,9 +162,9 @@ namespace Resonant {
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
 
-        @param time optional timestamp when to play the sample
+        @param time optional timestamp when to play the sample.
 
-        @return This function returns an integer note id, that can be used to control this note.
+        @return Returns a handle to the note playback information.
     */
     NoteInfo playSample(const char * filename,
                         float gain,
@@ -193,9 +198,9 @@ namespace Resonant {
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
 
-        @param time optional timestamp when to play the sample
+        @param time optional timestamp when to play the sample.
 
-        @return Returns a handle to the note playback information
+        @return Returns a handle to the note playback information.
     */
     NoteInfo playSampleAtLocation(const char * filename,
                                   float gain,
