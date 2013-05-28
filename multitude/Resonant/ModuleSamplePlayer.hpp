@@ -61,7 +61,7 @@ namespace Resonant {
 
   private:
     /* This private block is here since the class needs to be hidden, but it needs the above enum. */
-    class NoteInfoInternal
+    class RESONANT_API NoteInfoInternal
     {
     public:
 
@@ -79,7 +79,7 @@ namespace Resonant {
     /** This class can be used to track the playback of individual notes. Instances of this class
         can be copied freely.
     */
-    class NoteInfo
+    class RESONANT_API NoteInfo
     {
     public:
       NoteInfo();
