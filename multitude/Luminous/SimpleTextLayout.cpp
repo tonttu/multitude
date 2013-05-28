@@ -96,6 +96,9 @@ namespace
 {
   Radiant::Mutex s_layoutCacheMutex;
   std::unordered_map<LayoutCacheKey, LayoutPtr> s_layoutCache;
+
+  const float s_defaultLineHeight = 1.0f;
+  const float s_defaultLetterSpacing = 1.0f;
 }
 
 namespace Luminous
@@ -141,16 +144,26 @@ namespace Luminous
 
     bool forceHeight = false;
     float height = 0.0f;
-    float heightFactor = 1.0f;
+    float heightFactor = s_defaultLineHeight;
     float y = 0;
 
     if (m_lineHeight.size() == 1) {
       if (m_lineHeight.unit() == Valuable::Attribute::VU_PXS) {
         forceHeight = true;
         height = m_lineHeight.asFloat();
-      } else if (m_lineHeight.unit() == Valuable::Attribute::VU_UNKNOWN ||
-                 m_lineHeight.unit() == Valuable::Attribute::VU_PERCENTAGE) {
+      } else if (m_lineHeight.unit() == Valuable::Attribute::VU_PERCENTAGE) {
         heightFactor = m_lineHeight.asFloat();
+      } else if (m_lineHeight.unit() == Valuable::Attribute::VU_UNKNOWN) {
+        if(m_lineHeight.isNumber())
+          heightFactor = m_lineHeight.asFloat();
+        else if (m_lineHeight.asKeyword() == "normal")
+          heightFactor = s_defaultLineHeight;
+        else
+          Radiant::error("Not a valid value for line-height: %s",
+                         m_lineHeight.stringify().toUtf8().data());
+      } else {
+        Radiant::error("Unsupported unit for line-height: %s",
+                       m_letterSpacing.stringify().toUtf8().data());
       }
     }
 
@@ -158,13 +171,22 @@ namespace Luminous
 
     QFont font = m_layout.font();
     if (m_letterSpacing.size() == 1) {
-      if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
-        font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
-      } else {
+      if (m_letterSpacing.unit() == Valuable::Attribute::VU_PXS) {
         font.setLetterSpacing(QFont::AbsoluteSpacing, m_letterSpacing.asFloat());
+      } else if (m_letterSpacing.unit() == Valuable::Attribute::VU_PERCENTAGE) {
+        font.setLetterSpacing(QFont::PercentageSpacing, m_letterSpacing.asFloat() * 100.0f);
+      } else if (m_letterSpacing.unit() == Valuable::Attribute::VU_UNKNOWN) {
+        if(m_letterSpacing.asKeyword() == "normal")
+          font.setLetterSpacing(QFont::PercentageSpacing, s_defaultLetterSpacing * 100.0f);
+        else
+          Radiant::error("Not a valid value for letter-spacing: %s",
+                         m_letterSpacing.stringify().toUtf8().data());
+      } else {
+        Radiant::error("Unsupported unit for letter-spacing: %s",
+                       m_letterSpacing.stringify().toUtf8().data());
       }
     } else {
-      font.setLetterSpacing(QFont::PercentageSpacing, 100.0f);
+      font.setLetterSpacing(QFont::PercentageSpacing, s_defaultLetterSpacing * 100.0f);
     }
     m_layout.setFont(font);
 
