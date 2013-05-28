@@ -311,8 +311,13 @@ namespace Resonant {
   {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
 
-    int r = stream.first->callback(in, out, framesPerBuffer, stream.second, *time, status);
-    return stream.first->m_isRunning ? r : paComplete;
+    if(stream.first->m_isRunning) {
+      int r = stream.first->callback(in, out, framesPerBuffer, stream.second, *time, status);
+      return stream.first->m_isRunning ? r : paComplete;
+    }
+    else {
+      return paComplete;
+    }
   }
 
   void AudioLoop::AudioLoopInternal::paFinished(void * self)
