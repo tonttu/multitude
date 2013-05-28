@@ -27,6 +27,50 @@
 
 namespace Resonant {
 
+
+  ModuleSamplePlayer::NoteInfoInternal::NoteInfoInternal()
+    : m_status(NOTE_PLAYING)
+    , m_noteId(-1)
+
+  {
+  }
+
+
+  ModuleSamplePlayer::NoteInfo::NoteInfo()
+  {}
+
+  ModuleSamplePlayer::NoteInfo::~NoteInfo()
+  {}
+
+  ModuleSamplePlayer::NoteStatus ModuleSamplePlayer::NoteInfo::status() const
+  {
+    if(m_info)
+      return m_info->m_status;
+
+    return NOTE_FINISHED;
+  }
+
+  int ModuleSamplePlayer::NoteInfo::noteId() const
+  {
+    if(m_info)
+      return m_info->m_noteId;
+
+    return -1;
+  }
+
+  void ModuleSamplePlayer::NoteInfo::init(int id)
+  {
+    if(!m_info)
+      m_info = NoteInfoInternalPtr(new NoteInfoInternal());
+
+    m_info->m_noteId = id;
+    m_info->m_status = NOTE_PLAYING;
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+
   class ModuleSamplePlayer::Sample::Internal
   {
   public:
@@ -264,6 +308,19 @@ namespace Resonant {
       if(!data.readString(name, buflen)) {
         Radiant::error("ModuleSamplePlayer::SampleVoice::init # Error reading parameter");
         break;
+      }
+    }
+
+    if(m_noteId > 0) {
+      Radiant::Guard g(host->m_mutex);
+      auto it = host->m_infos.find(m_noteId);
+      if(it != host->m_infos.end()) {
+        m_info = it->second;
+      }
+      else {
+        m_info = NoteInfoInternalPtr(new NoteInfoInternal());
+        m_info->m_noteId = m_noteId;
+        host->m_infos[m_noteId] = m_info;
       }
     }
 
@@ -538,6 +595,21 @@ namespace Resonant {
 
   }
 
+  bool ModuleSamplePlayer::stop()
+  {
+    for(auto it : m_infos) {
+      it.second->m_status = NOTE_FINISHED;
+    }
+
+    m_infos.clear();
+
+    while(m_active > 0) {
+      dropVoice(m_active - 1);
+    }
+
+    return true;
+  }
+
   bool ModuleSamplePlayer::addSample(const char * filename, const char * name)
   {
     if(!Radiant::FileUtils::fileReadable(filename))
@@ -619,7 +691,7 @@ namespace Resonant {
   }
 
 
-  int ModuleSamplePlayer::playSample(const char * filename,
+  ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSample(const char * filename,
                                       float gain,
                                       float relpitch,
                                       int targetChannel,
@@ -634,15 +706,18 @@ namespace Resonant {
     if(!sndf) {
       Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
                      filename);
-      return 0;
+      return NoteInfo();
     }
 
     sf_close(sndf);
 
     int noteId;
+    NoteInfo noteInfo;
     {
       Radiant::Guard g(m_mutex);
       noteId = m_userNoteIdCounter++;
+      noteInfo.init(noteId);
+      m_infos[noteId] = noteInfo.m_info;
     }
 
     Radiant::BinaryData control;
@@ -681,10 +756,10 @@ namespace Resonant {
     // Send the control message to the sample player.
     DSPNetwork::instance()->send(control);
 
-    return noteId;
+    return noteInfo;
   }
 
-  int ModuleSamplePlayer::playSampleAtLocation(const char *filename, float gain, float relpitch,
+  ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSampleAtLocation(const char *filename, float gain, float relpitch,
                                                Nimble::Vector2 location, int sampleChannel,
                                                bool loop, Radiant::TimeStamp time)
   {
@@ -694,15 +769,18 @@ namespace Resonant {
     if(!sndf) {
       Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
                      filename);
-      return 0;
+      return NoteInfo();
     }
 
     sf_close(sndf);
 
+    NoteInfo noteInfo;
     int noteId;
     {
       Radiant::Guard g(m_mutex);
       noteId = m_userNoteIdCounter++;
+      noteInfo.init(noteId);
+      m_infos[noteId] = noteInfo.m_info;
     }
 
     Radiant::BinaryData control;
@@ -741,7 +819,7 @@ namespace Resonant {
     // Send the control message to the sample player.
     DSPNetwork::instance()->send(control);
 
-    return noteId;
+    return noteInfo;
   }
 
   void ModuleSamplePlayer::stopSample(int noteId)
@@ -872,11 +950,22 @@ namespace Resonant {
     // trace("ModuleSamplePlayer::dropVoice # %d", i);
     assert( i < m_active);
     m_active--;
+    NoteInfoInternalPtr noteInfo = m_voiceptrs[i]->info();
     m_voiceptrs[i]->clear();
     for( ; i < m_active; i++) {
       m_voiceptrs[i] = m_voiceptrs[i + 1];
     }
     m_voiceptrs[m_active] = 0;
+
+    if(noteInfo) {
+      Radiant::Guard g(m_mutex);
+      auto it = m_infos.find(noteInfo->m_noteId);
+      if(it != m_infos.end()) {
+        m_infos.erase(it);
+      }
+
+      noteInfo->m_status = NOTE_FINISHED;
+    }
   }
 
   ModuleSamplePlayer::SampleVoice * ModuleSamplePlayer::findVoiceForNoteId(int noteId)
@@ -888,5 +977,6 @@ namespace Resonant {
     }
     return 0;
   }
+
 }
 

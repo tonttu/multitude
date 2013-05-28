@@ -46,6 +46,55 @@ namespace Resonant {
   {
   public:
 
+    /// Possible states of the individual notes
+    /** Each note has its own id.*/
+    enum NoteStatus {
+      /// Note is playing
+      NOTE_PLAYING,
+      /// Note is finished
+      NOTE_FINISHED
+    };
+
+  private:
+    /* This private block is here since the class needs to be hidden, but it needs the above enum. */
+    class NoteInfoInternal
+    {
+    public:
+
+      NoteInfoInternal();
+
+      NoteStatus m_status;
+      int m_noteId;
+    };
+
+    typedef std::shared_ptr<NoteInfoInternal> NoteInfoInternalPtr;
+
+  public:
+
+    /// Note information container
+    /** This class can be used to track the playback of individual notes. */
+    class NoteInfo
+    {
+    public:
+      NoteInfo();
+      ~NoteInfo();
+
+      /// Returns the current status of the note
+      NoteStatus status() const;
+      /// Returns the identified of the note
+      int noteId() const;
+
+      /// Returns true if the note is playing
+      bool isPlaying() const { return status() == NOTE_PLAYING; }
+
+    private:
+
+      friend class ModuleSamplePlayer;
+      void init(int id);
+
+      NoteInfoInternalPtr m_info;
+    };
+
     /// Audio sample player module
     ModuleSamplePlayer();
     /// Delete the sample player
@@ -54,6 +103,8 @@ namespace Resonant {
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void eventProcess(const QByteArray & address, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
+    virtual bool stop() OVERRIDE;
+
 
     /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped
@@ -76,6 +127,8 @@ namespace Resonant {
 
         @param delay Delay time to wait before starting the playback. Short delay times
         may lead to poor synchronization between different channels.
+
+        @return Returns a handle to the note playback information
     */
 
     void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000,
@@ -108,13 +161,13 @@ namespace Resonant {
 
         @return This function returns an integer note id, that can be used to control this note.
     */
-    int playSample(const char * filename,
-                    float gain,
-                    float relpitch,
-                    int targetChannel,
-                    int sampleChannel,
-                    bool loop = false,
-                    Radiant::TimeStamp time = Radiant::TimeStamp(0));
+    NoteInfo playSample(const char * filename,
+                        float gain,
+                        float relpitch,
+                        int targetChannel,
+                        int sampleChannel,
+                        bool loop = false,
+                        Radiant::TimeStamp time = Radiant::TimeStamp(0));
 
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
@@ -141,17 +194,21 @@ namespace Resonant {
         back for-ever.
 
         @param time optional timestamp when to play the sample
+
+        @return Returns a handle to the note playback information
     */
-    int playSampleAtLocation(const char * filename,
-                              float gain,
-                              float relpitch,
-                              Nimble::Vector2 location,
-                              int sampleChannel,
-                              bool loop = false,
-                              Radiant::TimeStamp time = Radiant::TimeStamp(0));
+    NoteInfo playSampleAtLocation(const char * filename,
+                                  float gain,
+                                  float relpitch,
+                                  Nimble::Vector2 location,
+                                  int sampleChannel,
+                                  bool loop = false,
+                                  Radiant::TimeStamp time = Radiant::TimeStamp(0));
 
     /// Stops the playback of a given sample
     void stopSample(int noteId);
+
+    void stopSample(const NoteInfo & info) { stopSample(info.noteId()); }
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
@@ -238,6 +295,7 @@ namespace Resonant {
 
       int noteId() const { return m_noteId; }
 
+      NoteInfoInternalPtr info() { return m_info; }
     private:
       enum State {
         INACTIVE,
@@ -259,6 +317,7 @@ namespace Resonant {
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;
       Radiant::TimeStamp m_startTime;
+      NoteInfoInternalPtr m_info;
     };
 
     /* Loads samples from the disk, as necessary. */
@@ -333,6 +392,7 @@ namespace Resonant {
 
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;
+    std::map<int, NoteInfoInternalPtr> m_infos;
 
     size_t m_channels;
     size_t m_active;
