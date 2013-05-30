@@ -22,6 +22,7 @@
 #include "Trace.hpp"
 
 #include <QSettings>
+#include <QProcess>
 
 #include <assert.h>
 
@@ -152,6 +153,24 @@ namespace Radiant
     void setEnv(const char * name, const char * value)
     {
       SetEnvironmentVariableA((char *) name, (char *) value);
+    }
+
+    void openFirewallPortTCP(int port, const QString & name)
+    {
+      QByteArray argv0(512, '\0');
+      GetModuleFileNameA(0, argv0.data(), argv0.size());
+      QString nameRule = QString("name=%1").arg(name);
+      QString progRule = QString("program=%1").arg(argv0.data());
+      QString portRule = QString("localport=%1").arg(port);
+
+      QProcess::execute("netsh", QStringList() << "advfirewall" << "firewall" <<
+                        "delete" << "rule" << nameRule << "dir=in" << "profile=any" <<
+                        progRule << "protocol=tcp");
+
+      QProcess::execute("netsh", QStringList() << "advfirewall" << "firewall" <<
+                        "add" << "rule" << nameRule << "dir=in" << "action=allow" <<
+                        progRule << "profile=any" << portRule << "protocol=tcp" <<
+                        "interfacetype=lan");
     }
 
   }

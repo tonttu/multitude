@@ -115,6 +115,10 @@ namespace Radiant
       else
         unsetenv(name);
     }
+
+    void openFirewallPortTCP(int port, const QString & name)
+    {
+    }
   }
 
 }

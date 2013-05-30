@@ -60,6 +60,11 @@ namespace Radiant
 
     /// Setup an environment variable
     RADIANT_API void setEnv(const char * name, const char * value);
+
+    /// Make a new TCP rule to OS firewall
+    /// @param port TCP port to open
+    /// @param name rule name
+    RADIANT_API void openFirewallPortTCP(int port, const QString & name);
   }
 
 }
