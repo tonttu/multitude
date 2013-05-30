@@ -53,7 +53,7 @@ namespace Resonant {
   public:
     /// Creates a new audio IO object
     AudioLoop();
-    /// Deletes an audio OI object
+    /// Deletes an audio IO object
     virtual ~AudioLoop();
 
     /// Start the AudioLoop.
