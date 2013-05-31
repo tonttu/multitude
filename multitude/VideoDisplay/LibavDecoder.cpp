@@ -1898,9 +1898,11 @@ namespace VideoDisplay
       }
 
       if(err < 0) {
-        /// @todo if we are reading a socket-based stream, it might be possible
-        ///       to get eof if our input buffer just ends. We should now call
-        ///       read_packet to make sure we actually are at eof
+        // With streams we might randomly get EAGAIN, at least on linux
+        if(err == AVERROR(EAGAIN)) {
+          Radiant::Sleep::sleepMs(1);
+          continue;
+        } else
         if(err != AVERROR_EOF) {
           avError(QString("%1 Read error").arg(errorMsg.data()), err);
           state() = STATE_ERROR;
