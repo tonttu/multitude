@@ -1189,29 +1189,37 @@ namespace VideoDisplay
     }
 
     if(m_videoFilter.graph) {
-      AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
-            m_av.frame->data, m_av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
-            m_av.frame->width, m_av.frame->height,
-            AVPixelFormat(m_av.frame->format));
+      // If we don't have dr1, we can't use buffer refs, we need to actually copy the data
+      int err;
+      if (m_av.dr1) {
+        AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
+              m_av.frame->data, m_av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
+              m_av.frame->width, m_av.frame->height,
+              AVPixelFormat(m_av.frame->format));
 
-      if (ref)
-        avfilter_copy_frame_props(ref, m_av.frame);
+        if (ref)
+          avfilter_copy_frame_props(ref, m_av.frame);
 
-      if(buffer) {
-        ref->buf->priv = new std::pair<LibavDecoder::D *, DecodedImageBuffer *>(this, buffer);
-        ref->buf->free = releaseFilterBuffer;
+        if(buffer) {
+          ref->buf->priv = new std::pair<LibavDecoder::D *, DecodedImageBuffer *>(this, buffer);
+          ref->buf->free = releaseFilterBuffer;
+        }
+        err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
+        if (err < 0)
+          avfilter_unref_buffer(ref);
+      } else {
+        err = av_buffersrc_write_frame(m_videoFilter.bufferSourceFilter, m_av.frame);
       }
 
-      int err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
       if(err < 0) {
-        avError(QString("LibavDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref failed").
+        avError(QString("LibavDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref/av_buffersrc_write_frame failed").
                 arg(m_options.source()), err);
-        avfilter_unref_buffer(ref);
       } else {
         while (true) {
           // we either use custom deleter (releaseFilterBuffer) or the
           // default one with the actual data cleared
-          if(!buffer)
+          // without dr1, we let libav handle the memory
+          if (m_av.dr1 && !buffer)
             m_av.packet.data = nullptr;
 
           AVFilterBufferRef * output = nullptr;
