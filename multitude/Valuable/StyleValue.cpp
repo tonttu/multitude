@@ -41,14 +41,14 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_NONE)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {}
 
   StyleValue::Component::Component(float f, Attribute::ValueUnit unit)
     : m_data()
     , m_type(TYPE_FLOAT)
     , m_unit(unit)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     m_data.m_float = f;
   }
@@ -57,7 +57,7 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_INT)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     m_data.m_int = i;
   }
@@ -66,7 +66,7 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_COLOR)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     m_data.m_color = new Radiant::Color(color);
   }
@@ -75,7 +75,7 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_STRING)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     m_data.m_string = new QString(string);
   }
@@ -84,7 +84,7 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_KEYWORD)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     m_data.m_keyword = new QByteArray(keyword);
   }
@@ -110,7 +110,7 @@ namespace Valuable
     : m_data()
     , m_type(TYPE_NONE)
     , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::WHITE_SPACE)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
     operator=(component);
   }
@@ -328,7 +328,7 @@ namespace Valuable
       Component key(it.key().toUtf8());
       Component value(it.value());
       if (m_components.size() > 0)
-        key.setSeparator(COMMA);
+        key.setSeparator(SEPARATOR_COMMA);
       append(key);
       append(value);
     }
@@ -461,9 +461,9 @@ namespace Valuable
         Radiant::error("StyleValue::stringify # Unknown component type %d (%s)", t, v.typeName());
         continue;
       }
-      if (separator == COMMA) {
+      if (separator == SEPARATOR_COMMA) {
         out << ",";
-      } else if (separator == SLASH) {
+      } else if (separator == SEPARATOR_SLASH) {
         out << "/";
       }
     }
@@ -505,7 +505,7 @@ namespace Valuable
   QMap<QString, QString> StyleValue::asMap() const
   {
     QMap<QString, QString> map;
-    for (auto group: split(COMMA)) {
+    for (auto group: split(SEPARATOR_COMMA)) {
       QStringList tmp;
       for (auto v: group.components().mid(1))
         tmp << v.asString();

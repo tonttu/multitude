@@ -31,9 +31,9 @@ namespace Valuable
     /// A separator between components
     enum Separator
     {
-      WHITE_SPACE,  ///< Components are separated by white space (newline, tab, space)
-      COMMA,        ///< Components are separated by comma (,)
-      SLASH         ///< Components are separated by slash (/)
+      SEPARATOR_WHITE_SPACE,  ///< Components are separated by white space (newline, tab, space)
+      SEPARATOR_COMMA,        ///< Components are separated by comma (,)
+      SEPARATOR_SLASH         ///< Components are separated by slash (/)
     };
 
     /// Component variant type
