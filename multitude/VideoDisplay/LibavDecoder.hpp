@@ -67,7 +67,7 @@ namespace VideoDisplay
   protected:
     virtual void load(const Options & options) OVERRIDE;
 
-    virtual void childLoop() OVERRIDE;
+    virtual void runDecoder() OVERRIDE;
 
   private:
     class D;

@@ -1848,9 +1848,9 @@ namespace VideoDisplay
       m_d->m_audioTransfer->setSeeking(value);
   }
 
-  void LibavDecoder::childLoop()
+  void LibavDecoder::runDecoder()
   {
-    QByteArray errorMsg("LibavDecoder::D::childLoop # " + m_d->m_options.source().toUtf8() + ":");
+    QByteArray errorMsg("LibavDecoder::D::runDecoder # " + m_d->m_options.source().toUtf8() + ":");
     QThread::currentThread()->setPriority(QThread::LowPriority);
 
     QByteArray src = m_d->m_options.source().toUtf8();

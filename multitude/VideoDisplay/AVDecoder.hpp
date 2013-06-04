@@ -585,6 +585,14 @@ namespace VideoDisplay
     /// @return true if the decoder is in STATE_ERROR
     bool hasError() const;
 
+    /// This decoder might require that the previous version of the decoder
+    /// should be first deleted. Since it might block take a long time,
+    /// this decoder is deleted in the child loop of the new decoder
+    /// @param decoder old decoder that will deleted before this decoder is
+    ///                started, assuming that there are no more references
+    ///                to the old decoder outside this class.
+    void setPreviousDecoder(std::shared_ptr<AVDecoder> decoder);
+
     /// Marks the decoder for shutting down, doesn't block
     virtual void close() = 0;
 
@@ -673,6 +681,12 @@ namespace VideoDisplay
     /// Initializes the decoder, but doesn't start the decoder thread.
     /// @param options opening options
     virtual void load(const Options & options) = 0;
+
+    /// Run the actual decoder, called from the decoder thread
+    virtual void runDecoder() = 0;
+
+  private:
+    virtual void childLoop() FINAL;
 
   private:
     class D;

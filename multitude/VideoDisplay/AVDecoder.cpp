@@ -22,6 +22,7 @@ namespace VideoDisplay
 
   public:
     AVDecoder::DecoderState m_state;
+    AVDecoderPtr m_previousDecoder;
   };
 
   AVDecoder::D::D()
@@ -31,6 +32,12 @@ namespace VideoDisplay
   AVDecoder::AVDecoder()
     : m_d(new D())
   {
+  }
+
+  void AVDecoder::childLoop()
+  {
+    m_d->m_previousDecoder.reset();
+    runDecoder();
   }
 
   AVDecoder::~AVDecoder()
@@ -60,6 +67,11 @@ namespace VideoDisplay
   bool AVDecoder::hasError() const
   {
     return m_d->m_state == STATE_ERROR;
+  }
+
+  void AVDecoder::setPreviousDecoder(AVDecoderPtr decoder)
+  {
+    m_d->m_previousDecoder = decoder;
   }
 
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
