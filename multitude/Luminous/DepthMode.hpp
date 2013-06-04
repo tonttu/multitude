@@ -47,9 +47,11 @@ namespace Luminous
     /// @return DepthMode with default settings
     static DepthMode Default() { return DepthMode(); }
 
-    /// Construct a default depth mode. The default mode consists of LESS
-    /// function with range set to (0, 1).
-    LUMINOUS_API DepthMode();
+    /// Construct a new depth mode.
+    /// @param function depth test function
+    /// @param range depth range
+    LUMINOUS_API DepthMode(Function function = LESS_EQUAL,
+                           Nimble::Rangef range = Nimble::Rangef(0.f, 1.f));
 
     /// Set function for depth comparisons
     /// @param function Function to use in comparisons

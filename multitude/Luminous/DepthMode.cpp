@@ -12,9 +12,9 @@
 
 namespace Luminous
 {
-  DepthMode::DepthMode()
-    : m_function(LESS_EQUAL)
-    , m_range(0.f, 1.f)
+  DepthMode::DepthMode(Function function, Nimble::Rangef range)
+    : m_function(function)
+    , m_range(range)
   {
   }
 }
