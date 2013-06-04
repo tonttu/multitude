@@ -404,6 +404,16 @@ namespace Luminous
           contentHeigth = line.height();
       }
 
+      auto align = m_d->m_layout.textOption().alignment();
+      if (align & Qt::AlignBottom) {
+        nonConst->setVerticalOffset(maximumSize().height() - contentHeigth);
+      } else if (align & Qt::AlignVCenter) {
+        // Align empty text so that the first line is in the vertical middle.
+        nonConst->setVerticalOffset(.5f * (maximumSize().height() - contentHeigth));
+      } else {
+        nonConst->setVerticalOffset(0.f);
+      }
+
       nonConst->setLayoutReady(true);
       nonConst->clearGlyphs();
     }

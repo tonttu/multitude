@@ -422,7 +422,11 @@ namespace Luminous
     /// @param location Text location in viewRect. Anything outside will be clipped.
     /// @param viewRect Where the text is located
     /// @param style Text style properties
-    void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect, const TextStyle & style);
+    /// @param ignoreVerticalAlign If true the rendering assumes that vertical alignment is already
+    ///        handled and baked in rendering location. Layout's options about vertical alignment are
+    ///        ignored in that case.
+    void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect,
+                  const TextStyle & style, bool ignoreVerticalAlign=false);
 
     /// Draws given string
     /// @param text String to render
@@ -739,7 +743,7 @@ namespace Luminous
                       const Nimble::Vector2f & offset,
                       const Nimble::Rectf & viewRect, const TextStyle & style,
                       FontUniformBlock & uniform, const Program & program,
-                      const Nimble::Matrix4f & modelview);
+                      const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign);
 
     Luminous::RenderContext * m_resources;
     class Internal;

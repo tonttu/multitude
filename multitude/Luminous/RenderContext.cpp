@@ -1043,7 +1043,8 @@ namespace Luminous
   }
 
   void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
-                               const Nimble::Rectf & viewRect, const TextStyle & style)
+                               const Nimble::Rectf & viewRect, const TextStyle & style,
+                               bool ignoreVerticalAlign)
   {
     // Need to check here that we are using correct texture atlas
     // This will be fixed on next generate() call
@@ -1068,7 +1069,7 @@ namespace Luminous
       const float blur = style.dropShadowBlur();
       //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
       uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
-      drawTextImpl(layout, location, style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model);
+      drawTextImpl(layout, location, style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
     }
 
     if (style.glow() > 0.0f) {
@@ -1076,7 +1077,7 @@ namespace Luminous
       uniform.colorIn.w *= opacity();
       uniform.colorOut.w *= opacity();
       uniform.outline.make(edge * (1.0f - style.glow()), edge);
-      drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
+      drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
     }
 
     // To remove color bleeding at the edge, ignore colorOut if there is no border
@@ -1091,14 +1092,14 @@ namespace Luminous
     uniform.colorIn.w *= opacity();
     uniform.colorOut.w *= opacity();
 
-    drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model);
+    drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
   }
 
   void RenderContext::drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
                                    const Nimble::Vector2f & renderOffset,
                                    const Nimble::Rectf & viewRect, const TextStyle & style,
                                    FontUniformBlock & uniform, const Program & program,
-                                   const Nimble::Matrix4f & modelview)
+                                   const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign)
   {
     const int maxGlyphsPerCmd = 1000;
 
@@ -1111,6 +1112,8 @@ namespace Luminous
 
 
     Nimble::Vector2f renderLocation = renderOffset - viewRect.low();
+    if(!ignoreVerticalAlign)
+      renderLocation.y += layout.verticalOffset();
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
@@ -1132,7 +1135,10 @@ namespace Luminous
                               std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
         } else {
           b.uniform->clip = viewRect;
-          b.uniform->clip.move(-renderOffset - location);
+          if(!ignoreVerticalAlign)
+            b.uniform->clip.move(Nimble::Vector2f(0.f, -layout.verticalOffset()));
+          else
+            b.uniform->clip.move(Nimble::Vector2f(0.f, -location.y));
         }
 
         m.setTranslation(offset);

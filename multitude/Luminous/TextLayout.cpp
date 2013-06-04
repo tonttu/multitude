@@ -36,8 +36,8 @@ namespace Luminous
 
   public:
     Nimble::SizeF m_maximumSize;
-    Nimble::Vector2f m_renderLocation;
     Nimble::Rectf m_boundingBox;
+    float m_verticalOffset;
     /// Set to false if we need to do layout again
     bool m_layoutReady;
     /// Do we have all glyphs == no need to call regenerate()
@@ -53,7 +53,7 @@ namespace Luminous
 
   TextLayout::D::D(const Nimble::SizeF & maximumSize)
     : m_maximumSize(maximumSize)
-    , m_renderLocation(0, 0)
+    , m_verticalOffset(0.f)
     , m_layoutReady(false)
     , m_glyphsReady(false)
     , m_atlasGeneration(-1)
@@ -199,14 +199,14 @@ namespace Luminous
     return m_d->m_boundingBox;
   }
 
-  const Nimble::Vector2f & TextLayout::renderLocation() const
+  float TextLayout::verticalOffset() const
   {
-    return m_d->m_renderLocation;
+    return m_d->m_verticalOffset;
   }
 
-  void TextLayout::setRenderLocation(const Nimble::Vector2f & location)
+  void TextLayout::setVerticalOffset(float offset)
   {
-    m_d->m_renderLocation = location;
+    m_d->m_verticalOffset = offset;
   }
 
   void TextLayout::setBoundingBox(const Nimble::Rectf & bb)

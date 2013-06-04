@@ -59,11 +59,15 @@ namespace Luminous {
     /// Returns the bounding box of the text.
     LUMINOUS_API const Nimble::Rectf & boundingBox() const;
 
-    LUMINOUS_API const Nimble::Vector2f & renderLocation() const;
-    LUMINOUS_API void setRenderLocation(const Nimble::Vector2f & location);
+    /// This tells how much there is need to offset the vertical position
+    /// of the layout. It is necessary for enabling vertical alignment.
+    /// @return Offset for rendering this layout
+    LUMINOUS_API float verticalOffset() const;
 
   protected:
     LUMINOUS_API virtual void generateInternal() const = 0;
+    LUMINOUS_API void setVerticalOffset(float offset);
+
 
     LUMINOUS_API TextLayout(const Nimble::SizeF & maximumSize);
 
