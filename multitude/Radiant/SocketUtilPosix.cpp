@@ -92,7 +92,7 @@ namespace Radiant {
 
       if(doBind && bind(fd, rp->ai_addr, static_cast<int> (rp->ai_addrlen)) == -1) {
         err = SocketWrapper::err();
-        errstr = QString("bind() failed: ") + SocketWrapper::strerror(err);
+        errstr = QString("bind(%2, %1) failed: %3").arg(port).arg(host, SocketWrapper::strerror(err));
         err = err ? err : -1;
       } else if(!doBind && connect(fd, rp->ai_addr, static_cast<int> (rp->ai_addrlen)) == -1) {
         err = SocketWrapper::err();
