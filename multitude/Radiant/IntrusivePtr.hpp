@@ -90,7 +90,7 @@ namespace Radiant
   template <typename T>
   class IntrusivePtr;
 
-  /// This class implements weak pointers for the IntrisuvePtr class. The weak
+  /// This class implements weak pointers for the IntrusivePtr class. The weak
   /// associated to an intrusive pointer. Whenever the contents of the weak
   /// pointer are accessed, it must be converted to an intrusive pointer with
   /// the lock() method or a special constructor. If the intrusive pointer
