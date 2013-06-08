@@ -43,7 +43,7 @@ namespace Radiant {
         which provides a handy way of generating unique keys in C/C++.
     */
     void hostIsAlive(void * key);
-    /** Instructs the Watchdog to forger some hosting object.
+    /** Instructs the Watchdog to forget some hosting object.
         @param key The identifier of the calling object.
     */
     void forgetHost(void * key);
