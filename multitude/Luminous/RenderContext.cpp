@@ -434,7 +434,8 @@ namespace Luminous
   {
     if (linesegments == 0) {
       /// @todo Automagically determine the proper number of linesegments
-      linesegments = 32;
+      // This is better than nothing, but the model view transformation matrix is being ignored.
+      linesegments = std::max((int) (radius * 0.4f), 16);
     }
 
     // Filler function: Generates vertices in a circle
@@ -491,7 +492,8 @@ namespace Luminous
   {
     if(linesegments == 0) {
       /// @todo automagically determine divisions?
-      linesegments = 32;
+      // This is better than nothing, but the model view transformation matrix is being ignored.
+      linesegments = std::max((int) (axis.maximum() * 0.4f), 16);
     }
 
     float rotation = axis.angle();
