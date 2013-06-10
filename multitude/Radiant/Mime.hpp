@@ -26,7 +26,7 @@ namespace Radiant
     /// Get mime type from string
     /// @param mime string of type "toplevel/subtype",
     /// @sa topLevel subType
-    MimeType(const QString & mime);
+    explicit MimeType(const QString & mime);
 
     /// constructs a type from top-level and sub-type
     /// @param toplevel top-level mime type
