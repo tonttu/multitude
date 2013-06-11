@@ -93,6 +93,10 @@ namespace Nimble {
     /// Transpose the size, i.e. swap the width and height
     void transpose();
 
+    /// Index an element in the size object.
+    /// This method does not check that the argument value is valid
+    inline T operator [] (int index) { return ((T*) this)[index]; }
+
     /// Add the given size to this size
     /// @param s size to add
     /// @return reference to this size
