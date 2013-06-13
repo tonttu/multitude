@@ -84,9 +84,34 @@ namespace Valuable {
     ArchiveElement serialize(Archive &) const OVERRIDE { return ArchiveElement(); }
     bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
 
+    virtual bool handleShorthand(const Valuable::StyleValue & value,
+                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
+    {
+      if (m_sources.empty())
+        return false;
+
+      for (auto source: m_sources)
+        expanded[source] = value;
+
+      return true;
+    }
+
+#if 0
+    virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
+    {
+      /// @todo implement by looking at m_mask in m_master
+    }
+#endif
+
+    void setSources(std::vector<FlagAliasT<T>*> sources)
+    {
+      m_sources = sources;
+    }
+
   private:
     AttributeFlagsT<T> & m_master;
     const Radiant::FlagsT<T> m_flags;
+    std::vector<FlagAliasT<T>*> m_sources;
   };
 
   /**
@@ -149,10 +174,44 @@ namespace Valuable {
 
       assert(names);
 
+      std::map<T, FlagAliasT<T>*> bits;
       for (const FlagNames * it = names; it->name; ++it) {
-        m_flags[QByteArray(it->name).toLower()] = Flags::fromInt(it->value);
-        if (parent && createAliases)
-          m_aliases << new FlagAliasT<T>(parent, *this, it->name, Flags::fromInt(it->value));
+        auto flag = Flags::fromInt(it->value);
+        m_flags[QByteArray(it->name).toLower()] = flag;
+        if (parent && createAliases && it->value) {
+          auto alias = new FlagAliasT<T>(parent, *this, it->name, flag);
+          m_aliases << alias;
+
+          std::bitset<sizeof(T)*8> bitset(it->value);
+          if (bitset.count() == 1) {
+            const T t = T(it->value);
+            if (bits.find(t) == bits.end())
+              bits[t] = alias;
+          }
+        }
+      }
+
+      // mark some of the aliases to be shorthands, for example this would
+      // mark "input-translate-xy" to be a shorhand for "input-translate-x" and "...-y"
+      for (auto alias: m_aliases) {
+        std::bitset<sizeof(T)*8> bitset(alias->flags().asInt());
+        bool found = true;
+        std::vector<FlagAliasT<T>*> sources;
+        for (std::size_t i = 0; i < bitset.size(); ++i) {
+          if (!bitset[i])
+            continue;
+
+          const T t = T(1 << i);
+          auto it = bits.find(t);
+          if (it == bits.end() || it->second == alias) {
+            found = false;
+            break;
+          }
+          sources.push_back(it->second);
+        }
+
+        if (found)
+          alias->setSources(sources);
       }
     }
 

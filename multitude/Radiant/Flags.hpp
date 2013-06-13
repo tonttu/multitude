@@ -110,6 +110,8 @@ namespace Radiant
     /// @return converted flags
     static FlagsT<T> fromInt(Int i) { return FlagsT<T>(i); }
 
+    bool operator<(const FlagsT<T> & t) const { return m_value < t.m_value; }
+
   private:
     FlagsT(S s) : m_value(s) {}
     S m_value;
