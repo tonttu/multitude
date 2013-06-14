@@ -79,11 +79,6 @@ namespace Luminous
     /// @return number of color components
     LUMINOUS_API int internalFormat() const;
 
-    /// Set 1D texture data from memory. This function assumes 1D data and will automatically set the texture height to 1.
-    /// @param width width of the texture
-    /// @param dataFormat data format
-    /// @param data pointer to data
-    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const void * data);
     /// Set 2D texture data from memory.
     /// @param width width of the texture
     /// @param height height of the texture
@@ -117,7 +112,7 @@ namespace Luminous
     /// @sa dimensions
     LUMINOUS_API bool isValid() const;
 
-    /// Get texture dimension. 1D textures will have dimension 1, 2D texture 2 and 3D textures 3.
+    /// Get texture dimension. 2D textures will have dimension 2 and 3D textures 3.
     /// @return texture dimension
     LUMINOUS_API uint8_t dimensions() const;
     /// Get the width of the texture
