@@ -534,6 +534,11 @@ namespace Radiant {
   /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
+  /// A grid of doubles without memory management
+  typedef GridT<double, GridNoMemT<double> > PtrGrid64f;
+  /// A grid of doubles with memory management
+  typedef GridT<double, GridMemT<double> >   MemGrid64f;
+
   /// A grid of Vector2s without memory management
   typedef GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2> > PtrGridVector2;
   /// A grid of Vector2s with memory management
@@ -562,6 +567,9 @@ namespace Radiant {
 
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
+
+        template class GridT<float, GridNoMemT<double>>;
+        template class GridT<float, GridMemT<double>>;
 
         template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
         template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
