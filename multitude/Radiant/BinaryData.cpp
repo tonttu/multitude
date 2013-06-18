@@ -762,17 +762,18 @@ namespace Radiant {
     m_current = 0;
     m_total = 0;
 
-    bool waitForData = timeoutMs < 0;
+    const bool waitForData = timeoutMs < 0;
     double timeout = timeoutMs / 1000.0;
 
     Radiant::Timer timer;
-    bool read = false;
+    int n = 0;
+    char * target = (char*) &s;
 
     do {
-      read = stream.read(&s, 4, waitForData) == 4;
-    } while(stream.isOpen() && !read && timer.time() < timeout);
+      n += stream.read(&target[n], 4 - n, waitForData);
+    } while(n < 4 && stream.isOpen() && (waitForData || timer.time() < timeout));
 
-    if(!read){
+    if(n < 4) {
       error("BinaryData::read # Could not read the 4 header bytes");
       return false;
     }
@@ -787,10 +788,13 @@ namespace Radiant {
 
     memset(&m_buf[0], 0, m_size);
 
-    int n = stream.read( & m_buf[0], s);
+    n = 0;
+    do {
+      n += stream.read(& m_buf[n], s - n, waitForData);
+    } while(n < s && stream.isOpen() && (waitForData || timer.time() < timeout));
+
     if(n != (int) s) {
-      error("BinaryData::read # buffer read failed (got %d != %d)",
-            n, s);
+      error("BinaryData::read # buffer read failed (got %d != %d)", n, s);
       return false;
     }
 
