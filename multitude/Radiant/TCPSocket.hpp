@@ -71,7 +71,7 @@ namespace Radiant {
 
     /// Returns true of the socket is open.
     /// @return True if there is an open socket
-    bool isOpen() const;
+    virtual bool isOpen() const OVERRIDE;
 
     /// Returns the hostname
     /// @return Hostname of the socket

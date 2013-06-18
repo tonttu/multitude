@@ -53,6 +53,10 @@ namespace Radiant {
     /// Close the stream
     /// @return True if succeeded. Base implementation returns always true
     virtual bool close() { return true; }
+
+    /// Checks whether the stream is still accessible
+    /// @return True if the stream is open and accessible
+    virtual bool isOpen() const { return true; }
   };
 
 }
