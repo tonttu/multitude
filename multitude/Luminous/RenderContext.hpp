@@ -526,17 +526,6 @@ namespace Luminous
     /// it manually.
     void flush();
 
-  private:
-/// @cond
-    //////////////////////////////////////////////////////////////////////////
-    /// Direct mode API
-    //////////////////////////////////////////////////////////////////////////
-    friend class D;
-    friend class CustomOpenGL;
-    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
-/// @endcond
-
     /// Returns the GL resources handle corresponding to given program.
     /// @param program CPU side object representing the shader program
     /// @return Handle to OpenGL resources of given program
@@ -567,6 +556,20 @@ namespace Luminous
     /// @param program Handle to OpenGL program associated with vertexarray
     /// @return Handle to OpenGL resources of queried vertex array
     VertexArrayGL & handle(const VertexArray & vertexarray, ProgramGL * program);
+
+  private:
+
+/// @cond
+
+    //////////////////////////////////////////////////////////////////////////
+    /// Direct mode API
+    //////////////////////////////////////////////////////////////////////////
+    friend class D;
+    friend class CustomOpenGL;
+    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+
+/// @endcond
 
     /// Finds shared buffer from buffer pool.
     /// @param elementSize Size of the single element to be stored
