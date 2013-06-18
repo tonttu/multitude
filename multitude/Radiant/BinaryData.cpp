@@ -16,6 +16,7 @@
 #include <Radiant/BinaryStream.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/ConfigReader.hpp>
+#include <Radiant/Timer.hpp>
 
 #include <Nimble/Math.hpp>
 
@@ -755,13 +756,23 @@ namespace Radiant {
     return stream.write( & m_buf[0], s) == s;
   }
 
-  bool BinaryData::read(Radiant::BinaryStream & stream)
+  bool BinaryData::read(Radiant::BinaryStream & stream, int timeoutMs)
   {
     uint32_t s = 0;
     m_current = 0;
     m_total = 0;
 
-    if(stream.read(&s, 4) != 4) {
+    bool waitForData = timeoutMs < 0;
+    double timeout = timeoutMs / 1000.0;
+
+    Radiant::Timer timer;
+    bool read = false;
+
+    do {
+      read = stream.read(&s, 4, waitForData) == 4;
+    } while(stream.isOpen() && !read && timer.time() < timeout);
+
+    if(!read){
       error("BinaryData::read # Could not read the 4 header bytes");
       return false;
     }
@@ -785,8 +796,6 @@ namespace Radiant {
 
     m_current = 0;
     m_total = s;
-
-    // info("BinaryData::read # %d bytes read", (int) s);
 
     return true;
   }

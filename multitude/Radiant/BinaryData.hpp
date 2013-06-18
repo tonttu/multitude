@@ -299,8 +299,9 @@ namespace Radiant {
     bool write(Radiant::BinaryStream &stream) const;
     /// Reads the buffer from a stream
     /// @param stream Stream to read from
+    /// @param timeoutMs How many milliseconds the data is waited for. -1 if waiting indefinitively.
     /// @return False if the data could not completely read, true otherwise
-    bool read(Radiant::BinaryStream &stream);
+    bool read(Radiant::BinaryStream &stream, int timeoutMs=-1);
 
     /// Returns a pointer to the buffer
     /// @return Pointer to the raw data used by BinaryData
