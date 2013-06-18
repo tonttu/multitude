@@ -95,7 +95,7 @@ namespace Nimble {
 
     /// Index an element in the size object.
     /// This method does not check that the argument value is valid
-    inline T operator [] (int index) { return ((T*) this)[index]; }
+    inline T operator [] (int index) const { return ((T*) this)[index]; }
 
     /// Add the given size to this size
     /// @param s size to add
