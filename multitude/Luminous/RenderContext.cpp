@@ -433,9 +433,14 @@ namespace Luminous
   void RenderContext::drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
   {
     if (linesegments == 0) {
-      /// @todo Automagically determine the proper number of linesegments
-      // This is better than nothing, but the model view transformation matrix is being ignored.
-      linesegments = std::max((int) (radius * 0.4f), 16);
+
+      // Minimize geometric error when approximating a circle with a polygon
+      const float scale = this->approximateScaling();
+
+      const float tolerance = 0.5f;
+      const float actualRadius = scale * (radius + 0.5f * style.strokeWidth());
+
+      linesegments = Nimble::Math::PI / acos(1.f - (tolerance / actualRadius));
     }
 
     // Filler function: Generates vertices in a circle
@@ -1327,6 +1332,16 @@ namespace Luminous
   const Program & RenderContext::texShader() const
   {
     return m_data->m_texShader;
+  }
+
+  float RenderContext::approximateScaling() const
+  {
+    const float sx = Nimble::Vector2f(transform()[0][0], transform()[0][1]).lengthSqr();
+    const float sy = Nimble::Vector2f(transform()[1][0], transform()[1][1]).lengthSqr();
+
+    float s = std::max(sx, sy);
+
+    return sqrt(s);
   }
 
   const Program & RenderContext::fontShader() const

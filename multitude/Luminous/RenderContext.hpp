@@ -678,8 +678,15 @@ namespace Luminous
     /// is texture sample modulated with uniform color.
     /// @return Shader program used for texturing in Luminous.
     const Program & texShader() const;
+
+    /// Get the approximate scaling factor applied by the transform.
+    /// @return approximate scaling applied
+    float approximateScaling() const;
+
 /// @cond
+
     const Program & fontShader() const;
+
 /// @endcond
 
    private:
