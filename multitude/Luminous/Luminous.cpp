@@ -66,7 +66,7 @@ namespace Luminous
 
         if(Luminous::GPUAssociation::isSupported()) {
           unsigned int gpuCount = Luminous::GPUAssociation::numGPUs();
-          Radiant::info("Available GPUs: %ld", gpuCount);
+          Radiant::info("Available GPUs: %u", gpuCount);
         }
 
         // Check for DXT support

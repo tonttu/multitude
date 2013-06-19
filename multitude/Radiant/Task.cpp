@@ -52,8 +52,8 @@ namespace Radiant
 
   Task::Task(Priority p)
     : m_state(WAITING),
-      m_priority(p),
       m_canceled(false),
+      m_priority(p),
       m_scheduled(0),
       m_host(0)
   {}

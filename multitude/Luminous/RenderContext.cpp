@@ -718,7 +718,7 @@ namespace Luminous
                                                      const std::map<QByteArray,const Texture *> * textures,
                                                      const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-    unsigned int indexOffset, vertexOffset, uniformOffset;
+    unsigned int indexOffset = 0, vertexOffset, uniformOffset;
 
     // Align uniforms as required by OpenGL
     uniformSize = alignUniform(uniformSize);

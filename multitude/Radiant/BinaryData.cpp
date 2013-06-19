@@ -791,7 +791,7 @@ namespace Radiant {
     n = 0;
     do {
       n += stream.read(& m_buf[n], s - n, waitForData);
-    } while(n < s && stream.isOpen() && (waitForData || timer.time() < timeout));
+    } while(n < int(s) && stream.isOpen() && (waitForData || timer.time() < timeout));
 
     if(n != (int) s) {
       error("BinaryData::read # buffer read failed (got %d != %d)", n, s);

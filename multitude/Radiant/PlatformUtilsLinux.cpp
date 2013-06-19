@@ -114,7 +114,8 @@ namespace Radiant
 
       const QString cmd = QString("grep %1 /proc/%2/maps | awk '{print $6}'| head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
 
-      system(cmd.toUtf8().data());
+      if (system(cmd.toUtf8().data()) != 0)
+        Radiant::error("PlatformUtils::getLibraryPath # Failed to get library path for %s", libraryName.toUtf8().data());
 
       return file.readAll().trimmed();
     }

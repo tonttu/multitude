@@ -135,9 +135,9 @@ namespace Luminous
         typeGood = true;
     };
 
-    int width = header.widthLo + (header.widthHi << 8);
-    int height = header.heightLo + (header.heightHi << 8);
-    size_t bytesPerPixel = (header.bpp >> 3);
+    const int width = header.widthLo + (header.widthHi << 8);
+    const int height = header.heightLo + (header.heightHi << 8);
+    const int bytesPerPixel = (header.bpp >> 3);
 
     if(!typeGood || width == 0 || height == 0)
       return false;
