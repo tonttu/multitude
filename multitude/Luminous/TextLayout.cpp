@@ -46,6 +46,8 @@ namespace Luminous
     /// Do we have all glyphs == no need to call regenerate()
     bool m_glyphsReady;
 
+    std::vector<std::pair<Nimble::Rectf, QUrl> > m_urls;
+
     int m_atlasGeneration;
     std::map<std::pair<RenderResource::Id, QColor>, int> m_groupCache;
     std::vector<Group> m_groups;
@@ -81,6 +83,7 @@ namespace Luminous
     if (format)
       color = format->foreground().color();
 
+    Nimble::Rectf bb;
     for (int i = 0; i < glyphs.size(); ++i) {
       const quint32 glyph = glyphs[i];
 
@@ -96,6 +99,8 @@ namespace Luminous
         Group & g = findGroup(glyphCache->texture(), color);
 
         TextLayout::Item item;
+        bb.expand(location);
+        bb.expand(location+size);
         item.vertices[0].location.make(location.x, location.y);
         item.vertices[1].location.make(location.x+size.x, location.y);
         item.vertices[2].location.make(location.x, location.y+size.y);
@@ -110,6 +115,8 @@ namespace Luminous
         missingGlyphs = true;
       }
     }
+    if (format && !format->anchorHref().isEmpty())
+      m_urls.push_back(std::make_pair(bb, format->anchorHref()));
 
     return missingGlyphs;
   }
@@ -209,6 +216,14 @@ namespace Luminous
     if (!isLayoutReady())
       generateInternal();
     return m_d->m_boundingBox;
+  }
+
+  QUrl TextLayout::findUrl(Nimble::Vector2f location) const
+  {
+    for (auto p: m_d->m_urls)
+      if (p.first.contains(location))
+        return p.second;
+    return QUrl();
   }
 
   float TextLayout::verticalOffset() const

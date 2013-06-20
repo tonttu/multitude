@@ -20,6 +20,8 @@
 #include <array>
 #include <vector>
 
+#include <QUrl>
+
 class QGlyphRun;
 class QTextCharFormat;
 
@@ -74,6 +76,9 @@ namespace Luminous {
     /// of the layout. It is necessary for enabling vertical alignment.
     /// @return Offset for rendering this layout
     LUMINOUS_API float verticalOffset() const;
+
+    /// @todo document, maybe rename
+    LUMINOUS_API QUrl findUrl(Nimble::Vector2f location) const;
 
   protected:
     LUMINOUS_API virtual void generateInternal() const = 0;
