@@ -138,12 +138,16 @@ namespace Luminous
     QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
 
     for (QTextBlock block = m_d->doc().begin(); block.isValid(); block = block.next()) {
-      QTextLayout * textLayout = block.layout();
       QRectF rect = layout->blockBoundingRect(block);
 
       const Nimble::Vector2f layoutLocation(rect.left(), rect.top());
-      foreach (const QGlyphRun & glyphRun, textLayout->glyphRuns())
-        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
+      for (auto it = block.begin(), end = block.end(); it != end; ++it) {
+        QTextFragment frag = it.fragment();
+        QTextCharFormat format = frag.charFormat();
+
+        foreach (const QGlyphRun & glyphRun, frag.glyphRuns())
+          missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun, &format);
+      }
     }
 
     QList<int> indices;

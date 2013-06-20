@@ -13,26 +13,29 @@
 #include <Luminous/FontCache.hpp>
 
 #include <QGlyphRun>
+#include <QTextCharFormat>
+
+bool operator<(QColor a, QColor b)
+{
+  if (a.isValid() && b.isValid()) {
+    const uint64_t av = (uint64_t(a.red()) << 48) | (uint64_t(a.green()) << 32) | (uint64_t(a.blue()) << 16) | (uint64_t(a.alpha()));
+    const uint64_t bv = (uint64_t(b.red()) << 48) | (uint64_t(b.green()) << 32) | (uint64_t(b.blue()) << 16) | (uint64_t(b.alpha()));
+    return av < bv;
+  }
+  return b.isValid();
+}
 
 namespace Luminous
 {
   class TextLayout::D
   {
   public:
-    struct Group
-    {
-      Group(Texture & tex) : texture(&tex) {}
-      Texture * texture;
-      std::vector<TextLayout::Item> items;
-    };
-
-  public:
     D(const Nimble::SizeF & size);
 
-    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun);
+    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun, QTextCharFormat * format);
 
   protected:
-    Group & findGroup(Texture & texture);
+    Group & findGroup(Texture & texture, QColor color);
 
   public:
     Nimble::SizeF m_maximumSize;
@@ -44,7 +47,7 @@ namespace Luminous
     bool m_glyphsReady;
 
     int m_atlasGeneration;
-    std::map<RenderResource::Id, int> m_groupCache;
+    std::map<std::pair<RenderResource::Id, QColor>, int> m_groupCache;
     std::vector<Group> m_groups;
   };
 
@@ -61,7 +64,7 @@ namespace Luminous
   }
 
   bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
-                               const QGlyphRun & glyphRun)
+                               const QGlyphRun & glyphRun, QTextCharFormat * format)
   {
     bool missingGlyphs = false;
 
@@ -73,6 +76,10 @@ namespace Luminous
 
     const float scale = float(font.pixelSize()) / cache.pixelSize();
     const float invsize = 1.0f / float(font.pixelSize());
+
+    QColor color;
+    if (format)
+      color = format->foreground().color();
 
     for (int i = 0; i < glyphs.size(); ++i) {
       const quint32 glyph = glyphs[i];
@@ -86,7 +93,7 @@ namespace Luminous
             layoutLocation + glyphCache->location() * scale;
         const Nimble::Vector2f & size = glyphCache->size() * scale;
 
-        Group & g = findGroup(glyphCache->texture());
+        Group & g = findGroup(glyphCache->texture(), color);
 
         TextLayout::Item item;
         item.vertices[0].location.make(location.x, location.y);
@@ -107,14 +114,14 @@ namespace Luminous
     return missingGlyphs;
   }
 
-  TextLayout::D::Group & TextLayout::D::findGroup(Texture & texture)
+  TextLayout::Group & TextLayout::D::findGroup(Texture & texture, QColor color)
   {
-    auto it = m_groupCache.find(texture.resourceId());
+    auto it = m_groupCache.find(std::make_pair(texture.resourceId(), color));
     if (it != m_groupCache.end()) {
       return m_groups[it->second];
     }
-    m_groupCache.insert(std::make_pair(texture.resourceId(), m_groups.size()));
-    m_groups.emplace_back(texture);
+    m_groupCache.insert(std::make_pair(std::make_pair(texture.resourceId(), color), m_groups.size()));
+    m_groups.emplace_back(texture, color);
     return m_groups.back();
   }
 
@@ -160,6 +167,11 @@ namespace Luminous
   const std::vector<TextLayout::Item> & TextLayout::items(int groupIndex) const
   {
     return m_d->m_groups[groupIndex].items;
+  }
+
+  const TextLayout::Group & TextLayout::group(int groupIndex) const
+  {
+    return m_d->m_groups[groupIndex];
   }
 
   bool TextLayout::isComplete() const
@@ -247,8 +259,8 @@ namespace Luminous
   }
 
   bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,
-                                  const QGlyphRun & glyphRun)
+                                  const QGlyphRun & glyphRun, QTextCharFormat * format)
   {
-    return m_d->generate(location, glyphRun);
+    return m_d->generate(location, glyphRun, format);
   }
 } // namespace Luminous

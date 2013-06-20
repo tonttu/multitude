@@ -21,6 +21,7 @@
 #include <vector>
 
 class QGlyphRun;
+class QTextCharFormat;
 
 namespace Luminous {
   /// TextLayout is the base class for different implementations of text layouting.
@@ -36,6 +37,15 @@ namespace Luminous {
       std::array<FontVertex, 4> vertices;
     };
 
+    /// @clean up and document
+    struct Group
+    {
+      Group(Texture & tex, QColor c) : texture(&tex), color(c) {}
+      Texture * texture;
+      QColor color;
+      std::vector<TextLayout::Item> items;
+    };
+
   public:
     LUMINOUS_API virtual ~TextLayout();
 
@@ -45,6 +55,7 @@ namespace Luminous {
     LUMINOUS_API int groupCount() const;
     LUMINOUS_API Texture * texture(int groupIndex) const;
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;
+    LUMINOUS_API const Group & group(int groupIndex) const;
 
     LUMINOUS_API bool isLayoutReady() const;
     LUMINOUS_API bool isComplete() const;
@@ -76,7 +87,7 @@ namespace Luminous {
     LUMINOUS_API void setGlyphsReady(bool v);
     LUMINOUS_API void clearGlyphs();
     LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,
-                                     const QGlyphRun & glyphRun);
+                                     const QGlyphRun & glyphRun, QTextCharFormat * format = nullptr);
 
   private:
     class D;

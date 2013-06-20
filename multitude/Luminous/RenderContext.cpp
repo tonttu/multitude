@@ -1124,11 +1124,12 @@ namespace Luminous
 
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
+      auto & group = layout.group(g);
+      if (group.color.isValid())
+        uniform.colorIn = Radiant::Color(group.color);
 
-      auto & items = layout.items(g);
-
-      for (int i = 0; i < int(items.size());) {
-        const int count = std::min<int>(items.size() - i, maxGlyphsPerCmd);
+      for (int i = 0; i < int(group.items.size());) {
+        const int count = std::min<int>(group.items.size() - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
               true, PRIMITIVE_TRIANGLE_STRIP, count*6 - 2, count*4, 1, program, &textures);
@@ -1155,7 +1156,7 @@ namespace Luminous
 
         const int first = i;
         for (const int m = count + i; i < m; ++i) {
-          auto & item = items[i];
+          auto & item = group.items[i];
           std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
           b.vertex += 4;
 
