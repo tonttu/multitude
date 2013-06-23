@@ -41,7 +41,7 @@ namespace Luminous
     cmd.primitiveSize = primitiveSize;                                    // For lines/points
     cmd.primitiveCount = vertexCount;                                     // Number of vertices
     cmd.indexed = (vertexArray.indexBuffer() != 0);                       // Whether we should use indexed or non-indexed drawing
-    cmd.vertexOffset = offset;                                            // Vertex offset (for indexed and non-indexed)
+    cmd.vertexOffset = (cmd.indexed ? 0 : offset);                        // Vertex offset (for non-indexed)
     cmd.indexOffset = offset;                                             // Index offset (for indexed drawing only)
     cmd.uniformOffsetBytes = uniformOffset * (unsigned int) uniformSize;  // Start of active uniform in buffer
     cmd.uniformSizeBytes = (unsigned int)uniformSize;                     // Size of uniform
