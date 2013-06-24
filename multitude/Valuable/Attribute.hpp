@@ -298,10 +298,12 @@ namespace Valuable
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
-    void removeListener(Node * listener, int role = ALL_ROLES);
+    /// @returns True if any items from the list were removed, otherwise false
+    bool removeListener(Node * listener, int role = ALL_ROLES);
     /// Removes a listener from the listener list
     /// @param id listener id, same as the return value in addListener
-    void removeListener(long id);
+    /// @returns True if any items from the list were removed, otherwise false
+    bool removeListener(long id);
 
     /// @returns true if the current value of the object is different from
     ///          the default value. Default implementation always returns true

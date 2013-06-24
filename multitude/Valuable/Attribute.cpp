@@ -282,13 +282,16 @@ namespace Valuable
     removeListener(0, role);
   }
 
-  void Attribute::removeListener(Node * listener, int role)
+  bool Attribute::removeListener(Node * listener, int role)
   {
+    bool erasedAnything = false;
+
     QList<Node*> listeners;
     for(QMap<long, AttributeListener>::iterator it = m_listeners.begin(); it != m_listeners.end(); ) {
       if((it->role & role) && (!listener || listener == it->listener)) {
         if(it->listener) listeners << it->listener;
         it = m_listeners.erase(it);
+        erasedAnything = true;
       } else ++it;
     }
 
@@ -299,14 +302,17 @@ namespace Valuable
       if(!found)
         listener->m_attributeListening.remove(this);
     }
+
+    return erasedAnything;
   }
 
-  void Attribute::removeListener(long id)
+  bool Attribute::removeListener(long id)
   {
     QMap<long, AttributeListener>::iterator it = m_listeners.find(id);
-    if(it == m_listeners.end()) return;
+    if(it == m_listeners.end()) return false;
     if(it->listener) it->listener->m_attributeListening.remove(this);
     m_listeners.erase(it);
+    return true;
   }
 
   bool Attribute::isChanged() const
