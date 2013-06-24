@@ -396,6 +396,11 @@ namespace Valuable
       if (sendSignal) this->emitChange();
     }
 
+    inline bool hasValue(Layer layer)
+    {
+      return m_valueSet[layer];
+    }
+
     /// @todo should return the derived type, not AttributeT
     inline AttributeT<T> & operator = (const T & t)
     {
