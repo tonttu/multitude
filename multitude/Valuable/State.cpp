@@ -146,7 +146,12 @@ namespace Valuable
       auto self = weak.lock();
       if (!self) return;
 
-      Radiant::Guard g(self->m_d->m_stateMutex);
+      /// @todo this causes a deadlock (#4564) if the state is modified inside
+      /// the callbacks. Is this mutex really required? Anyway the callbacks
+      /// are executed after-update, so if we do multiple state transitions per
+      /// frame, the actual state when the callback is executed can be
+      /// different.
+      //Radiant::Guard g(self->m_d->m_stateMutex);
       self->m_d->sendCallbacks(state, gen, false);
     });
   }
