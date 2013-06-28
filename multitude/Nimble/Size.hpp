@@ -242,7 +242,7 @@ namespace Nimble {
   template<typename T>
   void SizeT<T>::fit(const SizeT &size, Qt::AspectRatioMode mode)
   {
-    assert(mode == Qt::IgnoreAspectRatio || mode == Qt::KeepAspectRatio);
+    assert(mode == Qt::IgnoreAspectRatio || mode == Qt::KeepAspectRatio || Qt::KeepAspectRatioByExpanding);
 
     if(mode == Qt::IgnoreAspectRatio || m_width == 0 || m_height == 0) {
       m_width = size.width();
