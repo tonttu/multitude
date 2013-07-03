@@ -66,7 +66,7 @@ namespace Radiant
     int err = SocketUtilPosix::bindOrConnectSocket(fd, host, port, errstr,
                   true, AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(err) {
-      error("TCPServerSocket::open # %s", errstr.toUtf8().data());
+      error("TCPServerSocket::open(%s:%d) # %s", host, port, errstr.toUtf8().data());
       return err;
     }
 
