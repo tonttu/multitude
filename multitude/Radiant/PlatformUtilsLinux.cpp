@@ -30,6 +30,33 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <QStringList>
+#include <QProcess>
+
+namespace
+{
+
+  // Utility similar to system()
+  int run(QString cmd, QStringList argv = QStringList(),
+          QByteArray * out = 0, QByteArray * err = 0)
+  {
+    QProcess p;
+    p.start(cmd, argv, QProcess::ReadOnly);
+    p.waitForStarted();
+    p.waitForFinished(-1);
+    if(out) *out = p.readAllStandardOutput();
+    if(err) {
+      *err = p.readAllStandardError();
+    } else {
+      QByteArray e = p.readAllStandardError();
+      if(!e.isEmpty())
+        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
+    }
+    return p.exitCode();
+  }
+
+}
+
 namespace Radiant
 {
 
@@ -129,6 +156,15 @@ namespace Radiant
 
     void openFirewallPortTCP(int port, const QString & name)
     {
+    }
+
+    bool reboot()
+    {
+      if(geteuid() == 0) {
+        return run("reboot") == 0;
+      } else {
+        return run("sudo", (QStringList() << "-n" << "--" << "reboot")) == 0;
+      }
     }
   }
 

@@ -65,6 +65,10 @@ namespace Radiant
     /// @param port TCP port to open
     /// @param name rule name
     RADIANT_API void openFirewallPortTCP(int port, const QString & name);
+
+    /// Reboot the system
+    /// @return true on success
+    RADIANT_API bool reboot();
   }
 
 }

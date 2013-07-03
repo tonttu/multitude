@@ -119,6 +119,12 @@ namespace Radiant
     void openFirewallPortTCP(int port, const QString & name)
     {
     }
+
+    bool reboot()
+    {
+      Radiant::error("PlatformUtils::reboot # not implemented on OS X");
+      return false;
+    }
   }
 
 }
