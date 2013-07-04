@@ -306,7 +306,7 @@ namespace Luminous
     /// Pushes new frame buffer to the stack.
     /// @param target frame buffer for rendering commands.
     /// @return Guard which pops this frame buffer automatically on its destruction.
-    FrameBufferGuard pushFrameBuffer(const FrameBuffer & target);
+    std::unique_ptr<FrameBufferGuard> pushFrameBuffer(const FrameBuffer & target);
     /// Pops the current frame buffer from the stack.
     void popFrameBuffer();
 

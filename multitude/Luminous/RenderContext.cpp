@@ -1355,7 +1355,7 @@ namespace Luminous
     return m_data->m_uniformBufferOffsetAlignment;
   }
 
-  FrameBufferGuard RenderContext::pushFrameBuffer(const FrameBuffer &target)
+  std::unique_ptr<FrameBufferGuard> RenderContext::pushFrameBuffer(const FrameBuffer &target)
   {
     m_data->m_driverGL->pushFrameBuffer(target);
 
@@ -1381,7 +1381,7 @@ namespace Luminous
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
 
-    return FrameBufferGuard(*this);
+    return std::unique_ptr<FrameBufferGuard>(new FrameBufferGuard(*this));
   }
 
   void RenderContext::popFrameBuffer()
