@@ -170,9 +170,9 @@ namespace Radiant
     bool shutdown()
     {
       if(geteuid() == 0) {
-        return run("shutdown -P now") == 0;
+        return run("shutdown", (QStringList() << "-h" << "-P" << "now")) == 0;
       } else {
-        return run("sudo", (QStringList() << "-n" << "--" << "shutdown -h -P now")) == 0;
+        return run("sudo", (QStringList() << "-n" << "--" << "shutdown" << "-h" << "-P" << "now")) == 0;
       }
     }
   }
