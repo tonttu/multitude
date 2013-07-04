@@ -37,6 +37,36 @@
 
 #include <Windows.h>
 
+namespace {
+
+  bool systemShutdown(bool rebootAfterShutdown)
+  {
+    HANDLE token;
+    if (!OpenProcessToken(GetCurrentProcess(),
+                          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
+      throw QString("OpenProcessToken: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    TOKEN_PRIVILEGES tkp;
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    if (!LookupPrivilegeValue(0, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid))
+      throw QString("LookupPrivilegeValue: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    if (!AdjustTokenPrivileges(token, FALSE, &tkp, 0, 0, 0))
+      throw QString("AdjustTokenPrivileges: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    const DWORD reason = SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED;
+    const DWORD timeout = 30;
+    if (InitiateSystemShutdownExA(NULL, NULL,
+                                  timeout, TRUE, rebootAfterShutdown, reason) != 0) {
+      return true;
+    } else {
+      throw QString("InitiateSystemShutdownExA: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+    }
+  }
+
+}
+
 namespace Radiant
 {
 
@@ -177,29 +207,14 @@ namespace Radiant
 
     bool reboot()
     {
-      HANDLE token;
-      if (!OpenProcessToken(GetCurrentProcess(),
-                            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
-        throw QString("OpenProcessToken: %1").arg(Radiant::StringUtils::getLastErrorMessage());
-
-      TOKEN_PRIVILEGES tkp;
-      tkp.PrivilegeCount = 1;
-      tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-      if (!LookupPrivilegeValue(0, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid))
-        throw QString("LookupPrivilegeValue: %1").arg(Radiant::StringUtils::getLastErrorMessage());
-
-      if (!AdjustTokenPrivileges(token, FALSE, &tkp, 0, 0, 0))
-        throw QString("AdjustTokenPrivileges: %1").arg(Radiant::StringUtils::getLastErrorMessage());
-
-      const DWORD reason = SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED;
-      const DWORD timeout = 30;
-      if (InitiateSystemShutdownExA(NULL, "Rebooting due to received AMX command",
-                               timeout, TRUE, TRUE, reason) != 0) {
-        return true;
-      } else {
-        throw QString("InitiateSystemShutdownExA: %1").arg(Radiant::StringUtils::getLastErrorMessage());
-      }
+      return systemShutdown(true);
     }
+
+    bool shutdown()
+    {
+      return systemShutdown(false);
+    }
+
   }
 
 }

@@ -166,6 +166,15 @@ namespace Radiant
         return run("sudo", (QStringList() << "-n" << "--" << "reboot")) == 0;
       }
     }
+
+    bool shutdown()
+    {
+      if(geteuid() == 0) {
+        return run("shutdown -P now") == 0;
+      } else {
+        return run("sudo", (QStringList() << "-n" << "--" << "shutdown -P now")) == 0;
+      }
+    }
   }
 
 }

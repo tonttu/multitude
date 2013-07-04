@@ -125,6 +125,12 @@ namespace Radiant
       Radiant::error("PlatformUtils::reboot # not implemented on OS X");
       return false;
     }
+
+    bool shutdown()
+    {
+      Radiant::error("PlatformUtils::shutdown # not implemented on OS X");
+      return false;
+    }
   }
 
 }

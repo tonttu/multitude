@@ -67,8 +67,13 @@ namespace Radiant
     RADIANT_API void openFirewallPortTCP(int port, const QString & name);
 
     /// Reboot the system
+    /// @throw QString error message
     /// @return true on success
     RADIANT_API bool reboot();
+
+    /// Shutdown the system immediately
+    /// @return true on success
+    RADIANT_API bool shutdown();
   }
 
 }
