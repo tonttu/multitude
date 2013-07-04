@@ -112,7 +112,7 @@ namespace Radiant
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("TCPSocket::open # %s", errstr.toUtf8().data());
+      error("TCPSocket::open(%s:%d) # %s", host, port, errstr.toUtf8().data());
     }
     return err;
   }
