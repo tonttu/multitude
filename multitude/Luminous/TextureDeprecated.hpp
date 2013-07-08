@@ -13,8 +13,6 @@
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/GLResource.hpp>
-#include <Luminous/PixelFormat.hpp>
-
 #include <Nimble/Vector2.hpp>
 
 #include <Patterns/NotCopyable.hpp>
@@ -181,37 +179,6 @@ namespace Luminous
     void allocate();
   };
 
-#ifndef LUMINOUS_OPENGLES
-  /// A 1D texture
-  class LUMINOUS_API Texture1D : public TextureT<GL_TEXTURE_1D>
-  {
-  public:
-    /// Constructs a 1D texture and adds it to the given resource collection
-    MULTI_ATTR_DEPRECATED("Texture1D is deprecated. Use Luminous::Texture instead.", Texture1D(RenderContext * context = 0));
-
-    /// Load the texture from from raw data, provided by the user
-    bool loadBytes(GLenum internalFormat, int h,
-                   const void* data,
-                   const PixelFormat& srcFormat,
-                   bool buildMipmaps = true);
-
-    /// Constructs a 1D texture by loading it from a file
-    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, RenderContext * context = 0);
-    /// Constructs a 1D texture by loading it from memory
-    static Texture1D* fromBytes(GLenum internalFormat,
-                                int h,
-                                const void* data,
-                                const PixelFormat& srcFormat, bool buildMipmaps = true,
-                                RenderContext * context = 0);
-
-  };
-
-  inline Texture1D::Texture1D(RenderContext * context)
-    : TextureT<GL_TEXTURE_1D> (context)
-  {}
-
-#endif // LUMINOUS_OPENGLES
-
   /// A 2D texture
   class LUMINOUS_API Texture2D : public TextureT<GL_TEXTURE_2D>
   {
@@ -287,51 +254,12 @@ namespace Luminous
     /// Number of lines that have been uploaded to GPU. Used to track progressive uploads.
     /// @sa progressiveUpload
     size_t m_uploadedLines;
-
-    friend class ImageTex;
   };
 
   inline Texture2D::Texture2D(RenderContext * context)
     : TextureT<GL_TEXTURE_2D>(context),
       m_uploadedLines(0)
   {}
-
-#ifndef LUMINOUS_OPENGLES
-
-  /// A 3D texture
-  class LUMINOUS_API Texture3D : public TextureT<GL_TEXTURE_3D>
-  {
-  public:
-    /// Constructs a 3D texture and adds it to the given resource collection
-    /// @param resources resource collection to own this texture
-    MULTI_ATTR_DEPRECATED("Texture3D is deprecated. Use Luminous::Texture instead.", Texture3D(RenderContext * resources = 0));
-
-    /// Set the depth of the 3D texture (ie. the z dimension)
-    /// @param d new depth
-    void setDepth(int d) { m_depth = d; }
-    /// Get the depth of the 3D texture
-    /// @return depth of the texture
-    int depth() const { return m_depth; }
-  private:
-    int m_depth;
-  };
-
-  inline Texture3D::Texture3D(RenderContext * resources)
-    : TextureT<GL_TEXTURE_3D> (resources),
-      m_depth(0)
-  {}
-
-  /// A cubemap texture
-  class LUMINOUS_API TextureCube : public TextureT<GL_TEXTURE_CUBE_MAP>
-  {
-  public:
-    /// Constructs a cube texture and adds it to the given resource collection
-    TextureCube(RenderContext * context = 0)
-        : TextureT<GL_TEXTURE_CUBE_MAP> (context) {}
-
-  };
-#endif // LUMINOUS_OPENGLES
-
 }
 
 /// @endcond

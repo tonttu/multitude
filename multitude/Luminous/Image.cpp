@@ -897,58 +897,6 @@ namespace Luminous
     return *m_texture.get();
   }
 
-  ////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////
-
-  ImageTex::ImageTex()
-  {}
-
-  bool ImageTex::bind(RenderContext * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
-  {
-    bool ret = true;
-
-    Texture2D & tex = ref(resources);
-
-    tex.bind(textureUnit);
-
-    if(tex.generation() != generation()) {
-      ret = tex.loadImage(textureUnit, *this, withmipmaps, internalFormat);
-      tex.setGeneration(generation());
-    }
-
-    return ret;
-  }
-
-  bool ImageTex::isFullyLoadedToGPU(RenderContext * resources)
-  {
-    if(!width() || !height())
-      return false;
-
-    if(!resources)
-      resources = RenderContext::getThreadContext();
-
-    if(!resources->getResource(this))
-      return false;
-
-    Texture2D & tex = ref(resources);
-
-    return (tex.m_uploadedLines == size_t(height()));
-  }
-
-  ImageTex * ImageTex::move()
-  {
-    PUSH_IGNORE_DEPRECATION_WARNINGS
-    ImageTex * t = new ImageTex;
-    std::swap(t->m_width, m_width);
-    std::swap(t->m_height, m_height);
-    std::swap(t->m_pixelFormat, m_pixelFormat);
-    std::swap(t->m_data, m_data);
-    t->m_generation = ++m_generation;
-
-    return t;
-    POP_IGNORE_DEPRECATION_WARNINGS
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -1161,34 +1109,6 @@ namespace Luminous
     }
 
     return 1.0f;
-  }
-
-  CompressedImageTex::~CompressedImageTex()
-  {
-  }
-
-  void CompressedImageTex::bind(RenderContext * resources, GLenum textureUnit)
-  {
-    Texture2D & tex = ref(resources);
-    tex.bind(textureUnit);
-
-    // Luminous::Utils::glCheck("ImageTex::bind # 1");
-
-    if(tex.width() != width() || tex.height() != height()) {
-      tex.loadImage(*this);
-    }
-  }
-
-  /// Creates a new CompressedImageTex from this, all the cpu data from
-  /// Luminous::CompressedImage is moved to the new object.
-  CompressedImageTex * CompressedImageTex::move()
-  {
-    CompressedImageTex * t = new CompressedImageTex;
-    std::swap(t->m_size, m_size);
-    std::swap(t->m_compression, m_compression);
-    std::swap(t->m_d->ptr, m_d->ptr);
-    std::swap(t->m_d->size, m_d->size);
-    return t;
   }
 
 #endif // LUMINOUS_OPENGLES

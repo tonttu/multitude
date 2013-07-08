@@ -39,7 +39,6 @@ namespace Luminous {
   using Nimble::Vector4f;
 
   class RenderContext;
-  class Texture1D;
 
   /// Class for managing information on multiple OpenGL vindows/viewports. This
   /// class stores information about the layout of multiple OpenGL windows and

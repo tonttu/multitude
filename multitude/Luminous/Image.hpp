@@ -259,65 +259,6 @@ namespace Luminous
     mutable Radiant::Mutex m_textureMutex;
   };
 
-  /// @cond
-
-  /** ImageTex is a utility class for rendering images.
-
-  ImageTex provides an easy way to create OpenGL textures from image files in a
-  way that handles multiple rendering contexts transparently.
-  @deprecated This class will be removed in Cornerstone 2.1. Use Luminous::Image::texture() instead.
-  */
-  class LUMINOUS_API ImageTex : public Luminous::Image, public Luminous::ContextVariableT<Luminous::Texture2D>
-  {
-  public:
-    MULTI_ATTR_DEPRECATED("This class is obsolete. Use Image::texture() instead.", ImageTex());
-
-    /** Binds a texture representing this image to the current OpenGL context.
-
-        @param textureUnit The OpenGL texture unit to bind to
-        @param withmipmaps Should we use mimaps, or not. This argument only
-        makes difference the first time this function executed for the context
-        (and the texture is created), after that the the same texture is used.
-        @return true if the bind succeeded
-    */
-    bool bind(GLenum textureUnit = GL_TEXTURE0, bool withmipmaps = true) {
-      return bind(0, textureUnit, withmipmaps);
-    }
-
-    /** Binds a texture representing this image to the current OpenGL context.
-
-        @param resources The OpenGL resource handler
-        @param textureUnit The OpenGL texture unit to bind to
-        @param withmipmaps Should we use mimaps, or not. This argument only
-        makes difference the first time this function executed for the context
-        (and the texture is created), after that the the same texture is used.
-        @param internalFormat internal OpenGL texture format. May be zero to
-        let the GPU automatically choose one.
-        @return true if the bind succeeded
-    */
-    bool bind(RenderContext * resources, GLenum textureUnit = GL_TEXTURE0,
-              bool withmipmaps = true, int internalFormat = 0);
-
-    /// Checks if the image data is fully loaded to the GPU, inside a texture
-    /// @param resources OpenGL resource collection to use
-    /// @return true if the texture data has been fully uploaded to the GPU
-    bool isFullyLoadedToGPU(RenderContext * resources = 0);
-
-    ImageTex & operator = (const Luminous::Image & that)
-    {
-      Image::operator =(that);
-
-      return *this;
-    }
-
-    /// Creates a new ImageTex from this. All the cpu data from Luminous::Image
-    /// is moved to the new object.
-    /// @return cloned ImageTex
-    ImageTex * move();
-  };
-
-  /// @endcond
-
 #ifndef LUMINOUS_OPENGLES
 
   /// A compressed image. Currently supports DXT format.
@@ -370,29 +311,7 @@ namespace Luminous
 /// @endcond
   };
 
-  /// @cond
-
-  /// CompressedImageTex provides an easy way to access textures generated from
-  /// compressed images. @sa Luminous::ImageTex
-  class LUMINOUS_API CompressedImageTex : public CompressedImage, public Luminous::ContextVariableT<Luminous::Texture2D>
-  {
-  public:
-    virtual ~CompressedImageTex();
-
-    /** Binds a texture representing this compressed image to the current
-    OpenGL context.
-    @param resources The OpenGL resource handler
-    @param textureUnit The OpenGL texture unit to bind to*/
-    void bind(RenderContext * resources, GLenum textureUnit = GL_TEXTURE0);
-
-    /// Creates a new CompressedImageTex from this object. All the cpu data from
-    /// Luminous::CompressedImage is moved to the new object.
-    /// @return new CompressedImageTex object
-    CompressedImageTex * move();
-  };
 #endif // LUMINOUS_OPENGLES
-
-/// @endcond
 }
 
 #endif

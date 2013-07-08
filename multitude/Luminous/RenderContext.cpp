@@ -1229,15 +1229,6 @@ namespace Luminous
     // flush();
   }
 
-/*
-  FrameBufferObject RenderContext::pushFrameBuffer(Nimble::Vector2 size, float scale) {
-    return m_data->m_rtm.pushFrameBuffer(size, scale);
-  }
-
-  Luminous::Texture2D & RenderContext::popFrameBuffer(FrameBufferObject & trt) {
-    return m_data->m_rtm.popFrameBuffer(trt);
-  }
-*/
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
   {
     m_data->m_viewportStack.push(viewport);
