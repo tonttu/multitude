@@ -53,8 +53,6 @@ namespace Valuable {
         m_master(master),
         m_flags(flags)
     {
-      /// @todo we should actually serialize these
-      setSerializable(false);
     }
 
     virtual bool set(int v, Layer layer, ValueUnit) OVERRIDE
@@ -82,7 +80,16 @@ namespace Valuable {
 
     Radiant::FlagsT<T> flags() const { return m_flags; }
 
-    ArchiveElement serialize(Archive &) const OVERRIDE { return ArchiveElement(); }
+    ArchiveElement serialize(Archive & archive) const OVERRIDE
+    {
+      Layer layer;
+      if (!layerForSerialization(archive, layer))
+        return ArchiveElement();
+      ArchiveElement e = archive.createElement(name());
+      e.set(m_master.value(layer) ? "true" : "false");
+      return e;
+    }
+
     bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
 
     virtual bool handleShorthand(const Valuable::StyleValue & value,
@@ -97,16 +104,15 @@ namespace Valuable {
       return true;
     }
 
-#if 0
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
     {
-      /// @todo implement by looking at m_mask in m_master
+      return m_master.isFlagDefinedOnLayer(m_flags, layer);
     }
-#endif
 
     void setSources(std::vector<FlagAliasT<T>*> sources)
     {
       m_sources = sources;
+      setSerializable(sources.empty());
     }
 
   private:
@@ -214,6 +220,9 @@ namespace Valuable {
         if (found)
           alias->setSources(sources);
       }
+
+      if (createAliases)
+        setSerializable(false);
     }
 
     AttributeFlagsT & operator=(const Flags & b) { setValue(b, USER); return *this; }
@@ -353,6 +362,11 @@ namespace Valuable {
       }
       setValue(newValue, layer);
       return true;
+    }
+
+    bool isFlagDefinedOnLayer(Radiant::FlagsT<T> flags, Layer layer) const
+    {
+      return (m_masks[layer] & flags) == flags;
     }
 
   private:

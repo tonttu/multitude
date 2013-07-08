@@ -457,11 +457,9 @@ namespace Valuable
       if (!vo->serializable())
         continue;
 
-      if (!archive.checkFlags(Archive::ONLY_CHANGED) || vo->isChanged()) {
-        ArchiveElement child = vo->serialize(archive);
-        if(!child.isNull())
-          elem.add(child);
-      }
+      ArchiveElement child = vo->serialize(archive);
+      if (!child.isNull())
+        elem.add(child);
     }
 
     return elem;

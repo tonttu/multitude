@@ -403,7 +403,7 @@ namespace Valuable
 
     /// Serialize object to a XML file. Example usage:
     /// @code
-    /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
+    /// Serializer::serializeXML("widget.xml", widget);
     /// @endcode
     /// @param filename output xml filename
     /// @param t Object to be serialized

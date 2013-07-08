@@ -13,12 +13,6 @@
 namespace Valuable
 {
 
-  SerializationOptions::SerializationOptions(unsigned int options)
-    : m_options(options)
-  {}
-
-  //////////////////////////////////////////////////////////////////////////
-
   ArchiveElementImpl::~ArchiveElementImpl()
   {
   }

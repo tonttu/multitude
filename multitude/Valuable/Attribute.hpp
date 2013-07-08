@@ -363,6 +363,21 @@ namespace Valuable
     /// and clears the USER value.
     virtual void setAsDefaults() {}
 
+    bool layerForSerialization(SerializationOptions flags, Layer & layer) const
+    {
+      if (flags.checkFlags(SerializationOptions::LAYER_STYLE_IMPORTANT) && isValueDefinedOnLayer(STYLE_IMPORTANT))
+        layer = STYLE_IMPORTANT;
+      else if (flags.checkFlags(SerializationOptions::LAYER_USER) && isValueDefinedOnLayer(USER))
+        layer = USER;
+      else if (flags.checkFlags(SerializationOptions::LAYER_STYLE) && isValueDefinedOnLayer(STYLE))
+        layer = STYLE;
+      else if (flags.checkFlags(SerializationOptions::LAYER_DEFAULT) && isValueDefinedOnLayer(DEFAULT))
+        layer = DEFAULT;
+      else
+        return false;
+      return true;
+    }
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
@@ -523,7 +538,10 @@ namespace Valuable
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      ArchiveElement e = Serializer::serialize(archive, value());
+      Layer layer;
+      if (!layerForSerialization(archive, layer))
+        return ArchiveElement();
+      ArchiveElement e = Serializer::serialize(archive, value(layer));
       if (e.isNull())
         return e;
       if (!name().isEmpty())

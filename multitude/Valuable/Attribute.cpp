@@ -189,9 +189,13 @@ namespace Valuable
 
   ArchiveElement Attribute::serialize(Archive & archive) const
   {
+    Layer layer;
+    if (!layerForSerialization(archive, layer))
+      return ArchiveElement();
+
     ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.data());
     elem.add("type", type());
-    elem.set(asString());
+    elem.set(asString(nullptr, layer));
 
     return elem;
   }

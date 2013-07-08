@@ -26,16 +26,31 @@ namespace Valuable
   /**
    * Options that define the behaviour of the (de)serialize() methods.
    */
-  class VALUABLE_API SerializationOptions
+  class SerializationOptions
   {
   public:
-    /// Serialization bitflags
-    enum Options { DEFAULTS = 0,    /// Normal behaviour, serialize everything
-                   ONLY_CHANGED = 1 /// Serialize only values that are different from the original values
-                 };
+    /// Serialization bitflags. The actual value that is serialized is from the
+    /// layer with highest priority that is included in serialization with
+    /// LAYER_-flags. The default is LAYER_USER, meaning that only manually set
+    /// values will be serialized. If an attribute has a value set only from a
+    /// CSS file, that whole attribute is ignored.
+    /// @sa Valuable::Attribute::Layer
+    enum Options
+    {
+      LAYER_DEFAULT         = 1 << 0, /// Serialize values from Valuable::Attribute::DEFAULT layer
+      LAYER_STYLE           = 1 << 1, /// Serialize values from Valuable::Attribute::STYLE layer
+      LAYER_USER            = 1 << 2, /// Serialize values from Valuable::Attribute::USER layer
+      LAYER_STYLE_IMPORTANT = 1 << 3, /// Serialize values from Valuable::Attribute::STYLE_IMPORTANT layer
+
+      /// Normal behaviour, serialize manually set values
+      DEFAULTS              = LAYER_USER,
+      /// Serialize only values that are different from the original values
+      ONLY_CHANGED          = LAYER_STYLE | LAYER_USER | LAYER_STYLE_IMPORTANT
+    };
 
     /// Construct an options object with given flags.
-    SerializationOptions(unsigned int options = DEFAULTS);
+    SerializationOptions(unsigned int options = DEFAULTS)
+      : m_options(options) {}
 
     /// Check if given flag is enabled
     /// @param flag Flag to test
