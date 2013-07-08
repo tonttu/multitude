@@ -81,7 +81,7 @@ namespace Valuable
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      virtual QString asString(bool * const ok = 0) const OVERRIDE;
+      virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }
@@ -144,10 +144,10 @@ namespace Valuable
   typedef AttributeVectorT<Nimble::Vector4T, float> AttributeVector4f;
 
   template<class VectorType>
-  QString AttributeVector<VectorType>::asString(bool * const ok) const {
+  QString AttributeVector<VectorType>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
-    return Radiant::StringUtils::toString(value());
+    return Radiant::StringUtils::toString(value(layer));
   }
 
   template<class VectorType>

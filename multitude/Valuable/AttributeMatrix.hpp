@@ -45,7 +45,7 @@ namespace Valuable
     { return this->value().data(); }
 
     // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
   };
 
 
@@ -88,10 +88,10 @@ namespace Valuable
   */
 
   template<class MatrixType, typename ElementType, int N>
-  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok) const {
+  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
-    return Radiant::StringUtils::toString(this->value());
+    return Radiant::StringUtils::toString(this->value(layer));
   }
 
   /// A float Matrix2 value object

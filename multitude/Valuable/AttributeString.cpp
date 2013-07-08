@@ -26,20 +26,20 @@ namespace Valuable
       *this = tmp;
   }
 
-  float AttributeString::asFloat(bool * const ok) const
+  float AttributeString::asFloat(bool * const ok, Layer layer) const
   {
-    return value().toFloat(ok);
+    return value(layer).toFloat(ok);
   }
 
-  int AttributeString::asInt(bool * const ok) const
+  int AttributeString::asInt(bool * const ok, Layer layer) const
   {
-    return value().toInt(ok, 0);
+    return value(layer).toInt(ok, 0);
   }
 
-  QString AttributeString::asString(bool * const ok) const
+  QString AttributeString::asString(bool * const ok, Layer layer) const
   {
     if(ok) *ok = true;
-    return value();
+    return value(layer);
   }
 
   bool AttributeString::set(const QString & v, Layer layer, ValueUnit)

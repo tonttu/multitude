@@ -39,7 +39,7 @@ namespace Valuable
     using Base::operator =;
 
 #ifdef CLANG_XML
-    virtual int asInt(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value()); }
+    virtual int asInt(bool * const ok, Attribute::Layer layer) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value(layer)); }
 #endif
 
     AttributeIntT() : Base() {}

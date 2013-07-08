@@ -37,7 +37,7 @@ namespace Valuable
                        const StringMap & v = StringMap(), bool transit = false);
 
     /// Returns the value as string
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
 
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;

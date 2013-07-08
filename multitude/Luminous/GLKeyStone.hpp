@@ -92,7 +92,7 @@ namespace Luminous {
     rotated. This function is typically used by some GUI code to
     determine in what orientation the whole key-stone thing is.
     @return number of rotations applied*/
-    int rotations() const { return m_rotations.asInt(); }
+    int rotations() const { return m_rotations; }
 
     /** Calculates the OpenGL keystone matrix. */
     void calculateMatrix();

@@ -37,11 +37,11 @@ namespace Valuable
         : Base(host, name, v, transit)
     {}
 
-    virtual QString asString(bool * const ok) const OVERRIDE
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
     {
       if(ok) *ok = true;
 
-      const Radiant::TimeStamp & ts = value();
+      const Radiant::TimeStamp & ts = value(layer);
       return QString::number(ts.value());
     }
 

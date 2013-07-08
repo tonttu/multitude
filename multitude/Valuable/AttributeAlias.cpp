@@ -31,31 +31,31 @@ namespace Valuable
       m_attribute->eventProcess(id, data);
   }
 
-  float AttributeAlias::asFloat(bool * const ok) const
+  float AttributeAlias::asFloat(bool * const ok, Layer layer) const
   {
     if(!m_attribute) {
       if(ok) *ok = false;
       return .0f;
     }
-    return m_attribute->asFloat(ok);
+    return m_attribute->asFloat(ok, layer);
   }
 
-  int AttributeAlias::asInt(bool * const ok) const
+  int AttributeAlias::asInt(bool * const ok, Layer layer) const
   {
     if(!m_attribute) {
       if(ok) *ok = false;
       return 0;
     }
-    return m_attribute->asInt(ok);
+    return m_attribute->asInt(ok, layer);
   }
 
-  QString AttributeAlias::asString(bool * const ok) const
+  QString AttributeAlias::asString(bool * const ok, Layer layer) const
   {
     if(!m_attribute) {
       if(ok) *ok = false;
-      return "";
+      return QString();
     }
-    return m_attribute->asString(ok);
+    return m_attribute->asString(ok, layer);
   }
 
   bool AttributeAlias::set(float v, Attribute::Layer layer, Attribute::ValueUnit unit)

@@ -166,27 +166,24 @@ namespace Valuable
     eventProcess(id, data);
   }
 
-  float Attribute::asFloat(bool * ok) const
+  float Attribute::asFloat(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error(
-          "Attribute::asFloat # %s : conversion not available", m_name.data());
+    Radiant::error("Attribute::asFloat # %s : conversion not available", m_name.data());
     return 0.0f;
   }
 
-  int Attribute::asInt(bool * ok) const
+  int Attribute::asInt(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error(
-"Attribute::asInt # %s : conversion not available", m_name.data());
+    Radiant::error("Attribute::asInt # %s : conversion not available", m_name.data());
     return 0;
   }
 
-  QString Attribute::asString(bool * ok) const
+  QString Attribute::asString(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error(
-"Attribute::asString # %s : conversion not available", m_name.data());
+    Radiant::error("Attribute::asString # %s : conversion not available", m_name.data());
     return "";
   }
 

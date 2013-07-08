@@ -30,16 +30,16 @@ namespace Valuable
     if(ok) *this = (v != 0);
   }
 
-  int AttributeBool::asInt(bool * const ok) const
+  int AttributeBool::asInt(bool * const ok, Layer layer) const
   {
     if(ok) *ok = true;
-    return value();
+    return value(layer);
   }
 
-  QString AttributeBool::asString(bool * const ok) const
+  QString AttributeBool::asString(bool * const ok, Layer layer) const
   {
     if(ok) *ok = true;
-    return Radiant::StringUtils::toString(value());
+    return Radiant::StringUtils::toString(value(layer));
   }
 
   bool AttributeBool::set(int value, Layer layer, ValueUnit)

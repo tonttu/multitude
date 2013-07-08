@@ -64,13 +64,13 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     /// Returns the size of the rectangle
     Nimble::Vector2i size() const { return m_size.asVector(); }
     /// Returns amount of stereo panning
-    float stereoPan() const { return m_stereoPan.asFloat(); }
+    float stereoPan() const { return m_stereoPan; }
     /// Returns the width of the fade border
-    int fade() const { return m_fadeWidth.asInt(); }
+    int fade() const { return m_fadeWidth; }
     /// Returns the left channel id
-    int leftChannel() const { return m_leftChannel.asInt(); }
+    int leftChannel() const { return m_leftChannel; }
     /// Returns the right channel id
-    int rightChannel() const { return m_rightChannel.asInt(); }
+    int rightChannel() const { return m_rightChannel; }
 
   private:
     // Corner location of the rectangle in screen coordinates

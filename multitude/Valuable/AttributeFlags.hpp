@@ -53,6 +53,7 @@ namespace Valuable {
         m_master(master),
         m_flags(flags)
     {
+      /// @todo we should actually serialize these
       setSerializable(false);
     }
 
@@ -242,6 +243,29 @@ namespace Valuable {
       return m_cache;
     }
 
+    /// For example value(USER) returns bitset that includes bits only from
+    /// USER level, not from any lower or higher priority level. This might
+    /// be confusing in some situations.
+    Flags value(Layer layer) const
+    {
+      return layer == LAYER_CURRENT ? value() : value(layer, layer);
+    }
+
+    /// Collects bits between layers topLayer to bottomLayer (inclusive) to bitmask
+    Flags value(Layer topLayer, Layer bottomLayer) const
+    {
+      Flags flags;
+      Flags available = ~Flags();
+
+      for(int layer = topLayer; layer >= bottomLayer; --layer) {
+        Flags mask = m_masks[layer] & available;
+        flags |= mask & m_values[layer];
+        available &= ~m_masks[layer];
+      }
+
+      return flags;
+    }
+
     void setFlags(const Flags & f, bool state, Layer layer = USER)
     {
       if(state) m_values[layer] |= f;
@@ -269,44 +293,11 @@ namespace Valuable {
       updateCache();
     }
 
-    virtual QString asString(bool * const ok) const OVERRIDE
+    QString asString(bool * const ok, Layer layer) const
     {
-      // All matching flags sorted by their popcount and their location in the
-      // original array to optimize the string representation.
-      // For example motion-x and motion-y will become motion-xy, since motion-xy
-      // has a higher popcount than motion-x / -y
-      std::multimap<int, std::pair<QByteArray, Flags> > flags;
-
-      Flags v = value();
-      int i = 0;
-      for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
-        if ((v & *it) == *it) {
-          std::bitset<sizeof(T)*8> bitset(it->asInt());
-          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), *it)));
-        }
-      }
-
-      QStringList flagLst;
-      for (auto p: flags) {
-        Flags v2 = p.second.second;
-        if ((v2 & v) == v2) {
-          // If we have bits on that aren't actual enums (or the string version
-          // is missing), v might still have some bits enabled, but v2 might be
-          // an enum with a value of zero. Skip this case, since otherwise we
-          // might have something like "lock-depth flags-none" that makes no
-          // sense.
-          if (v2 || flagLst.isEmpty())
-            flagLst << p.second.first;
-          // these bits are now consumed by this flag, remove those from the value
-          v &= ~v2;
-          if (!v)
-            break;
-        }
-      }
-
       if (ok)
         *ok = true;
-      return flagLst.join(" ");
+      return stringify(value(layer));
     }
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
@@ -328,10 +319,10 @@ namespace Valuable {
       return true;
     }
 
-    virtual int asInt(bool * const ok = 0) const OVERRIDE
+    virtual int asInt(bool * const ok, Layer layer) const OVERRIDE
     {
       if(ok) *ok = true;
-      return value().asInt();
+      return value(layer).asInt();
     }
 
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
@@ -366,18 +357,47 @@ namespace Valuable {
 
   private:
 
+    QString stringify(Flags v) const
+    {
+      // All matching flags sorted by their popcount and their location in the
+      // original array to optimize the string representation.
+      // For example motion-x and motion-y will become motion-xy, since motion-xy
+      // has a higher popcount than motion-x / -y
+      std::multimap<int, std::pair<QByteArray, Flags> > flags;
+
+      int i = 0;
+      for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
+        if ((v & *it) == *it) {
+          std::bitset<sizeof(T)*8> bitset(it->asInt());
+          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), *it)));
+        }
+      }
+
+      QStringList flagLst;
+      for (auto p: flags) {
+        Flags v2 = p.second.second;
+        if ((v2 & v) == v2) {
+          // If we have bits on that aren't actual enums (or the string version
+          // is missing), v might still have some bits enabled, but v2 might be
+          // an enum with a value of zero. Skip this case, since otherwise we
+          // might have something like "lock-depth flags-none" that makes no
+          // sense.
+          if (v2 || flagLst.isEmpty())
+            flagLst << p.second.first;
+          // these bits are now consumed by this flag, remove those from the value
+          v &= ~v2;
+          if (!v)
+            break;
+        }
+      }
+
+      return flagLst.join(" ");
+    }
+
     void updateCache()
     {
       Flags tmp = m_cache;
-      m_cache.clear();
-      Flags available = ~Flags();
-
-      for(int layer = LAYER_COUNT - 1; layer >= 0; --layer) {
-        Flags mask = m_masks[layer] & available;
-        m_cache |= mask & m_values[layer];
-        available &= ~m_masks[layer];
-      }
-
+      m_cache = value(Layer(LAYER_COUNT - 1), Layer(0));
       if(tmp != m_cache) emitChange();
     }
 

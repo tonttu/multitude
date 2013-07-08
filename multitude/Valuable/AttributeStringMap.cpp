@@ -24,10 +24,10 @@ namespace Valuable
   {
   }
 
-  QString AttributeStringMap::asString(bool * const ok) const
+  QString AttributeStringMap::asString(bool * const ok, Layer layer) const
   {
     if (ok) *ok = true;
-    const QMap<QString, QString> &map = value();
+    const QMap<QString, QString> &map = value(layer);
     QString ret;
     for(auto it =  map.begin(); ; ) {
       ret.append(QString("\"%1\" \"%2\"").arg(it.value()).arg(it.key()));

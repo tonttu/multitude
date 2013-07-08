@@ -37,12 +37,26 @@ namespace Valuable
       : Base(host, name, v, transit)
       {}
 
-      /// Converts the numeric value to float
-      virtual float asFloat(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<float> (value()); }
-      /// Converts the numeric value to integer
-      virtual int asInt(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value()); }
-      /// Converts the numeric value to string
-      virtual QString asString(bool * const ok = 0) const OVERRIDE { if(ok) *ok = true; return Radiant::StringUtils::toString(value()); }
+    /// Converts the numeric value to float
+    virtual float asFloat(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    {
+      if (ok) *ok = true;
+      return static_cast<float> (value(layer));
+    }
+
+    /// Converts the numeric value to integer
+    virtual int asInt(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    {
+      if (ok) *ok = true;
+      return static_cast<int> (value(layer));
+    }
+
+    /// Converts the numeric value to string
+    virtual QString asString(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    {
+      if (ok) *ok = true;
+      return Radiant::StringUtils::toString(value(layer));
+    }
   };
 
 }

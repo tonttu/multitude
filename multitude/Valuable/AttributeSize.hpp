@@ -84,10 +84,10 @@ namespace Valuable {
       return *m_values[1];
     }
 
-    virtual QString asString(bool * const ok = 0) const OVERRIDE
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
     {
       if(ok) *ok = true;
-      return QString("%1 %2").arg(*m_values[0]).arg(*m_values[1]);
+      return QString("%1 %2").arg(m_values[0]->value(layer)).arg(m_values[1]->value(layer));
     }
 
     virtual bool deserialize(const ArchiveElement &element) OVERRIDE

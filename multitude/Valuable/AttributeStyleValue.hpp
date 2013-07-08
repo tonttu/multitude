@@ -67,10 +67,10 @@ namespace Valuable
       return true;
     }
 
-    virtual QString asString(bool * const ok = 0) const OVERRIDE
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
     {
       if (ok) *ok = true;
-      return value().stringify();
+      return value(layer).stringify();
     }
   };
 } // namespace Valuable

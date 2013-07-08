@@ -32,7 +32,7 @@ namespace Valuable
     /// @param r The rectangle to be stored in the AttributeRect
     AttributeRectT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false);
 
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
 
     /// Converts the object to rectangle
     Nimble::RectT<T> asRect() const { return this->value(); }
@@ -54,10 +54,10 @@ namespace Valuable
   {}
 
   template <class T>
-  QString AttributeRectT<T>::asString(bool * const ok) const {
+  QString AttributeRectT<T>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
-    return Radiant::StringUtils::toString(this->value());
+    return Radiant::StringUtils::toString(this->value(layer));
   }
 }
 

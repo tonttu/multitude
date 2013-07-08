@@ -24,10 +24,10 @@ namespace Valuable
   {
   }
 
-  QString AttributeStringList::asString(bool * const ok) const
+  QString AttributeStringList::asString(bool * const ok, Layer layer) const
   {
     if (ok) *ok = true;
-    return value().join(" ");
+    return value(layer).join(" ");
   }
 
   bool AttributeStringList::set(const QString & v, Attribute::Layer layer, Attribute::ValueUnit)

@@ -54,10 +54,11 @@ namespace Valuable
         delete m_values[i];
     }
 
-    virtual QString asString(bool * const ok = 0) const OVERRIDE
+    virtual QString asString(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE
     {
       if (ok) *ok = true;
-      return QString("%1 %2 %3 %4").arg(*m_values[0]).arg(*m_values[1]).arg(*m_values[2]).arg(*m_values[3]);
+      return QString("%1 %2 %3 %4").arg(m_values[0]->value(layer)).arg(m_values[1]->value(layer)).
+          arg(m_values[2]->value(layer)).arg(m_values[3]->value(layer));
     }
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
@@ -223,6 +224,12 @@ namespace Valuable
     Nimble::Frame4f value() const
     {
       return Nimble::Frame4f(*m_values[0], *m_values[1], *m_values[2], *m_values[3]);
+    }
+
+    Nimble::Frame4f value(Layer layer) const
+    {
+      return Nimble::Frame4f(m_values[0]->value(layer), m_values[1]->value(layer),
+          m_values[2]->value(layer), m_values[3]->value(layer));
     }
 
     bool handleShorthand(const StyleValue & value,

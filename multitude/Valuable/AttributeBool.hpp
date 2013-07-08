@@ -35,8 +35,8 @@ namespace Valuable
     virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
 
-    virtual int asInt(bool * const ok) const OVERRIDE;
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    virtual int asInt(bool * const ok, Layer layer) const OVERRIDE;
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
   };
 
 }
