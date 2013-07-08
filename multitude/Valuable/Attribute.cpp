@@ -342,6 +342,16 @@ namespace Valuable
     return m_serializable;
   }
 
+  void Attribute::setOwnerShorthand(Attribute * owner)
+  {
+    m_ownerShorthand = owner;
+  }
+
+  Attribute * Attribute::ownerShorthand() const
+  {
+    return m_ownerShorthand;
+  }
+
   bool Attribute::set(float, Layer, ValueUnit)
   {
     Radiant::error("Attribute::set(float) # %s: conversion not available",

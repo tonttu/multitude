@@ -337,6 +337,9 @@ namespace Valuable
     /// @returns true if this attribute should be serialized with its host
     bool serializable() const;
 
+    void setOwnerShorthand(Attribute * owner);
+    Attribute * ownerShorthand() const;
+
 #ifdef MULTI_DOCUMENTER
     struct Doc
     {
@@ -370,6 +373,7 @@ namespace Valuable
   private:
     // The object that holds this object
     Node * m_host;
+    Attribute * m_ownerShorthand;
     bool m_serializable;
     QByteArray m_name;
     bool m_transit;

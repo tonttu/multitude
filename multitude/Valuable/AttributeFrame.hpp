@@ -43,9 +43,10 @@ namespace Valuable
 #ifndef CLANG_XML
       for (int i = 0; i < 4; ++i) {
         m_values[i]->addListener(std::bind(&AttributeFrame::valuesChanged, this));
-        m_values[i]->setSerializable(false);
+        m_values[i]->setOwnerShorthand(this);
       }
 #endif
+      setSerializable(false);
     }
 
     ~AttributeFrame()
