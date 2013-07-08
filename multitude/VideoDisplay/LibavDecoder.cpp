@@ -883,6 +883,12 @@ namespace VideoDisplay
     }
 
     if(m_av.videoCodecContext) {
+      /// @todo sometimes it might be possible to get invalid size here if the
+      /// first video packet is too far in the stream or it takes very long
+      /// time to decode it (there is opening timeout in libav). If this happens,
+      /// we should skip the whole header-ready event and continue decoding the
+      /// stream normally. After the first video frame is decoded, size should
+      /// be updated and then the events should be triggered
       m_av.videoSize = Nimble::Size(m_av.videoCodecContext->width, m_av.videoCodecContext->height);
     } else {
       m_av.videoSize = Nimble::Size();
