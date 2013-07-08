@@ -69,6 +69,7 @@ namespace Valuable
     /// calling this. This is because it reads m_changeCallbacks and modifies
     /// m_onceCallbacks, and it's also important that callbacks are called in
     /// the right order
+    std::vector<CallbackType> collectCallbacks(int newState, bool direct);
     void sendCallbacks(int newState, int generation, bool direct);
 
   public:
@@ -92,23 +93,32 @@ namespace Valuable
       m_generation(0)
   {}
 
-  void StateInt::D::sendCallbacks(int newState, int generation, bool direct)
+  std::vector<StateInt::CallbackType> StateInt::D::collectCallbacks(int newState, bool direct)
   {
+    std::vector<CallbackType> collected;
     for (auto & p: m_changeCallbacks)
       if (p.second.m_direct == direct)
-        p.second.m_callback(newState, generation);
+        collected.push_back(p.second.m_callback);
 
     for (auto it = m_onceCallbacks.begin(); it != m_onceCallbacks.end();) {
       auto & c = it->second;
       if (c.m_direct == direct && ((c.m_stateMask & newState) == newState)) {
-        c.m_callback(newState, generation);
+        collected.push_back(std::move(c.m_callback));
         it = m_onceCallbacks.erase(it);
       } else ++it;
     }
 
     for (auto & p: m_callbacks)
       if (p.second.m_direct == direct && ((p.second.m_stateMask & newState) == newState))
-        p.second.m_callback(newState, generation);
+        collected.push_back(p.second.m_callback);
+
+    return collected;
+  }
+
+  void StateInt::D::sendCallbacks(int newState, int generation, bool direct)
+  {
+    for (auto c: collectCallbacks(newState, direct))
+      c(newState, generation);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -150,8 +160,13 @@ namespace Valuable
       auto self = weak.lock();
       if (!self) return;
 
-      Radiant::Guard g(self->m_d->m_stateMutex);
-      self->m_d->sendCallbacks(state, gen, false);
+      std::vector<CallbackType> callbacks;
+      {
+        Radiant::Guard g(self->m_d->m_stateMutex);
+        callbacks = self->m_d->collectCallbacks(state, false);
+      }
+      for (auto c: callbacks)
+        c(state, gen);
     });
   }
 
@@ -166,12 +181,13 @@ namespace Valuable
         callback(m_d->m_state, m_d->m_generation);
       } else {
         auto weak = m_d->m_weak;
+        int state = m_d->m_state;
+        int gen = m_d->m_generation;
         Node::invokeAfterUpdate([=] {
           auto self = weak.lock();
           if (!self) return;
 
-          Radiant::Guard g(self->m_d->m_stateMutex);
-          callback(m_d->m_state, m_d->m_generation);
+          callback(state, gen);
         });
       }
     }
