@@ -65,6 +65,10 @@ namespace Valuable
   public:
     D(int initialState);
 
+    /// This function is not thread-safe, m_stateMutex has to be locked before
+    /// calling this. This is because it reads m_changeCallbacks and modifies
+    /// m_onceCallbacks, and it's also important that callbacks are called in
+    /// the right order
     void sendCallbacks(int newState, int generation, bool direct);
 
   public:
@@ -146,12 +150,7 @@ namespace Valuable
       auto self = weak.lock();
       if (!self) return;
 
-      /// @todo this causes a deadlock (#4564) if the state is modified inside
-      /// the callbacks. Is this mutex really required? Anyway the callbacks
-      /// are executed after-update, so if we do multiple state transitions per
-      /// frame, the actual state when the callback is executed can be
-      /// different.
-      //Radiant::Guard g(self->m_d->m_stateMutex);
+      Radiant::Guard g(self->m_d->m_stateMutex);
       self->m_d->sendCallbacks(state, gen, false);
     });
   }
