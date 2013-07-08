@@ -19,7 +19,6 @@
 #include "ImageCodecTGA.hpp"
 #include "ImageCodecQT.hpp"
 #include "ImageCodecSVG.hpp"
-#include "CPUMipmaps.hpp"
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
 #include "GPUAssociation.hpp"
@@ -72,7 +71,7 @@ namespace Luminous
         // Check for DXT support
         bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
         Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
-        Luminous::CPUMipmaps::s_dxtSupported = dxtSupport;
+
 
         if (!glewIsSupported("GL_ARB_sample_shading")) {
           Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "

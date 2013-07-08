@@ -12,7 +12,6 @@
 
 #include "GLResources.hpp"
 #include "RenderContext.hpp"
-#include "ShaderDeprecated.hpp"
 #include "PixelFormat.hpp"
 #include "DummyOpenGL.hpp"
 
@@ -60,15 +59,11 @@ namespace Luminous
       m_colorCorrection(this, "colorcorrection"),
       m_rgbCube(this, "rgbcube")
   {
-    m_colorCorrectionShader = new Luminous::ShaderDeprecated();
-    m_colorCorrectionShader->setFragmentShader(s_colorCorrectionShader);
-
     eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::Area::~Area()
   {
-    delete m_colorCorrectionShader;
   }
 
   void MultiHead::Area::setGeometry(int x, int y, int w, int h, bool copyToGraphics)

@@ -19,7 +19,6 @@
 #include <Luminous/GLResources.hpp>
 #include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
-#include <Luminous/VertexBuffer.hpp>
 #include <Luminous/VertexArray.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
