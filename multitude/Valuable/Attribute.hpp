@@ -335,7 +335,7 @@ namespace Valuable
     /// @param v should this attribute be serialized with its host
     void setSerializable(bool v);
     /// @returns true if this attribute should be serialized with its host
-    bool serializable() const;
+    bool isSerializable() const;
 
     void setOwnerShorthand(Attribute * owner);
     Attribute * ownerShorthand() const;

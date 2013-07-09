@@ -341,7 +341,7 @@ namespace Valuable
     m_serializable = v;
   }
 
-  bool Attribute::serializable() const
+  bool Attribute::isSerializable() const
   {
     return m_serializable;
   }

@@ -453,8 +453,8 @@ namespace Valuable
     for(container::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it) {
       Attribute * vo = it->second;
 
-      /// @todo need to add new flag to Archive that controls how Attribute::serializable works
-      if (!vo->serializable())
+      /// @todo need to add new flag to Archive that controls how Attribute::isSerializable works
+      if (!vo->isSerializable())
         continue;
 
       ArchiveElement child = vo->serialize(archive);
