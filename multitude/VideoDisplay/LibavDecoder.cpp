@@ -351,6 +351,7 @@ namespace VideoDisplay
     bool open();
     void close();
 
+    void increaseSeekGeneration();
     bool seekToBeginning();
     bool seek();
 
@@ -967,20 +968,24 @@ namespace VideoDisplay
     return true;
   }
 
+  void LibavDecoder::D::increaseSeekGeneration()
+  {
+    ++m_seekGeneration;
+    if(m_audioTransfer)
+      m_audioTransfer->setSeekGeneration(m_seekGeneration);
+    m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
+    if(m_options.playMode() == PAUSE)
+      m_pauseTimestamp = Radiant::TimeStamp::currentTime();
+  }
+
   bool LibavDecoder::D::seek()
   {
     QByteArray errorMsg("LibavDecoder::D::seek # " + m_options.source().toUtf8() + ":");
 
     if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
-      if(ok) {
-        ++m_seekGeneration;
-        if(m_audioTransfer)
-          m_audioTransfer->setSeekGeneration(m_seekGeneration);
-        m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-        if(m_options.playMode() == PAUSE)
-          m_pauseTimestamp = Radiant::TimeStamp::currentTime();
-      }
+      if(ok)
+        increaseSeekGeneration();
       return ok;
     }
 
@@ -1059,12 +1064,7 @@ namespace VideoDisplay
       avcodec_flush_buffers(m_av.audioCodecContext);
     if(m_av.videoCodecContext)
       avcodec_flush_buffers(m_av.videoCodecContext);
-    ++m_seekGeneration;
-    if(m_audioTransfer)
-      m_audioTransfer->setSeekGeneration(m_seekGeneration);
-    m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-    if(m_options.playMode() == PAUSE)
-      m_pauseTimestamp = Radiant::TimeStamp::currentTime();
+    increaseSeekGeneration();
     m_audioTrackHasEnded = false;
     m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
     m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
@@ -1275,6 +1275,16 @@ namespace VideoDisplay
             frame->setImageSize(Nimble::Vector2i(output->video->w, output->video->h));
             frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
 
+            VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
+            if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
+                lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+              // There was a problem with the stream, previous frame had larger timestamp than this
+              // frame, that should be newer. This must be broken stream or concatenated MPEG file
+              // or something similar. We treat this like it was a seek request
+              /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
+              increaseSeekGeneration();
+              frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+            }
             m_decodedVideoFrames.put();
           }
         }
@@ -1320,6 +1330,13 @@ namespace VideoDisplay
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+
+      VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
+      if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
+          lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+        increaseSeekGeneration();
+        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+      }
       m_decodedVideoFrames.put();
     }
 
