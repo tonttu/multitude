@@ -90,7 +90,16 @@ namespace Valuable {
       return e;
     }
 
-    bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
+    bool deserialize(const ArchiveElement & e) OVERRIDE
+    {
+      const QByteArray p = e.get().toUtf8().trimmed();
+      bool on = p == "true" || p == "on" || p == "yes";
+      if (on || p == "false" || p == "off" || p == "no") {
+        m_master.setFlags(m_flags, on);
+        return true;
+      }
+      return false;
+    }
 
     virtual bool handleShorthand(const Valuable::StyleValue & value,
                                  QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
@@ -219,6 +228,9 @@ namespace Valuable {
 
         if (found)
           alias->setSources(sources);
+
+        if (sources.empty())
+          alias->setOwnerShorthand(this);
       }
 
       if (createAliases)
