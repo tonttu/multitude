@@ -667,6 +667,11 @@ namespace VideoDisplay
     /// @param location 2D location of the audio
     virtual void panAudioTo(Nimble::Vector2f location) const = 0;
 
+    /// Controls the gain (volume) of the video sound-track.
+    /// @param gain new audio gain, typical range is 0-1, although larger values
+    ///             can be used as well. Default value is 1.
+    virtual void setAudioGain(float gain) = 0;
+
     /// Creates a new decoder and loads it with given options
     /// @param options options given to load()
     /// @param backend use empty string for automatic backend

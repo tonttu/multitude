@@ -282,6 +282,7 @@ namespace VideoDisplay
       , m_audioFilter()
       , m_radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
       , m_loopOffset(0)
+      , m_audioGain(1)
       , m_audioTransfer(nullptr)
       , m_audioTrackHasEnded(false)
       , m_maxAudioDelay(0.3)
@@ -326,6 +327,7 @@ namespace VideoDisplay
 
     double m_loopOffset;
 
+    float m_audioGain;
     AudioTransfer * m_audioTransfer;
 
     /// In some videos, the audio track might be shorter than the video track
@@ -868,6 +870,7 @@ namespace VideoDisplay
     if(m_av.audioCodec) {
       int channelLayout = av_get_channel_layout(m_options.channelLayout());
       m_audioTransfer = new AudioTransfer(m_host, av_get_channel_layout_nb_channels(channelLayout));
+      m_audioTransfer->setGain(m_audioGain);
       m_audioTransfer->setSeekGeneration(m_seekGeneration);
       m_audioTransfer->setPlayMode(m_options.playMode());
 
@@ -1793,6 +1796,13 @@ namespace VideoDisplay
 
       Resonant::DSPNetwork::instance()->send(control);
     }
+  }
+
+  void LibavDecoder::setAudioGain(float gain)
+  {
+    m_d->m_audioGain = gain;
+    if (m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setGain(gain);
   }
 
   void LibavDecoder::audioTransferDeleted()
