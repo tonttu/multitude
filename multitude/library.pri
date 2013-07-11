@@ -36,15 +36,13 @@ src_code.files += $$FLEXSOURCES $$BISONSOURCES
 src_code.files += $$PROJECT_FILE
 
 INSTALLS += target
-
-# Source code & headers go with the framework on OS X
 INSTALLS += includes src_code extra_inc
 
 TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
-    DLLDESTDIR = $$PWD/bin
+  DLLDESTDIR = $$PWD/bin
 
   # Optimized debug libraries
   CONFIG(debug,debug|release) {
@@ -54,31 +52,15 @@ win32 {
       QMAKE_CXXFLAGS_DEBUG += -O2
       QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
       QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
-      # No need to install headers
-      #EXPORT_HEADERS = nothing
     }
   }
-	
-	# For some reason DESTDIR_TARGET doesn't work here
-	tt = $$join(TARGET, "", "$(DESTDIR)", ".dll")
-	dlls.path = /bin
-	dlls.files += $$tt
-	dlls.CONFIG += no_check_exist
-	
-	INSTALLS += dlls
-	
-	!isEmpty(WINDOWS_INSTALL_SDK_LIB) {
-		# For some reason DESTDIR_TARGET doesn't work here
-		sdk_lib.path = /src/lib
-		sdk_lib.files += $$join(TARGET, "", "$(DESTDIR)", ".lib")
-		sdk_lib.CONFIG += no_check_exist
-	
-		sdk_dll.path = /src/lib
-		sdk_dll.files += $$join(TARGET, "", "$(DESTDIR)", ".dll")
-		sdk_dll.CONFIG += no_check_exist
-		
-		INSTALLS += sdk_lib sdk_dll
-	}
+
+  # Install DLL to binary folder
+  dlls.path = /bin
+  dlls.files = $${DESTDIR}/$${TARGET}.dll
+  dlls.CONFIG += no_check_exist
+
+  INSTALLS += dlls
 }
 
 unix {
