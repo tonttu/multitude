@@ -53,11 +53,11 @@ namespace Valuable
    * /// FunnyWidget.cpp
    *
    * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
-   * Valuable::FlagNames s_modes[] = {{"on", FunnyWidget::ON, "enabled", FunnyWidget::ON},
+   * Valuable::EnumNames s_modes[] = {{"on", FunnyWidget::ON, "enabled", FunnyWidget::ON},
    *                                  {"off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF},
    *                                  {0, 0}};
    *
-   * Valuable::FlagNames s_priorities[] = {{"low", FunnyWidget::PriorityLow},
+   * Valuable::EnumNames s_priorities[] = {{"low", FunnyWidget::PriorityLow},
    *                                       {"medium", FunnyWidget::PriorityMedium},
    *                                       {"high", FunnyWidget::PriorityHigh},
    *                                       {0, 0}};
@@ -80,12 +80,12 @@ namespace Valuable
   public:
     using Base::operator =;
 
-    AttributeEnumT(Node * host, const QByteArray & name, const FlagNames * names,
+    AttributeEnumT(Node * host, const QByteArray & name, const EnumNames * names,
                   const T & v, bool transit = false)
       : AttributeNumericT<T>(host, name, v, transit)
       , m_allowIntegers(false)
     {
-      for (const FlagNames * it = names; it->name; ++it) {
+      for (const EnumNames * it = names; it->name; ++it) {
         m_enumValues[QString(it->name).toLower()] = T(it->value);
       }
     }

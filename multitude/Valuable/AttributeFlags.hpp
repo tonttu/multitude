@@ -33,6 +33,18 @@ namespace Valuable {
     const char * name;
     /// Value of the value
     long value;
+    /// Should we create an alias for this flag so that you can write "name: value" in CSS
+    bool createAlias;
+  };
+
+  /// This struct is used to define the name strings for enum values so they
+  /// can be referenced from CSS.
+  struct EnumNames
+  {
+    /// Name of the flag
+    const char * name;
+    /// Value of the value
+    long value;
   };
 
   template <typename T> class AttributeFlagsT;
@@ -181,7 +193,7 @@ namespace Valuable {
   public:
     typedef Radiant::FlagsT<T> Flags;
     AttributeFlagsT(Node * parent, const QByteArray & name, const FlagNames * names,
-               Flags v = Flags(), bool createAliases = true, bool transit = false)
+               Flags v = Flags(), bool transit = false)
       : Attribute(parent, name, transit)
     {
       m_masks[DEFAULT] = ~Flags();
@@ -194,7 +206,7 @@ namespace Valuable {
       for (const FlagNames * it = names; it->name; ++it) {
         auto flag = Flags::fromInt(it->value);
         m_flags[QByteArray(it->name).toLower()] = flag;
-        if (parent && createAliases && it->value) {
+        if (parent && it->value && it->createAlias) {
           auto alias = new FlagAliasT<T>(parent, *this, it->name, flag);
           m_aliases << alias;
 
@@ -233,7 +245,7 @@ namespace Valuable {
           alias->setOwnerShorthand(this);
       }
 
-      if (createAliases)
+      if (!m_aliases.isEmpty())
         setSerializable(false);
     }
 
