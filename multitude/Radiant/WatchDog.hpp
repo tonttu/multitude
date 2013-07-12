@@ -22,6 +22,8 @@
 
 #include <map>
 
+#include <QByteArray>
+
 namespace Radiant {
 
   /** A guard that is used to make sure that programs do not get stuck.
@@ -42,7 +44,7 @@ namespace Radiant {
         @param key The identifier of the calling object. This is usually a point to some object
         which provides a handy way of generating unique keys in C/C++.
     */
-    void hostIsAlive(void * key);
+    void hostIsAlive(void * key, const QByteArray & name);
     /** Instructs the Watchdog to forger some hosting object.
         @param key The identifier of the calling object.
     */
@@ -72,6 +74,7 @@ namespace Radiant {
     public:
       Item() : m_check(true) {}
       volatile bool m_check;
+      QByteArray m_name;
     };
 
     typedef std::map<void *, Item> container;

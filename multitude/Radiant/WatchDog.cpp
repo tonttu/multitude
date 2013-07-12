@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #endif
 
+#include <QStringList>
+
 namespace Radiant {
 
   WatchDog * WatchDog::m_instance = 0;
@@ -54,10 +56,11 @@ namespace Radiant {
       m_instance = 0;
   }
 
-  void WatchDog::hostIsAlive(void * key)
+  void WatchDog::hostIsAlive(void * key, const QByteArray & name)
   {
     Radiant::Guard g(m_mutex);
     m_items[key].m_check = true;
+    m_items[key].m_name = name;
   }
 
   void WatchDog::forgetHost(void * key)
@@ -89,23 +92,24 @@ namespace Radiant {
       for(int i = 0; i < n && m_continue; i++)
         Radiant::Sleep::sleepMs(100);
 
-      bool ok = true;
+      QStringList errorItems;
       {
         Radiant::Guard g(m_mutex);
         for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
           Item & item = it->second;
           if(item.m_check == false)
-            ok = false;
+            errorItems << QString::fromUtf8(item.m_name);
 
           item.m_check = false;
         }
       }
 
-      if(!ok && m_continue) {
+      if(!errorItems.isEmpty() && m_continue) {
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
               "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
               "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
               "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
+        error("WATCHDOG: Unresponsive items: %s", errorItems.join(", ").toUtf8().data());
 
 #ifdef RADIANT_LINUX
         struct rlimit limit;
