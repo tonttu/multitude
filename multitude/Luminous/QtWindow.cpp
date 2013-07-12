@@ -179,22 +179,20 @@ namespace Luminous
     virtual bool event(QEvent * e) OVERRIDE
     {
       QTouchEvent * te = dynamic_cast<QTouchEvent *>(e);
+      if(te) {
 
-      if(!te) {
+        m_window.eventHook()->handleTouchEvent(Radiant::TouchEvent(*te));
+        te->accept();
+
+        return true;
+
+      } else {
         return QGLWidget::event(e);
       }
 
-      /*const QList<QTouchEvent::TouchPoint> & points = te->touchPoints();
-
-      for(auto it = points.begin(); it != points.end(); it++) {
-
-      }
-      */
-
-      m_window.eventHook()->handleTouchEvent(Radiant::TouchEvent(*te));
-      te->accept();
-      return true;
     }
+
+
   };
 
   ////////////////////////////////////////////////////////////
@@ -423,17 +421,17 @@ namespace Luminous
 
   void QtWindow::minimize()
   {
-    m_d->m_glWidget->showMinimized();
+    m_d->m_mainWindow->showMinimized();
   }
 
   void QtWindow::maximize()
   {
-    m_d->m_glWidget->showMaximized();
+    m_d->m_mainWindow->showMaximized();
   }
 
   void QtWindow::restore()
   {
-    m_d->m_glWidget->showNormal();
+    m_d->m_mainWindow->showNormal();
   }
 
   void QtWindow::showCursor(bool visible)
