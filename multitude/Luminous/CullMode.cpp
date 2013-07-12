@@ -14,7 +14,7 @@ namespace Luminous
 {
 
 CullMode::CullMode()
-  : m_enabled(true)
+  : m_enabled(false)
   , m_face(BACK)
 {
 }

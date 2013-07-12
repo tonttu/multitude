@@ -584,6 +584,7 @@ namespace Luminous
     setBlendMode(Luminous::BlendMode::Default());
     setDepthMode(Luminous::DepthMode::Default());
     setStencilMode(Luminous::StencilMode::Default());
+    setCullMode(Luminous::CullMode::Default());
 
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
