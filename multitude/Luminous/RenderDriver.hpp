@@ -87,6 +87,9 @@ namespace Luminous
     LUMINOUS_API virtual void setCullMode(const CullMode & mode) = 0;
     LUMINOUS_API virtual void setFrontFace(FaceWinding winding) = 0;
 
+    LUMINOUS_API virtual void enableClipDistance(const QList<int> & planes) = 0;
+    LUMINOUS_API virtual void disableClipDistance(const QList<int> & planes) = 0;
+
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) = 0;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) = 0;
 

@@ -621,6 +621,16 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandFrontFace(winding));
   }
 
+  void RenderDriverGL::enableClipDistance(const QList<int> & planes)
+  {
+    m_d->newRenderQueueSegment(new CommandClipDistance(planes, true));
+  }
+
+  void RenderDriverGL::disableClipDistance(const QList<int> & planes)
+  {
+    m_d->newRenderQueueSegment(new CommandClipDistance(planes, false));
+  }
+
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)
   {
     m_d->newRenderQueueSegment(new CommandViewportGL(rect));

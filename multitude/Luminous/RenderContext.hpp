@@ -498,6 +498,14 @@ namespace Luminous
     /// @param winding Winding of the front-facing polygons
     void setFrontFace(enum FaceWinding winding);
 
+    /// Enable clipplanes for use in shaders
+    /// @param planes a list of planes that will be enabled
+    void enableClipPlanes(const QList<int> & planes);
+
+    /// Disable clipplanes from being used in shaders
+    /// @param planes a list of planes that will be disabled
+    void disableClipPlanes(const QList<int> & planes);
+
 /// @cond
 
     /// @todo REMOVE US

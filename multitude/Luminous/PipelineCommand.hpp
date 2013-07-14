@@ -194,8 +194,23 @@ namespace Luminous
   private:
     FaceWinding m_winding;
   };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  class CommandClipDistance : public PipelineCommand
+  {
+  public:
+    CommandClipDistance(const QList<int> & planes, bool enable);
+
+    virtual void execute() OVERRIDE;
+    
+  private:
+    QList<int> m_planes;
+    bool m_enable;
+  };
 }
 
 /// @endcond
 
-#endif
+#endif // LUMINOUS_OPENGL_PIPELINECOMMAND_HPP

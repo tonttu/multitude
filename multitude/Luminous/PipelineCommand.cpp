@@ -228,4 +228,24 @@ namespace Luminous
     glFrontFace(m_winding);
   }
 
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  CommandClipDistance::CommandClipDistance(const QList<int> & planes, bool enable)
+    : m_planes(planes)
+    , m_enable(enable)
+  {
+  }
+
+  void CommandClipDistance::execute()
+  {
+    if (m_enable) {
+      for (int i = 0; i < m_planes.size(); ++i)
+        glEnable(GL_CLIP_DISTANCE0 + m_planes.at(i));
+    }
+    else {
+      for (int i = 0; i < m_planes.size(); ++i)
+        glDisable(GL_CLIP_DISTANCE0 + m_planes.at(i));
+    }
+  }
 }

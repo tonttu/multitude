@@ -1704,6 +1704,15 @@ namespace Luminous
     m_data->m_driverGL->setFrontFace(winding);
   }
 
+  void RenderContext::enableClipPlanes(const QList<int> & planes)
+  {
+    m_data->m_driverGL->enableClipDistance(planes);
+  }
+
+  void RenderContext::disableClipPlanes(const QList<int> & planes)
+  {
+    m_data->m_driverGL->disableClipDistance(planes);
+  }
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
