@@ -554,6 +554,7 @@ namespace Luminous
       it->second.setExpirationSeconds(program.expiration());
     }
 
+    it->second.link(program);
     return it->second;
   }
 
