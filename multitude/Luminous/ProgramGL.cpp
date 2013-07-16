@@ -28,8 +28,10 @@ namespace Luminous
 
   ShaderGL::~ShaderGL()
   {
-    if(m_handle)
+    if(m_handle) {
       glDeleteShader(m_handle);
+      GLERROR("ShaderGL::~ShaderGL # glDeleteShader");
+    }
   }
 
   ShaderGL::ShaderGL(ShaderGL && shader)
@@ -49,10 +51,13 @@ namespace Luminous
     if(!m_handle) {
       if(shader.type() == Shader::Vertex) {
         m_handle = glCreateShader(GL_VERTEX_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_VERTEX_SHADER)");
       } else if(shader.type() == Shader::Fragment) {
         m_handle = glCreateShader(GL_FRAGMENT_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_FRAGMENT_SHADER)");
       } else if(shader.type() == Shader::Geometry) {
         m_handle = glCreateShader(GL_GEOMETRY_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_GEOMETRY_SHADER)");
       } else {
         Radiant::error("Unknown shader type");
         return false;
@@ -64,8 +69,9 @@ namespace Luminous
     const GLchar * text = shaderData.data();
     const GLint length = shaderData.size();
     glShaderSource(m_handle, 1, &text, &length);
+    GLERROR("ShaderGL::compile # glShaderSource");
     glCompileShader(m_handle);
-    //GLERROR("RenderDriverGL::setShaderProgram glCompileShader");
+    GLERROR("ShaderGL::compile # glCompileShader");
     GLint compiled = GL_FALSE;
     glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled);
     if (compiled != GL_TRUE) {
@@ -119,8 +125,10 @@ namespace Luminous
 
   ProgramGL::~ProgramGL()
   {
-    if(m_handle)
+    if(m_handle) {
       glDeleteProgram(m_handle);
+      GLERROR("ProgramGL::~ProgramGL # glDeleteProgram");
+    }
   }
 
   void ProgramGL::bind()
@@ -129,12 +137,14 @@ namespace Luminous
     // Avoid re-applying the same shader
     if(m_state.setProgram(m_handle)) {
       glUseProgram(m_handle);
+      GLERROR("ProgramGL::bind # glUseProgram");
 #ifndef RADIANT_OSX_MOUNTAIN_LION
       // OpenGL 4.0 feature, so we use the ARB version
-      if (isSampleShadingSupported())
+      if (isSampleShadingSupported()) {
         glMinSampleShadingARB(m_sampleShading);
+        GLERROR("ProgramGL::bind # glMinSampleShadingARB");
+      }
 #endif
-      //GLERROR("RenderDriverGL::setShaderProgram glUseProgram");
     }
   }
 
@@ -162,11 +172,11 @@ namespace Luminous
 
       // Attach to the program
       glAttachShader(m_handle, shadergl.handle());
-      //GLERROR("RenderDriverGL::setShaderProgram glAttachShader");
+      GLERROR("ProgramGL::link # glAttachShader");
     }
 
     glLinkProgram(m_handle);
-    GLERROR("RenderDriverGL::setShaderProgram glLinkProgram");
+    GLERROR("ProgramGL::link # glLinkProgram");
     // Check for linking errors
     GLint status;
     glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
@@ -240,6 +250,7 @@ namespace Luminous
       /// Uniforms that have an array index / different kind of notation
       /// (foo vs foo[0]) might not be in the m_uniforms-map, yet
       int loc = glGetUniformLocation(m_handle, name.data());
+      GLERROR("ProgramGL::uniformLocation");
       m_uniforms[name] = loc;
       return loc;
     }
