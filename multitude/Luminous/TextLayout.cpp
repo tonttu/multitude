@@ -70,7 +70,7 @@ namespace Luminous
   {
     bool missingGlyphs = false;
 
-    const QRawFont & font = glyphRun.rawFont();
+    QRawFont font = glyphRun.rawFont();
     const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
     const QVector<QPointF> & positions = glyphRun.positions();
 
@@ -87,7 +87,7 @@ namespace Luminous
     for (int i = 0; i < glyphs.size(); ++i) {
       const quint32 glyph = glyphs[i];
 
-      FontCache::Glyph * glyphCache = cache.glyph(glyph);
+      FontCache::Glyph * glyphCache = cache.glyph(font, glyph);
       if (glyphCache) {
         if (glyphCache->isEmpty())
           continue;

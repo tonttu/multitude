@@ -268,7 +268,6 @@ namespace Luminous
     };
 
   public:
-    QRawFont m_rawFont;
     const QString m_rawFontKey;
 
     /// This locks m_cache, m_fileCache
@@ -508,12 +507,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   FontCache::D::D(const QRawFont & rawFont)
-    : m_rawFont(rawFont)
-    // This needs to be created before calling setPixelSize(), since after that
-    // the font is in some weird state before rendering anything
-    , m_rawFontKey(makeKey(m_rawFont))
+    : m_rawFontKey(makeKey(rawFont))
   {
-    m_rawFont.setPixelSize(s_distanceFieldPixelSize);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -575,7 +570,7 @@ namespace Luminous
     return s_atlasMutex;
   }
 
-  FontCache::Glyph * FontCache::glyph(quint32 glyph)
+  FontCache::Glyph * FontCache::glyph(QRawFont & rawFont, quint32 glyph)
   {
     Radiant::Guard g(m_d->m_cacheMutex);
 
@@ -622,7 +617,9 @@ namespace Luminous
     m_d->m_cacheMutex.unlock();
     /// @todo there probably needs to be a limit how many of these we want
     ///       to generate in one frame
-    QPainterPath path = m_d->m_rawFont.pathForGlyph(glyph);
+    if (!qFuzzyCompare(rawFont.pixelSize(), s_distanceFieldPixelSize))
+      rawFont.setPixelSize(s_distanceFieldPixelSize);
+    QPainterPath path = rawFont.pathForGlyph(glyph);
     m_d->m_cacheMutex.lock();
     m_d->m_glyphGenerationRequests.push_back(std::make_pair(glyph, path));
 
