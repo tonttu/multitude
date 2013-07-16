@@ -8,6 +8,38 @@
  * 
  */
 
+
+/// Begin private/public -hack
+/// See comment in RichTextLayout::generateInternal for the reason this exists
+
+// On Windows we have our own patched Qt, since private functions aren't exported
+#ifndef _WIN32
+
+// First include everything QTextLayout includes, to minimize the impact we have
+#include <QtCore/qstring.h>
+#include <QtCore/qnamespace.h>
+#include <QtCore/qrect.h>
+#include <QtCore/qvector.h>
+#include <QtGui/qcolor.h>
+#include <QtCore/qobject.h>
+#include <QtGui/qevent.h>
+#include <QtGui/qtextformat.h>
+#include <QtGui/qglyphrun.h>
+#include <QtGui/qtextcursor.h>
+
+#ifdef QTEXTLAYOUT_H
+#error "QTextLayout was included too early"
+#endif
+
+#define private public
+#include <QTextLayout>
+#undef private
+
+#endif // _WIN32
+
+/// End private/public -hack
+
+
 #include "RichTextLayout.hpp"
 
 #include <QTextDocument>
@@ -138,15 +170,36 @@ namespace Luminous
     QAbstractTextDocumentLayout * layout = m_d->doc().documentLayout();
 
     for (QTextBlock block = m_d->doc().begin(); block.isValid(); block = block.next()) {
-      QRectF rect = layout->blockBoundingRect(block);
+      const QTextLayout * textLayout = block.layout();
+      const QRectF rect = layout->blockBoundingRect(block);
+      /// Must use line count from text layout, not from text block, since when
+      /// we have automatically wrapped lines, these are different
+      const int lineCount = textLayout->lineCount();
 
       const Nimble::Vector2f layoutLocation(rect.left(), rect.top());
       for (auto it = block.begin(), end = block.end(); it != end; ++it) {
-        QTextFragment frag = it.fragment();
-        QTextCharFormat format = frag.charFormat();
+        const QTextFragment frag = it.fragment();
+        if (!frag.isValid())
+          continue;
+        const QTextCharFormat format = frag.charFormat();
 
-        foreach (const QGlyphRun & glyphRun, frag.glyphRuns())
-          missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun, &format);
+        const int pos = frag.position() - block.position();
+
+        for (int i = 0; i < lineCount; ++i) {
+          const QTextLine line = textLayout->lineAt(i);
+
+          /// There is an indexing bug in Qt 4.8 in QTextFragment::glyphRuns
+          /// that results corrupted glyphs when having multiple lines. In Qt 5
+          /// it's fixed by introducing a different API. One function implementing
+          /// similar thing already exists in 4.8, but it's private for unknown
+          /// reason. This function is now exposed with stupid but absolutely
+          /// necessary '#define private public' -trick. There is no other way
+          /// of fixing this without modifying Qt itself.
+          QList<QGlyphRun> glyphs = line.glyphs(pos, frag.length());
+
+          for (const QGlyphRun & glyphRun: glyphs)
+            missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun, &format);
+        }
       }
     }
 

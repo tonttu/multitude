@@ -92,7 +92,7 @@ namespace Luminous {
     LUMINOUS_API void setGlyphsReady(bool v);
     LUMINOUS_API void clearGlyphs();
     LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,
-                                     const QGlyphRun & glyphRun, QTextCharFormat * format = nullptr);
+                                     const QGlyphRun & glyphRun, const QTextCharFormat * format = nullptr);
 
   private:
     class D;
