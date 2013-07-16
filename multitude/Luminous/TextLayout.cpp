@@ -70,7 +70,7 @@ namespace Luminous
   {
     bool missingGlyphs = false;
 
-    QRawFont font = glyphRun.rawFont();
+    const QRawFont & font = glyphRun.rawFont();
     const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
     const QVector<QPointF> & positions = glyphRun.positions();
 

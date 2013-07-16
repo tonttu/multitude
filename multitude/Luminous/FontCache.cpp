@@ -570,7 +570,7 @@ namespace Luminous
     return s_atlasMutex;
   }
 
-  FontCache::Glyph * FontCache::glyph(QRawFont & rawFont, quint32 glyph)
+  FontCache::Glyph * FontCache::glyph(const QRawFont & rawFont, quint32 glyph)
   {
     Radiant::Guard g(m_d->m_cacheMutex);
 
@@ -617,9 +617,14 @@ namespace Luminous
     m_d->m_cacheMutex.unlock();
     /// @todo there probably needs to be a limit how many of these we want
     ///       to generate in one frame
-    if (!qFuzzyCompare(rawFont.pixelSize(), s_distanceFieldPixelSize))
-      rawFont.setPixelSize(s_distanceFieldPixelSize);
+    // We can't change the pixelsize in QRawFont with some fonts on Windows,
+    // so we just scale the path manually here
+    float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
     QPainterPath path = rawFont.pathForGlyph(glyph);
+    for (int i = 0; i < path.elementCount(); ++i) {
+      const QPainterPath::Element & e = path.elementAt(i);
+      path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
+    }
     m_d->m_cacheMutex.lock();
     m_d->m_glyphGenerationRequests.push_back(std::make_pair(glyph, path));
 
