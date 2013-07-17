@@ -258,12 +258,11 @@ namespace Nimble {
     if(isEmpty()) {
       *this = RectT<T>(v, v);
     } else {
+      m_low[0] = std::min(m_low[0], v[0]);
+      m_low[1] = std::min(m_low[1], v[1]);
 
-      if(v[0] < m_low[0]) m_low[0] = v[0];
-      if(v[1] < m_low[1]) m_low[1] = v[1];
-
-      if(v[0] > m_high[0]) m_high[0] = v[0];
-      if(v[1] > m_high[1]) m_high[1] = v[1];
+      m_high[0] = std::max(m_high[0], v[0]);
+      m_high[1] = std::max(m_high[1], v[1]);
     }
   }
 
