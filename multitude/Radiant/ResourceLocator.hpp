@@ -64,7 +64,15 @@ namespace Radiant
       /// @param path path to search for
       /// @param filter filter the search results
       /// @return list of matching paths or an empty list
+      /// @todo change second parameter to be a bitmask instead of single enum value
       QStringList locate(const QString & path, Filter filter = ALL_ENTRIES) const;
+
+      /// Add a search path, this function is mostly for JavaScript code
+      /// @param path path to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      /// @todo add shared_ptr support to JSWrapper
+      static void addDefaultSearchPath(const QString & path, bool inFront = false)
+      { instance()->addSearchPath(path, inFront); }
 
     private:
       class D;
