@@ -15,6 +15,7 @@
 #include "Valuable/Node.hpp"
 #include "Valuable/AttributeAlias.hpp"
 #include "Valuable/AttributeBool.hpp"
+#include "Valuable/AttributeStringList.hpp"
 
 #include <QStringList>
 
@@ -90,9 +91,21 @@ namespace Valuable
           obj = alias->attribute();
 
         Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(obj);
-        if(b) {
+        Valuable::AttributeStringList * strlst = dynamic_cast<Valuable::AttributeStringList*>(obj);
+        if (b) {
           *b = true;
           m_parsedArgs.insert(name);
+        } else if (strlst && i < argc - 1) {
+          QString arg = argv[++i];
+          QStringList lst = arg.split(";", QString::SkipEmptyParts);
+          for (int i = 0; i < lst.size()-1; ) {
+            if (lst[i].endsWith('\\')) {
+              lst[i][lst[i].size()-1] = ';';
+              lst[i] += lst[i+1];
+              lst.removeAt(i+1);
+            } else ++i;
+          }
+          *strlst = lst;
         } else if (i < argc - 1) {
           Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);

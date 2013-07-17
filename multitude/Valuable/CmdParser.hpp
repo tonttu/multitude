@@ -41,6 +41,9 @@ namespace Valuable
      * Boolean arguments (AttributeBool objects) don't use distinct parameter, but
      * they will be switched on by \c --name and off by \c --no-name.
      *
+     * String lists are separated by semicolon (;) that can be escaped with
+     * backslash: <tt>--css style1.css;style2.css</tt>
+     *
      * Example:
      * \code
      * Node opts;
