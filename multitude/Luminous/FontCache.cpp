@@ -619,12 +619,44 @@ namespace Luminous
     ///       to generate in one frame
     // We can't change the pixelsize in QRawFont with some fonts on Windows,
     // so we just scale the path manually here
-    float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
-    QPainterPath path = rawFont.pathForGlyph(glyph);
-    for (int i = 0; i < path.elementCount(); ++i) {
-      const QPainterPath::Element & e = path.elementAt(i);
-      path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
+
+    QPainterPath path;
+    /// On windows, depending on the font, it might not be possible to fully
+    /// disable hinting. This means that the original font size actually
+    /// changes how the glyph is aligned. On some (raw) fonts it's also
+    /// illegal to change their pixel size on-fly. We might be able to pass
+    /// the original QFont instance as a parameter here, but for now, try to
+    /// re-create it.
+#ifdef RADIANT_WINDOWS
+    if (rawFont.pixelSize() < s_distanceFieldPixelSize) {
+      QFont tmp;
+      tmp.setFamily(rawFont.familyName());
+      tmp.setStyle(rawFont.style());
+      tmp.setStyleName(rawFont.styleName());
+      tmp.setWeight(rawFont.weight());
+      tmp.setPixelSize(s_distanceFieldPixelSize);
+      QRawFont font2 = QRawFont::fromFont(tmp);
+      if (m_d->m_rawFontKey == makeKey(font2)) {
+        path = font2.pathForGlyph(glyph);
+      }
     }
+#endif
+
+    if (path.isEmpty()) {
+      QRawFont font2 = rawFont;
+      font2.setPixelSize(s_distanceFieldPixelSize);
+      path = font2.pathForGlyph(glyph);
+    }
+
+    if (path.isEmpty()) {
+      float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+      path = rawFont.pathForGlyph(glyph);
+      for (int i = 0; i < path.elementCount(); ++i) {
+        const QPainterPath::Element & e = path.elementAt(i);
+        path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
+      }
+    }
+
     m_d->m_cacheMutex.lock();
     m_d->m_glyphGenerationRequests.push_back(std::make_pair(glyph, path));
 
