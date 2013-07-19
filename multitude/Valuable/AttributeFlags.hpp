@@ -49,6 +49,13 @@ namespace Valuable {
 
   template <typename T> class AttributeFlagsT;
 
+  class FlagAlias : public Attribute
+  {
+  public:
+    FlagAlias(Node * parent, const QByteArray & name)
+      : Attribute(parent, name, false) {}
+  };
+
   /// This class provides a mechanism to toggle individual flags on and off
   /// using their name from CSS. With this class we can write things like:
   /// @code
@@ -56,12 +63,12 @@ namespace Valuable {
   ///   input-pass-to-children: true;
   /// @endcode
   template <typename T>
-  class FlagAliasT : public Attribute
+  class FlagAliasT : public FlagAlias
   {
   public:
     FlagAliasT(Node * parent, AttributeFlagsT<T> & master,
                const QByteArray & name, Radiant::FlagsT<T> flags)
-      : Attribute(parent, name, false),
+      : FlagAlias(parent, name),
         m_master(master),
         m_flags(flags)
     {
@@ -134,6 +141,13 @@ namespace Valuable {
     {
       m_sources = sources;
       setSerializable(sources.empty());
+    }
+
+    virtual int asInt(bool * const ok, Layer layer) const OVERRIDE
+    {
+      if (ok)
+        *ok = true;
+      return (m_master.value(layer) & m_flags) == m_flags ? 1 : 0;
     }
 
   private:
