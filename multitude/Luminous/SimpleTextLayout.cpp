@@ -128,7 +128,10 @@ namespace Luminous
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
+    QTextOption textOption;
+    textOption.setUseDesignMetrics(true);
     m_layout.setFont(font);
+    m_layout.setTextOption(textOption);
   }
 
   SimpleTextLayout::D::D(const QTextLayout & copy)
@@ -299,7 +302,9 @@ namespace Luminous
 
   void SimpleTextLayout::setTextOption(const QTextOption & textOption)
   {
-    m_d->m_layout.setTextOption(textOption);
+    QTextOption copy = textOption;
+    copy.setUseDesignMetrics(true);
+    m_d->m_layout.setTextOption(copy);
     invalidate();
   }
 
