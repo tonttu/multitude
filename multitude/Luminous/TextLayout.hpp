@@ -24,7 +24,6 @@
 
 class QGlyphRun;
 class QTextCharFormat;
-class QFont;
 
 namespace Luminous {
   /// TextLayout is the base class for different implementations of text layouting.
@@ -92,8 +91,8 @@ namespace Luminous {
     LUMINOUS_API void setLayoutReady(bool v);
     LUMINOUS_API void setGlyphsReady(bool v);
     LUMINOUS_API void clearGlyphs();
-    LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location, const QGlyphRun & glyphRun,
-                                     const QFont & font, const QTextCharFormat * format = nullptr);
+    LUMINOUS_API bool generateGlyphs(const Nimble::Vector2f & location,
+                                     const QGlyphRun & glyphRun, const QTextCharFormat * format = nullptr);
 
   private:
     class D;
