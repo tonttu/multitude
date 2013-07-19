@@ -33,6 +33,7 @@ namespace Valuable
 
   Attribute::Attribute()
   : m_host(0),
+    m_ownerShorthand(nullptr),
     m_serializable(true),
     m_transit(false),
     m_listenersId(0)
@@ -40,6 +41,7 @@ namespace Valuable
 
   Attribute::Attribute(Node * host, const QByteArray & name, bool transit)
     : m_host(0),
+      m_ownerShorthand(nullptr),
       m_serializable(true),
       m_name(name),
       m_transit(transit),
@@ -59,6 +61,7 @@ namespace Valuable
 
   Attribute::Attribute(const Attribute & o)
     : m_host(0)
+    , m_ownerShorthand(nullptr)
     , m_serializable(true)
     , m_listenersId(0)
   {
