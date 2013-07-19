@@ -32,7 +32,8 @@ namespace Luminous
   public:
     D(const Nimble::SizeF & size);
 
-    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun, const QTextCharFormat * format);
+    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun,
+                  const QFont & font, const QTextCharFormat * format);
 
   protected:
     Group & findGroup(Texture & texture, QColor color);
@@ -65,19 +66,19 @@ namespace Luminous
   {
   }
 
-  bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
-                               const QGlyphRun & glyphRun, const QTextCharFormat * format)
+  bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation, const QGlyphRun & glyphRun,
+                               const QFont & font, const QTextCharFormat * format)
   {
     bool missingGlyphs = false;
 
-    const QRawFont & font = glyphRun.rawFont();
+    const QRawFont & rawFont = glyphRun.rawFont();
     const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
     const QVector<QPointF> & positions = glyphRun.positions();
 
-    FontCache & cache = FontCache::acquire(font);
+    FontCache & cache = FontCache::acquire(rawFont);
 
-    const float scale = float(font.pixelSize()) / cache.pixelSize();
-    const float invsize = 1.0f / float(font.pixelSize());
+    const float scale = float(rawFont.pixelSize()) / cache.pixelSize();
+    const float invsize = 1.0f / float(rawFont.pixelSize());
 
     QColor color;
     if (format)
@@ -87,7 +88,7 @@ namespace Luminous
     for (int i = 0; i < glyphs.size(); ++i) {
       const quint32 glyph = glyphs[i];
 
-      FontCache::Glyph * glyphCache = cache.glyph(font, glyph);
+      FontCache::Glyph * glyphCache = cache.glyph(font, rawFont, glyph);
       if (glyphCache) {
         if (glyphCache->isEmpty())
           continue;
@@ -273,11 +274,11 @@ namespace Luminous
     return m_d->m_atlasGeneration == FontCache::generation();
   }
 
-  bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,
-                                  const QGlyphRun & glyphRun, const QTextCharFormat * format)
+  bool TextLayout::generateGlyphs(const Nimble::Vector2f & location, const QGlyphRun & glyphRun,
+                                  const QFont & font, const QTextCharFormat * format)
   {
     if (glyphRun.glyphIndexes().isEmpty())
       return false;
-    return m_d->generate(location, glyphRun, format);
+    return m_d->generate(location, glyphRun, font, format);
   }
 } // namespace Luminous

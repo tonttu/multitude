@@ -48,7 +48,7 @@ namespace Luminous
   public:
     LUMINOUS_API ~FontCache();
 
-    LUMINOUS_API Glyph * glyph(const QRawFont & rawFont, quint32 glyph);
+    LUMINOUS_API Glyph * glyph(const QFont & font, const QRawFont & rawFont, quint32 glyph);
 
     LUMINOUS_API float pixelSize() const;
 

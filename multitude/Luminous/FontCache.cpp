@@ -520,7 +520,7 @@ namespace Luminous
       QSettings settings(indexFileName(), QSettings::IniFormat);
       /// Update this when something is changed with the generation code so that
       /// the old cache needs to be invalidated
-      const int version = 2;
+      const int version = 3;
       if (settings.value("cache-version").toInt() != version) {
         settings.clear();
         settings.setValue("cache-version", version);
@@ -570,7 +570,7 @@ namespace Luminous
     return s_atlasMutex;
   }
 
-  FontCache::Glyph * FontCache::glyph(const QRawFont & rawFont, quint32 glyph)
+  FontCache::Glyph * FontCache::glyph(const QFont & font, const QRawFont & rawFont, quint32 glyph)
   {
     Radiant::Guard g(m_d->m_cacheMutex);
 
@@ -615,46 +615,63 @@ namespace Luminous
     // No need to keep the lock during pathForGlyph, since we have already
     // reserved this glyph by setting nullptr to m_cache
     m_d->m_cacheMutex.unlock();
+
     /// @todo there probably needs to be a limit how many of these we want
     ///       to generate in one frame
-    // We can't change the pixelsize in QRawFont with some fonts on Windows,
-    // so we just scale the path manually here
 
     QPainterPath path;
-    /// On windows, depending on the font, it might not be possible to fully
-    /// disable hinting. This means that the original font size actually
-    /// changes how the glyph is aligned. On some (raw) fonts it's also
-    /// illegal to change their pixel size on-fly. We might be able to pass
-    /// the original QFont instance as a parameter here, but for now, try to
-    /// re-create it.
-#ifdef RADIANT_WINDOWS
-    if (rawFont.pixelSize() < s_distanceFieldPixelSize) {
-      QFont tmp;
-      tmp.setFamily(rawFont.familyName());
-      tmp.setStyle(rawFont.style());
-      tmp.setStyleName(rawFont.styleName());
-      tmp.setWeight(rawFont.weight());
-      tmp.setPixelSize(s_distanceFieldPixelSize);
-      QRawFont font2 = QRawFont::fromFont(tmp);
-      if (m_d->m_rawFontKey == makeKey(font2)) {
-        path = font2.pathForGlyph(glyph);
-      }
-    }
-#endif
+    float scaleFactor = 1.0f;
 
-    if (path.isEmpty()) {
-      QRawFont font2 = rawFont;
-      font2.setPixelSize(s_distanceFieldPixelSize);
-      path = font2.pathForGlyph(glyph);
+    // First try, change pixel size on QRawFont. This fails on Windows with
+    // some font engines, but it can be detected with empty QPainterPath
+    {
+      QRawFont rawFont2 = rawFont;
+      rawFont2.setPixelSize(s_distanceFieldPixelSize);
+      path = rawFont2.pathForGlyph(glyph);
+      scaleFactor = s_distanceFieldPixelSize / rawFont2.pixelSize();
     }
 
     if (path.isEmpty()) {
-      float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
-      path = rawFont.pathForGlyph(glyph);
-      for (int i = 0; i < path.elementCount(); ++i) {
-        const QPainterPath::Element & e = path.elementAt(i);
-        path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
+      // If we are lucky enough, the original pixel size is large enough,
+      // meaning that:
+      // a) even if we tried, we probably wouldn't be able to create a new
+      //    QRawFont with any better pixelSize, since apparently with Qt,
+      //    font size is a match if it's within 20% of the requested size
+      // b) it's probably using the same variation of the font if its large
+      //    enough, so we can just scale this one
+      if (rawFont.pixelSize() > 0.8f*s_distanceFieldPixelSize) {
+        // This really can't fail, if we get an empty path, then it's just an
+        // empty character, like space
+        path = rawFont.pathForGlyph(glyph);
+        scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+      } else {
+        // So if copying the font failed and we couldn't just scale up the given
+        // raw font, lets create a new one from scratch
+        {
+          QFont font2 = font;
+          font2.setPixelSize(s_distanceFieldPixelSize);
+          QRawFont rawFont2 = QRawFont::fromFont(font2);
+          // Need to make sure that the font we just got is the same or at
+          // least compatible with the one we should be using
+          if (rawFont2.isValid() && makeKey(rawFont2) == m_d->m_rawFontKey) {
+            path = rawFont2.pathForGlyph(glyph);
+            scaleFactor = s_distanceFieldPixelSize / rawFont2.pixelSize();
+          }
+        }
+
+        // Worst case, can't change the pixel size, shouldn't use the original,
+        // can't create a new one, have to just scale up the original, and
+        // hope it looks correct
+        if (path.isEmpty()) {
+          path = rawFont.pathForGlyph(glyph);
+          scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+        }
       }
+    }
+
+    for (int i = 0; i < path.elementCount(); ++i) {
+      const QPainterPath::Element & e = path.elementAt(i);
+      path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
     }
 
     m_d->m_cacheMutex.lock();
