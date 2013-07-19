@@ -223,7 +223,7 @@ namespace Luminous
         const bool rtl = block.layout()->textOption().textDirection() == Qt::RightToLeft;
 
         QTextLayout textLayout(m_d->m_listBullet, block.charFormat().font());
-        int size = textLayout.font().pixelSize();
+        float size = textLayout.font().pointSizeF();
 
         textLayout.beginLayout();
         QTextLine line = textLayout.createLine();
