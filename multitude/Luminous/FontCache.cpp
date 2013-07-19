@@ -520,7 +520,7 @@ namespace Luminous
       QSettings settings(indexFileName(), QSettings::IniFormat);
       /// Update this when something is changed with the generation code so that
       /// the old cache needs to be invalidated
-      const int version = 2;
+      const int version = 3;
       if (settings.value("cache-version").toInt() != version) {
         settings.clear();
         settings.setValue("cache-version", version);
@@ -621,40 +621,22 @@ namespace Luminous
     // so we just scale the path manually here
 
     QPainterPath path;
-    /// On windows, depending on the font, it might not be possible to fully
-    /// disable hinting. This means that the original font size actually
-    /// changes how the glyph is aligned. On some (raw) fonts it's also
-    /// illegal to change their pixel size on-fly. We might be able to pass
-    /// the original QFont instance as a parameter here, but for now, try to
-    /// re-create it.
-#ifdef RADIANT_WINDOWS
-    if (rawFont.pixelSize() < s_distanceFieldPixelSize) {
-      QFont tmp;
-      tmp.setFamily(rawFont.familyName());
-      tmp.setStyle(rawFont.style());
-      tmp.setStyleName(rawFont.styleName());
-      tmp.setWeight(rawFont.weight());
-      tmp.setPixelSize(s_distanceFieldPixelSize);
-      QRawFont font2 = QRawFont::fromFont(tmp);
-      if (m_d->m_rawFontKey == makeKey(font2)) {
-        path = font2.pathForGlyph(glyph);
-      }
-    }
-#endif
-
-    if (path.isEmpty()) {
-      QRawFont font2 = rawFont;
-      font2.setPixelSize(s_distanceFieldPixelSize);
-      path = font2.pathForGlyph(glyph);
-    }
-
-    if (path.isEmpty()) {
-      float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+    if (rawFont.isValid())
       path = rawFont.pathForGlyph(glyph);
-      for (int i = 0; i < path.elementCount(); ++i) {
-        const QPainterPath::Element & e = path.elementAt(i);
-        path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
-      }
+
+    /// It would be ideal to somehow generate QRawFont that has pixelSize that
+    /// is very close to s_distanceFieldPixelSize. That is because smaller font
+    /// size might actually use different hinting values and even totally different
+    /// glyphs than the same font with larger size. However, it is not possible:
+    /// * We can't always change QRawFont pixelSize, it sometimes crashes, and
+    ///   invalidates glyph number, so we might get wrong character with it.
+    /// * Same problem with QRawFont::fromFont, even when using the original QFont
+    ///   with it
+
+    const float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+    for (int i = 0; i < path.elementCount(); ++i) {
+      const QPainterPath::Element & e = path.elementAt(i);
+      path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);
     }
 
     m_d->m_cacheMutex.lock();
