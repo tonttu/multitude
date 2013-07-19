@@ -105,7 +105,13 @@ namespace Valuable {
       if (!layerForSerialization(archive, layer))
         return ArchiveElement();
       ArchiveElement e = archive.createElement(name());
-      e.set(m_master.value(layer) ? "true" : "false");
+      auto flags = m_master.value(layer) & m_flags;
+      if (flags == m_flags)
+        e.set("true");
+      else if (!flags)
+        e.set("false");
+      else
+        e.set("");
       return e;
     }
 
@@ -117,6 +123,8 @@ namespace Valuable {
         m_master.setFlags(m_flags, on);
         return true;
       }
+      if (p == "")
+        return true;
       return false;
     }
 
