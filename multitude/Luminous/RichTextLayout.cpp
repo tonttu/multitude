@@ -108,6 +108,15 @@ namespace Luminous
       return *m_doc;
 
     m_doc.reset(new QTextDocument());
+
+    QTextOption textOption = m_doc->defaultTextOption();
+    textOption.setUseDesignMetrics(true);
+    m_doc->setDefaultTextOption(textOption);
+
+    QFont font = m_doc->defaultFont();
+    font.setHintingPreference(QFont::PreferNoHinting);
+    m_doc->setDefaultFont(font);
+
     connect(m_doc.get(), SIGNAL(contentsChanged()), this, SLOT(changed()));
     connect(m_doc.get(), SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
     return *m_doc;
