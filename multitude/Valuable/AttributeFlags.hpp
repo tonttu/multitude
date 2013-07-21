@@ -159,6 +159,8 @@ namespace Valuable {
     }
 
   private:
+    friend class AttributeFlagsT<T>;
+
     AttributeFlagsT<T> & m_master;
     const Radiant::FlagsT<T> m_flags;
     std::vector<FlagAliasT<T>*> m_sources;
@@ -456,9 +458,15 @@ namespace Valuable {
 
     void updateCache()
     {
-      Flags tmp = m_cache;
+      Flags before = m_cache;
       m_cache = value(Layer(LAYER_COUNT - 1), Layer(0));
-      if(tmp != m_cache) emitChange();
+      Flags changedBits = before ^ m_cache;
+      if (changedBits) {
+        for (auto * alias: m_aliases)
+          if (alias->flags() & changedBits)
+            alias->emitChange();
+        emitChange();
+      }
     }
 
     Flags m_cache;
