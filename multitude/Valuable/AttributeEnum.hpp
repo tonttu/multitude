@@ -96,6 +96,7 @@ namespace Valuable
 
   public:
     using Base::operator =;
+    using Base::value;
 
     AttributeEnumT(Node * host, const QByteArray & name, const EnumNames * names,
                   const T & v, bool transit = false)
@@ -139,6 +140,19 @@ namespace Valuable
         if (it != m_enumValues.end())
           this->setValue(T(*it));
       }
+    }
+
+    virtual QString asString(bool * const ok, Valuable::Attribute::Layer layer) const OVERRIDE
+    {
+      if (ok)
+        *ok = true;
+
+      T v = value(layer);
+      for (auto it = m_enumValues.begin(); it != m_enumValues.end(); ++it) {
+        if (*it == v)
+          return it.key();
+      }
+      return QString::number(v);
     }
   };
 
