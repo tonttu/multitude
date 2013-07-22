@@ -241,9 +241,7 @@ namespace Luminous
           for(const QRect & rect : m_dirtyRegion2D.rects()) {
             const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
             // Number of scanlines to upload
-            const size_t scanLines = std::min<int32_t>(rect.height(), bytesFree / bytesPerScanline);
-            if (scanLines == 0)
-              break;
+            const size_t scanLines = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerScanline, 1, rect.height());
 
             auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
                 texture.dataFormat().bytesPerPixel();
