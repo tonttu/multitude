@@ -301,6 +301,10 @@ namespace Luminous {
       void setAntiAliasingSamples(int samplesPerPixel)
       { m_fsaaSamplesPerPixel = samplesPerPixel; }
 
+      /// Sets the maximum upload limits and margin for GPU texture and buffer uploads
+      void setUploadLimits(uint64_t limit, uint64_t margin)
+      { m_uploadLimit = limit; m_uploadMargin = margin; }
+
       /// Direct rendering mode enabled
       /// @return true if direct rendering is enabled, false is rendering
       /// is done through an off-screen render target
@@ -345,6 +349,14 @@ namespace Luminous {
       Valuable::AttributeBool       m_fullscreen;
       Valuable::AttributeBool       m_resizeable;
       Valuable::AttributeInt        m_fsaaSamplesPerPixel;
+      // GPU upload limits
+      /// PCIe bandwidth
+      /// PCIe 1.0 x16: 4GB/sec (2001)
+      /// PCIe 2.0 x16: 8GB/sec (2007)
+      /// PCIe 3.0 x16: 15.8GB/sec (2011)
+      Valuable::AttributeUInt64     m_uploadLimit;
+      Valuable::AttributeUInt64     m_uploadMargin;
+
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
 

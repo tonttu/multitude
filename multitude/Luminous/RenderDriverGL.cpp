@@ -125,7 +125,6 @@ namespace Luminous
     unsigned int m_threadIndex;
 
     /// Render statistics
-    int32_t m_totalBytes;         // Total bytes currently in GPU memory for this thread
     Radiant::Timer m_frameTimer;  // Time since begin of frame
     uint64_t m_frame;             // Current frame number
     double m_fps;                 // Frames per second
@@ -898,6 +897,21 @@ namespace Luminous
     }
 
     return 0;
+  }
+
+  uint64_t RenderDriverGL::uploadLimit() const
+  {
+    return m_d->m_stateGL.uploadLimit();
+  }
+
+  uint64_t RenderDriverGL::uploadMargin() const
+  {
+    return m_d->m_stateGL.uploadMargin();
+  }
+
+  void RenderDriverGL::setUploadLimits(uint64_t limit, uint64_t margin)
+  {
+    m_d->m_stateGL.setUploadLimits(limit,margin);
   }
 
   int RenderDriverGL::uniformBufferOffsetAlignment() const

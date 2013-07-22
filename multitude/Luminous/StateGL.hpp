@@ -78,6 +78,19 @@ namespace Luminous
     /// @return number of bytes available
     inline int64_t availableUploadBytes() const;
 
+    /// Set the maximum and minimum number of bytes per second for uploading content to the GPU.
+    /// @param limit maximum number of bytes to upload per second
+    /// @param margin minimum number of bytes to upload per second
+    inline void setUploadLimits(uint64_t limit, uint64_t margin);
+
+    /// Get the maximum number of bytes per second used for uploading content to the GPU
+    /// @return number of bytes per second
+    inline uint64_t uploadLimit() const;
+
+    /// Get the minimum number of bytes per second used for uploading content to the GPU
+    /// @return number of bytes per second
+    inline uint64_t uploadMargin() const;
+
     /// Consume the given amount of bytes from the upload budget. This function
     /// decreases the upload budget by the given amount.
     /// @param bytes number of bytes to consume
@@ -132,7 +145,9 @@ namespace Luminous
     const unsigned int m_threadIndex;
 
     /// Uploaded bytes this frame
-    int64_t m_uploadedBytes;
+    uint64_t m_uploadedBytes;
+    uint64_t m_uploadLimit;
+    uint64_t m_uploadMargin;
 
     BufferMaps m_bufferMaps;
 
@@ -157,7 +172,10 @@ namespace Luminous
     , m_currentReadFrameBuffer(0)
     , m_currentDrawFrameBuffer(0)
     , m_currentTextureUnit(0)
-  {}
+    , m_uploadLimit(0)
+    , m_uploadMargin(0)
+  {
+  }
 
   bool StateGL::setProgram(GLuint handle)
   {
@@ -190,13 +208,23 @@ namespace Luminous
 
   int64_t StateGL::availableUploadBytes() const
   {
-    /// @todo this should be configurable
-    /// PCIe bandwidth
-    /// PCIe 1.0 x16: 4GB/sec (2001)
-    /// PCIe 2.0 x16: 8GB/sec (2007)
-    /// PCIe 3.0 x16: 15.8GB/sec (2011)
-    const int64_t upload_bytes_limit_frame = ((uint64_t)4 << 30) / 60;
-    return std::max(int64_t(0), upload_bytes_limit_frame - m_uploadedBytes);
+    return std::max(uploadMargin(), uploadLimit() - m_uploadedBytes);
+  }
+
+  void StateGL::setUploadLimits(uint64_t limit, uint64_t margin)
+  {
+    m_uploadLimit = limit;
+    m_uploadMargin = margin;
+  }
+
+  uint64_t StateGL::uploadLimit() const
+  {
+    return m_uploadLimit;
+  }
+
+  uint64_t StateGL::uploadMargin() const
+  {
+    return m_uploadMargin;
   }
 
   void StateGL::consumeUploadBytes(int64_t bytes)

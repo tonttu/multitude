@@ -59,7 +59,7 @@ namespace Luminous
         , m_uniformBufferOffsetAlignment(0)
         , m_automaticDepthDiff(-1.0f/100000.0f)
         , m_driver(renderDriver)
-        , m_driverGL(dynamic_cast<RenderDriverGL*>(&renderDriver))
+        , m_driverGL(static_cast<RenderDriverGL*>(&renderDriver))
         , m_bufferIndex(0)
         , m_useOffScreenFrameBuffer(false)
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
@@ -103,6 +103,11 @@ namespace Luminous
       desc.addAttribute<float>("vertex_invsize");
       m_fontShader.setVertexDescription(desc);
       m_fontShader.setSampleShading(1.0f);
+
+      // Fetch GPU upload limits from the window configuration
+      uint64_t limit = *(win->attribute<uint64_t>("gpu-upload-limit"));
+      uint64_t margin = *(win->attribute<uint64_t>("gpu-upload-margin"));
+      renderDriver.setUploadLimits( limit, margin );
     }
 
     ~Internal()
