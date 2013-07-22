@@ -16,6 +16,24 @@
 
 namespace Valuable
 {
+  class AttributeEnum
+  {
+  public:
+    AttributeEnum() : m_allowIntegers(false) {}
+    virtual ~AttributeEnum() {}
+
+    void setAllowIntegers(bool allow)
+    {
+      m_allowIntegers = allow;
+    }
+
+    const QMap<QString, int> & enumValues() const { return m_enumValues; }
+
+  protected:
+    QMap<QString, int> m_enumValues;
+    bool m_allowIntegers;
+  };
+
   /**
    * Valuable enum. Similar to AttributeFlags, but only one value can be enabled
    * at a time.
@@ -71,9 +89,8 @@ namespace Valuable
    *
    * @endcode
    */
-  // We can't inherit from AttributeIntT, since T might be an enum
   template <typename T>
-  class AttributeEnumT : public AttributeNumericT<T>
+  class AttributeEnumT : public AttributeNumericT<T>, public AttributeEnum
   {
     typedef AttributeNumericT<T> Base;
 
@@ -82,11 +99,11 @@ namespace Valuable
 
     AttributeEnumT(Node * host, const QByteArray & name, const EnumNames * names,
                   const T & v, bool transit = false)
-      : AttributeNumericT<T>(host, name, v, transit)
-      , m_allowIntegers(false)
+      : AttributeNumericT<T>(host, name, v, transit),
+        AttributeEnum()
     {
       for (const EnumNames * it = names; it->name; ++it) {
-        m_enumValues[QString(it->name).toLower()] = T(it->value);
+        m_enumValues[QString(it->name).toLower()] = it->value;
       }
     }
 
@@ -110,7 +127,7 @@ namespace Valuable
       if (it == m_enumValues.end())
         return false;
 
-      this->setValue(*it, layer);
+      this->setValue(T(*it), layer);
       return true;
     }
 
@@ -120,18 +137,9 @@ namespace Valuable
       if (data.readString(str)) {
         auto it = m_enumValues.find(str.toLower());
         if (it != m_enumValues.end())
-          this->setValue(*it);
+          this->setValue(T(*it));
       }
     }
-
-    void setAllowIntegers(bool allow)
-    {
-      m_allowIntegers = allow;
-    }
-
-  private:
-    QMap<QString, T> m_enumValues;
-    bool m_allowIntegers;
   };
 
 }
