@@ -112,6 +112,15 @@ namespace Valuable
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
     virtual Attribute * attribute(const QByteArray & name) const;
+
+    /// @copydoc attribute
+    /// @return Null if no object can be found or the type is wrong
+    template <typename T>
+    AttributeT<T> * attribute(const QByteArray & name) const
+    {
+      return dynamic_cast<AttributeT<T> *>(attribute(name));
+    }
+
     /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
     MULTI_ATTR_DEPRECATED("Node::getValue is deprecated. Use Node::attribute instead.",
                           virtual Attribute * getValue(const QByteArray & name) const);
