@@ -39,7 +39,7 @@ namespace Luminous {
       std::array<FontVertex, 4> vertices;
     };
 
-    /// @clean up and document
+    /// @todo clean up and document
     struct Group
     {
       Group(Texture & tex, QColor c) : texture(&tex), color(c) {}
