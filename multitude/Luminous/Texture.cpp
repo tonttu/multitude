@@ -164,23 +164,24 @@ namespace Luminous
   {
     auto comp = m_d->dataFormat.compression();
     if(comp == PixelFormat::COMPRESSION_NONE)
-      return m_d->dataFormat.bytesPerPixel() * lineSizePixels() * height();
+      return m_d->dataFormat.bytesPerPixel() * lineSizePixels() * height() * depth();
 
     // align to 4
-    int w = width(), h = height();
+    int w = width(), h = height(), d = depth();
     w += (4 - (w & 3)) & 3;
     h += (4 - (h & 3)) & 3;
+    d += (4 - (d & 3)) & 3;
 
     switch(comp) {
     case PixelFormat::COMPRESSED_RGB_DXT1:
     case PixelFormat::COMPRESSED_RGBA_DXT1:
-      return w * h / 2;
+      return w * h * d / 2;
 
     //case PixelFormat::COMPRESSED_RGBA_DXT2:
     case PixelFormat::COMPRESSED_RGBA_DXT3:
     //case PixelFormat::COMPRESSED_RGBA_DXT4:
     case PixelFormat::COMPRESSED_RGBA_DXT5:
-      return w * h;
+      return w * h * d;
 
     default:
       return 0;
