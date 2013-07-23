@@ -112,7 +112,7 @@ namespace Valuable
     template <typename T>
     AttributeT<T> * createAttribute(const QByteArray & name, const T & value = T(), bool transit = false)
     {
-      auto attr = new AttributeT<T>(this, name, value, transit)
+      auto attr = new AttributeT<T>(this, name, value, transit);
       if (!addAttribute(name, attr)) {
         delete attr;
         return nullptr;
