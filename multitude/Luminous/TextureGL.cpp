@@ -268,6 +268,8 @@ namespace Luminous
                         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
         uploaded = texture.dataSize();
         GLERROR("TextureGL::upload # glTexSubImage3D");
+        /// Make sure regions are cleaned
+        m_dirtyRegion2D = QRegion();
       }
 
       // Update upload-limiter
