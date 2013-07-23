@@ -105,8 +105,8 @@ namespace Luminous
       m_fontShader.setSampleShading(1.0f);
 
       // Fetch GPU upload limits from the window configuration
-      uint64_t limit = *(win->attribute<uint64_t>("gpu-upload-limit"));
-      uint64_t margin = *(win->attribute<uint64_t>("gpu-upload-margin"));
+      uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
+      uint64_t margin = *(win->attribute<int64_t>("gpu-upload-margin"));
       renderDriver.setUploadLimits( limit, margin );
     }
 
