@@ -108,6 +108,18 @@ namespace Valuable
       return addAttribute(name, &*attribute);
     }
 
+    /// Create a new attribute and add it to the list of attribute objects
+    template <typename T>
+    AttributeT<T> * createAttribute(const QByteArray & name, const T & value = T(), bool transit = false)
+    {
+      auto attr = new AttributeT<T>(this, name, value, transit)
+      if (!addAttribute(name, attr)) {
+        delete attr;
+        return nullptr;
+      }
+      return attr;
+    }
+
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
