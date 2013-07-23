@@ -38,7 +38,7 @@ src_code.files += $$PROJECT_FILE
 INSTALLS += target
 INSTALLS += includes src_code extra_inc
 
-TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
+!no_version_in_target:TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
