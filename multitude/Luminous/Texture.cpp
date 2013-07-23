@@ -122,6 +122,18 @@ namespace Luminous
     return m_d->internalFormat;
   }
 
+  void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const void * data)
+  {
+    m_d->dimensions = 1;
+    m_d->width = width;
+    m_d->height = 1;
+    m_d->depth = 1;
+    m_d->dataFormat = dataFormat;
+    m_d->data = data;
+    m_d->translucent = dataFormat.hasAlpha();
+    invalidate();
+  }
+
   void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
   {
     m_d->dimensions = 2;
@@ -203,7 +215,7 @@ namespace Luminous
 
   bool Texture::isValid() const
   {
-    return m_d->dimensions >= 2 && m_d->dimensions <= 4;
+    return m_d->dimensions >= 1 && m_d->dimensions <= 4;
   }
 
   uint8_t Texture::dimensions() const { return m_d->dimensions; }

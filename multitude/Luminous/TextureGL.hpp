@@ -55,6 +55,12 @@ namespace Luminous
     inline void bind(int textureUnit);
 
   private:
+    void upload1D(const Texture & texture, int textureUnit, bool forceBind);
+    void upload2D(const Texture & texture, int textureUnit, bool forceBind);
+    void upload3D(const Texture & texture, int textureUnit, bool forceBind);
+    bool updateParams(const Texture & texture);
+
+  private:
     int m_generation;
     int m_paramsGeneration;
     int m_internalFormat;

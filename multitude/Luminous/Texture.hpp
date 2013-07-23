@@ -79,6 +79,11 @@ namespace Luminous
     /// @return number of color components
     LUMINOUS_API int internalFormat() const;
 
+    /// Set 1D texture data from memory.
+    /// @param width width of the texture
+    /// @param dataFormat data format
+    /// @param data data pointer
+    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const void * data);
     /// Set 2D texture data from memory.
     /// @param width width of the texture
     /// @param height height of the texture
