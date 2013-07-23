@@ -168,12 +168,12 @@ namespace Luminous
     , m_currentVertexArray(0)
     , m_threadIndex(threadIndex)
     , m_uploadedBytes(0)
+    , m_uploadLimit(0)
+    , m_uploadMargin(0)
     , m_driver(driver)
     , m_currentReadFrameBuffer(0)
     , m_currentDrawFrameBuffer(0)
     , m_currentTextureUnit(0)
-    , m_uploadLimit(0)
-    , m_uploadMargin(0)
   {
   }
 

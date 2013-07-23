@@ -206,7 +206,7 @@ namespace Luminous
     /// @param x pixel x coordinate
     /// @param y pixel y coordinate
     /// @return color at the given pixel
-    Nimble::Vector4 pixel(unsigned x, unsigned y) const;
+    Nimble::Vector4 pixel(int x, int y) const;
 
     /// Get a pixel from the image. This function does additional checks for
     /// make sure the requested pixels are within the image. If the requested

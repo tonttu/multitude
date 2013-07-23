@@ -828,10 +828,10 @@ namespace Luminous
     return pixel(x, y);
   }
 
-  Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
+  Nimble::Vector4 Image::pixel(int x, int y) const
   {
     assert(m_data);
-    assert(x < width() && y < height());
+    assert(x >= 0 && x < width() && y >= 0 && y < height());
 
     const uint8_t * px = line(y);
     px += m_pixelFormat.bytesPerPixel() * x;
