@@ -25,6 +25,7 @@
 
 #include <sys/stat.h>
 
+#include <QFile>
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
@@ -110,11 +111,8 @@ namespace Radiant
     if(!fileReadable(filename))
       return false;
 
-    FILE * f = fopen(filename.toUtf8().data(), "r+");
-    if(!f)
-      return false;
-    fclose(f);
-    return true;
+    QFile file(filename);
+    return file.open(QIODevice::ReadOnly | QIODevice::Append);
   }
 
   bool FileUtils::renameFile(const char * from, const char * to)
