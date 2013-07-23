@@ -295,15 +295,16 @@ namespace Luminous {
       void setScreennumber(int s) { m_screennumber = s; }
 
       /// Number of samples per pixel for full-screen anti-aliasing
-      int antiAliasingSamples() const
-      { return m_fsaaSamplesPerPixel; }
-      /// Sets the number of samples per pixel for full-screen anti-aliasing
-      void setAntiAliasingSamples(int samplesPerPixel)
-      { m_fsaaSamplesPerPixel = samplesPerPixel; }
+      int antiAliasingSamples() const { return m_fsaaSamplesPerPixel; }
+      void setAntiAliasingSamples(int samplesPerPixel) { m_fsaaSamplesPerPixel = samplesPerPixel; }
 
-      /// Sets the maximum upload limits and margin for GPU texture and buffer uploads
-      void setUploadLimits(uint64_t limit, uint64_t margin)
-      { m_uploadLimit = limit; m_uploadMargin = margin; }
+      /// Maximum upload limit for GPU texture and buffer uploads
+      uint64_t uploadLimit() const { return m_uploadLimit; }
+      void setUploadLimit(uint64_t limit) { m_uploadLimit = limit; }
+
+      /// Minimum upload limit for GPU texture and buffer uploads
+      uint64_t uploadMargin() const { return m_uploadMargin; }
+      void setUploadMargin(uint64_t margin) { m_uploadMargin = margin; }
 
       /// Direct rendering mode enabled
       /// @return true if direct rendering is enabled, false is rendering
