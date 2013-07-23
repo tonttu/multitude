@@ -24,24 +24,6 @@
 
 #include <functional>
 
-namespace
-{
-  static const char* s_colorCorrectionShader =
-      "#version 120\n"
-      "uniform sampler2D tex;\n"
-      "uniform sampler1D lut;\n"
-      "const float off = 0*0.5*(1.0/256.0);"
-      "void main() {\n"
-      "vec2 uv = gl_TexCoord[0].st;\n"
-      "vec3 color = texture2D(tex, uv).rgb;\n"
-      "float r = texture1D(lut, color.r+off).r;\n"
-      "float g = texture1D(lut, color.g+off).g;\n"
-      "float b = texture1D(lut, color.b+off).b;\n"
-      //" r = color.r; g = color.g; b = color.b;\n"
-      "gl_FragColor = vec4(r, g, b, 1);\n"
-      "}";
-}
-
 namespace Luminous
 {
 

@@ -855,7 +855,7 @@ namespace VideoDisplay
 
     if (!m_av.seekByBytes && m_av.seekingSupported && m_av.videoCodec && m_av.audioCodec) {
       const int64_t start = m_av.formatContext->streams[m_av.audioStreamIndex]->start_time;
-      if (start != AV_NOPTS_VALUE) {
+      if (start != int64_t(AV_NOPTS_VALUE)) {
         int err = avformat_seek_file(m_av.formatContext, m_av.audioStreamIndex,
                                      start, start, start, 0);
         if (err < 0) {
