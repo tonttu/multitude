@@ -209,7 +209,6 @@ namespace Luminous
       return;
     }
 
-    /// @todo 3D textures don't work atm
     if(!m_dirtyRegion2D.isEmpty()) {
       if(!bound)
         bind(textureUnit);
@@ -226,6 +225,7 @@ namespace Luminous
 
       int uploaded = 0;
 
+      /// @todo 1D textures are not supported yet and treated as a X-by-1 2D texture
       if (texture.dimensions() == 1 || texture.dimensions() == 2) {
         // See how much of the bytes we can upload in this frame
         int64_t bytesFree = m_state.availableUploadBytes();
@@ -266,7 +266,7 @@ namespace Luminous
         /// @todo incremental upload
         glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
                         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
-        uploaded = texture.width() * texture.height() * texture.depth() * texture.dataFormat().bytesPerPixel();
+        uploaded = texture.dataSize();
         GLERROR("TextureGL::upload # glTexSubImage3D");
       }
 

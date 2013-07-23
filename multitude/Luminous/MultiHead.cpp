@@ -328,8 +328,8 @@ namespace Luminous
       m_fullscreen(this, "fullscreen", false),
       m_resizeable(this, "resizeable", false),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
-      m_uploadLimit(this, "gpu-upload-limit", ((uint64_t)4<<30)),
-      m_uploadMargin(this, "gpu-upload-margin", ((uint64_t)128<<10)),
+      m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4<<30)),
+      m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<10)),
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1)
   {

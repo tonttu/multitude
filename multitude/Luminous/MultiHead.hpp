@@ -299,12 +299,12 @@ namespace Luminous {
       void setAntiAliasingSamples(int samplesPerPixel) { m_fsaaSamplesPerPixel = samplesPerPixel; }
 
       /// Maximum upload limit for GPU texture and buffer uploads
-      uint64_t uploadLimit() const { return m_uploadLimit; }
-      void setUploadLimit(uint64_t limit) { m_uploadLimit = limit; }
+      int64_t uploadLimit() const { return m_uploadLimit; }
+      void setUploadLimit(int64_t limit) { m_uploadLimit = limit; }
 
       /// Minimum upload limit for GPU texture and buffer uploads
-      uint64_t uploadMargin() const { return m_uploadMargin; }
-      void setUploadMargin(uint64_t margin) { m_uploadMargin = margin; }
+      int64_t uploadMargin() const { return m_uploadMargin; }
+      void setUploadMargin(int64_t margin) { m_uploadMargin = margin; }
 
       /// Direct rendering mode enabled
       /// @return true if direct rendering is enabled, false is rendering
@@ -355,8 +355,8 @@ namespace Luminous {
       /// PCIe 1.0 x16: 4GB/sec (2001)
       /// PCIe 2.0 x16: 8GB/sec (2007)
       /// PCIe 3.0 x16: 15.8GB/sec (2011)
-      Valuable::AttributeUInt64     m_uploadLimit;
-      Valuable::AttributeUInt64     m_uploadMargin;
+      Valuable::AttributeInt64      m_uploadLimit;
+      Valuable::AttributeInt64      m_uploadMargin;
 
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11

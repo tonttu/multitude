@@ -899,17 +899,17 @@ namespace Luminous
     return 0;
   }
 
-  uint64_t RenderDriverGL::uploadLimit() const
+  int64_t RenderDriverGL::uploadLimit() const
   {
     return m_d->m_stateGL.uploadLimit();
   }
 
-  uint64_t RenderDriverGL::uploadMargin() const
+  int64_t RenderDriverGL::uploadMargin() const
   {
     return m_d->m_stateGL.uploadMargin();
   }
 
-  void RenderDriverGL::setUploadLimits(uint64_t limit, uint64_t margin)
+  void RenderDriverGL::setUploadLimits(int64_t limit, int64_t margin)
   {
     m_d->m_stateGL.setUploadLimits(limit,margin);
   }

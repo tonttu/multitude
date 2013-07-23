@@ -81,15 +81,15 @@ namespace Luminous
     /// Set the maximum and minimum number of bytes per second for uploading content to the GPU.
     /// @param limit maximum number of bytes to upload per second
     /// @param margin minimum number of bytes to upload per second
-    inline void setUploadLimits(uint64_t limit, uint64_t margin);
+    inline void setUploadLimits(int64_t limit, int64_t margin);
 
     /// Get the maximum number of bytes per second used for uploading content to the GPU
     /// @return number of bytes per second
-    inline uint64_t uploadLimit() const;
+    inline int64_t uploadLimit() const;
 
     /// Get the minimum number of bytes per second used for uploading content to the GPU
     /// @return number of bytes per second
-    inline uint64_t uploadMargin() const;
+    inline int64_t uploadMargin() const;
 
     /// Consume the given amount of bytes from the upload budget. This function
     /// decreases the upload budget by the given amount.
@@ -145,9 +145,9 @@ namespace Luminous
     const unsigned int m_threadIndex;
 
     /// Uploaded bytes this frame
-    uint64_t m_uploadedBytes;
-    uint64_t m_uploadLimit;
-    uint64_t m_uploadMargin;
+    int64_t m_uploadedBytes;
+    int64_t m_uploadLimit;
+    int64_t m_uploadMargin;
 
     BufferMaps m_bufferMaps;
 
@@ -211,18 +211,18 @@ namespace Luminous
     return std::max(uploadMargin(), uploadLimit() - m_uploadedBytes);
   }
 
-  void StateGL::setUploadLimits(uint64_t limit, uint64_t margin)
+  void StateGL::setUploadLimits(int64_t limit, int64_t margin)
   {
     m_uploadLimit = limit;
     m_uploadMargin = margin;
   }
 
-  uint64_t StateGL::uploadLimit() const
+  int64_t StateGL::uploadLimit() const
   {
     return m_uploadLimit;
   }
 
-  uint64_t StateGL::uploadMargin() const
+  int64_t StateGL::uploadMargin() const
   {
     return m_uploadMargin;
   }

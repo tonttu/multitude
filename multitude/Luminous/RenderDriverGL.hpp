@@ -94,9 +94,9 @@ namespace Luminous
     LUMINOUS_API virtual unsigned long availableGPUMemory() const OVERRIDE;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const OVERRIDE;
 
-    LUMINOUS_API virtual uint64_t uploadLimit() const OVERRIDE;
-    LUMINOUS_API virtual uint64_t uploadMargin() const OVERRIDE;
-    LUMINOUS_API virtual void setUploadLimits(uint64_t limit, uint64_t margin) OVERRIDE;
+    LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
+    LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
+    LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) OVERRIDE;
 
     LUMINOUS_API int uniformBufferOffsetAlignment() const;
 
