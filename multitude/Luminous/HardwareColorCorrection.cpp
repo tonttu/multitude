@@ -49,7 +49,7 @@ namespace Luminous
     }
     m_p->m_cc = cc;
     if(m_p->m_cc) {
-      m_p->m_cc->eventAddListener("changed", "sync", m_p, Valuable::Node::AFTER_UPDATE_ONCE);
+      m_p->m_cc->eventAddListener("changed", "sync", m_p, Valuable::Node::DIRECT);
       m_p->doSync();
     }
   }
