@@ -46,12 +46,12 @@ namespace Luminous
     /// Multiply the top matrix from the left with the given matrix and push the
     /// result into the stack
     void pushTransformLeftMul(const Nimble::Matrix4 & m);
-    /// @deprecated
+    /// @deprecated Transformation stack uses 4x4-matrices
     void pushTransformLeftMul(const Nimble::Matrix3 & m);
     /// Multiply the top matrix from the right with the given matrix and push
     /// the result into the stack
     void pushTransformRightMul(const Nimble::Matrix4 & m);
-    /// @deprecated
+    /// @deprecated Transformation stack uses 4x4-matrices
     void pushTransformRightMul(const Nimble::Matrix3 & m);
     /// Push a new matrix to the stack, just copying the current top
     void pushTransform();
@@ -63,7 +63,7 @@ namespace Luminous
     /// @endcode
     /// @param m matrix to push
     void pushTransform(const Nimble::Matrix4 & m);
-    /// @deprecated
+    /// @deprecated Transformation stack uses 4x4-matrices
     void pushTransform(const Nimble::Matrix3 & m);
     /// Replaces the top matrix with the given matrix
     /// @param m matrix to set
