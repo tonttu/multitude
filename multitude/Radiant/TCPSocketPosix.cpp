@@ -59,15 +59,19 @@ namespace Radiant
   {
     /// @todo this should probably moved elsewhere. No reason to run this multiple times.
     // ignore SIGPIPE (ie. when client closes the socket)
-  #ifndef _MSC_VER
-    signal(SIGPIPE, SIG_IGN);
-  #endif
+    #ifndef _MSC_VER
+      signal(SIGPIPE, SIG_IGN);
+    #endif
 
     SocketWrapper::startup();
   }
 
   TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
+    /// @todo this should probably moved elsewhere. No reason to run this multiple times.
+    #ifndef _MSC_VER
+      signal(SIGPIPE, SIG_IGN);
+    #endif
     SocketWrapper::startup();
     m_d->setOpts();
   }
