@@ -178,8 +178,8 @@ namespace Luminous
     if(comp == PixelFormat::COMPRESSION_NONE)
       return m_d->dataFormat.bytesPerPixel() * lineSizePixels() * height() * depth();
 
-    // align to 4
-    int w = width(), h = height(), d = depth();
+    // align to 4 for compressed DXT textures
+    int w = width(), h = height();
     w += (4 - (w & 3)) & 3;
     h += (4 - (h & 3)) & 3;
 
