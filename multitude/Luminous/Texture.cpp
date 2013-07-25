@@ -182,18 +182,17 @@ namespace Luminous
     int w = width(), h = height(), d = depth();
     w += (4 - (w & 3)) & 3;
     h += (4 - (h & 3)) & 3;
-    d += (4 - (d & 3)) & 3;
 
     switch(comp) {
     case PixelFormat::COMPRESSED_RGB_DXT1:
     case PixelFormat::COMPRESSED_RGBA_DXT1:
-      return w * h * d / 2;
+      return w * h / 2;
 
     //case PixelFormat::COMPRESSED_RGBA_DXT2:
     case PixelFormat::COMPRESSED_RGBA_DXT3:
     //case PixelFormat::COMPRESSED_RGBA_DXT4:
     case PixelFormat::COMPRESSED_RGBA_DXT5:
-      return w * h * d;
+      return w * h;
 
     default:
       return 0;
