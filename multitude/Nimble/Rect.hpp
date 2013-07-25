@@ -31,7 +31,10 @@ namespace Nimble {
       RectT does not really care how the coordinates are orginized
       (which way is up and so on). Some rare functions assume that one
       is using normal GUI coordinates (Y increases from top to
-      bottom). */
+      bottom).
+
+      @tparam T Template parameter for the vectors used to describe the rectangle.
+    */
   template <typename T>
   class RectT
   {

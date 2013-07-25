@@ -274,7 +274,7 @@ namespace Radiant {
     { return (that.m_val - m_val) * 1000000.0/(double) FRACTIONS_PER_SECOND; }
 
     /// Returns the amount of time passed since this timestamp.
-    /// Computes the difference between getTime and this time-stamp
+    /// Computes the difference between @ref currentTime and this time-stamp
     /// @return amount of time passed since this time-stamp
     TimeStamp since() const { return TimeStamp(currentTime().m_val - this->m_val); }
 
