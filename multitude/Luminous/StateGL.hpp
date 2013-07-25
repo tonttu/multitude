@@ -208,7 +208,9 @@ namespace Luminous
 
   int64_t StateGL::availableUploadBytes() const
   {
-    return std::max(uploadMargin(), uploadLimit() - m_uploadedBytes);
+    // Return the available number of bytes for this frame.
+    // We assume an average of 60 fps here
+    return std::max(uploadMargin()/60, (uploadLimit()/60 - m_uploadedBytes));
   }
 
   void StateGL::setUploadLimits(int64_t limit, int64_t margin)
