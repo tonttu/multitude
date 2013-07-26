@@ -144,8 +144,6 @@ macx {
   LIB_OPENCL = -framework,OpenCL
   LIB_OPENGL = -framework,OpenGL
 
-  DEFINES += QT_MAC_USE_COCOA Q_OS_MAC64
-
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
