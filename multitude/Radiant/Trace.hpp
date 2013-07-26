@@ -168,6 +168,36 @@ namespace Radiant {
   /// @param filename output filename
   RADIANT_API void setTraceFile(const char * filename);
 
+  /// This class provides an output stream for debugging information.
+  class Trace
+  {
+  public:
+    /// Constructor
+    /// @param severity severity of messages in this stream
+    inline Trace(Severity severity) : m_severity(severity) {}
+
+    /// Output message to the stream
+    /// @param s message to append
+    /// @return reference to this
+    inline Trace & operator<< (const QString & s) { trace(m_severity, "%s", s.toUtf8().data()); return *this; }
+
+  private:
+    Severity m_severity;
+  };
+
+  /// Obtain debug stream instance
+  /// @return debug stream
+  inline Trace debug() { return Trace(DEBUG); }
+  /// Obtain info stream instance
+  /// @return info stream
+  inline Trace info() { return Trace(INFO); }
+  /// Obtain warning stream instance
+  /// @return warning stream
+  inline Trace warning() { return Trace(WARNING); }
+  /// Obtain error stream instance
+  /// @return error stream
+  inline Trace error() { return Trace(FAILURE); }
+
 }
 
 #endif
