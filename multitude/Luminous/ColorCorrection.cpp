@@ -349,6 +349,16 @@ namespace Luminous
     return points;
   }
 
+  Nimble::Vector3 ColorCorrection::controlPoint(size_t index) const
+  {
+    Nimble::Vector3 result;
+
+    for(int i = 0; i < 3; i++)
+      result[i] = m_d->m_splines[i].points().at(index)[1];
+
+    return result;
+  }
+
   void ColorCorrection::setControlPoint(size_t index, const Nimble::Vector3 &rgbvalue)
   {
     for(int c = 0; c < 3; c++) {

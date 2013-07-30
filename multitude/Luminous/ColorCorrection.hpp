@@ -39,6 +39,7 @@ namespace Luminous
     const std::vector<Nimble::Vector2f> & controlPoints(int channel) const;
     std::vector<Nimble::Vector2f> controlPoints(int channel, bool modifiers) const;
 
+    Nimble::Vector3 controlPoint(size_t index) const;
     void setControlPoint(size_t index, const Nimble::Vector3 & rgbvalue);
     void multiplyRGBValues(float mul, bool clamp);
 
