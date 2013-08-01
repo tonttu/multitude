@@ -954,7 +954,7 @@ namespace Luminous
   /// automatically pop the target in its destructor so the user doesn't need to
   /// remember to do it manually. It is equivalent to calling
   /// "RenderContext::pushFrameBuffer(const FrameBuffer &)" and "RenderContext::popFrameBuffer"
-  class FrameBufferGuard : Patterns::NotCopyable
+  class FrameBufferGuard : public Patterns::NotCopyable
   {
   public:
     /// Construct a new guard
@@ -990,7 +990,7 @@ namespace Luminous
     /// automatically pop transforms in its destructor so the user doesn't need to
     /// remember to do it manually. It is equivalent to calling
     /// "RenderContext::pushTransformLeftMul(m)" and "RenderContext::popTransform()".
-    class LeftMul : Patterns::NotCopyable
+    class LeftMul : public Patterns::NotCopyable
     {
     public:
       /// Construct a new guard. This calls RenderContext::pushTransformLeftMul(m)
@@ -1012,7 +1012,7 @@ namespace Luminous
     /// automatically pop transforms in its destructor so the user doesn't need to
     /// remember to do it manually. It is equivalent to calling
     /// "RenderContext::pushTransformRightMul(m)" and "RenderContext::popTransform()".
-    class RightMul  : Patterns::NotCopyable
+    class RightMul : public Patterns::NotCopyable
     {
     public:
       /// Construct a new guard. This calls RenderContext::pushTransformRightMul(m)
