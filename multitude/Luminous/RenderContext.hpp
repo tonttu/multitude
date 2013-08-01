@@ -47,25 +47,6 @@ namespace Luminous
   {
   public:
 
-    /// This class provides a simple guard for setting opacity. It will
-    /// automatically pop opacity in its destructor so the user doesn't need to
-    /// remember to do it manually.
-    class OpacityGuard : public Patterns::NotCopyable
-    {
-    public:
-      /// Construct a new guard
-      /// @param r render context
-      OpacityGuard(RenderContext & r) : m_rc(&r) {}
-      /// Construct a guard by moving
-      /// @param o guard to move
-      OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
-      /// Destructor. This function automatically calls RenderContext::popOpacity().
-      ~OpacityGuard() { m_rc->popOpacity(); }
-
-    private:
-      RenderContext * m_rc;
-    };
-
     /// TextFlags can be used to give performance hint to RenderContext about
     /// the layout of the text.
     enum TextFlags
@@ -295,7 +276,7 @@ namespace Luminous
     /// the current opacity multiplied by the given value.
     /// @param opacity opacity to push
     /// @return Guard for pushed opacity.
-    OpacityGuard pushOpacity(float opacity);
+    void pushOpacity(float opacity);
     /// Pop the current opacity from the stack
     void popOpacity();
     /// Get the current opacity
@@ -305,7 +286,7 @@ namespace Luminous
     /// Pushes new frame buffer to the stack.
     /// @param target frame buffer for rendering commands.
     /// @return Guard which pops this frame buffer automatically on its destruction.
-    std::unique_ptr<FrameBufferGuard> pushFrameBuffer(const FrameBuffer & target);
+    void pushFrameBuffer(const FrameBuffer & target);
     /// Pops the current frame buffer from the stack.
     void popFrameBuffer();
 
@@ -867,8 +848,193 @@ namespace Luminous
     std::tie(t, buffer) = sharedBuffer(sizeof(T), maxVertexCount, type, offset);
     return std::make_pair(reinterpret_cast<T*>(t), buffer);
   }
+
+  /// This class provides a simple guard for setting opacity. It will
+  /// automatically pop opacity in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushOpacity(float)" and "RenderContext::popOpacity"
+  class OpacityGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    OpacityGuard(RenderContext & r, float opacity) : m_rc(&r) { r.pushOpacity(opacity); }
+    /// Construct a guard by moving
+    /// @param o guard to move
+    OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popOpacity().
+    ~OpacityGuard() { if(m_rc) m_rc->popOpacity(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active view transform. It will
+  /// automatically pop the transform in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushViewTransform(const Nimble::Matrix4 & m)" and "RenderContext::popViewTransform"
+  class ViewTransformGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ViewTransformGuard(RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { r.pushViewTransform(m); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ViewTransformGuard(ViewTransformGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popViewTransform().
+    ~ViewTransformGuard() { if (m_rc) m_rc->popViewTransform(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active viewport. It will
+  /// automatically pop the viewport in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushViewport(const Nimble::Recti &)" and "RenderContext::popViewport"
+  class ViewportGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ViewportGuard(RenderContext & r, const Nimble::Recti & viewport) : m_rc(&r) { r.pushViewport(viewport); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ViewportGuard(ViewportGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popViewport().
+    ~ViewportGuard() { if (m_rc) m_rc->popViewport(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active scissor area. It will
+  /// automatically pop the area in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushScissorRect(const Nimble::Recti &)" and "RenderContext::popScissorRect"
+  class ScissorGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ScissorGuard(RenderContext & r, const Nimble::Recti & scissor) : m_rc(&r) { r.pushScissorRect(scissor); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ScissorGuard(ScissorGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popScissorRect().
+    ~ScissorGuard() { if (m_rc) m_rc->popScissorRect(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active clipping area. It will
+  /// automatically pop the area in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushClipRect(const Nimble::Rectangle &)" and "RenderContext::popClipRect"
+  class ClipGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ClipGuard(RenderContext & r, const Nimble::Rectangle & rect) : m_rc(&r) { r.pushClipRect(rect); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ClipGuard(ClipGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popClipRect().
+    ~ClipGuard() { if (m_rc) m_rc->popClipRect(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+  class RenderContext;
+
+  /// This class provides a simple guard for setting the active render target. It will
+  /// automatically pop the target in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushFrameBuffer(const FrameBuffer &)" and "RenderContext::popFrameBuffer"
+  class FrameBufferGuard
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context to pop a target from
+    FrameBufferGuard(RenderContext & r, const FrameBuffer &target) : m_rc(&r) { r.pushFrameBuffer(target); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    FrameBufferGuard(FrameBufferGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popFrameBuffer().
+    ~FrameBufferGuard() { if (m_rc) m_rc->popFrameBuffer(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting transformations. It will
+  /// automatically pop transforms in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushTransform(m)" and "RenderContext::popTransform()".
+  class TransformGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard. This calls RenderContext::pushTransform(m)
+    TransformGuard(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransform(m); }
+    /// @copydoc TransformGuard
+    TransformGuard(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransform(m); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    TransformGuard(TransformGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ~TransformGuard() { if (m_rc) m_rc->popTransform(); }
+
+    /// This class provides a simple guard for setting transformations. It will
+    /// automatically pop transforms in its destructor so the user doesn't need to
+    /// remember to do it manually. It is equivalent to calling
+    /// "RenderContext::pushTransformLeftMul(m)" and "RenderContext::popTransform()".
+    class LeftMul {
+    public:
+      /// Construct a new guard. This calls RenderContext::pushTransformLeftMul(m)
+      /// @param r render context
+      /// @param m Transformation matrix
+      LeftMul(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransformLeftMul(m); }
+      /// @copydoc LeftMul
+      LeftMul(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransformLeftMul(m); }
+      /// Construct a guard by moving
+      /// @param rhs guard to move
+      LeftMul(LeftMul && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+      /// Destroys the guard. This calls RenderContext::popTransform()
+      ~LeftMul() { if (m_rc) m_rc->popTransform(); }
+    private:
+      Luminous::RenderContext * m_rc;
+    };
+
+    /// This class provides a simple guard for setting transformations. It will
+    /// automatically pop transforms in its destructor so the user doesn't need to
+    /// remember to do it manually. It is equivalent to calling
+    /// "RenderContext::pushTransformRightMul(m)" and "RenderContext::popTransform()".
+    class RightMul {
+    public:
+      /// Construct a new guard. This calls RenderContext::pushTransformRightMul(m)
+      /// @param r render context
+      /// @param m Transformation matrix
+      RightMul(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransformRightMul(m); }
+      /// @copydoc RightMul
+      RightMul(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransformRightMul(m); }
+      /// Construct a guard by moving
+      /// @param rhs guard to move
+      RightMul(RightMul && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+      /// Destroys the guard. This calls RenderContext::popTransform()
+      ~RightMul() { if (m_rc) m_rc->popTransform(); }
+    private:
+      Luminous::RenderContext * m_rc;
+    };
+
+  private:
+    Luminous::RenderContext * m_rc;
+  };
 }
 
 #include <Luminous/RenderContextImpl.hpp>
+
+
 
 #endif

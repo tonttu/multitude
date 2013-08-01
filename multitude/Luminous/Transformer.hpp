@@ -13,6 +13,7 @@
 #include <Luminous/Export.hpp>
 
 #include <Nimble/Matrix4.hpp>
+#include <Patterns/NotCopyable.hpp>
 
 #include <stack>
 #include <vector>

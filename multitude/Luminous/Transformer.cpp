@@ -8,6 +8,7 @@
  * 
  */
 #include "Transformer.hpp"
+#include "RenderContext.hpp"
 
 namespace Luminous
 {
@@ -134,5 +135,4 @@ namespace Luminous
 
   void Transformer::beforeTransformChange()
   {}
-
 }

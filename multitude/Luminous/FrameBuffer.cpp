@@ -374,19 +374,4 @@ namespace Luminous
   {
     return m_d->createRenderBufferAttachment(attachment, storageFormat);
   }
-
-  ////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////
-
-  FrameBufferGuard::FrameBufferGuard(RenderContext &r)
-    : m_renderContext(r)
-  {}
-
-  FrameBufferGuard::~FrameBufferGuard()
-  {
-    /// @todo this should check that the current target is still valid (someone
-    /// might manually pop it before)
-    m_renderContext.popFrameBuffer();
-  }
-
 }

@@ -512,7 +512,7 @@ namespace Luminous
     float a = axis.length();
     float b = otherAxisLength;
 
-    pushTransformRightMul(Nimble::Matrix3::makeTranslation(center) * Nimble::Matrix3::makeRotation(rotation));
+    Luminous::TransformGuard::RightMul transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * Nimble::Matrix3::makeRotation(rotation));
 
     bool isFilled = style.fillColor().alpha() > 0.f;
     bool stroke = style.strokeWidth() > 0.0f;
@@ -606,7 +606,6 @@ namespace Luminous
 
       angle += step;
     }
-    popTransform();
   }
 
   void RenderContext::addRenderCounter()
@@ -1036,9 +1035,10 @@ namespace Luminous
     s.stroke().clear();
 
     // Fill is an affine transform of a circle
-    pushTransformRightMul(Nimble::Matrix3::makeTranslation(center) * m);
-    drawCircle(Nimble::Vector2(0, 0), 1.0f, s, lineSegments, fromRadians, toRadians);
-    popTransform();
+    {
+      Luminous::TransformGuard transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * m);
+      drawCircle(Nimble::Vector2(0, 0), 1.0f, s, lineSegments, fromRadians, toRadians);
+    }
 
     // Stroke should be of constant width, so use drawDonut for the outline
     if(style.strokeColor().alpha() > 0.f && style.strokeWidth() > 0.f) {
@@ -1351,7 +1351,7 @@ namespace Luminous
     return m_data->m_uniformBufferOffsetAlignment;
   }
 
-  std::unique_ptr<FrameBufferGuard> RenderContext::pushFrameBuffer(const FrameBuffer &target)
+  void RenderContext::pushFrameBuffer(const FrameBuffer &target)
   {
     m_data->m_driverGL->pushFrameBuffer(target);
 
@@ -1376,8 +1376,6 @@ namespace Luminous
 
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
-
-    return std::unique_ptr<FrameBufferGuard>(new FrameBufferGuard(*this));
   }
 
   void RenderContext::popFrameBuffer()
@@ -1535,7 +1533,7 @@ namespace Luminous
     PostProcessContextPtr first = *chain.begin();
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
-      auto g = pushFrameBuffer(first->frameBuffer());
+      Luminous::FrameBufferGuard(*this, first->frameBuffer());
       blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
@@ -1563,7 +1561,7 @@ namespace Luminous
             next->frameBuffer();
 
       // Push the next auxilary frame buffer
-      auto g = pushFrameBuffer(frameBuffer);
+      Luminous::FrameBufferGuard bufferGuard(*this, frameBuffer);
 
       // Run each area through the filter
       for(unsigned j = 0; j < m_data->m_window->areaCount(); j++) {
@@ -1600,17 +1598,15 @@ namespace Luminous
     // Blit from current frame buffer to filter's auxiliary frame buffer
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
-      auto g = pushFrameBuffer(filterCtx->frameBuffer());
+      Luminous::FrameBufferGuard bufferGuard(*this, filterCtx->frameBuffer());
       blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
     // Push the original frame buffer
-    auto g = pushFrameBuffer(sourceFrameBuffer);
-
-    pushScissorRect(viewport);
+    Luminous::FrameBufferGuard bufferGuard(*this, sourceFrameBuffer);
+    Luminous::ScissorGuard scissorGuard(*this, viewport);
     filterCtx->doFilter(*this);
-    popScissorRect();
   }
 
   bool RenderContext::initialize()
@@ -1620,7 +1616,7 @@ namespace Luminous
     return true;
   }
 
-  RenderContext::OpacityGuard RenderContext::pushOpacity(float opacity)
+  void RenderContext::pushOpacity(float opacity)
   {
     auto value = 1.f;
 
@@ -1628,8 +1624,6 @@ namespace Luminous
       value = m_data->m_opacityStack.top();
 
     m_data->m_opacityStack.push(value * opacity);
-
-    return OpacityGuard(*this);
   }
 
   void RenderContext::popOpacity()
