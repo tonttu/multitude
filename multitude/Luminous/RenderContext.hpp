@@ -881,7 +881,7 @@ namespace Luminous
     ViewTransformGuard(RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { r.pushViewTransform(m); }
     /// Construct a guard by moving
     /// @param rhs guard to move
-    ViewTransformGuard(ViewTransformGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ViewTransformGuard(ViewTransformGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popViewTransform().
     ~ViewTransformGuard() { if (m_rc) m_rc->popViewTransform(); }
   private:
@@ -900,7 +900,7 @@ namespace Luminous
     ViewportGuard(RenderContext & r, const Nimble::Recti & viewport) : m_rc(&r) { r.pushViewport(viewport); }
     /// Construct a guard by moving
     /// @param rhs guard to move
-    ViewportGuard(ViewportGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ViewportGuard(ViewportGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popViewport().
     ~ViewportGuard() { if (m_rc) m_rc->popViewport(); }
   private:
@@ -919,7 +919,7 @@ namespace Luminous
     ScissorGuard(RenderContext & r, const Nimble::Recti & scissor) : m_rc(&r) { r.pushScissorRect(scissor); }
     /// Construct a guard by moving
     /// @param rhs guard to move
-    ScissorGuard(ScissorGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ScissorGuard(ScissorGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popScissorRect().
     ~ScissorGuard() { if (m_rc) m_rc->popScissorRect(); }
   private:
@@ -938,7 +938,7 @@ namespace Luminous
     ClipGuard(RenderContext & r, const Nimble::Rectangle & rect) : m_rc(&r) { r.pushClipRect(rect); }
     /// Construct a guard by moving
     /// @param rhs guard to move
-    ClipGuard(ClipGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ClipGuard(ClipGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popClipRect().
     ~ClipGuard() { if (m_rc) m_rc->popClipRect(); }
   private:
@@ -954,7 +954,7 @@ namespace Luminous
   /// automatically pop the target in its destructor so the user doesn't need to
   /// remember to do it manually. It is equivalent to calling
   /// "RenderContext::pushFrameBuffer(const FrameBuffer &)" and "RenderContext::popFrameBuffer"
-  class FrameBufferGuard
+  class FrameBufferGuard : Patterns::NotCopyable
   {
   public:
     /// Construct a new guard
@@ -962,7 +962,7 @@ namespace Luminous
     FrameBufferGuard(RenderContext & r, const FrameBuffer &target) : m_rc(&r) { r.pushFrameBuffer(target); }
     /// Construct a guard by moving
     /// @param rhs guard to move
-    FrameBufferGuard(FrameBufferGuard & rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    FrameBufferGuard(FrameBufferGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popFrameBuffer().
     ~FrameBufferGuard() { if (m_rc) m_rc->popFrameBuffer(); }
 
