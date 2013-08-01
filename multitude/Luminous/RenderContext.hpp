@@ -990,7 +990,8 @@ namespace Luminous
     /// automatically pop transforms in its destructor so the user doesn't need to
     /// remember to do it manually. It is equivalent to calling
     /// "RenderContext::pushTransformLeftMul(m)" and "RenderContext::popTransform()".
-    class LeftMul {
+    class LeftMul : Patterns::NotCopyable
+    {
     public:
       /// Construct a new guard. This calls RenderContext::pushTransformLeftMul(m)
       /// @param r render context
@@ -1011,7 +1012,8 @@ namespace Luminous
     /// automatically pop transforms in its destructor so the user doesn't need to
     /// remember to do it manually. It is equivalent to calling
     /// "RenderContext::pushTransformRightMul(m)" and "RenderContext::popTransform()".
-    class RightMul {
+    class RightMul  : Patterns::NotCopyable
+    {
     public:
       /// Construct a new guard. This calls RenderContext::pushTransformRightMul(m)
       /// @param r render context
