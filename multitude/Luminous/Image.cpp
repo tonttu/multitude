@@ -1,23 +1,18 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "Image.hpp"
 #include "ImageCodec.hpp"
 #include "Luminous.hpp"
 #include "CodecRegistry.hpp"
-#include "Utils.hpp"
+#include "Texture.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -28,25 +23,19 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
 #include <stdlib.h>
 #include <QString>
 #include <string.h>
 #include <typeinfo>
 #include <errno.h>
+#include <QFile>
 
 #ifdef RADIANT_LINUX
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #endif
-
-#ifdef WIN32
-#include <strings.h>	// strcasecmp()
-#endif
-
-using namespace std;
-using namespace Radiant;
 
 namespace Luminous
 {
@@ -113,6 +102,11 @@ namespace Luminous
     memcpy(m_data, img.m_data, bytes);
   }
 
+  Image::Image(Image && img)
+  {
+    operator=(std::move(img));
+  }
+
   Image::~Image()
   {
     clear();
@@ -142,6 +136,9 @@ namespace Luminous
     }
 
     changed();
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
   void Image::minify(const Image &src, int w, int h)
@@ -162,8 +159,10 @@ namespace Luminous
         float alphaSum = 0.f;
         Nimble::Vector3 colorSum(0.f, 0.f, 0.f);
 
-        for(int j = sy * y0; j < sy * y0 + sy; ++j) {
-          for(int i = sx * x0; i < sx * x0 + sx; ++i) {
+        // Take 'floor' of the limits in order to avoid floating point accuracy problems
+        int maxX = sy * y0 + sy, maxY = sx * x0 + sx;
+        for(int j = sy * y0; j < maxX; ++j) {
+          for(int i = sx * x0; i < maxY; ++i) {
             Nimble::Vector4 p = src.pixel(i,j);
             // If this pixel contributes any color, scale by alpha and add it to the sum
             if (p.w > std::numeric_limits<float>::epsilon()) {
@@ -174,14 +173,21 @@ namespace Luminous
             ++count;
           }
         }
-        // Scale the color by the number of pixels that contribute
-        colorSum /= alphaCount;
-        // Scale the alpha by all the pixels
-        alphaSum = std::min<float>(alphaSum / count, 1.f);
+        if (alphaCount > 0) {
+          // Scale the alpha by all the pixels
+          alphaSum = std::min(alphaSum / count, 1.f);
+          // Scale the color by the number of pixels that contribute
+          colorSum /= alphaCount * alphaSum;
+          // Round the color (setPixel just makes float -> int conversion wihtout rounding)
+          colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
+        }
 
         setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
       }
     }
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
@@ -236,7 +242,7 @@ namespace Luminous
             float val =
                 (*v00) * fw00 +  (*v10) * fw10 +  (*v01) * fw01 + (*v11) * fw11;
 
-            *dest = uint8_t(Nimble::Math::Min((int) (val + 0.5f), 255));
+            *dest = uint8_t(std::min((int) (val + 0.5f), 255));
 
             dest++;
 
@@ -304,7 +310,7 @@ namespace Luminous
                 ((*v00) * fw00 * a00 +  (*v10) * fw10 * a10 +
                  (*v01) * fw01 * a01 +  (*v11) * fw11 * a11) * ascale;
 
-            *dest = uint8_t(Nimble::Math::Min((int) (val + 0.5f), 255));
+            *dest = uint8_t(std::min((int) (val + 0.5f), 255));
 
             dest++;
 
@@ -314,7 +320,7 @@ namespace Luminous
             v11++;
           }
 
-          *dest = uint8_t(Nimble::Math::Min((int) asum, 255));
+          *dest = uint8_t(std::min((int) asum, 255));
 
           /* if(*dest > 128)
              printf("."); */
@@ -324,6 +330,9 @@ namespace Luminous
       }
 
       //write("some-with-a.png");
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
 
       return true;
     }
@@ -344,7 +353,7 @@ namespace Luminous
     int h = sh / 2;
 
     if(source.pixelFormat() == PixelFormat::alphaUByte() ||
-       source.pixelFormat() == PixelFormat::luminanceUByte()) {
+       source.pixelFormat() == PixelFormat::redUByte()) {
 
       allocate(w, h, source.pixelFormat());
 
@@ -373,6 +382,9 @@ namespace Luminous
         }
 
       }
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
 
       return true;
     }
@@ -408,6 +420,9 @@ namespace Luminous
           l1 += 3;
         }
       }
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
 
       return true;
     }
@@ -458,10 +473,14 @@ namespace Luminous
         }
       }
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
 
     Radiant::error("Image::quarterSize # unsupported pixel format");
+
     return false;
   }
 
@@ -485,6 +504,9 @@ namespace Luminous
 
       m_width -= n;
 
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+
       return true;
     }
 
@@ -500,6 +522,9 @@ namespace Luminous
       m_height -= n;
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
   }
 
   void Image::forgetLastLine()
@@ -507,13 +532,16 @@ namespace Luminous
     if(m_height) {
       m_height--;
       changed();
+
+      if(m_texture)
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
     }
   }
 
   bool Image::hasAlpha() const
   {
     return (m_pixelFormat.layout() == PixelFormat::LAYOUT_ALPHA) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_LUMINANCE_ALPHA) ||
+        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RED_GREEN) ||
         (m_pixelFormat.layout() == PixelFormat::LAYOUT_RGBA);
   }
 
@@ -524,9 +552,7 @@ namespace Luminous
 
     forgetLastPixels(xlose);
     forgetLastLines(ylose);
-
   }
-
 
   Image& Image::operator = (const Image& img)
                            {
@@ -536,6 +562,28 @@ namespace Luminous
     memcpy(m_data, img.m_data, bytes);
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
+
+    return *this;
+  }
+
+  Image & Image::operator = (Image && img)
+  {
+    m_width = img.m_width;
+    m_height = img.m_height;
+    m_pixelFormat = img.m_pixelFormat;
+    m_data = img.m_data;
+    m_generation = img.m_generation;
+    m_texture = std::move(img.m_texture);
+
+    /// Invalidate the old
+    img.m_width = 0;
+    img.m_height = 0;
+    img.m_pixelFormat = Luminous::PixelFormat();
+    img.m_data = nullptr;
+    img.m_generation = 0;
 
     return *this;
   }
@@ -565,6 +613,9 @@ namespace Luminous
     }
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(m_width, m_height, pixelFormat(), m_data);
   }
   /*
   // Guess the filetype from the extension
@@ -581,7 +632,7 @@ namespace Luminous
     return type;
   }
 */
-  bool Image::read(const char* filename)
+  bool Image::read(const QString & filename)
   {
     initDefaultImageCodecs();
 
@@ -589,54 +640,59 @@ namespace Luminous
 
     clear();
 
-    FILE * file = fopen(filename, "rb");
-    if(!file) {
-      error("Image::read # failed to open file '%s'", filename);
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly)) {
+      Radiant::error("Image::read # failed to open file '%s'", filename.toUtf8().data());
       // m_ready = true;
       return false;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename, file);
-    if(codec) {
-      result = codec->read(*this, file);
-      // m_dataReady = result;
+    auto codec = codecs()->getCodec(filename, &file);
+    if (codec) {
+      try {
+        result = codec->read(*this, file);
+      } catch (std::bad_alloc & err) {
+        Radiant::error("Image::read # %s: %s", filename.toUtf8().data(), err.what());
+        result = false;
+      }
     } else {
-      error("Image::read # no suitable codec found for '%s'", filename);
+      Radiant::error("Image::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
-
-    fclose(file);
+    file.close();
 
     changed();
 
     // m_ready = true;
 
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
+
     return result;
   }
 
-  bool Image::write(const char* filename)
+  bool Image::write(const QString & filename) const
   {
     initDefaultImageCodecs();
 
     bool ret = false;
 
-    FILE * file = fopen(filename, "wb");
-    if(!file) {
-      error("Image::write # failed to open file '%s'", filename);
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly)) {
+      Radiant::error("Image::write # failed to open file '%s'", filename.toUtf8().data());
       return false;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename);
+    auto codec = codecs()->getCodec(filename);
     if(codec) {
       ret = codec->write(*this, file);
     } else {
-      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename);
+      debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename.toUtf8().data());
 
       codec = codecs()->getCodec(".png");
       ret = codec->write(*this, file);
     }
 
-    fclose(file);
-
+    file.close();
     return ret;
   }
 
@@ -653,6 +709,9 @@ namespace Luminous
       memcpy( & m_data[0], bytes, nbytes);
 
     changed();
+
+    if(m_texture)
+      m_texture->setData(width, height, format, m_data);
   }
 
   bool Image::setPixelFormat(const PixelFormat & format)
@@ -690,6 +749,10 @@ namespace Luminous
     }
 
     if(src != m_data) delete [] src;
+
+    if(m_texture)
+      m_texture->setData(width(), height(), format, m_data);
+
     return true;
   }
 
@@ -703,30 +766,32 @@ namespace Luminous
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
     changed();
+
+    m_texture.reset();
   }
 
-  bool Image::ping(const char * filename, ImageInfo & info)
+  bool Image::ping(const QString & filename, ImageInfo & info)
   {
     bool result = false;
 
-    FILE * file = fopen(filename, "rb");
-    if(!file) {
-      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename);
+    QFile file(filename);
+    
+    if(!file.open(QIODevice::ReadOnly)) {
+      Radiant::error("Image::ping # failed to open file '%s' for reading.", filename.toUtf8().data());
       return result;
     }
 
-    ImageCodec * codec = codecs()->getCodec(filename, file);
+    auto codec = Luminous::Image::codecs()->getCodec(filename, &file);
     if(codec) {
       result = codec->ping(info, file);
     } else {
-        Radiant::error("No suitable image codec found for '%s'", filename);
+      Radiant::error("No suitable image codec found for '%s'", filename.toUtf8().data());
     }
 
-    fclose(file);
+    file.close();
 
     return result;
   }
-
 
   unsigned char Image::pixelAlpha(Nimble::Vector2 relativeCoord) const
   {
@@ -747,6 +812,9 @@ namespace Luminous
     size_t byteCount = pixelFormat().bytesPerPixel() * width() * height();
     memset(data(), 0, byteCount);
     changed();
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
   Nimble::Vector4 Image::safePixel(int x, int y) const
@@ -760,15 +828,10 @@ namespace Luminous
     return pixel(x, y);
   }
 
-  Nimble::Vector4 Image::pixel(unsigned x, unsigned y) const
+  Nimble::Vector4 Image::pixel(int x, int y) const
   {
-    if(empty())
-      return Nimble::Vector4(0, 0, 0, 1);
-
-    if(int(x) >= width())
-      x = width() - 1;
-    if(int(y) >= height())
-      y = height() - 1;
+    assert(m_data);
+    assert(x >= 0 && x < width() && y >= 0 && y < height());
 
     const uint8_t * px = line(y);
     px += m_pixelFormat.bytesPerPixel() * x;
@@ -776,7 +839,7 @@ namespace Luminous
     const float s = 1.0f / 255.0f;
 
     // I guess alpha is special case
-    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte())
+    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::redUByte())
       return Nimble::Vector4(1, 1, 1, px[0] * s);
     else if(m_pixelFormat.numChannels() == 3)
       return Nimble::Vector4(px[0] * s, px[1] * s, px[2] * s, 1);
@@ -798,7 +861,9 @@ namespace Luminous
     px += pixelFormat().bytesPerPixel() * x;
 
 
-    if(m_pixelFormat == PixelFormat::alphaUByte() || m_pixelFormat == PixelFormat::luminanceUByte()) {
+    if(m_pixelFormat == PixelFormat::redUByte()) {
+        px[0] = pixel.x * 255;
+    } else if(m_pixelFormat == PixelFormat::alphaUByte()) {
         px[0] = pixel.w * 255;
     } else if(pixelFormat().numChannels() == 3) {
         px[0] = pixel.x * 255;
@@ -813,60 +878,29 @@ namespace Luminous
       Radiant::error("Image::setPixel # unsupported pixel format");
       assert(0);
     }
+
+    if(m_texture)
+      m_texture->addDirtyRect(QRect(x, y, 1, 1));
   }
 
-  ////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////
-
-  ImageTex::ImageTex()
-  {}
-
-  bool ImageTex::bind(GLResources * resources, GLenum textureUnit, bool withmipmaps, int internalFormat)
+  Texture & Image::texture() const
   {
-    bool ret = true;
-
-    Texture2D & tex = ref(resources);
-
-    tex.bind(textureUnit);
-
-    if(tex.generation() != generation()) {
-      ret = tex.loadImage(textureUnit, *this, withmipmaps, internalFormat);
-      tex.setGeneration(generation());
+    if(!m_texture) {
+      Radiant::Guard g(m_textureMutex);
+      if (!m_texture) {
+        std::unique_ptr<Texture> tex(new Texture());
+        tex->setData(width(), height(), pixelFormat(), m_data);
+        std::swap(m_texture, tex);
+      }
     }
 
-    return ret;
-  }
-
-  bool ImageTex::isFullyLoadedToGPU(GLResources * resources)
-  {
-    if(!width() || !height())
-      return false;
-
-    if(!resources)
-      resources = GLResources::getThreadResources();
-
-    if(!resources->getResource(this))
-      return false;
-
-    Texture2D & tex = ref(resources);
-
-    return (tex.m_uploadedLines == size_t(height()));
-  }
-
-  ImageTex * ImageTex::move()
-  {
-    ImageTex * t = new ImageTex;
-    std::swap(t->m_width, m_width);
-    std::swap(t->m_height, m_height);
-    std::swap(t->m_pixelFormat, m_pixelFormat);
-    std::swap(t->m_data, m_data);
-    t->m_generation = ++m_generation;
-
-    return t;
+    return *m_texture.get();
   }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
+
+#ifndef LUMINOUS_OPENGLES
 
   class CompressedImage::Private
   {
@@ -915,24 +949,25 @@ namespace Luminous
 
     bool result = false;
 
-    FILE * file = fopen(filename.toUtf8().data(), "rb");
-    if(!file) {
-      error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
+    QFile file(filename);
+    if(!file.open(QIODevice::ReadOnly)) {
+      Radiant::error("CompressedImage::read # failed to open file '%s': %s", filename.toUtf8().data(), strerror(errno));
       return false;
     }
 
-    ImageCodec * codec = Image::codecs()->getCodec(filename, file);
+    auto codec = Image::codecs()->getCodec(filename, &file);
     if(codec) {
       result = codec->read(*this, file, level);
     } else {
-      error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
+      Radiant::error("CompressedImage::read # no suitable codec found for '%s'", filename.toUtf8().data());
     }
-    fclose(file);
+
+    file.close();
 
     return result;
   }
 
-  bool CompressedImage::loadImage(FILE * file, const ImageInfo & info, int size)
+  bool CompressedImage::loadImage(QFile & file, const ImageInfo & info, int size)
   {
     clear();
 #if 0
@@ -957,7 +992,8 @@ namespace Luminous
 #endif
     m_d->ptr = new char[size];
 
-    if (fread(m_d->ptr, size, 1, file) != 1) {
+    auto bytesRead = file.read(m_d->ptr, size);
+    if (bytesRead != size) {
       Radiant::error("CompressedImage::loadImage # Failed to read image");
       delete m_d->ptr;
       m_d->ptr = 0;
@@ -1075,33 +1111,6 @@ namespace Luminous
     return 1.0f;
   }
 
-  CompressedImageTex::~CompressedImageTex()
-  {
-  }
-
-  void CompressedImageTex::bind(GLResources * resources, GLenum textureUnit)
-  {
-    Texture2D & tex = ref(resources);
-    tex.bind(textureUnit);
-
-    // Luminous::Utils::glCheck("ImageTex::bind # 1");
-
-    if(tex.width() != width() || tex.height() != height()) {
-      tex.loadImage(*this);
-    }
-  }
-
-  /// Creates a new CompressedImageTex from this, all the cpu data from
-  /// Luminous::CompressedImage is moved to the new object.
-  CompressedImageTex * CompressedImageTex::move()
-  {
-    CompressedImageTex * t = new CompressedImageTex;
-    std::swap(t->m_size, m_size);
-    std::swap(t->m_compression, m_compression);
-    std::swap(t->m_d->ptr, m_d->ptr);
-    std::swap(t->m_d->size, m_d->size);
-    return t;
-  }
-
+#endif // LUMINOUS_OPENGLES
 
 }

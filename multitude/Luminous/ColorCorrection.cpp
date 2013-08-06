@@ -1,7 +1,6 @@
 #include "ColorCorrection.hpp"
 
 #include <Nimble/Splines.hpp>
-#include <Nimble/SplinesImpl.hpp>
 
 #include <QTextStream>
 
@@ -29,12 +28,12 @@ namespace {
   static float applyModifiers(float x, float y, float contrast, float gamma, float brightness)
   {
     y += (x - .5f) * (contrast - 1.f);
-    return Nimble::Math::Pow(y, gamma) + brightness;
+    return std::pow(y, gamma) + brightness;
   }
 
   static float invertModifiers(float x, float y, float contrast, float gamma, float brightness)
   {
-    y = Nimble::Math::Pow(y - brightness, 1.f / gamma);
+    y = std::pow(y - brightness, 1.f / gamma);
     return y - (x - .5f) * (contrast - 1.f);
   }
 
@@ -53,7 +52,7 @@ namespace {
     for (int i = 0; i < 10; ++i) {
       const float v = evalBezier(t, p0, p1, p2, p3);
       const float error = x - v;
-      if (Nimble::Math::Abs(error) < 0.0001f)
+      if (std::abs(error) < 0.0001f)
         break;
       const float d = evalBezierDerivate(t, p0, p1, p2, p3);
       t = Nimble::Math::Clamp(t + 0.9f * error / d, 0.f, 1.f);
@@ -232,14 +231,14 @@ namespace {
       Nimble::Vector2f p;
       nearestControlPoint(0.0f, p);
       if (p.x != 0.0f) {
-        if (Nimble::Math::Abs(p.x) < 1.0/256.0f)
+        if (std::abs(p.x) < 1.0/256.0f)
           p.x = 0;
         else
           insert(0, 0);
       }
       nearestControlPoint(1.0f, p);
       if (p.x != 1.0f) {
-        if (Nimble::Math::Abs(p.x-1.0f) < 1.0/256.0f)
+        if (std::abs(p.x-1.0f) < 1.0/256.0f)
           p.x = 1;
         else
           insert(1, 1);
@@ -292,6 +291,7 @@ namespace Luminous
       , m_contrast(host, "contrast", Nimble::Vector3(1.0f, 1.0f, 1.0f))
       , m_brightness(host, "brightness", Nimble::Vector3(0.0f, 0.0f, 0.0f))
       , m_identity(true)
+      , m_rgbCached(false)
     {
     }
 
@@ -303,10 +303,13 @@ namespace Luminous
 
     bool m_identity;
     std::vector<Nimble::Vector2f> m_prev[3];
+
+    bool m_rgbCached;
+    Luminous::RGBCube m_rgbCube;
   };
 
 
-  ColorCorrection::ColorCorrection(Node * parent, const QString & name, bool transit)
+  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name, bool transit)
     : Valuable::Node(parent, name, transit),
       m_d(new D(this))
   {
@@ -368,6 +371,40 @@ namespace Luminous
     return points;
   }
 
+  Nimble::Vector3 ColorCorrection::controlPoint(size_t index) const
+  {
+    Nimble::Vector3 result;
+
+    for(int i = 0; i < 3; i++)
+      result[i] = m_d->m_splines[i].points().at(index)[1];
+
+    return result;
+  }
+
+  void ColorCorrection::setControlPoint(size_t index, const Nimble::Vector3 &rgbvalue)
+  {
+    for(int c = 0; c < 3; c++) {
+      std::vector<Nimble::Vector2f> points = m_d->m_splines[c].points();
+      points.at(index).y = rgbvalue[c];
+      m_d->m_splines[c].setPoints(points);
+    }
+    checkChanged();
+  }
+
+  void ColorCorrection::multiplyRGBValues(float mul, bool clamp)
+  {
+    for(int c = 0; c < 3; c++) {
+      std::vector<Nimble::Vector2f> points = m_d->m_splines[c].points();
+      for(size_t i = 0; i < points.size(); i++) {
+        Nimble::Vector2f & p = points[i];
+        p.y *= mul;
+        if(clamp)
+          p.y = Nimble::Math::Clamp(p.y, 0.0f, 1.0f);
+      }
+      m_d->m_splines[c].setPoints(points);
+    }
+  }
+
   float ColorCorrection::value(float x, int channel, bool clamp, bool modifiers) const
   {
     float y;
@@ -380,11 +417,18 @@ namespace Luminous
     return clamp ? Nimble::Math::Clamp(y, 0.f, 1.f) : y;
   }
 
-  Nimble::Vector3f ColorCorrection::valueRGB(float x) const
+  Nimble::Vector3f ColorCorrection::value(float x) const
   {
     return Nimble::Vector3f(value(x, 0, true, true),
                             value(x, 1, true, true),
                             value(x, 2, true, true));
+  }
+
+  Nimble::Vector3f ColorCorrection::valueRGB(float x, bool clamp, bool modifiers) const
+  {
+    return Nimble::Vector3f(value(x, 0, clamp, modifiers),
+                            value(x, 1, clamp, modifiers),
+                            value(x, 2, clamp, modifiers));
   }
 
   bool ColorCorrection::isIdentity() const
@@ -399,9 +443,25 @@ namespace Luminous
       m_d->m_splines[c].insert(0, 0);
       m_d->m_splines[c].insert(1, 1);
     }
-    m_d->m_gamma = Nimble::Vector3(1);
-    m_d->m_contrast = Nimble::Vector3(1);
-    m_d->m_brightness = Nimble::Vector3(0);
+    m_d->m_gamma = Nimble::Vector3f(1.f, 1.f, 1.f);
+    m_d->m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
+    m_d->m_brightness = Nimble::Vector3(0.f, 0.f, 0.f);
+    checkChanged();
+  }
+
+  void Luminous::ColorCorrection::setIdentity(const std::vector<float> & points)
+  {
+    for (int c = 0; c < 3; ++c) {
+      m_d->m_splines[c].clear();
+      for(size_t j = 0; j < points.size(); j++) {
+        float v = points[j];
+        m_d->m_splines[c].insert(v, v);
+      }
+
+    }
+    m_d->m_gamma = Nimble::Vector3f(1.f, 1.f, 1.f);
+    m_d->m_contrast = Nimble::Vector3(1.f, 1.f, 1.f);
+    m_d->m_brightness = Nimble::Vector3(0.f, 0.f, 0.f);
     checkChanged();
   }
 
@@ -552,6 +612,16 @@ namespace Luminous
     }
 
     return false;
+  }
+
+  const RGBCube & ColorCorrection::asRGBCube() const
+  {
+    if(!m_d->m_rgbCached) {
+      m_d->m_rgbCube.fromColorSplines(*this);
+      m_d->m_rgbCached = true;
+    }
+
+    return m_d->m_rgbCube;
   }
 
   void ColorCorrection::changed()

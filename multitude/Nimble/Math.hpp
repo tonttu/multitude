@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef NIMBLE_MATH_HPP
@@ -6,14 +13,19 @@
 
 #include "Export.hpp"
 
-#define _USE_MATH_DEFINES
+#include <Radiant/Platform.hpp>
 
 #include <cmath>
+#include <algorithm>
 #ifdef WIN32
-#	include <float.h>
+# include <float.h>
 #endif
 
-#include <stdint.h>
+#include <QtGlobal>
+
+#include <cstdint>
+#include <limits>
+#include <cstdlib>
 
 namespace Nimble {
 
@@ -22,11 +34,6 @@ namespace Nimble {
       basic functions. **/
   namespace Math
   {
-    // Constants:
-
-    /// Tolerance used when comparing floating point numbers
-    const double TOLERANCE  = 0.000001f;
-
     /// Pi
     const double PI         = 3.1415926535897931;
     /// Pi times two
@@ -40,85 +47,24 @@ namespace Nimble {
     const double SQRT2      = 1.41421356237309514547;
     /// Square root of two divided by two
     const double SQRT2_PER2 = 0.70710678118654757273;
-    /// A small number
-    const double EPSILON    = 1.0e-10;
 
-    // float & double inlines:
-
-    /// Returns the cosine
-    inline float Cos(float v)  { return std::cos(v); }
-    /// Returns the sine
-    inline float Sin(float v)  { return std::sin(v); }
-    /// Returns the tangent
-    inline float Tan(float v)  { return std::tan(v); }
-    /// Returns the square root
-    inline float Sqrt(float v) { return std::sqrt(v); }
     /// Returns the inverse square root
     inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
-    /// Returns the exponential function
-    inline float Exp(float v)  { return std::exp(v); }
-    /// Returns the natural logarithm (base e)
-    inline float Log(float v)  { return std::log(v); }
-    /// Returns the logarithm in base 10
-    inline float Log10(float v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#if defined(RADIANT_CXX11) && !defined(RADIANT_WINDOWS)
+#if defined(RADIANT_CXX11) && !defined(CLANG_XML)
     inline float Log2(float v) { return std::log2(v); }
 #else
-    inline float Log2(float v) { return Log(v) / Log(2.f); }
+    inline float Log2(float v) { return std::log(v) / std::log(2.f); }
 #endif
-    /// Raises x to the yth power
-    inline float Pow(float x, float y)    { return std::pow(x, y); }
 
-    /// Returns the arccosine
-    inline float ACos(float v)  { return std::acos(v); }
-    /// Returns the arcsine
-    inline float ASin(float v)  { return std::asin(v); }
-    /// Returns the arctangent
-    inline float ATan(float v)  { return std::atan(v); }
-    /// Returns the arctangent
-    inline float ATan2(float x, float y)  { return std::atan2(x, y); }
-
-    /// Returns the cosine
-    inline double Cos(double v)  { return std::cos(v); }
-    /// Returns the sine
-    inline double Sin(double v)  { return std::sin(v); }
-    /// Returns the tangent
-    inline double Tan(double v)  { return std::tan(v); }
-    /// Returns the square root
-    inline double Sqrt(double v) { return std::sqrt(v); }
     /// Returns the inverse square root
     inline double InvSqrt(double v) { return 1.0 / std::sqrt(v); }
-    /// Returns the exponential function
-    inline double Exp(double v)  { return std::exp(v); }
-    /// Returns the natural logarithm (base e)
-    inline double Log(double v)  { return std::log(v); }
-    /// Returns the logarithm in base 10
-    inline double Log10(double v)  { return std::log10(v); }
     /// Returns the logarithm in base 2
-#if defined(RADIANT_CXX11) && !defined(RADIANT_WINDOWS)
+#if defined(RADIANT_CXX11) && !defined(CLANG_XML)
     inline double Log2(double v) { return std::log2(v); }
 #else
-    inline double Log2(double v) { return Log(v) / Log(2.0); }
+    inline double Log2(double v) { return std::log(v) / std::log(2.0); }
 #endif
-    /// Raises x to the yth power
-    inline double Pow(double x, double y)    { return std::pow(x, y); }
-
-    /// Returns the arccosine
-    inline double ACos(double v)  { return std::acos(v); }
-    /// Returns the arcsine
-    inline double ASin(double v)  { return std::asin(v); }
-    /// Returns the arctangent
-    inline double ATan(double v)  { return std::atan(v); }
-    /// Returns the arctangent
-    inline double ATan2(double x, double y)  { return std::atan2(x, y); }
-
-    /// Returns the square root
-    inline float Sqrt(int v) { return std::sqrt(float(v)); }
-    /// Returns the square root
-    inline double Sqrt(int64_t v) { return std::sqrt(double(v)); }
-    /// Returns the square root
-    inline double Sqrt(uint64_t v) { return std::sqrt(double(v)); }
 
     /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
@@ -128,10 +74,12 @@ namespace Nimble {
     /// Checks if the given value if finite
     inline bool isFinite(float v)
     {
-#ifdef WIN32
+#if defined(_MSC_VER) && !defined(CLANG_XML)
       return _finite(v) != 0;
+#elif defined(_MSC_VER) && defined(CLANG_XML)
+      return v == v && (v == 0 || v != 2*v);
 #else
-      return finite(v);
+      return std::isfinite(v);
 #endif
     }
     /// Checks if the given number is a NaN
@@ -139,8 +87,10 @@ namespace Nimble {
     /// @return Check result
     inline bool isNAN(float v)
     {
-#ifdef WIN32
-    return _isnan(v) != 0;
+#if defined(_MSC_VER) && !defined(CLANG_XML)
+      return _isnan(v) != 0;
+#elif defined(_MSC_VER) && defined(CLANG_XML)
+      return v != v;
 #else
       return std::isnan(v);
 #endif
@@ -150,31 +100,25 @@ namespace Nimble {
     template <class T>
     inline int Sign(T v) { return ((v < T(0)) ? -1 : ((v == T(0)) ? 0 : 1)); }
 
-    // Min & Max inlines:
-
     /// Returns the maximum of the values
     template <class T>
     inline T Max(T x, T y) { return x > y ? x : y; }
     /// Returns the maximum of the values
     template <class T>
-    inline T Max(T a, T b, T c) { return Max(a, Max(b,c)); }
+    inline T Max(T a, T b, T c) { return std::max(a, std::max(b,c)); }
     /// Returns the maximum of the values
     template <class T>
-    inline T Max(T a, T b, T c, T d) { return Max(Max(a, b), Max(c, d)); }
+    inline T Max(T a, T b, T c, T d) { return std::max(std::max(a, b), std::max(c, d)); }
 
     /// Returns the minimum of the values
     template <class T>
     inline T Min(T x, T y) { return x < y ? x : y; }
     /// Returns the minimum of the values
     template <class T>
-    inline T Min(T a, T b, T c) { return Min(a, Min(b, c)); }
+    inline T Min(T a, T b, T c) { return std::min(a, std::min(b, c)); }
     /// Returns the minimum of the values
     template <class T>
-    inline T Min(T a, T b, T c, T d) { return Min(Min(a, b), Min(c, d)); }
-
-    /// Calculates the absolute value of the argument.
-    template <class T>
-    inline T Abs(T x) { return (x > T(0)) ? x : -x; }
+    inline T Min(T a, T b, T c, T d) { return std::min(std::min(a, b), std::min(c, d)); }
 
     /// Calculates the fraction of the floating point number
     template <class T>
@@ -193,34 +137,29 @@ namespace Nimble {
     template <class T>
     bool IsClose(const T & a, const T & b, const T & limit)
     {
-      return Abs(a - b) < limit;
+      return std::abs(a - b) < limit;
+    }
+
+    /// Compare two values
+    /// @param a first value to compare
+    /// @param b second value to compare
+    /// @return true if the values are close to identical; otherwise false
+    template<typename T>
+    bool fuzzyCompare(const T & a, const T & b)
+    {
+      return qFuzzyCompare(a, b);
+    }
+
+    template<>
+    inline bool fuzzyCompare(const int & a, const int & b)
+    {
+      return a == b;
     }
 
     /// Rounds the given number to nearest integer
     inline int Round(float x) { return x > 0.0f ? (int) (x + 0.5f) : (int) (x - 0.5f); }
     /// Rounds the given number to nearest integer
     inline int Round(double x) { return x > 0.0 ? (int) (x + 0.5) : (int) (x - 0.5); }
-
-    /// Rounds the given number up to nearest integer
-    inline int Ceil(float x) { return x >= 0.0f ? (int) (x + 0.99999f) : (int) (x); }
-    /// Rounds the given number down to nearest integer
-    inline int Floor(float x) { return x >= 0.0f ? (int)x : (int) (x - 0.9999f); }
-    /// Rounds the given number down to nearest integer
-    inline int Floor(double x) { return x >= 0.0f ? (int)x : (int) (x - 0.9999); }
-
-    /// Convert degrees to radians
-    template <class T>
-    inline T degToRad(T deg)
-    {
-      return deg * ((T) PI / (T) 180);
-    }
-
-    /// Convert radians to degrees
-    template <class T>
-    inline T radToDeg(T rad)
-    {
-      return rad * ((T) 180 / (T) PI);
-    }
 
     /// Clamp a value between minimum and maximum values
     /// @param x The input value to limit.
@@ -245,7 +184,7 @@ namespace Nimble {
     inline T Wrap(T x, T low, T high)
     {
       T diff = high - low;
-      return x - Floor((x - low) / diff) * diff;
+      return x - std::floor((x - low) / diff) * diff;
     }
 
     /// Calculates the determinant of a 2x2 matrix, which is given in
@@ -311,7 +250,6 @@ namespace Nimble {
 
     /// Interpolate smoothly between two values based on third (Texturing and
     /// Modeling, Third Edition: A Procedural Approach, by Ken Perlin)
-
     template<class T>
     T smoothstep(const T & a, const T & b, float t)
     {
@@ -320,10 +258,7 @@ namespace Nimble {
       return t * t * t * (t * (t * T(6) - T(15)) + T(10));
     }
 
-
-
     /// Calculates the mean and variance of a buffer of values
-
     template <class T>
         inline void calculateMeanVariance(const T * values, int n, T * mean, T * variance)
     {
@@ -351,11 +286,10 @@ namespace Nimble {
     {
       T sum = 0;
       for(int i = 0; i < n; i++)
-        sum += Abs(values[i]);
+        sum += std::abs(values[i]);
 
       return sum;
     }
-
 
     /// Calculate the two principal axes in 2d data
     /// Length of the axes are the corresponding eigenvalues
@@ -370,7 +304,7 @@ namespace Nimble {
     {
       double mean[] = { 0, 0 };
 
-      for(int i=0; i < n; ++i) {
+      for(size_t i=0; i < n; ++i) {
         mean[0] += values[i][0];
         mean[1] += values[i][1];
       }
@@ -380,7 +314,7 @@ namespace Nimble {
       float covariance[3] = { 0, 0, 0 };
 
 
-      for(int i=0; i < n; ++i) {
+      for(size_t i=0; i < n; ++i) {
         double vx = values[i][0] - mean[0];
         double vy = values[i][1] - mean[1];
 
@@ -394,10 +328,10 @@ namespace Nimble {
       covariance[2] /= n;
 
 
-      if(Nimble::Math::Abs(covariance[1]) < 1e-5f) {
+      if(std::abs(covariance[1]) < 1e-5f) {
 
-        double smaller = Min(covariance[0], covariance[2]);
-        double bigger = Max(covariance[0], covariance[2]);
+        double smaller = std::min(covariance[0], covariance[2]);
+        double bigger = std::max(covariance[0], covariance[2]);
 
         axis1[0] = 1;
         axis1[1] = 0;
@@ -415,7 +349,7 @@ namespace Nimble {
         double b = -covariance[0] - covariance[2];
         double c = -covariance[1]*covariance[1] + covariance[0]*covariance[2];
 
-        double discr = Nimble::Math::Sqrt(b*b - 4*c);
+        double discr = std::sqrt(b*b - 4.0*c);
         double q = -0.5*(b + Nimble::Math::Sign(b)*discr);
 
         double eigs[] = { q, c/q };
@@ -426,8 +360,8 @@ namespace Nimble {
         double v1x = (e1-covariance[2])/covariance[1];
         double v2x = (e2-covariance[2])/covariance[1];
 
-        double l1 = 1.0/Nimble::Math::Sqrt(v1x*v1x+1);
-        double l2 = 1.0/Nimble::Math::Sqrt(v2x*v2x+1);
+        double l1 = 1.0/std::sqrt(v1x*v1x+1);
+        double l2 = 1.0/std::sqrt(v2x*v2x+1);
 
         axis1[0] = (v1x * l1);
         axis1[1] = l1;
@@ -442,6 +376,7 @@ namespace Nimble {
       }
     }
   }
+
 }
 
 #endif

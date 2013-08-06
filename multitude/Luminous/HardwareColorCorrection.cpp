@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "HardwareColorCorrection.hpp"
 #include "ColorCorrection.hpp"
 #include "VM1.hpp"
@@ -7,15 +17,15 @@ namespace Luminous
   class HardwareColorCorrection::Private : public Valuable::Node
   {
   public:
-    Private() : m_cc(0), m_ok(true)
+    Private() : m_cc(0), m_ok(false)
     {
       eventAddIn("sync");
     }
 
-    void processMessage(const QString & type, Radiant::BinaryData & data)
+    void eventProcess(const QByteArray & type, Radiant::BinaryData & data)
     {
       if(type == "sync") doSync();
-      else Node::processMessage(type, data);
+      else Node::eventProcess(type, data);
     }
 
     void doSync() {

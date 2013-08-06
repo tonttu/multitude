@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef RADIANT_SERIAL_PORT_HPP
@@ -6,7 +13,7 @@
 
 #include <Radiant/BinaryStream.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef WIN32
 # define NOMINMAX
@@ -24,10 +31,10 @@ namespace Radiant
 
       @author Tommi Ilmonen
   */
-
   class RADIANT_API SerialPort : public Radiant::BinaryStream
   {
   public:
+    /// Constructor
     SerialPort();
     /// Delete the object and close the port
     virtual ~SerialPort();
@@ -59,16 +66,21 @@ namespace Radiant
     /// @return number of bytes written
     virtual int write(const void * buf, int bytes);
     /// Writes a byte to the port
+    /// @param byte Byte to write
+    /// @return Number of bytes written
     int writeByte(uint8_t byte);
     /// Read bytes from the port
     /// @param[out] buf output buffer
     /// @param bytes max bytes to read
+    /// @param waitfordata ignored
     /// @return number of bytes read
     virtual int read(void * buf, int bytes, bool waitfordata = true);
 
     /// Checks if the port is open
+    /// @return True if the port is open, false otherwise
     bool isOpen() const;
     /// Returns the name of the device
+    /// @return Name of the device
     const QString & deviceName() { return m_device; }
 
 #ifdef RADIANT_WINDOWS

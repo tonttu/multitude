@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #ifndef RADIANT_SYNCHRONIZED_QUEUE_HPP
 #define RADIANT_SYNCHRONIZED_QUEUE_HPP
 
@@ -9,7 +19,8 @@
 namespace Radiant
 {
 
-  /** This class provides a thread-safe queue */
+  /// This class provides a thread-safe queue
+  /// @tparam T Type of the values stored
   template<class T>
   class SynchronizedQueue
   {
@@ -56,6 +67,7 @@ namespace Radiant
     }
 
     /// Adds an element to the end of the queue
+    /// @param t Value to add to the queue
     void push(const T & t)
     {
       Guard g(m_mutex);
@@ -66,6 +78,7 @@ namespace Radiant
     }
 
     /// Returns true if the queue is empty
+    /// @return True if queue is empty, true otherwise
     bool empty() const
     {
       Guard g(m_mutex);
@@ -97,6 +110,8 @@ namespace Radiant
     }
 
     /// Copies a queue
+    /// @param c Queue to copy
+    /// @return Reference to self
     SynchronizedQueue<T> & operator = (const SynchronizedQueue & c)
     {
       Radiant::Guard g1(m_mutex);

@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "Platform.hpp"
 
 #ifndef RADIANT_WINDOWS
@@ -6,7 +16,7 @@
 #include "Mutex.hpp"
 #include "Trace.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <execinfo.h>
 #include <dlfcn.h>
@@ -57,16 +67,21 @@ namespace Radiant
 {
   CallStack::CallStack()
   {
-    m_frameCount = backtrace(m_frames, max_frames);
+    m_frameCount = backtrace(m_frames, MAX_FRAMES);
   }
 
   CallStack::~CallStack()
   {
   }
 
-  void CallStack::print() const
+  QStringList CallStack::toStringList() const
   {
+    if (!m_cache.isEmpty())
+      return m_cache;
+
     char ** strings = backtrace_symbols(stack(), size());
+
+    QStringList tmp;
 
     /// strings[i] can be something like:
     /// /home/riku/cornerstone/multitude/lib/libRadiant.so.1(_ZN7Radiant8MemCheckC2Ev+0x40) [0x7fe3fd420c64]
@@ -76,7 +91,7 @@ namespace Radiant
 
     for(size_t i = 0; i < size(); i++) {
       if(r.exactMatch(QString::fromUtf8(strings[i]))) {
-        QString func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
+        QByteArray func = Radiant::StringUtils::demangle(r.cap(2).toUtf8().data());
         QString file;
 
         Dl_info info;
@@ -92,14 +107,22 @@ namespace Radiant
           file = r.cap(1);
 
         if(func.isEmpty())
-          Radiant::error("#%-2d %p at %s", int(i), m_frames[i], file.toUtf8().data());
+          tmp << QString("#%1 0x%2 at %3").arg(i, -2).arg((intptr_t)m_frames[i], 0, 16).arg(file);
         else
-          Radiant::error("#%-2d %s at %s", int(i), func.toUtf8().data(), file.toUtf8().data());
+          tmp << QString("#%1 %2 at %3").arg(i, -2).arg(func.data(), file);
       } else {
-        Radiant::error("#%-2d %s", int(i), strings[i]);
+        tmp << QString("#%1 %3").arg(i, -2).arg(strings[i]);
       }
     }
     free (strings);
+    m_cache = tmp;
+    return tmp;
+  }
+
+  void CallStack::print() const
+  {
+    for (auto & str: toStringList())
+      Radiant::error("%s", str.toUtf8().data());
   }
 }
 

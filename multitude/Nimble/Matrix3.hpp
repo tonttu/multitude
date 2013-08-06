@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef NIMBLE_MATRIX3T_HPP
@@ -8,6 +15,7 @@
 #include "Matrix2.hpp"
 #include "Vector3.hpp"
 
+#include <array>
 #include <cassert>
 
 namespace Nimble {
@@ -19,11 +27,14 @@ namespace Nimble {
   class Matrix3T
   {
   public:
+    /// Data-type of the matrix
+    typedef T type;
+
     /// Constructs the matrix without initializing any values.
     Matrix3T() {}
     /// Constructs a matrix and initializes it from memory
-    template <class S>
-    Matrix3T(const S * x)
+    template <class K>
+    Matrix3T(const K * x)
     {
       m[0][0] = x[0]; m[0][1] = x[1]; m[0][2] = x[2];
       m[1][0] = x[3]; m[1][1] = x[4]; m[1][2] = x[5];
@@ -65,7 +76,7 @@ namespace Nimble {
     /// Transposes the matrix
     inline void               transpose();
     /// Returns a transposed matrix
-    inline Matrix3T transposed() const { Matrix3T m(*this); m.transpose(); return m; }
+    inline Matrix3T transposed() const;
     /// Fills the matrix with zeroes
     void                      clear() { m[0].clear(); m[1].clear(); m[2].clear(); }
     /// Makes the matrix an identity matrix
@@ -89,9 +100,6 @@ namespace Nimble {
     /// Compares if two matrices are different
     inline bool               operator!=(const Matrix3T<T>& that) const;
 
-    /// Run internal test function.*/
-    inline static void        test();
-
     /// Returns the number of rows in the matrix
     /// This function can be used when you build template-based functions.
     /// @return 3
@@ -107,62 +115,62 @@ namespace Nimble {
     inline Matrix2T<T> upperLeft() const {
       return Matrix2T<T>(get(0, 0), get(0, 1), get(1, 0), get(1, 1));
     }
-    /** Calculates the inverse of this matrix.
-      @param ok Returns the success value of the inversion operation
-      @param tolerance if determinant smaller than tolerance, abort
-      @return the inverted matrix */
+
+    /// Calculates the inverse of this matrix.
+    /// @param ok Returns the success value of the inversion operation
+    /// @param tolerance if determinant smaller than tolerance, abort
+    /// @return the inverted matrix
     inline Matrix3T<T>        inverse(bool * ok = 0, T tolerance = 1.0e-8) const;
+
+    /// Calculate the inverse of this matrix. This function is an optimized
+    /// version of inverse() that assumes the bottom row of the matrix is 0 0
+    /// 1.
+    /// @return inverted matrix
     inline Matrix3T<T>        inverse23() const;
 
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const Vector2T<T> & t) { Matrix3T<T> m; m.identity(); m.set(0, 2, t.x); m.set(1, 2, t.y); return m; }
+    inline static Matrix3T<T> makeTranslation(const Vector2T<T> & v)
+    { return makeTranslation(v.x, v.y); }
     /// Create a matrix that performs 2D translation
-    static Matrix3T<T> translation(const T & x, const T & y) { Matrix3T<T> m; m.identity(); m.set(0, 2, x); m.set(1, 2, y); return m; }
-    /// Create a matrix that performs 2D translation
-    inline static Matrix3T<T> translate2D(const Vector2T<T> & t);
-    /// Create a matrix that performs 2D translation
-    inline static Matrix3T<T> translate2D(const T & x, const T & y)
-    { return translate2D(Vector2T<T>(x, y)); }
+    inline static Matrix3T<T> makeTranslation(const T & x, const T & y);
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scale2D(const Vector2T<T> & s);
+    inline static Matrix3T<T> makeScale(const Vector2T<T> & v)
+    { return makeScale(v.x, v.y); }
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scale2D(const T & xscale, const T & yscale);
+    inline static Matrix3T<T> makeScale(const T & xscale, const T & yscale);
     /// Create a matrix that performs 2D scaling
-    inline static Matrix3T<T> scaleUniform2D(const T & s)
-    { return scale2D(Vector2T<T>(s, s)); }
+    inline static Matrix3T<T> makeUniformScale(const T & s)
+    { return makeScale(s,s); }
     /// Create a matrix that performs uniform scaling around the given point
-    static Matrix3T<T> scaleUniformAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeUniformScaleAroundPoint(Vector2T<T> p,
                                                      T s)
-	{
-		return translate2D(p) * scaleUniform2D(s) * translate2D(-p);
-	}
+    {
+        return makeTranslation(p) * makeUniformScale(s) * makeTranslation(-p);
+    }
 
     /// Create a matrix that performs uniform scaling around the given point
-    static Matrix3T<T> scaleAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeScaleAroundPoint(Vector2T<T> p,
                                                      const T & xscale, const T & yscale)
     {
-      return translate2D(p) * scale2D(xscale, yscale) * translate2D(-p);
+      return makeTranslation(p) * makeScale(xscale, yscale) * makeTranslation(-p);
     }
 
     /// Create a matrix that performs 2D rotation
-    inline static Matrix3T<T> rotate2D(T radians);
+    inline static Matrix3T<T> makeRotation(T radians);
 
     /// Rotate around a given point
     /** @param p The center point of rotation
         @param radians The amount of roration, in radians
         @return New rotation matrix
     */
-    static Matrix3T<T> rotateAroundPoint2D(Vector2T<T> p,
+    static Matrix3T<T> makeRotationAroundPoint(Vector2T<T> p,
                                            T radians)
-	{
-		return translate2D(p) * rotate2D(radians) * translate2D(-p);
-	}
+    {
+        return makeTranslation(p) * makeRotation(radians) * makeTranslation(-p);
+    }
 
     /// Create a rotation matrix
     inline static Matrix3T<T> makeRotation(T radians, const Vector3T<T> & axis);
-
-    /// Extract the scaling factor from a homogenous 2D transformation matrix
-    inline T extractScale() const;
 
     /// Multiply the given point with the matrix and perform the homogenous divide
     inline Vector2T<T> project(const Vector2T<T> & v) const;
@@ -170,7 +178,7 @@ namespace Nimble {
     inline Vector2T<T> project(const T & x, const T & y) const;
 
     /** Identity matrix. */
-    NIMBLE_API static const Matrix3T<T> IDENTITY;
+    static const Matrix3T<T> IDENTITY;
 
     /// Returns a 2d transformation matrix that does scale, rotate & translation (in this order)
     /// @param rad rotation angle (counter-clockwise)
@@ -179,10 +187,10 @@ namespace Nimble {
     /// @param tx x translate
     /// @param ty y translate
     /// @return New transformation matrix
-    inline static Matrix3T<T> transformation(float rad, float sx, float sy, float tx, float ty)
+    inline static Matrix3T<T> makeTransformation(float rad, float sx, float sy, float tx, float ty)
     {
-      const T st = rad == 0.0f ? 0.0f : Nimble::Math::Sin(rad);
-      const T ct = rad == 0.0f ? 1.0f : Nimble::Math::Cos(rad);
+      const T st = rad == 0.0f ? 0.0f : std::sin(rad);
+      const T ct = rad == 0.0f ? 1.0f : std::cos(rad);
 
       return Matrix3T<T>(
           sx*ct, -sy*st, tx,
@@ -192,7 +200,7 @@ namespace Nimble {
     }
 
     /// Create a projection matrix which maps the unit square to given vertices
-    static Nimble::Matrix3T<T> projectionMatrix(const Nimble::Vector2T<T> vertices[4])
+    static Nimble::Matrix3T<T> makeProjectionMatrix(const std::array<Nimble::Vector2T<T>, 4> & vertices)
     {
       float dx1 = vertices[1].x - vertices[2].x;
       float dx2 = vertices[3].x - vertices[2].x;
@@ -205,10 +213,10 @@ namespace Nimble {
       float sy = vertices[0].y - vertices[1].y +
                  vertices[2].y - vertices[3].y;
 
-      float del = Math::Det(dx1, dx2, dy1, dy2);
+      float del = Nimble::Math::Det(dx1, dx2, dy1, dy2);
 
-      float g = Math::Det(sx, dx2, sy, dy2) / del;
-      float h = Math::Det(dx1, sx, dy1, sy) / del;
+      float g = Nimble::Math::Det(sx, dx2, sy, dy2) / del;
+      float h = Nimble::Math::Det(dx1, sx, dy1, sy) / del;
 
       float a = vertices[1].x - vertices[0].x + g * vertices[1].x;
       float b = vertices[3].x - vertices[0].x + h * vertices[3].x;
@@ -226,112 +234,53 @@ namespace Nimble {
     /// Create a projective matrix which maps from[i] to to[i] for i=0..3
     /// @param from The four source points
     /// @param to The four targets points
-    static Nimble::Matrix3T<T> mapCorrespondingPoints(const Nimble::Vector2T<T> from[4],
-                                                  const Nimble::Vector2T<T> to[4],
+    /// @param ok if defined; set to true if the projection could be created
+    /// @return projection matrix
+    static Nimble::Matrix3T<T> mapCorrespondingPoints(const std::array<Nimble::Vector2T<T>, 4> & from,
+                                                  const std::array<Nimble::Vector2T<T>, 4> & to,
                                                   bool * ok = 0)
     {
-      return  projectionMatrix(to) * projectionMatrix(from).inverse(ok);
+      return  makeProjectionMatrix(to) * makeProjectionMatrix(from).inverse(ok);
     }
 
 
   private:
-    inline static void swap(T &a, T& b);
-
     Vector3T<T> m[3];
   };
 
-  template <class T>
-  inline void Matrix3T<T>::test()
-  {
-    Matrix3T<T> a;
-    int i,j;
-    /* STORING & INDEXING ELEMENTS */
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[i][j] == 3*i+j);
-
-    /* CLEAR */
-    a.clear();
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[i][j] == 0);
-
-    /* ROW & COLUMN OPERATORS */
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    {
-      assert(a.row(i)[j] == 3*i+j);
-      assert(a.column(j)[i] == 3*i+j);
-    }
-    /* TRANSPOSE */
-    a.transpose();
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(a[j][i] == 3*i+j);
-
-    /* IDENTITY */
-    a.identity();
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    {
-      if( i == j ) assert(a[i][j] == 1);
-      else assert(a[i][j] == 0);
-    }
-
-    /* COPY OPERATOR, CONSTRUCTOR AND EQUALITY OPERATOR */
-
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    a[i][j] = T(3*i+j);
-
-    Matrix3T<T> b(a);
-    assert(a == b);
-    assert(!(a != b));
-
-    /* MATRIX MULTIPLICATION */
-
-    Matrix3T<T> c;
-    c.identity();
-    b *= c;
-    assert(a == b);
-
-    c.clear();
-    b *= c;
-    for(i = 0; i < 3; i++)
-      for(j = 0; j < 3; j++)
-    assert(b[i][j] == 0);
-  }
+  template<typename T> const Matrix3T<T> Matrix3T<T>::IDENTITY(
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1);
 
   /// 3x3 matrix of floats
   typedef Matrix3T<float> Matrix3;
   /// 3x3 matrix of floats
   typedef Matrix3T<float> Matrix3f;
-
-  template <class T>
-  inline void Matrix3T<T>::swap(T &a, T& b)
-  {
-    T t = a;
-    a = b;
-    b = t;
-  }
+  /// 3x3 matrix of doubles
+  typedef Matrix3T<double> Matrix3d;
 
   template <class T>
   inline void Matrix3T<T>::transpose()
   {
-    swap(m[0][1],m[1][0]);
-    swap(m[0][2],m[2][0]);
-    swap(m[1][2],m[2][1]);
+    std::swap(m[0][1],m[1][0]);
+    std::swap(m[0][2],m[2][0]);
+    std::swap(m[1][2],m[2][1]);
   }
 
+  template <class T>
+  inline Matrix3T<T> Matrix3T<T>::transposed() const
+  {
+    Matrix3T<T> r;
+
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        r[i][j] = m[j][i];
+      }
+    }
+
+    return r;
+  }
   template <class T>
   inline void Matrix3T<T>::identity()
   {
@@ -342,8 +291,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateX(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(1.0, 0.0, 0.0);
     m[1].make(0.0, ca, -sa);
     m[2].make(0.0, sa, ca);
@@ -352,8 +301,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateY(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(ca,  0.0, sa);
     m[1].make(0.0, 1.0, 0.0);
     m[2].make(-sa, 0.0, ca);
@@ -363,8 +312,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateZ(T a)
   {
-    T ca = Math::Cos(a);
-    T sa = Math::Sin(a);
+    T ca = std::cos(a);
+    T sa = std::sin(a);
     m[0].make(ca, -sa, 0.0);
     m[1].make(sa, ca, 0.0);
     m[2].make(0.0, 0.0, 1.0);
@@ -397,10 +346,10 @@ namespace Nimble {
 
     T fTrace = data()[0] + data()[4] + data()[8];
     T fCos = ((T)0.5)*(fTrace-((T)1.0));
-    radians = Math::ACos(fCos);  // in [0,PI]
+    radians = std::acos(fCos);  // in [0,PI]
 
     if ( radians > (T)0.0 ) {
-      if ( radians < Math::PI ) {
+      if ( radians < Nimble::Math::PI ) {
     axis[0] = data()[7]-data()[5];
     axis[1] = data()[2]-data()[6];
     axis[2] = data()[3]-data()[1];
@@ -413,7 +362,7 @@ namespace Nimble {
       // r00 >= r11
       if ( data()[0] >= data()[8] ) {
         // r00 is maximum diagonal term
-        axis[0] = ((T)0.5)*Math::Sqrt(data()[0] -
+        axis[0] = ((T)0.5)*std::sqrt(data()[0] -
                       data()[4] - data()[8] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[0];
         axis[1] = fHalfInverse*data()[1];
@@ -421,7 +370,7 @@ namespace Nimble {
       }
       else {
         // r22 is maximum diagonal term
-        axis[2] = ((T)0.5)*Math::Sqrt(data()[8] -
+        axis[2] = ((T)0.5)*std::sqrt(data()[8] -
                       data()[0] - data()[4] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[2];
         axis[0] = fHalfInverse*data()[2];
@@ -432,7 +381,7 @@ namespace Nimble {
       // r11 > r00
       if ( data()[4] >= data()[8] ) {
         // r11 is maximum diagonal term
-        axis[1] = ((T)0.5)*Math::Sqrt(data()[4] -
+        axis[1] = ((T)0.5)*std::sqrt(data()[4] -
                       data()[0] - data()[8] + (T)1.0);
         fHalfInverse  = ((T)0.5)/axis[1];
         axis[0] = fHalfInverse*data()[1];
@@ -440,7 +389,7 @@ namespace Nimble {
       }
       else {
         // r22 is maximum diagonal term
-        axis[2] = ((T)0.5)*Math::Sqrt(data()[8] -
+        axis[2] = ((T)0.5)*std::sqrt(data()[8] -
                       data()[0] - data()[4] + (T)1.0);
         fHalfInverse = ((T)0.5)/axis[2];
         axis[0] = fHalfInverse*data()[2];
@@ -463,8 +412,8 @@ namespace Nimble {
   template <class T>
   inline void Matrix3T<T>::rotateAroundAxis(const Vector3T<T>& axis, T radians)
   {
-    T ca = Math::Cos(radians);
-    T sa = Math::Sin(radians);
+    T ca = std::cos(radians);
+    T sa = std::sin(radians);
     // T fCos = cos(radians);
     // T sa = sin(radians);
     T fOneMinusCos = ((T) 1.0) -ca;
@@ -497,32 +446,31 @@ namespace Nimble {
     //       -cx*cz*sy+sx*sz  cz*sx+cx*sy*sz  cx*cy
 
     if ( m[0][2] < 1.0f )
+    {
+      if ( m[0][2] > -1.0f )
       {
-    if ( m[0][2] > -1.0f )
-      {
-        xa = Math::ATan2(-m[1][2],m[2][2]);
+        xa = std::atan2(-m[1][2],m[2][2]);
         ya = (T)asin(m[0][2]);
-        za = Math::ATan2(-m[0][1],m[0][0]);
+        za = std::atan2(-m[0][1],m[0][0]);
         return true;
       }
-        else
+      else
       {
-            // WARNING.  Not unique.  XA - ZA = -atan2(r10,r11)
-            xa = -Math::ATan2(m[1][0],m[1][1]);
-            ya = -(T)Math::HALF_PI;
-            za = 0.0f;
-            return false;
+        // Not unique.  XA - ZA = -atan2(r10,r11)
+        xa = -std::atan2(m[1][0],m[1][1]);
+        ya = -(T)Math::HALF_PI;
+        za = 0.0f;
+        return false;
       }
-      }
+    }
     else
-      {
-    // WARNING.  Not unique.  XAngle + ZAngle = atan2(r10,r11)
-    xa = Math::ATan2(m[1][0],m[1][1]);
-    ya = (T)Math::HALF_PI;
-    za = 0.0f;
-    return false;
-      }
-
+    {
+      // Not unique.  XAngle + ZAngle = atan2(r10,r11)
+      xa = std::atan2(m[1][0],m[1][1]);
+      ya = (T)Math::HALF_PI;
+      za = 0.0f;
+      return false;
+    }
   }
 
   /// Assign multiplication
@@ -570,7 +518,7 @@ namespace Nimble {
 
     T fDet = m[0][0] * res[0][0] + m[0][1] * res[1][0] + m[0][2] * res[2][0];
 
-    if(Math::Abs(fDet) <= tolerance ) {
+    if(std::abs(fDet) <= tolerance ) {
       if(ok)
     *ok = false;
       return res;
@@ -616,7 +564,7 @@ namespace Nimble {
     return res;
   }
 
-  /// Multiply two matrices together
+/// Multiply two matrices together
 template <class T>
 inline Nimble::Matrix3T<T> operator * (const Nimble::Matrix3T<T>& m1,
                      const Nimble::Matrix3T<T>& m2)
@@ -625,45 +573,22 @@ inline Nimble::Matrix3T<T> operator * (const Nimble::Matrix3T<T>& m1,
 
   for(int i = 0; i < 3; i++) {
     Nimble::Vector3T<T> t = m2.column(i);
-    res[0][i] = ::dot(m1.row(0),t);
-    res[1][i] = ::dot(m1.row(1),t);
-    res[2][i] = ::dot(m1.row(2),t);
+    res[0][i] = dot(m1.row(0),t);
+    res[1][i] = dot(m1.row(1),t);
+    res[2][i] = dot(m1.row(2),t);
   }
 
   return res;
 }
 
 /// Multiply a matrix and a vector
-template <class S, class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<S>& m1,
+template <class K, class T>
+inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<K>& m1,
                    const Nimble::Vector3T<T>& m2)
 {
   Nimble::Vector3T<T> res;
   for(int i = 0; i < 3; i++)
-    res[i] = ::dot(m1.row(i),m2);
-  return res;
-}
-
-/// Multiply a matrix with a vector by implicitly adding one as the third component of the vector
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix3T<T>& m1,
-                   const Nimble::Vector2T<T>& m2)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = ::dot3(m1.row(i),m2);
-  return res;
-}
-
-
-/// Multiply a matrix and a vector
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2,
-                   const Nimble::Matrix3T<T>& m1)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = ::dot(m1.column(i),m2);
+    res[i] = dot(m1.row(i),m2);
   return res;
 }
 
@@ -680,59 +605,31 @@ inline void Matrix3T<T>::insert(const Matrix2T<T>& b)
 }
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::translate2D(const Vector2T<T> & t)
+inline Matrix3T<T> Matrix3T<T>::makeTranslation(const T & x, const T & y)
 {
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 2, t.x);
-  m.set(1, 2, t.y);
-
-  return m;
+  return Matrix3T<T>(
+    1, 0, x,
+    0, 1, y,
+    0, 0, 1);
 }
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::scale2D(const Vector2T<T> & s)
+inline Matrix3T<T> Matrix3T<T>::makeScale(const T & xscale, const T & yscale)
 {
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 0, s.x);
-  m.set(1, 1, s.y);
-
-  return m;
-}
-
-template<class T>
-inline Matrix3T<T> Matrix3T<T>::scale2D(const T & xscale, const T & yscale)
-{
-  Matrix3T<T> m;
-  m.identity();
-
-  m.set(0, 0, xscale);
-  m.set(1, 1, yscale);
-
-  return m;
+  return Matrix3T<T>(
+    xscale, 0, 0,
+    0, yscale, 0,
+    0, 0, 1);
 }
 
 
 template<class T>
-inline Matrix3T<T> Matrix3T<T>::rotate2D(T radians)
+inline Matrix3T<T> Matrix3T<T>::makeRotation(T radians)
 {
   Matrix3T<T> m;
   m.rotateZ(radians);
 
   return m;
-}
-
-template<class T>
-T Matrix3T<T>::extractScale() const
-{
-  Vector3T<T> u(T(1), T(0), T(0));
-  Vector3T<T> v = *this * u;
-  T s = Math::Sqrt(v.x * v.x + v.y * v.y);
-
-  return s;
 }
 
 template<class T>
@@ -767,29 +664,39 @@ Matrix3T<T> Matrix3T<T>::makeRotation(T radians, const Vector3T<T> & axis)
 template<class T>
 inline Vector2T<T> Matrix3T<T>::project(const Vector2T<T> & v) const
 {
-  Vector3T<T> p = *this * v;
+  Vector3T<T> p = *this * Nimble::Vector3T<T>(v, 1.f);
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
 template<class T>
 inline Vector2T<T> Matrix3T<T>::project(const T & x, const T & y) const
 {
-  Vector3T<T> p = *this * Vector2T<T>(x, y);
+  Vector3T<T> p = *this * Vector3T<T>(x, y, 1);
   return Vector2T<T>(p.x / p.z, p.y / p.z);
 }
 
-} // namespace
-
+/// Output the given matrix to a stream
+/// @param os stream to output to
+/// @param m matrix to output
+/// @return reference to the stream
 template <class T>
 inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix3T<T>& m)
 {
-  os << m[0] << ", " << m[1] << ", " << m[2];
+  os << m[0] << std::endl << m[1] << std::endl << m[2];
   return os;
 }
 
-using Nimble::operator *;
-using Nimble::operator /;
-using Nimble::operator <<;
-using Nimble::operator >>;
+/// Read a matrix from a stream
+/// @param is stream to read from
+/// @param m matrix to read to
+/// @return reference to the input stream
+template <class T>
+inline std::istream & operator>>(std::istream & is, Nimble::Matrix3T<T> & m)
+{
+  is >> m[0] >> m[1] >> m[2];
+  return is;
+}
+
+} // namespace
 
 #endif

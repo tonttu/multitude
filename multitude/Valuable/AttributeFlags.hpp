@@ -1,22 +1,18 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef VALUABLE_VALUEFLAGS_HPP
 #define VALUABLE_VALUEFLAGS_HPP
 
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
+#include "StyleValue.hpp"
 
 #include <Radiant/Flags.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -25,23 +21,54 @@
 #include <QMap>
 #include <QByteArray>
 
+#include <bitset>
+
 namespace Valuable {
 
+  /// This struct is used to define the name strings for flags so they can be
+  /// referenced from CSS.
   struct FlagNames
   {
+    /// Name of the flag
     const char * name;
+    /// Value of the value
+    long value;
+    /// Should we create an alias for this flag so that you can write "name: value" in CSS
+    bool createAlias;
+  };
+
+  /// This struct is used to define the name strings for enum values so they
+  /// can be referenced from CSS.
+  struct EnumNames
+  {
+    /// Name of the flag
+    const char * name;
+    /// Value of the value
     long value;
   };
 
   template <typename T> class AttributeFlagsT;
 
+  class FlagAlias : public Attribute
+  {
+  public:
+    FlagAlias(Node * parent, const QByteArray & name)
+      : Attribute(parent, name, false) {}
+  };
+
+  /// This class provides a mechanism to toggle individual flags on and off
+  /// using their name from CSS. With this class we can write things like:
+  /// @code
+  /// Widget {
+  ///   input-pass-to-children: true;
+  /// @endcode
   template <typename T>
-  class FlagAliasT : public Attribute
+  class FlagAliasT : public FlagAlias
   {
   public:
     FlagAliasT(Node * parent, AttributeFlagsT<T> & master,
-               const QString & name, Radiant::FlagsT<T> flags)
-      : Attribute(parent, name, false),
+               const QByteArray & name, Radiant::FlagsT<T> flags)
+      : FlagAlias(parent, name),
         m_master(master),
         m_flags(flags)
     {
@@ -53,10 +80,10 @@ namespace Valuable {
       return true;
     }
 
-    bool set(const QVariantList & v, QList<ValueUnit> unit, Layer layer) OVERRIDE
+    bool set(const StyleValue & v, Layer layer) OVERRIDE
     {
-      if(v.size() != 1 || unit[0] != VU_UNKNOWN) return false;
-      QString p = v[0].toString().toLower();
+      if(v.size() != 1 || v.unit() != VU_UNKNOWN) return false;
+      QByteArray p = v.asKeyword().toLower();
       bool on = p == "true" || p == "on" || p == "yes";
       if(on || p == "false" || p == "off" || p == "no") {
         m_master.setFlags(m_flags, on, layer);
@@ -72,38 +99,88 @@ namespace Valuable {
 
     Radiant::FlagsT<T> flags() const { return m_flags; }
 
-    const char * type() const OVERRIDE { return "FlagAlias"; }
-    ArchiveElement serialize(Archive &) const OVERRIDE { return ArchiveElement(); }
-    bool deserialize(const ArchiveElement &) OVERRIDE { return false; }
+    ArchiveElement serialize(Archive & archive) const OVERRIDE
+    {
+      Layer layer;
+      if (!layerForSerialization(archive, layer))
+        return ArchiveElement();
+      ArchiveElement e = archive.createElement(name());
+      auto flags = m_master.value(layer) & m_flags;
+      if (flags == m_flags)
+        e.set("true");
+      else if (!flags)
+        e.set("false");
+      else
+        e.set("");
+      return e;
+    }
+
+    bool deserialize(const ArchiveElement & e) OVERRIDE
+    {
+      const QByteArray p = e.get().toUtf8().trimmed();
+      bool on = p == "true" || p == "on" || p == "yes";
+      if (on || p == "false" || p == "off" || p == "no") {
+        m_master.setFlags(m_flags, on);
+        return true;
+      }
+      if (p == "")
+        return true;
+      return false;
+    }
+
+    virtual bool handleShorthand(const Valuable::StyleValue & value,
+                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
+    {
+      if (m_sources.empty())
+        return false;
+
+      for (auto source: m_sources)
+        expanded[source] = value;
+
+      return true;
+    }
+
+    virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
+    {
+      return m_master.isFlagDefinedOnLayer(m_flags, layer);
+    }
+
+    void setSources(std::vector<FlagAliasT<T>*> sources)
+    {
+      m_sources = sources;
+      setSerializable(sources.empty());
+    }
+
+    virtual int asInt(bool * const ok, Layer layer) const OVERRIDE
+    {
+      if (ok)
+        *ok = true;
+      return (m_master.value(layer) & m_flags) == m_flags ? 1 : 0;
+    }
 
   private:
+    friend class AttributeFlagsT<T>;
+
     AttributeFlagsT<T> & m_master;
     const Radiant::FlagsT<T> m_flags;
+    std::vector<FlagAliasT<T>*> m_sources;
   };
 
   /**
-   * Valuable Flags, bitmask of enum values.
+   * Attribute containing flags, bitmask of enum values.
    *
-   * @example
    * @code
    * /// FunnyWidget.hpp
    *
    * struct FunnyWidget {
    *   FunnyWidget();
    *
-   *   enum Mode {
-   *     ON = 1,
-   *     OFF = 0
-   *   };
-   *
    *   enum InputFlags {
-   *     INPUT_MOTION_X = 1 << 1,
-   *     INPUT_MOTION_Y = 1 << 2,
-   *     INPUT_MOTION_XY = INPUT_MOTION_X | INPUT_MOTION_Y
+   *     INPUT_TRANSLATE_X = 1 << 1,
+   *     INPUT_TRANSLATE_Y = 1 << 2,
+   *     INPUT_TRANSLATE_XY = INPUT_TRANSLATE_X | INPUT_TRANSLATE_Y
    *   };
    *
-   *   /// m_mode is either ON or OFF
-   *   AttributeEnum<Mode> m_mode;
    *   /// m_flags is bitwise or of InputFlags values
    *   AttributeFlags<InputFlags> m_flags;
    * };
@@ -112,30 +189,24 @@ namespace Valuable {
    *
    * /// FunnyWidget.cpp
    *
-   * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
-   * Valuable::Flags s_modes[] = {"on", Widget::ON, "enabled", Widget::ON,
-   *                              "off", Widget::OFF, "disabled", Widget::OFF,
-   *                              0, 0};
-   *
    * /// In CSS/Script you can write "motion-x: true;" or "flags: motion-x motion-y;"
-   * Valuable::Flags s_flags[] = {"motion-x", Widget::INPUT_MOTION_X,
-   *                              "motion-y", Widget::INPUT_MOTION_Y,
-   *                              "motion-xy", Widget::INPUT_MOTION_XY,
-   *                              "INPUT_MOTION_X", Widget::INPUT_MOTION_X,
-   *                              "INPUT_MOTION_Y", Widget::INPUT_MOTION_Y,
-   *                              "INPUT_MOTION_XY", Widget::INPUT_MOTION_XY,
-   *                              0, 0};
+   * Valuable::FlagNames s_flags[] = {{"translate-x", FunnyWidget::INPUT_TRANSLATE_X},
+   *                                  {"translate-y", FunnyWidget::INPUT_TRANSLATE_Y},
+   *                                  {"translate-xy", FunnyWidget::INPUT_TRANSLATE_XY},
+   *                                  {"INPUT_TRANSLATE_X", FunnyWidget::INPUT_TRANSLATE_X},
+   *                                  {"INPUT_TRANSLATE_Y", FunnyWidget::INPUT_TRANSLATE_Y},
+   *                                  {"INPUT_TRANSLATE_XY", FunnyWidget::INPUT_TRANSLATE_XY},
+   *                                  {0, 0}};
    *
    * FunnyWidget::FunnyWidget()
-   *  : m_mode(this, "mode", s_modes, ON),
-   *    m_flags(this, "flags", s_flags, INPUT_MOTION_XY)
+   *  : m_flags(this, "flags", s_flags, INPUT_TRANSLATE_XY)
    * {
-   *   m_flags.mask("input-motion")
-   *     ("xy", INPUT_MOTION_XY)
-   *     ("x", INPUT_MOTION_X)
-   *     ("y", INPUT_MOTION_Y);
+   *   m_flags.mask("input-translate")
+   *     ("xy", INPUT_TRANSLATE_XY)
+   *     ("x", INPUT_TRANSLATE_X)
+   *     ("y", INPUT_TRANSLATE_Y);
    *   m_flags.mask("fixed")
-   *     (true, INPUT_MOTION_XY)
+   *     (true, INPUT_TRANSLATE_XY)
    *     (false, 0);
    *
    * @endcode
@@ -145,22 +216,64 @@ namespace Valuable {
   {
   public:
     typedef Radiant::FlagsT<T> Flags;
-    AttributeFlagsT(Node * parent, const QString & name, const FlagNames * names,
+    AttributeFlagsT(Node * parent, const QByteArray & name, const FlagNames * names,
                Flags v = Flags(), bool transit = false)
       : Attribute(parent, name, transit)
     {
-      m_masks[ORIGINAL] = ~Flags();
-      m_values[ORIGINAL] = v;
+      m_masks[DEFAULT] = ~Flags();
+      m_values[DEFAULT] = v;
       m_cache = v;
 
-      if(parent && names) {
-        for(const FlagNames * it = names; it->name; ++it) {
-          m_aliases << new FlagAliasT<T>(parent, *this, it->name, Flags::fromInt(it->value));
+      assert(names);
+
+      std::map<T, FlagAliasT<T>*> bits;
+      for (const FlagNames * it = names; it->name; ++it) {
+        auto flag = Flags::fromInt(it->value);
+        m_flags[QByteArray(it->name).toLower()] = flag;
+        if (parent && it->value && it->createAlias) {
+          auto alias = new FlagAliasT<T>(parent, *this, it->name, flag);
+          m_aliases << alias;
+
+          std::bitset<sizeof(T)*8> bitset(it->value);
+          if (bitset.count() == 1) {
+            const T t = T(it->value);
+            if (bits.find(t) == bits.end())
+              bits[t] = alias;
+          }
         }
       }
+
+      // mark some of the aliases to be shorthands, for example this would
+      // mark "input-translate-xy" to be a shorhand for "input-translate-x" and "...-y"
+      for (auto alias: m_aliases) {
+        std::bitset<sizeof(T)*8> bitset(alias->flags().asInt());
+        bool found = true;
+        std::vector<FlagAliasT<T>*> sources;
+        for (std::size_t i = 0; i < bitset.size(); ++i) {
+          if (!bitset[i])
+            continue;
+
+          const T t = T(1 << i);
+          auto it = bits.find(t);
+          if (it == bits.end() || it->second == alias) {
+            found = false;
+            break;
+          }
+          sources.push_back(it->second);
+        }
+
+        if (found)
+          alias->setSources(sources);
+
+        if (sources.empty())
+          alias->setOwnerShorthand(this);
+      }
+
+      if (!m_aliases.isEmpty())
+        setSerializable(false);
     }
 
-    AttributeFlagsT & operator=(const Flags & b) { setValue(b, MANUAL); return *this; }
+    AttributeFlagsT & operator=(const Flags & b) { setValue(b, USER); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
     bool operator!=(const Flags & b) const { return value() != b; }
@@ -172,9 +285,9 @@ namespace Valuable {
     Flags operator|(const Flags & b) const { return value() | b; }
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
-    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
-    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
-    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() & b, MANUAL); return *this; }
+    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, USER); return *this; }
+    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() | b, USER); return *this; }
+    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() ^ b, USER); return *this; }
 
     operator Flags() const { return m_cache; }
 
@@ -187,7 +300,30 @@ namespace Valuable {
       return m_cache;
     }
 
-    void setFlags(const Flags & f, bool state = true, Layer layer = MANUAL)
+    /// For example value(USER) returns bitset that includes bits only from
+    /// USER level, not from any lower or higher priority level. This might
+    /// be confusing in some situations.
+    Flags value(Layer layer) const
+    {
+      return layer == LAYER_CURRENT ? value() : value(layer, layer);
+    }
+
+    /// Collects bits between layers topLayer to bottomLayer (inclusive) to bitmask
+    Flags value(Layer topLayer, Layer bottomLayer) const
+    {
+      Flags flags;
+      Flags available = ~Flags();
+
+      for(int layer = topLayer; layer >= bottomLayer; --layer) {
+        Flags mask = m_masks[layer] & available;
+        flags |= mask & m_values[layer];
+        available &= ~m_masks[layer];
+      }
+
+      return flags;
+    }
+
+    void setFlags(const Flags & f, bool state, Layer layer = USER)
     {
       if(state) m_values[layer] |= f;
       else m_values[layer] &= ~f;
@@ -214,27 +350,44 @@ namespace Valuable {
       updateCache();
     }
 
+    QString asString(bool * const ok, Layer layer) const
+    {
+      if (ok)
+        *ok = true;
+      return stringify(value(layer));
+    }
+
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE
     {
-      /// @todo Should we serialize all layers?
-      *this = Radiant::StringUtils::fromString<T>(element.get().toUtf8().data());
+      QString tmp = element.get();
+      bool ok = false;
+      int num = tmp.toInt(&ok);
+      if (ok) {
+        *this = Flags::fromInt(num);
+      } else {
+        Flags newValue;
+        for (auto str: tmp.split(QRegExp("\\s+"), QString::SkipEmptyParts)) {
+          auto it = m_flags.find(str.toUtf8().toLower());
+          if (it == m_flags.end()) return false;
+          newValue |= *it;
+        }
+        *this = newValue;
+      }
       return true;
     }
 
-    virtual const char * type() const OVERRIDE { return "AttributeFlags"; }
-
-    virtual int asInt(bool * const ok = 0) const OVERRIDE
+    virtual int asInt(bool * const ok, Layer layer) const OVERRIDE
     {
       if(ok) *ok = true;
-      return value().asInt();
+      return value(layer).asInt();
     }
 
-    virtual void processMessage(const QString &, Radiant::BinaryData & data) OVERRIDE
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
       uint32_t v = uint32_t(data.readInt32(&ok));
 
-      if(ok) setValue(Flags::fromInt(v), MANUAL);
+      if(ok) setValue(Flags::fromInt(v), USER);
     }
 
     virtual bool set(int v, Layer layer, ValueUnit /*unit*/ = VU_UNKNOWN) OVERRIDE
@@ -244,47 +397,83 @@ namespace Valuable {
       return true;
     }
 
-    virtual bool set(const QVariantList & v, QList<ValueUnit> units, Layer layer = MANUAL) OVERRIDE
+    virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
     {
-      foreach(const ValueUnit & vu, units)
-        if(vu != VU_UNKNOWN) return false;
-
-      QMap<QByteArray, Flags> all;
-      foreach(const FlagAliasT<T>* alias, m_aliases)
-        all[alias->name().toUtf8()] = alias->flags();
+      if (!v.isUniform() || !v[0].canConvert(StyleValue::TYPE_KEYWORD))
+        return false;
 
       Flags newValue;
-      foreach(const QVariant & var, v) {
-        if(var.type() != QVariant::ByteArray) return false;
-        typename QMap<QByteArray, Flags>::iterator it = all.find(var.toByteArray());
-        if(it == all.end()) return false;
+      for(const auto & var : v.components()) {
+        auto it = m_flags.find(var.asKeyword().toLower());
+        if (it == m_flags.end()) return false;
         newValue |= *it;
       }
       setValue(newValue, layer);
       return true;
     }
 
+    bool isFlagDefinedOnLayer(Radiant::FlagsT<T> flags, Layer layer) const
+    {
+      return (m_masks[layer] & flags) == flags;
+    }
+
   private:
+
+    QString stringify(Flags v) const
+    {
+      // All matching flags sorted by their popcount and their location in the
+      // original array to optimize the string representation.
+      // For example motion-x and motion-y will become motion-xy, since motion-xy
+      // has a higher popcount than motion-x / -y
+      std::multimap<int, std::pair<QByteArray, Flags> > flags;
+
+      int i = 0;
+      for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
+        if ((v & *it) == *it) {
+          std::bitset<sizeof(T)*8> bitset(it->asInt());
+          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), *it)));
+        }
+      }
+
+      QStringList flagLst;
+      for (auto p: flags) {
+        Flags v2 = p.second.second;
+        if ((v2 & v) == v2) {
+          // If we have bits on that aren't actual enums (or the string version
+          // is missing), v might still have some bits enabled, but v2 might be
+          // an enum with a value of zero. Skip this case, since otherwise we
+          // might have something like "lock-depth flags-none" that makes no
+          // sense.
+          if (v2 || flagLst.isEmpty())
+            flagLst << p.second.first;
+          // these bits are now consumed by this flag, remove those from the value
+          v &= ~v2;
+          if (!v)
+            break;
+        }
+      }
+
+      return flagLst.join(" ");
+    }
 
     void updateCache()
     {
-      Flags tmp = m_cache;
-      m_cache.clear();
-      Flags available = ~Flags();
-
-      for(int layer = LAYER_COUNT - 1; layer >= 0; --layer) {
-        Flags mask = m_masks[layer] & available;
-        m_cache |= mask & m_values[layer];
-        available &= ~m_masks[layer];
+      Flags before = m_cache;
+      m_cache = value(Layer(LAYER_COUNT - 1), Layer(0));
+      Flags changedBits = before ^ m_cache;
+      if (changedBits) {
+        for (auto * alias: m_aliases)
+          if (alias->flags() & changedBits)
+            alias->emitChange();
+        emitChange();
       }
-
-      if(tmp != m_cache) emitChange();
     }
 
     Flags m_cache;
     Flags m_values[LAYER_COUNT];
     Flags m_masks[LAYER_COUNT];
     QList<FlagAliasT<T>*> m_aliases;
+    QMap<QByteArray, Flags> m_flags;
   };
 }
 

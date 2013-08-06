@@ -1,24 +1,24 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef NIMBLE_RECT_HPP
 #define NIMBLE_RECT_HPP
 
-#include "Export.hpp"
 #include "Matrix3.hpp"
 #include "Vector2.hpp"
+#include "Frame4.hpp"
+
+#include <Radiant/Defines.hpp>
+
+#include <QRect>
+#include <QRectF>
 
 namespace Nimble {
 
@@ -31,14 +31,15 @@ namespace Nimble {
       RectT does not really care how the coordinates are orginized
       (which way is up and so on). Some rare functions assume that one
       is using normal GUI coordinates (Y increases from top to
-      bottom). */
+      bottom).
 
-  /// @todo rename to AARect/RectAA
-  template <class T>
-      class NIMBLE_API RectT
+      @tparam T Template parameter for the vectors used to describe the rectangle.
+    */
+  template <typename T>
+  class RectT
   {
   public:
-    RectT()
+    inline RectT()
       : m_low(0, 0),
       m_high(-1, -1)
     {}
@@ -46,29 +47,37 @@ namespace Nimble {
     /// Returns true if the rectangle is empty
     inline bool isEmpty() const { return m_low.x > m_high.x || m_low.y > m_high.y; }
 
-    /// Constructs a rectangle and initializes both corners to the given point
-    RectT(const Vector2T<T> & lowHigh)
-      : m_low(lowHigh), m_high(lowHigh) {}
-    /// Constructs a rectangle and initializes both corners to the given point
-    RectT(const Vector2T<T> * lowHigh)
-      : m_low(*lowHigh), m_high(*lowHigh) {}
+    /// Convert QRectF to Nimble::RectT
+    inline RectT(const QRectF & qrect)
+      : m_low(qrect.left(), qrect.top()), m_high(qrect.right(), qrect.bottom()) {}
+
+    /// Convert QRect to Nimble::RectT
+    inline RectT(const QRect & qrect)
+      : m_low(qrect.left(), qrect.top()),
+        m_high(qrect.left()+qrect.width(), qrect.top()+qrect.height()) {}
+
     /// Constructs a rectangle and initializes it to the given points
-    RectT(const Vector2T<T> & low, const Vector2T<T> & high)
+    inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
       : m_low(low), m_high(high) {}
+
+    /// Constructs a rectangle and initializes it with the low point and a size
+    inline RectT(const Vector2T<T> & low, const SizeT<T> & size)
+      : m_low(low), m_high(low.x + size.width(), low.y + size.height()) {}
+
     /// Constructs a rectangle and initializes it to the given points
-    RectT(T xlow, T ylow, T xhigh, T yhigh)
+    inline RectT(T xlow, T ylow, T xhigh, T yhigh)
       : m_low(xlow, ylow), m_high(xhigh, yhigh) {}
-    ~RectT() {}
+    inline ~RectT() {}
 
     /// Scales the rectangle uniformly
-    void scale(T v) { m_low = m_low * v; m_high = m_high * v; }
+    inline void scale(T v) { m_low = m_low * v; m_high = m_high * v; }
     /// Scales the rectangle
     inline void scale(const Vector2T<T> &v);
 
     /// Translate the rectangle by v
-    void move(const Vector2T<T> &v) { m_low += v; m_high += v; }
+    inline void move(const Vector2T<T> &v) { m_low += v; m_high += v; }
     /// Translate the higher corner by v but make sure it never goes below the lower corner
-    void moveHighClamped(const Vector2T<T> &v)
+    inline void moveHighClamped(const Vector2T<T> &v)
     {
       m_high += v;
       for(int i = 0 ; i < 2; i++)
@@ -77,9 +86,9 @@ namespace Nimble {
     }
 
     /// Resets both low and high point to origin.
-    void clear() { m_low.clear(); m_high.clear(); }
+    inline void clear() { m_low.clear(); m_high.clear(); }
     /// Resets both low and high point to the given argument point.
-    void clear(const Vector2T<T> &v) { m_low = m_high = v; }
+    inline void clear(const Vector2T<T> &v) { m_low = m_high = v; }
 
     /// Expands this rectangle to include the argument point
     inline void expand(const Vector2T<T> &v);
@@ -87,50 +96,49 @@ namespace Nimble {
     inline void expand(const Vector2T<T> &v, T radius);
     /// Expands this rectangle to include the argument rectangle
     inline void expand(const RectT &b);
-    /// Contracts the rectangle by v
-    inline void smaller(const T & v)
-    { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
+    /// @deprecated use grow() instead
+    MULTI_ATTR_DEPRECATED("RectT::expand() is deprecated. Use RectT::grow instead.", inline void expand(const Frame4f & frame));
+    /// @deprecated Use shrink() instead
+    MULTI_ATTR_DEPRECATED("RectT::smaller() is deprecated. Use RectT::shrink() instead.", inline void smaller(T v)) { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
 
     /// Returns the low X/Y vector
-    Vector2T<T> & low() { return m_low; }
+    inline Vector2T<T> & low() { return m_low; }
     /// Returns the low X/Y vector
-    const Vector2T<T> & low() const { return m_low; }
+    inline const Vector2T<T> & low() const { return m_low; }
     /// Returns the high X/Y vector
-    Vector2T<T> & high() { return m_high; }
+    inline Vector2T<T> & high() { return m_high; }
     /// Returns the high X/Y vector
-    const Vector2T<T> & high() const { return m_high; }
+    inline const Vector2T<T> & high() const { return m_high; }
 
     /// Returns the low x value combined with high y value.
     /// @return (low.x, high.y)
-    Vector2T<T> lowHigh() const { return Vector2T<T>(m_low.x, m_high.y); }
+    inline Vector2T<T> lowHigh() const { return Vector2T<T>(m_low.x, m_high.y); }
     /// Returns the high x value combined with low y value.
     /// @return (high.x, low.y)
-    Vector2T<T> highLow() const { return Vector2T<T>(m_high.x, m_low.y); }
+    inline Vector2T<T> highLow() const { return Vector2T<T>(m_high.x, m_low.y); }
 
     /// Sets the corner to given values
-    void set(T lx, T ly, T hx, T hy)
+    inline void set(T lx, T ly, T hx, T hy)
     { m_low.make(lx, ly); m_high.make(hx, hy); }
     /// Sets the corner to given values
-    void set(const Vector2T<T> &low, const Vector2T<T> &high)
+    inline void set(const Vector2T<T> &low, const Vector2T<T> &high)
     { m_low = low; m_high = high; }
     /// Sets both corners to the given value
-    void set(const Vector2T<T> &point)
+    inline void set(const Vector2T<T> &point)
     { m_low = m_high = point; }
 
-    /*void set(const Vector2T<T> &point, T radius)
-    { m_low = point - radius; m_high = point + radius; }*/
     /// Sets the low corner
-    void setLow(const Vector2T<T> &low) { m_low = low; }
+    inline void setLow(const Vector2T<T> &low) { m_low = low; }
     /// Sets the high corner
-    void setHigh(const Vector2T<T> &high) { m_high = high; }
+    inline void setHigh(const Vector2T<T> &high) { m_high = high; }
     /// Sets the x of the low corner
-    void setLowX(const T lowX) { m_low.x = lowX; }
+    inline void setLowX(const T lowX) { m_low.x = lowX; }
     /// Sets the y of the low corner
-    void setLowY(const T lowY) { m_low.y = lowY; }
+    inline void setLowY(const T lowY) { m_low.y = lowY; }
     /// Sets the x of the high corner
-    void setHighX(const T highX) { m_high.x = highX; }
+    inline void setHighX(const T highX) { m_high.x = highX; }
     /// Sets the y of the high corner
-    void setHighY(const T highY) { m_high.y = highY; }
+    inline void setHighY(const T highY) { m_high.y = highY; }
 
     /// Returns the center of the rectangle.
     inline Vector2T<T> center() const { return (m_low + m_high) * (T) 0.5; }
@@ -149,9 +157,9 @@ namespace Nimble {
     /// Returns the height of the rectangle
     inline T height() const { return m_high.y - m_low.y; }
     /// Returns the size of the rectangle (= high - low)
-    inline Vector2T<T> size() const { return m_high - m_low; }
+    inline SizeT<T> size() const { return SizeT<T>(m_high - m_low); }
     /// Returns the surface area of the rectangle
-    inline T area() const { Vector2T<T> s(size()); return s.x * s.y; }
+    inline T area() const { auto s(size()); return s.width() * s.height(); }
 
     /// Calculates the intersection area of two rectangles.
     inline RectT intersection(const RectT &) const;
@@ -176,11 +184,18 @@ namespace Nimble {
     inline void transform(const Matrix3T<T>& m);
     /// Scales the rectangle
     inline void shrinkRelative(float xs, float ys);
+    /// Uniformly shrinks the rectangle by the specified amount
+    /// @param v amount to shrink
+    inline void shrink(T v)
+    { m_low.x += v; m_low.y += v; m_high.x -= v; m_high.y -= v; }
+    /// @deprecated Use grow() instead
+    MULTI_ATTR_DEPRECATED("RectT::increaseSize() is deprecated. Use RectT::grow() instead.", inline void increaseSize(T v)) { m_low.x -= v; m_low.y -= v; m_high.x += v; m_high.y += v; }
     /// Increases the size of the rectangle uniformly
-    /// @todo duplicate with smaller() mostly (make a single function that works with negative values)
-    /// @param add amount to enlarge
-    inline void increaseSize(T add)
-    { m_low.x -= add; m_low.y -= add; m_high.x += add; m_high.y += add; }
+    /// @param v amount to enlarge
+    inline void grow(T v)
+    { m_low.x -= v; m_low.y -= v; m_high.x += v; m_high.y += v; }
+    /// Increases the size of the rectangle with the argument frame
+    inline void grow(const Frame4f & b);
 
     /// Returns one quarter of the rectangle.
     /// @param row The row of the quarter (0-1)
@@ -198,18 +213,43 @@ namespace Nimble {
     inline RectT fitContent(float aspectRatio) const;
 
     /// Check if two rectangles are identical
+    /// @param o rect to compare
+    /// @return true if the rects are equal; otherwise false
     inline bool operator == (const RectT<T> & o) const {
       return m_low == o.m_low && m_high == o.m_high;
     }
 
+    /// Check if two rects are not equal
+    /// @param o rect to compare
+    /// @return true if the rectangles are not equal; otherwise false
     inline bool operator != (const RectT<T> & o) const {
-      return m_low != o.m_low || m_high != o.m_high;
+      return !(*this == o);
     }
 
-    /// Returns a const pointer to the rectangle corner data
+    /// Returns a pointer to the rectangle corner data
+    /// @return pointer to the corner data
     const T * data() const { return m_low.data(); }
     /// Returns a pointer to the rectangle corner data
+    /// @return pointer to the corner data
     T * data() { return m_low.data(); }
+
+    /// Convert the rect to floating-point precision
+    /// @return converted rect
+    /// @todo overload toQRect()
+    // Note: The following doesn't work in VS2012 because it doesn't support
+    // default arguments for function templates
+    // template<typename U = T, typename = typename std::enable_if<std::is_floating_point<U>::value>::type>
+    QRectF toQRectF() const
+    {
+      return QRectF(float(m_low.x), float(m_low.y), float(width()), float(height()));
+    }
+
+    /// Convert the rect to QRect
+    /// @return QRect matching the rect
+    QRect toQRect() const
+    {
+      return QRect(int(m_low.x), int(m_low.y), int(width()), int(height()));
+    }
 
   private:
     Vector2T<T> m_low, m_high;
@@ -219,14 +259,13 @@ namespace Nimble {
       inline void RectT<T>::expand(const Vector2T<T> &v)
   {
     if(isEmpty()) {
-      *this = RectT<T>(v);
+      *this = RectT<T>(v, v);
     } else {
+      m_low[0] = std::min(m_low[0], v[0]);
+      m_low[1] = std::min(m_low[1], v[1]);
 
-      if(v[0] < m_low[0]) m_low[0] = v[0];
-      if(v[1] < m_low[1]) m_low[1] = v[1];
-
-      if(v[0] > m_high[0]) m_high[0] = v[0];
-      if(v[1] > m_high[1]) m_high[1] = v[1];
+      m_high[0] = std::max(m_high[0], v[0]);
+      m_high[1] = std::max(m_high[1], v[1]);
     }
   }
 
@@ -256,6 +295,19 @@ namespace Nimble {
   }
 
   template <class T>
+  void RectT<T>::expand(const Frame4f & b)
+  {
+    grow(b);
+  }
+
+  template <class T>
+  void RectT<T>::grow(const Frame4f & b)
+  {
+    m_low -= b.leftTop().cast<T>();
+    m_high += b.rightBottom().cast<T>();
+  }
+
+  template <class T>
       void RectT<T>::scale(const Vector2T<T> &v)
   {
     m_low[0] *= v[0];
@@ -276,8 +328,8 @@ namespace Nimble {
   {
     RectT<T> ret;
     for(int i = 0; i < 2; i++) {
-      ret.m_low[i] = Math::Max(m_low[i], b.m_low[i]);
-      ret.m_high[i] = Math::Min(m_high[i], b.m_high[i]);
+      ret.m_low[i] = std::max(m_low[i], b.m_low[i]);
+      ret.m_high[i] = std::min(m_high[i], b.m_high[i]);
     }
     return ret;
   }
@@ -377,8 +429,6 @@ namespace Nimble {
   template<class T>
   void RectT<T>::transform(const Matrix3T<T>& m)
   {
-    using Math::Min;
-    using Math::Max;
     Vector2T<T> v0(m_low.x, m_low.y);
     Vector2T<T> v1(m_high.x, m_low.y);
     Vector2T<T> v2(m_high.x, m_high.y);
@@ -389,10 +439,10 @@ namespace Nimble {
     Vector2T<T> t2 = m.project(v2);
     Vector2T<T> t3 = m.project(v3);
 
-    m_low.x = Min(Min(Min(t0.x, t1.x), t2.x), t3.x);
-    m_low.y = Min(Min(Min(t0.y, t1.y), t2.y), t3.y);
-    m_high.x = Max(Max(Max(t0.x, t1.x), t2.x), t3.x);
-    m_high.y = Max(Max(Max(t0.y, t1.y), t2.y), t3.y);
+    m_low.x = Nimble::Math::Min(t0.x, t1.x, t2.x, t3.x);
+    m_low.y = Nimble::Math::Min(t0.y, t1.y, t2.y, t3.y);
+    m_high.x = Nimble::Math::Max(t0.x, t1.x, t2.x, t3.x);
+    m_high.y = Nimble::Math::Max(t0.y, t1.y, t2.y, t3.y);
   }
 
   template<class T>
@@ -458,16 +508,7 @@ namespace Nimble {
   /// Rectangle of doubles
   typedef RectT<double> Rectd;
 
-  // These are needed under Windows
-#ifdef WIN32
-#   ifdef NIMBLE_EXPORT
-  template Nimble::RectT<float>;
-  template Nimble::RectT<int>;
-  template Nimble::RectT<double>;
-#   endif
-#endif
-
-  /// Write a vector into a stream
+  /// Write a rect into a stream
   template <class T>
       inline std::ostream &operator<<(std::ostream &os, const Nimble::RectT<T> &t)
   {
@@ -475,7 +516,7 @@ namespace Nimble {
     return os;
   }
 
-  /// Read a vector from a stream
+  /// Read a rect from a stream
   template <class T>
       inline std::istream &operator>>(std::istream &is, Nimble::RectT<T> &t)
   {

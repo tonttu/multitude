@@ -1,6 +1,8 @@
 #ifndef __WINDOWS_TYPES__
 #define __WINDOWS_TYPES__
 
+/// @cond
+
 #define MAX_NUM_DEVICES 50
 #include <sys/time.h>
 
@@ -83,5 +85,7 @@ typedef struct timeval FILETIME;
 #ifndef INVALID_HANDLE_VALUE
 #define INVALID_HANDLE_VALUE 0xFFFFFFFF
 #endif
+
+/// @endcond
 
 #endif

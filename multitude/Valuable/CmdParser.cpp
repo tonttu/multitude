@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,7 +13,9 @@
 #include "Valuable/DOMDocument.hpp"
 #include "Valuable/DOMElement.hpp"
 #include "Valuable/Node.hpp"
+#include "Valuable/AttributeAlias.hpp"
 #include "Valuable/AttributeBool.hpp"
+#include "Valuable/AttributeStringList.hpp"
 
 #include <QStringList>
 
@@ -86,12 +83,29 @@ namespace Valuable
         continue;
       }
 
-      Valuable::Attribute * obj = opts.getValue(name);
+      Valuable::Attribute * obj = opts.attribute(name.toUtf8());
       if(obj) {
+        // check if we have an alias for an AttributeBool
+        Valuable::AttributeAlias * alias = dynamic_cast<Valuable::AttributeAlias*>(obj);
+        if(alias)
+          obj = alias->attribute();
+
         Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(obj);
-        if(b) {
+        Valuable::AttributeStringList * strlst = dynamic_cast<Valuable::AttributeStringList*>(obj);
+        if (b) {
           *b = true;
           m_parsedArgs.insert(name);
+        } else if (strlst && i < argc - 1) {
+          QString arg = argv[++i];
+          QStringList lst = arg.split(";", QString::SkipEmptyParts);
+          for (int i = 0; i < lst.size()-1; ) {
+            if (lst[i].endsWith('\\')) {
+              lst[i][lst[i].size()-1] = ';';
+              lst[i] += lst[i+1];
+              lst.removeAt(i+1);
+            } else ++i;
+          }
+          *strlst = lst;
         } else if (i < argc - 1) {
           Valuable::DOMElement e = tmpDoc->createElement("tmp");
           e.setTextContent(argv[++i]);
@@ -104,7 +118,7 @@ namespace Valuable
       } else {
         if(name.length() > 3 && name.startsWith("no-")) {
           Valuable::AttributeBool * b = dynamic_cast<Valuable::AttributeBool*>(
-              opts.getValue(name.mid(3)));
+              opts.attribute(name.mid(3).toUtf8()));
           if(b) {
             *b = false;
             m_parsedArgs.insert(name);

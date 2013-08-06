@@ -1,48 +1,45 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include "AttributeBool.hpp"
 #include "DOMElement.hpp"
-#include "Radiant/StringUtils.hpp"
+#include "StyleValue.hpp"
+
+#include <Radiant/StringUtils.hpp>
 
 namespace Valuable
 {
-  AttributeBool::AttributeBool(Node * host, const QString & name,
+  AttributeBool::AttributeBool(Node * host, const QByteArray & name,
                        bool value, bool transit)
     : AttributeT<bool>(host, name, value, transit)
   {}
 
   AttributeBool::~AttributeBool() {}
 
-  bool AttributeBool::deserialize(const ArchiveElement & e)
-  {
-    *this = Radiant::StringUtils::fromString<int32_t>(e.get().toUtf8().data()) != 0;
-    return true;
-  }
-
-  void AttributeBool::processMessage(const QString &, Radiant::BinaryData & data)
+  void AttributeBool::eventProcess(const QByteArray &, Radiant::BinaryData & data)
   {
     bool ok = true;
     int32_t v = data.readInt32(&ok);
     if(ok) *this = (v != 0);
   }
 
-  QString AttributeBool::asString(bool * const ok) const
+  int AttributeBool::asInt(bool * const ok, Layer layer) const
   {
     if(ok) *ok = true;
-    return Radiant::StringUtils::stringify((int32_t)value());
+    return value(layer);
+  }
+
+  QString AttributeBool::asString(bool * const ok, Layer layer) const
+  {
+    if(ok) *ok = true;
+    return Radiant::StringUtils::toString(value(layer));
   }
 
   bool AttributeBool::set(int value, Layer layer, ValueUnit)
@@ -51,10 +48,10 @@ namespace Valuable
     return true;
   }
 
-  bool AttributeBool::set(const QVariantList & v, QList<ValueUnit> units, Layer layer)
+  bool AttributeBool::set(const StyleValue & v, Layer layer)
   {
-    if(v.size() == 1 && units[0] == VU_UNKNOWN && v[0].type() == QVariant::ByteArray) {
-      QByteArray ba = v[0].toByteArray().toLower();
+    if(v.size() == 1 && v.type() == StyleValue::TYPE_KEYWORD) {
+      QByteArray ba = v.asKeyword().toLower();
       if(ba == "true") setValue(true, layer);
       else if(ba == "false") setValue(false, layer);
       else return false;

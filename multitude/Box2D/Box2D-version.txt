@@ -1,1 +1,0 @@
-This Box2D 2.1.2, shrank to only the most essential parts.

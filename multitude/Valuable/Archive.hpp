@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -31,21 +26,36 @@ namespace Valuable
   /**
    * Options that define the behaviour of the (de)serialize() methods.
    */
-  class VALUABLE_API SerializationOptions
+  class SerializationOptions
   {
   public:
-    /// Serialization bitflags
-    enum Options { DEFAULTS = 0,    /// Normal behaviour, serialize everything
-                   ONLY_CHANGED = 1 /// Serialize only values that are different from the original values
-                 };
+    /// Serialization bitflags. The actual value that is serialized is from the
+    /// layer with highest priority that is included in serialization with
+    /// LAYER_-flags. The default is LAYER_USER, meaning that only manually set
+    /// values will be serialized. If an attribute has a value set only from a
+    /// CSS file, that whole attribute is ignored.
+    /// @sa Valuable::Attribute::Layer
+    enum Options
+    {
+      LAYER_DEFAULT         = 1 << 0, /// Serialize values from Valuable::Attribute::DEFAULT layer
+      LAYER_STYLE           = 1 << 1, /// Serialize values from Valuable::Attribute::STYLE layer
+      LAYER_USER            = 1 << 2, /// Serialize values from Valuable::Attribute::USER layer
+      LAYER_STYLE_IMPORTANT = 1 << 3, /// Serialize values from Valuable::Attribute::STYLE_IMPORTANT layer
+
+      /// Normal behaviour, serialize manually set values
+      DEFAULTS              = LAYER_USER,
+      /// Serialize only values that are different from the original values
+      ONLY_CHANGED          = LAYER_STYLE | LAYER_USER | LAYER_STYLE_IMPORTANT
+    };
 
     /// Construct an options object with given flags.
-    SerializationOptions(unsigned int options = DEFAULTS);
+    SerializationOptions(unsigned int options = DEFAULTS)
+      : m_options(options) {}
 
     /// Check if given flag is enabled
     /// @param flag Flag to test
     /// @return True if given flag is enabled in the options.
-    inline bool checkFlag(Options flag) { return (m_options & unsigned(flag)) == unsigned(flag); }
+    inline bool checkFlags(Options flag) { return (m_options & unsigned(flag)) == unsigned(flag); }
   protected:
     /// Actual bitmask of flags
     unsigned int m_options;
@@ -90,6 +100,9 @@ namespace Valuable
     /// Reads the element name
     /// @return The name of the element
     virtual QString name() const = 0;
+    /// Sets the element name
+    /// @param name The new name of the element
+    virtual void setName(const QString & name) = 0;
   };
 
   /// Classes that implement this interface provide the functionality for
@@ -125,7 +138,6 @@ namespace Valuable
 
     /// Returns NULL if the iterator is not valid anymore. Can be used like
     /// for(it = foo.children(); it; ++it) {}
-    /// @todo should be replaced with safe bool
     /// @return true if the iterator is still valid
     operator bool () const;
 
@@ -201,6 +213,9 @@ namespace Valuable
     /// Reads the element name
     /// @return The name of the element
     QString name() const;
+    /// Sets the element name
+    /// @param name The new name of the element
+    void setName(const QString & name);
     /// Is this a NULL element, created by the default constructor
     /// @return True if this element has no implementation.
     bool isNull() const;

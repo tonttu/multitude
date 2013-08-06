@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 
@@ -41,11 +48,8 @@ namespace Luminous {
     };
 
     /// Creates a new GLKeyStone object.
-    GLKeyStone(Valuable::Node * host, const QString & name);
+    GLKeyStone(Valuable::Node * host, const QByteArray &name);
     virtual ~GLKeyStone();
-
-    /// Returns the object type name = "glkeystone"
-    virtual const char * type() const { return "glkeystone"; }
 
     /// Reads in variables from the DOMElement and calculates the matrix
     virtual bool deserialize(const Valuable::ArchiveElement & e);
@@ -88,7 +92,7 @@ namespace Luminous {
     rotated. This function is typically used by some GUI code to
     determine in what orientation the whole key-stone thing is.
     @return number of rotations applied*/
-    int rotations() const { return m_rotations.asInt(); }
+    int rotations() const { return m_rotations; }
 
     /** Calculates the OpenGL keystone matrix. */
     void calculateMatrix();

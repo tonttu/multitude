@@ -1,5 +1,17 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #ifndef LUMINOUS_SCREENDETECTOR_HPP
 #define LUMINOUS_SCREENDETECTOR_HPP
+
+/// @cond
 
 #include "Export.hpp"
 
@@ -7,13 +19,14 @@
 
 #include <QString>
 #include <QList>
+#include <Radiant/Trace.hpp>
 
 namespace Luminous
 {
   class ScreenInfo
   {
   public:
-    ScreenInfo() : m_logicalScreen(0) {}
+    ScreenInfo() : m_logicalScreen(0),m_numid(-1) {}
 
     /// For example "GPU-0.DFP-3"
     QString id() const { return m_gpu + "." + m_connection; }
@@ -41,6 +54,23 @@ namespace Luminous
     /// Size and location relative to this logical screen
     const Nimble::Recti & geometry() const { return m_geometry; }
     void setGeometry(const Nimble::Recti & geometry) { m_geometry = geometry; }
+    /// Unique Number that identifies the screen
+    void setNumId(int nid) {
+      m_numid = nid;
+    }
+    int numId() const {return m_numid;}
+    QString displayGroup() const {return gpu()+"-"+QString("%1").arg(logicalScreen());}
+    bool isMTDevice()
+    {
+      //TODO find a better way to do this
+        return name().contains("MultiTouchVM1") || name().contains("Prisma2 1080p");
+    }
+
+    bool isTaction()
+    {
+      //TODO find a better way to do this
+        return name().contains("MultiTouchVM1");
+    }
 
   private:
     QString m_name;
@@ -49,6 +79,7 @@ namespace Luminous
     QString m_connection;
     int m_logicalScreen;
     Nimble::Recti m_geometry;
+    int m_numid;
   };
 
   class LUMINOUS_API ScreenDetector
@@ -62,5 +93,7 @@ namespace Luminous
   };
 
 }
+
+/// @endcond
 
 #endif // LUMINOUS_SCREENDETECTOR_HPP

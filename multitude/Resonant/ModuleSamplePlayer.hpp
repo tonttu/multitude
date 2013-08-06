@@ -1,10 +1,20 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef RESONANT_MODULE_SAMPLE_PLAYER_HPP
 #define RESONANT_MODULE_SAMPLE_PLAYER_HPP
 
-#include <Radiant/RefPtr.hpp>
+#include <memory>
+
+#include <Nimble/Ramp.hpp>
+
 #include <Radiant/Thread.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Condition.hpp>
@@ -15,8 +25,6 @@
 #include <QString>
 #include <vector>
 
-#include <strings.h>
-
 namespace Resonant {
 
   class DSPNetwork;
@@ -26,6 +34,10 @@ namespace Resonant {
       This class implements a basic sample player, which can be used
       as a minimal synthesizer.
 
+      <B>Note management:</B> Playing samples become notes that can be controlled by the user.
+      If you play the same sample many times, each note is treated individually.
+      For this purpose the functions that start sample playback return NoteInfo objects that can
+      be used to query the state of the note.
 
       <B>Memory management:</B> The samples (aka audio files)
       are read from the disk as they are needed. The samples are loaded when they
@@ -38,14 +50,67 @@ namespace Resonant {
   {
   public:
 
+    /// Possible states of the individual notes
+    /** Each note has its own id.*/
+    enum NoteStatus {
+      /// Note is playing
+      NOTE_PLAYING,
+      /// Note is finished
+      NOTE_FINISHED
+    };
+
+  private:
+    /* This private block is here since the class needs to be hidden, but it needs the above enum. */
+    class RESONANT_API NoteInfoInternal
+    {
+    public:
+
+      NoteInfoInternal();
+
+      NoteStatus m_status;
+      int m_noteId;
+    };
+
+    typedef std::shared_ptr<NoteInfoInternal> NoteInfoInternalPtr;
+
+  public:
+
+    /// Note information container
+    /** This class can be used to track the playback of individual notes. Instances of this class
+        can be copied freely.
+    */
+    class RESONANT_API NoteInfo
+    {
+    public:
+      NoteInfo();
+      ~NoteInfo();
+
+      /// Returns the current status of the note
+      NoteStatus status() const;
+      /// Returns the identified of the note
+      int noteId() const;
+
+      /// Returns true if the note is playing
+      bool isPlaying() const { return status() == NOTE_PLAYING; }
+
+    private:
+
+      friend class ModuleSamplePlayer;
+      void init(int id);
+
+      NoteInfoInternalPtr m_info;
+    };
+
     /// Audio sample player module
-    ModuleSamplePlayer(Application *);
+    ModuleSamplePlayer();
     /// Delete the sample player
     virtual ~ModuleSamplePlayer();
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QString & address, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n);
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
+    virtual void eventProcess(const QByteArray & address, Radiant::BinaryData &) OVERRIDE;
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
+    virtual bool stop() OVERRIDE;
+
 
     /** Adds a few voices that will play an ambient sound background.
         All files in the given directory are loaded looped
@@ -68,6 +133,7 @@ namespace Resonant {
 
         @param delay Delay time to wait before starting the playback. Short delay times
         may lead to poor synchronization between different channels.
+
     */
 
     void createAmbientBackground(const char * directory, float gain, int fillchannels = 1000,
@@ -96,15 +162,58 @@ namespace Resonant {
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
 
-        @param time optional timestamp when to play the sample
+        @param time optional timestamp when to play the sample.
+
+        @return Returns a handle to the note playback information.
     */
-    void playSample(const char * filename,
-                    float gain,
-                    float relpitch,
-                    int targetChannel,
-                    int sampleChannel,
-                    bool loop = false,
-                    Radiant::TimeStamp time = 0);
+    NoteInfo playSample(const char * filename,
+                        float gain,
+                        float relpitch,
+                        int targetChannel,
+                        int sampleChannel,
+                        bool loop = false,
+                        Radiant::TimeStamp time = Radiant::TimeStamp(0));
+
+    /// Plays an audio sample
+    /** This function starts the playback of an audio sample.
+
+        @param filename The name of the audio sample file.
+
+        @param gain The gain coefficient for playback. Setting gain to one
+        plays the file back at the original volume.
+
+        @param relpitch The pitch for the playback. If the pitch is set to one,
+        then the file will play back at the original speed. With pitch of 0.5
+        the file will play back one octave below original pitch, and last
+        twice as long as nominal file duration.
+
+        @param location The screen location where this sample should be located. Currently
+        the location is used so that the sample player tries to find an audio panning module and
+        if the panner is present uses that to convert the location to one
+        specific audio out channel. The sound is then played out on that channel.
+
+        @param sampleChannel Select the channel of the source file that should be used as the
+        source.
+
+        @param loop Turns on looping if necessary. With looping the sample will play
+        back for-ever.
+
+        @param time optional timestamp when to play the sample.
+
+        @return Returns a handle to the note playback information.
+    */
+    NoteInfo playSampleAtLocation(const char * filename,
+                                  float gain,
+                                  float relpitch,
+                                  Nimble::Vector2 location,
+                                  int sampleChannel,
+                                  bool loop = false,
+                                  Radiant::TimeStamp time = Radiant::TimeStamp(0));
+
+    /// Stops the playback of a given sample
+    void stopSample(int noteId);
+
+    void stopSample(const NoteInfo & info) { stopSample(info.noteId()); }
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
@@ -117,6 +226,8 @@ namespace Resonant {
     /// @return Current playback time
     const Radiant::TimeStamp & time() { return m_time; }
 
+    int locationToChannel(Nimble::Vector2 location);
+
   private:
 
     bool addSample(const char * filename, const char * name);
@@ -125,6 +236,7 @@ namespace Resonant {
     int findSample(const char * );
 
     void loadSamples();
+    void stopSampleInternal(Radiant::BinaryData & data);
 
     class SampleInfo
     {
@@ -167,13 +279,14 @@ namespace Resonant {
     public:
       SampleVoice(Sample * s = 0)
         : m_state(INACTIVE), m_gain(1), m_relPitch(1.0f),
+          m_dpos(0), m_noteId(0), m_finishCounter(-1),
           m_sampleChannel(0), m_targetChannel(0),
           m_sample(s), m_position(0)
       {}
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
-      void init(std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
+      void init(ModuleSamplePlayer *, std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
 
       bool isActive() { return m_state != INACTIVE; }
 
@@ -183,7 +296,11 @@ namespace Resonant {
 
       void clear() { m_state = INACTIVE; m_sample.reset(); }
 
+      void stop(float fadeTime = 0.02f, float sampleRate = 44100.0f);
 
+      int noteId() const { return m_noteId; }
+
+      NoteInfoInternalPtr info() { return m_info; }
     private:
       enum State {
         INACTIVE,
@@ -193,9 +310,11 @@ namespace Resonant {
 
       State m_state;
 
-      float m_gain;
+      Nimble::Rampd m_gain;
       float m_relPitch;
       double m_dpos;
+      int m_noteId;
+      int m_finishCounter;
 
       size_t m_sampleChannel;
       size_t m_targetChannel;
@@ -203,6 +322,7 @@ namespace Resonant {
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;
       Radiant::TimeStamp m_startTime;
+      NoteInfoInternalPtr m_info;
     };
 
     /* Loads samples from the disk, as necessary. */
@@ -215,7 +335,7 @@ namespace Resonant {
 
       void init(const char * filename, SampleVoice * waiting)
       {
-        bzero(m_waiting, sizeof(m_waiting));
+        memset(m_waiting, 0, sizeof(m_waiting));
         m_waiting[0] = waiting;
         m_name = filename;
         m_free = false;
@@ -269,12 +389,15 @@ namespace Resonant {
 
     void dropVoice(size_t index);
 
+    SampleVoice * findVoiceForNoteId(int noteId);
+
     std::list<SampleInfo> m_sampleList;
 
     std::vector<std::shared_ptr<Sample> > m_samples;
 
     std::vector<SampleVoice> m_voices;
     std::vector<SampleVoice *> m_voiceptrs;
+    std::map<int, NoteInfoInternalPtr> m_infos;
 
     size_t m_channels;
     size_t m_active;
@@ -283,6 +406,10 @@ namespace Resonant {
     Radiant::TimeStamp m_time;
 
     BGLoader * m_loader;
+
+    int m_userNoteIdCounter;
+
+    Radiant::Mutex m_mutex;
   };
 
 }

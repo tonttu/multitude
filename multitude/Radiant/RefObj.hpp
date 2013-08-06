@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -66,11 +61,16 @@ namespace Radiant {
   class RefObj
   {
   public:
+    /// Constructor
     RefObj() : m_holder(0) { check(); }
+
     /// Creates a RefObj that copies the argument object
+    /// @param obj Object to copy
     RefObj(const T &obj)
         : m_holder(new RefObjInt<T>) { m_holder->m_object = obj; }
+
     /// Share the object pointer with another RefObj
+    /// @param that Object that is being copied
     RefObj(const RefObj<T> &that)
     {
       m_holder = ((RefObj *) & that)->m_holder;
@@ -82,19 +82,24 @@ namespace Radiant {
     ~RefObj() { breakLink(); }
 
     /// Get a reference to the object
+    /// @return Reference to the object
     T & ref() { check(); return m_holder->m_object; }
+
     /// Get a constant reference to the object
+    /// @return Constant reference to the object
     const T & ref() const { check(); return m_holder->m_object; }
 
     /// An operator to get a reference to the object
+    /// @return Reference to the object
     T & operator *() { check(); return m_holder->m_object; }
     /// An operator to get a constant reference to the object
+    /// @return Constatnt reference to the object
     const T & operator *() const { check(); return m_holder->m_object; }
 
     /// Create a deep copy of the object
-    /** Instead of sharing a link to an object, this method creates a
-    real copy of the object.
-    @param that object to copy */
+    /// Instead of sharing a link to an object, this method creates a
+    /// real copy of the object.
+    /// @param that object to copy
     void deepCopy(const RefObj &that)
     {
       if(!m_holder)
@@ -107,6 +112,8 @@ namespace Radiant {
     }
 
     /// Link to the source object
+    /// @param that Object to point to from this objecct
+    /// @return Reference to self
     RefObj & operator = (const RefObj &that)
                         {
       that.check();

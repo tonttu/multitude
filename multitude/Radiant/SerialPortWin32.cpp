@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "Platform.hpp"
@@ -105,9 +112,6 @@ namespace Radiant
     }
 
     // Set timeouts
-//    const int   waitTimeMS = waitTimeUS / 1000;
-
-//trace(INFO, "SerialPort::open # timeout %dus (%dms)", waitTimeUS, waitTimeMS);
 
     COMMTIMEOUTS  timeouts;
     memset(& timeouts, 0, sizeof(COMMTIMEOUTS));
@@ -154,13 +158,7 @@ namespace Radiant
 
     DWORD   bytesWritten = 0;
     WriteFile(m_hPort, buf, bytes, & bytesWritten, 0);
-/*
-    std::ostringstream os;
-    for(int i = 0; i < bytesWritten; i++)
-        os << (int)((char*)buf)[i] << " ";
 
-    info("SerialPort::write # wrote %d bytes (%s)", bytesWritten, os.str().c_str());
-*/
     return int(bytesWritten);
   }
 
@@ -183,13 +181,6 @@ namespace Radiant
     DWORD   bytesRead = 0;
     if(ReadFile(m_hPort, buf, bytes, & bytesRead, 0) == FALSE)
         error("SerialPort::read # read failed");
-/*
-
-    std::ostringstream os;
-    for(int i = 0; i < bytesRead; i++)
-        os << (int)((char*)buf)[i] << " ";
-    info("SerialPort::read # read %d bytes (%s)", bytesRead, os.str().c_str());
-*/
 
     return int(bytesRead);
   }

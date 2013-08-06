@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "FT2xxStream.hpp"
 
 #include "Trace.hpp"
@@ -42,30 +52,7 @@ namespace Radiant {
       return false;
     }
 
-    /*
-    status = FT_SetBitMode(m_data->m_handle, 0x1, 0x2);
-
-    if(status == FT_OK)
-      info("FT2xxStream::open # bit mode adjusted");
-    else
-      error("FT2xxStream::open # Could not set bit mode");
-      */
-    /*
-     // This does not work, possibly due to the lack of an EEPROM (or something else)
-    UCHAR mode = 0xFF;
-
-    status = FT_GetBitMode(m_data->m_handle, & mode);
-
-    if(status == FT_OK)
-      info("FT2xxStream::open # bit mode = %x", (int) mode);
-    else
-      error("FT2xxStream::open # Could not get bit mode");
-      */
-
-    // status = FT_SetBaudRate(m_data->m_handle, FT_BAUD_921600);
-    // int baud = 10000000;
     int baud = FT_BAUD_921600 * 13;
-    // int baud = FT_BAUD_921600 * 8;
     status = FT_SetBaudRate(m_data->m_handle, baud);
 
     if(status != FT_OK) {
@@ -141,7 +128,6 @@ namespace Radiant {
 
       if(status == FT_OK) {
         devices.push_back(buffer);
-        // info("FT2xxStream::listDevices # %d: [%s]", (int) i, buffer);
       }
       else {
         error("FT2xxStream::listDevices # Failed to get serial number for %d", (int) i);

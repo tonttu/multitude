@@ -1,22 +1,14 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include "Plane.hpp"
-
-/// @todo use Nimble::TOLERANCE
-static const float EPSILON = 1e-5f;
 
 namespace Nimble
 {
@@ -32,27 +24,27 @@ namespace Nimble
   Plane::Plane(const Nimble::Vector3f & normal, const Nimble::Vector3f & point)
   : m_normal(normal)
   {
-    m_constant = ::dot(normal, point);
+    m_constant = dot(normal, point);
   }
 
   float Plane::distanceTo(const Nimble::Vector3f & point) const
   {
-    return ::dot(m_normal, point) - m_constant;
+    return dot(m_normal, point) - m_constant;
   }
 
   bool Plane::intersect(const Nimble::Vector3f & rayO, const Nimble::Vector3f & rayD, float & rayT) const
   {
-    float dotDN = ::dot(rayD, m_normal);
-    float dist = distanceTo(rayO);
+    auto dotDN = dot(rayD, m_normal);
+    auto dist = distanceTo(rayO);
 
-    if(fabs(dotDN) > EPSILON) {
+    if(std::abs(dotDN) > std::numeric_limits<float>::epsilon()) {
       // Not parallel
       rayT = -dist / dotDN;
 
       return true;
     }
 
-    if(fabs(dist) <= EPSILON) {
+    if(std::abs(dist) <= std::numeric_limits<float>::epsilon()) {
       // Parallel
       rayT = 0.f;
       return true;

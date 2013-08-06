@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "Platform.hpp"
 
 #ifdef RADIANT_WINDOWS
@@ -6,7 +16,7 @@
 #include "Mutex.hpp"
 #include "Trace.hpp"
 
-#include <stdint.h>
+#include <cstdint>
 #include <sstream>
 
 #define WIN32_LEAN_AND_MEAN
@@ -128,16 +138,23 @@ namespace Radiant
       initialized = true;
     }
 
-    m_frameCount = backtrace(m_frames, max_frames);
+    m_frameCount = backtrace(m_frames, MAX_FRAMES);
   }
 
   CallStack::~CallStack()
   {
   }
 
-  void CallStack::print() const
+  QStringList CallStack::toStringList() const
   {
-      Radiant::Guard lock(s_dbgHelpMutex);
+    if (!m_cache.isEmpty())
+      return m_cache;
+
+    QStringList tmp;
+    Radiant::Guard lock(s_dbgHelpMutex);
+
+    if (!m_cache.isEmpty())
+      return m_cache;
 
     HANDLE handle = GetCurrentProcess();
     DWORD64 offset;
@@ -169,8 +186,17 @@ namespace Radiant
         if (GetLastError() != ERROR_INVALID_ADDRESS)
           Radiant::warning("Unable to get symbol line information: err %d\n", GetLastError());
       }
-      Radiant::info("#%d %s at %s:%d", i, pSymbol->Name, sym_line.FileName, sym_line.LineNumber);
+      tmp << QString("#%1 %3 at %4:%2").arg(i, -2).arg(sym_line.LineNumber).arg(pSymbol->Name, sym_line.FileName);
     }
+
+    m_cache = tmp;
+    return tmp;
+  }
+
+  void CallStack::print() const
+  {
+    for (auto & str: toStringList())
+      Radiant::error("%s", str.toUtf8().data());
   }
 }
 

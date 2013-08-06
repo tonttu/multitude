@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -24,17 +19,16 @@
 
 namespace
 {
-  using namespace Resonant;
   void s_streamStateCb(pa_stream * p, void * self)
   {
-    ModulePulseAudio * mpa = static_cast<ModulePulseAudio*>(self);
+    Resonant::ModulePulseAudio * mpa = static_cast<Resonant::ModulePulseAudio*>(self);
     mpa->streamState(pa_stream_get_state(p));
   }
 
   void s_streamRequestCb(pa_stream * p, size_t nbytes, void * self)
   {
     if(p && self) {
-      ModulePulseAudio * mpa = static_cast<ModulePulseAudio*>(self);
+      Resonant::ModulePulseAudio * mpa = static_cast<Resonant::ModulePulseAudio*>(self);
       mpa->dataAvailable(p, nbytes);
     }
   }
@@ -43,16 +37,16 @@ namespace
 namespace Resonant
 {
   ModulePulseAudio::ModulePulseAudio(const QString & monitorName, uint32_t sinkInput)
-    : Module(0), m_ready(false), m_stream(0), m_monitorName(monitorName),
+    : m_ready(false), m_stream(0), m_monitorName(monitorName),
     m_sinkInput(sinkInput), m_buffer(0), m_bufferSize(0),
     m_syncCount(0), m_canSync(false)
   {
-    // info("ModulePulseAudio::ModulePulseAudio # %p", this);
+    // Radiant::info("ModulePulseAudio::ModulePulseAudio # %p", this);
   }
 
   ModulePulseAudio::~ModulePulseAudio()
   {
-    // info("ModulePulseAudio::~ModulePulseAudio # %p", this);
+    // Radiant::info("ModulePulseAudio::~ModulePulseAudio # %p", this);
   }
 
   void ModulePulseAudio::contextChange(pa_context_state_t state)
@@ -143,7 +137,7 @@ namespace Resonant
   {
   }
 
-  void ModulePulseAudio::process(float **, float ** out, int n)
+  void ModulePulseAudio::process(float **, float ** out, int n, const CallbackTime &)
   {
     if(!m_ready) {
       memset(out[0], 0, n*4);
@@ -162,7 +156,7 @@ namespace Resonant
       }
     }
 
-    int pos = Nimble::Math::Min<int>(n, m_bufferSize);
+    int pos = std::min<int>(n, m_bufferSize);
     if(pos)
       memcpy(out[0], m_buffer, pos*4);
 
@@ -188,7 +182,7 @@ namespace Resonant
         m_bufferSize /= 4;
 
         if(m_bufferSize) {
-          int tmp = Nimble::Math::Min<int>(n, m_bufferSize);
+          int tmp = std::min<int>(n, m_bufferSize);
           memcpy(out[0] + pos, m_buffer, tmp*4);
           m_bufferSize -= tmp;
           m_buffer += tmp;

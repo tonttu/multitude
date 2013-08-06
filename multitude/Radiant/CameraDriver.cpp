@@ -1,21 +1,20 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include "CameraDriver.hpp"
 #include "Mutex.hpp"
 #include "Radiant.hpp"
+
+#ifdef RADIANT_IOS
+# undef CAMERA_DRIVER_1394
+#endif // RADIANT_IOS
 
 #ifdef CAMERA_DRIVER_CMU
 #	include <Radiant/VideoCameraCMU.hpp>
@@ -45,7 +44,7 @@ namespace Radiant
 
   CameraDriverFactory::~CameraDriverFactory()
   {
-    for(DriverMap::iterator it = m_drivers.begin(); it != m_drivers.end(); it++)
+    for(DriverMap::iterator it = m_drivers.begin(); it != m_drivers.end(); ++it)
       delete it->second;
   }
 
@@ -69,20 +68,20 @@ namespace Radiant
   CameraDriver * CameraDriverFactory::getCameraDriver(const QString & driverName)
   {
     // If the user has not registered any drivers, we register the defaults here once
-    MULTI_ONCE_BEGIN
-    assert(m_drivers.empty());
+    MULTI_ONCE {
+      assert(m_drivers.empty());
 #ifdef CAMERA_DRIVER_CMU
-    registerDriver(new CameraDriverCMU());
+      registerDriver(new CameraDriverCMU());
 #endif
 
 #ifdef CAMERA_DRIVER_PGR
-	  registerDriver(new CameraDriverPTGrey());
+      registerDriver(new CameraDriverPTGrey());
 #endif
 
 #ifdef CAMERA_DRIVER_1394
-    registerDriver(new CameraDriver1394());
+      registerDriver(new CameraDriver1394());
 #endif
-    MULTI_ONCE_END
+    }
 
     DriverMap::iterator it = m_drivers.find(driverName);
     if(it != m_drivers.end())
@@ -112,10 +111,10 @@ namespace Radiant
           str.toUtf8().data(), cd);
       if(cd) {
         // Make sure there is at least one camera available using this driver
-		  size_t cameraCount = cd->queryCameras(cameras);
-        
-		if(cameraCount > 0) 
-			return cd;
+          size_t cameraCount = cd->queryCameras(cameras);
+
+        if(cameraCount > 0)
+            return cd;
       }
     }
 

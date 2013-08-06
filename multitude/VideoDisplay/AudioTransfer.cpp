@@ -1,345 +1,303 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of VideoDisplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "VideoDisplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "AudioTransfer.hpp"
-#include "VideoIn.hpp"
-#include "VideoDisplay.hpp"
 
-#include <Radiant/PlatformUtils.hpp>
-#include <Radiant/Trace.hpp>
+#include "LibavDecoder.hpp"
 
-#include <assert.h>
-#include <stdlib.h>
+#include <Resonant/AudioLoop.hpp>
 
-
-namespace VideoDisplay {
-
-  using namespace Radiant;
-
-  static Radiant::Mutex __countermutex;
-  int    __instancecount = 0;
-
-  AudioTransfer::AudioTransfer(Resonant::Application * a, VideoIn * video)
-      : Module(a),
-      m_video(video),
-      m_channels(0),
-      m_started(false),
-      m_stopped(false),
-      m_sampleFmt(Radiant::ASF_INT16),
-      m_frames(0),
-      m_videoFrame(0),
-      m_showFrame(-1),
-      m_ending(false),
-      m_end(false),
-      m_audioLatency(0.0f),
-      m_gain(1.0f),
-      m_mutex(true)
+namespace
+{
+  void zero(float ** dest, int channels, int frames, int offset)
   {
-    const char * lat = getenv("RESONANT_LATENCY");
-    if(lat) {
-      double ms = atof(lat);
-      debugVideoDisplay("Adjusted audio latency to %lf milliseconds", ms);
-      m_audioLatency = ms * 0.001;
+    assert(frames >= 0);
+
+    for(int channel = 0; channel < channels; ++channel)
+      memset(dest[channel] + offset, 0, frames * sizeof(float));
+  }
+}
+
+namespace VideoDisplay
+{
+  const int s_decodedBufferCount = 200;
+
+  void DecodedAudioBuffer::fill(Timestamp timestamp, int channels, int samples,
+                                const int16_t * interleavedData)
+  {
+    m_timestamp = timestamp;
+    m_offset = 0;
+    m_data.resize(channels);
+
+    const float gain = 1.0f;
+    const float factor = (gain / (1 << 16));
+
+    for(int c = 0; c < channels; ++c) {
+      m_data[c].resize(samples);
+      float * destination = m_data[c].data();
+      const int16_t * source = interleavedData + c;
+      for(int s = 0; s < samples; ++s) {
+        *destination++ = *source * factor;
+        source += channels;
+      }
     }
+  }
 
-    Radiant::Guard g2(m_mutex);
+  /// @todo should do this without copying any data! (using libav buffer refs)
+  void DecodedAudioBuffer::fillPlanar(Timestamp timestamp, int channels,
+                                      int samples, const float ** src)
+  {
+    m_timestamp = timestamp;
+    m_offset = 0;
+    m_data.resize(channels);
 
-    if(m_video)
-      m_video->setAudioListener(this);
-
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount++;
-      tmp = __instancecount;
+    for(int c = 0; c < channels; ++c) {
+      m_data[c].resize(samples);
+      memcpy(m_data[c].data(), src[c], samples*sizeof(float));
     }
-    debugVideoDisplay("AudioTransfer::AudioTransfer # %p Instance count at %d", this, tmp);
+  }
 
-    m_timingBase = Radiant::TimeStamp::getTime();
+  class AudioTransfer::D
+  {
+  public:
+    D(LibavDecoder * avff, int channels)
+      : m_avff(avff)
+      , m_channels(channels)
+      , m_seekGeneration(0)
+      , m_playMode(AVDecoder::PAUSE)
+      , m_seeking(false)
+      , m_decodedBuffers(s_decodedBufferCount)
+      , m_buffersReader(0)
+      , m_buffersWriter(0)
+      , m_resonantToPts(0)
+      , m_usedSeekGeneration(0)
+      , m_samplesInGeneration(0)
+      , m_gain(1.0f)
+      /*, samplesProcessed(0)*/
+    {}
+
+    LibavDecoder * m_avff;
+    const int m_channels;
+    int m_seekGeneration;
+    AVDecoder::PlayMode m_playMode;
+    bool m_seeking;
+
+    Timestamp m_pts;
+
+    std::vector<DecodedAudioBuffer> m_decodedBuffers;
+
+    // decodedBuffers[buffersReader % s_decodedBufferCount] points to the next
+    // buffer that could be processed to Resonant (iff readyBuffers > 0).
+    // Only used from process()
+    int m_buffersReader;
+    // decodedBuffers[buffersWriter % s_decodedBufferCount] points to the next
+    // buffer that could be filled with new decoded audio from the AVDecoder
+    int m_buffersWriter;
+
+    QAtomicInt m_readyBuffers;
+    QAtomicInt m_samplesInBuffers;
+
+    double m_resonantToPts;
+    int m_usedSeekGeneration;
+    int m_samplesInGeneration;
+
+    float m_gain;
+    /*long samplesProcessed;*/
+
+    DecodedAudioBuffer * getReadyBuffer();
+    void bufferConsumed(int samples);
+  };
+
+  DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
+  {
+    while((m_playMode == AVDecoder::PLAY || m_seeking) && m_readyBuffers > 0) {
+      DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
+      if(buffer->timestamp().seekGeneration() < m_seekGeneration) {
+        m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
+        m_readyBuffers.deref();
+        ++m_buffersReader;
+        continue;
+      }
+      /// @todo shouldn't be hard-coded
+      if(m_seeking && m_samplesInGeneration > 44100.0/24.0)
+        return nullptr;
+      return buffer;
+    }
+    return nullptr;
+  }
+
+  void AudioTransfer::D::bufferConsumed(int samples)
+  {
+    m_readyBuffers.deref();
+    m_samplesInBuffers.fetchAndAddRelaxed(-samples);
+    ++m_buffersReader;
+  }
+
+  AudioTransfer::AudioTransfer(LibavDecoder * avff, int channels)
+    : m_d(new D(avff, channels))
+  {
+    assert(channels > 0);
   }
 
   AudioTransfer::~AudioTransfer()
   {
-    int tmp = 0;
-    {
-      Radiant::Guard g(__countermutex);
-      __instancecount--;
-      tmp = __instancecount;
+    if(m_d->m_avff) {
+      m_d->m_avff->audioTransferDeleted();
     }
-    debugVideoDisplay("AudioTransfer::~AudioTransfer # %p Instance count at %d", this, tmp);
+    // Radiant::info("AudioTransfer::~AudioTransfer # %p", this);
+    delete m_d;
   }
 
   bool AudioTransfer::prepare(int & channelsIn, int & channelsOut)
   {
-    debugVideoDisplay("AudioTransfer::prepare");
-
-    Radiant::Guard g2(m_mutex);
-
-    if(!m_video) {
-      Radiant::error("AudioTransfer::prepare # No video source");
-      m_stopped = true;
-      return false;
-    }
-
-    Radiant::Guard g(m_video->mutex());
-
-    m_channels = 0;
-    m_sampleFmt = Radiant::ASF_INT16;
-    int sr = 44100;
-
-    m_video->getAudioParameters( & m_channels, & sr, & m_sampleFmt);
-
-    debugVideoDisplay("AudioTransfer::prepare # chans = %d", m_channels);
-
     channelsIn = 0;
-    channelsOut = m_channels;
-
-    m_frames = 0;
-    m_started = true;
-    m_stopped = false;
-    m_availAudio = 1000000;
-    m_videoFrame = (int) m_video->latestFrame() + 1;
-
-    if(m_videoFrame < 0)
-      m_videoFrame = 0;
-
-    m_video->getFrame(m_videoFrame - 1, false);
-
-    m_baseTS = 0;
-    m_sinceBase = 0;
-    m_showFrame = -1;
-    m_total = 0;
-    m_ending = false;
-    m_end = false;
-    m_first = true;
-
-    m_startTime = TimeStamp::getTime();
-    m_timingBase = m_startTime;
-
+    channelsOut = m_d->m_channels;
     return true;
   }
 
-  void AudioTransfer::process(float **, float ** out, int n)
+  void AudioTransfer::process(float **, float ** out, int n, const Resonant::CallbackTime & time)
   {
-    Radiant::Guard g2(m_mutex);
+    /**
+     * We need to implement toPts -function, that converts absolute
+     * timestamp (Radiant::TimeStamp) to video pts (presentation timestamp).
+     * This is used by AV-synchronization code, VideoWidget has an estimate
+     * Radiant::TimeStamp of the time when the currently rendered frame will be
+     * actually displayed on the screen. In the audio thread we save a offset
+     * value that can be used to make the actual conversion between
+     * Radiant::TimeStamp and pts.
+     */
 
-    if(!m_video) {
-      zero(out, m_channels, n, 0);
-      return;
-    }
+    int processed = 0;
+    int remaining = n;
 
-    Radiant::Guard g(m_video->mutex());
+    bool first = true;
 
-    if(!m_video->isFrameAvailable(m_videoFrame)) {
-      zero(out, m_channels, n, 0);
-
-      if(m_ending && !m_end) {
-        debugVideoDisplay("AudioTransfer::process # END detected.");
-        m_end = true;
-      }
-
-      debugVideoDisplay("AudioTransfer::process # No frame %d", m_videoFrame);
-
-      return;
-    }
-
-    debugVideoDisplay("AudioTransfer::process # %d %d %d %d",
-                   m_channels, m_videoFrame, n, m_availAudio);
-
-    const VideoIn::Frame * f = m_video->getFrame(m_videoFrame, false);
-
-    checkEnd(f);
-
-    if(!f)
-      return;
-
-    if(m_availAudio > f->m_audioFrames) {
-      m_availAudio = f->m_audioFrames;
-      debugVideoDisplay("AudioTransfer::process # taking audio %d %d",
-                     m_availAudio, m_videoFrame);
-      m_baseTS = f->m_audioTS; // - Radiant::TimeStamp::createSecondsD(f->m_audioFrames / 44100.0f);
-    }
-
-    int take  = Nimble::Math::Min(n, m_availAudio);
-    int taken = 0;
-
-    if(take) {
-
-      int index = f->m_audioFrames - m_availAudio;
-
-      const float * src = & f->m_audio[index * m_channels];
-
-      deInterleave(out, src, m_channels, take, 0);
-    }
-
-    taken += take;
-    m_availAudio -= take;
-    n -= take;
-    m_sinceBase += take;
-
-    // Take new data from the next visual frame(s)
-    while(n) {
-
-      m_videoFrame++;
-
-      debugVideoDisplay("AudioTransfer::process # To new frame %d", m_videoFrame);
-
-      if(!m_video->isFrameAvailable(m_videoFrame)) {
-        debugVideoDisplay("AudioTransfer::process # NOT ENOUGH DECODED : RETURN");
-        m_availAudio = 1000000000;
-        m_first = true;
+    while(remaining > 0) {
+      DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
+      if(!decodedBuffer) {
+        zero(out, m_d->m_channels, remaining, processed);
         break;
-      }
+      } else {
+        const int offset = decodedBuffer->offset();
+        const int samples = std::min<int>(remaining, decodedBuffer->samples() - offset);
 
-      f = m_video->getFrame(m_videoFrame, false);
+        const Timestamp ts = decodedBuffer->timestamp();
 
-      checkEnd(f);
+        // Presentation time of the decoded audio buffer, at the time
+        // when currently processed audio will be written to audio hardware
+        const double pts = ts.pts() + offset / 44100.0;
 
-      if(f->m_type == VideoIn::FRAME_IGNORE) {
-        debugVideoDisplay("AudioTransfer::process # Ignoring one");
-        continue;
-      }
+        m_d->m_pts = ts;
+        m_d->m_pts.setPts(pts + samples / 44100.0);
 
-      m_availAudio = f->m_audioFrames;
+        if(first) {
+          // We can convert Resonant times to pts with this offset
+          m_d->m_resonantToPts = pts - time.outputTime.secondsD();
+          m_d->m_usedSeekGeneration = ts.seekGeneration();
 
-      if(m_availAudio) {
-        m_baseTS = f->m_audioTS; // - Radiant::TimeStamp::createSecondsD(f->m_audioFrames / 44100.0f);
-        m_sinceBase = 0;
-      }
+          first = false;
+        }
+        m_d->m_samplesInGeneration += samples;
 
-      take = Nimble::Math::Min(n, m_availAudio);
+        // We could take the gain into account in the preprocessing stage,
+        // in another thread with more resources, but then changing gain
+        // would have a noticeably latency
+        const float gain = m_d->m_seeking ? m_d->m_gain * 0.35 : m_d->m_gain;
+        if(std::abs(gain - 1.0f) < 1e-5f) {
+          for(int channel = 0; channel < m_d->m_channels; ++channel)
+            memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
+        } else {
+          for(int channel = 0; channel < m_d->m_channels; ++channel) {
+            float * destination = out[channel] + processed;
+            const float * source = decodedBuffer->data(channel) + offset;
+            for(int s = 0; s < samples; ++s)
+              *destination++ = *source++ * gain;
+          }
+        }
 
-      if(!take) {
-        debugVideoDisplay("AudioTransfer::process # Jumping over frame");
-        continue;
-      }
+        processed += samples;
+        remaining -= samples;
 
-      debugVideoDisplay("AudioTransfer::process # Got new i = %d a = %d %lf", m_videoFrame,
-            m_availAudio, f->m_audioTS.secondsD());
-
-      deInterleave(out, & f->m_audio[0], m_channels, take, taken);
-
-      n -= take;
-      m_availAudio -= take;
-      taken += take;
-      m_sinceBase += take;
-    }
-
-    m_total += taken;
-
-    zero(out, m_channels, n, taken);
-
-    m_showTime =
-        m_baseTS + TimeStamp::createSecondsD(m_sinceBase / 44100.0 - m_audioLatency);
-
-    m_showFrame = m_video->selectFrame(m_showFrame, m_showTime);
-
-    m_timingBase = Radiant::TimeStamp::getTime();
-    // if(m_videoFrame < m_showFrame)
-    // m_videoFrame = m_showFrame;
-    /*
-    if(!taken) {
-      for(int i = 0; i < m_channels; i++) {
-    bzero(out[i], sizeof(float) * n);
+        if(offset + samples == decodedBuffer->samples())
+          m_d->bufferConsumed(offset + samples);
+        else
+          decodedBuffer->setOffset(offset + samples);
       }
     }
-    */
-    debug("AudioTransfer::process # EXIT %d %d (%lf, %lf)",
-          m_showFrame, m_total, m_showTime.secondsD(), m_baseTS.secondsD());
   }
 
-  bool AudioTransfer::stop()
+  Timestamp AudioTransfer::toPts(const Radiant::TimeStamp & ts) const
   {
-    m_stopped = true;
-    return true;
+    const Timestamp newts(ts.secondsD() + m_d->m_resonantToPts, m_d->m_usedSeekGeneration);
+    return std::min(m_d->m_pts, newts);
   }
 
-  unsigned AudioTransfer::videoFrame()
+  Timestamp AudioTransfer::lastPts() const
   {
-    Radiant::Guard g2(m_mutex);
-
-
-    float dt = m_timingBase.sinceSecondsD();
-
-    if(dt > 0.03f) {
-      // info("AudioTransfer::videoFrame # adjusting for %f", dt);
-      m_showFrame = m_video->selectFrame(m_showFrame,
-                                         m_showTime + Radiant::TimeStamp::createSecondsD(dt));
-    }
-
-    debugVideoDisplay("AudioTransfer::videoFrame # %d", m_showFrame);
-    return m_showFrame;
+    return m_d->m_pts;
   }
 
-  void AudioTransfer::forgetVideo()
+  float AudioTransfer::bufferStateSeconds() const
   {
-    debugVideoDisplay("AudioTransfer::forgetVideo");
-
-    Radiant::Guard g2(m_mutex);
-
-    m_video = 0;
-    m_ending = true;
+    /// @todo shouldn't be hard-coded
+    return m_d->m_samplesInBuffers / 44100.0f;
   }
 
-  void AudioTransfer::deInterleave(float ** dest, const float * src,
-                                   int chans, int frames, int offset)
+  void AudioTransfer::shutdown()
   {
-    assert(frames >= 0);
-
-    debugVideoDisplay("AudioTransfer::deInterleave # %d %d %d", chans, frames, offset);
-
-    const float gain = m_gain;
-
-    for(int c = 0; c < chans; c++) {
-      float * d = dest[c] + offset;
-      const float * s = src + c;
-      for(int f = 0; f < frames; f++) {
-        *d = *s * gain;
-        d++;
-        s += chans;
-      }
-    }
+    m_d->m_avff = nullptr;
   }
 
-  void AudioTransfer::zero(float ** dest, int chans, int frames, int offset)
+  DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
-    assert(frames >= 0);
+    if(m_d->m_readyBuffers >= int(m_d->m_decodedBuffers.size()))
+      return nullptr;
 
-    for(int c = 0; c < chans; c++) {
-      float * d = dest[c] + offset;
-      for(int f = 0; f < frames; f++) {
-        *d++ = 0;
-      }
-    }
+    if(m_d->m_samplesInBuffers > samples)
+      return nullptr;
+
+    int b = m_d->m_buffersWriter++;
+
+    return & m_d->m_decodedBuffers[b % s_decodedBufferCount];
   }
 
-  void AudioTransfer::checkEnd(const VideoIn::Frame * f)
+  void AudioTransfer::putReadyBuffer(int samples)
   {
-    if(!f) {
-      m_ending = true;
-      debugVideoDisplay("ShowGL::checkEnd # At end 1");
-    }
-    else {
-      double runtime = m_video->runtimeSeconds();
-      if(runtime > 0.6)
-        runtime -= 0.5;
-      if(f->m_absolute.secondsD() > runtime) {
-        m_ending = true;
-        debugVideoDisplay("ShowGL::checkEnd # At end 2 %lf %lf", f->m_absolute.secondsD(), runtime);
-      }
-    }
+    m_d->m_samplesInBuffers.fetchAndAddRelaxed(samples);
+    m_d->m_readyBuffers.ref();
   }
 
+  void AudioTransfer::setPlayMode(AVDecoder::PlayMode playMode)
+  {
+    m_d->m_playMode = playMode;
+  }
+
+  void AudioTransfer::setSeeking(bool seeking)
+  {
+    m_d->m_seeking = seeking;
+  }
+
+  void AudioTransfer::setSeekGeneration(int seekGeneration)
+  {
+    if(m_d->m_seekGeneration != seekGeneration)
+      m_d->m_samplesInGeneration = 0;
+    m_d->m_seekGeneration = seekGeneration;
+  }
+
+  float AudioTransfer::gain() const
+  {
+    return m_d->m_gain;
+  }
+
+  void AudioTransfer::setGain(float gain)
+  {
+    m_d->m_gain = gain;
+  }
 }

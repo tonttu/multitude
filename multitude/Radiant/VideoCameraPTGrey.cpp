@@ -1,21 +1,16 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include "Platform.hpp"
 
-#ifdef RADIANT_WINDOWS
+#ifdef CAMERA_DRIVER_PGR
 
 #include "VideoCameraPTGrey.hpp"
 
@@ -32,6 +27,15 @@
 #endif
 
 #define NUM_BUFFERS 10
+
+/// @todo Do we need this?
+//#define USE_MUTEX 1
+
+#ifdef USE_MUTEX
+#define GUARD_MUTEX Guard g(s_cameraMutex);
+#else
+#define GUARD_MUTEX
+#endif
 
 namespace Radiant
 {
@@ -193,8 +197,7 @@ namespace Radiant
     config.grabTimeout = 0;
     config.numImageNotifications = 1;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
     if(err != FlyCapture2::PGRERROR_OK) {
@@ -277,8 +280,7 @@ namespace Radiant
 
     FlyCapture2::PGRGuid guid = it->second;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
 
     // Connect camera
     FlyCapture2::Error err = m_camera.Connect(&guid);
@@ -325,14 +327,14 @@ namespace Radiant
 
     // Set Format7 frame size
     FlyCapture2::Format7ImageSettings f7s;
-    bzero(&f7s, sizeof(f7s));
+    memset(&f7s, 0, sizeof(f7s));
     f7s.offsetX = roi.low().x;
     f7s.offsetY = roi.low().y;
     Nimble::Vector2i avail(f7info.maxWidth, f7info.maxHeight);
     avail -= roi.low();
 
-    f7s.width = Nimble::Math::Min(roi.width(), avail.x);
-    f7s.height = Nimble::Math::Min(roi.height(), avail.y);
+    f7s.width = std::min(roi.width(), avail.x);
+    f7s.height = std::min(roi.height(), avail.y);
     f7s.pixelFormat = FlyCapture2::PIXEL_FORMAT_MONO8;
     f7s.mode = FlyCapture2::Mode(mode);
 
@@ -356,7 +358,7 @@ namespace Radiant
     // Validate
     Radiant::info("Validating format7 settings...");
     FlyCapture2::Format7PacketInfo f7pi;
-    bzero(&f7pi, sizeof(f7pi));
+    memset(&f7pi, 0, sizeof(f7pi));
     err = m_camera.ValidateFormat7Settings(&f7s, &supported, &f7pi);
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::openFormat7 # ValidateFormat7Settings %s", err.GetDescription());
@@ -426,8 +428,7 @@ namespace Radiant
       return false;
     }
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     FlyCapture2::Error err = m_camera.StartCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::start # %s", err.GetDescription());
@@ -450,8 +451,7 @@ namespace Radiant
 
     Radiant::info("VideoCameraPTGrey::stop");
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     FlyCapture2::Error err = m_camera.StopCapture();
     if(err != FlyCapture2::PGRERROR_OK) {
       Radiant::error("VideoCameraPTGrey::stop # %s", err.GetDescription());
@@ -471,8 +471,7 @@ namespace Radiant
     Radiant::info("VideoCameraPTGrey::close");
     m_state = UNINITIALIZED;
 
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
+    GUARD_MUTEX
     m_camera.Disconnect();
 
     return true;
@@ -497,17 +496,8 @@ namespace Radiant
         return false;
       }
     }
-    /*
-    if(m_image.size() != img.GetDataSize()) {
-      Radiant::info("ALLOCATED %dx%d bytes %d", m_image.width(), m_image.height(), m_image.size());
-      Radiant::info("FRAME %dx%d stride %d bytes %d", img.GetCols(), img.GetRows(), img.GetStride(), img.GetDataSize());
-
-      //assert(m_image.size() == img.GetDataSize());
-    }
-*/
 
     if(m_fakeFormat7 && m_format7Rect.width() > 1) {
-      // info("FAKE FORMAT 7 CAPTURE");
       // Copy only part of the image
       /* The fake format7 mode. This is done so that one can use Format7 ROI even
          when the feature is broken. One many Windows systems this only causes BSODs.
@@ -562,10 +552,7 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeature(FeatureType id, float value)
   {
-    /// @todo Do we need this?
-    // Guard g(s_cameraMutex);
-
-    // debugRadiant("VideoCameraPTGrey::setFeature # %d %f", id, value);
+    GUARD_MUTEX
 
     // If less than zero, use automatic mode
     if(value < 0.f) {
@@ -590,24 +577,11 @@ namespace Radiant
 
   void VideoCameraPTGrey::setFeatureRaw(FeatureType id, int32_t value)
   {
-    // debugRadiant("VideoCameraPTGrey::setFeatureRaw # %d %d", id, value);
-
     FlyCapture2::Property prop;
     prop.type = propertyToFC2(id);
 
     m_camera.GetProperty(&prop);
-    /*
-    Radiant::info("DEBUG: BEFORE ADJUSTMENT");
-    Radiant::info("type %d", prop.type);
-    Radiant::info("present %d", prop.present);
-    Radiant::info("abs control %d", prop.absControl);
-    Radiant::info("one push %d", prop.onePush);
-    Radiant::info("on/off %d", prop.onOff);
-    Radiant::info("autoManual %d", prop.autoManualMode);
-    Radiant::info("value A %d", prop.valueA);
-    Radiant::info("value B %d", prop.valueB);
-    Radiant::info("abs value %f", prop.absValue);
-*/
+
 
     prop.valueA = value;
     prop.valueB = value;
@@ -621,13 +595,6 @@ namespace Radiant
                      err.GetDescription());
       err.PrintErrorTrace();
     }
-    /*
-    m_camera.GetProperty(&prop);
-    Radiant::info("DEBUG: AFTER ADJUSTMENT");
-    Radiant::info("abs control %d", prop.absControl);
-    Radiant::info("value A %d", prop.valueA);
-    Radiant::info("value B %d", prop.valueB);
-*/
   }
 
   bool VideoCameraPTGrey::enableTrigger(TriggerSource src)
@@ -820,8 +787,6 @@ namespace Radiant
 
     if(!g_bus) g_bus = new FlyCapture2::BusManager();
 
-    // g_bus->RegisterCallback(g_busResetCallback, FlyCapture2::BUS_RESET, 0, 0);
-
     // Get the number of available cameras
     unsigned int numCameras;
     FlyCapture2::Error err = g_bus->GetNumOfCameras(&numCameras);
@@ -894,4 +859,4 @@ namespace Radiant
 
 }
 
-#endif
+#endif // CAMERA_DRIVER_PGR

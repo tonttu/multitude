@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,7 +15,6 @@
 #include "Trace.hpp"
 
 #include <sys/types.h>
-#include <strings.h>
 #include <stdio.h>
 
 namespace Radiant
@@ -51,6 +45,15 @@ namespace Radiant
     delete m_d;
   }
 
+  const QString TCPServerSocket::host() const {
+    return m_d->m_host;
+  }
+
+  int TCPServerSocket::port() const {
+    return m_d->m_port;
+  }
+
+
   int TCPServerSocket::open(const char * host, int port, int maxconnections)
   {
     close();
@@ -63,7 +66,7 @@ namespace Radiant
     int err = SocketUtilPosix::bindOrConnectSocket(fd, host, port, errstr,
                   true, AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(err) {
-      error("TCPServerSocket::open # %s", errstr.toUtf8().data());
+      error("TCPServerSocket::open(%s:%d) # %s", host, port, errstr.toUtf8().data());
       return err;
     }
 
@@ -86,6 +89,8 @@ namespace Radiant
       return false;
 
     m_d->m_fd = -1;
+    m_d->m_host = "";
+    m_d->m_port = 0;
 
     if(::shutdown(fd, SHUT_RDWR)) {
       debug("TCPServerSocket::close # Failed to shut down the socket: %s", SocketWrapper::strerror(SocketWrapper::err()));
@@ -109,7 +114,7 @@ namespace Radiant
       return false;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
     int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
@@ -128,7 +133,7 @@ namespace Radiant
     sockaddr newAddress;
     socklen_t addressLength(sizeof(newAddress));
 
-    bzero( & newAddress, sizeof(newAddress));
+    memset( & newAddress, 0, sizeof(newAddress));
 
     for(;;) {
       SocketWrapper::clearErr();

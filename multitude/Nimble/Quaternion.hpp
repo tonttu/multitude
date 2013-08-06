@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -81,10 +76,9 @@ namespace Nimble {
     template <typename Y>
     Vector3T<Y> operator*(const Vector3T<Y> & v) const
     {
-      // nVidia SDK implementation
       Vector3T<Y> qvec(x, y, z);
-      Vector3T<Y> uv = ::cross(qvec, v);
-      Vector3T<Y> uuv = ::cross(qvec, uv);
+      Vector3T<Y> uv = cross(qvec, v);
+      Vector3T<Y> uuv = cross(qvec, uv);
       uv *= (2.0f * w);
       uuv *= 2.0f;
       return v + uv + uuv;
@@ -151,7 +145,7 @@ namespace Nimble {
     /// Extracts the rotation part of a 4x4 matrix, and calculates the quaternion values from that
     void operator=(const Matrix4T<T> & m)
     {
-      *this = m.getRotation();
+      *this = m.rotation();
     }
 
     /// Calculates quaternion values from a 3x3 rotation matrix
@@ -164,22 +158,22 @@ namespace Nimble {
       angle *= T(0.5);
       axis.normalize();
 
-      T si = Math::Sin(angle);
-      w = Math::Cos(angle);
+      T si = std::sin(angle);
+      w = std::cos(angle);
       x = axis.x * si;
       y = axis.y * si;
       z = axis.z * si;
 
     }
 
-    /// The squared length of this quaterion
+    /// The squared length of this quaternion
     /// @return x*x+y*y+z*z+w*w
     T lensq() const
     {
       return(x*x+y*y+z*z+w*w);
     }
 
-    /// Returns dot product between this quatertion and the argument quaternion
+    /// Returns dot product between this quaternion and the argument quaternion
     T dotp(const QuaternionT & v) const
     {
       return(x*v.x+y*v.y+z*v.z+w*v.w);
@@ -226,64 +220,14 @@ namespace Nimble {
       m.setRotation(*this);
       return m;
     }
-/*
-    Matrix33 Rmatrix() const {
-      Matrix33 ret;
-      T leninv = lensq();
-      if(leninv==0)
-        return(Matrix33(0));
-      else
-        leninv=(T)1.0/(T)sqrt(leninv);
 
-      T s2 = s*s, x2 = x*x, y2 = y*y, z2 = z*z;
-      ret.C[0]=(s2+x2-y2-z2);
-      ret.C[4]=(s2-x2+y2-z2);
-      ret.C[8]=(s2-x2-y2+z2);
-
-      T sx = s*x, yz = y*z;
-      ret.C[1*3+2]=2*(yz+sx);
-      ret.C[2*3+1]=2*(yz-sx);
-      T sy = s*y, zx = z*x;
-      ret.C[0*3+2]=2*(zx-sy);
-      ret.C[2*3+0]=2*(zx+sy);
-      T sz = s*z, xy = x*y;
-      ret.C[0*3+1]=2*(xy+sz);
-      ret.C[1*3+0]=2*(xy-sz);
-      return(ret);
-    }
-
-    void fillAffine33(Affine33 &aff) const {
-      T leninv = lensq();
-      if(leninv==0)
-        return;
-      else
-        leninv=(T)1.0/(T)sqrt(leninv);
-
-      T s2 = s*s, x2 = x*x, y2 = y*y, z2 = z*z;
-      aff.C[0] =leninv*(s2+x2-y2-z2);
-      aff.C[5] =leninv*(s2-x2+y2-z2);
-      aff.C[10]=leninv*(s2-x2-y2+z2);
-
-      leninv += leninv;
-
-      T sx = s*x, yz = y*z;
-      aff.C[1*4+2]=leninv*(yz+sx);
-      aff.C[2*4+1]=leninv*(yz-sx);
-      T sy = s*y, zx = z*x;
-      aff.C[0*4+2]=leninv*(zx-sy);
-      aff.C[2*4+0]=leninv*(zx+sy);
-      T sz = s*z, xy = x*y;
-      aff.C[0*4+1]=leninv*(xy+sz);
-      aff.C[1*4+0]=leninv*(xy-sz);
-    }
-*/
     /// Performs slerp interpolation between two quaternions
     static QuaternionT slerp(const QuaternionT & q1, QuaternionT q2, T t)
     {
       T sinom, scale0, scale1, theta;
 
       // calc cosine
-      T cosom = Math::Clamp<T>(q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w,
+      T cosom = Nimble::Math::Clamp<T>(q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w,
                                -1.0, 1.0);
 
       // Check if the quaternions are on opposite hemispheres
@@ -301,10 +245,10 @@ namespace Nimble {
       if((T(1.0) - cosom) > T(1e-03)) {
         // The quaternions aren't very close, proceed with SLERP
 
-        theta = Math::ACos(cosom);
-        sinom =	T(1.0) / Math::Sin(theta);
-        scale0 = Math::Sin(theta * scale0) * sinom;
-        scale1 = Math::Sin(theta * scale1) * sinom;
+        theta = std::acos(cosom);
+        sinom =	T(1.0) / std::sin(theta);
+        scale0 = std::sin(theta * scale0) * sinom;
+        scale1 = std::sin(theta * scale1) * sinom;
       }
 
       // Do the interpolation
@@ -331,7 +275,7 @@ namespace Nimble {
       T len = x*x + y*y + z*z;
       if(len > T(0.0)) {
         T ilen = Nimble::Math::InvSqrt(len);
-        angle = T(2.0) * Nimble::Math::ACos(w);
+        angle = T(2.0) * std::acos(w);
         axis.x = x*ilen;
         axis.y = y*ilen;
         axis.z = z*ilen;
@@ -349,7 +293,7 @@ namespace Nimble {
     {
       angle *= 0.5;
       axis.normalize();
-      return QuaternionT(axis*Math::Sin(angle), Math::Cos(angle));
+      return QuaternionT(axis*std::sin(angle), std::cos(angle));
     }
   };
 
@@ -367,10 +311,5 @@ namespace Nimble {
   /// Default (float) quaternion type
   typedef QuaternionT<float> Quaternion;
 }
-
-#ifdef __GCCXML__
-/// This is exported to JS
-template class Nimble::QuaternionT<float>;
-#endif
 
 #endif

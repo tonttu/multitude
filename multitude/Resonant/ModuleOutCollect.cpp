@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -25,24 +20,21 @@
 
 #include <algorithm>
 
-#include <strings.h>
-
 namespace Resonant {
 
   using Radiant::debug;
   using Radiant::info;
   using Radiant::error;
 
-  ModuleOutCollect::ModuleOutCollect(Application * a , DSPNetwork * host)
-    : Module(a),
-    m_subwooferChannel(-1),
-    m_host(host)
+  ModuleOutCollect::ModuleOutCollect(DSPNetwork * host)
+    : m_subwooferChannel(-1)
+    , m_host(host)
   {
     /* A hack to get the subwoofer channel information in without message passing etc. */
     const char * subenv = getenv("RESONANT_SUBWOOFER");
     if(subenv) {
       m_subwooferChannel = atoi(subenv);
-      info("ModuleOutCollect::ModuleOutCollect # Subwoofer channel set to %d",
+      Radiant::info("ModuleOutCollect::ModuleOutCollect # Subwoofer channel set to %d",
            m_subwooferChannel);
     }
   }
@@ -75,14 +67,14 @@ namespace Resonant {
     return true;
   }
 
-  void ModuleOutCollect::processMessage(const QString & id, Radiant::BinaryData & control)
+  void ModuleOutCollect::eventProcess(const QByteArray & id, Radiant::BinaryData & control)
   {
     bool ok = true;
     Move tmp;
 
     ok = control.readString(tmp.sourceId);
 
-    // info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
+    // Radiant::info("ModuleOutCollect::control # Now %d sources in the map", (int) m_map.size());
 
     if(id == "subwooferchannel") {
       m_subwooferChannel = control.readInt32();
@@ -97,17 +89,17 @@ namespace Resonant {
           it = m_map.erase(it);
         }
         else
-          it++;
+          ++it;
       }
     }
     else {
       tmp.from = control.readInt32( & ok);
       tmp.to   = control.readInt32( & ok);
 
-      debugResonant("ModuleOutCollect::control # %s", id.toUtf8().data());
+      debugResonant("ModuleOutCollect::control # %s", id.data());
 
       if(!ok) {
-        error("ModuleOutCollect::control # Could not parse control # %s",
+        Radiant::error("ModuleOutCollect::control # Could not parse control # %s",
               tmp.sourceId.toUtf8().data());
         return;
       }
@@ -123,16 +115,16 @@ namespace Resonant {
           m_map.erase(it);
         }
         else
-          error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
+          Radiant::error("ModuleOutCollect::control # Could not erase mapping # %s:%d -> %d",
                 tmp.sourceId.toUtf8().data(), tmp.from, tmp.to);
       }
       else {
-        error("ModuleOutCollect::control # No param \"%s\"", id.toUtf8().data());
+        Radiant::error("ModuleOutCollect::control # No param \"%s\"", id.data());
       }
     }
   }
 
-  void ModuleOutCollect::process(float ** in, float **, int n)
+  void ModuleOutCollect::process(float ** in, float **, int n, const CallbackTime &)
   {
     size_t chans = m_channels;
 
@@ -140,7 +132,7 @@ namespace Resonant {
 
     // Set to zero
     if(!m_interleaved.empty())
-      bzero( & m_interleaved[0], sizeof(float) * n * chans);
+      memset( & m_interleaved[0], 0, sizeof(float) * n * chans);
 
     for(size_t i = 0; i < m_map.size(); i++) {
 
@@ -155,7 +147,7 @@ namespace Resonant {
       float * dest = & m_interleaved[to];
 
       /* if(i < 2)
-        info("ModuleOutCollect::process # %p %d %f", src, i, src[0]);
+        Radiant::info("ModuleOutCollect::process # %p %d %f", src, i, src[0]);
       */
 
       while(src < sentinel) {

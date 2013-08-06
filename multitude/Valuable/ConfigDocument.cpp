@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -194,7 +189,6 @@ void ConfigDocument::writeConfig(std::ostream & output)
 
 void ConfigDocument::trimSpaces( std::string & str)
 {
-  using namespace std;
   size_t startpos = str.find_first_not_of(" \t\r");
   size_t endpos = str.find_last_not_of(" \t\r");
 
@@ -401,8 +395,7 @@ void convert(ConfigElement & to, DOMElement from)
 
   DOMElement::NodeList nodes = from.getChildNodes();
 
-  for(DOMElement::NodeList::iterator it = nodes.begin();
-      it != nodes.end(); it++) {
+  for(DOMElement::NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
 
     DOMElement de = (*it);
 

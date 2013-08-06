@@ -1,93 +1,96 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
-#ifndef VIDEODISPLAY_AUDIO_TRANSFER_HPP
-#define VIDEODISPLAY_AUDIO_TRANSFER_HPP
+#ifndef VIDEODISPLAY_AUDIO_TRANSFER2_HPP
+#define VIDEODISPLAY_AUDIO_TRANSFER2_HPP
 
-#include "Export.hpp"
-#include "VideoIn.hpp"
+#include "AVDecoder.hpp"
 
+#include <Radiant/Allocators.hpp>
 #include <Radiant/IODefs.hpp>
-#include <Radiant/TimeStamp.hpp>
 
 #include <Resonant/Module.hpp>
 
-namespace VideoDisplay {
+/// @cond
 
-  /** Transer sound stream from video input to audio output.
-
-      This class transfers sound data from the low-level video input
-      thread to audio playback engine.
-
-      AudioTransfer object are disposable, so they can be used only
-      once.
-
-      @see VideoIn
-   */
-  class VIDEODISPLAY_API AudioTransfer : public Resonant::Module
+namespace VideoDisplay
+{
+  class DecodedAudioBuffer
   {
   public:
-    /// Constructs an audio transfer object
-    AudioTransfer(Resonant::Application *, VideoIn * video);
-    virtual ~AudioTransfer();
+    DecodedAudioBuffer() : m_timestamp(), m_offset(0) {}
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void process(float ** in, float ** out, int n);
-    virtual bool stop();
+    void fill(Timestamp timestamp, int channels, int samples, const int16_t * src);
+    void fillPlanar(Timestamp timestamp, int channels, int samples, const float ** src);
 
-    /// Returns true if the audio transfer has actually started
-    bool started() const { return m_started; }
-    /// Returns true if the audio transfer has been stopped
-    bool stopped() const { return m_stopped; }
+    Timestamp timestamp() const { return m_timestamp; }
 
-    /// Check if the file has reached its end
-    bool atEnd() const { return m_end; }
+    int offset() const { return m_offset; }
+    void setOffset(int offset) { m_offset = offset; }
 
-    /// Returns the video frame that should be played right now.
-    unsigned videoFrame();
+    const float * data(unsigned channel) const
+    {
+      if(channel >= m_data.size()) return 0;
+      return m_data[channel].data();
+    }
 
-    /// Forgets the video source object, and shuts down.
-    void forgetVideo();
-
-    /// Sets the gain factor for the sound-track
-    void setGain(float gain) { m_gain = gain; }
+    int samples() const { return m_data.empty() ? 0 : m_data[0].size(); }
 
   private:
+    //DecodedAudioBuffer(const DecodedAudioBuffer &);
+    //DecodedAudioBuffer & operator=(DecodedAudioBuffer &);
+  private:
+    Timestamp m_timestamp;
+    int m_offset;
 
-    void deInterleave(float ** dest, const float * src,
-                 int chans, int frames, int offset);
-    static void zero(float ** dest,
-             int chans, int frames, int offset);
-
-    void checkEnd(const VideoIn::Frame * f);
-
-    VideoIn * m_video;
-    int       m_channels;
-    bool      m_started;
-    bool      m_stopped;
-    Radiant::AudioSampleFormat m_sampleFmt;
-    long      m_frames;
-
-    int       m_videoFrame;
-    int       m_showFrame;
-    int       m_availAudio;
-    int       m_total;
-    Radiant::TimeStamp m_startTime;
-
-    // Time stamp at the beginning of the current audio package.
-    Radiant::TimeStamp m_baseTS;
-    Radiant::TimeStamp m_timingBase;
-    Radiant::TimeStamp m_showTime;
-    int                m_sinceBase;
-    bool      m_ending;
-    bool      m_end;
-    bool      m_first;
-    double    m_audioLatency;
-    float     m_gain;
-    Radiant::Mutex m_mutex;
+    // vector of channels
+    typedef std::vector<float, Radiant::aligned_allocator<float, 32>> AlignedFloatVector;
+    std::vector<AlignedFloatVector> m_data;
   };
 
+  class LibavDecoder;
+
+  class AudioTransfer : public Resonant::Module
+  {
+  public:
+    AudioTransfer(LibavDecoder *, int channels);
+    virtual ~AudioTransfer();
+
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time) OVERRIDE;
+
+    Timestamp toPts(const Radiant::TimeStamp & ts) const;
+
+    Timestamp lastPts() const;
+
+    float bufferStateSeconds() const;
+
+    void shutdown();
+
+    DecodedAudioBuffer * takeFreeBuffer(int samples);
+    void putReadyBuffer(int samples);
+
+    void setPlayMode(AVDecoder::PlayMode playMode);
+    void setSeeking(bool seeking);
+    void setSeekGeneration(int seekGeneration);
+
+    /// Gain factor for the sound-track
+    float gain() const;
+    void setGain(float gain);
+
+  private:
+    class D;
+    D * m_d;
+  };
 }
 
-#endif
+/// @endcond
 
+#endif // VIDEODISPLAY_AUDIO_TRANSFER2_HPP

@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef LUMINOUS_GLRESOURCE_HPP
@@ -21,9 +16,11 @@
 
 #include <cstddef>
 
+/// @cond
+
 namespace Luminous
 {
-  class GLResources;
+  class RenderContext;
 
   /// Abstract base class for OpenGL resource objects
   /** This class is used to represent arbitrary OpenGL resources per
@@ -112,6 +109,7 @@ namespace Luminous
       };
      </PRE>
   */
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1
   class LUMINOUS_API GLResource
   {
     enum { PERSISTENT = -2 };
@@ -122,16 +120,16 @@ namespace Luminous
 
     /// Constructs a new resource and associates it with the given resources
     /// collection
-    GLResource(GLResources * resources = 0);
+    GLResource(RenderContext * resources = 0);
     virtual ~GLResource();
 
     /// Returns the resources collection this resource belongs to
-    GLResources * resources() { return m_resources; }
+    RenderContext * context() { return m_context; }
 
     /** Change the current resource host. This function can only be
       called once.
     @param resources new resource host*/
-    virtual void setResources(GLResources * resources);
+    virtual void setContext(RenderContext * resources);
 
     /// Returns the number of bytes this object consumes at the moment
     virtual long consumesBytes();
@@ -161,11 +159,13 @@ namespace Luminous
     void changeByteConsumption(long deallocated, long allocated);
 
   private:
-    GLResources * m_resources;
+    RenderContext * m_context;
 
     long m_deleteOnFrame;
     size_t m_generation;
   };
 }
+
+/// @endcond
 
 #endif

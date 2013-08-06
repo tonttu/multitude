@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "ImageCodecDDS.hpp"
 #include "Image.hpp"
 
@@ -135,12 +145,12 @@ union DDS_header {
   char data[ 128 ];
 };
 
-bool parse(FILE * file, DDS_header & header, ImageInfo & info)
+bool parse(QFile & file, DDS_header & header, ImageInfo & info)
 {
-  long pos = ftell(file);
-  int ok = (int) fread(&header, sizeof(DDS_header), 1, file);
-  fseek(file, pos, SEEK_SET);
-  if(!ok) return false;
+  auto pos = file.pos();
+  auto bytesRead = file.read(reinterpret_cast<char *>(&header), sizeof(DDS_header));
+  file.seek(pos);
+  if(bytesRead != sizeof(DDS_header)) return false;
 
   /// @todo seek to the end of the file, check that dwPitchOrLinearSize is correct
 
@@ -168,7 +178,7 @@ ImageCodecDDS::ImageCodecDDS()
 {
 }
 
-bool ImageCodecDDS::canRead(FILE * file)
+bool ImageCodecDDS::canRead(QFile & file)
 {
   DDS_header header;
   ImageInfo info;
@@ -185,18 +195,18 @@ QString ImageCodecDDS::name() const
   return "dds";
 }
 
-bool ImageCodecDDS::ping(ImageInfo & info, FILE * file)
+bool ImageCodecDDS::ping(ImageInfo & info, QFile & file)
 {
   DDS_header header;
   return parse(file, header, info);
 }
 
-bool ImageCodecDDS::read(Image &, FILE *)
+bool ImageCodecDDS::read(Image &, QFile &)
 {
   return false;
 }
 
-bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
+bool ImageCodecDDS::read(CompressedImage & image, QFile & file, int level)
 {
   DDS_header header;
   ImageInfo info;
@@ -207,7 +217,7 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
     return false;
   }
 
-  int size = linearSize(Nimble::Vector2i(info.width, info.height),
+  int size = linearSize(Nimble::Size(info.width, info.height),
                         info.pf.compression());
 
   if((header.dwFlags & DDSD_LINEARSIZE) && size != int(header.dwPitchOrLinearSize)) {
@@ -219,26 +229,26 @@ bool ImageCodecDDS::read(CompressedImage & image, FILE * file, int level)
   int offset = sizeof(header);
 
   if(level == 0) {
-    fseek(file, offset, SEEK_SET);
+    file.seek(offset);
     return image.loadImage(file, info, size);
   }
 
   for(int l = 0; l <= level; ++l) {
-    size = linearSize(Nimble::Vector2i(info.width, info.height),
+    size = linearSize(Nimble::Size(info.width, info.height),
                       info.pf.compression());
     if(l == level) break;
 
     offset += size;
-    info.width = Nimble::Math::Max(1, info.width >> 1);
-    info.height = Nimble::Math::Max(1, info.height >> 1);
+    info.width = std::max(1, info.width >> 1);
+    info.height = std::max(1, info.height >> 1);
   }
 
-  fseek(file, offset, SEEK_SET);
+  file.seek(offset);
   return image.loadImage(file, info, size);
 }
 
 bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compression format,
-                                 Nimble::Vector2i size, int mipmaps,
+                                 Nimble::Size size, int mipmaps,
                                  const std::vector<unsigned char> & dxt)
 {
   DDS_header header;
@@ -249,8 +259,8 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   header.dwSize = 124; // <- doesn't include magic
   header.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT |
       DDSD_MIPMAPCOUNT | DDSD_LINEARSIZE;
-  header.dwWidth = size.x;
-  header.dwHeight = size.y;
+  header.dwWidth = size.width();
+  header.dwHeight = size.height();
   header.dwMipMapCount = mipmaps;
   header.dwPitchOrLinearSize = linearSize(size, format);
 
@@ -281,29 +291,29 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   }
 }
 
-bool ImageCodecDDS::write(const Image &, FILE *)
+bool ImageCodecDDS::write(const Image &, QFile &)
 {
   return false;
 }
 
-Nimble::Vector2i ImageCodecDDS::bufferSize(Nimble::Vector2i size)
+Nimble::Size ImageCodecDDS::bufferSize(Nimble::Size size)
 {
   // DXT is compressed in 4x4 blocks, this will round the size up to the
   // nearest size diviable by 4
-  if(size.x == 0 || (size.x & 3))
-    size.x = (size.x & ~3) + 4;
-  if(size.y == 0 || (size.y & 3))
-    size.y = (size.y & ~3) + 4;
+  if(size.width() == 0 || (size.width() & 3))
+    size.setWidth((size.width() & ~3) + 4);
+  if(size.height() == 0 || (size.height() & 3))
+    size.setHeight((size.height() & ~3) + 4);
   return size;
 }
 
-int ImageCodecDDS::linearSize(Nimble::Vector2i size, PixelFormat::Compression format)
+int ImageCodecDDS::linearSize(Nimble::Size size, PixelFormat::Compression format)
 {
   bool dxt1 = format == PixelFormat::COMPRESSED_RGB_DXT1 ||
       format == PixelFormat::COMPRESSED_RGBA_DXT1;
   int channels = dxt1 ? 3 : 4;
   int factor = dxt1 ? 6 : 4;
   size = bufferSize(size);
-  return size.x * size.y * channels / factor;
+  return size.width() * size.height() * channels / factor;
 }
 }

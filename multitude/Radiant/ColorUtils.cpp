@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -22,17 +17,15 @@
 namespace Radiant
 {
 
-  using namespace Nimble;
-
   void ColorUtils::rgbTohsv(float r, float g, float b, float & h, float & s, float & v)
   {
     h = s = v = 0.0f;
 
     // Find the amount of white
-    const float   min = Math::Min(r, Math::Min(g, b));
+    const float   min = std::min(r, std::min(g, b));
 
     // Find the dominant primary
-    const float   max = Math::Max(r, Math::Max(g, b));
+    const float   max = std::max(r, std::max(g, b));
 
     // Compute saturation and value
     const float   delta = max - min;
@@ -64,9 +57,17 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::rgbTohsv(Vector3f & rgb, Vector3f & hsv)
+  void ColorUtils::rgbTohsv(const Nimble::Vector3f & rgb, Nimble::Vector3f & hsv)
   {
     rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
+  }
+
+  Color ColorUtils::rgbTohsv(const Color & rgb)
+  {
+    Color hsv;
+    hsv.w = rgb.w;
+    ColorUtils::rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
+    return hsv;
   }
 
   void ColorUtils::hsvTorgb(float h, float s, float v, float & r, float & g, float & b)
@@ -109,9 +110,17 @@ namespace Radiant
     }
   }
 
-  void ColorUtils::hsvTorgb(Vector3f & hsv, Vector3f & rgb)
+  void ColorUtils::hsvTorgb(const Nimble::Vector3f & hsv, Nimble::Vector3f & rgb)
   {
     hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+  }
+
+  Color ColorUtils::hsvTorgb(const Color & hsv)
+  {
+    Color rgb;
+    rgb.w = hsv.w;
+    hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+    return rgb;
   }
 
   void ColorUtils::colorBalance(VideoImage & img, Nimble::Vector3f rgbCoeff)

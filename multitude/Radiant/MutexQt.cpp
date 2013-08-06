@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "Mutex.hpp"
@@ -14,7 +21,7 @@
 
 namespace Radiant {
 
-  Mutex s_onceMutex;
+  Mutex s_onceMutex(true);
 
   // static bool mutexDebug = false;
 
@@ -82,29 +89,25 @@ namespace Radiant {
     return ret;
   }
 
-  int Condition::wakeAll()
+  void Condition::wakeAll()
   {
     m_d->wakeAll();
-    return 0;
   }
 
-  int Condition::wakeAll(Mutex & mutex)
+  void Condition::wakeAll(Mutex & mutex)
   {
     Guard g(mutex);
     wakeAll();
-    return 0;
   }
 
-  int Condition::wakeOne()
+  void Condition::wakeOne()
   {
     m_d->wakeOne();
-    return 0;
   }
 
-  int Condition::wakeOne(Mutex & mutex)
+  void Condition::wakeOne(Mutex & mutex)
   {
     Guard g(mutex);
     m_d->wakeOne();
-    return 0;
   }
 }

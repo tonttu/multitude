@@ -3,7 +3,7 @@
 
 #include <SDL/SDL.h>
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Image.hpp>
 #include <Luminous/Texture.hpp>
 #include <Luminous/Utils.hpp>
@@ -71,8 +71,8 @@ int main(int argc, char ** argv)
 
   glViewport(0, 0, width, height);
 
-  Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
-  Luminous::GLResources::setThreadResources( & rsc, 0, 0);
+  Luminous::RenderContext rsc;
+  Luminous::RenderContext::setThreadContext( & rsc);
 
   std::shared_ptr<Resonant::DSPNetwork> dsp = Resonant::DSPNetwork::instance();
   dsp->start();

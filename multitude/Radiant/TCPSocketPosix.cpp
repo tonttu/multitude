@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,7 +15,6 @@
 #include "Trace.hpp"
 
 #include <sys/types.h>
-#include <strings.h>
 
 #include "signal.h"
 
@@ -65,23 +59,41 @@ namespace Radiant
   {
     /// @todo this should probably moved elsewhere. No reason to run this multiple times.
     // ignore SIGPIPE (ie. when client closes the socket)
-  #ifndef _MSC_VER
-    signal(SIGPIPE, SIG_IGN);
-  #endif
+    #ifndef _MSC_VER
+      signal(SIGPIPE, SIG_IGN);
+    #endif
 
     SocketWrapper::startup();
   }
 
   TCPSocket::TCPSocket(int fd) : m_d(new D(fd))
   {
+    /// @todo this should probably moved elsewhere. No reason to run this multiple times.
+    #ifndef _MSC_VER
+      signal(SIGPIPE, SIG_IGN);
+    #endif
     SocketWrapper::startup();
     m_d->setOpts();
   }
 
   TCPSocket::~TCPSocket()
   {
-    close();
-    delete m_d;
+    if (m_d) {
+      close();
+      delete m_d;
+    }
+  }
+
+  TCPSocket::TCPSocket(TCPSocket && socket)
+    : m_d(socket.m_d)
+  {
+    socket.m_d = nullptr;
+  }
+
+  TCPSocket & TCPSocket::operator=(TCPSocket && socket)
+  {
+    std::swap(m_d, socket.m_d);
+    return *this;
   }
 
   bool TCPSocket::setNoDelay(bool noDelay)
@@ -104,7 +116,7 @@ namespace Radiant
     if(err == 0) {
       m_d->setOpts();
     } else {
-      error("TCPSocket::open # %s", errstr.toUtf8().data());
+      error("TCPSocket::open(%s:%d) # %s", host, port, errstr.toUtf8().data());
     }
     return err;
   }
@@ -149,7 +161,6 @@ namespace Radiant
 
     while(pos < bytes) {
       SocketWrapper::clearErr();
-      // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
       int max = bytes - pos > 32767 ? 32767 : bytes - pos;
       bool block = flags == WAIT_ALL || (flags == WAIT_SOME && pos == 0);
       int tmp;
@@ -234,7 +245,7 @@ namespace Radiant
       return true;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLWRNORM;
     int status = SocketWrapper::poll(&pfd, 1, 0);
@@ -251,7 +262,7 @@ namespace Radiant
       return false;
 
     struct pollfd pfd;
-    bzero( & pfd, sizeof(pfd));
+    memset( & pfd, 0, sizeof(pfd));
 
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
@@ -280,6 +291,16 @@ namespace Radiant
   unsigned long TCPSocket::txBytes() const
   {
     return m_d->m_txBytes;
+  }
+
+  const QString& TCPSocket::host() const
+  {
+    return m_d->m_host;
+  }
+
+  int TCPSocket::port() const
+  {
+    return m_d->m_port;
   }
 }
 

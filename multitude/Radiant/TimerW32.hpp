@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #ifndef RADIANT_TIMERW32_HPP
 #define RADIANT_TIMERW32_HPP
 
@@ -23,18 +33,18 @@ namespace Radiant
   class Timer
   {
   public:
-    /// Construct a new Timer and start it
+    /// Construct a new Timer and @ref start it
     inline Timer();
 
     /// Start the timer
     /// Starts the timer by resetting its clock to zero
     inline void start();
     /// Get start time
-    /// Returns the time of the last start() call.
+    /// Returns the time of the last @ref start call.
     /// @return start time in seconds
     inline double startTime() const;
     /// Get elapsed time
-    /// Returns the elapsed time in seconds since last start() call.
+    /// Returns the elapsed time in seconds since last @ref start call.
     /// @return elapsed time in seconds
     inline double time() const;
     /// Get the timer resolution
@@ -42,12 +52,6 @@ namespace Radiant
     /// @return resolution in ticks per second
     inline int resolution() const;
 
-    /// Operators
-    inline double operator-(const Timer & rhs) const;
-
-    /// Returns the time of the last start() call. Equivalent to calling startTime();
-    /// @return the start time in seconds
-    inline operator double() const;
   private:
     LARGE_INTEGER m_performanceFrequency;
     double m_performanceReciprocal;
@@ -81,16 +85,6 @@ namespace Radiant
     LARGE_INTEGER endTime;
     QueryPerformanceCounter(&endTime);
     return double((endTime.QuadPart - m_startTime.QuadPart) * m_performanceReciprocal);
-  }
-
-  double Timer::operator-(const Timer & rhs) const
-  {
-    return startTime() - rhs.startTime();
-  }
-
-  Timer::operator double() const
-  {
-    return startTime();
   }
 }
 

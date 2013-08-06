@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "Binning.hpp"
 
 #include <Luminous/Luminous.hpp>
@@ -74,7 +84,9 @@ namespace FireView {
   }
 
   void Binning::debugVisualize(int sx, int sy)
-  {/*
+  {
+#if 0
+    /*
     Radiant::Color c[] = {
       Radiant::Color(1.f, 0.f, 0.f, 1.f),
       Radiant::Color(0.f, 1.f, 0.f, 1.f),
@@ -111,6 +123,7 @@ namespace FireView {
     glBegin(GL_POINTS);
     glVertex2f(m_debugLastPoint.x * sx, (1.f - m_debugLastPoint.y) * sy);
     glEnd();
+#endif
   }
 
   void Binning::defineBins_ANSI_C78_377()

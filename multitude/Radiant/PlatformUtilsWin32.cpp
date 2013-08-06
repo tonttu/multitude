@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -36,6 +31,7 @@
 #include <sys/stat.h>
 
 #include <Windows.h>
+#include <vector>
 
 namespace {
 
@@ -94,9 +90,15 @@ namespace Radiant
       return path;
     }
 
+    /// Returns the current process identifier
+    int getProcessId()
+    {
+      return GetCurrentProcessId();
+    }
+
     QString getUserHomePath()
     {
-      // Typically this retrieves "C:\Documents and Settings\(username)"
+      // Typically this retrieves "C:\Users\(username)"
 
       QString   path;
 
@@ -113,6 +115,7 @@ namespace Radiant
       return path;
     }
 
+    /// @todo check if this can be removed (use MultiTouch::cornerstoneRoot() instead)
     QString getModuleGlobalDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;
@@ -131,7 +134,7 @@ namespace Radiant
 
       assert(strlen(module) < 128);
 
-      // Typically this retrieves "C:\Documents and Settings\(username)\Application Data"
+      // Typically this retrieves "C:\Users\(username)\Application Data"
 
       QString   path;
 
@@ -146,14 +149,6 @@ namespace Radiant
       }
 
       return path;
-    }
-
-    bool fileReadable(const char * filename)
-    {
-      struct _stat  buf;
-      memset(& buf, 0, sizeof(struct _stat));
-
-      return ((_stat(filename, & buf) != -1) && (buf.st_mode & _S_IREAD));
     }
 
     void * openPlugin(const char * path)
@@ -182,9 +177,33 @@ namespace Radiant
       return pmc.WorkingSetSize;
     }
 
-    void setEnv(const char * name, const char * value)
+    QString getLibraryPath(const QString& libraryName)
     {
-      SetEnvironmentVariableA((char *) name, (char *) value);
+      auto wLibraryName = libraryName.toStdWString();
+
+      HMODULE handle = GetModuleHandle(wLibraryName.data());
+      if(handle == NULL) {
+        Radiant::error("getLibraryPath # failed for '%s'", libraryName.toUtf8().data());
+        return QString();
+      }
+
+      std::vector<wchar_t> buffer(MAX_PATH);
+
+      DWORD got = GetModuleFileName(handle, &buffer[0], buffer.size());
+
+      while(got == buffer.size()) {
+
+        buffer.resize(2 * buffer.size());
+
+        got = GetModuleFileName(handle, &buffer[0], buffer.size());
+      }
+
+      if(got == 0) {
+        Radiant::error("getLibraryPath # failed to get path for '%s'", libraryName.toUtf8().data());
+        return QString();
+      }
+
+      return QString::fromStdWString(std::wstring(buffer.begin(), buffer.begin() + got));
     }
 
     void openFirewallPortTCP(int port, const QString & name)

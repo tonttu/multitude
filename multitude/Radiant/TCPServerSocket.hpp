@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,36 +15,44 @@
 
 #include <Radiant/Export.hpp>
 
+#include <QString>
+
 namespace Radiant {
 
   class TCPSocket;
 
   /// A server TCP socket for accepting incoming connections
   /// @todo Example code
-
   class RADIANT_API TCPServerSocket : public Patterns::NotCopyable
   {
   public:
+    /// Constructor
     TCPServerSocket();
+    /// Destructor
     ~TCPServerSocket();
 
     /// Opens a server TCP socket to desired host:port
-    /// @param host hostname
-    /// @param port port
-    /// @param maxconnections maximum number of pending connections
+    /// @param host Hostname
+    /// @param port Port number
+    /// @param maxconnections Maximum number of pending connections
     /// @return On successful execution, returns zero, otherwise an
-    /// error code (as in errno.h).
-    /// @todo why maxconnections 2?
+    ///         error code (as in errno.h).
     int open(const char * host, int port, int maxconnections = 2);
+
     /// Closes the socket
+    /// @return True if the socket was succesfulle closed
     bool close();
+
     /// Returns true of the socket is open.
+    /// @return True if the socket is open, false otherwise
     bool isOpen() const;
 
     /// Returns the hostname
-    //const char * host() const;
+    /// @return Hostname of the socket
+    const QString host() const;
     /// Returns the port number
-    //int port() const;
+    /// @return Port number of the socket
+    int port() const;
 
     /// Check for pending connections
     /// Checks for pending connections and optionally blocks for the given timeout.
@@ -57,7 +60,6 @@ namespace Radiant {
     /// @return true if there are pending connections
     bool isPendingConnection(unsigned int waitMicroSeconds = 0);
 
-    /// Accept new connections
     /// Accepts new connections. Blocks until a connection is received or the socket is closed.
     /// @return connected socket or null in case of error
     TCPSocket * accept();

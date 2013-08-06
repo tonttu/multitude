@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -19,7 +14,6 @@
 #include "StringUtils.hpp"
 
 #include <string.h>
-#include <strings.h>
 #include <time.h>
 
 #ifndef WIN32
@@ -91,7 +85,7 @@ namespace Radiant {
 				  bool yearfirst)
   {
     if(!date)
-      return 0;
+      return TimeStamp(0);
 
     QStringList segments = QString::fromUtf8(date).split(delim);
 
@@ -120,7 +114,7 @@ namespace Radiant {
 
     struct tm tms;
 
-    bzero(& tms, sizeof(tms));
+    memset(& tms, 0, sizeof(tms));
 
     tms.tm_year = year - 1900;
     tms.tm_mon = month - 1;
@@ -128,16 +122,14 @@ namespace Radiant {
     
     time_t tval = mktime(&tms);
 
-    //trace("tval as ctime = %s (%d %d %d)", ctime( & tval), year, month, day);
-
-    return TimeStamp(tval * ticksPerSecond());
+    return TimeStamp(tval * ticksPerSecond().value());
   }
 
   TimeStamp TimeStamp::createTime(const char * time,
 				  const char * delim)
   {
     if(!time)
-      return 0;
+      return TimeStamp(0);
 
     QStringList segments = QString::fromUtf8(time).split(delim);
     
@@ -167,14 +159,19 @@ namespace Radiant {
     return createDate(date, delim, yearfirst) + createTime(time, timedelim);
   }
 
-  TimeStamp::type TimeStamp::getTime()
+  TimeStamp TimeStamp::currentTime()
   {
-	  struct timeval tv;
-	  gettimeofday(& tv, 0);
-	  int64_t tmp = tv.tv_sec;
-	  tmp <<= 24;
-	  tmp |= (int64_t) (tv.tv_usec * (FRACTIONS_PER_SECOND * 0.000001));
-	  return tmp;
+    struct timeval tv;
+    gettimeofday(& tv, 0);
+    int64_t tmp = tv.tv_sec;
+    tmp <<= 24;
+    tmp |= (int64_t) (tv.tv_usec * (FRACTIONS_PER_SECOND * 0.000001));
+    return TimeStamp(tmp);
+  }
+
+  TimeStamp TimeStamp::getTime()
+  {
+    return currentTime();
   }
 
   QString TimeStamp::asString() const {
@@ -196,6 +193,17 @@ namespace Radiant {
 
   }
 
+  std::ostream & operator<<(std::ostream & os, const TimeStamp & ts)
+  {
+    return os << ts.value();
+  }
 
+  std::istream & operator>>(std::istream & is, TimeStamp & ts)
+  {
+    TimeStamp::type t;
+    is >> t;
+    ts.setValue(t);
+    return is;
+  }
 
 }

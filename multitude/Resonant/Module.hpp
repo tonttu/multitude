@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -28,7 +23,7 @@ namespace  Radiant {
 
 namespace Resonant {
 
-  class Application;
+  struct CallbackTime;
 
   /** Base class for #Resonant signal processing blocks. */
   /// @todo Check if the id could be dropped in favor of
@@ -43,7 +38,7 @@ namespace Resonant {
     };
 
     /// Constructs a new module base object.s
-    Module(Application *);
+    Module();
     virtual ~Module();
 
     /** Prepare for signal processing.
@@ -70,7 +65,7 @@ namespace Resonant {
         @param id Command name
         @param data Command parameters
      */
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+    virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
     /** Processes one cycle of audio data.
 
     @param in Input audio data.
@@ -80,21 +75,21 @@ namespace Resonant {
     @param n Number of samples to process. Guaranteed to be between
     1 and #MAX_CYCLE.
      */
-    virtual void process(float ** in, float ** out, int n) = 0;
+    virtual void process(float ** in, float ** out, int n, const CallbackTime & time) = 0;
+
     /// Stops the signal processing, freeing any resources necessary.
     /// @return True if stopping succeeded (or was already stopped). False on error.
     virtual bool stop();
 
     /// Sets the id of the module.
     /// @param id The new id
-    void setId(const QString & id);
+    void setId(const QByteArray & id);
     /// ID of the module
     /// @return the id of the module.
-    const QString & id() const { return m_id; }
+    const QByteArray & id() const { return m_id; }
 
   private:
-    Application * m_application;
-    QString m_id;
+    QByteArray m_id;
   };
 
 }

@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef RESONANT_MODULE_GAIN_HPP
@@ -17,11 +24,11 @@ namespace Resonant {
   {
   public:
     /// Constructs a new gain controller module
-    ModuleGain(Application *);
+    ModuleGain();
     virtual ~ModuleGain();
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void process(float ** in, float ** out, int n);
+    virtual void process(float ** in, float ** out, int n, const CallbackTime &);
 
     /// Set the gain instantly
     /// @param gain New gain coefficient

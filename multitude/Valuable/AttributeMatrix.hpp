@@ -1,23 +1,20 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef VALUEMATRIX_HPP
 #define VALUEMATRIX_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
+
+#include <Radiant/StringUtils.hpp>
 
 #include <Nimble/Matrix4.hpp>
 
@@ -26,7 +23,7 @@ namespace Valuable
 
   /// A matrix value object
   template<class MatrixType, typename ElementType, int N>
-  class VALUABLE_API AttributeMatrix : public AttributeT<MatrixType>
+  class AttributeMatrix : public AttributeT<MatrixType>
   {
     typedef AttributeT<MatrixType> Base;
   public:
@@ -37,7 +34,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    AttributeMatrix(Node * host, const QString & name, const MatrixType & v = MatrixType(), bool transit = false)
+    AttributeMatrix(Node * host, const QByteArray & name, const MatrixType & v = MatrixType(), bool transit = false)
       : Base(host, name, v, transit) {}
 
     AttributeMatrix() : Base() {}
@@ -47,11 +44,55 @@ namespace Valuable
     const ElementType * data() const
     { return this->value().data(); }
 
-    // virtual void processMessage(const QString & id, Radiant::BinaryData & data);
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
-    virtual const char * type() const OVERRIDE;
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
+    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
   };
+
+
+  
+  template <class T, typename S, int N>
+  AttributeMatrix<T,S,N>::~AttributeMatrix()
+  {}
+
+  /*
+  template <class T, typename S, int N>
+  void AttributeMatrix<T,S,N>::eventProcess(const QByteArray & id,
+                      Radiant::BinaryData & data)
+  {
+    if(id && strlen(id)) {
+      int index = strtol(id, 0, 10);
+      if(index >= N) {
+        return;
+      }
+
+      bool ok = true;
+
+      S v = data.read<S>(&ok);
+
+      if(ok) {
+        T tmp = Base::m_value;
+        tmp.data()[index] = v;
+        (*this) = tmp;
+      }
+    }
+    else {
+
+      bool ok = true;
+
+      T v = data.read<T>(&ok);
+
+      if(ok)
+        (*this) = v;
+    }
+  }
+  */
+
+  template<class MatrixType, typename ElementType, int N>
+  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok, Attribute::Layer layer) const {
+    if(ok) *ok = true;
+
+    return Radiant::StringUtils::toString(this->value(layer));
+  }
 
   /// A float Matrix2 value object
   typedef AttributeMatrix<Nimble::Matrix2f, float, 4> AttributeMatrix2f;

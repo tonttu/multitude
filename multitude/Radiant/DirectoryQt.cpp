@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -19,7 +14,6 @@
 #include <Radiant/Mutex.hpp>
 #include <QDir>
 #include <QList>
-#include <QTextCodec>
 
 #include <algorithm>
 
@@ -38,19 +32,14 @@ namespace Radiant
 
   void Directory::populate()
   {
-    MULTI_ONCE(
-        QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-        QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-    )
-
-    QDir::SortFlags sf = (m_sortFlag == Name) ? QDir::Name : QDir::Unsorted;
+    QDir::SortFlags sf = (m_sortFlag == NAME) ? QDir::Name : QDir::Unsorted;
     QDir::Filters ff = 0;
 
-    if(m_filterFlags & Dirs) ff |= QDir::Dirs;
-    if(m_filterFlags & Files) ff |= QDir::Files;
-    if(m_filterFlags & NoDotAndDotDot) ff |= QDir::NoDotAndDotDot;
-    if(m_filterFlags & Hidden) ff |= QDir::Hidden;
-    if(m_filterFlags & System) ff |= QDir::System;
+    if(m_filterFlags & DIRS) ff |= QDir::Dirs;
+    if(m_filterFlags & FILES) ff |= QDir::Files;
+    if(m_filterFlags & NO_DOT_AND_DOTDOT) ff |= QDir::NoDotAndDotDot;
+    if(m_filterFlags & HIDDEN) ff |= QDir::Hidden;
+    if(m_filterFlags & SYSTEM) ff |= QDir::System;
  
     QDir dir(m_path, "", sf, ff);
 

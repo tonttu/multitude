@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,13 +13,34 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Radiant/TimeStamp.hpp>
+
 #include <Resonant/Export.hpp>
 
 #include <cstdlib>
 
 class QString;
-
+struct PaStreamCallbackTimeInfo;
 namespace Resonant {
+
+  /// @cond
+
+  struct CallbackTime
+  {
+    CallbackTime(Radiant::TimeStamp outputTime, double latency, unsigned long flags)
+      : outputTime(outputTime),
+        latency(latency),
+        flags(flags)
+    {}
+    /// When will be this sample be played on the sound card
+    const Radiant::TimeStamp outputTime;
+    /// Estimated latency
+    const double latency;
+    /// PaStreamCallbackFlags
+    const unsigned long flags;
+  };
+
+  /// @endcond
 
   /** A simple audio IO class.
 
@@ -37,7 +53,7 @@ namespace Resonant {
   public:
     /// Creates a new audio IO object
     AudioLoop();
-    /// Deletes an audio OI object
+    /// Deletes an audio IO object
     virtual ~AudioLoop();
 
     /// Start the AudioLoop.
@@ -84,7 +100,9 @@ namespace Resonant {
     ///         for more information
     /// @see PaStreamCallback in PortAudio documentation
     virtual int callback(const void * in, void * out,
-                         unsigned long framesPerBuffer, int streamid) = 0;
+                         unsigned long framesPerBuffer, int streamid,
+                         const PaStreamCallbackTimeInfo & time,
+                         unsigned long flags) = 0;
 
     /// @cond
     bool       m_isRunning;

@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef RADIANT_TCP_SOCKET_HPP
@@ -41,13 +36,22 @@ namespace Radiant {
       WAIT_ALL    ///< Blocks until all requested data is read or socket has a read error
     };
 
+    /// Constructor
     TCPSocket();
     /// Construct a socket based on a file descriptor
     /// This method is potentially non-portable as not all platforms use file
     /// descriptors to handle sockets.
     /// @param fd socket file descriptor
     TCPSocket(int fd);
+    /// Destructor. Closes the socket.
     ~TCPSocket();
+    /// Move the given socket
+    /// @param socket socket to move
+    TCPSocket(TCPSocket && socket);
+    /// Move the given socket
+    /// @param socket socket to move
+    /// @return reference to this
+    TCPSocket & operator=(TCPSocket && socket);
 
     /// Turn the Nagle algorithm on or off. This controls the queuing of
     /// messages to fill packets.
@@ -62,15 +66,19 @@ namespace Radiant {
     /// error code (as in errno.h).
     int open(const char * host, int port);
     /// Closes the socket
+    /// @return True if there was socket to close, false otherwise
     virtual bool close();
 
     /// Returns true of the socket is open.
-    bool isOpen() const;
+    /// @return True if there is an open socket
+    virtual bool isOpen() const OVERRIDE;
 
     /// Returns the hostname
-    //QString host() const;
+    /// @return Hostname of the socket
+    const QString& host() const;
     /// Returns the port number
-    //int port() const;
+    /// @return Port number of the socket
+    int port() const;
 
     /// Read bytes from the socket
     /** @param[out] buffer pointer to a buffer to store the read data to
@@ -93,19 +101,31 @@ namespace Radiant {
     }
 
     /// Write bytes to the socket
+    /// @param buffer Data to write
+    /// @param bytes How many bytes is requested to be written
+    /// @return How many bytes were actually written
     int write(const void * buffer, int bytes);
 
     /// Returns true if the socket has been closed
+    /// @return True if socket has been closed
     virtual bool isHungUp() const;
 
     /// Return 'true' if readable data is pending.
+    /// @param waitMicroSeconds How long this call will block at most
+    /// @return True If the socket is pending input
     virtual bool isPendingInput(unsigned int waitMicroSeconds = 0);
 
     /// @cond
     int fd() const;
     /// @endcond
 
+    /// Number of bytes received through the socket. This count gets cleared
+    /// when a socket is opened.
+    /// @return number of bytes received through the socket
     unsigned long rxBytes() const;
+    /// Number of bytes sent through the socket. This count gets cleared
+    /// when a socket is opened.
+    /// @return number of bytes sent through the socket
     unsigned long txBytes() const;
 
 /// @cond

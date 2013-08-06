@@ -1,8 +1,18 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "VM1.hpp"
 
 #include "ColorCorrection.hpp"
-#include "BGThread.hpp"
 
+#include <Radiant/BGThread.hpp>
 #include <Radiant/SerialPort.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
@@ -29,7 +39,7 @@ namespace
       if(r < 0) {
         int e = errno;
         if(e == EAGAIN && timeoutMS > 0) {
-          Radiant::Sleep::sleepMs(Nimble::Math::Max(1, timeoutMS));
+          Radiant::Sleep::sleepMs(std::max(1, timeoutMS));
           --timeoutMS;
           continue;
         } else {
@@ -116,7 +126,7 @@ namespace Luminous
 {
   static Radiant::Mutex s_vm1Mutex;
 
-  class VM1::D : public Luminous::Task, public std::enable_shared_from_this<VM1::D>
+  class VM1::D : public Radiant::Task, public std::enable_shared_from_this<VM1::D>
   {
   public:
     D();
@@ -238,7 +248,8 @@ namespace Luminous
     m_data += ba;
     if (state() == DONE) {
       setState(WAITING);
-      Luminous::BGThread::instance()->addTask(shared_from_this());
+      /// @todo make this work
+      //Radiant::BGThread::instance()->addTask(shared_from_this());
     }
   }
 
@@ -252,7 +263,8 @@ namespace Luminous
       Radiant::Guard g(s_vm1Mutex);
       m_d = D::s_d.lock();
       if (!m_d) {
-        m_d.reset(new D());
+        /// @todo make this work
+        //m_d.reset(new D());
         D::s_d = m_d;
       }
     }

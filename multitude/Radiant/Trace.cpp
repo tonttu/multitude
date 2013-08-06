@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "Trace.hpp"
@@ -47,7 +42,7 @@ namespace Radiant {
   static std::string g_lastLogLine = "";
   static bool g_forceColors = false;
   static bool g_enableThreadId = false;
-  static std::set<std::string> g_verboseModules;
+  static std::set<QString> g_verboseModules;
 
   QString g_appname;
 
@@ -81,12 +76,12 @@ namespace Radiant {
     return g_enableThreadId;
   }
 
-  void enableVerboseOutput(bool enable, const char * module)
+  void enableVerboseOutput(bool enable, const QString & module)
   {
 
-    if (module) {
+    if (!module.isEmpty()) {
       if (enable) {
-        g_verboseModules.insert(std::string(module));
+        g_verboseModules.insert(module);
       } else {
         g_verboseModules.erase(module);
       }
@@ -135,6 +130,9 @@ namespace Radiant {
     const char * color = "";
     const char * colors_end = "";
 
+#ifndef RADIANT_OSX
+    /* On OSX Mountain Lion the color switching code seems to corrupt the terminal
+       if the application crashes. It is easier to just not use the colors. */
     if(use_colors) {
       if(s == WARNING) {
         color = "\033[1;33m";
@@ -146,6 +144,7 @@ namespace Radiant {
       timestamp_color = "\033[1;30m";
       colors_end = "\033[0m";
     }
+#endif
 
     char storage[1024];
     char * buffer = storage;
@@ -180,43 +179,49 @@ namespace Radiant {
 
     vsnprintf(buffer, size, msg, args);
 
-    Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+    Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
-    {
+    // Skip duplicates
+    if(enabledDuplicateFilter()) {
       Guard lock(g_mutex);
+      std::string tmp(storage);
+      if(g_lastLogLine == tmp)
+        return;
 
-      // Skip duplicates
-      if(enabledDuplicateFilter()) {
-        std::string tmp(storage);
-        if(g_lastLogLine == tmp)
-          return;
+      g_lastLogLine = tmp;
+    }
 
-        g_lastLogLine = tmp;
-      }
+    time_t t = now.value() >> 24;
+    /// localtime is not thread-safe on unix, and localtime_r isn't defined in windows
+#ifdef RADIANT_WINDOWS
+    struct tm * ts = localtime(&t);
+#else
+    struct tm tmp;
+    struct tm * ts = localtime_r(&t, &tmp);
+#endif
 
-      time_t t = now.value() >> 24;
-      /// localtime is not thread-safe
-      struct tm * ts = localtime(&t);
-
-      fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
-              ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
-              ts->tm_hour, ts->tm_min, ts->tm_sec,
-              int(now.subSecondsUS()) / 1000, colors_end, storage,
-              colors_end);
+    fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s\n", timestamp_color,
+            ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+            ts->tm_hour, ts->tm_min, ts->tm_sec,
+            int(now.subSecondsUS()) / 1000, colors_end, storage,
+            colors_end);
 
 #ifdef _WIN32
     // Log to the Windows debug-console as well
     char logmsg[256];
-    vsnprintf(logmsg, 256, msg, args);
+    int len = _snprintf(logmsg, 16, "[thr:%d] ", GetCurrentThreadId());
 
-    char threadId[16];
-    _snprintf(threadId, 16, "[thr:%d] ", GetCurrentThreadId());
-  
-    OutputDebugStringA(threadId);
-    OutputDebugStringA(logmsg);
-    OutputDebugStringA("\n");
-#endif
+    int len2 = vsnprintf(logmsg+len, 256-len, msg, args);
+    if (len + len2 > 254 || len2 < 0) {
+      logmsg[254] = '\n';
+      logmsg[255] = '\0';
+    } else {
+      logmsg[len+len2] = '\n';
+      logmsg[len+len2+1] = '\0';
     }
+
+    OutputDebugStringA(logmsg);
+#endif
     fflush(out);
   }
 
@@ -304,6 +309,8 @@ namespace Radiant {
     va_start(args, msg);
     g_output(FATAL, 0, msg, args);
     va_end(args);
+
+    abort();
 
     exit(EXIT_FAILURE);
   }

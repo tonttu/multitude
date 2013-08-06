@@ -1,21 +1,15 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "MipMapGenerator.hpp"
 #include "Image.hpp"
-#include "CPUMipmaps.hpp"
 #include "ImageCodecDDS.hpp"
 #include "Squish/squish.h"
 
@@ -23,37 +17,45 @@
 
 namespace Luminous {
 
-  MipMapGenerator::MipMapGenerator(const QString & src)
-    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+  MipMapGenerator::MipMapGenerator(const QString & src,
+                                   const QString & target)
+    : Task(defaultPriority()),
       m_src(src),
+      m_target(target),
       m_out(0),
       m_flags(0)
   {
   }
 
   MipMapGenerator::MipMapGenerator(const QString & src,
+                                   const QString & target,
                                    const PixelFormat & mipmapFormat)
-    : Task((PRIORITY_NORMAL + PRIORITY_LOW) / 2),
+    : Task(defaultPriority()),
       m_src(src),
+      m_target(target),
       m_mipmapFormat(mipmapFormat),
       m_out(0),
       m_flags(0)
   {
   }
 
+  MipMapGenerator::~MipMapGenerator()
+  {
+  }
+
   void MipMapGenerator::doTask()
   {
-    setFinished();
-
     if(m_mipmapFormat != PixelFormat() &&
        m_mipmapFormat.compression() == PixelFormat::COMPRESSION_NONE) {
       Radiant::error("MipMapGenerator::doTask # non-DXT -formats aren't supported");
+      setFinished();
       return;
     }
 
     Image img;
     if(!img.read(m_src.toUtf8().data())) {
       Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.toUtf8().data());
+      setFinished();
       return;
     }
 
@@ -84,11 +86,11 @@ namespace Luminous {
     // number of mipmaps, including the original one
     int mipmaps = 0;
 
-    Nimble::Vector2i size = img.size();
+    Nimble::Size size = img.size();
     for(;;) {
       requiredSize += ImageCodecDDS::linearSize(size, m_mipmapFormat.compression());
       ++mipmaps;
-      if(size.x <= 4 && size.y <= 4) break;
+      if(size.width() <= 4 && size.height() <= 4) break;
       size /= 2;
     }
 
@@ -97,9 +99,8 @@ namespace Luminous {
 
     resize(img, 0);
 
-    const QString filename = CPUMipmaps::cacheFileName(m_src, -1, "dds");
     ImageCodecDDS dds;
-    dds.writeMipmaps(filename, m_mipmapFormat.compression(),
+    dds.writeMipmaps(m_target, m_mipmapFormat.compression(),
                      img.size(), mipmaps, m_outBuffer);
     if(m_listener) {
       ImageInfo info;
@@ -107,8 +108,14 @@ namespace Luminous {
       info.width = img.height();
       info.mipmaps = mipmaps;
       info.pf = m_mipmapFormat;
-      m_listener->mipmapsReady(info);
+      m_listener(info);
     }
+    setFinished();
+  }
+
+  void MipMapGenerator::setListener(std::function<void (const ImageInfo &)> func)
+  {
+    m_listener = func;
   }
 
   void MipMapGenerator::resize(const Image & img, const int level)
@@ -139,5 +146,10 @@ namespace Luminous {
       return PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT3);
     else
       return PixelFormat(PixelFormat::COMPRESSED_RGB_DXT1);
+  }
+
+  int MipMapGenerator::defaultPriority()
+  {
+    return (PRIORITY_NORMAL + PRIORITY_LOW) / 2;
   }
 }

@@ -1,334 +1,231 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
-#ifndef LUMINOUS_TEXTURE_HPP
+#if !defined (LUMINOUS_TEXTURE_HPP)
 #define LUMINOUS_TEXTURE_HPP
 
-#include <Luminous/Luminous.hpp>
-#include <Luminous/GLResource.hpp>
-#include <Luminous/PixelFormat.hpp>
+#include "Luminous/Luminous.hpp"
+#include "Luminous/RenderResource.hpp"
 
-#include <Nimble/Vector2.hpp>
+#include <Radiant/Color.hpp>
 
-#include <Patterns/NotCopyable.hpp>
-
-#include <Valuable/Node.hpp>
+#include <QRegion>
 
 namespace Luminous
 {
-  class PixelFormat;
-  class Image;
-  class CompressedImage;
 
-  /// UploadLimiter manages GPU upload limits for each RenderThread per frame.
-  /// These limits should be obeyed when loading data to GPU with glTexImage2D
-  /// or similar command. All classes in Luminous follow this limit automatically.
-  ///
-  /// Simple example:
-  /// @code
-  /// long & limit = UploadLimiter::available();
-  /// if(limit >= bytesToUpload) {
-  ///   glTexImage2D(...);
-  ///   limit -= bytesToUpload;
-  /// } /* else wait for the next frame */
-  /// @endcode
-  class LUMINOUS_API UploadLimiter : public Valuable::Node
+  /// A GPU texture. This class contains the necessary CPU-side information
+  /// about a texture. This class does not own the memory it handles. All
+  /// pointers given to this class must remain valid during the lifetime of
+  /// this object.
+  /// GPU correspondent of this class is TextureGL
+  class Texture : public RenderResource
   {
   public:
-    /// Accepts "frame" event, resets all limits for a new frame.
-    void processMessage(const QString & type, Radiant::BinaryData & data);
+    /// Texture filter mode
+    enum Filter {
+      /// Point-sampled filtering
+      FILTER_NEAREST = GL_NEAREST,
+      /// Linear filtering
+      FILTER_LINEAR = GL_LINEAR
+    };
 
-    /// Get the singleton instance. Usually not used, since all the important
-    /// functions are already static.
-    /// @return an instance of UploadLimiter
-    static UploadLimiter & instance();
+    /// Texture wrap mode
+    enum Wrap {
+      /// Repeat texture
+      WRAP_REPEAT,
+      /// Mirror texture
+      WRAP_MIRROR,
+      /// Clamp texture
+      WRAP_CLAMP,
+      /// Clamp-to-border
+      WRAP_BORDER
+    };
 
-    /// Returns a reference to the thread-specific remaining upload capacity in
-    /// bytes. Use this to check if some GPU transfer operation should be
-    /// performed right away, delayed to the next frame or splitted to smaller
-    /// pieces.
-    /// After doing any upload operation, decrease this value accordingly.
-    /// @returns How many bytes there are available for uploading in this frame.
-    static long & available();
+  public:
+    /// Construct a new texture
+    LUMINOUS_API Texture();
+    /// Destructor
+    LUMINOUS_API ~Texture();
 
-    /// Returns the current frame number.
-    static long frame();
+    /// Construct a copy
+    /// @param tex texture to copy
+    LUMINOUS_API Texture(Texture & tex);
+    /// Copy a texture
+    /// @param tex texture to copy
+    LUMINOUS_API Texture & operator=(Texture & tex);
 
-    /// Ask the frame upload limit.
-    /// @return The frame upload limit in bytes.
-    static long limit();
+    /// Construct texture by moving
+    /// @param tex texture to move
+    LUMINOUS_API Texture(Texture && tex);
+    /// Move a texture
+    /// @param tex texture to move
+    LUMINOUS_API Texture & operator=(Texture && tex);
 
-    /// Sets the upload limit
-    /// @param limit New upload limit in bytes.
-    static void setLimit(long limit);
+    /// Specify the number of color components in the texture. Use 0 to let
+    /// Cornerstone select the default format. See "internalFormat" parameter
+    /// description in
+    /// http://www.opengl.org/sdk/docs/man3/xhtml/glTexImage2D.xml
+    /// @param format number of color components
+    LUMINOUS_API void setInternalFormat(int format);
+    /// Get the number of color components in the texture
+    /// @return number of color components
+    LUMINOUS_API int internalFormat() const;
 
-    /// Enable or disable the upload limiter. available() will always return
-    /// numeric_limits<long>::max() if limiter is disabled.
-    /// @param v True if limiter should be enabled
-    static void setEnabledForCurrentThread(bool v);
+    /// Set 1D texture data from memory.
+    /// @param width width of the texture
+    /// @param dataFormat data format
+    /// @param data data pointer
+    LUMINOUS_API void setData(unsigned int width, const PixelFormat & dataFormat, const void * data);
+    /// Set 2D texture data from memory.
+    /// @param width width of the texture
+    /// @param height height of the texture
+    /// @param dataFormat data format
+    /// @param data data pointer
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data);
+    /// Set 3D texture data from memory.
+    /// @param width width of the texture
+    /// @param height height of the texture
+    /// @param depth depth of the texture
+    /// @param dataFormat data format
+    /// @param data data pointer
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data);
 
-    /// Ask the limiter status
-    /// @returns True if limiter is active for this thread.
-    static bool enabledForCurrentThread();
+    /// Reset the texture to invalid state
+    LUMINOUS_API void reset();
+
+    /// Get the size of the texture data in bytes
+    /// @return texture size in bytes
+    LUMINOUS_API std::size_t dataSize() const;
+
+    /// Set the texture line size in pixels. Use 0 to use width of the texture.
+    /// @param size size of one line in pixels
+    LUMINOUS_API void setLineSizePixels(std::size_t size);
+    /// Get the texture line size in pixels
+    /// @return line size in pixels
+    LUMINOUS_API unsigned int lineSizePixels() const;
+
+    /// Check if the texture is valid. Texture is considered valid, if its dimension has been defined.
+    /// @return true if the texture is valid; otherwise false
+    /// @sa dimensions
+    LUMINOUS_API bool isValid() const;
+
+    /// Get texture dimension. 2D textures will have dimension 2 and 3D textures 3.
+    /// @return texture dimension
+    LUMINOUS_API uint8_t dimensions() const;
+    /// Get the width of the texture
+    /// @return texture width in pixels
+    LUMINOUS_API unsigned int width() const;
+    /// Get the height of the texture
+    /// @return texture height in pixels
+    LUMINOUS_API unsigned int height() const;
+    /// Get the depth of the texture
+    /// @return texture depth in pixels
+    LUMINOUS_API unsigned int depth() const;
+    /// Get the pixel format of the texture data
+    /// @return data format
+    LUMINOUS_API const PixelFormat & dataFormat() const;
+    /// Get the raw pointer to texture data.
+    /// @return pointer to texture data
+    LUMINOUS_API const void * data() const;
+
+    /// Mark a region of the texture as dirty. Dirty regions are used to
+    /// determine which parts of the texture data must be uploaded to GPU
+    /// memory. Use this function if you want to optimize texture uploads to
+    /// GPU. For example, if you only update a small region of a large texture,
+    /// you can just mark the changed region as dirty and Cornerstone will only
+    /// upload that part of the texture to the GPU.
+    /// @param rect dirty region define in pixel coordinates
+    LUMINOUS_API void addDirtyRect(const QRect & rect);
+
+    /// Get the texture dirty region for the given thread. This functions
+    /// returns the dirty region of the texture for the given thread. This
+    /// function is used by Cornerstone internally. There should be no reason
+    /// to call this function manually.
+    /// @param threadIndex index of the thread to query the region for
+    /// @return dirty region for the given thread
+    LUMINOUS_API QRegion dirtyRegion(unsigned int threadIndex) const;
+
+    /// Get the dirty region for the given thread and clear the dirty region.
+    /// This functions returns the dirty region of the texture and
+    /// simultaneously clears it to empty. This function is used by Cornerstone
+    /// internally and there should be no reason to call this function
+    /// manually.
+    /// @param threadIndex index of the thread to query
+    /// @return dirty region for the given thread
+    LUMINOUS_API QRegion takeDirtyRegion(unsigned int threadIndex) const;
+
+    /// Get the sample count of the texture. By default, the sample count is
+    /// zero for textures that are not multi-sampled.
+    /// @return sample count
+    LUMINOUS_API unsigned int samples() const;
+
+    /// Set the number of samples for the texture. This function can be used to
+    /// define multi-sampled textures.
+    /// @param samples sample count
+    LUMINOUS_API void setSamples(unsigned int samples);
+
+    /// Check if the texture is translucent.
+    /// @sa setTranslucency
+    LUMINOUS_API bool translucent() const;
+
+    /// Set translucency flag to the texture. This flag is used by Cornerstone
+    /// to optimize rendering. Rendering opaque textures can be sorted for
+    /// optimal performance. Rendering translucent textures can not be sorted.
+    /// A texture must be marked as translucent if it has an alpha channel and
+    /// any pixel in the texture has an alpha component other than one. Failure
+    /// to do so may cause rendering artifacts as incorrect blending.
+    /// @param translucency texture translucency
+    /// @sa translucent
+    LUMINOUS_API void setTranslucency(bool translucency);
+
+    /// Get the texture minification filter mode
+    /// @return filtering used for texture minification
+    LUMINOUS_API Filter getMinFilter() const;
+    /// Set texture minification filtering
+    /// @param filter filtering used
+    LUMINOUS_API void setMinFilter(Filter filter);
+
+    /// Get texture magnification filter mode
+    /// @return filtering used for texture magnification
+    LUMINOUS_API Filter getMagFilter() const;
+    /// Set texture magnification filtering
+    /// @param filter filtering used
+    LUMINOUS_API void setMagFilter(Filter filter);
+
+    /// Set the texture wrap mode
+    /// @param s wrap mode for s texture coordinate
+    /// @param t wrap mode for t texture coordinate
+    /// @param r wrap mode for r texture coordinate
+    LUMINOUS_API void setWrap(Wrap s, Wrap t, Wrap r);
+    /// Get the texture wrap mode
+    /// @param[out] s wrap mode for s coordinate
+    /// @param[out] t wrap mode for t coordinate
+    /// @param[out] r wrap mode for r coordinate
+    LUMINOUS_API void getWrap(Wrap & s, Wrap & t, Wrap & r) const;
+
+    /// Set the texture border color
+    /// @param color border color
+    LUMINOUS_API void setBorderColor(const Radiant::Color & color);
+    /// Get the texture border color
+    /// @return border color
+    LUMINOUS_API const Radiant::Color & borderColor() const;
+
+    /// Get the generation number for texture parameters. This is increased
+    /// every time border color, wrap mode or min/mag filters are changed
+    /// @return generation number, starting from 0
+    LUMINOUS_API int paramsGeneration() const;
 
   private:
-    UploadLimiter();
-    int m_frame;
-    long m_frameLimit;
-    bool m_inited;
+    class D;
+    D * m_d;
   };
-
-  /// Base class for different textures
-  /** Texture objects can be create without a valid OpenGL context, but their actual
-      usage requires a valid OpenGL context. */
-  template<GLenum TextureType>
-  class LUMINOUS_API TextureT : public GLResource, public Patterns::NotCopyable
-  {
-    friend class Framebuffer;
-
-  public:
-    /// Constructs a texture and adds it to the given resource collection
-    TextureT(GLResources * res = 0)
-    : GLResource(res),
-      m_textureId(0),
-      m_width(0),
-      m_height(0),
-      m_internalFormat(0),
-      m_haveMipmaps(false),
-      m_consumed(0)
-    {}
-    virtual ~TextureT();
-
-    /** Activate textureUnit and bind this texture to that unit.
-    @param textureUnit texture unit to bind to*/
-    void bind(GLenum textureUnit)
-    {
-      allocate();
-      glActiveTexture(textureUnit);
-      glBindTexture(TextureType, m_textureId);
-    }
-
-    /** Bind this texture to the currently active texture unit. */
-    void bind()
-    {
-      allocate();
-      glBindTexture(TextureType, m_textureId);
-    }
-
-    /// Returns the width of the texture (if known)
-    int width() const { return m_width; }
-    /// Returns the height of the texture (if known)
-    int height() const { return m_height; }
-
-    /// Returns the size (width x height) of the texture, if known
-    Nimble::Vector2i size() const
-    { return Nimble::Vector2i(m_width, m_height); }
-
-    /** Sets the width of the texture. This is not used by the object for
-    anything but allows the user to query texture dimension from the texture
-    object.
-    @param w texture width */
-    void setWidth(int w) { m_width = w; }
-    /** Sets the height of the texture. This is not used by the object for
-    anything but allows the user to query texture dimension from the texture
-    object.
-    @param h texture height */
-    void setHeight(int h) { m_height = h; }
-
-    /// Get the number of pixels in the texture.
-    /// Computes the area of the texture in pixels
-    /// @return the number of pixels in the texture
-    int pixelCount() const { return m_width * m_height; }
-
-    /// Returns estimation of much GPU RAM the texture uses.
-    /// @return estimated number of bytes
-    virtual long consumesBytes()
-    {
-      /// @todo how about compressed formats with mipmaps, does the 4/3 rule apply here as well?
-      if(m_consumed > 0) return (long)m_consumed;
-
-      return (long)estimateMemoryUse();
-    }
-
-    /// Get the OpenGL texture id
-    /// @return the OpenGL texture id
-    GLuint id() const { return m_textureId; }
-    /// Returns true if the texture is defined
-    /// @return true if the texture object has been defined
-    bool isDefined() const { return id() != 0; }
-
-    /// Get the internal format of the texture
-    /// @return internal OpenGL texture format
-    GLenum internalFormat() const { return m_internalFormat; }
-
-    bool haveMipmaps() const { return m_haveMipmaps; }
-
-  protected:
-    size_t estimateMemoryUse() const;
-
-    /// OpenGL texture handle
-    GLuint m_textureId;
-    /// Width of the texture
-    int m_width;
-    /// Height of the texture
-    int m_height;
-    /// The internal texture format
-    GLenum m_internalFormat;
-    /// Does the texture have mipmaps
-    bool m_haveMipmaps;
-    /// The actual consumed size on GPU, if good enough estimate is known
-    /// If this is zero, the size is guessed from internalFormat and size
-    int m_consumed;
-
-  private:
-    /// Allocates the texture object. Does not allocate memory for the texture data.
-    void allocate();
-  };
-
-  /// A 1D texture
-  class LUMINOUS_API Texture1D : public TextureT<GL_TEXTURE_1D>
-  {
-  public:
-    /// Constructs a 1D texture and adds it to the given resource collection
-    Texture1D(GLResources * resources = 0) : TextureT<GL_TEXTURE_1D> (resources) {}
-
-    /// Load the texture from from raw data, provided by the user
-    bool loadBytes(GLenum internalFormat, int h,
-                   const void* data,
-                   const PixelFormat& srcFormat,
-                   bool buildMipmaps = true);
-
-    /// Constructs a 1D texture by loading it from a file
-    static Texture1D* fromImage(Image & image, bool buildMipmaps = true, GLResources * resources = 0);
-    /// Constructs a 1D texture by loading it from memory
-    static Texture1D* fromBytes(GLenum internalFormat,
-                                int h,
-                                const void* data,
-                                const PixelFormat& srcFormat, bool buildMipmaps = true,
-                                GLResources * resources = 0);
-
-  };
-
-  /// A 2D texture
-  class LUMINOUS_API Texture2D : public TextureT<GL_TEXTURE_2D>
-  {
-  public:
-    /// Constructs a 2D texture and adds it to the given resource collection
-    Texture2D(GLResources * resources = 0) :
-        TextureT<GL_TEXTURE_2D>(resources),
-      m_uploadedLines(0)
-    {}
-
-    /// Get the aspect ratio of the texture
-    /// Returns the aspect ratio of this texture, ie. the ratio of width to height
-    /// @return the aspect ratio
-    float aspectRatio() const { return m_width / (float) m_height; }
-
-    /// Load the texture from an image file
-    bool loadImage(const char * filename, bool buildMipmaps = true);
-    /// Load the texture from an image
-    /// @param image image to generate the texture from
-    /// @param buildMipmaps if true, generate mipmaps automatically
-    /// @param internalFormat specify the internal OpenGL texture format. If
-    /// zero, set the format automatically
-    /// @return true on success
-    bool loadImage(GLenum textureUnit, const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0);
-    bool loadImage(const Luminous::Image & image, bool buildMipmaps = true, int internalFormat = 0)
-    { return loadImage(GL_TEXTURE0, image, buildMipmaps, internalFormat); }
-    /// Load the texture from a compressed image
-    /// @param image compressed image to load from
-    /// @return true on success
-    bool loadImage(const Luminous::CompressedImage & image);
-
-    /// Load the texture from raw data, provided by the user
-    bool loadBytes(GLenum textureUnit, GLenum internalFormat, int w, int h,
-                   const void* data,
-                   const PixelFormat& srcFormat,
-                   bool buildMipmaps = true);
-
-    /// Load the texture from raw data, provided by the user
-    bool loadBytes(GLenum internalFormat, int w, int h,
-                   const void* data,
-                   const PixelFormat& srcFormat,
-                   bool buildMipmaps = true)
-    { return loadBytes(GL_TEXTURE0, internalFormat, w, h, data, srcFormat, buildMipmaps); }
-
-    /// Load a sub-texture.
-    void loadSubBytes(int x, int y, int w, int h, const void * subData, const PixelFormat & srcFormat);
-
-    /// Create a new texture, from an image file
-    static Texture2D * fromFile(const char * filename, bool buildMipmaps = true, GLResources * resources = 0);
-    /// Create a new texture, from an image
-    static Texture2D * fromImage(Luminous::Image & img, bool buildMipmaps = true, GLResources * resources = 0);
-    /// Create a new texture from raw image data, provided by the user
-    static Texture2D * fromBytes(GLenum internalFormat, int w, int h,
-                const void * data,
-                const PixelFormat& srcFormat,
-                bool buildMipmaps = true, GLResources * resources = 0);
-
-    /// Do progressive texture upload
-    /// Continues uploading lines to texture memory using previously uploaded
-    /// lines as offset. The function checks the currently available bandwidth and
-    /// uploads data within that limit. If the texture size exceeds the available
-    /// bandwidth, only part of it that fits within the bandwidth limit is
-    /// uploaded. This function should be called once per frame until it returns
-    /// true indicating that the texture has been fully uploaded.
-    /// @param resources OpenGL resource collection
-    /// @param textureUnit OpenGL texture unit where the texture will be bound as a side effect of calling this function
-    /// @return true if the texture data was fully uploaded, false otherwise
-    bool progressiveUpload(Luminous::GLResources * resources, GLenum textureUnit, const Image & srcImage);
-
-  private:
-    /// Number of lines that have been uploaded to GPU. Used to track progressive uploads.
-    /// @sa progressiveUpload
-    size_t m_uploadedLines;
-
-    friend class ImageTex;
-  };
-
-  /// A 3D texture
-  class LUMINOUS_API Texture3D : public TextureT<GL_TEXTURE_3D>
-  {
-  public:
-    /// Constructs a 3D texture and adds it to the given resource collection
-    /// @param resources resource collection to own this texture
-    Texture3D(GLResources * resources = 0)
-      : TextureT<GL_TEXTURE_3D> (resources),
-      m_depth(0)
-    {}
-
-    /// Set the depth of the 3D texture (ie. the z dimension)
-    /// @param d new depth
-    void setDepth(int d) { m_depth = d; }
-    /// Get the depth of the 3D texture
-    /// @return depth of the texture
-    int depth() const { return m_depth; }
-  private:
-    int m_depth;
-  };
-
-  /// A cubemap texture
-  class LUMINOUS_API TextureCube : public TextureT<GL_TEXTURE_CUBE_MAP>
-  {
-  public:
-    /// Constructs a cube texture and adds it to the given resource collection
-    TextureCube(GLResources * resources = 0)
-        : TextureT<GL_TEXTURE_CUBE_MAP> (resources) {}
-
-  };
-
 }
-
-#endif
+#endif // LUMINOUS_TEXTURE_HPP

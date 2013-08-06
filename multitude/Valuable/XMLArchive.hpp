@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -64,6 +59,7 @@ namespace Valuable
     QString get() const;
 
     QString name() const;
+    virtual void setName(const QString & name) OVERRIDE;
 
     /// Returns a pointer to the wrapped DOMElement
     /// @return The wrapped DOMElement
@@ -99,9 +95,21 @@ namespace Valuable
 
     void setRoot(const ArchiveElement & element);
 
-    bool writeToFile(const QString & file) const;
+    /// Serialize archive as XML to a file
+    /// @param filename file to open
+    /// @return true if writing was successful
+    bool writeToFile(const QString & filename) const;
+    /// Serialize archive as XML to a buffer
+    /// @param buffer that will be overwritten with the new data
+    /// @return true if writing was successful
     bool writeToMem(QByteArray & buffer) const;
+    /// Read archive contents from a file
+    /// @param filename file to open
+    /// @returns true if reading was successful
     bool readFromFile(const QString & filename);
+    /// Read archive contents from a buffer
+    /// @param buffer data buffer to read the data from
+    /// @returns true if reading was successful
     bool readFromMem(const QByteArray & buffer);
 
     /// Returns a pointer to wrapped DOMDocument

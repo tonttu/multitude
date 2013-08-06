@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -31,7 +26,7 @@ namespace Luminous
 
   /** The general usage pattern is as follows:
 
-      <pre>
+      @code
 
       // Application main loop:
       while(true) {
@@ -58,12 +53,11 @@ namespace Luminous
     rsc2->eraseResources();
     renderOpenGL();
       }
-      </pre>
+      @endcode
 
       This code snippet is for the single-threaded case, with two
       OpenGL contexts.
    */
-  /// @todo Rename??
   class LUMINOUS_API GarbageCollector
   {
   public:

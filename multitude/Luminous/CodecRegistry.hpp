@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -21,6 +16,8 @@
 #include <vector>
 #include <map>
 #include <QString>
+#include <QFile>
+#include <memory>
 
 namespace Luminous
 {
@@ -39,14 +36,14 @@ namespace Luminous
     /// @param file the file to query
     /// @return returns a pointer to a codec that reports it can load the given
     /// file or NULL if no codec is found.
-    ImageCodec * getCodec(const QString & filename, FILE * file = 0);
+    std::shared_ptr<ImageCodec> getCodec(const QString & filename, QFile * file = nullptr);
     /// Register a new codec that can be used to load images
     /// @param codec the new codec
-    void registerCodec(ImageCodec * codec);
+    void registerCodec(std::shared_ptr<ImageCodec> codec);
 
   private:
-    typedef std::vector<ImageCodec *> Codecs;
-    typedef std::multimap<QString, ImageCodec *> Aliases;
+    typedef std::vector<std::shared_ptr<ImageCodec> > Codecs;
+    typedef std::multimap<QString, std::shared_ptr<ImageCodec> > Aliases;
 
     Codecs m_codecs;
     Aliases m_aliases;

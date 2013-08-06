@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -19,7 +14,9 @@
 #include "Export.hpp"
 #include "Rect.hpp"
 
-#include <stdint.h>
+#include <cstdint>
+
+#include <random>
 
 namespace Nimble {
 
@@ -41,30 +38,30 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(uint32_t val = 0) : m_val(val) {}
+    RandomUniform(unsigned long val = std::mt19937::default_seed) : m_rand(val)
+    {
+    }
+
     ~RandomUniform() {}
 
     /// Random numbers between 0 and 1
     inline float rand01()
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (1.0f / (float) ((uint32_t) 0xffffffff));
     }
 
     /// Random numbers between 0 and x
     inline float rand0X(float x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (x / (float) ((uint32_t) 0xffffffff));
     }
 
     /// Random numbers between 0 and x
     inline double rand0X(double x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (double) tmp * (x / (double) ((uint32_t) 0xffffffff));
     }
 
@@ -74,7 +71,7 @@ namespace Nimble {
       return rand32() % x;
     }
 
-    /// Random numbers between 0 and x-1
+    /// 64-bit random numbers between 0 and x-1
     inline uint64_t rand0X64(uint64_t x)
     {
       uint64_t tmp1 = rand();
@@ -86,16 +83,14 @@ namespace Nimble {
     /// Random numbers between -1 and 1
     inline float rand11()
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (2.0f / (float) ((uint32_t) 0xffffffff)) - 1.0f;
     }
 
     /// Random numbers between -x and x
     inline float randXX(float x)
     {
-      uint32_t tmp = m_val * m_randMul + 1;
-      m_val = tmp;
+      uint32_t tmp = m_dist(m_rand);
       return (float) tmp * (2.0f * x / (float) ((uint32_t) 0xffffffff)) - x;
     }
 
@@ -105,35 +100,25 @@ namespace Nimble {
       return rand0X(max - min) + min;
     }
 
-    /// A random number in range 0-2^32. The lower bits of the random
-    /// number are not totally random.
+    /// A random number in range 0:2^32-1.
     /// @return Generated random number
     inline uint32_t rand()
     {
-      m_val = m_val * m_randMul + 1;
-      return m_val;
+      return m_dist(m_rand);
     }
 
-    /// A random number in range 0-2^24. All bits of the value should
-    /// be fairly random.
+    /// A random number in range 0:2^24-1.
     /// @return Generated random number
     inline uint32_t rand24()
     {
-      m_val = m_val * m_randMul + 1;
-      return m_val >> 8;
+      return std::uniform_int_distribution<uint32_t>(0,0xffffff)(m_rand);
     }
 
-    /// A random number in range 0-2^32. All bits of the value should
-    /// be fairly random.
+    /// A random number in range 0:2^32-1
     /// @return Generated random number
     inline uint32_t rand32()
     {
-      /* Generate two random numbers are take the 16 higher bits from
-         both. */
-      uint32_t v1 = m_val * m_randMul + 1;
-      uint32_t v2 = v1 * m_randMul + 1;
-      m_val = v2;
-      return (v1 & 0xFFFF0000) | (v2 >> 16);
+      return m_dist(m_rand);
     }
 
     /// Get random numbers between 0 and range-1.
@@ -141,8 +126,7 @@ namespace Nimble {
     /// @return Generated random number
     inline uint32_t randN24(uint32_t range)
     {
-      m_val = m_val * m_randMul + 1;
-      return (m_val >> 8) % range;
+      return rand24() % range;
     }
 
     /// Random 2d vector inside a rectangle
@@ -152,14 +136,16 @@ namespace Nimble {
                               randMinMax(r.low().y, r.high().y));
     }
 
-    /// Random 2d vector on a unit circle
+    /// Random 2d vector on a circle
+    /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecOnCircle(float radius = 1.0f)
     {
       float a = rand0X(Math::TWO_PI);
       return Nimble::Vector2f(cosf(a) * radius, sinf(a) * radius);
     }
 
-    /// Random 2d vector on a unit circle
+    /// Random 2d vector on or inside a circle
+    /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecInCircle(float radius = 1.0f)
     {
       while(true) {
@@ -172,24 +158,46 @@ namespace Nimble {
       }
     }
 
+    /// Random 3d vector on a sphere
+    /// @param radius The radius of the sphere
+    inline Nimble::Vector3f randVecOnSphere(float radius = 1.0f)
+    {
+      while(true) {
+        Nimble::Vector3f v(rand11(), rand11(), rand11());
+        if(v.lengthSqr() > 1.0f)
+          continue;
+
+        v.normalize(radius);
+        return v;
+      }
+    }
+
+    /// Random 3d vector inside or on a sphere
+    /// @param radius The radius of the sphere
+    inline Nimble::Vector3f randVecInSphere(float radius = 1.0f)
+    {
+      while(true) {
+        Nimble::Vector3f v(rand11(), rand11(), rand11());
+        if(v.lengthSqr() > 1.0f)
+          continue;
+
+        return v * radius;
+      }
+    }
+
     /// Random boolean
-    /// @todo does this work with 32-bit computers too?
     /// @return True or false.
     inline bool randBool()
     {
-      // count bits in 13 bit random value
-      return (rand0X(uint32_t(1 << 13)) * 0x200040008001ULL
-              & 0x111111111111111ULL) % 0xf < 7;
+      return std::uniform_int_distribution<uint32_t>(0,1)(m_rand);
     }
 
     /// Returns a reference to an instance
     static RandomUniform & instance() { return m_instance; }
 
-    /// @todo add static members inside Nimble::Math ?
-
   private:
-    uint32_t m_val;
-    static const uint32_t m_randMul = 134695621;
+    std::mt19937 m_rand;
+    std::uniform_int_distribution<uint32_t> m_dist;
     static RandomUniform  m_instance;
   };
 
@@ -202,30 +210,20 @@ namespace Nimble {
       /// @param mean the mean of the normal distribution
       /// @param stdDev the standard deviation for the normal distribution
       /// @param seed seed value for the pseudo-random sequence
-      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, uint32_t seed = 0) : m_uniform(seed), m_mean(mean), m_stdDev(stdDev) {}
+      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long seed = std::mt19937::default_seed)
+        : m_rand(seed), m_dist(mean, stdDev) {}
 
       /// Generate a random number from the distribution
       /// @return a pseudo-random number
-      inline float rand() {
-        float x1, x2, rsq;
-
-        do {
-          // Pick two uniform numbers within a unit-square and test if they are
-          // within a unit-circle, if not, try again
-          x1 = 2.0f * m_uniform.rand01() - 1.0f;
-          x2 = 2.0f * m_uniform.rand01() - 1.0f;
-          rsq = x1 * x1 + x2 * x2;
-        } while(rsq >= 1.0f || rsq == 0.0f);
-
-        // Box-Muller transformation and return the other number
-        float fac = sqrt((-2.0f * log(rsq)) / rsq);
-        return (x2 * fac) * m_stdDev + m_mean;
+      inline float rand()
+      {
+        return m_dist(m_rand);
       }
 
     private:
-      RandomUniform m_uniform;
-      float m_mean;
-      float m_stdDev;
+      std::mt19937 m_rand;
+      std::normal_distribution<float> m_dist;
+
   };
 }
 

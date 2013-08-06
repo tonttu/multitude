@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -17,11 +12,46 @@
 #define VALUABLE_VALUE_CONTAINER_HPP
 
 #include "Serializer.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 #include <iterator>
+
+namespace
+{
+  template <typename Container, typename T>
+  struct NotNullInserter
+  {
+    static void insert(std::insert_iterator<Container> & inserter, const T & t)
+    {
+      *inserter = t;
+    }
+  };
+
+  template <typename Container, typename T>
+  struct NotNullInserter<Container, T*>
+  {
+    static void insert(std::insert_iterator<Container> & inserter, T * t)
+    {
+      if(t)
+        *inserter = t;
+    }
+  };
+
+  template <typename Container, typename T>
+  struct NotNullInserter<Container, std::shared_ptr<T>>
+  {
+    static void insert(std::insert_iterator<Container> & inserter, const std::shared_ptr<T> & t)
+    {
+      if(t)
+        *inserter = t;
+    }
+  };
+}
 
 namespace Valuable
 {
+
+  /// This class is a base class for wrapping STL-like containers into attributes.
+  /// @sa Valuable::AttributeContainer
   template<typename T> class AttributeContainerT : public Attribute
   {
   public:
@@ -38,12 +68,12 @@ namespace Valuable
 
     typedef T container_type;
 
-    virtual const char* type() const OVERRIDE { return "container"; }
-
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      ArchiveElement elem = archive.createElement((name().isEmpty() ? type() : name()).toUtf8().data());
-      for(const_iterator it = m_container.begin(); it != m_container.end(); it++) {
+      QString elementName = name().isEmpty() ? "AttributeContainerT" : name();
+
+      ArchiveElement elem = archive.createElement(elementName);
+      for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {
         elem.add(Serializer::serialize(archive, *it));
       }
       return elem;
@@ -54,7 +84,7 @@ namespace Valuable
       if(m_clearOnDeserialize) m_container.clear();
       std::insert_iterator<T> inserter(m_container, m_container.end());
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
-        *inserter = Serializer::deserialize<typename T::value_type>(*it);
+        NotNullInserter<T, typename T::value_type>::insert(inserter, Serializer::deserialize<typename T::value_type>(*it));
       }
       return true;
     }
@@ -87,7 +117,7 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainerT(Node * host, const QString & name)
+    AttributeContainerT(Node * host, const QByteArray & name)
       : Attribute(host, name, false)
       , m_clearOnDeserialize(true)
     {}
@@ -121,11 +151,13 @@ namespace Valuable
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QString & name)
+    AttributeContainer(Node * host, const QByteArray & name)
       : AttributeContainerT<T>(host, name)
     {}
   };
 
+  /// This class handles container attributes. It allows us to use
+  /// std-containers and Qt containers as attributes.
   template <typename Key, typename T, typename Compare, typename Allocator>
   class AttributeContainer<std::map<Key, T, Compare, Allocator> >
     : public AttributeContainerT<std::map<Key, T, Compare, Allocator> >
@@ -133,12 +165,13 @@ namespace Valuable
   public:
     typedef AttributeContainerT<std::map<Key, T, Compare, Allocator> > Container;
 
+    /// Constructs a new container
     AttributeContainer() {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QString & name)
+    AttributeContainer(Node * host, const QByteArray & name)
       : Container(host, name)
     {}
 
@@ -147,7 +180,7 @@ namespace Valuable
       if(Container::m_clearOnDeserialize) Container::m_container.clear();
       for(ArchiveElement::Iterator it = element.children(); it; ++it) {
         typename Container::value_type p = Serializer::deserialize<typename Container::value_type>(*it);
-        Container::m_container[p.first] = p.second;
+        Container::m_container[p.first] = std::move(p.second);
       }
       return true;
     }

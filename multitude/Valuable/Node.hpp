@@ -1,39 +1,36 @@
-/* COPYRIGHT
+
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
-#ifndef VALUABLE_HASVALUES_HPP
-#define VALUABLE_HASVALUES_HPP
+#ifndef VALUABLE_NODE_HPP
+#define VALUABLE_NODE_HPP
 
 #include "Export.hpp"
 #include "AttributeInt.hpp"
-#include "AttributeObject.hpp"
+#include "Attribute.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/Color.hpp>
+#include <Radiant/IntrusivePtr.hpp>
 #include <Radiant/Trace.hpp>
-#if 0
-#include <v8.h>
+
+#ifdef CORNERSTONE_JS
+#include <Valuable/v8.hpp>
 #endif
+
 #include <map>
 #include <set>
 
 #include <QString>
 #include <QSet>
-
-#define VO_TYPE_HASVALUES "Node"
 
 namespace Valuable
 {
@@ -49,63 +46,117 @@ namespace Valuable
   class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
   {
   public:
-    /// Universally unique identifier type
+    /// Unique identifier type
     typedef int64_t Uuid;
 
-    typedef std::function<void ()> ListenerFunc;
-    typedef std::function<void (Radiant::BinaryData &)> ListenerFunc2;
+    /// Default listener function type
+    typedef std::function<void ()> ListenerFuncVoid;
+    /// Listener function type that takes a BinaryData reference as a parameter,
+    /// similar to @ref eventProcess
+    typedef std::function<void (Radiant::BinaryData &)> ListenerFuncBd;
 
+    /// Types of event listeners
     enum ListenerType
     {
-      DIRECT,
-      AFTER_UPDATE,
-      AFTER_UPDATE_ONCE
+      /// Listener will activate immediately when an event is sent. Listener is
+      /// executed in the thread the event is sent.
+      DIRECT=1,
+
+      /// Listener activation is delayed to happen after update. Listener is
+      /// executed in the main thread.
+      AFTER_UPDATE=2,
+      /// Listener activation is delayed to happen after update. Duplicate
+      /// events are merged, so the listener activates only once even if multiple
+      /// events were sent. Listener is executed in the main thread.
+      AFTER_UPDATE_ONCE=4
     };
 
     Node();
     /** Constructs a new Node and adds it under the given host
-      @param host host
-      @param name name of the object
-      @param transit should the object changes be transmitted
+      @param host Host of this node. Parent in node-hierarchy
+      @param name Name of this object.
+      @param transit Should the object changes be transmitted.
     */
-    Node(Node * host, const QString & name = "", bool transit = false);
+    Node(Node * host, const QByteArray &name = "", bool transit = false);
     virtual ~Node();
 
-    /// Adds new Attribute to the list of values
-    bool addValue(const QString & name, Attribute * const value);
-    /// Gets a Attribute with the given name
-    /// @param name Value object name to search for
-    /// @return Null if no object can be found
-    virtual Attribute * getValue(const QString & name);
-    /// Removes a Attribute from the list of value.
-    void removeValue(Attribute * const value);
+    /// Moves a node, including all its attributes, events etc
+    /// @param node node to move
+    Node(Node && node);
+    /// Moves a node, replacing this
+    /// @param node node to move
+    /// @returns reference to this
+    Node & operator=(Node && node);
 
-    /// @todo add 'shortcut' API
-    // float getAttributeFloat(const QString & name, bool * ok = 0, float default = 0.f)
-    // ...
+    /// Adds a new Attribute to the list of attribute objects.
+    /// Copies the name of the attribute from the given object.
+    bool addAttribute(Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
+    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
+                          bool addValue(Attribute * const value));
+
+    /// Adds a new Attribute to the list of attribute objects.
+    bool addAttribute(const QByteArray &name, Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
+    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
+                          bool addValue(const QByteArray &name, Attribute * const value));
+
+    /// @copydoc addAttribute
+    template<typename Widget>
+    bool addAttribute(const QByteArray &name, const Radiant::IntrusivePtr<Widget>& attribute)
+    {
+      return addAttribute(name, &*attribute);
+    }
+
+    /// Gets an Attribute with the given name
+    /// @param name Attribute name to search for
+    /// @return Null if no object can be found
+    virtual Attribute * attribute(const QByteArray & name) const;
+
+    /// @copydoc attribute
+    /// @return Null if no object can be found or the type is wrong
+    template <typename T>
+    AttributeT<T> * attribute(const QByteArray & name) const
+    {
+      return dynamic_cast<AttributeT<T> *>(attribute(name));
+    }
+
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
+    MULTI_ATTR_DEPRECATED("Node::getValue is deprecated. Use Node::attribute instead.",
+                          virtual Attribute * getValue(const QByteArray & name) const);
+
+    /// Removes an Attribute from the list of attribute objects.
+    void removeAttribute(Attribute * const attribute);
+    /// @deprecated This function will be removed in Cornerstone 2.1. Use removeAttribute instead.
+    MULTI_ATTR_DEPRECATED("Node::removeValue is deprecated. Use Node::removeAttribute instead.",
+                          void removeValue(Attribute * const value));
+
+    /// Clears all Attribute values of the given layer
+    /// @param layer layer to clear
+    void clearValues(Layer layer);
 
     /// Uses a query string to find a Attribute, and sets a new value to that if found.
-    /// @param query The path to the Attribute. This is a '/'-separated list
+    /// @param name The path to the Attribute. This is a '/'-separated list
     ///        of Attribute names, forming a path inside a Attribute tree.
     ///        ".." can be used to refer to host element. For example
     ///        setValue("../foo/bar", 4.0f) sets 4.0f to Attribute named "bar"
     ///        under Attribute "foo" that is sibling of this object.
-    /// @param value The new value
+    /// @param v The new value
     /// @return True if object was found and the value was set successfully.
     /// @todo implement similar to getValue (to avoid dynamic_cast)
     template<class T>
-    bool setValue(const QString & name, const T & v)
+    bool setValue(const QByteArray & name, const T & v)
     {
       int cut = name.indexOf("/");
-      QString next, rest;
+      QByteArray next, rest;
       if(cut > 0) {
         next = name.left(cut);
         rest = name.mid(cut + 1);
 
-        if(next == QString("..")) {
+        if(next == QByteArray("..")) {
           if(!m_host) {
             Radiant::error(
-                "Node::setValue # node '%s' has no host", m_name.toUtf8().data());
+                "Node::setValue # node '%s' has no host", m_name.data());
             return false;
           }
 
@@ -115,10 +166,10 @@ namespace Valuable
         next = name;
       }
 
-      container::iterator it = m_values.find(next);
-      if(it == m_values.end()) {
+      container::iterator it = m_attributes.find(next);
+      if(it == m_attributes.end()) {
         Radiant::error(
-            "Node::setValue # property '%s' not found", next.toUtf8().data());
+            "Node::setValue # property '%s' not found", next.data());
         return false;
       }
 
@@ -130,24 +181,35 @@ namespace Valuable
       Attribute * vo = it->second;
       return vo->set(v);
     }
-#if 0
-    bool setValue(const QString & name, v8::Handle<v8::Value> v);
-    bool setValue(const QString & name, v8::Local<v8::Value> v) {
-      return setValue(name, static_cast<v8::Handle<v8::Value> >(v));
+
+#ifdef CORNERSTONE_JS
+    /// Set attribute value from JavaScript
+    /// @param name attribute name
+    /// @param v attribute value. Supported types: boolean, number, string,
+    ///          list of two, three or four numbers
+    /// @returns true if conversion from JavaScript was successful, and attribute value was set
+    bool setValue(const QByteArray & name, v8::Handle<v8::Value> v);
+
+    /// @cond
+
+    inline bool setValue(const QByteArray & name, const v8::Local<v8::Value> & v) {
+      return setValue(name, v8::Handle<v8::Value>(v));
     }
+
+    /// @endcond
+
 #endif
+
     /// Saves this object (and its children) to an XML file
-    bool saveToFileXML(const QString & filename);
+    bool saveToFileXML(const QString & filename, unsigned int opts = SerializationOptions::DEFAULTS);
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(QByteArray & buffer);
+    bool saveToMemoryXML(QByteArray & buffer, unsigned int opts = SerializationOptions::DEFAULTS);
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const QString & filename);
 
+    /// Reads this object (and its children) from a memory buffer
     bool loadFromMemoryXML(const QByteArray & buffer);
-
-    /// Returns the typename of this object.
-    virtual const char * type() const { return VO_TYPE_HASVALUES; }
 
     /// Serializes this object (and its children) to a DOM node
     virtual ArchiveElement serialize(Archive &doc) const;
@@ -162,65 +224,109 @@ namespace Valuable
     /// Prints the contents of this Attribute to the terminal
     void debugDump();
 
-    /// Container for key-value object pairs
-    typedef std::map<QString, Attribute *> container;
+    /// Container for attributes, key is the attribute name
+    typedef std::map<QByteArray, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
-    /// Returns an iterator to the beginning of the values
-    iterator valuesBegin() { return m_values.begin(); }
-    const_iterator valuesBegin() const { return m_values.begin(); }
-    /// Returns an iterator to the end of the values
-    iterator valuesEnd() { return m_values.end(); }
-    const_iterator valuesEnd() const { return m_values.end(); }
-
-    const container & values() { return m_values; }
+    /// @returns attribute container
+    const container & attributes() { return m_attributes; }
 
     /** Add an event listener to this object.
-
-        This function is part of the experimental event passing
-        framework.
-
-        @param from The event id to match when in the eventSend.
-
-        @param to The event id to to use when delivering the event
-
-        @param obj The listening object
-
-        @param defaultData The default binary data to be used when
-        delivering the message.
-
+        This function is part of the event passing framework. After calling this,
+        @a listener will get the messages with id @a messageId whenever this object
+        has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param messageId the event id to use when delivering the event to listener.
+                         This is the first parameter in @ref eventProcess
+        @param listener the listening widget. Receives events and handles them
+                        in @ref eventProcess -function
+        @param listenerType defines when to send events to listener
+        @param defaultData the default binary data to be used when delivering
+                           the message, used only if @ref eventSend doesn't
+                           include BinaryData
+        @returns event id, can be used with @ref eventRemoveListener(long)
     */
-    void eventAddListener(const QString & from,
-                          const QString & to,
-                          Valuable::Node * obj,
-                          ListenerType listenerType,
-                          const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QString & from,
-                          const QString & to,
-                          Valuable::Node * obj,
-                          const Radiant::BinaryData * defaultData = 0)
+    template <typename Widget>
+    long eventAddListener(const QByteArray &eventId,
+                          const QByteArray &messageId,
+                          Radiant::IntrusivePtr<Widget>& listener,
+                          ListenerType listenerType = DIRECT,
+                          const Radiant::BinaryData *defaultData = 0)
     {
-      eventAddListener(from, to, obj, DIRECT, defaultData);
+      return eventAddListener(eventId, messageId, &*listener, listenerType, defaultData);
     }
-#if 0
-    void eventAddListener(const QString & from,
-                          const QString & to,
-                          v8::Persistent<v8::Function> func,
+
+    /// @todo the raw pointers in these should be fixed!
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a listener will get the messages with id @a messageId whenever this object
+        has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param messageId the event id to use when delivering the event to listener.
+                         This is the first parameter in @ref eventProcess
+        @param listener the listening object. Receives events and handles them
+                        in @ref eventProcess -function
+        @param listenerType defines when to send events to listener
+        @param defaultData the default binary data to be used when delivering
+                           the message, used only if @ref eventSend doesn't
+                           include BinaryData
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
+    long eventAddListener(const QByteArray & eventId,
+                          const QByteArray & messageId,
+                          Valuable::Node * listener,
+                          ListenerType listenerType = DIRECT,
                           const Radiant::BinaryData * defaultData = 0);
-    void eventAddListener(const QString & from,
-                          v8::Persistent<v8::Function> func,
-                          const Radiant::BinaryData * defaultData = 0)
-    {
-      eventAddListener(from, from, func, defaultData);
-    }
-#endif
-    void eventAddListener(const QString & from, ListenerFunc func,
+
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a func will be called whenever this object has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param func the listener callback
+        @param listenerType defines when to call the callback
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
+    long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
-    void eventAddListenerBd(const QString & from, ListenerFunc2 func,
+    /** Add an event listener to this object.
+        This function is part of the event passing framework. After calling this,
+        @a func will be called whenever this object has events with @a eventId.
+        @param eventId the event id to match when in the @ref eventSend. Corresponds
+                       to the first parameter in @ref eventSend
+        @param func the listener callback that will get event BinaryData as a parameter
+        @param listenerType defines when to call the callback
+        @returns event id, can be used with @ref eventRemoveListener(long)
+    */
+    long eventAddListenerBd(const QByteArray & eventId, ListenerFuncBd func,
                             ListenerType listenerType = DIRECT);
+
+    /// Removes all events from this object to given listener
+    /// @param listener event listener
+    /// @returns number of events removed
+    template <typename Widget>
+    int eventRemoveListener(Radiant::IntrusivePtr<Widget>& listener)
+    {
+      return eventRemoveListener(QByteArray(), QByteArray(), &*listener);
+    }
+
+    /// Removes events from this object that match the parameters.
+    /// @param eventId event id or null QByteArray to match all event ids
+    /// @param messageId message id or null QByteArray to match all message ids
+    /// @param listener event listener or nullptr to match all listeners
+    /// @returns number of events removed
+    template <typename Widget>
+    int eventRemoveListener(const QByteArray & eventId = QByteArray(),
+                            const QByteArray & messageId = QByteArray(),
+                            Radiant::IntrusivePtr<Widget>& listener=Radiant::IntrusivePtr<Widget>())
+    {
+      return eventRemoveListener(eventId, messageId, &*listener);
+    }
 
     /** Removes event listeners from this object.
 
@@ -229,35 +335,38 @@ namespace Valuable
       myWidget1->eventRemoveListener(myWidget2);
 
       // Remove selected event links between two widgets:
-      myWidget1->eventRemoveListener("interactionbegin", myWidget3);
-      myWidget1->eventRemoveListener(QString(), "clear", myWidget4);
+      myWidget1->eventRemoveListener("interaction-begin", myWidget3);
+      myWidget1->eventRemoveListener(QByteArray(), "clear", myWidget4);
 
       // Remove all selected events to any other widgets
-      myWidget1->eventRemoveListener("singletap");
+      myWidget1->eventRemoveListener("single-tap");
       @endcode
 
 
-      @param from The name of the originating event that should be cleared. If this parameter
-      is null (QString()), then all originating events are matched.
+      @param eventId The name of the originating event that should be cleared. If this parameter
+      is null (QByteArray()), then all originating events are matched.
 
-      @param to The name of of the destination event that should be cleared. If this parameter
-      is null (QString()), then all destination events are matched.
+      @param messageId The name of of the destination event that should be cleared. If this parameter
+      is null (QByteArray()), then all destination events are matched.
 
-      @param obj The target object for which the events should be cleared. If
+      @param listener The target object for which the events should be cleared. If
                  this parameter is null, then all objects are matched.
 
       @return number of event listener links removed
       */
-    int eventRemoveListener(const QString & from = QString(), const QString & to = QString(), Valuable::Node * obj = 0);
-    int eventRemoveListener(Valuable::Node * obj)
+    int eventRemoveListener(const QByteArray & eventId = QByteArray(), const QByteArray & messageId = QByteArray(), Valuable::Node * listener = 0);
+
+    /// Removes all events from this object to given listener
+    /// @param listener event listener
+    /// @returns number of events removed
+    int eventRemoveListener(Valuable::Node * listener)
     {
-      return eventRemoveListener(QString(), QString(), obj);
+      return eventRemoveListener(QByteArray(), QByteArray(), listener);
     }
 
-    /// Adds an event source
-    void eventAddSource(Valuable::Node * source);
-    /// Removes an event source
-    void eventRemoveSource(Valuable::Node * source);
+    /// Removes event listener with given id
+    /// @returns true if listener was found and removed
+    bool eventRemoveListener(long listenerId);
 
     /// Returns the number of event sources
     unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
@@ -268,7 +377,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void processMessage(const QString & type, Radiant::BinaryData & data);
+    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
     /// @endcond
 
@@ -279,73 +388,122 @@ namespace Valuable
     Uuid id() const;
 
     /// Registers a new event this class can send with eventSend
-    void eventAddOut(const QString & id);
+    void eventAddOut(const QByteArray & eventId);
 
-    /// Registers a new event that this class handles in processMessage
-    void eventAddIn(const QString & id);
+    /// Registers a new event that this class handles in eventProcess
+    void eventAddIn(const QByteArray & messageId);
 
-    /// Returns true if this object accepts event 'id' in processMessage
-    bool acceptsEvent(const QString & id) const;
+    /// Register a deprecated event that is automatically converted to new
+    /// event id and a warning is issued when it is used.
+    /// @param deprecatedId deprecated event id
+    /// @param newId replacing event id
+    void eventAddDeprecated(const QByteArray & deprecatedId, const QByteArray & newId);
+
+    /// Returns true if this object accepts event 'id' in eventProcess
+    bool acceptsEvent(const QByteArray & messageId) const;
 
     /// Returns set of all registered OUT events
-    const QSet<QString> & eventOutNames() const { return m_eventSendNames; }
+    const QSet<QByteArray> & eventOutNames() const { return m_eventSendNames; }
 
     /// Returns set of all registered IN events
-    const QSet<QString> & eventInNames() const { return m_eventListenNames; }
-#if 0
-    long addListener(const QString & name, v8::Persistent<v8::Function> func,
+    const QSet<QByteArray> & eventInNames() const { return m_eventListenNames; }
+
+#ifdef CORNERSTONE_JS
+    /// Add a JavaScript attribute listener to attribute belonging this Node.
+    /// @param attribute Attribute name
+    /// @param func JavaScript function to call whenever attribute is changed/deleted
+    /// @param role when should the listener function be called
+    /// @returns listener id that can be used to remove the listener with Attribute::removeListener
+    long addListener(const QByteArray & attribute, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
 #endif
+    /// Triggers any pending AFTER_UPDATE-events.
+    /// This is called automatically from MultiWidgets::Application every frame.
+    /// If you don't have running application instance, or if you want to block
+    /// main thread for a longer period of time, this should be called periodically
+    /// manually to make sure all events are dispatched.
+    /// @returns number of processes items
     static int processQueue();
 
+    /// Copies attribute values from one node to another
+    /// @param from source node
+    /// @param to target node
+    /// @returns true if copying was successful
     static bool copyValues(const Node & from, Node & to);
+
+    /// Queue function to be called in the main thread after the next update()
+    /// @param function function to be called
+    static void invokeAfterUpdate(ListenerFuncVoid function);
+
+    virtual void setAsDefaults() OVERRIDE;
 
   protected:
 
-    /// Sends an event to all listeners on this object
-    void eventSend(const QString & id, Radiant::BinaryData &);
-    void eventSend(const QString & id);
+    /// Sends an event and bd to all listeners on this eventId
+    void eventSend(const QByteArray & eventId, Radiant::BinaryData & bd);
+    /// Sends an event to all listeners on this eventId
+    void eventSend(const QByteArray & eventId);
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
+    /// @param p1 event parameter
     template <typename P1>
-    void eventSend(const QString & id, const P1 & p1)
+    void eventSend(const QByteArray & eventId, const P1 & p1)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
+    /// @param p1,p2 event parameters
     template <typename P1, typename P2>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
+    /// @param p1,p2,p3 event parameters
     template <typename P1, typename P2, typename P3>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
       bd.write(p3);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
+    /// @param p1,p2,p3,p4 event parameters
     template <typename P1, typename P2, typename P3, typename P4>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
       bd.write(p2);
       bd.write(p3);
       bd.write(p4);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
+    /// Sends an event to all listeners on this eventId.
+    /// Builds Radiant::BinaryData automatically based on the function parameters
+    /// @param eventId event id
+    /// @param p1,p2,p3,p4,p5 event parameters
     template <typename P1, typename P2, typename P3, typename P4, typename P5>
-    void eventSend(const QString & id, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
+    void eventSend(const QByteArray & eventId, const P1 & p1, const P2 & p2, const P3 & p3, const P4 & p4, const P5 & p5)
     {
       Radiant::BinaryData bd;
       bd.write(p1);
@@ -353,57 +511,78 @@ namespace Valuable
       bd.write(p3);
       bd.write(p4);
       bd.write(p5);
-      eventSend(id, bd);
+      eventSend(eventId, bd);
     }
 
-    void defineShortcut(const QString & name);
+    /// Get the sender of the event, only valid in DIRECT events
+    /// @returns the sender of the event, can be read in eventProcess()
+    Node * sender() { return m_sender; }
 
-    /// The sender of the event, can be read in processMessage()
-    Node * m_sender;
+    /// This is called when new attribute is added to Node
+    /// @param attribute added attribute
+    virtual void attributeAdded(Attribute * attribute);
+    /// This is called when attribute is removed from Node
+    /// @param attribute removed attribute
+    virtual void attributeRemoved(Attribute * attribute);
 
   private:
+    /// Adds an event source
+    void eventAddSource(Valuable::Node * source);
+    /// Removes an event source
+    void eventRemoveSource(Valuable::Node * source);
+
+    /// Check that the given event is registered. Also convert deprecated
+    /// events to new ids and issue warnings.
+    QByteArray validateEvent(const QByteArray & from);
+
+  private:
+
+    Node * m_sender;
+
     friend class Attribute; // So that Attribute can call the function below.
 
-    void valueRenamed(const QString & was, const QString & now);
+    void attributeRenamed(const QByteArray & was, const QByteArray & now);
 
-    container m_values;
+    container m_attributes;
 
     class ValuePass {
     public:
-      ValuePass() : m_listener(0), m_func(), m_func2(), m_valid(true), m_frame(-1), m_type(DIRECT) {}
+      ValuePass(long id) : m_listener(0), m_func(), m_func2(), m_frame(-1), m_type(DIRECT), m_listenerId(id) {}
 
       inline bool operator == (const ValuePass & that) const;
 
       Valuable::Node * m_listener;
-      ListenerFunc m_func;
-      ListenerFunc2 m_func2;
-#if 0
-      v8::Persistent<v8::Function> m_funcv8;
-#endif
+      ListenerFuncVoid m_func;
+      ListenerFuncBd m_func2;
       Radiant::BinaryData   m_defaultData;
-      QString m_from;
-      QString m_to;
-      bool        m_valid;
+      QByteArray m_from;
+      QByteArray m_to;
       int         m_frame;
       ListenerType m_type;
+      long m_listenerId;
     };
 
     typedef std::list<ValuePass> Listeners;
     Listeners m_elisteners; // Event listeners
 
-    typedef std::set<Valuable::Node *> Sources;
+    typedef std::map<Valuable::Node *, int> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
 
-    // set of all valueobjects that this Node is listening to
-    QSet<Attribute*> m_valueListening;
+    // set of all attributes that this Node is listening to
+    QSet<Attribute*> m_attributeListening;
 
     Valuable::AttributeIntT<Uuid> m_id;
+
     // For invalidating the too new ValuePass objects
     int m_frame;
 
-    QSet<QString> m_eventSendNames;
-    QSet<QString> m_eventListenNames;
+    long m_listenersId;
+
+    QSet<QByteArray> m_eventSendNames;
+    QSet<QByteArray> m_eventListenNames;
+
+    QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
   };
 
 }

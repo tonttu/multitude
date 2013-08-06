@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,37 +15,30 @@
 #include <Radiant/Types.hpp>
 #include <Radiant/Timer.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Radiant {
 
   class TimeStamp;
 
-  /** Sleeping services. This class contains only static member
-      functions. The constructor and destructor are included to prevent
-      compiler warnings.*/
+  /// Sleeping services. This class contains only static member
+  /// functions.
   class RADIANT_API Sleep
   {
-  public:
-
-    Sleep() { }
-
-    ~Sleep() {}
-
+  public:   
     /// Sleep for n seconds.
     /// @param secs Number of seconds to sleep
     static void sleepS(uint32_t secs);
 
-    /** Sleep for n milliseconds. You cannot sleep more than one second
-    with this function. */
+    /// Sleep for n milliseconds. You cannot sleep more than one second
+    /// with this function.
     /// @param msecs Number of milliseconds to sleep
     static void sleepMs(uint32_t msecs);
 
-    /** Sleep for n microseconds. You cannot sleep more than one
-        second with this function. The resolution of this function is
-        unlikely to be better than one millisecond on any platform,
-        even if the underlying APIs might imply this.
-    */
+    /// Sleep for n microseconds. You cannot sleep more than one
+    /// second with this function. The resolution of this function is
+    /// unlikely to be better than one millisecond on any platform,
+    /// even if the underlying APIs might imply this.
     /// @param usecs Number of microseconds to sleep
     static void sleepUs(uint32_t usecs);
   };
@@ -59,10 +47,23 @@ namespace Radiant {
   /////////////////////////////////////////////////////////////////////////////
 
   /// Synchronized sleeping.
-  /** This class can be used to time the execution of a thread. For
-      example if you want a thread not to execute too often.*/
+  /** This class can be used to execute a piece of code in fixed intervals.
+      Here's a simple example where a loop cycle is executed every 100ms:
 
-  /// @todo Add example(s)
+      \code
+      const long loopCycleUs = 100*1000;//100ms
+      Radiant::SleepSync sleep;
+      while (true) {
+         sleep.resetTiming();
+
+         // do something that differs in length between [0..loopCycleUs]
+         // ...
+
+         sleep.sleepSynchroUs(loopCycleUs);
+      }
+      \endcode
+
+  */
   class RADIANT_API SleepSync
   {
   public:

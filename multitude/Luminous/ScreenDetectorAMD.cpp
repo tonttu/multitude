@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "ScreenDetectorAMD.hpp"
 
 #include <Radiant/Platform.hpp>
@@ -20,17 +30,35 @@
 #include <map>
 
 // Compare display modes
-bool operator==(const ADLMode & lhs, const ADLMode & rhs) { return (lhs.iXRes == rhs.iXRes && lhs.iYRes == rhs.iYRes); }
-template <typename T> bool operator==(const ADLMode & lhs, const T & rhs) { return lhs == rhs.displayMode; }
-template <typename T> bool operator==(const T & lhs, const ADLMode & rhs) { return lhs.displayMode == rhs; }
+bool operator==(const ADLMode & lhs, const ADLMode & rhs) {
+  return (lhs.iXRes == rhs.iXRes && lhs.iYRes == rhs.iYRes);
+}
+template <typename T> bool operator==(const ADLMode & lhs, const T & rhs) {
+  return lhs == rhs.displayMode;
+}
+template <typename T> bool operator==(const T & lhs, const ADLMode & rhs) {
+  return lhs.displayMode == rhs;
+}
 
 // Compare display targets
-bool operator==(const ADLDisplayTarget & lhs, const ADLDisplayTarget & rhs) { return ( lhs.displayID.iDisplayLogicalIndex == rhs.displayID.iDisplayLogicalIndex ); }
-template <typename T> bool operator==(const ADLDisplayTarget & lhs, const T & rhs) { return lhs == rhs.displayTarget; }
-template <typename T> bool operator==(const T & lhs, const ADLDisplayTarget & rhs) { return lhs.displayTarget == rhs; }
+bool operator==(const ADLDisplayTarget & lhs, const ADLDisplayTarget & rhs) {
+  return ( lhs.displayID.iDisplayLogicalIndex ==
+           rhs.displayID.iDisplayLogicalIndex );
+}
+template <typename T> bool operator==(const ADLDisplayTarget & lhs,
+                                      const T & rhs) {
+  return lhs == rhs.displayTarget;
+}
+template <typename T> bool operator==(const T & lhs,
+                                      const ADLDisplayTarget & rhs) {
+  return lhs.displayTarget == rhs;
+}
 
 // Compare display IDs
-bool operator<(const ADLDisplayID & a, const ADLDisplayID & b) { return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0; }
+bool operator<(const ADLDisplayID & a,
+               const ADLDisplayID & b) {
+  return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0;
+}
 
 namespace {
   // Error checking for ADL functions
@@ -38,19 +66,68 @@ namespace {
   {
     switch (err)
     {
-    case ADL_ERR:                         Radiant::error("ScreenDetectorAMD::detect # %s: Generic error (%d)", msg.c_str(), err); break;
-    case ADL_ERR_NOT_INIT:                Radiant::error("ScreenDetectorAMD::detect # %s: ADL not initialized (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_PARAM:           Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_PARAM_SIZE:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter size (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_ADL_IDX:         Radiant::error("ScreenDetectorAMD::detect # %s: Invalid ADL index (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_CONTROLLER_IDX:  Radiant::error("ScreenDetectorAMD::detect # %s: Invalid controller index (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_DIPLAY_IDX:      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid display index (%d)", msg.c_str(), err); break;
-    case ADL_ERR_NOT_SUPPORTED:           Radiant::error("ScreenDetectorAMD::detect # %s: Function not supported (%d)", msg.c_str(), err); break;
-    case ADL_ERR_NULL_POINTER:            Radiant::error("ScreenDetectorAMD::detect # %s: Null pointer error (%d)", msg.c_str(), err); break;
-    case ADL_ERR_DISABLED_ADAPTER:        Radiant::error("ScreenDetectorAMD::detect # %s: Disabled adapter (%d)", msg.c_str(), err); break;
-    case ADL_ERR_INVALID_CALLBACK:        Radiant::error("ScreenDetectorAMD::detect # %s: Invalid callback (%d)", msg.c_str(), err); break;
-    case ADL_ERR_RESOURCE_CONFLICT:       Radiant::error("ScreenDetectorAMD::detect # %s: Resource conflict (%d)", msg.c_str(), err); break;
-    case ADL_OK:                          return true; // All ok
+    case ADL_ERR:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Generic error (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_NOT_INIT:
+      Radiant::error("ScreenDetectorAMD::detect # %s: ADL not initialized (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_PARAM:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_PARAM_SIZE:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid parameter size (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_ADL_IDX:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid ADL index (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_CONTROLLER_IDX:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid controller index (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_DIPLAY_IDX:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid display index (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_NOT_SUPPORTED:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Function not supported (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_NULL_POINTER:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Null pointer error (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_DISABLED_ADAPTER:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Disabled adapter (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_INVALID_CALLBACK:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Invalid callback (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_ERR_RESOURCE_CONFLICT:
+      Radiant::error("ScreenDetectorAMD::detect # %s: Resource conflict (%d)",
+                     msg.c_str(),
+                     err);
+      break;
+    case ADL_OK:
+      return true; // All ok
     default:
       Radiant::error("ScreenDetectorAMD::detect # Error %d", err);
     }
@@ -61,29 +138,42 @@ namespace {
   bool getAdapterInformation( std::vector<AdapterInfo> & adapterInfo )
   {
     int adapterCount = 0;
-    bool success = checkADL("ADL_Adapter_NumberOfAdapters_Get", ADL_Adapter_NumberOfAdapters_Get(&adapterCount));
+    bool success = checkADL("ADL_Adapter_NumberOfAdapters_Get",
+                            ADL_Adapter_NumberOfAdapters_Get(&adapterCount));
     if (success) {
       adapterInfo.resize(adapterCount);
       memset(adapterInfo.data(), 0, adapterCount * sizeof(AdapterInfo));
-      success = checkADL("ADL_Adapter_AdapterInfo_Get", ADL_Adapter_AdapterInfo_Get( adapterInfo.data(), adapterCount * sizeof(AdapterInfo)));
+      success = checkADL("ADL_Adapter_AdapterInfo_Get",
+                         ADL_Adapter_AdapterInfo_Get( adapterInfo.data(),
+                                                      adapterCount * sizeof(AdapterInfo)));
     }
     return success;
   }
 
 #if defined (RADIANT_WINDOWS)
   // Retrieve display configuration
-  bool getDisplayMapConfig(int adapterIndex, std::vector<ADLDisplayMap> & displayMap, std::vector<ADLDisplayTarget> & displayTarget)
+  bool getDisplayMapConfig(int adapterIndex,
+                           std::vector<ADLDisplayMap> & displayMap,
+                           std::vector<ADLDisplayTarget> & displayTarget)
   {
     ADLDisplayMap * maps = NULL;
     ADLDisplayTarget * targets = NULL;
     int numDisplayMaps = 0;
     int numDisplayTargets = 0;
 
-    bool success = checkADL("ADL_Display_DisplayMapConfig_Get", ADL_Display_DisplayMapConfig_Get(adapterIndex, &numDisplayMaps, &maps, &numDisplayTargets, &targets, ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO));
+    bool success = checkADL("ADL_Display_DisplayMapConfig_Get",
+                            ADL_Display_DisplayMapConfig_Get(adapterIndex,
+                                                             &numDisplayMaps,
+                                                             &maps,
+                                                             &numDisplayTargets,
+                                                             &targets,
+                                                             ADL_DISPLAY_DISPLAYMAP_OPTION_GPUINFO));
     if (success) {
       // Copy into target containers
-      displayMap.resize(numDisplayMaps); memcpy(displayMap.data(), maps, numDisplayMaps * sizeof(ADLDisplayMap));
-      displayTarget.resize(numDisplayTargets); memcpy(displayTarget.data(), targets, numDisplayTargets * sizeof(ADLDisplayTarget));
+      displayMap.resize(numDisplayMaps);
+      memcpy(displayMap.data(), maps, numDisplayMaps * sizeof(ADLDisplayMap));
+      displayTarget.resize(numDisplayTargets);
+      memcpy(displayTarget.data(), targets, numDisplayTargets * sizeof(ADLDisplayTarget));
 
       // Clean-up
       adlFree(maps);
@@ -93,15 +183,26 @@ namespace {
   }
 
   // Retrieve SLS (EyeFinity) configuration
-  bool getSLSMapConfig(int adapterIndex, std::vector<ADLDisplayTarget> displayTargets, ADLSLSMap & slsMap, std::vector<ADLSLSTarget> & targets, std::vector<ADLSLSMode> & modes, std::vector<ADLBezelTransientMode> & bezels, std::vector<ADLBezelTransientMode> & transients, std::vector<ADLSLSOffset> & offsets)
+  bool getSLSMapConfig(int adapterIndex,
+                       std::vector<ADLDisplayTarget> displayTargets,
+                       ADLSLSMap & slsMap,
+                       std::vector<ADLSLSTarget> & targets,
+                       std::vector<ADLSLSMode> & modes,
+                       std::vector<ADLBezelTransientMode> & bezels,
+                       std::vector<ADLBezelTransientMode> & transients,
+                       std::vector<ADLSLSOffset> & offsets)
   {
     int slsIndex = 0;
     int numDisplayTarget = (int)displayTargets.size();
     ADLDisplayTarget * displayTarget = displayTargets.data();
 
-    bool success = false;
+    bool success = true;
     // NOTE: we don't use checkADL here since this is allowed to fail on non-SLS targets
-    if (ADL_Display_SLSMapIndex_Get(adapterIndex, numDisplayTarget, displayTarget, &slsIndex) == ADL_OK) {
+    if (ADL_Display_SLSMapIndex_Get(adapterIndex,
+                                    numDisplayTarget,
+                                    displayTarget,
+                                    &slsIndex) == ADL_OK) {
+      success = false;
       int numSLSTargets = 0;
       int numNativeModes = 0;
       int numBezelModes = 0;
@@ -114,7 +215,10 @@ namespace {
       ADLBezelTransientMode * transientModes = NULL;
       ADLSLSOffset * slsOffsets = NULL;
 
-      if (checkADL("ADL_Display_SLSMapConfig_Get", ADL_Display_SLSMapConfig_Get(adapterIndex, slsIndex, &slsMap,
+      if (checkADL("ADL_Display_SLSMapConfig_Get",
+                   ADL_Display_SLSMapConfig_Get(adapterIndex,
+                                                slsIndex,
+                                                &slsMap,
         &numSLSTargets, &slsTargets,
         &numNativeModes, &nativeModes,
         &numBezelModes, &bezelModes,
@@ -124,14 +228,30 @@ namespace {
       {
         if ( slsMap.grid.iSLSGridColumn * slsMap.grid.iSLSGridRow == numDisplayTarget ) {
           success = true;
-          targets.resize(numSLSTargets); memcpy(targets.data(), slsTargets, numSLSTargets * sizeof(ADLSLSTarget));
-          modes.resize(numNativeModes); memcpy(modes.data(), nativeModes, numNativeModes * sizeof(ADLSLSMode));
-          bezels.resize(numBezelModes); memcpy(bezels.data(), bezelModes, numBezelModes * sizeof(ADLBezelTransientMode));
-          transients.resize(numTransientModes); memcpy(transients.data(), transientModes, numTransientModes * sizeof(ADLBezelTransientMode));
-          offsets.resize(numSLSOffsets); memcpy(offsets.data(), slsOffsets, numSLSOffsets * sizeof(ADLSLSOffset));
+          targets.resize(numSLSTargets);
+          memcpy(targets.data(),
+                 slsTargets,
+                 numSLSTargets * sizeof(ADLSLSTarget));
+          modes.resize(numNativeModes);
+          memcpy(modes.data(),
+                 nativeModes,
+                 numNativeModes * sizeof(ADLSLSMode));
+          bezels.resize(numBezelModes);
+          memcpy(bezels.data(),
+                 bezelModes,
+                 numBezelModes * sizeof(ADLBezelTransientMode));
+          transients.resize(numTransientModes);
+          memcpy(transients.data(),
+                 transientModes,
+                 numTransientModes * sizeof(ADLBezelTransientMode));
+          offsets.resize(numSLSOffsets);
+          memcpy(offsets.data(),
+                 slsOffsets,
+                 numSLSOffsets * sizeof(ADLSLSOffset));
         }
         else
-          Radiant::error("Number of display targets returned is not equal to the SLS grid size");
+          Radiant::error("Number of display targets returned is not equal to "
+                         "the SLS grid size");
 
         // Free resources
         adlFree(slsTargets);
@@ -154,13 +274,19 @@ namespace {
   }
 
   // Retrieve mode for a single displaytarget
-  bool getDisplayTargetMode(int adapterIndex, int displayTargetIndex, std::vector<ADLMode> & mode)
+  bool getDisplayTargetMode(int adapterIndex,
+                            int displayTargetIndex,
+                            std::vector<ADLMode> & mode)
   {
     int numModes = 0;
     ADLMode *modes = NULL;
 
     // Retrieve mode for this target
-    bool success = checkADL("ADL_Display_Modes_Get", ADL_Display_Modes_Get( adapterIndex, displayTargetIndex, &numModes, &modes));
+    bool success = checkADL("ADL_Display_Modes_Get",
+                            ADL_Display_Modes_Get( adapterIndex,
+                                                   displayTargetIndex,
+                                                   &numModes,
+                                                   &modes));
     if (success) {
       mode.clear();
       // Filter out invalid modes
@@ -176,13 +302,20 @@ namespace {
 #endif
 
   // Get display information for all displays on the specified adapter
-  bool getDisplayInfo(int adapterIndex, std::vector<ADLDisplayInfo> & displayInfo)
+  bool getDisplayInfo(int adapterIndex,
+                      std::vector<ADLDisplayInfo> & displayInfo)
   {
     int displayCount = 0;
     ADLDisplayInfo * lst = 0;
-    bool success = checkADL("ADL_Display_DisplayInfo_Get", ADL_Display_DisplayInfo_Get(adapterIndex, &displayCount, &lst, 1));
+    bool success = checkADL("ADL_Display_DisplayInfo_Get",
+                            ADL_Display_DisplayInfo_Get(adapterIndex,
+                                                        &displayCount,
+                                                        &lst,
+                                                        1));
     if (success) {
-      displayInfo.resize(displayCount); memcpy(displayInfo.data(), lst, displayCount * sizeof(ADLDisplayInfo));
+      displayInfo.resize(displayCount);
+      memcpy(displayInfo.data(),
+             lst, displayCount * sizeof(ADLDisplayInfo));
       adlFree(lst);
     }
     return success;
@@ -199,17 +332,29 @@ namespace {
     // Fetch the XScreen information
     std::vector<XScreenInfo> xscreens(adapterInfo.size());
     memset(xscreens.data(), 0, sizeof(XScreenInfo) * xscreens.size());
-    if (!checkADL("ADL_Adapter_XScreenInfo_Get", ADL_Adapter_XScreenInfo_Get(xscreens.data(), sizeof(XScreenInfo) * xscreens.size())))
+    if (!checkADL("ADL_Adapter_XScreenInfo_Get",
+                  ADL_Adapter_XScreenInfo_Get(xscreens.data(),
+                                              sizeof(XScreenInfo) * xscreens.size())))
       return false;
 
-    std::set<ADLDisplayID> uniqueDisplays;
+    std::set<int> uniqueDisplays;
+    //for some reason ADL returns duplicate adapters so we need to make sure we
+    //skip those we use AdapterInfo.strUDID which should be unique
+    std::set<QString> uniqueAdapters;
     bool ok = false;
     for(size_t adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
 
       // XScreen doesn't match the requested screen: skip
-      if(xscreens[adapterInfo[adapterIdx].iAdapterIndex].iXScreenNum != screen) continue;
+      if(xscreens[adapterInfo[adapterIdx].iAdapterIndex].iXScreenNum != screen)
+        continue;
 
       const AdapterInfo & currentAdapter = adapterInfo[adapterIdx];
+
+      QString adapterID(currentAdapter.strUDID);
+      // Already seen this adapter
+      if(uniqueAdapters.find(adapterID) != uniqueAdapters.end())
+        continue;
+      uniqueAdapters.insert(adapterID);
 
       std::vector<ADLDisplayInfo> displayInfos;
       if (!getDisplayInfo(currentAdapter.iAdapterIndex, displayInfos))
@@ -218,15 +363,21 @@ namespace {
       for(size_t displayIdx = 0; displayIdx < displayInfos.size(); ++displayIdx) {
         const ADLDisplayInfo & currentDisplay = displayInfos[displayIdx];
 
-        if (uniqueDisplays.find(currentDisplay.displayID) != uniqueDisplays.end()                   // Already seen this display
-            ||(currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED ) == 0)  // Don't care about disconnected outputs
+        // Already seen this display
+        // Don't care about disconnected outputs
+        if (uniqueDisplays.find(currentDisplay.displayID.iDisplayLogicalAdapterIndex)
+            != uniqueDisplays.end()||
+            (currentDisplay.iDisplayInfoValue & ADL_DISPLAY_DISPLAYINFO_DISPLAYCONNECTED ) == 0)
           continue;
 
-        uniqueDisplays.insert(currentDisplay.displayID);
+        uniqueDisplays.insert(currentDisplay.displayID.iDisplayLogicalAdapterIndex);
 
         Luminous::ScreenInfo screenInfo;
         screenInfo.setName(currentDisplay.strDisplayName);
         screenInfo.setGpuName(currentAdapter.strAdapterName);
+        //same id scheme used by amdcccle, or so it seems
+        int nid = currentDisplay.displayID.iDisplayLogicalAdapterIndex + 1;
+        screenInfo.setNumId(nid);
 
         int gpuID = 0;
         ADL_Adapter_ID_Get(adapterInfo[adapterIdx].iAdapterIndex, &gpuID);
@@ -254,7 +405,8 @@ namespace {
           currentDisplay.displayID.iDisplayLogicalIndex,
           name, sizeof(name));
         if(err != ADL_OK) {
-          Radiant::error("ScreenDetectorAMD::detect # ADL_Display_XrandrDisplayName_Get: %d", err);
+          Radiant::error("ScreenDetectorAMD::detect # ADL_Display_XrandrDisplay"
+                         "Name_Get: %d", err);
           continue;
         }
         Nimble::Recti rect;
@@ -285,7 +437,9 @@ namespace {
 
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
       int active;
-      checkADL("ADL_Adapter_Active_Get", ADL_Adapter_Active_Get(adapterInfo[adapterIdx].iAdapterIndex, & active));
+      checkADL("ADL_Adapter_Active_Get",
+               ADL_Adapter_Active_Get(adapterInfo[adapterIdx].iAdapterIndex,
+                                      & active));
       // Get rid of invalid adapters
       if (active == ADL_FALSE
         || adapterInfo[adapterIdx].iPresent == 0
@@ -312,7 +466,9 @@ namespace {
       std::vector<ADLDisplayMap> displayMaps;
       std::vector<ADLDisplayTarget> displayTargets;
 
-      if (!getDisplayMapConfig( adapterInfo[adapterIdx].iAdapterIndex, displayMaps, displayTargets))
+      if (!getDisplayMapConfig( adapterInfo[adapterIdx].iAdapterIndex,
+                                displayMaps,
+                                displayTargets))
         continue;
 
       ADLSLSMap slsMap = { 0 };
@@ -323,24 +479,44 @@ namespace {
       std::vector<ADLBezelTransientMode> transientModes;
       std::vector<ADLSLSOffset> slsOffsets;
 
-      if (!getSLSMapConfig(adapterInfo[adapterIdx].iAdapterIndex, displayTargets, slsMap, slsTargets, slsModes, bezelModes, transientModes, slsOffsets))
+      if (!getSLSMapConfig(adapterInfo[adapterIdx].iAdapterIndex,
+                           displayTargets,
+                           slsMap,
+                           slsTargets,
+                           slsModes,
+                           bezelModes,
+                           transientModes,
+                           slsOffsets))
         continue;
 
       // Get the display mode for each target
-      for ( int displayTargetIdx = 0; displayTargetIdx < displayTargets.size(); ++displayTargetIdx )
+      for ( int displayTargetIdx = 0;
+            displayTargetIdx < displayTargets.size();
+            ++displayTargetIdx )
       {
         std::vector<ADLMode> targetMode;
-        if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex, displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex, targetMode))
+        int disp_id =
+            displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex;
+        if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex,
+                                  disp_id,
+                                  targetMode) ||
+            targetMode.size()==0)
           continue;
 
+        screeninfo.setNumId(disp_id);
         // Search the 'normal' modes
-        std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(), slsModes.end(), targetMode[0]);
+        std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(),
+                                                                    slsModes.end(),
+                                                                    targetMode[0]);
         std::vector<ADLBezelTransientMode>::const_iterator bezelIter;
         if (slsIter != slsModes.end()) {
           /// Found a 'normal' mode (without bezel correction)
           //////////////////////////////////////////////////////////////////////////
           // Find the SLSTarget that maps to the current display target
-          std::vector<ADLSLSTarget>::const_iterator slsTargetIter = std::find(slsTargets.begin(), slsTargets.end(), displayTargets[displayTargetIdx]);
+          std::vector<ADLSLSTarget>::const_iterator slsTargetIter =
+              std::find(slsTargets.begin(),
+                        slsTargets.end(),
+                        displayTargets[displayTargetIdx]);
 
           // Determine if we're in portrait or landscape
           bool portrait = (targetMode[0].iOrientation != 0 && targetMode[0].iOrientation != 180);
@@ -365,7 +541,8 @@ namespace {
             int currentSLSOffset = -1;
             for ( int slsOffsetIdx = 0; slsOffsetIdx< slsOffsets.size(); slsOffsetIdx++) {
               if ( bezelIter->iSLSModeIndex == slsOffsets[slsOffsetIdx].iBezelModeIndex &&
-                displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex == slsOffsets[slsOffsetIdx].displayID.iDisplayLogicalIndex )
+                displayTargets[displayTargetIdx].displayID.iDisplayLogicalIndex ==
+                   slsOffsets[slsOffsetIdx].displayID.iDisplayLogicalIndex )
               {
                 currentSLSOffset = slsOffsetIdx;
                 break;
@@ -409,13 +586,17 @@ namespace {
 namespace Luminous
 {
   static bool adlAvailable = false;
-
+  static Radiant::Mutex detector_mutex;
   bool ScreenDetectorAMD::detect(int screen, QList<ScreenInfo> & results)
   {
-    MULTI_ONCE(adlAvailable = initADL(););
+    MULTI_ONCE {
+      adlAvailable = initADL();
+    }
+
     if (!adlAvailable)
       return false;
 
+    Radiant::Guard g(detector_mutex);
     checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
 
 #if defined (RADIANT_LINUX)
@@ -428,6 +609,7 @@ namespace Luminous
 #endif
 
     ADL_Main_Control_Destroy();
+
     return success;
   }
 }

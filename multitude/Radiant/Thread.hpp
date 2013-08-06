@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef RADIANT_THREAD_HPP
@@ -22,6 +17,8 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <QString>
+
 #include <cstring>
 #include <map>
 #include <list>
@@ -32,13 +29,6 @@ class QThread;
 namespace Radiant {
 
   class Mutex;
-
-  /** Returns the current thread id as an integer, that is expected to match the thread id
-      that is shown by "top -H" and other similar tools.
-      @return calling thread id */
-  /// @todo isn't this duplicate functionality with Thread::myThreadId() ?
-  int RADIANT_API gettid();
-
   /// Platform-independent threading
   /** This class is used by inheriting it and overriding the virtual
       method childLoop().
@@ -52,11 +42,14 @@ namespace Radiant {
     typedef void* id_t;
 
     /// The id of the calling thread
+    /// @return Id of the calling thread
     static id_t myThreadId();
 
-    /** Construct a thread structure. The thread is NOT activated by this
-    method. */
-    Thread(const char * name = "Radiant::Thread");
+    /// Construct a thread structure. The thread is NOT activated by this
+    /// method.
+    /// @param name thread name
+    /// @sa setName
+    Thread(const QString & name = "Radiant::Thread");
 
     /// Destructor
     /** The thread must be stopped before this method is
@@ -66,39 +59,29 @@ namespace Radiant {
     before this function). */
     virtual ~Thread();
 
-    void setName(const char * name);
+    /// Set the thread name. The thread name can be used by some debuggers, for
+    /// example QtCreator. Useful for debugging purposes. Does not affect any
+    /// functionality.
+    /// @param name thread name
+    void setName(const QString &name);
 
-    /** Starts the thread */
+    /// Starts the thread
     void run();
 
-    /** Waits until thread is finished. This method does nothing to
-    kill the thread, it simply waits until the thread has run its
-    course. */
-    /// @param timeoutms Time to wait, in milliseconds
+    /// Waits until thread is finished. This method does nothing to
+    /// kill the thread, it simply waits until the thread has run its
+    /// course.
+    /// @param timeoutms How many milliseconds this function call will block at most
     /// @returns true if the thread has terminated within the timeout period
     bool waitEnd(int timeoutms = 0);
-
-    /** Kills the thread. A violent way to shut down a thread. You
-    should only call this method in emergency situations. May result
-    in application crash and other minor problems.*/
-    void kill();
 
     /// Check if the thread is running
     /// @returns true if the thread is running.
     bool isRunning() const;
 
-    /** Drive some self tests. */
-    //static void test();
-
   protected:
-    /// Exits the the calling thread.
-    void threadExit();
-
-    /// Calls childLoop.
-    void mainLoop();
-
-    /** The actual contents of the thread. You need to override this to
-    add functionality to your software. */
+    /// The actual contents of the thread. You need to override this to
+    /// add functionality to your software
     virtual void childLoop() = 0;
 
   private:
@@ -121,9 +104,20 @@ namespace Radiant {
     typedef std::map<Thread::id_t, T> Map;
 
   public:
-    TLS() : m_default() {}
-    /// Copy constructor
+    /// Constructs TLS variable with default constructor
+    TLS() {}
+    /// Construct a TLS variable with the given default value
+    /// @param t default value
     TLS(const T& t) : m_default(t) {}
+    /// Construct a copy
+    /// @param t object to copy
+    TLS(const  TLS & t)
+    {
+      Radiant::Guard g1(m_mutex);
+      Radiant::Guard g2(m_mutex);
+      m_default = t.m_default;
+      m_values = t.m_values;
+    }
 
     /// Get the calling thread instance of the TLS variable
     /// @return variable instance in calling thread
@@ -142,6 +136,8 @@ namespace Radiant {
     /// @copydoc get
     operator T&() { return get(); }
 
+    /// Set all instances of the variable to the given value
+    /// @param t value to set
     void setAll(const T & t)
     {
       Radiant::Guard g(m_mutex);
@@ -168,7 +164,9 @@ namespace Radiant {
       return lst;
     }
 
-    /// Compare if two TLS variables are equal
+    /// Assign the underlying value
+    /// @param t Value to assign
+    /// @return Reference to self
     TLS<T> & operator=(const T& t)
     {
       get() = t;

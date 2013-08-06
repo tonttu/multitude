@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,6 +13,7 @@
 
 #include "Export.hpp"
 #include "Platform.hpp"
+#include "TimeStamp.hpp"
 
 #include <Patterns/NotCopyable.hpp>
 
@@ -27,6 +23,10 @@
 
 namespace Radiant
 {
+
+  /// @cond
+
+  /// This class is used by MultiTaction firmware to implement mount_rw
   class RADIANT_API FileWriter : public Patterns::NotCopyable
   {
   public:
@@ -39,6 +39,8 @@ namespace Radiant
     static void setInitFunction(void (*f)());
     static void setDeinitFunction(void (*f)());
   };
+
+  /// @endcond
 
   /// FileUtils contains functions for platform independent file-handing
   class RADIANT_API FileUtils
@@ -68,8 +70,6 @@ namespace Radiant
     /// Check if a given file is readable.
     /// @param filename Name of file
     /// @returns true if the specified file is readable
-    static bool fileReadable(const char* filename);
-    /// @copydoc fileReadable
     static bool fileReadable(const QString & filename);
 
     /// Check if the user can append to a given file.
@@ -155,7 +155,7 @@ namespace Radiant
     /// Returns seconds from epoch, 0 in case of error
     /// @param filePath Full filename with path
     /// @returns timestamp of last modification or 0 if the time could not be retrieved
-    static unsigned long int lastModified(const QString & filePath);
+    static Radiant::TimeStamp lastModified(const QString & filePath);
 
     /// Adds indentation space to the given stream
     /// @param f Handle to a file stream
@@ -165,9 +165,11 @@ namespace Radiant
     static void indent(FILE * f, int levels);
 
 		/// Returns the path separator for the current platform
+    /// @return Path separator for the current platform
     static QString pathSeparator();
 
 		/// Returns the directory separator for the current platform
+    /// @return Directory separator for the current platform
     static QString directorySeparator();
 
 #ifdef RADIANT_LINUX

@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -27,15 +22,11 @@
 
 namespace Luminous
 {
-  /// Converts OpenGL texture internal format enum into human-readable string
-  LUMINOUS_API const char * glInternalFormatToString(GLint format);
-  /// Converts OpenGL texture format enum into human-readable string
-  LUMINOUS_API const char * glFormatToString(GLenum format);
-
-  /// Converts OpenGL error into a human-readalbe string
+  /// Converts OpenGL error into a human-readable string. This function gets
+  /// the current error code from OpenGL and displays it using Radiant::error.
+  /// @param msg message prefix
+  /// @param line line number
   LUMINOUS_API void glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
-
-
 }
 
 #endif

@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Effects.
- *
- * Copyright: MultiTouch Oy, Finland, http://multitouch.fi
- *
- * All rights reserved, 2007-2010
- *
- * You may use this file only for purposes for which you have a
- * specific, written permission from MultiTouch Oy.
- *
- * See file "Effects.hpp" for authors and more details.
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef LUMINOUS_SPRITERENDERER_HPP
@@ -21,90 +16,67 @@
 
 namespace Luminous {
 
-  /** Optimized 2D sprite renderer.
-
-      This class can be used to draw a great number of sprites on the screen. SpriteRenderer relies on
-      geometry-, vertex-, and pixels shaders to to increase its performance. Consequently it may not run on outdated or
-      very low-end hardware.
-
-      The maximum number of sprites depends on the hardware, and the sprite update logic. Typically
-      the limiting factor is the CPU-based calculation of the sprite parameters. Usually
-      the maximum number of particles would be between 100 000 and 1000 0000.
-
-      The typical use pattern of SpriteRenderer is as follows:
-
-      @code
-
-      class MyClass
-      {
-
-      void update()
-      {
-        m_sprites.resize(100);
-        Luminous::SpriteRenderer::Sprite * sprite = m_sprites.sprites();
-
-        for(int i = 0; i < 100; i++)
-          updateSprite(sprite); // Fill the sprite with proper values
-          sprite++;
-        }
-      }
-
-      void render(Luminous::RenderContext & r)
-      {
-        m_sprites.uploadSpritesToGPU(r);
-        m_sprites.renderSprites(r);
-      }
-
-      private:
-        Luminous::SpriteRenderer m_sprites;
-      };
-
-      @endcode
-  */
+  /// This class implements a simple particle system.
+  ///
+  /// This class can be used to draw a great number of sprites on the screen.
+  /// It relies on geometry, vertex, and pixels shaders to to increase its
+  /// performance. Consequently it may not run on outdated or very low-end
+  /// hardware.
+  ///
+  /// The maximum number of particles depends on the hardware, and the particle
+  /// update logic. Typically the limiting factor is the CPU-based calculation
+  /// of the particle parameters.
   class LUMINOUS_API SpriteRenderer : public Patterns::NotCopyable
   {
   public:
 
     /// Individual sprite
-    class LUMINOUS_API Sprite
+    struct Sprite
     {
-    public:
-      Sprite();
-      /// The location of the sprite
-      Nimble::Vector2 m_location;
+      Sprite()
+        : location(0,0)
+        , velocity(0,0)
+        , color(1.f, 1.f, 1.f, 1.f)
+        , rotation(0.f)
+        , size(10.f)
+      {}
+
+      /// Location of the sprite
+      Nimble::Vector2f location;
       /// The velocity of the sprite
       /** The velocity information is used to implement motion blur/stretching. */
-      Nimble::Vector2 m_velocity;
+      Nimble::Vector2f velocity;
       /// The color of the sprite
-      Nimble::Vector4 m_color;
+      Nimble::Vector4f color;
       /// The rotation of the sprite
-      float m_rotation;
+      float rotation;
       /// The size (diameter) of the particle.
-      float m_size;
+      float size;
     };
 
+    /// Constructor
     SpriteRenderer();
+    /// Destructor
     ~SpriteRenderer();
 
     /// Resize the sprite buffer
     void resize(size_t n);
+
     /// Returns the number of allocated sprites
     size_t spriteCount() const;
-    /// A pointer to the sprites
-    Sprite * sprites();
 
     /// The container type where the sprites are stored
     typedef std::vector<Sprite> SpriteVector;
 
     /// Return the vector containing the sprites
-    SpriteVector & spriteVector();
+    SpriteVector & sprites();
 
-    /// Uploads the current sprites to the GPU
-    void uploadSpritesToGPU(Luminous::RenderContext & r);
     /// Renders the sprites
-    void renderSprites(Luminous::RenderContext & r);
+    void render(Luminous::RenderContext & r) const;
+
     /// Sets the texture that is used in the rendering process
-    void setTexture(const Luminous::Image &);
+    void setImage(const Luminous::Image & image);
+
     /// Create a blurry texture
     /// Creates a basic square texture with radial gradient pattern
     /// @param dim texture dimensions
@@ -114,18 +86,28 @@ namespace Luminous {
     void createFuzzyTexture(int dim, float centerDotSize = 0.25f,
                             float haloweight = 0.75f, float halodescent = 1.0f);
 
-    /// Selects the blending function used for the sprites
-    void setBlendFunc(Luminous::RenderContext::BlendFunc f);
-    /// Sets the velocity scaling factor
-    /** @param velscale The scaling factor to be used for stretching sprites along the
-        velocity vector during rendering. Value zero inhibits the velocity stretching. Default value
-        is zero. */
-    void setVelocityScale(float velscale);
-  private:
+    /// Set the blend mode used for rendering the particles.
+    /// @param mode blend mode
+    void setBlendMode(const Luminous::BlendMode & mode);
 
-    class GPUData;
-    class Internal;
-    Internal * m_data;
+    /// Blend mode used during rendering.
+    /// @return blend mode used
+    const BlendMode & blendMode() const;
+
+    /// Set the velocity scaling factor.
+    /// @param velscale velocity scaling
+    /// @sa velocityScale
+    void setVelocityScale(float velscale);
+
+    /// Velocity scaling factor is used to stretch the particles along the
+    /// velocity vector during rendering. Set to zero to disable stretching.
+    /// Default value is zero.
+    /// @return velocity scaling factor
+    float velocityScale() const;
+
+  private:
+    class D;
+    D * m_d;
   };
 
 }

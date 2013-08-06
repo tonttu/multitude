@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -28,6 +23,8 @@
 #include <QString>
 #include <vector>
 
+/// @cond
+
 namespace Luminous
 {
 
@@ -35,13 +32,14 @@ namespace Luminous
   /// OpenGL program object. If you want to use OpenGL shader, you will likely
   /// want to use Luminous::Shader instead which provides a higher level
   /// abstraction for shader. @sa Luminous::Shader
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1. Use Luminous::Program instead.
   class LUMINOUS_API GLSLProgramObject : public GLResource, public Patterns::NotCopyable
   {
   public:
 
     /// Constructs new program object and puts it in the given resources
     /// collection
-    GLSLProgramObject(GLResources * resources = 0);
+    GLSLProgramObject(RenderContext * resources = 0);
     virtual ~GLSLProgramObject();
 
     /// Adds a shader object to the program to be linked
@@ -62,12 +60,12 @@ namespace Luminous
     virtual void unbind();
 
     /// Gets the location of the given uniform variable
-    int getUniformLoc(const QString & name);
+    int getUniformLoc(const QByteArray & name);
     /// Gets the location of the given uniform variable
     int getUniformLoc(const char * name);
 
     /// Gets the location of the given attribute variable
-    int getAttribLoc(const QString & name);
+    int getAttribLoc(const QByteArray & name);
     /// Gets the location of the given attribute variable
     int getAttribLoc(const char * name);
 
@@ -87,12 +85,18 @@ namespace Luminous
     /// @copydoc setUniformInt
     /// The matrix is automatically transposed for OpenGL
     bool setUniformMatrix3(const char * name, const Nimble::Matrix3f & value);
+    /// @copydoc setUniformInt
+    /// The matrix is automatically transposed for OpenGL
+    bool setUniformMatrix4(const char * name, const Nimble::Matrix4f & value);
+
+#ifndef LUMINOUS_OPENGLES
 
     /// Sets a given program parameter
     /** This is in practice a call to glProgramParameteriEXT
     @param pname parameter to set
     @param value parameter value*/
     void setProgramParameter(GLenum pname, GLint value);
+#endif // LUMINOUS_OPENGLES
 
     /// Validates the program
     /// @return true if the program is valid and can be used
@@ -169,7 +173,17 @@ namespace Luminous
     /// @return true if the program has errors
     bool hasErrors() const { return m_errors; }
 
+    /// Sets the label of this program.
+    void setLabel(const QString & l) { m_label = l; }
+    /// The label of this program
+    /** The label has no functional significance. It is only used for printing error messages,
+        and it makes it easier to track cases where wrong program might be accidentally loaded. */
+    const QString & label() const { return m_label; }
+
   protected:
+  private:
+
+    friend class RenderContext;
     /// The linker log
     std::vector<GLchar> m_linkerLog;
     /// True if the program has been linked
@@ -180,9 +194,13 @@ namespace Luminous
     std::list<GLSLShaderObject*> m_shaderObjects;
     /// The OpenGL handle for the program
     GLuint m_handle;
+    /// A label to help debugging
+    QString m_label;
   };
 
 }
+
+/// @endcond
 
 #endif
 

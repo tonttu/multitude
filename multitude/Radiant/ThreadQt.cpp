@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,37 +15,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
-#include <unistd.h>
 #include <iostream>
 #include <cassert>
 
 #include <QThread>
 
-#ifdef RADIANT_LINUX
-#include <sys/syscall.h>
 namespace Radiant {
-  int gettid() { return syscall(SYS_gettid); }
-}
-#elif defined(RADIANT_WINDOWS)
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-namespace Radiant {
-  int gettid() { return GetCurrentThreadId(); }
-}
-#else
-namespace Radiant {
-  int gettid() { return getpid(); }
-}
-#endif
-
-namespace Radiant {
-
-  enum {
-    STOPPED,
-    STOPPING,
-    RUNNING
-  };
 
   bool Thread::m_threadDebug = false;
   bool Thread::m_threadWarnings = false;
@@ -70,9 +40,8 @@ namespace Radiant {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-  Thread::Thread(const char * name)
+  Thread::Thread(const QString &name)
     : m_d(new D(this))
-    , m_state(STOPPED)
   {
     setName(name);
   }
@@ -84,9 +53,9 @@ namespace Radiant {
 	  delete m_d;
   }
 
-  void Thread::setName(const char * name)
+  void Thread::setName(const QString & name)
   {
-    m_d->setObjectName(QString(name));
+    m_d->setObjectName(name);
   }
 
   Thread::id_t Thread::myThreadId()
@@ -102,14 +71,9 @@ namespace Radiant {
   bool Thread::waitEnd(int timeoutms)
   {
     if(timeoutms)
-      return m_d->wait(timeoutms * 1000); // Guess that it is microseconds...
+      return m_d->wait(timeoutms);
     else
       return m_d->wait();
-  }
-
-  void Thread::kill()
-  {
-    // Does nothing
   }
 
   bool Thread::isRunning() const

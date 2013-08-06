@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -23,12 +18,10 @@
 #include <QImageReader>
 #include <QImage>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Luminous
 {
-  using namespace Radiant;
-
   ImageCodecQT::ImageCodecQT(const char * suffix)
     : m_suffix(suffix)
   {}
@@ -36,11 +29,9 @@ namespace Luminous
   ImageCodecQT::~ImageCodecQT()
   {}
 
-  bool ImageCodecQT::canRead(FILE * file)
+  bool ImageCodecQT::canRead(QFile & file)
   {
-    QFile f;
-    f.open(file, QIODevice::ReadOnly);
-    QImageReader r(&f);
+    QImageReader r(&file);
     return r.canRead();
   }
 
@@ -54,15 +45,9 @@ namespace Luminous
     return QString("ImageCodecQT");
   }
 
-  bool ImageCodecQT::ping(ImageInfo & info, FILE * file)
+  bool ImageCodecQT::ping(ImageInfo & info, QFile & file)
   {
-    QFile f;
-    if(!f.open(file, QIODevice::ReadOnly)) {
-      Radiant::error("ImageCodecQT::ping # failed to open file");
-      return false;
-    }
-
-    QImageReader r(&f);
+    QImageReader r(&file);
 
     if(!r.canRead()) {
       Radiant::error("ImageCodecQT::ping # no valid data or the file format is not supported");
@@ -73,13 +58,29 @@ namespace Luminous
 
     QSize s = r.size();
 
-    if(fmt == QImage::Format_RGB32)
+    switch (fmt) {
+    case QImage::Format_Mono:
+    case QImage::Format_MonoLSB:
+    case QImage::Format_RGB32:
+    case QImage::Format_RGB16:
+    case QImage::Format_RGB666:
+    case QImage::Format_RGB555:
+    case QImage::Format_RGB888:
+    case QImage::Format_RGB444:
       info.pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_Indexed8)
-      info.pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_ARGB32)
+      break;
+    /// @todo Indexed8 might have a alpha channel, we don't know without actually opening the image.
+    ///       Should we open it?
+    case QImage::Format_Indexed8:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+    case QImage::Format_ARGB8565_Premultiplied:
+    case QImage::Format_ARGB6666_Premultiplied:
+    case QImage::Format_ARGB8555_Premultiplied:
+    case QImage::Format_ARGB4444_Premultiplied:
       info.pf = PixelFormat::rgbaUByte();
-    else {
+      break;
+    default:
       Radiant::error("ImageCodecQT::ping # image has unsupported pixel format (%d: %dx%d)", fmt, s.width(), s.height());
       return false;
     }
@@ -90,53 +91,39 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::read(Image & image, FILE * file)
+  bool ImageCodecQT::read(Image & image, QFile & file)
   {
-    QFile f;
-    if(!f.open(file, QIODevice::ReadOnly))
-      return false;
-    QImageReader r(&f);
-
-    if(!r.canRead())
-      return false;
-
-    QImage::Format fmt = r.imageFormat();
-    PixelFormat pf;
-
-    if(fmt == QImage::Format_RGB32)
-      pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_Indexed8)
-      pf = PixelFormat::rgbUByte();
-    else if(fmt == QImage::Format_ARGB32)
-      pf = PixelFormat::rgbaUByte();
-    else
-      return false;
-
     QImage qi;
-    if(!r.read(&qi))
+    if (!qi.load(&file, nullptr))
       return false;
 
-    if(fmt == QImage::Format_Indexed8) {
-      QImage tmp = qi.convertToFormat(QImage::Format_RGB32);
-      qi = tmp;
-      fmt = QImage::Format_RGB32;
+    QImage::Format fmt = qi.format();
+
+    if ((fmt != QImage::Format_ARGB32 && fmt != QImage::Format_RGB32) ||
+        (qi.depth() != 32 && qi.depth() != 24 && qi.depth() != 8)) {
+      qi = qi.convertToFormat(qi.hasAlphaChannel() ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+      fmt = qi.format();
     }
 
-    image.allocate(qi.width(), qi.height(), pf);
+    if ((fmt != QImage::Format_ARGB32 && fmt != QImage::Format_RGB32) ||
+        (qi.depth() != 32 && qi.depth() != 24 && qi.depth() != 8))
+      return false;
+
+    const int bytesPerPixel = qi.depth() / 8;
+    image.allocate(qi.width(), qi.height(), fmt == QImage::Format_ARGB32 ? PixelFormat::rgbaUByte() : PixelFormat::rgbUByte());
 
     const uint8_t * src = qi.bits();
-    const uint32_t  chl = qi.depth() == 8? 1 : 4;
-    const uint8_t * sentinel = src + chl * qi.width() * qi.height();
+    const uint8_t * sentinel = src + bytesPerPixel * qi.width() * qi.height();
     uint8_t * dest = image.data();
 
     if(fmt == QImage::Format_ARGB32) {
-      if(qi.depth() != 8) {
+      if (bytesPerPixel != 1) {
         while(src < sentinel) {
           dest[0] = src[2];
           dest[1] = src[1];
           dest[2] = src[0];
           dest[3] = src[3];
-          src += 4;
+          src += bytesPerPixel;
           dest += 4;
         }
       } else {
@@ -155,7 +142,7 @@ namespace Luminous
         dest[0] = src[2];
         dest[1] = src[1];
         dest[2] = src[0];
-        src += 4;
+        src += bytesPerPixel;
         dest += 3;
       }
     }
@@ -163,7 +150,7 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::write(const Image & image, FILE * file)
+  bool ImageCodecQT::write(const Image & image, QFile & file)
   {
     QImage qi;
 
@@ -174,7 +161,7 @@ namespace Luminous
 
     if(image.pixelFormat() == PixelFormat::rgbUByte()) {
 
-      // info("File is almost written rbgUByte");
+      // Radiant::info("File is almost written rbgUByte");
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_RGB32);
@@ -191,7 +178,7 @@ namespace Luminous
       }
     }
     else if(image.pixelFormat() == PixelFormat::rgbaUByte()) {
-      // info("File is almost written rbgaUByte");
+      // Radiant::info("File is almost written rbgaUByte");
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_ARGB32);
@@ -207,7 +194,7 @@ namespace Luminous
         dest += 4;
       }
     }
-    else if(image.pixelFormat() == PixelFormat::luminanceUByte()) {
+    else if(image.pixelFormat() == PixelFormat::redUByte()) {
 
       qi = QImage(image.width(), image.height(),
                   QImage::Format_RGB32);
@@ -236,20 +223,11 @@ namespace Luminous
         dest += 4;
       }
     } else {
-      error("ImageCodecQT::write # Unsupported pixel format");
+      Radiant::error("ImageCodecQT::write # Unsupported pixel format");
     }
 
-    // info("File is almost written");
-
-    QFile f;
-    bool ok = f.open(file, QIODevice::ReadWrite);
-
-    if(!ok) {
-      // error("Error in QFile.open()");
-      return false;
-    }
-
-    return qi.save(&f, m_suffix.toUtf8().data());
+    // Radiant::info("File is almost written");
+    return qi.save(&file, m_suffix.toUtf8().data());
   }
 
 }

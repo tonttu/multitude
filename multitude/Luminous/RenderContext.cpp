@@ -1,221 +1,119 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include "RenderContext.hpp"
 
 #include "Error.hpp"
-#include "GLContext.hpp"
-#include "Texture.hpp"
-#include "FramebufferObject.hpp"
-//#include "RenderTarget.hpp"
 
-#include "Utils.hpp"
-#include "GLSLProgramObject.hpp"
+#include "RenderCommand.hpp"
 
-#include <strings.h>
+#include <Nimble/ClipStack.hpp>
 
-#define DEFAULT_RECURSION_LIMIT 8
+// Luminous v2
+#include "Luminous/VertexArray.hpp"
+#include "Luminous/VertexDescription.hpp"
+#include "Luminous/Buffer.hpp"
+#include "Luminous/RenderDriverGL.hpp"
+#include "Luminous/SimpleTextLayout.hpp"
+#include "Luminous/ColorCorrectionFilter.hpp"
+#include "Luminous/PostProcessChain.hpp"
+#include "Luminous/PostProcessContext.hpp"
+#include "Luminous/PostProcessFilter.hpp"
+
+#include <Nimble/Matrix4.hpp>
+
+#include <Radiant/Mutex.hpp>
+#include <Radiant/PlatformUtils.hpp>
+#include <Radiant/Thread.hpp>
+
+#include <tuple>
+#include <vector>
+
+#define DEFAULT_RECURSION_LIMIT 4
 #define SHADER(str) #str
 
 namespace Luminous
 {
-
-  using namespace Nimble;
-  using namespace Radiant;
-
-
-  RenderContext::FBOPackage::~FBOPackage()
-  {}
-
-  void RenderContext::FBOPackage::setSize(Nimble::Vector2i size)
-
-  {
-    if(size == m_tex.size())
-      return;
-
-    GLint textureId = 0;
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureId);
-
-    m_tex.bind();
-    m_tex.setWidth(size.x);
-    m_tex.setHeight(size.y);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
-  }
-
-  void RenderContext::FBOPackage::attach()
-  {
-    m_fbo.attachTexture2D(&m_tex, Luminous::COLOR0, 0);
-    m_fbo.check();
-  }
-
-  void RenderContext::FBOPackage::activate(RenderContext & r)
-  {
-    glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
-
-    attach();
-    r.pushDrawBuffer(Luminous::COLOR0, this);
-    // Save and setup viewport to match the FBO
-    glViewport(0, 0, m_tex.width(), m_tex.height());
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, m_tex.width(), 0, m_tex.height());
-  }
-
-  void RenderContext::FBOPackage::deactivate(RenderContext & r)
-  {
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    m_fbo.unbind();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    glPopAttrib();
-
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    r.popDrawBuffer();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-    // Restore matrix stack
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    Luminous::glErrorToString(__FILE__, __LINE__);
-  }
-
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-
-  RenderContext::FBOHolder::FBOHolder()
-      : m_context(0),
-      m_texUV(1,1)
-  {
-  }
-
-  RenderContext::FBOHolder::FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package)
-      : m_context(context), m_package(package),
-      m_texUV(1,1)
-  {
-    m_package->m_users++;
-  }
-
-  RenderContext::FBOHolder::FBOHolder(const FBOHolder & that)
-  {
-    FBOHolder * that2 = (FBOHolder *) & that;
-    m_context = that2->m_context;
-    m_package = that2->m_package;
-    m_texUV   = that2->m_texUV;
-    m_package->m_users++;
-  }
-
-  RenderContext::FBOHolder::~FBOHolder()
-  {
-    release();
-  }
-
-  /** Copies the data pointers from the argument object. */
-  RenderContext::FBOHolder & RenderContext::FBOHolder::operator =
-      (const RenderContext::FBOHolder & that)
-  {
-    release();
-    FBOHolder * that2 = (FBOHolder *) & that;
-    m_context = that2->m_context;
-    m_package = that2->m_package;
-    m_texUV   = that2->m_texUV;
-    m_package->m_users++;
-    return *this;
-  }
-
-
-  Luminous::Texture2D * RenderContext::FBOHolder::finish()
-  {
-    if(!m_package)
-      return 0;
-
-    Luminous::Texture2D * tex = & m_package->m_tex;
-
-    release();
-
-    return tex;
-  }
-
-  void RenderContext::FBOHolder::release()
-  {
-    if(m_package) {
-      m_package->m_users--;
-
-      if(!m_package->m_users) {
-        m_context->clearTemporaryFBO(m_package);
-      }
-
-      m_package.reset();
-      m_context = 0;
-    }
-  }
-
-  ///////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////
-
   class RenderContext::Internal
   {
   public:
-
-    Internal(const Luminous::MultiHead::Window * win, Luminous::RenderContext & /*rc*/)
-        : m_recursionLimit(DEFAULT_RECURSION_LIMIT),
-        m_recursionDepth(0),
-        m_renderCount(0),
-        m_frameCount(0),
-        m_window(win),
-        m_viewStackPos(-1),
-        m_glContext(0),
-        m_initialized(false),
-        m_blendFunc(BLEND_USUAL)
-        //m_rtm(rc)
+    /// Optimal value for BUFFERSETS is actually dependent on glFinish
+    /// in RenderThread, see comment there.
+    enum { MAX_TEXTURES = 64, BUFFERSETS = 1 };
+    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win, unsigned gpuId)
+        : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
+        , m_recursionDepth(0)
+        , m_renderCount(0)
+        , m_frameCount(0)
+        , m_area(0)
+        , m_window(win)
+        , m_gpuId(gpuId)
+        , m_initialized(false)
+        , m_uniformBufferOffsetAlignment(0)
+        , m_automaticDepthDiff(-1.0f/100000.0f)
+        , m_driver(renderDriver)
+        , m_driverGL(static_cast<RenderDriverGL*>(&renderDriver))
+        , m_bufferIndex(0)
+        , m_useOffScreenFrameBuffer(false)
+        , m_finalFrameBuffer(FrameBuffer::WINDOW)
+        , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
+        , m_currentFrameBuffer(0)
+        , m_postProcessFilters(0)
     {
+      // Reset render call count
+      m_renderCalls.push(0);
 
-      m_attribs.resize(10000);
-      m_attribs.clear();
+      // Initialize default frame buffer size
+      assert(win);
+      m_finalFrameBuffer.setSize(win->size());
 
-      m_verts.resize(10000);
-      m_verts.clear();
+      // Set initial data for an off-screen frame buffer
+      // The hardware resource is not created if this is actually never bound
+      m_offScreenFrameBuffer.setSize(win->size());
+      m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
+
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+
+      m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
+      m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
+      Luminous::VertexDescription desc;
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      m_basicShader.setVertexDescription(desc);
+
+      m_texShader.loadShader("Luminous/GLSL150/tex.vs", Shader::Vertex);
+      m_texShader.loadShader("Luminous/GLSL150/tex.fs", Shader::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_texShader.setVertexDescription(desc);
+
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", Shader::Vertex);
+      m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", Shader::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      desc.addAttribute<float>("vertex_invsize");
+      m_fontShader.setVertexDescription(desc);
+      m_fontShader.setSampleShading(1.0f);
+
+      // Fetch GPU upload limits from the window configuration
+      uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
+      uint64_t margin = *(win->attribute<int64_t>("gpu-upload-margin"));
+      renderDriver.setUploadLimits( limit, margin );
     }
 
     ~Internal()
     {
     }
 
-    void pushFBO(std::shared_ptr<FBOPackage> fbo)
-    {
-      m_fboStack.push(fbo);
-    }
-
-    std::shared_ptr<FBOPackage> popFBO()
-    {
-      m_fboStack.pop();
-
-      return m_fboStack.empty() ? std::shared_ptr<FBOPackage>() : m_fboStack.top();
-    }
 
     void initialize() {
 
@@ -223,384 +121,237 @@ namespace Luminous
 
       if(!m_initialized) {
         m_initialized = true;
-        const char * circ_vert_shader = SHADER(
-            uniform mat4 matrix;
-            varying vec2 pos;
-            void main(void) {
-              pos = gl_Vertex.xy;
-              mat4 transform = gl_ProjectionMatrix * matrix;
-              gl_Position = transform * gl_Vertex;
-              gl_ClipVertex = gl_ModelViewMatrix * matrix * gl_Vertex;
-              gl_FrontColor = gl_Color;
-            }
-          );
-        const char * circ_frag_shader = SHADER(
-            varying vec2 pos;
-            uniform float border_start;
-            void main(void) {
-              float r = length(pos);
-              gl_FragColor = gl_Color;
-              gl_FragColor.w *= smoothstep(1.00, border_start, r);
-            }
-          );
 
-        m_circle_shader.reset(new GLSLProgramObject());
-        m_circle_shader->loadStrings(circ_vert_shader, circ_frag_shader);
-
-        m_polyline_shader.reset(new GLSLProgramObject());
-        const char * polyline_frag = SHADER(
-            varying vec2 p1;
-            varying vec2 p2;
-            varying vec2 vertexcoord;
-            uniform float width;
-            void main() {
-              gl_FragColor = gl_Color;
-              vec2 pp = p2-p1;
-              float t = ((vertexcoord.x-p1.x)*(p2.x-p1.x)+(vertexcoord.y-p1.y)*(p2.y-p1.y))/dot(pp,pp);
-              t = clamp(t, 0.0, 1.0);
-              vec2 point_on_line = p1+t*(p2-p1);
-              float dist = length(vertexcoord-point_on_line);
-              gl_FragColor.w *= clamp(width-dist, 0.0, 1.0);
-            }
-          );
-
-          const char * polyline_vert = SHADER(
-              attribute vec2 coord;
-              attribute vec2 coord2;
-              uniform float width;
-              varying vec2 p1;
-              varying vec2 p2;
-              varying vec2 vertexcoord;
-              void main() {
-                p1 = coord;
-                p2 = coord2;
-                vertexcoord = gl_Vertex.xy;
-                gl_Position = gl_ProjectionMatrix * gl_Vertex;
-                gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;
-                gl_FrontColor = gl_Color;
-              }
-            );
-        m_polyline_shader->loadStrings(polyline_vert, polyline_frag);
-
-        m_viewFBO.reset(new Luminous::Framebuffer());
+        m_uniformBufferOffsetAlignment = m_driver.uniformBufferOffsetAlignment();
       }
-
-      while(!m_drawBufferStack.empty())
-        m_drawBufferStack.pop();
-      m_drawBufferStack.push(DrawBuf(GL_BACK, 0)); // Start off by rendering to the back buffer
     }
-    Nimble::Vector2 contextSize() const
+
+    Nimble::Size contextSize() const
     {
-      return m_window ? m_window->size() : Nimble::Vector2i(10, 10);
+      if(m_window)
+        return m_window->size();
+
+      /// @todo why not zero vector?
+      return Nimble::Size(10, 10);
     }
 
-    void drawCircle(RenderContext & r, Nimble::Vector2f center, float radius,
-                                   const float * rgba) {
-
-      const Matrix3f& m = r.transform();
-      const float tx = center.x;
-      const float ty = center.y;
-
-      static const GLfloat rect_vertices[] = {
-        -1.0, -1.0,
-        1.0, -1.0,
-        1.0, 1.0,
-        -1.0, 1.0
-      };
-
-      // translate(tx, ty) & scale(radius)
-      Matrix4f t(m[0][0]*radius, m[0][1]*radius, 0, m[0][2] + m[0][1]*ty+m[0][0]*tx,
-                 m[1][0]*radius, m[1][1]*radius, 0, m[1][2] + m[1][1]*ty+m[1][0]*tx,
-                 0         , 0         , 1, 0,
-                 m[2][0]*radius, m[2][1]*radius, 0, m[2][2]  + m[2][1]*ty+m[2][0]*tx);
-
-      if(rgba)
-        glColor4fv(rgba);
-
-      m_circle_shader->bind();
-
-      // uniform scaling assumed, should work fine with "reasonable" non-uniform scaling
-      float totalRadius = m.extractScale() * radius;
-      float border = Nimble::Math::Min(1.0f, totalRadius-2.0f);
-      m_circle_shader->setUniformFloat("border_start", (totalRadius-border)/totalRadius);
-      GLint matrixLoc = m_circle_shader->getUniformLoc("matrix");
-      glUniformMatrix4fv(matrixLoc, 1, GL_TRUE, t.data());
-
-      // using a VBO with 4 vertices is actually slower than this
-      glEnableClientState(GL_VERTEX_ARRAY);
-      glVertexPointer(2, GL_FLOAT, 0, rect_vertices);
-      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-      glDisableClientState(GL_VERTEX_ARRAY);
-      m_circle_shader->unbind();
-    }
-
-    void drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
-                      float width, const float * rgba);
-
-    void pushViewStack()
+    void createPostProcessFilters(RenderContext & rc, const Luminous::PostProcessFilters & filters)
     {
-      int w = m_window->size().x;
-      int h = m_window->size().y;
-      ++m_viewStackPos;
-      if ((int) m_viewTextures.size() == m_viewStackPos) {
-        m_viewTextures.push_back(new Luminous::Texture2D);
-        Luminous::Texture2D & tex = *m_viewTextures.back();
-        tex.setWidth(w);
-        tex.setHeight(h);
-        tex.bind();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+      for(Luminous::PostProcessFilters::const_iterator it = filters.begin(); it != filters.end(); ++it) {
+
+        if(m_postProcessChain.contains(*it))
+          continue;
+
+        // Create a new context for the filter
+        auto context = std::make_shared<PostProcessContext>(*it);
+
+        if(context) {
+          // By default resizes new frame buffers to current context size
+          context->initialize(rc);
+          m_postProcessChain.insert(context);
+        }
       }
-      attachViewTexture();
-      glPushAttrib(GL_VIEWPORT_BIT);
-      glViewport(0, 0, w, h);
-      glClearColor(0, 0, 0, 1);
-      glClear(GL_COLOR_BUFFER_BIT);
     }
-    void popViewStack()
+
+    FrameBuffer & defaultFrameBuffer()
     {
-      glPopAttrib();
-      --m_viewStackPos;
-      // if wasn't last
-      if (m_viewStackPos >= 0) {
-        attachViewTexture();
-      } else {
-        unattachViewTexture();
-      }
-      assert(m_viewStackPos >= -1);
-      glEnable(GL_TEXTURE_2D);
-      m_viewTextures[m_viewStackPos+1]->bind();
-    }
-
-    void attachViewTexture()
-    {
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // <- essential on Nvidia
-
-      m_viewFBO->attachTexture2D(m_viewTextures[m_viewStackPos], Luminous::COLOR0);
-      m_viewFBO->check();
-      // attachTexture2D should do this as a side effect already?
-      glDrawBuffer(Luminous::COLOR0);
-    }
-    void unattachViewTexture() {
-      m_viewFBO->unbind();
-      glDrawBuffer(GL_BACK);
+      return m_window->directRendering() ?
+            m_finalFrameBuffer :
+            m_offScreenFrameBuffer;
     }
 
     size_t m_recursionLimit;
     size_t m_recursionDepth;
 
-    //std::stack<Nimble::Rectangle> m_clipStack;
-    std::vector<Nimble::Rectangle> m_clipStack;
-
-    typedef std::list<std::shared_ptr<FBOPackage> > FBOPackages;
-
-    FBOPackages m_fbos;
-
-
-    std::stack<std::shared_ptr<FBOPackage>, std::vector<std::shared_ptr<FBOPackage> > > m_fboStack;
-
-    class DrawBuf
-    {
-    public:
-      DrawBuf() : m_fbo(0), m_dest(GL_BACK) {}
-      DrawBuf(GLenum dest, FBOPackage * fbo) : m_fbo(fbo), m_dest(dest) {}
-      FBOPackage * m_fbo;
-      GLenum m_dest;
-    };
-
-    std::stack<DrawBuf, std::vector<DrawBuf> > m_drawBufferStack;
-
+    std::stack<Nimble::ClipStack> m_clipStacks;
+ 
     unsigned long m_renderCount;
     unsigned long m_frameCount;
 
-    std::shared_ptr<Luminous::GLSLProgramObject> m_circle_shader;
-    std::shared_ptr<Luminous::GLSLProgramObject> m_polyline_shader;
-
+    const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
-    /// fbo for views
-    std::shared_ptr<Luminous::Framebuffer> m_viewFBO;
-    /// fbo texture stack for views
-    std::vector<Luminous::Texture2D *> m_viewTextures;
-    int m_viewStackPos;
-    std::vector<Nimble::Vector2> m_attribs;
-    std::vector<Nimble::Vector2> m_verts;
 
-    Luminous::GLContext * m_glContext;
+    unsigned m_gpuId;
+
+    Transformer m_viewTransformer;
 
     bool m_initialized;
 
-    BlendFunc m_blendFunc;
-
-    /// Viewports defined as x1,y1,x2,y2
+    // Viewports defined as x1,y1,x2,y2
     typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ViewportStack;
     ViewportStack m_viewportStack;
-    //RenderTargetManager m_rtm;
+
+    // Scissor rectangles
+    typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ScissorStack;
+    ScissorStack m_scissorStack;
+
+    // Cache for vertex array objects used in sharedbuffer rendering
+    // key is <vertex buffer id, shader>
+    
+    struct VertexArrayKey
+    {
+      VertexArrayKey(RenderResource::Id id1 = 0,
+		     RenderResource::Id id2 = 0,
+		     const ProgramGL* program = 0)
+	: m_id1(id1), m_id2(id2), m_program(program) {}
+
+      inline bool operator == (const VertexArrayKey & that) const
+      {
+        return m_id1 == that.m_id1 && m_id2 == that.m_id2 && m_program == that.m_program;
+      }
+
+      inline bool operator < (const VertexArrayKey & that) const
+      {
+        /// Make sure we keep a strict ordering so we don't get (A < B && B < A) == true
+        if (m_id1 != that.m_id1)
+          return m_id1 < that.m_id1;
+
+        if (m_id2 != that.m_id2)
+          return m_id2 < that.m_id2;
+
+        return m_program < that.m_program;
+      }
+
+      const RenderResource::Id m_id1;
+      const RenderResource::Id m_id2;
+      const ProgramGL* m_program;
+    };
+
+    
+    typedef std::map<VertexArrayKey, VertexArray> VertexArrayCache;
+    VertexArrayCache m_vertexArrayCache;
+    
+    // List of currently active textures, vbos etc.
+
+    int m_uniformBufferOffsetAlignment;
+
+    float m_automaticDepthDiff;
+    // Stack of render call counts
+    std::stack<int> m_renderCalls;
+
+    Program m_basicShader;
+    Program m_texShader;
+    Program m_fontShader;
+
+    Luminous::RenderDriver & m_driver;
+    Luminous::RenderDriverGL * m_driverGL;
+
+    struct BufferPool
+    {
+      BufferPool() {}
+      std::vector<SharedBuffer> buffers;
+
+      BufferPool(BufferPool && pool)
+        : buffers(std::move(pool.buffers))
+      {}
+
+      BufferPool & operator=(BufferPool && pool)
+      {
+        buffers = std::move(pool.buffers);
+        return *this;
+      }
+
+      void flush(RenderContext & ctx)
+      {
+        for(auto it = buffers.begin(); it != buffers.end(); ++it) {
+          if (it->reservedBytes > 0) {
+            // @todo Investigate if orphaning is any faster on multi-screen/multi-GPU setups
+            // it->buffer.setData(nullptr, it->buffer.size(), Buffer::STREAM_DRAW);
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
+            ctx.unmapBuffer(it->buffer, it->type, 0, it->reservedBytes);
+#else
+            BufferGL & b = ctx.handle(it->buffer);
+            b.upload(it->type, 0, it->reservedBytes, it->data.data());
+#endif
+            it->reservedBytes = 0;
+          }
+        }
+      }
+    };
+
+    // vertex/uniform struct size -> pool
+    std::map<std::size_t, BufferPool> m_vertexBuffers[BUFFERSETS];
+    std::map<std::size_t, BufferPool> m_uniformBuffers[BUFFERSETS];
+    BufferPool m_indexBuffers[BUFFERSETS];
+    int m_bufferIndex;
+
+    // Updated before each frame
+    bool m_useOffScreenFrameBuffer;
+
+    // Default window framebuffer. Eventually the result of the rendering pipeline end ups here
+    FrameBuffer m_finalFrameBuffer;
+    // Used when rendering non-directly/with postprocessing
+    FrameBuffer m_offScreenFrameBuffer;
+    const FrameBuffer * m_currentFrameBuffer;
+
+    // owned by Application
+    const Luminous::PostProcessFilters * m_postProcessFilters;
+    PostProcessChain m_postProcessChain;
+
+    std::stack<float> m_opacityStack;
   };
 
-  void RenderContext::Internal::drawPolyLine(RenderContext& r, const Nimble::Vector2f * vertices, int n,
-                                             float width, const float * rgba)
-  {
-    if(n < 2)
-      return;
-
-    width *= r.scale() * 0.5f;
-    width += 1; // for antialiasing
-
-    const Matrix3 & m = r.transform();
-    Vector2f cprev;
-    Vector2f cnow = m.project(vertices[0]);
-    Vector2f cnext;
-    Vector2f avg;
-    Vector2f dirNext;
-    Vector2f dirPrev;
-
-    int nextIdx = 1;
-    while ((vertices[nextIdx]-cnow).lengthSqr() < 9.0f && nextIdx < n-1) {
-      nextIdx++;
-    }
-
-    cnext = m.project(vertices[nextIdx]);
-    dirNext = cnext - cnow;
-    dirNext.normalize();
-    avg = dirNext.perpendicular();
-
-    if (avg.length() < 1e-5) {
-      avg.make(1,0);
-    } else {
-      avg.normalize();
-    }
-    avg *= width;
-
-    m_verts.clear();
-    m_verts.push_back(cnow + avg);
-    m_verts.push_back(cnow - avg);
-
-    m_attribs.clear();
-
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-    m_attribs.push_back(cnow);
-
-    for (int i = nextIdx; i < n; ) {
-      nextIdx = i+1;
-      cprev = cnow;
-      cnow = cnext;
-
-      // at least 3 pixels gap between vertices
-      while (nextIdx < n-1 && (vertices[nextIdx]-cnow).lengthSqr() < 9.0f) {
-        nextIdx++;
-      }
-      if (nextIdx > n-1) {
-        cnext = 2.0f*cnow - cprev;
-      } else {
-        cnext = m.project(vertices[nextIdx]);
-      }
-
-      dirPrev = dirNext;
-      dirNext = cnext - cnow;
-
-      if (dirNext.length() < 1e-5f) {
-        dirNext = dirPrev;
-      } else {
-        dirNext.normalize();
-      }
-
-      avg = (dirPrev + dirNext).perpendicular();
-      avg.normalize();
-
-      float dp = Math::Clamp(dot(avg, dirPrev.perpendicular()), 1e-2f, 1.0f);
-      avg /= dp;
-      avg *= width;
-      m_verts.push_back(cnow-avg);
-      m_verts.push_back(cnow+avg);
-
-      m_verts.push_back(cnow+avg);
-      m_verts.push_back(cnow-avg);
-
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-      m_attribs.push_back(cnow);
-
-      i = nextIdx;
-    }
-
-    GLuint loc = m_polyline_shader->getAttribLoc("coord");
-    glEnableVertexAttribArray(loc);
-    GLuint loc2 = m_polyline_shader->getAttribLoc("coord2");
-    glEnableVertexAttribArray(loc2);
-
-    m_polyline_shader->bind();
-    m_polyline_shader->setUniformFloat("width", width);
-
-    glColor4fv(rgba);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat *>(&m_verts[0]));
-    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[0]));
-    glVertexAttribPointer(loc2, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<GLfloat *>(&m_attribs[4]));
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glDrawArrays(GL_QUADS, 0, (GLsizei) m_verts.size());
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableVertexAttribArray(loc);
-    glDisableVertexAttribArray(loc2);
-    m_polyline_shader->unbind();
-  }
-
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * win)
+  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win, unsigned gpuId)
       : Transformer(),
-      m_resources(resources),
-      m_data(new Internal(win, *this))
+      m_data(new Internal(driver, win, gpuId))
   {
     resetTransform();
     m_data->m_recursionDepth = 0;
-
-    // Make sure the clip stack is empty
-    while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop_back();
   }
 
   RenderContext::~RenderContext()
   {
     debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameCount,
-         m_data->m_renderCount / Nimble::Math::Max(m_data->m_frameCount, (unsigned long) 1));
+         m_data->m_renderCount / std::max(m_data->m_frameCount, (unsigned long) 1));
     delete m_data;
   }
 
-  void RenderContext::setWindow(const Luminous::MultiHead::Window * window)
+  void RenderContext::setArea(const Luminous::MultiHead::Area * area)
   {
-    m_data->m_window = window;
+    m_data->m_area = area;
+    m_data->m_window = area->window();
   }
 
-  const MultiHead::Window * RenderContext::window() const
+  const Luminous::MultiHead::Window * RenderContext::window() const
   {
     return m_data->m_window;
   }
 
-  void RenderContext::prepare()
+  const Luminous::MultiHead::Area * RenderContext::area() const
   {
-
-    resetTransform();
-    m_data->initialize();
-    m_data->m_recursionDepth = 0;
-    m_data->m_frameCount++;
-
-    // Make sure the clip stack is empty
-    while(!m_data->m_clipStack.empty())
-      m_data->m_clipStack.pop_back();
-
+    return m_data->m_area;
   }
 
-  void RenderContext::finish()
+  unsigned RenderContext::gpuId() const
   {
+    return m_data->m_gpuId;
+  }
+
+  void RenderContext::pushViewTransform(const Nimble::Matrix4 & m)
+  {
+    m_data->m_viewTransformer.pushTransform();
+    m_data->m_viewTransformer.setTransform(m);
+  }
+
+  void RenderContext::popViewTransform()
+  {
+    m_data->m_viewTransformer.popTransform();
+  }
+
+  const Nimble::Matrix4 & RenderContext::viewTransform() const
+  {
+    return m_data->m_viewTransformer.transform();
+  }
+
+  const FrameBuffer & RenderContext::currentFrameBuffer() const
+  {
+    assert(m_data->m_currentFrameBuffer);
+
+    return *m_data->m_currentFrameBuffer;
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -623,294 +374,238 @@ namespace Luminous
     return m_data->m_recursionDepth;
   }
 
+
+  /// Save the current clipping stack and start with a empty one
+  void RenderContext::pushClipStack()
+  {
+    m_data->m_clipStacks.push(Nimble::ClipStack());
+  }
+
+  /// Restores the previously saved clipping stack
+  void RenderContext::popClipStack()
+  {
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.pop();
+  }
+
   void RenderContext::pushClipRect(const Nimble::Rectangle & r)
   {
 //      Radiant::info("RenderContext::pushClipRect # (%f,%f) (%f,%f)", r.center().x, r.center().y, r.size().x, r.size().y);
-
-    m_data->m_clipStack.push_back(r);
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.top().push(r);
   }
 
   void RenderContext::popClipRect()
   {
-    m_data->m_clipStack.pop_back();
-  }
-
-  const std::vector<Nimble::Rectangle> & RenderContext::clipStack() const
-  {
-    return m_data->m_clipStack;
+    assert(!m_data->m_clipStacks.empty());
+    m_data->m_clipStacks.top().pop();
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
-//      Radiant::info("RenderContext::isVisible # area (%f,%f) (%f,%f)", area.center().x, area.center().y, area.size().x, area.size().y);
+    if(m_data->m_clipStacks.empty())
+      return true;
 
-      if(m_data->m_clipStack.empty()) {
-        debugLuminous("\tclip stack is empty");
-        return true;
-      } else {
+    return m_data->m_clipStacks.top().isVisible(area);
+  }
+  
+  void RenderContext::drawArc(const Nimble::Vector2f & center, float radius,
+                              float fromRadians, float toRadians, const Luminous::Style & style, unsigned int linesegments)
+  {
+    if (linesegments == 0) {
+      /// @todo Automagically determine the proper number of linesegments
+      linesegments = 32;
+    }
 
-          // Since we have no proper clipping algorithm, we compare against every clip rectangle in the stack
-          bool inside = true;
+    /// The maximum supported linewidth is often quite low so we'll generate a triangle strip instead
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, (linesegments + 1) * 2,
+      program, style.strokeColor(), style.strokeWidth(), style);
 
-          // Why does const_reverse_iterator not work on OSX :(
-          for(std::vector<Nimble::Rectangle>::reverse_iterator it = m_data->m_clipStack.rbegin(); it != m_data->m_clipStack.rend(); it++) {
-            inside &= (*it).intersects(area);
-          }
+    float step = (toRadians - fromRadians) / linesegments;
 
-          /*
-          const Nimble::Rectangle & clipArea = m_data->m_clipStack.top();
+    auto v = b.vertex;
+    float angle = fromRadians;
+    for (unsigned int i = 0; i <= linesegments; ++i) {
+      Nimble::Vector2f c(std::cos(angle), std::sin(angle));
+      (v++)->location = center + c * (radius - style.strokeWidth());
+      (v++)->location = center + c * (radius + style.strokeWidth());
 
-          bool inside = m_data->m_clipStack.top().intersects(area);
+      angle += step;
+    }
+  }
 
-          Radiant::info("\tclip area (%f,%f) (%f,%f) : inside %d", clipArea.center().x, clipArea.center().y, clipArea.size().x, clipArea.size().y, inside);
-          */
+  void RenderContext::drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int linesegments, float fromRadians, float toRadians)
+  {
+    if (linesegments == 0) {
 
-          return inside;
+      // Minimize geometric error when approximating a circle with a polygon
+      const float scale = this->approximateScaling();
+
+      const float tolerance = 0.5f;
+      const float actualRadius = scale * (radius + 0.5f * style.strokeWidth());
+
+      linesegments = Nimble::Math::PI / acos(1.f - (tolerance / actualRadius));
+    }
+
+    // Filler function: Generates vertices in a circle
+    auto fill = [=](BasicVertex * vertices) {
+      float step = (toRadians - fromRadians) / linesegments;
+
+      // Add the rest of the fan vertices
+      float angle = fromRadians;
+      for (unsigned int i = 0; i <= linesegments; ++i) {
+        Nimble::Vector2f c(std::cos(angle), std::sin(angle));
+        vertices[i].location = center + c * radius;
+        angle += step;
       }
-  }
-/*
-  const Nimble::Rectangle & RenderContext::visibleArea() const
-  {
-    return m_data->m_clipStack.back();
-  }
-*/
-
-  void RenderContext::pushDrawBuffer(GLenum dest, FBOPackage * fbo)
-  {
-    if(m_data->m_drawBufferStack.size() > 1000) {
-      error("RenderContext::pushDrawBuffer # Stack is very deep %d",
-            (int) m_data->m_drawBufferStack.size());
-    }
-
-    m_data->m_drawBufferStack.push(Internal::DrawBuf(dest, fbo));
-    glDrawBuffer(dest);
-  }
-
-  void RenderContext::popDrawBuffer()
-  {
-    if(m_data->m_drawBufferStack.empty()) {
-      error("RenderContext::popDrawBuffer # empty stack");
-      glDrawBuffer(GL_BACK);
-      return;
-    }
-    m_data->m_drawBufferStack.pop();
-
-    if(m_data->m_drawBufferStack.empty()) {
-      error("RenderContext::popDrawBuffer # empty stack (phase 2)");
-      glDrawBuffer(GL_BACK);
-      return;
-    }
-    Internal::DrawBuf buf = m_data->m_drawBufferStack.top();
-    // info("DrawBuffer = %d %x", (int) buf.m_dest, (int) buf.m_dest);
-    if(buf.m_fbo)
-      buf.m_fbo->attach();
-
-    glDrawBuffer(buf.m_dest);
-  }
-
-
-  RenderContext::FBOHolder RenderContext::getTemporaryFBO
-      (Nimble::Vector2f basicsize, float scaling, uint32_t flags)
-  {
-    Nimble::Vector2i minimumsize = basicsize * scaling;
-
-    /* First we try to find a reasonable available FBO, that is not more than
-       100% too large.
-    */
-
-    long maxpixels = 2 * minimumsize.x * minimumsize.y;
-
-    FBOHolder ret;
-    std::shared_ptr<FBOPackage> fbo;
-
-    for(Internal::FBOPackages::iterator it = m_data->m_fbos.begin();
-    it != m_data->m_fbos.end(); it++) {
-      fbo = *it;
-
-      if(flags & FBO_EXACT_SIZE) {
-        if(fbo->userCount() ||
-           fbo->m_tex.width() != minimumsize.x ||
-           fbo->m_tex.height() != minimumsize.y)
-          continue;
-      }
-      else if(fbo->userCount() ||
-              fbo->m_tex.width() < minimumsize.x ||
-              fbo->m_tex.height() < minimumsize.y ||
-              fbo->m_tex.pixelCount() > maxpixels)
-        continue;
-
-      ret = FBOHolder(this, fbo);
-      break;
-    }
-
-    if(!ret.m_package) {
-      // Nothing available, we need to create a new FBOPackage
-      // info("Creating a new FBOPackage");
-      fbo.reset(new FBOPackage());
-      Vector2i useSize = minimumsize;
-      if(!(flags & FBO_EXACT_SIZE))
-        useSize += minimumsize / 4;
-      fbo->setSize(useSize);
-      m_data->m_fbos.push_back(std::shared_ptr<FBOPackage>(fbo));
-
-      ret = FBOHolder(this, fbo);
-    }
-
-    /* We now have a valid FBO, next job is to set it up for rendering.
-    */
-
-    glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
-
-    for(int i = 0; i < 6; i++)
-      glDisable(GL_CLIP_PLANE0 + i);
-
-    ret.m_package->attach();
-
-    // Draw into color attachment 0
-    pushDrawBuffer(Luminous::COLOR0, &*ret.m_package);
-
-    // Save and setup viewport to match the FBO
-    glViewport(0, 0, fbo->m_tex.width(), fbo->m_tex.height());
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, minimumsize.x, minimumsize.y);
-
-    // Save matrix stack
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    gluOrtho2D(0, minimumsize.x, 0, minimumsize.y);
-
-    m_data->pushFBO(ret.m_package);
-
-    // Lets adjust the matrix stack to take into account the new
-    // reality:
-    pushTransform(Nimble::Matrix3::scale2D(
-        minimumsize.x / basicsize.x,
-        minimumsize.y / basicsize.y));
-
-    ret.m_texUV.make(minimumsize.x / (float) fbo->m_tex.width(),
-                     minimumsize.y / (float) fbo->m_tex.height());
-
-    // info("texuv = %f %f", ret.m_texUV.x, ret.m_texUV.y);
-
-    return ret;
-  }
-
-  void RenderContext::drawLineRect(const Nimble::Rectf & r,
-                                   float thickness, const float * rgba)
-  {
-    thickness *= 0.5f;
-
-    Vector2 v1(thickness, thickness);
-
-    Nimble::Rectf inside(r.low() + v1, r.high() - v1);
-    Nimble::Rectf outside(r.low() - v1, r.high() + v1);
-
-    Utils::glRectWithHoleAA(outside, inside, transform(), rgba);
-  }
-
-
-  void RenderContext::drawRect(const Nimble::Rectf & rect, const float * rgba)
-  {
-    Utils::glTexRectAA(rect.size(),
-                       transform() * Matrix3::translate2D(rect.low()), rgba);
-  }
-
-
-  void RenderContext::drawCircle(Nimble::Vector2f center, float radius,
-                                 const float * rgba, int segments) {
-    if (segments < 0) {
-      drawCircleImpl(center, radius, rgba);
-    } else {
-      drawCircleWithSegments(center, radius, rgba, segments);
-    }
-  }
-
-  void RenderContext::drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * color, int linesegments)
-  {
-    width *= 0.5f;
-
-    float delta = (toRadians - fromRadians) / linesegments;
-
-    float tanFactor = tan(delta);
-    float radFactor = 1.f - cos(delta);
-
-    float r = color[0];
-    float g = color[1];
-    float b = color[2];
-    float a = color[3];
-
-    float radii[4] = {
-      radius - width - blendWidth, radius - width,
-      radius + width, radius + width + blendWidth
     };
 
-    Nimble::Vector2 p[4];
-    for(int k = 0; k < 4; k++)
-      p[k] = center + radii[k] * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    // Draw fill
+    if (style.fillColor().w > 0.f) {
+      const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_FAN, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
+      // Center is the first vertex in a fan
+      b.vertex[0].location = center;
+      // Create the rest of the vertices
+      fill(&b.vertex[1]);
+    }
 
-    for(size_t i = 0; i < (size_t) linesegments; i++) {
+    // Draw stroke
+    if(style.strokeWidth() > 0.f && style.strokeColor().alpha() > 0.f) {
+      Luminous::Style s = style;
+      s.stroke().clear();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
 
-      Nimble::Vector2 v[4];
-
-      for(int k = 0; k < 4; k++) {
-        v[k] = p[k];
-
-        Nimble::Vector2f t(-(p[k].y - center.y), p[k].x - center.x);
-        p[k] += tanFactor * t;
-        Nimble::Vector2f r = center - p[k];
-        p[k] += radFactor * r;
-      }
-
-      glBegin(GL_QUAD_STRIP);
-
-      glColor4f(r, g, b, 0.f);
-
-      glVertex2fv(transform().project(v[0]).data());
-      glVertex2fv(transform().project(p[0]).data());
-
-      glColor4f(r, g, b, a);
-
-      glVertex2fv(transform().project(v[1]).data());
-      glVertex2fv(transform().project(p[1]).data());
-
-      glVertex2fv(transform().project(v[2]).data());
-      glVertex2fv(transform().project(p[2]).data());
-
-      glColor4f(r, g, b, 0.f);
-
-      glVertex2fv(transform().project(v[3]).data());
-      glVertex2fv(transform().project(p[3]).data());
-
-      glEnd();
+      drawDonut(center,
+                Nimble::Vector2(radius, 0),
+                radius,
+                style.strokeWidth(),
+                s,
+                linesegments,
+                fromRadians,
+                toRadians);
     }
   }
 
-  void RenderContext::drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float *rgba, int segments)
+  void RenderContext::drawDonut(const Nimble::Vector2f & center,
+                                Nimble::Vector2 axis,
+                                float otherAxisLength,
+                                float width,
+                                const Luminous::Style & style,
+                                unsigned int linesegments,
+                                float fromRadians, float toRadians)
   {
-    // Draw two arcs
-    drawArc(center, radius1, fromRadians, toRadians, width, blendWidth, rgba, segments);
-    drawArc(center, radius2, fromRadians, toRadians, width, blendWidth, rgba, segments);
+    if(linesegments == 0) {
+      /// @todo automagically determine divisions?
+      // This is better than nothing, but the model view transformation matrix is being ignored.
+      linesegments = std::max((int) (axis.maximum() * 0.4f), 16);
+    }
 
-    // Draw sector edges
-    /// @todo these look a bit crappy as the blending doesn't match the arcs properly
-    Nimble::Vector2f p0 = center + radius1 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
-    Nimble::Vector2f p1 = center + radius2 * Nimble::Vector2f(cos(fromRadians), sin(fromRadians));
+    float rotation = axis.angle();
 
-    Nimble::Vector2f p2 = center + radius1 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
-    Nimble::Vector2f p3 = center + radius2 * Nimble::Vector2f(cos(toRadians), sin(toRadians));
+    // Ellipse parameters
+    float a = axis.length();
+    float b = otherAxisLength;
 
-    drawLine(p0, p1, width, rgba);
-    drawLine(p2, p3, width, rgba);
-  }
+    Luminous::TransformGuard::RightMul transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * Nimble::Matrix3::makeRotation(rotation));
 
-  void RenderContext::drawCircleImpl(Nimble::Vector2f center, float radius,
-                                 const float * rgba) {
-    m_data->drawCircle(*this, center, radius, rgba);
+    bool isFilled = style.fillColor().alpha() > 0.f;
+    bool stroke = style.strokeWidth() > 0.0f;
+
+    bool needInnerStroke = std::min(a, b) - width/2.0f > 0.0f;
+
+    const float step = (toRadians - fromRadians) / (linesegments-1);
+
+    float angle = fromRadians;
+
+    float r = 0.5f * width;
+
+    float maxLength = std::max(a, b);
+    float iSpan = 1.0f/(2.0f*r);
+    Nimble::Vector2f low = Nimble::Vector2(maxLength, maxLength);
+
+    RenderBuilder<BasicVertex, BasicUniformBlock> fill;
+    RenderBuilder<BasicVertexUV, BasicUniformBlock> textured;
+
+    RenderBuilder<BasicVertex, BasicUniformBlock> innerStroke;
+    RenderBuilder<BasicVertex, BasicUniformBlock> outerStroke;
+
+    /// Generate the fill builders
+    bool isTextured = false;
+    if(isFilled) {
+      if (!style.fill().hasTextures()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        fill = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
+      }
+      else {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        textured = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.fillColor(), 1.f, style);
+        isTextured = true;
+      }
+    }
+
+    /// Generate the stroke builders
+    if(stroke) {
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+      if(needInnerStroke)
+        innerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
+      outerStroke = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, linesegments * 2, program, style.strokeColor(), 1.0f, style);
+    }
+
+    /// Generate the vertex data
+    for (unsigned int i = 0; i < linesegments; ++i) {
+      // Expand path of ellipse e(t) = (a cos(t), b sin(t)) along normals
+
+      Nimble::Vector2f c = Nimble::Vector2(std::cos(angle), std::sin(angle));
+      Nimble::Vector2f normal = Nimble::Vector2(-b*c.x, -a*c.y).normalized(r);
+
+      Nimble::Vector2 e(a*c.x, b*c.y);
+
+
+      Nimble::Vector2f in = e + normal;
+      Nimble::Vector2f out = e - normal;
+
+      if(isTextured) {
+        textured.vertex[2*i].location = in;
+        textured.vertex[2*i+1].location = out;
+        textured.vertex[2*i].texCoord = iSpan * (in-low);
+        textured.vertex[2*i+1].texCoord = iSpan * (out-low);
+      }
+      else if(isFilled) {
+        fill.vertex[2*i].location = in;
+        fill.vertex[2*i+1].location = out;
+      }
+      if(stroke) {
+        // For the stroke, we need to find normals for along the inner & outer edge:
+        //  s(t) = e(t) + g(t), g(t) = r * normal(e(t)) / ||normal(e(t)||
+
+        Nimble::Vector2 e_(-a*c.y, b*c.x);
+
+        // Calculate dg/dt
+        Nimble::Vector2 s_(a*a*b*c.y, -a*b*b*c.x);
+        s_ *= -r*std::pow(e_.x*e_.x + e_.y*e_.y, -3/2.0f);
+
+        // Add de/dt
+        s_ += Nimble::Vector2(-a*c.y, b*c.x);
+
+        Nimble::Vector2 offset = s_.perpendicular().normalized(0.5f * style.strokeWidth());
+
+        if(needInnerStroke) {
+          innerStroke.vertex[2*i].location = in + offset;
+          innerStroke.vertex[2*i+1].location = in - offset;
+        }
+
+        outerStroke.vertex[2*i].location = out + offset; 
+        outerStroke.vertex[2*i+1].location = out - offset;
+      }
+
+      angle += step;
+    }
   }
 
   void RenderContext::addRenderCounter()
@@ -918,343 +613,632 @@ namespace Luminous
     m_data->m_renderCount++;
   }
 
-  void RenderContext::drawCircleWithSegments(Nimble::Vector2f center, float radius,
-                                 const float * rgba, int segments)
+  Nimble::Vector4 proj(const Nimble::Matrix4 & m4, const Nimble::Matrix3 & m3,
+                       Nimble::Vector2 v)
   {
-    if(segments < 0) {
-      float realRad = radius * transform().extractScale();
-      segments = Math::Clamp((int) realRad * 2, 6, 60);
+    Nimble::Vector3 v3(v.x, v.y, 1);
+    v3 = m3 * v3;
+    Nimble::Vector4 v4(v3.x, v3.y, 0, v3.z);
+    return m4 * v4;
+  }
+
+  RenderContext::SharedBuffer* RenderContext::findAvailableBuffer(
+      std::size_t elementSize, std::size_t elementCount, Buffer::Type type)
+  {
+    int bufferIndex = m_data->m_bufferIndex;
+    Internal::BufferPool & pool = type == Buffer::INDEX
+        ? m_data->m_indexBuffers[bufferIndex]
+        : type == Buffer::VERTEX
+          ? m_data->m_vertexBuffers[bufferIndex][elementSize]
+          : m_data->m_uniformBuffers[bufferIndex][elementSize];
+
+    const std::size_t requiredBytes = elementSize * elementCount;
+
+    SharedBuffer * buffer = nullptr;
+    std::size_t nextSize = 1 << 20;
+    for(int i = 0; ;++i) {
+      if(i >= int(pool.buffers.size())) {
+        pool.buffers.emplace_back(type);
+        buffer = &pool.buffers.back();
+        buffer->buffer.setData(nullptr, std::max(requiredBytes, nextSize), Buffer::STREAM_DRAW);
+        /// Fix the generation so it doesn't get automatically overwritten by an upload()
+        buffer->buffer.setGeneration(0);
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+        buffer->data.resize(buffer->buffer.size());
+#endif
+        break;
+      }
+
+      buffer = &pool.buffers[i];
+      if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
+        break;
+
+      nextSize <<= 1;
+    }
+    return buffer;
+  }
+
+  std::pair<void *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
+      std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
+  {
+    SharedBuffer * buffer = findAvailableBuffer(vertexSize, maxVertexCount, type);
+
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
+    char * data = mapBuffer<char>(buffer->buffer, type, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
+                                  Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
+#else
+    char * data = buffer->data.data();
+#endif
+    assert(data);
+    data += buffer->reservedBytes;
+    offset = buffer->reservedBytes / vertexSize;
+    buffer->reservedBytes += vertexSize * maxVertexCount;
+    return std::make_pair(data, buffer);
+  }
+
+  template <> 
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
+                                        Radiant::FlagsT<Buffer::MapAccess> access)
+  {
+    return m_data->m_driver.mapBuffer(buffer, type, offset, length, access);
+  }
+
+  void RenderContext::unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length)
+  {
+    m_data->m_driver.unmapBuffer(buffer, type, offset, length);
+  }
+
+  // Create a render command using the shared buffers
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     const Luminous::VertexArray & vertexArray,
+                                                     const Luminous::Buffer & uniformBuffer,
+                                                     float & depth,
+                                                     const Program & shader,
+                                                     const std::map<QByteArray,const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(translucent, vertexArray, uniformBuffer, shader, textures, uniforms);
+
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
+    ++(m_data->m_renderCalls.top());
+
+    return cmd;
+  }
+
+  // Create a render command using the shared buffers
+  std::size_t RenderContext::alignUniform(std::size_t uniformSize) const
+  {
+    return std::ceil(uniformSize / float(uniformBufferOffsetAlignment())) * uniformBufferOffsetAlignment();
+  }
+
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     int indexCount, int vertexCount,
+                                                     std::size_t vertexSize, std::size_t uniformSize,
+                                                     unsigned int *& mappedIndexBuffer,
+                                                     void *& mappedVertexBuffer,
+                                                     void *& mappedUniformBuffer,
+                                                     float & depth,
+                                                     const Program & shader,
+                                                     const std::map<QByteArray,const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    unsigned int indexOffset = 0, vertexOffset, uniformOffset;
+
+    // Align uniforms as required by OpenGL
+    uniformSize = alignUniform(uniformSize);
+
+    SharedBuffer * vbuffer;
+    std::tie(mappedVertexBuffer, vbuffer) = sharedBuffer(vertexSize, vertexCount, Buffer::VERTEX, vertexOffset);
+
+    SharedBuffer * ubuffer;
+    std::tie(mappedUniformBuffer, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::UNIFORM, uniformOffset);
+
+    SharedBuffer * ibuffer;
+    RenderResource::Id ibufferId = 0;
+    if (indexCount > 0) {
+      // Index buffers are implicitly tied to VAO when bound so we make mapping after we
+      // are sure that correct VAO is bound
+      ibuffer = findAvailableBuffer(sizeof(unsigned int), indexCount, Buffer::INDEX);
+      // Get the matching vertexarray from cache or create a new one if needed
+      ibufferId = ibuffer->buffer.resourceId();
     }
 
-    Nimble::Matrix3 m(transform() * Nimble::Matrix3::translate2D(center));
+    Internal::VertexArrayKey key(vbuffer->buffer.resourceId(), ibufferId, &handle(shader));
+    
+    Internal::VertexArrayCache::const_iterator it = m_data->m_vertexArrayCache.find(key);
 
-    Utils::glSolidSoftCircle(m, radius, 1.0f, segments, rgba);
+    if(it == m_data->m_vertexArrayCache.end()) {
+      // No array yet for this combination: Create a new vertexarray
+      VertexArray vertexArray;
+      vertexArray.addBinding(vbuffer->buffer, shader.vertexDescription());
+      if (indexCount > 0)
+        vertexArray.setIndexBuffer(ibuffer->buffer);
+      
+      it = m_data->m_vertexArrayCache.insert(std::make_pair(key, std::move(vertexArray))).first;
+      // m_data->m_vertexArrayCache[key] = std::move(vertexArray);
+      // it = m_data->m_vertexArrayCache.find(key);
+    }
+
+    RenderCommand & cmd = m_data->m_driver.createRenderCommand(
+          translucent, it->second, ubuffer->buffer, shader, textures, uniforms);
+    if(indexCount > 0) {
+      // Now we are ready to bind index buffer (driver made sure that VAO is bound)
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
+      char * data = mapBuffer<char>(ibuffer->buffer, Buffer::INDEX, Buffer::MAP_WRITE | Buffer::MAP_UNSYNCHRONIZED |
+                                    Buffer::MAP_INVALIDATE_BUFFER | Buffer::MAP_FLUSH_EXPLICIT);
+#else
+      char * data = ibuffer->data.data();
+#endif
+      mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
+      indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
+      ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
+    }
+
+    cmd.primitiveCount = ( indexCount > 0 ? indexCount : vertexCount );
+    cmd.indexed = (indexCount > 0);
+    cmd.indexOffset = indexOffset;
+    cmd.vertexOffset = vertexOffset;
+    cmd.uniformOffsetBytes = uniformOffset * uniformSize;
+    cmd.uniformSizeBytes = uniformSize;
+
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
+    ++(m_data->m_renderCalls.top());
+
+    return cmd;
   }
 
-  void RenderContext::drawPolyLine(const Nimble::Vector2f * vertices, int n,
-                                   float width, const float * rgba)
+  /// Drawing utility commands
+  //////////////////////////////////////////////////////////////////////////
+
+  //
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style & style)
   {
-    m_data->drawPolyLine(*this, vertices, n, width, rgba);
+    drawRect(Nimble::Rect(min, max), style);
   }
 
-  void RenderContext::drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
-                               float width, const float * rgba)
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style)
   {
-    Nimble::Vector2f vs[2] = { p1, p2 };
-    drawPolyLine(vs, 2, width, rgba);
+    drawRect(Nimble::Rect(min, size), style);
   }
 
-  void RenderContext::drawCurve(Vector2* controlPoints, float width, const float * rgba) {
+  void RenderContext::drawRect(const Nimble::Rectf & rect, const Style & style)
+  {
+    drawRect(rect, Nimble::Rect(0, 0, 1, 1), style);
+  }
 
-    struct Subdivider {
-      std::vector<Vector2> & points;
+  void RenderContext::drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style)
+  {
+    if (style.fillColor().w > 0.f) {
+      if(!style.fill().hasTextures()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
+        b.vertex[0].location = rect.low();
+        b.vertex[1].location = rect.highLow();
+        b.vertex[2].location = rect.lowHigh();
+        b.vertex[3].location = rect.high();
+      }
+      else {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
-      void subdivide(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, int level=0) {
-        Vector2 p12 = 0.5f*(p1+p2);
-        Vector2 p23 = 0.5f*(p2+p3);
-        Vector2 p34 = 0.5f*(p3+p4);
-        Vector2 p123 = 0.5f*(p12+p23);
-        Vector2 p234 = 0.5f*(p23+p34);
-        Vector2 p1234 = 0.5f*(p123 + p234);
+        b.vertex[0].location = rect.low();
+        b.vertex[0].texCoord = uvs.low();
 
-        ///@todo could do collinearity detection
-        if (level != 0 && (level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f)) {
-          //points.push_back(p1);
-          //points.push_back(p4);
-          points.push_back(p23);
+        b.vertex[1].location = rect.highLow();
+        b.vertex[1].texCoord = uvs.highLow();
+
+        b.vertex[2].location = rect.lowHigh();
+        b.vertex[2].texCoord = uvs.lowHigh();
+
+        b.vertex[3].location = rect.high();
+        b.vertex[3].texCoord = uvs.high();
+      }
+    }
+
+    // Draw the outline
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+
+      Luminous::Style s = style;
+      s.stroke().clear();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      Nimble::Rect outer = rect;
+      Nimble::Rect inner = rect;
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
+
+      drawRectWithHole(outer, inner, s);
+      /*
+      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
+      b.vertex[0].location.make(rect.low(), b.depth);
+      b.vertex[1].location.make(rect.highLow(), b.depth);
+      b.vertex[2].location.make(rect.high(), b.depth);
+      b.vertex[3].location.make(rect.lowHigh(), b.depth);
+      b.vertex[4].location.make(rect.low(), b.depth);
+      */
+    }
+  }
+
+  void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
+  {
+    if (style.fillColor().w > 0.f) {
+      if(!style.fill().hasTextures()) {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
+        b.vertex[0].location = vertices[0];
+        b.vertex[1].location = vertices[1];
+        b.vertex[2].location = vertices[2];
+        b.vertex[3].location = vertices[3];
+      }
+      else {
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
+
+        b.vertex[0].location = vertices[0];
+        b.vertex[0].texCoord = uvs[0];
+
+        b.vertex[1].location = vertices[1];
+        b.vertex[1].texCoord = uvs[1];
+
+        b.vertex[2].location = vertices[2];
+        b.vertex[2].texCoord = uvs[2];
+
+        b.vertex[3].location = vertices[3];
+        b.vertex[3].texCoord = uvs[3];
+      }
+    }
+
+    // Draw the outline
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+      Luminous::Style s;
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      int order[] = {0, 1, 3, 2, 0};
+      std::vector<Nimble::Vector2> outline;
+      outline.resize(4);
+      float w = style.strokeWidth();
+      for(size_t i = 0; i < sizeof(order)/sizeof(int) - 1; ++i) {
+        const Nimble::Vector2& p0 = vertices[order[i]];
+        const Nimble::Vector2& p1 = vertices[order[i+1]];
+        const Nimble::Vector2 nDiff = (p1 - p0).normalized();
+        const Nimble::Vector2 perp(-nDiff.y, nDiff.x);
+
+        outline[0] = p0 - w*(nDiff + perp);
+        outline[1] = p0 - w*(nDiff - perp);
+        outline[2] = p1 + w*(nDiff - perp);
+        outline[3] = p1 + w*(nDiff + perp);
+        drawQuad(outline.data(), nullptr, s);
+      }
+    }
+  }
+
+  //
+  void RenderContext::drawRectWithHole(const Nimble::Rectf & area,
+                                       const Nimble::Rectf & hole,
+                                       const Luminous::Style & style)
+  {
+    if (style.fillColor().w > 0.f) {
+      if (!style.fill().hasTextures()) {
+        // Untextured
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 10, program, style.fillColor(), 1.f, style);
+        b.vertex[0].location = hole.low();
+        b.vertex[1].location = area.low();
+        b.vertex[2].location = hole.highLow();
+        b.vertex[3].location = area.highLow();
+        b.vertex[4].location = hole.high();
+        b.vertex[5].location = area.high();
+        b.vertex[6].location = hole.lowHigh();
+        b.vertex[7].location = area.lowHigh();
+        b.vertex[8].location = hole.low();
+        b.vertex[9].location = area.low();
+      }
+      else {
+        // Textured
+        /// @todo calculate correct UVs for the inside ring
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 10, program, style.fillColor(), 1.f, style);
+
+        b.vertex[0].location = hole.low();
+        b.vertex[0].texCoord.make(0,0);
+
+        b.vertex[1].location = area.low();
+        b.vertex[1].texCoord.make(0,0);
+
+        b.vertex[2].location = hole.highLow();
+        b.vertex[2].texCoord.make(0,0);
+
+        b.vertex[3].location = area.highLow();
+        b.vertex[3].texCoord.make(1,0);
+
+        b.vertex[4].location = hole.high();
+        b.vertex[4].texCoord.make(0,0);
+
+        b.vertex[5].location = area.high();
+        b.vertex[5].texCoord.make(1,1);
+
+        b.vertex[6].location = hole.lowHigh();
+        b.vertex[6].texCoord.make(0,0);
+
+        b.vertex[7].location = area.lowHigh();
+        b.vertex[7].texCoord.make(0,1);
+
+        b.vertex[8].location = hole.low();;
+        b.vertex[8].texCoord.make(0,0);
+
+        b.vertex[9].location = area.low();;
+        b.vertex[9].texCoord.make(0,0);
+      }
+    }
+
+    // Draw the stroke
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+      Luminous::Style s = style;
+      s.stroke().clear();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      Nimble::Rect outer = area;
+      Nimble::Rect inner = area;
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
+      drawRectWithHole(outer, inner, s);
+
+      outer = hole;
+      inner = hole;
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
+      drawRectWithHole(outer, inner, s);
+    }
+  }
+
+  //
+  void RenderContext::drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style)
+  {
+    assert(style.strokeWidth() > 0.f);
+    const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
+    b.vertex[0].location = p1;
+    b.vertex[1].location = p2;
+  }
+
+
+  void RenderContext::drawEllipse(Nimble::Vector2f center,
+                   Nimble::Vector2f axis,
+                   float otherAxisLength,
+                   const Luminous::Style & style,
+                   unsigned int lineSegments,
+                   float fromRadians,
+                   float toRadians)
+  {
+
+
+    Nimble::Vector2 otherAxis = axis.perpendicular().normalized(otherAxisLength);
+
+    Nimble::Matrix3 m(axis.x, otherAxis.x, 0,
+                      axis.y, otherAxis.y, 0,
+                      0, 0, 1);
+
+    Luminous::Style s = style;
+    s.stroke().clear();
+
+    // Fill is an affine transform of a circle
+    {
+      Luminous::TransformGuard transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * m);
+      drawCircle(Nimble::Vector2(0, 0), 1.0f, s, lineSegments, fromRadians, toRadians);
+    }
+
+    // Stroke should be of constant width, so use drawDonut for the outline
+    if(style.strokeColor().alpha() > 0.f && style.strokeWidth() > 0.f) {
+      s.setFillColor(style.strokeColor());
+      drawDonut(center,
+                axis,
+                otherAxisLength,
+                style.strokeWidth(),
+                s,
+                lineSegments,
+                fromRadians,
+                toRadians);
+    }
+  }
+
+  void RenderContext::drawText(const TextLayout & layout, const Nimble::Vector2f & location,
+                               const Nimble::Rectf & viewRect, const TextStyle & style,
+                               bool ignoreVerticalAlign)
+  {
+    // Need to check here that we are using correct texture atlas
+    // This will be fixed on next generate() call
+    if (!layout.correctAtlas())
+      return;
+
+    const Nimble::Matrix4f model = transform();
+
+    FontUniformBlock uniform;
+    uniform.invscale = 1.0f / Nimble::Vector2f(model[1][0], model[1][1]).length() / style.textSharpness();
+    uniform.split = 0.0f;
+
+    /// @todo how to calculate these?
+    const float magic = 175.f;
+    const float edge = 0.5f - style.fontRenderWidth() / magic;
+    const float strokeWidth = std::min(1.0f, style.strokeWidth() / magic);
+
+    if (style.dropShadowColor().alpha() > 0.0f) {
+      uniform.colorIn = uniform.colorOut = style.dropShadowColor();
+      uniform.colorIn.w *= opacity();
+      uniform.colorOut.w *= opacity();
+      const float blur = style.dropShadowBlur();
+      //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
+      uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
+      drawTextImpl(layout, location, style.dropShadowOffset(), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
+    }
+
+    if (style.glow() > 0.0f) {
+      uniform.colorIn = uniform.colorOut = style.glowColor();
+      uniform.colorIn.w *= opacity();
+      uniform.colorOut.w *= opacity();
+      uniform.outline.make(edge * (1.0f - style.glow()), edge);
+      drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
+    }
+
+    // To remove color bleeding at the edge, ignore colorOut if there is no border
+    // uniform.split = strokeWidth < 0.000001f ? 0 : edge + strokeWidth * 0.5f;
+    // uniform.outline.make(edge - strokeWidth * 0.5f, edge - strokeWidth * 0.5f);
+    uniform.split = strokeWidth < 0.000001f ? 0 : edge;
+    uniform.outline.make(edge - strokeWidth, edge - strokeWidth);
+
+    uniform.colorIn = style.fillColor();
+    uniform.colorOut = style.strokeColor();
+
+    uniform.colorIn.w *= opacity();
+    uniform.colorOut.w *= opacity();
+
+    drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
+  }
+
+  void RenderContext::drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
+                                   const Nimble::Vector2f & renderOffset,
+                                   const Nimble::Rectf & viewRect, const TextStyle & style,
+                                   FontUniformBlock & uniform, const Program & program,
+                                   const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign)
+  {
+    const int maxGlyphsPerCmd = 1000;
+
+    std::map<QByteArray, const Texture *> textures;
+    if (style.fill().textures())
+      textures = *style.fill().textures();
+
+    Nimble::Matrix4f m;
+    m.identity();
+
+
+    Nimble::Vector2f renderLocation = renderOffset - viewRect.low();
+    if(!ignoreVerticalAlign)
+      renderLocation.y += layout.verticalOffset();
+
+    for (int g = 0; g < layout.groupCount(); ++g) {
+      textures["tex"] = layout.texture(g);
+      auto & group = layout.group(g);
+      if (group.color.isValid())
+        uniform.colorIn = Radiant::Color(group.color);
+
+      for (int i = 0; i < int(group.items.size());) {
+        const int count = std::min<int>(group.items.size() - i, maxGlyphsPerCmd);
+
+        auto b = render<FontVertex, FontUniformBlock>(
+              true, PRIMITIVE_TRIANGLE_STRIP, count*6 - 2, count*4, 1, program, &textures);
+        uniform.projMatrix = b.uniform->projMatrix;
+        *b.uniform = uniform;
+        b.uniform->depth = b.depth;
+
+        Nimble::Vector3f offset(renderLocation.x + location.x, renderLocation.y + location.y, 0);
+        if (style.textOverflow() == OverflowVisible) {
+          b.uniform->clip.set(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(),
+                              std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
         } else {
-          subdivide(p1, p12, p123, p1234, level+1);
-          subdivide(p1234, p234, p34, p4, level+1);
+          b.uniform->clip = viewRect;
+          if(!ignoreVerticalAlign)
+            b.uniform->clip.move(Nimble::Vector2f(0.f, -layout.verticalOffset()));
+          else
+            b.uniform->clip.move(Nimble::Vector2f(0.f, -location.y));
+        }
+
+        m.setTranslation(offset);
+        b.uniform->modelMatrix = (modelview * m).transpose();
+
+        int index = 0;
+
+        const int first = i;
+        for (const int m = count + i; i < m; ++i) {
+          auto & item = group.items[i];
+          std::copy(item.vertices.begin(), item.vertices.end(), b.vertex);
+          b.vertex += 4;
+
+          // first vertex twice
+          if (i != first)
+            *b.idx++ = index;
+          *b.idx++ = index++;
+          *b.idx++ = index++;
+          *b.idx++ = index++;
+
+          // last vertex twice
+          *b.idx++ = index;
+          if (i != m - 1)
+            *b.idx++ = index++;
         }
       }
-    };
-    std::vector<Nimble::Vector2f> points;
-    points.push_back(controlPoints[0]);
-
-    Subdivider sub = {points};
-    sub.subdivide( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3] );
-    points.push_back(controlPoints[3]);
-
-    drawPolyLine(&points[0], (int) points.size(), width, rgba);
-  }
-
-  void RenderContext::drawSpline(Nimble::Interpolating & s, float width, const float * rgba, float step)
-  {
-    const float len = s.size();
-
-    if (len < 2)
-      return;
-    std::vector<Vector2> points;
-
-    for(float t = 0.f; t < len - 1; t += step) {
-      int ii = static_cast<int>(t);
-      float t2 = t - ii;
-      Vector2 point = s.getPoint(ii, t2);
-
-      if (points.size() >= 2) {
-          Vector2 p1 = (point - points[points.size()-2]);
-          Vector2 p2 = (point - points[points.size()-1]);
-          p1.normalize();
-          p2.normalize();
-          // 3 degrees
-          if (dot(p1, p2) > 0.99862953475457383) {
-              points.pop_back();
-          }
-
-      }
-      points.push_back(point);
     }
-    drawPolyLine(&points[0], (int) points.size(), width, rgba);
   }
 
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
-                                  const Nimble::Rect & texUV)
+  void RenderContext::drawText(const QString & text, const Nimble::Rectf & rect,
+                               const TextStyle & style, TextFlags flags)
   {
-    const Nimble::Matrix3 & m = transform();
-
-    Nimble::Vector2 v[] = {
-      m.project(area.low()),
-      m.project(area.highLow()),
-      m.project(area.high()),
-      m.project(area.lowHigh())
-    };
-
-    if(rgba)
-      glColor4fv(rgba);
-
-    const Vector2 & low = texUV.low();
-    const Vector2 & high = texUV.high();
-
-    const GLfloat texCoords[] = {
-      low.x, low.y,
-      high.x, low.y,
-      high.x, high.y,
-      low.x, high.y
-    };
-
-#if 0
-    // This fails when some other OpenGL features are used (FBOs, VBOs)
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
-
-    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glDrawArrays(GL_QUADS, 0, 4);
-
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
-#else
-    glBegin(GL_QUADS);
-
-    for(int i = 0; i < 4; i++) {
-      glTexCoord2fv(&texCoords[i * 2]);
-      glVertex2fv(v[i].data());
+    if (flags == TextStatic) {
+      const SimpleTextLayout & layout = SimpleTextLayout::cachedLayout(text, rect.size(), style.font(), style.textOption());
+      drawText(layout, rect.low(), Nimble::Rectf(Nimble::Vector2f(0, 0), rect.size()), style);
+    } else {
+      SimpleTextLayout layout(text, rect.size(), style.font(), style.textOption());
+      layout.generate();
+      drawText(layout, rect.low(), Nimble::Rectf(Nimble::Vector2f(0, 0), rect.size()), style);
     }
-
-    glEnd();
-#endif
   }
 
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba,
-                                  const Nimble::Rect * texUV, int uvCount)
-  {
-    if(rgba)
-      glColor4fv(rgba);
-
-    const Nimble::Matrix3 & m = transform();
-
-    glBegin(GL_QUADS);
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].low().data());
-    }
-    glVertex2fv(m.project(area.low()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].highLow().data());
-    }
-    glVertex2fv(m.project(area.highLow()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].high().data());
-    }
-    glVertex2fv(m.project(area.high()).data());
-
-    for(int i = 0; i < uvCount; i++) {
-      glMultiTexCoord2fv(GL_TEXTURE0 + i, texUV[i].lowHigh().data());
-    }
-    glVertex2fv(m.project(area.lowHigh()).data());
-
-    glEnd();
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba)
-  {
-    drawTexRect(size, rgba, Nimble::Rect(0, 0, 1, 1));
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
-                                  const Nimble::Rect & texUV)
-  {
-    const Nimble::Matrix3 & m = transform();
-
-    Nimble::Vector2 v[] = {
-      m.project(0, 0),
-      m.project(size.x, 0),
-      m.project(size.x, size.y),
-      m.project(0, size.y)
-    };
-
-    if(rgba)
-      glColor4fv(rgba);
-
-    const Vector2 & low = texUV.low();
-    const Vector2 & high = texUV.high();
-
-    const GLfloat texCoords[] = {
-      low.x, low.y,
-      high.x, low.y,
-      high.x, high.y,
-      low.x, high.y
-    };
-
-#if 0
-    // This fails when some other OpenGL features are used (FBOs, VBOs)
-    glEnable(GL_VERTEX_ARRAY);
-    glEnable(GL_TEXTURE_COORD_ARRAY);
-
-    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-    glVertexPointer(2, GL_FLOAT, 0, reinterpret_cast<GLfloat*>(v));
-    glDrawArrays(GL_QUADS, 0, 4);
-
-    glDisable(GL_VERTEX_ARRAY);
-    glDisable(GL_TEXTURE_COORD_ARRAY);
-#else
-    glBegin(GL_QUADS);
-
-    for(int i = 0; i < 4; i++) {
-      glTexCoord2fv(&texCoords[i * 2]);
-      glVertex2fv(v[i].data());
-    }
-
-    glEnd();
-#endif
-  }
-
-  void RenderContext::drawTexRect(Nimble::Vector2 size, const float * rgba,
-                                  Nimble::Vector2 texUV)
-  {
-    drawTexRect(size, rgba, Rect(Vector2(0,0), texUV));
-  }
-
-  void RenderContext::drawTexRect(const Nimble::Rect & area, const float * rgba)
-  {
-    pushTransformRightMul(Nimble::Matrix3::translate2D(area.low()));
-    drawTexRect(area.span(), rgba);
-    popTransform();
-  }
-
-  Nimble::Vector2 RenderContext::contextSize() const
+  Nimble::Size RenderContext::contextSize() const
   {
     return m_data->contextSize();
   }
 
-  void RenderContext::setBlendFunc(BlendFunc f)
-  {
-    m_data->m_blendFunc = f;
+  static RADIANT_TLS(RenderContext *) t_threadContext;
 
-    useCurrentBlendMode();
+  void RenderContext::setThreadContext(RenderContext * rsc)
+  {
+    t_threadContext = rsc;
   }
 
-  void RenderContext::useCurrentBlendMode()
+  RenderContext * RenderContext::getThreadContext()
   {
-    //Radiant::info("RenderContext::useCurrentBlendMode # %s", blendFuncNames()[m_data->m_blendFunc]);
-
-    if(m_data->m_blendFunc == BLEND_NONE) {
-      glDisable(GL_BLEND);
-      return;
+    if(!t_threadContext) {
+      Radiant::debug("No OpenGL resources for current thread");
+      return nullptr;
     }
 
-    glEnable(GL_BLEND);
-
-    if(m_data->m_blendFunc == BLEND_USUAL)
-      Utils::glUsualBlend();
-    else if(m_data->m_blendFunc == BLEND_ADDITIVE)
-      Utils::glAdditiveBlend();
-    else if(m_data->m_blendFunc == BLEND_SUBTRACTIVE)
-      Utils::glSubtractiveBlend();
+    return t_threadContext;
   }
 
-  const char ** RenderContext::blendFuncNames()
+  void RenderContext::flush()
   {
-    static const char * names [] = {
-      "usual",
-      "none",
-      "additive",
-      "subtractive"
-    };
+    int bufferIndex = m_data->m_bufferIndex;
+    m_data->m_indexBuffers[bufferIndex].flush(*this);
 
-    return names;
+    for(auto it = m_data->m_vertexBuffers[bufferIndex].begin(); it != m_data->m_vertexBuffers[bufferIndex].end(); ++it)
+      it->second.flush(*this);
+    for(auto it = m_data->m_uniformBuffers[bufferIndex].begin(); it != m_data->m_uniformBuffers[bufferIndex].end(); ++it)
+      it->second.flush(*this);
+
+    m_data->m_driver.flush();
   }
 
-  void RenderContext::pushViewStack()
+  void RenderContext::beforeTransformChange()
   {
-    m_data->pushViewStack();
+    // flush();
   }
 
-  void RenderContext::popViewStack()
-  {
-    m_data->popViewStack();
-  }
-
-  void RenderContext::clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo)
-  {
-    assert(fbo->userCount() == 0);
-
-    fbo->m_fbo.unbind();
-
-    fbo = m_data->popFBO();
-
-    if(fbo) {
-      fbo->attach();
-    }
-    popDrawBuffer();
-
-    glPopAttrib();
-
-    // Restore matrix stack
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    popTransform();
-  }
-
-  void RenderContext::setGLContext(Luminous::GLContext * ctx)
-  {
-    m_data->m_glContext = ctx;
-  }
-
-  Luminous::GLContext * RenderContext::glContext()
-  {
-    return m_data->m_glContext;
-  }
-/*
-  RenderTargetObject RenderContext::pushRenderTarget(Nimble::Vector2 size, float scale) {
-    return m_data->m_rtm.pushRenderTarget(size, scale);
-  }
-
-  Luminous::Texture2D & RenderContext::popRenderTarget(RenderTargetObject & trt) {
-    return m_data->m_rtm.popRenderTarget(trt);
-  }
-*/
   void RenderContext::pushViewport(const Nimble::Recti &viewport)
   {
     m_data->m_viewportStack.push(viewport);
-    glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+
+    m_data->m_driver.setViewport(viewport);
   }
 
   void RenderContext::popViewport()
@@ -1263,14 +1247,500 @@ namespace Luminous
 
     if(!m_data->m_viewportStack.empty()) {
       const Nimble::Recti & viewport = currentViewport();
-      glViewport(viewport.low().x, viewport.low().y, viewport.width(), viewport.height());
+      m_data->m_driver.setViewport(viewport);
     }
   }
 
   const Nimble::Recti & RenderContext::currentViewport() const
   {
+    assert(!m_data->m_viewportStack.empty());
     return m_data->m_viewportStack.top();
   }
 
-}
+  //////////////////////////////////////////////////////////////////////////
+  // Luminousv2 direct-mode API
+  //
+  // These commands are executed directly.
+  // They are only called from the CustomOpenGL guard
+  //
+  //////////////////////////////////////////////////////////////////////////
+  void RenderContext::draw(PrimitiveType primType, unsigned int offset, unsigned int primitives)
+  {
+    m_data->m_driver.draw(primType, offset, primitives);
+  }
 
+  void RenderContext::drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives)
+  {
+    m_data->m_driver.drawIndexed(primType, offset, primitives);
+  }
+  
+  TextureGL & RenderContext::handle(const Texture & texture)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(texture);
+  }
+
+  BufferGL & RenderContext::handle(const Buffer & buffer)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(buffer);
+  }
+
+  FrameBufferGL & RenderContext::handle(const FrameBuffer & target)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(target);
+  }
+
+  RenderBufferGL & RenderContext::handle(const RenderBuffer & buffer)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(buffer);
+  }
+
+  ProgramGL & RenderContext::handle(const Program & program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(program);
+  }
+
+  VertexArrayGL & RenderContext::handle(const VertexArray & vao, ProgramGL * program)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->handle(vao, program);
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  // Deferred mode API
+  // 
+  // All these commands generate a RenderCommand that can be reordered
+  //
+  //////////////////////////////////////////////////////////////////////////
+  void RenderContext::clear(ClearMask mask, const Radiant::Color & clearColor, double clearDepth, int clearStencil)
+  {
+    m_data->m_driver.clear(mask, clearColor, clearDepth, clearStencil);
+  }
+
+  const Program & RenderContext::basicShader() const
+  {
+    return m_data->m_basicShader;
+  }
+
+  const Program & RenderContext::texShader() const
+  {
+    return m_data->m_texShader;
+  }
+
+  float RenderContext::approximateScaling() const
+  {
+    const float sx = Nimble::Vector2f(transform()[0][0], transform()[0][1]).lengthSqr();
+    const float sy = Nimble::Vector2f(transform()[1][0], transform()[1][1]).lengthSqr();
+
+    float s = std::max(sx, sy);
+
+    return sqrt(s);
+  }
+
+  const Program & RenderContext::fontShader() const
+  {
+    return m_data->m_fontShader;
+  }
+
+  int RenderContext::uniformBufferOffsetAlignment() const
+  {
+    return m_data->m_uniformBufferOffsetAlignment;
+  }
+
+  void RenderContext::pushFrameBuffer(const FrameBuffer &target)
+  {
+    m_data->m_driverGL->pushFrameBuffer(target);
+
+    m_data->m_currentFrameBuffer = &target;
+
+    // Push new projection matrix
+    pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), 0.f, target.size().height(), -1.f, 1.f));
+
+    // Reset transformation matrix to identity
+    pushTransform();
+    setTransform(Nimble::Matrix4::IDENTITY);
+
+    const Nimble::Recti viewport(0, 0, target.size().width(), target.size().height());
+
+    // Push a scissor area that is the size of the frame buffer. This is done
+    // because the currently defined scissor area might be smaller the viewport
+    // defined by the frame buffer.
+    pushScissorRect(viewport);
+
+    // Push viewport
+    pushViewport(viewport);
+
+    // Reset the render call count for this target
+    m_data->m_renderCalls.push(0);
+  }
+
+  void RenderContext::popFrameBuffer()
+  {
+    // Restore viewport
+    popViewport();
+
+    // Restore scissor area
+    popScissorRect();
+
+    // Restore the matrix stack
+    popTransform();
+    popViewTransform();
+
+    m_data->m_renderCalls.pop();
+    m_data->m_driverGL->popFrameBuffer();
+  }
+
+  void RenderContext::beginFrame()
+  {
+    if(m_data->m_postProcessFilters) {
+      m_data->createPostProcessFilters(*this, *m_data->m_postProcessFilters);
+      // Reorders the chain is necessary
+      m_data->m_postProcessChain.prepare();
+    }
+
+    pushClipStack();
+
+    assert(stackSize() == 1);
+
+    m_data->m_driver.preFrame();
+
+    // Push frame buffer attached to back buffer. Don't use the RenderContext API
+    // to avoid the guard.
+    m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
+    m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+
+    // Check if we need an auxiliary frame buffer (save this so we can pop when we are done)
+    m_data->m_useOffScreenFrameBuffer = !m_data->m_window->directRendering() ||
+        m_data->m_postProcessChain.numEnabledFilters() > 0;
+
+    // Push auxiliary frame buffer if needed
+    if(m_data->m_useOffScreenFrameBuffer) {
+      m_data->m_driverGL->pushFrameBuffer(m_data->m_offScreenFrameBuffer);
+      m_data->m_currentFrameBuffer = &m_data->m_offScreenFrameBuffer;
+    }
+
+    assert(m_data->m_currentFrameBuffer->targetType() != FrameBuffer::INVALID);
+
+    // Push default opacity
+    assert(m_data->m_opacityStack.empty());
+    m_data->m_opacityStack.push(1.f);
+  }
+
+  void RenderContext::endFrame()
+  {
+    if(!m_data->m_window->directRendering()) {
+      // Push window frame buffer
+      m_data->m_finalFrameBuffer.setTargetBind(FrameBuffer::BIND_DRAW);
+      m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
+      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+
+      // Blit individual areas (from currently bound FBO)
+      for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
+        const Luminous::MultiHead::Area & area = m_data->m_window->area(i);
+        blit(area.viewport(), area.viewport());
+      }
+
+      m_data->m_driverGL->popFrameBuffer();
+    }
+
+    // Pop our auxiliary frame buffer if we have used it
+    if(m_data->m_useOffScreenFrameBuffer) {
+      m_data->m_driverGL->popFrameBuffer();
+      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+    }
+
+    //Actual drawing
+    flush();
+    m_data->m_bufferIndex = (m_data->m_bufferIndex + 1) % RenderContext::Internal::BUFFERSETS;
+
+    m_data->m_driver.postFrame();
+    /// @todo how do we generate this properly? Should we somehow linearize the depth buffer?
+    m_data->m_automaticDepthDiff = -1.0f / std::max(m_data->m_renderCalls.top(), 10000);
+    assert(m_data->m_renderCalls.size() == 1);
+    m_data->m_renderCalls.top() = 0;
+
+    // Pop opacity
+    assert(m_data->m_opacityStack.size() == 1);
+    m_data->m_opacityStack.pop();
+
+    // Pop the default target
+    m_data->m_driverGL->popFrameBuffer();
+
+    assert(stackSize() == 1);
+
+    assert(m_data->m_clipStacks.size() == 1);
+
+    popClipStack();
+  }
+
+  void RenderContext::beginArea()
+  {
+    assert(stackSize() == 1);
+    assert(transform() == Nimble::Matrix4::IDENTITY);
+  }
+
+  void RenderContext::endArea()
+  {
+    assert(stackSize() == 1);
+    assert(transform() == Nimble::Matrix4::IDENTITY);
+  }
+
+  void RenderContext::initPostProcess(Luminous::PostProcessFilters & filters)
+  {
+    m_data->m_postProcessFilters = &filters;
+
+    // Add color correction filter if any of the areas have a profile defined
+    for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
+      const MultiHead::Area & area = m_data->m_window->area(i);
+
+      if(area.isSoftwareColorCorrection()) {
+        Radiant::info("Enabling software color correction for area %lu", i);
+
+        // Check if filter already exists
+        if(!m_data->m_postProcessChain.hasFilterType<ColorCorrectionFilter>()) {
+
+          auto filter = std::make_shared<Luminous::ColorCorrectionFilter>();
+          filter->setOrder(PostProcessChain::Color_Correction);
+
+          auto context = std::make_shared<Luminous::PostProcessContext>(filter);
+
+          context->initialize(*this);
+          m_data->m_postProcessChain.insert(context);
+        }
+      }
+    }
+  }
+
+  void RenderContext::postProcess()
+  {
+    PostProcessChain & chain = m_data->m_postProcessChain;
+    const unsigned numFilters = chain.numEnabledFilters();
+
+    if(numFilters == 0)
+      return;
+
+    const Nimble::Recti viewport(Nimble::Vector2i(0, 0), contextSize().cast<int>());
+
+    // Copy off-screen buffers to use as the source of the first filter.
+    // This is done because the off-screen target contains multisampled depth
+    // and color buffers and usually filters are only interested in resolved
+    // color data. By blitting to an FBO that only contains a non-multisampled
+    // color buffer (default) the multisample resolution happens automatically.
+    PostProcessContextPtr first = *chain.begin();
+    first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
+    {
+      Luminous::FrameBufferGuard(*this, first->frameBuffer());
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+    }
+    first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
+
+    if(numFilters > 100) {
+      Radiant::warning("Using over 100 post processing filters.");
+    }
+
+    assert(m_data->m_window);
+
+    // Apply filters in filter chain
+    for(PostProcessChain::FilterIterator it(chain.begin()), next(it);
+        it != chain.end() && next++ != chain.end(); ++it) {
+
+      const PostProcessContextPtr ppf = *it;
+      assert(ppf && ppf->enabled());
+
+      // Note: if isLast is true, next is invalid
+      bool isLast = (next == chain.end());
+
+      // If this is the last filter, use the default frame buffer,
+      // otherwise use the auxiliary off-screen frame buffer of the next filter
+      const FrameBuffer & frameBuffer = isLast ?
+            m_data->defaultFrameBuffer() :
+            next->frameBuffer();
+
+      // Push the next auxilary frame buffer
+      Luminous::FrameBufferGuard bufferGuard(*this, frameBuffer);
+
+      // Run each area through the filter
+      for(unsigned j = 0; j < m_data->m_window->areaCount(); j++) {
+        const MultiHead::Area & area = m_data->m_window->area(j);
+
+        m_data->m_driver.setViewport(viewport);
+        m_data->m_driver.setScissor(area.viewport());
+
+        // Sets the current area to be rendered
+        setArea(&area);
+
+        ppf->doFilter(*this);
+      }
+    }
+  }
+
+  void RenderContext::processFilter(Luminous::PostProcessFilterPtr filter)
+  {
+    auto filterCtx = m_data->m_postProcessChain.get(filter);
+
+    // Create the context for the filter if necessary
+    if(!filterCtx) {
+      filterCtx = std::make_shared<PostProcessContext>(filter);
+      filterCtx->initialize(*this);
+
+      m_data->m_postProcessChain.insert(filterCtx);
+    }
+
+    const Nimble::Recti viewport = area()->viewport();
+
+    assert(m_data->m_currentFrameBuffer);
+    const FrameBuffer & sourceFrameBuffer = *m_data->m_currentFrameBuffer;
+
+    // Blit from current frame buffer to filter's auxiliary frame buffer
+    filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
+    {
+      Luminous::FrameBufferGuard bufferGuard(*this, filterCtx->frameBuffer());
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+    }
+    filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
+
+    // Push the original frame buffer
+    Luminous::FrameBufferGuard bufferGuard(*this, sourceFrameBuffer);
+    Luminous::ScissorGuard scissorGuard(*this, viewport);
+    filterCtx->doFilter(*this);
+  }
+
+  bool RenderContext::initialize()
+  {
+    m_data->initialize();
+
+    return true;
+  }
+
+  void RenderContext::pushOpacity(float opacity)
+  {
+    auto value = 1.f;
+
+    if(!m_data->m_opacityStack.empty())
+      value = m_data->m_opacityStack.top();
+
+    m_data->m_opacityStack.push(value * opacity);
+  }
+
+  void RenderContext::popOpacity()
+  {
+    assert(!m_data->m_opacityStack.empty());
+    m_data->m_opacityStack.pop();
+  }
+
+  float RenderContext::opacity() const
+  {
+    assert(!m_data->m_opacityStack.empty());
+    return m_data->m_opacityStack.top();
+  }
+
+  void RenderContext::setDefaultState()
+  {
+    m_data->m_driverGL->setDefaultState();
+  }
+
+  void RenderContext::pushScissorRect(const Nimble::Recti & scissorArea)
+  {
+    m_data->m_scissorStack.push(scissorArea);
+
+    m_data->m_driver.setScissor(scissorArea);
+  }
+
+  void RenderContext::popScissorRect()
+  {
+    assert(!m_data->m_scissorStack.empty());
+    m_data->m_scissorStack.pop();
+
+    if(!m_data->m_scissorStack.empty()) {
+      const Nimble::Recti & oldArea = currentScissorArea();
+      m_data->m_driver.setScissor(oldArea);
+    }
+  }
+
+  const Nimble::Recti & RenderContext::currentScissorArea() const
+  {
+    assert(!m_data->m_scissorStack.empty());
+    return m_data->m_scissorStack.top();
+  }
+
+  void RenderContext::blit(const Nimble::Recti & src, const Nimble::Recti & dst,
+                           ClearMask mask, Texture::Filter filter)
+  {
+    m_data->m_driver.blit(src, dst, mask, filter);
+  }
+
+  void RenderContext::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
+  {
+    m_data->m_driverGL->setRenderBuffers(colorBuffer, depthBuffer, stencilBuffer);
+  }
+
+  void RenderContext::setBlendMode(const BlendMode & mode)
+  {
+    m_data->m_driverGL->setBlendMode(mode);
+  }
+
+  void RenderContext::setDepthMode(const DepthMode & mode)
+  {
+    m_data->m_driverGL->setDepthMode(mode);
+  }
+
+  void RenderContext::setStencilMode(const StencilMode & mode)
+  {
+    m_data->m_driverGL->setStencilMode(mode);
+  }
+
+  void RenderContext::setCullMode(const CullMode& mode)
+  {
+    m_data->m_driverGL->setCullMode(mode);
+  }
+
+  void RenderContext::setFrontFace(FaceWinding winding)
+  {
+    m_data->m_driverGL->setFrontFace(winding);
+  }
+
+  void RenderContext::enableClipPlanes(const QList<int> & planes)
+  {
+    m_data->m_driverGL->enableClipDistance(planes);
+  }
+
+  void RenderContext::disableClipPlanes(const QList<int> & planes)
+  {
+    m_data->m_driverGL->disableClipDistance(planes);
+  }
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(RADIANT_OSX)
+# include <DummyOpenGL.hpp>
+#endif
+
+  CustomOpenGL::CustomOpenGL(RenderContext & r, bool reset)
+    : m_r(r)
+  {
+    // First, flush the current deferred render queues
+    r.flush();
+
+    if(reset) {
+      glPointSize(1.f);
+      glLineWidth(1.f);
+      glUseProgram(0);
+      glDisable(GL_DEPTH_TEST);
+      glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    }
+  }
+
+  CustomOpenGL::~CustomOpenGL()
+  {
+    m_r.setDefaultState();
+  }
+
+
+}

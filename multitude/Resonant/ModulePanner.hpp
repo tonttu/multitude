@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -24,7 +19,7 @@
 #include <Nimble/Vector2.hpp>
 
 #include <Radiant/RefObj.hpp>
-#include <Radiant/RefPtr.hpp>
+#include <memory>
 
 #include <Valuable/AttributeFloat.hpp>
 #include <Valuable/AttributeVector.hpp>
@@ -59,14 +54,14 @@ namespace Resonant {
 
 
     /// Constructs the panner module
-    ModulePanner(Application * = 0, Mode mode=RADIAL);
+    ModulePanner(Mode mode=RADIAL);
     virtual ~ModulePanner();
 
     virtual bool deserialize(const Valuable::ArchiveElement & element);
 
     virtual bool prepare(int & channelsIn, int & channelsOut);
-    virtual void processMessage(const QString &, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n);
+    virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
+    virtual void process(float ** in, float ** out, int n, const CallbackTime &);
 
     /** Creates a loudspeaker/headphone setup for full-HD displays.
 
@@ -100,12 +95,15 @@ namespace Resonant {
     /// Query the current panner mode
     /// @return Current panner mode
     Mode getMode() const;
+
   private:
 
     friend class ModuleRectPanner;
+    friend class ModuleSamplePlayer;
 
-    void setSourceLocation(const QString &, Nimble::Vector2 location);
-    void removeSource(const QString &);
+    int locationToChannel(Nimble::Vector2) const;
+    void setSourceLocation(const QByteArray &, Nimble::Vector2 location);
+    void removeSource(const QByteArray &);
     void addSoundRectangleSpeakers(SoundRectangle * r);
 
     /// @cond
@@ -144,7 +142,7 @@ namespace Resonant {
 
       Nimble::Vector2 m_location;
       bool  m_updates;
-      QString  m_id;
+      QByteArray  m_id;
       long m_generation; /// @see ModulePanner::m_generation
 
       std::vector<Pipe> m_pipes;

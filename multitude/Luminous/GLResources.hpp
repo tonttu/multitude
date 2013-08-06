@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef LUMINOUS_GLRESOURCES_HPP
@@ -22,6 +17,8 @@
 #include <Radiant/ResourceLocator.hpp>
 
 #include <map>
+
+/// @cond
 
 namespace Luminous
 {
@@ -50,11 +47,12 @@ namespace Luminous
       For example setting MULTI_GPU_RAM to 200, GLResources starts to
       drop old resources from GPU as the GPU RAM usage exceeds 200MB.
   */
+  /// @deprecated this class is deprecated and will be removed in Cornerstone 2.1
   class LUMINOUS_API GLResources
   {
   public:
     /// Constructs a new resource collection
-    GLResources(Radiant::ResourceLocator & rl);
+    GLResources();
     virtual ~GLResources();
 
     /// Initialize the GLResources object.
@@ -70,7 +68,7 @@ namespace Luminous
     /// Erase the resources that are no longer required
     void eraseResources();
     /// Erases all resources.
-    void clear();
+    void clearResources();
     /// Tell the resource manager that byte consumption was changed
     /** Individual resource objects should call this function when
       their byte consumption changes. A typical example might be a
@@ -111,11 +109,9 @@ namespace Luminous
     void setComfortableGPURAM(long bytes)
     { m_comfortableGPURAM = bytes; }
 
-    /// Returns the resource locator associated with this resource collection
-    Radiant::ResourceLocator & resourceLocator() { return m_resourceLocator; }
-
     // static void setThreadResources(GLResources *);
 
+#if 0
     /** Associates the resource collection, window, and area to the calling
     thread. @sa getThreadMultiHead
     @param resources resource collection
@@ -144,7 +140,7 @@ namespace Luminous
     /** @return The current window which has been set with #setThreadResources, or
         null if the window has not been set. */
     static const Luminous::MultiHead::Window * getThreadMultiHeadWindow();
-
+#endif
     /// Query if the PROXY_TEXTURE_2D extension seems to be broken.
     /** On Linux, with ATI cards, this OpenGL feature appears to be broken, and
         cannot be used. To overcome this issue, one can use this function
@@ -179,8 +175,6 @@ namespace Luminous
     long m_comfortableGPURAM;
     long m_frame;
     bool m_brokenProxyTexture2D;
-
-    Radiant::ResourceLocator & m_resourceLocator;
   };
 }
 
@@ -194,10 +188,10 @@ namespace Luminous
 
     @param name The variable name for this object (e.g. mytex etc.).
 
-    @param ey The object that this resource is related to. Often the
+    @param key The object that this resource is related to. Often the
     this-pointer is used as the key, but one can create other keys.
 
-    @param resources The GLResources object that is holding the OpenGL
+    @param resources The RenderContext object that is holding the OpenGL
     resources for this thread.
 */
 #define GLRESOURCE_ENSURE(type, name, key, resources)	\
@@ -208,7 +202,7 @@ namespace Luminous
   }
 
 #define GLRESOURCE_ENSURE2(type, name, key)	\
-  Luminous::GLResources * grs = Luminous::GLResources::getThreadResources(); \
+  Luminous::RenderContext * grs = Luminous::RenderContext::getThreadContext(); \
   type * name = dynamic_cast<type *> (grs->getResource(key));	\
   if(!name) { \
     name = new type();	\
@@ -216,11 +210,13 @@ namespace Luminous
   }
 
 #define GLRESOURCE_ENSURE3(type, name, key)	\
-  Luminous::GLResources * grs = Luminous::GLResources::getThreadResources(); \
+  Luminous::RenderContext * grs = Luminous::RenderContext::getThreadContext(); \
   type * name = dynamic_cast<type *> (grs->getResource(key));	\
   if(!name) { \
     name = new type(grs);	\
     grs->addResource(key, name); \
   }
+
+/// @endcond
 
 #endif

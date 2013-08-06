@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -17,14 +12,20 @@
 #define LUMINOUS_RENDERCONTEXT_HPP
 
 #include <Luminous/Luminous.hpp>
-#include <Luminous/FramebufferObject.hpp>
+#include <Luminous/RenderDriver.hpp>
 #include <Luminous/Transformer.hpp>
+#include <Luminous/Style.hpp>
 #include <Luminous/GLResource.hpp>
 #include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
-#include <Luminous/VertexBuffer.hpp>
-#include <Luminous/GLSLProgramObject.hpp>
-#include <Luminous/FramebufferResource.hpp>
+#include <Luminous/VertexArray.hpp>
+#include <Luminous/Buffer.hpp>
+#include <Luminous/RenderCommand.hpp>
+#include <Luminous/PostProcessFilter.hpp>
+#include "FrameBufferGL.hpp"
+#include "BufferGL.hpp"
+#include "CullMode.hpp"
 
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
@@ -32,333 +33,396 @@
 
 #include <Radiant/Defines.hpp>
 
+#include <QRectF>
+
+// #define RENDERCONTEXT_SHAREDBUFFER_MAP
+
 namespace Luminous
 {
-  class Texture2D;
-  class GLContext;
+  class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
-  class LUMINOUS_API RenderContext : public Transformer
+  /// Each RenderContext is tied to single RenderThread.
+  class LUMINOUS_API RenderContext : public Transformer, public GLResources
   {
   public:
 
-    /// Blending function type
-    enum BlendFunc {
-      BLEND_USUAL,
-      BLEND_NONE,
-      BLEND_ADDITIVE,
-      BLEND_SUBTRACTIVE
+    /// TextFlags can be used to give performance hint to RenderContext about
+    /// the layout of the text.
+    enum TextFlags
+    {
+      /// Text layout changes usually every frame
+      TextDynamic,
+      /// Text layout does not change often
+      TextStatic
     };
 
-/// @cond
 
-    class FBOPackage;
+    /** Proxy object for building rendering command.
 
-    class LUMINOUS_API FBOPackage : public GLResource
+        When created contains abstraction of the actual rendering command including
+        shader program and the placeholders for the data to be rendered (vertices, indices
+        and uniforms).
+
+        Instance of this class is returned from low level rendering commands.
+        User needs to fill vertex data to the returned object. In some cases
+        (depending which function returned the object and is indexed drawing used)
+        one has to to fill indices and uniforms as well.
+
+        @tparam Vertex Type of the vertex feed to the shader program.
+        @tparam UniformBlock Type of the uniform block feed to the shader program.
+    */
+    template <typename Vertex, typename UniformBlock>
+    struct RenderBuilder
     {
-    public:
-      friend class FBOHolder;
+    private:
+      RenderBuilder() : idx(), uniform(), vertex(), command(), depth(0.0f) {}
+
       friend class RenderContext;
 
-      FBOPackage(Luminous::GLResources *res = 0) : m_fbo(res), m_rbo(res), m_tex(res), m_users(0) {}
-      virtual ~FBOPackage();
-
-      void setSize(Nimble::Vector2i size);
-      void attach();
-
-      void activate(RenderContext & r);
-      void deactivate(RenderContext & r);
-
-      Luminous::Texture2D & texture() { return m_tex; }
-
-    private:
-
-      int userCount() const { return m_users; }
-
-      Luminous::Framebuffer   m_fbo;
-      Luminous::Renderbuffer  m_rbo;
-      Luminous::Texture2D     m_tex;
-      int m_users;
-    };
-
+    public:
+      /// Indices for rendering
+      unsigned int * idx;
+      /// Uniform block for uniforms
+      UniformBlock * uniform;
+      /// Vertices for rendering
+      Vertex * vertex;
+/// @cond
+      /// Abstraction of the rendering command. Users do not need to interact with this.
+      RenderCommand * command;
 /// @endcond
-
-/// @cond
-    /** Experimental support for getting temporary FBOs for this context.
-        */
-    class FBOHolder
-    {
-      friend class RenderContext;
-    public:
-
-      LUMINOUS_API FBOHolder();
-      LUMINOUS_API FBOHolder(RenderContext * context, std::shared_ptr<FBOPackage> package);
-      LUMINOUS_API FBOHolder(const FBOHolder & that);
-
-      LUMINOUS_API ~FBOHolder();
-
-      /** Copies the data pointers from the argument object. */
-      LUMINOUS_API FBOHolder & operator = (const FBOHolder & that);
-
-      LUMINOUS_API Luminous::Texture2D * finish();
-      /** The relative texture coordinates for this useful texture area. */
-      inline const Nimble::Vector2 & texUV() const { return m_texUV; }
-
-    private:
-
-      void release();
-
-      RenderContext * m_context;
-      std::shared_ptr<FBOPackage> m_package;
-      Nimble::Vector2 m_texUV;
+      /// Depth of rendering. Precalculated automatically based on the order of rendering calls.
+      float depth;
     };
 
-    enum {
-      FBO_EXACT_SIZE = 0x1,
-      /* these are just some big enough number, exact size is smaller */
-      VBO_VERBUF_SIZE = 2 * (8 + 3000) * sizeof(GL_FLOAT),
-      VBO_INDBUF_SIZE = 6000,
-      LOD_MINIMUM = 2,
-      LOD_MAXIMUM = 8
+/// @cond
+
+    struct SharedBuffer
+    {
+      SharedBuffer(Buffer::Type type) : type(type), reservedBytes(0) {}
+      SharedBuffer(SharedBuffer && shared)
+        : buffer(std::move(shared.buffer)),
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+          data(std::move(shared.data)),
+#endif
+          type(shared.type),
+          reservedBytes(shared.reservedBytes)
+      {}
+      SharedBuffer & operator=(SharedBuffer && shared)
+      {
+        buffer = std::move(shared.buffer);
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+        std::swap(data, shared.data);
+#endif
+        type = shared.type;
+        reservedBytes = shared.reservedBytes;
+        return *this;
+      }
+
+      Buffer buffer;
+#ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
+      std::vector<char> data;
+#endif
+      Buffer::Type type;
+      std::size_t reservedBytes;
     };
 
 /// @endcond
 
     /// Constructs a new render context and associates the given resources to it
-    /// @param resources OpenGL resource container to associate with the context
+    /// @param driver render driver to use
     /// @param window window to associate this context with
-    RenderContext(Luminous::GLResources * resources, const Luminous::MultiHead::Window * window);
+    /// @param gpuId Native GPU id this render context is associated with
+    RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0, unsigned gpuId = 0);
+    /// Closes this render context. Invalidates all GL resources tied to this context.
+    /// However note, that CPU equivalents of GL classes are still valid.
     virtual ~RenderContext();
 
-    /// Sets the associated window for this context
-    /// @param window window to associate
-    void setWindow(const Luminous::MultiHead::Window * window);
-    /// Get the window associated with this context
-    /// @return window for this context
+    /// Sets the associated area for this context at the moment
+    /// @param area area to associate
+    void setArea(const Luminous::MultiHead::Area * area);
+
+    /// Returns the window associated to the current area.
+    /// @return Pointer to current window.
     const Luminous::MultiHead::Window * window() const;
+    /// Returns the current area.
+    /// @return Pointer to current area
+    const Luminous::MultiHead::Area * area() const;
 
-    /// Returns the resource collection associated with this context
-    /// @return resource collection for this context
-    Luminous::GLResources * resources() { return m_resources; }
+    /// Returns a gpu id associated with this render context
+    unsigned gpuId() const;
 
-    /// Prepares the context for rendering a frame. This is called once for
-    /// every frame before rendering.
-    virtual void prepare();
+    /// Initializes the context. Is called automatically by rendering thread.
+    /// @return Was the initialization succesful.
+    bool initialize();
 
-    /// Notifies the context that a frame has been renreded. This is called
-    /// once after each frame.
-    virtual void finish();
+    /// Called once for every frame before rendering. For internal implementation.
+    void beginFrame();
+    /// Called once for every frame after rendering. For internal implementation.
+    void endFrame();
+
+    /// Called once for every area before rendering anything in it. Can be
+    /// called multiple times per frame depending on configuration.
+    void beginArea();
+    /// Called once for every area after rendering it. Can be
+    /// called multiple times per frame depending on configuration.
+    void endArea();
+
+    /// @cond
+    void initPostProcess(Luminous::PostProcessFilters & filters);
+    void postProcess();
+
+    void processFilter(Luminous::PostProcessFilterPtr filter);
+    /// @endcond
+
+    /// Returns transformation from the world coordinates (pixels) to projected eye
+    /// coordinates (normalized device coordinates).
+    /// @param Matrix representing current view transform
+    const Nimble::Matrix4 & viewTransform() const;
+    /// Push new view transform to the view transform stack.
+    /// @param m Matrix representing view transform
+    void pushViewTransform(const Nimble::Matrix4 & m);
+    /// Pop the current matrix from view transform stack.
+    void popViewTransform();
+
+    /// Returns the target framebuffer for the current rendering operations.
+    /// @return Draw frame buffer
+    const FrameBuffer & currentFrameBuffer() const;
 
     /// Sets the rendering recursion limit for the context. This is relevant
     /// for ViewWidgets which can cause recursive rendering of the scene.
     /// @param limit recursion depth limit
     void setRecursionLimit(size_t limit) ;
     /// Returns the recursion limit
+    /// @return Recursion limit
     size_t recursionLimit() const;
 
     /// Sets the current recursion depth.
+    /// @param rd Recursion depth
     void setRecursionDepth(size_t rd);
     /// Returns current recursion depth
+    /// @return Current recursion depth
     size_t recursionDepth() const;
+
+    /// Save the current clipping stack and start with a empty one
+    void pushClipStack();
+
+    /// Restores the previously saved clipping stack
+    void popClipStack();
 
     /// Pushes a clipping rectangle to the context
     void pushClipRect(const Nimble::Rectangle & r);
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
-    /// Returns the clipping rectangle stack
-    const std::vector<Nimble::Rectangle> & clipStack() const;
-
     /// Checks if the given rectangle is visible (not clipped).
+    /// @param area Area to check
+    /// @return Was the area visible
     bool isVisible(const Nimble::Rectangle & area);
 
-    /// @cond
-    void pushDrawBuffer(GLenum dest, FBOPackage * );
-    void popDrawBuffer();
+    // Render utility functions:
 
-    // Returns the visible area (bottom of the clip stack).
-    // @todo does not return anything useful
-    //const Nimble::Rectangle & visibleArea() const;
+    /// Draw an arc defined as a segment of circle
+    /// @param center Center of the arc
+    /// @param radius Radius of the arc
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
+    /// @param style Stroke definition of the arc (color, width)
+    /// @param lineSegments Number of steps (precision)
+    void drawArc(const Nimble::Vector2f & center, float radius, float fromRadians, float toRadians, const Luminous::Style & style, unsigned int lineSegments = 0);
 
-    FBOHolder getTemporaryFBO(Nimble::Vector2 basicsize,
-                              float scaling, uint32_t flags = 0);
-    /// @endcond
+    /// Draw a possibly filled circle
+    /// @param center Center of the circle
+    /// @param radius Radius of the circle
+    /// @param style Stroke and fill definitions of the circle (colors and stroke width)
+    /// @param lineSegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
+    void drawCircle(const Nimble::Vector2f & center, float radius, const Luminous::Style & style, unsigned int lineSegments = 0, float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
-    // Render functions:
+    /// Draws an ellipse
+    /// @param center Center of the ellipse
+    /// @param axis Axis of the ellipse (orientation and size)
+    /// @param otherAxisLength The length of the other axis
+    /// @param style Stroke and fill definitions similar to circle
+    /// @param lineSegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
+    void drawEllipse(Nimble::Vector2f center,
+                     Nimble::Vector2f axis,
+                     float otherAxisLength,
+                     const Luminous::Style & style,
+                     unsigned int lineSegments = 0,
+                     float fromRadians = 0, float toRadians = Nimble::Math::TWO_PI);
 
-    /** Draw a rectangle outline with given thickness and color.
-    @param rect rectangle to draw
-    @param thickness thickness of the outline
-    @param rgba color of the outline */
-    void drawLineRect(const Nimble::Rectf & rect, float thickness, const float * rgba);
-    /** Draws a solid, anti-aliased rectangle, with given color. If textures are active,
-        the rectangle is filled with the current texture modulated by the given color.
-    @param rect rectangle to draw
-    @param rgba fill color */
-    void drawRect(const Nimble::Rectf & rect, const float * rgba);
+    /// Draws a constant width donut defined as an ellipse and a hole in the center.
+    /// @param center Center of the donut
+    /// @param axis Axis of the ellipse (orientation and size)
+    /// @param otherAxisLength Other axis legth of the ellipse.
+    /// @param width The width of the donut.
+    /// @param style Stroke, fill and texturing definitions.
+    /// @param linesegments Number of steps (precision)
+    /// @param fromRadians Start angle in radians
+    /// @param toRadians End angle in radians
+    void drawDonut(const Nimble::Vector2f & center,
+                   Nimble::Vector2 axis,
+                   float otherAxisLength,
+                   float width,
+                   const Luminous::Style & style,
+                   unsigned int linesegments = 0,
+                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
 
-    /** Draws a solid, antialiased circle
-        @param center Center of the circle
+    /// Push the given opacity to render context. The resulting opacity will be
+    /// the current opacity multiplied by the given value.
+    /// @param opacity opacity to push
+    /// @return Guard for pushed opacity.
+    void pushOpacity(float opacity);
+    /// Pop the current opacity from the stack
+    void popOpacity();
+    /// Get the current opacity
+    /// @return the current opacity
+    float opacity() const;
 
-        @param radius Radius of the circle
+    /// Pushes new frame buffer to the stack.
+    /// @param target frame buffer for rendering commands.
+    /// @return Guard which pops this frame buffer automatically on its destruction.
+    void pushFrameBuffer(const FrameBuffer & target);
+    /// Pops the current frame buffer from the stack.
+    void popFrameBuffer();
 
-        @param rgba The color of the circle in RGBA format
+    //////////////////////////////////////////////////////////////////////////
+    // Implementation
 
-        @param segments Number of segments used in the circle. Deprecated, specifying segments will actually slow rendering.
-    */
-    void drawCircle(Nimble::Vector2f center, float radius,
-                    const float * rgba, int segments = -1);
+    /** Returns RenderBuilder for the given drawing query. Call to this function allocates the queried resources
+        from driver and associates those with the given shader and other parameters. After calling this function
+        user needs to feed data through the returned builder object.
 
-    /** Draws an arc
-      @param center center of the arc
-      @param radius radius of the arc
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      @param width width of the arc
-      @param blendWidth width of the blending region
-      @param rgba color of the arc in RGBA format
-      @param segments number of segments to use
+        @code
+        // Draw a triangle using drawPrimitiveT
+        Luminous::Style style;
+        // Call to drawPrimitiveT adds the rendering command to queue
+        RenderBuilder<BasicVertex, BasicUniformBlock> builder = rc.drawPrimitiveT(Luminous::PRIMITIVE_TRIANGLE,
+                                                                                  0, // Do not use indexed drawing
+                                                                                  3, // Three vertices
+                                                                                  rc.basicShader(), // Use basic shader
+                                                                                  Radiant::Color("red"),
+                                                                                  0, // This would be width of line or point
+                                                                                  style // No need to pass additional parameters
+                                                                                  );
+        // Now fill the data of the builder (vertices of triangle)
+        builder.vertex[0].location = Nimble::Vector2(0, 0);
+        builder.vertex[1].location = Nimble::Vector2(1, 0);
+        builder.vertex[2].location = Nimble::Vector2(.5, 1);
+
+        // That is all we needed: request to draw and supported that request with data
+        @endcode
+
+        @param primType Primitives to render
+        @param indexCount How many indices are to be specified. If zero, indices are effectively set to 0,1,...,vertexCount-1
+        @param vertexCount How many vertices are to be specified.
+        @param shader GLSL-program to use.
+        @param color Color for the corresponding uniform.
+        @param width Width for the rendered primitive. Only for points and lines.
+        @param style Style for the rendering.
+
+        @tparam Vertex Type of the vertex feed to the shader shader.
+        @tparam UniformBlock Type of the uniformblock. Needs at least to include public fields @c projMatrix (Nimble::Matrix4),
+                             @c modelMatrix (Nimble::Matrix4), @c color (Nimble::Vector4) and @c depth (float)
+                             (see Luminous::BasicUniformBlock).
+
+        @return Returns RenderBuilder-object which contains the interface to the rendering resources acquired by call to this function.
       */
-    void drawArc(Nimble::Vector2f center, float radius, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
+      const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
 
-    /** Draws a cut sector in a circle or a wedge.
-      @param center center of the circle
-      @param radius1 inner radius
-      @param radius2 outer radius
-      @param fromRadians start angle in radians
-      @param toRadians end angle in radians
-      @param width width of the wedge edge
-      @param blendWidth width of the blending region
-      @param rgba color of the wedge
-      @param segments number of segments to use
-      */
-    void drawWedge(Nimble::Vector2f center, float radius1, float radius2, float fromRadians, float toRadians, float width, float blendWidth, const float * rgba, int segments);
+    /// Draws a rectangle with rectangular hole
+    /// @param area Outer rectangle
+    /// @param hole Inner rectangle defining the hole
+    /// @param style Stroke, fill and texturing options
+    void drawRectWithHole(const Nimble::Rectf & area, const Nimble::Rect & hole, const Luminous::Style & style);
 
-    /** Draws a line that contains multiple segments.
+    /// Draws a line
+    /// @param p1 Start point of the line
+    /// @param p2 End point of the line
+    /// @param style Stroke definition of a line.
+    void drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style);
 
-        @param vertices Pointer to the line vertices
+    /// Draws a polyline
+    /// @param begin Initial position of sequence
+    /// @param numVertices Number of vertices (one more than lines in polyline)
+    /// @param style Stroke definition of a line.
+    /// @tparam InputIterator Iterator to vertices. Needs to have operator++ and operator*
+    template <typename InputIterator>
+    void drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style);
 
-        @param n Number of vertices
+    /// Draws a set of points
+    /// @param begin Initial position of sequence
+    /// @param numPoints Number of points
+    /// @param style Color and size passed as stroke parameters
+    /// @tparam InputIterator Iterator to vertices. Needs to have operator++ and operator*
+    template <typename InputIterator>
+    void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
 
-        @param width Width of the line
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param max Top right corner of a rectangle
+    /// @param style Stroke, fill and texturing options
+    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
 
-        @param rgba The line color in RGBA format
-     */
-    void drawPolyLine(const Nimble::Vector2f * vertices, int n,
-                      float width, const float * rgba);
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param size Rectangle size
+    /// @param style Stroke, fill and texturing options
+    void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style);
 
-    /** Draws a line between two points.
+    /// Draws a rectangle
+    /// @param rext Rectangle to draw
+    /// @param style Stroke, fill and texturing options
+    void drawRect(const Nimble::Rectf & rect, const Style & style);
 
-        @param p1 The first point
-        @param p2 The second point
+    /// Draws a rectangle
+    /// @param rect Rectangle to draw
+    /// @param uvs Texture coordinates
+    /// @param style Stroke, fill and texturing options
+    void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
 
-        @param width Width of the line
+    /// Draws a quad with two triangles.
+    /// The vertices of the first triangle are v[0], v[1], v[2]. The second triangle is
+    /// defined by vertices v[1], v[3] and v[2]. Both of the triangles are assumed to have a
+    /// counterclockwise orientation.
+    /// @param v Vertices of a quad
+    /// @param uvs Texture coordinates for the vertices
+    /// @param style Stroke, fill and texturing options
+    void drawQuad(const Nimble::Vector2 * v, const Nimble::Vector2 * uvs, const Style & style);
 
-        @param rgba The line color in RGBA format
-    */
 
-    void drawLine(Nimble::Vector2f p1, Nimble::Vector2f p2,
-                  float width, const float * rgba);
+    /// Draws text
+    /// @param layout Text object to render
+    /// @param location Text location in viewRect. Anything outside will be clipped.
+    /// @param viewRect Where the text is located
+    /// @param style Text style properties
+    /// @param ignoreVerticalAlign If true the rendering assumes that vertical alignment is already
+    ///        handled and baked in rendering location. Layout's options about vertical alignment are
+    ///        ignored in that case.
+    void drawText(const TextLayout & layout, const Nimble::Vector2f & location, const Nimble::Rectf & viewRect,
+                  const TextStyle & style, bool ignoreVerticalAlign=false);
 
-    /** Draw a cubic bzier curve
-        @param controlPoints array of 4 control points
-        @param width width of the curve
-        @param rgba array of 4 color components
-    */
-    void drawCurve(Nimble::Vector2* controlPoints, float width, const float * rgba=0);
-
-    /** Draws a spline.
-      @param spline spline to draw
-      @param width width of the spline
-      @param rgba color of the spline
-      @param step step to use when evaluating the spline
-    */
-    void drawSpline(Nimble::Interpolating & spline, float width, const float * rgba=0, float step=1.0f);
-    /** Draw a textured rectangle with given color.
-
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-        then it will be ignored.
-    */
-    void drawTexRect(Nimble::Vector2 size, const float * rgba);
-    /** @copybrief drawTexRect
-
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param texUV The maximum texture coordinate values **/
-    void drawTexRect(Nimble::Vector2 size, const float * rgba,
-                     const Nimble::Rect & texUV);
-    /** @copybrief drawTexRect
-    @param area The rectangle to draw.
-    @param rgba The color in RGBA format. If the argument is null,
-           then it will be ignored.
-    @param texUV The maximum texture coordinate values **/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba,
-                     const Nimble::Rect & texUV);
-    /** @copybrief drawTexRect
-    @param area The rectangle to draw.
-    @param rgba The color in RGBA format. If the argument is null,
-           then it will be ignored.
-    @param texUV Array of texture coordinates for multitexturing.
-    @param uvCount The number of texture coordinates to fill.**/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba,
-                     const Nimble::Rect * texUV, int uvCount);
-    /** @copybrief drawTexRect
-        @param size The size of the rectangle to be drawn.
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param texUV The maximum texture coordinate values **/
-    void drawTexRect(Nimble::Vector2 size, const float * rgba,
-                     Nimble::Vector2 texUV);
-    /** @copybrief drawTexRect
-        @param rgba The color in RGBA format. If the argument is null,
-               then it will be ignored.
-        @param area The rectangle to drawn **/
-    void drawTexRect(const Nimble::Rect & area, const float * rgba);
-    /// Sets the current blend function, and enables blending
-    /** If the function is BLEND_NONE, then blending is disabled.
-    @param f blend function */
-    void setBlendFunc(BlendFunc f);
-    /// Enables the current blend mode defined with setBlendFunc
-    void useCurrentBlendMode();
-
-    /// Returns a pointer to an array of human-readable blending mode strings
-    static const char ** blendFuncNames();
+    /// Draws given string
+    /// @param text String to render
+    /// @param rect Where to render, acts also as a clipping rectangle
+    /// @param style Text style properties
+    /// @param flags Will text layout be dynamic or static
+    void drawText(const QString & text, const Nimble::Rectf & rect, const TextStyle & style, TextFlags flags = TextStatic);
 
     /// Adds the render counter by one
-    /** The render counter is used to track how many objects have been rendered since the coutner was
-        last reset. Thsi can be useful for checking that object culling works as intended. */
+    /// The render counter is used to track how many objects have been rendered since the counter was
+    /// last reset. This can be useful for checking that object culling works as intended.
     void addRenderCounter();
 
-    /** Returns the size of the window of this #RenderContext object.
-
-        @return If the window is null, then Nimble::Vector2(10,10) is returned.
-    */
-    Nimble::Vector2 contextSize() const;
-
-    /// @cond
-    void pushViewStack();
-    /// Pops view stack, leaves current texture attached
-    void popViewStack();
-
-    /// @internal
-    /// Sets the current rendering context
-    void setGLContext(Luminous::GLContext *);
-
-    /// Returns a handle to the current OpenGL rendering context
-    /** This function is seldom necessary, and its use is deprecated and unsupported.
-        On some platforms this call may return null.
-        */
-    /// @internal
-    MULTI_ATTR_DEPRECATED("Will be removed in 2.0", Luminous::GLContext * glContext());
-
-    /// @endcond
-
-    /// Get a temporary texture render target
-    // RenderTargetObject pushRenderTarget(Nimble::Vector2 size, float scale);
-    /// Pop a temporary texture render target
-    // Luminous::Texture2D & popRenderTarget(RenderTargetObject & trt);
+    /// Returns the size of the window of this RenderContext object.
+    /// @return If the window is null, then Nimble::Size(10,10) is returned.
+    Nimble::Size contextSize() const;
 
     /// Push a viewport to the viewport stack
     /// Pushes a viewport to the top of the viewport stack.
@@ -371,17 +435,608 @@ namespace Luminous
     /// @return the viewport from the top of the viewport stack
     const Nimble::Recti & currentViewport() const;
 
+    /// Push scissor rectangle into scissor stack
+    void pushScissorRect(const Nimble::Recti & scissorArea);
+    /// Pop current scissor rectangle from stack
+    void popScissorRect();
+    /// Returns current scissor area
+    /// @return Current scissor area
+    const Nimble::Recti & currentScissorArea() const;
+
+    /// Copies pixels from the read frame buffer to the draw frame buffer
+    /// @sa FrameBuffer::setTargetBind
+    /// @param src Rectangle defining source area in the read frame buffer
+    /// @param dst Rectangle defining destination are in the draw frame buffer
+    /// @param mask Buffers to blit
+    /// @param filter Filtering mode for sampling
+    void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
+              ClearMask mask = CLEARMASK_COLOR,
+              Texture::Filter filter = Texture::FILTER_NEAREST);
+
+    /// Set the active render buffers
+    /// @param colorBuffer enables drawing to colorbuffer if set to true
+    /// @param depthBuffer enables drawing to depthbuffer if set to true
+    /// @param stencilBuffer enables drawing to stencilbuffer if set to true
+    void setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer);
+
+    /// Set the active blendmode
+    /// @param mode Description of new blend mode.
+    void setBlendMode(const BlendMode & mode);
+
+    /// Set the active depthmode
+    /// @param mode Description of the new depth mode
+    void setDepthMode(const DepthMode & mode);
+
+    /// Set the active stencil mode
+    /// @param mode Stencil mode to use
+    void setStencilMode(const StencilMode & mode);
+
+    /// Set the active cull mode
+    /// @param mode Cull mode to use
+    void setCullMode(const CullMode & mode);
+
+    /// Specify front-facing polygons
+    /// @param winding Winding of the front-facing polygons
+    void setFrontFace(enum FaceWinding winding);
+
+    /// Enable clipplanes for use in shaders
+    /// @param planes a list of planes that will be enabled
+    void enableClipPlanes(const QList<int> & planes);
+
+    /// Disable clipplanes from being used in shaders
+    /// @param planes a list of planes that will be disabled
+    void disableClipPlanes(const QList<int> & planes);
+
+/// @cond
+
+    /// @todo REMOVE US
+    /// Sets given render context for the current thread
+    /// @param rsc Context to set
+    static void setThreadContext(RenderContext * rsc);
+    /// Get the render context of the current thread
+    static RenderContext * getThreadContext();
+    /// Returns the resources of this context
+    /// @todo make deprecated
+    Luminous::RenderContext * resources() { return this; }
+
+    void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
+    void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
+    void bindProgram(GLSLProgramObject *) {}
+
+/// @endcond
+
+    /// Reset the OpenGL state to default. The usage of this function by manually
+    /// is not recommended
+    void setDefaultState();
+
+    /// Forces all queued rendering commands to execute. Is called internally
+    /// at the end of frame so under normal conditions there is no need call
+    /// it manually.
+    void flush();
+
+    /// Returns the GL resources handle corresponding to given program.
+    /// @param program CPU side object representing the shader program
+    /// @return Handle to OpenGL resources of given program
+    ProgramGL & handle(const Program & program);
+
+    /// Returns the GL resources handle corresponding to given texture.
+    /// @param texture CPU side object representing the texture
+    /// @return Handle to OpenGL resources of given texture
+    TextureGL & handle(const Texture & texture);
+
+    /// Returns the GL resources handle corresponding to given frame buffer.
+    /// @param target CPU side object representing the frame buffer
+    /// @return Handle to OpenGL resources of given frame buffer
+    FrameBufferGL & handle(const FrameBuffer & target);
+
+    /// Returns the GL resources handle corresponding to given render buffer.
+    /// @param buffer CPU side object representing the render buffer
+    /// @return Handle to OpenGL resources of given render buffer
+    RenderBufferGL & handle(const RenderBuffer & buffer);
+
+    /// Returns the GL resources handle corresponding to given buffer (vertex/index).
+    /// @param buffer CPU side object representing the buffer
+    /// @return Handle to OpenGL resources of given buffer
+    BufferGL & handle(const Buffer & buffer);
+
+    /// Returns the GL resources handle corresponding to given vertex array.
+    /// @param vertexarray CPU side object representing the vertex array
+    /// @param program Handle to OpenGL program associated with vertexarray
+    /// @return Handle to OpenGL resources of queried vertex array
+    VertexArrayGL & handle(const VertexArray & vertexarray, ProgramGL * program);
+
+  private:
+
+/// @cond
+
+    //////////////////////////////////////////////////////////////////////////
+    /// Direct mode API
+    //////////////////////////////////////////////////////////////////////////
+    friend class D;
+    friend class CustomOpenGL;
+    void draw(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+    void drawIndexed(PrimitiveType primType, unsigned int offset, unsigned int primitives);
+
+/// @endcond
+
+    /// Finds shared buffer from buffer pool.
+    /// @param elementSize Size of the single element to be stored
+    /// @param elementCount Number of elements
+    /// @param type Type of the buffer (Array/Index/Uniform)
+    SharedBuffer * findAvailableBuffer(std::size_t elementSize, std::size_t elementCount,
+                                       Buffer::Type type);
+
+    /// Returns the memory mapping to GL buffer.
+    /// @param buffer Buffer to map.
+    /// @param type Type of the buffer
+    /// @param offset Offset from the beginning of the buffer
+    /// @param length Requested length of the mapped memory region.
+    /// @param access Flags describing the access patterns of the mapped buffer.
+    template <typename T>
+    T * mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
+                  Radiant::FlagsT<Buffer::MapAccess> access);
+
+    /// Returns the memory mapping to GL buffer.
+    /// @param buffer Buffer to map.
+    /// @param type Type of the buffer
+    /// @param access Flags describing the access patterns of the mapped buffer.
+    template <typename T>
+    inline T * mapBuffer(const Buffer & buffer, Buffer::Type type,
+                         Radiant::FlagsT<Buffer::MapAccess> access);
+
+    /// Unmaps the given buffer or range of it. If unmapping the whole buffer then this
+    /// invalidates all the pointers returned by mapBuffer
+    /// @param buffer Buffere to unmap
+    /// @param type Type of the buffer
+    /// @param offset Offset to the region unmapped
+    /// @param length Length of the unmapped memory region
+    void unmapBuffer(const Buffer & buffer, Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
+
+  public:
+    /// Clears the buffers of current frame buffer
+    /// @param mask Mask to define what buffers to clear
+    /// @param clearColor All values in color buffer will be initialized to this if it is cleared
+    /// @param clearDepth All values in depth buffer will be initialized to this if it is cleared
+    /// @param clearStencil All values in stencil buffer will be initialized to this if it is cleared
+    void clear(ClearMask mask, const Radiant::Color & clearColor = Radiant::Color(0,0,0,0),
+               double clearDepth = 1.0, int clearStencil = 0);
+
+    /// Adds rendering command to the rendering queue. The difference between this and
+    /// @ref render(bool, Luminous::PrimitiveType, int, int, float, const Luminous::Program&, const std::map< QByteArray, const Texture * > * , const std::map< QByteArray, ShaderUniform > *) "render"
+    /// is that this version enables manual management of vertex data with the
+    /// vertex array. In addition the used uniform block has free form. User needs to do
+    /// his/hers own geometry transformations when using this function.
+    /// @sa drawPrimitiveT
+    /// @param translucent Does this rendering command involve transparency
+    /// @param type Primitives to render
+    /// @param offset Geometry and index offset in given vertex array
+    /// @param vertexCount Number of vertices to draw
+    /// @param primitiveSize Size of the point/line
+    /// @param vertexArray Storage of the vertex data
+    /// @param program Shader program to use in rendering
+    /// @param textures Mapping from names to textures. Each texture is fed with the given name to shader
+    /// @param uniforms Mapping from names to uniforms. Each uniform is fed with the given name to shader
+    ///
+    /// @tparam Vertex C++ class describing the vertex used in shader program. Doesn't require anything from this class
+    /// @tparam UniformBlock C++ class corresponding the uniform block used by shader program. Doesn't require anything from this class
+    /// @return Builder object for this drawing command. One has to fill the uniform block of the builder object.
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> render(bool translucent,
+                                               Luminous::PrimitiveType type,
+                                               int offset, int vertexCount,
+                                               float primitiveSize,
+                                               const Luminous::VertexArray & vertexArray,
+                                               const Luminous::Program & program,
+                                               const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                               const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    /// Similar to drawPrimitiveT but has less restrictions on the uniform block. It is enough for the
+    /// uniform block to have fields @c projMatrix and @c vievMatrix (both Nimble::Matrix4).
+    /// @sa drawPrimitiveT
+    /// @param translucent Does this rendering command involve transparency
+    /// @param type Primitives to render
+    /// @param offset Geometry and index offset in given vertex array
+    /// @param vertexCount Number of vertices to draw
+    /// @param primitiveSize Size of the point/line
+    /// @param vertexArray Storage of the vertex data
+    /// @param program Shader program to use in rendering
+    /// @param textures Mapping from names to textures. Each texture is fed with the given name to shader
+    /// @param uniforms Mapping from names to uniforms. Each uniform is fed with the given name to shader
+    ///
+    /// @tparam Vertex C++ class describing the vertex used in shader program.
+    /// @tparam UniformBlock C++ class corresponding the uniform block used by shader program. See the applying restrictions above.
+    /// @return Builder object for this drawing command. User has to fill the uniform and vertex (and possibly index) buffers of the builder object.
+    template <typename Vertex, typename UniformBlock>
+    RenderBuilder<Vertex, UniformBlock> render( bool translucent,
+                                                Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
+                                                const Luminous::Program & program,
+                                                const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                                const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    /// Returns the basic shader used in Luminous. This shader program transforms the geometry and
+    /// paints it with single color. Needs BasicVertex for vertex type and BasicUniformBlock for uniform block
+    /// type to be able to work.
+    /// @return Basic shader used in Luminous
+    const Program & basicShader() const;
+    /// Returns the shader used for texturing in Luminous. This shader program does the same as the one
+    /// returned by basicShader but also textures the geometry.
+    /// Needs BasicVertexUV for vertex type and
+    /// BasicUniformBlock for uniform block type to be able to work. The texture used is the one set
+    /// as fill texture to Luminous::Style (or the one with name "tex"). Final color for the fragment
+    /// is texture sample modulated with uniform color.
+    /// @return Shader program used for texturing in Luminous.
+    const Program & texShader() const;
+
+    /// Get the approximate scaling factor applied by the transform.
+    /// @return approximate scaling applied
+    float approximateScaling() const;
+
+/// @cond
+
+    const Program & fontShader() const;
+
+/// @endcond
+
+   private:
+    int uniformBufferOffsetAlignment() const;
+
+    std::size_t alignUniform(std::size_t uniformSize) const;
+
+    RenderCommand & createRenderCommand(bool translucent,
+                                        const Luminous::VertexArray & vertexArray,
+                                        const Luminous::Buffer & uniformBuffer,
+                                        float & depth,
+                                        const Program & shader,
+                                        const std::map<QByteArray,const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    RenderCommand & createRenderCommand(bool translucent,
+                                        int indexCount, int vertexCount,
+                                        std::size_t vertexSize, std::size_t uniformSize,
+                                        unsigned *& mappedIndexBuffer,
+                                        void *& mappedVertexBuffer,
+                                        void *& mappedUniformBuffer,
+                                        float & depth,
+                                        const Program & program,
+                                        const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    template <typename Vertex, typename Uniform>
+    RenderCommand & createRenderCommand(bool translucent,
+                                        const Luminous::VertexArray & vertexArray,
+                                        const Luminous::Buffer & uniformBuffer,
+                                        Uniform *& mappedUniformBuffer,
+                                        float & depth,
+                                        const Program & shader,
+                                        const std::map<QByteArray,const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    template <typename Vertex, typename UniformBlock>
+    RenderCommand & createRenderCommand(bool translucent,
+                                        int indexCount, int vertexCount,
+                                        unsigned *& mappedIndexBuffer,
+                                        Vertex *& mappedVertexBuffer,
+                                        UniformBlock *& mappedUniformBuffer,
+                                        float & depth,
+                                        const Program & program,
+                                        const std::map<QByteArray, const Texture *> * textures = nullptr,
+                                        const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    template <typename T>
+    std::pair<T *, SharedBuffer *> sharedBuffer(
+        std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
+
+    std::pair<void *, SharedBuffer *> sharedBuffer(
+        std::size_t vertexSize, std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset);
+
+    //////////////////////////////////////////////////////////////////////////
+    // <Luminousv2>
+    //////////////////////////////////////////////////////////////////////////
+  protected:
+    virtual void beforeTransformChange();
   private:
     void drawCircleWithSegments(Nimble::Vector2f center, float radius, const float *rgba, int segments);
     void drawCircleImpl(Nimble::Vector2f center, float radius, const float *rgba);
+    void drawTextImpl(const TextLayout & layout, const Nimble::Vector2f & location,
+                      const Nimble::Vector2f & offset,
+                      const Nimble::Rectf & viewRect, const TextStyle & style,
+                      FontUniformBlock & uniform, const Program & program,
+                      const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign);
 
-    void clearTemporaryFBO(std::shared_ptr<FBOPackage> fbo);
-
-    Luminous::GLResources * m_resources;
+    Luminous::RenderContext * m_resources;
     class Internal;
     Internal * m_data;
   };
 
+  /** Guard for executing plain OpenGL commands.
+    *
+    * With the help of this object one can inject custom OpenGL commands
+    * into Cornerstone application. The usage of this class is strongly
+    * discouraged because it can cause big performance losses.
+    * When using more exotic states, user should set the state of
+    * OpenGL state machine to the state it was before.
+    */
+  class CustomOpenGL : Patterns::NotCopyable
+  {
+  public:
+    /// Creates guard for the given OpenGL context. Executes all queued drawing
+    /// commands in the given context.
+    /// @param r Context to guard.
+    /// @param reset Do we reset OpenGL state
+    LUMINOUS_API CustomOpenGL(RenderContext & r, bool reset=false);
+    /// Sets the given render context to the default state
+    LUMINOUS_API ~CustomOpenGL();
+
+    /// Returns the GL resources handle corresponding to given program.
+    /// @param program CPU side object representing the shader program
+    /// @return Handle to OpenGL resources of given program
+    inline ProgramGL & handle(const Program & program) { return m_r.handle(program); }
+
+    /// Returns the GL resources handle corresponding to given texture.
+    /// @param texture CPU side object representing the texture
+    /// @return Handle to OpenGL resources of given texture
+    inline TextureGL & handle(const Texture & texture) { return m_r.handle(texture); }
+
+    /// Returns the GL resources handle corresponding to given buffer (vertex/index).
+    /// @param buffer CPU side object representing the buffer
+    /// @return Handle to OpenGL resources of given buffer
+    inline BufferGL & handle(const Buffer & buffer) { return m_r.handle(buffer); }
+
+    /// Returns the GL resources handle corresponding to given vertex array.
+    /// @param vertexArray CPU side object representing the vertex array
+    /// @param program Handle to OpenGL program associated with vertexarray
+    /// @return Handle to OpenGL resources of queried vertex array
+    inline VertexArrayGL & handle(const VertexArray & vertexArray, ProgramGL * program) { return m_r.handle(vertexArray, program); }
+
+    /// Returns the GL resources handle corresponding to given render buffer.
+    /// @param buffer CPU side object representing the render buffer
+    /// @return Handle to OpenGL resources of given render buffer
+    inline RenderBufferGL & handle(const RenderBuffer & buffer) { return m_r.handle(buffer); }
+
+    /// Returns the GL resources handle corresponding to given frame buffer.
+    /// @param target CPU side object representing the frame buffer
+    /// @return Handle to OpenGL resources of given frame buffer
+    inline FrameBufferGL & handle(const FrameBuffer & target) { return m_r.handle(target); }
+
+  private:
+    RenderContext & m_r;
+  };
+
+  template <> LUMINOUS_API
+  void * RenderContext::mapBuffer<void>(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
+                                        Radiant::FlagsT<Buffer::MapAccess> access);
+
+  template <typename T>
+  T * RenderContext::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
+                               Radiant::FlagsT<Buffer::MapAccess> access)
+  {
+    return reinterpret_cast<T*>(mapBuffer<void>(buffer, type, offset, length, access));
+  }
+
+  template <typename T>
+  inline T * RenderContext::mapBuffer(const Buffer & buffer, Buffer::Type type,
+                                      Radiant::FlagsT<Buffer::MapAccess> access)
+  {
+    return mapBuffer<T>(buffer, type, 0, buffer.size(), access);
+  }
+
+  template <typename Vertex, typename Uniform>
+  RenderCommand & RenderContext::createRenderCommand(bool translucent,
+                                                     int indexCount, int vertexCount,
+                                                     unsigned *& mappedIndexBuffer,
+                                                     Vertex *& mappedVertexBuffer,
+                                                     Uniform *& mappedUniformBuffer,
+                                                     float & depth,
+                                                     const Program & program,
+                                                     const std::map<QByteArray, const Texture *> * textures,
+                                                     const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    return createRenderCommand(translucent,
+                               indexCount, vertexCount,
+                               sizeof(Vertex), sizeof(Uniform),
+                               mappedIndexBuffer, reinterpret_cast<void *&>(mappedVertexBuffer),
+                               reinterpret_cast<void *&>(mappedUniformBuffer),
+                               depth, program, textures, uniforms);
+  }
+
+  template <typename T>
+  std::pair<T *, RenderContext::SharedBuffer *> RenderContext::sharedBuffer(
+      std::size_t maxVertexCount, Buffer::Type type, unsigned int & offset)
+  {
+    void * t;
+    SharedBuffer * buffer;
+    std::tie(t, buffer) = sharedBuffer(sizeof(T), maxVertexCount, type, offset);
+    return std::make_pair(reinterpret_cast<T*>(t), buffer);
+  }
+
+  /// This class provides a simple guard for setting opacity. It will
+  /// automatically pop opacity in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushOpacity(float)" and "RenderContext::popOpacity"
+  class OpacityGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    OpacityGuard(RenderContext & r, float opacity) : m_rc(&r) { r.pushOpacity(opacity); }
+    /// Construct a guard by moving
+    /// @param o guard to move
+    OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popOpacity().
+    ~OpacityGuard() { if(m_rc) m_rc->popOpacity(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active view transform. It will
+  /// automatically pop the transform in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushViewTransform(const Nimble::Matrix4 & m)" and "RenderContext::popViewTransform"
+  class ViewTransformGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ViewTransformGuard(RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { r.pushViewTransform(m); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ViewTransformGuard(ViewTransformGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popViewTransform().
+    ~ViewTransformGuard() { if (m_rc) m_rc->popViewTransform(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active viewport. It will
+  /// automatically pop the viewport in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushViewport(const Nimble::Recti &)" and "RenderContext::popViewport"
+  class ViewportGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ViewportGuard(RenderContext & r, const Nimble::Recti & viewport) : m_rc(&r) { r.pushViewport(viewport); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ViewportGuard(ViewportGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popViewport().
+    ~ViewportGuard() { if (m_rc) m_rc->popViewport(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active scissor area. It will
+  /// automatically pop the area in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushScissorRect(const Nimble::Recti &)" and "RenderContext::popScissorRect"
+  class ScissorGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ScissorGuard(RenderContext & r, const Nimble::Recti & scissor) : m_rc(&r) { r.pushScissorRect(scissor); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ScissorGuard(ScissorGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popScissorRect().
+    ~ScissorGuard() { if (m_rc) m_rc->popScissorRect(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting the active clipping area. It will
+  /// automatically pop the area in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushClipRect(const Nimble::Rectangle &)" and "RenderContext::popClipRect"
+  class ClipGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context
+    ClipGuard(RenderContext & r, const Nimble::Rectangle & rect) : m_rc(&r) { r.pushClipRect(rect); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    ClipGuard(ClipGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popClipRect().
+    ~ClipGuard() { if (m_rc) m_rc->popClipRect(); }
+  private:
+    RenderContext * m_rc;
+  };
+
+  ////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
+
+  class RenderContext;
+
+  /// This class provides a simple guard for setting the active render target. It will
+  /// automatically pop the target in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushFrameBuffer(const FrameBuffer &)" and "RenderContext::popFrameBuffer"
+  class FrameBufferGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard
+    /// @param r render context to pop a target from
+    FrameBufferGuard(RenderContext & r, const FrameBuffer &target) : m_rc(&r) { r.pushFrameBuffer(target); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    FrameBufferGuard(FrameBufferGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popFrameBuffer().
+    ~FrameBufferGuard() { if (m_rc) m_rc->popFrameBuffer(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  /// This class provides a simple guard for setting transformations. It will
+  /// automatically pop transforms in its destructor so the user doesn't need to
+  /// remember to do it manually. It is equivalent to calling
+  /// "RenderContext::pushTransform(m)" and "RenderContext::popTransform()".
+  class TransformGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Construct a new guard. This calls RenderContext::pushTransform(m)
+    TransformGuard(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransform(m); }
+    /// @copydoc TransformGuard
+    TransformGuard(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransform(m); }
+    /// Construct a guard by moving
+    /// @param rhs guard to move
+    TransformGuard(TransformGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    ~TransformGuard() { if (m_rc) m_rc->popTransform(); }
+
+    /// This class provides a simple guard for setting transformations. It will
+    /// automatically pop transforms in its destructor so the user doesn't need to
+    /// remember to do it manually. It is equivalent to calling
+    /// "RenderContext::pushTransformLeftMul(m)" and "RenderContext::popTransform()".
+    class LeftMul : public Patterns::NotCopyable
+    {
+    public:
+      /// Construct a new guard. This calls RenderContext::pushTransformLeftMul(m)
+      /// @param r render context
+      /// @param m Transformation matrix
+      LeftMul(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransformLeftMul(m); }
+      /// @copydoc LeftMul
+      LeftMul(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransformLeftMul(m); }
+      /// Construct a guard by moving
+      /// @param rhs guard to move
+      LeftMul(LeftMul && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+      /// Destroys the guard. This calls RenderContext::popTransform()
+      ~LeftMul() { if (m_rc) m_rc->popTransform(); }
+    private:
+      Luminous::RenderContext * m_rc;
+    };
+
+    /// This class provides a simple guard for setting transformations. It will
+    /// automatically pop transforms in its destructor so the user doesn't need to
+    /// remember to do it manually. It is equivalent to calling
+    /// "RenderContext::pushTransformRightMul(m)" and "RenderContext::popTransform()".
+    class RightMul : public Patterns::NotCopyable
+    {
+    public:
+      /// Construct a new guard. This calls RenderContext::pushTransformRightMul(m)
+      /// @param r render context
+      /// @param m Transformation matrix
+      RightMul(Luminous::RenderContext & r, const Nimble::Matrix4f & m) : m_rc(&r) { m_rc->pushTransformRightMul(m); }
+      /// @copydoc RightMul
+      RightMul(Luminous::RenderContext & r, const Nimble::Matrix3f & m) : m_rc(&r) { m_rc->pushTransformRightMul(m); }
+      /// Construct a guard by moving
+      /// @param rhs guard to move
+      RightMul(RightMul && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+      /// Destroys the guard. This calls RenderContext::popTransform()
+      ~RightMul() { if (m_rc) m_rc->popTransform(); }
+    private:
+      Luminous::RenderContext * m_rc;
+    };
+
+  private:
+    Luminous::RenderContext * m_rc;
+  };
 }
+
+#include <Luminous/RenderContextImpl.hpp>
+
+
 
 #endif

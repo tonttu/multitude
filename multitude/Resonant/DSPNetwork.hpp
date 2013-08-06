@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -102,13 +97,13 @@ namespace Resonant {
       /** @param moduleId The id of the module that we are connecting to.
           @param channel The channel to connect to.
       */
-      Connection(const QString & moduleId, int channel)
+      Connection(const QByteArray & moduleId, int channel)
         : m_moduleId(moduleId), m_channel(channel),m_buf(0)
       {
       }
 
       /// Sets the id of the connected module
-      void setModuleId(const QString & id)
+      void setModuleId(const QByteArray & id)
       {
         m_moduleId = id;
       }
@@ -124,7 +119,7 @@ namespace Resonant {
       friend class DSPNetwork;
 
       /// @cond
-      QString m_moduleId;
+      QByteArray m_moduleId;
       int         m_channel;
       Buf        *m_buf;
       /// @endcond
@@ -139,9 +134,9 @@ namespace Resonant {
     public:
       NewConnection() : m_sourceChannel(0), m_targetChannel(0) {}
       /** The id of the audio source module. */
-      QString m_sourceId;
+      QByteArray m_sourceId;
       /** The id of the audio destination module. */
-      QString m_targetId;
+      QByteArray m_targetId;
       /** The channel index in the source module (where the signal is coming from). */
       int         m_sourceChannel;
       /** The channel index in the target module (where the signal is going to). */
@@ -168,11 +163,7 @@ namespace Resonant {
       }
 
       /// Deletes the module.
-      void deleteModule()
-      {
-        delete m_module;
-        m_module = 0;
-      }
+      void deleteModule();
 
       /// Sets if the item should use panner
       void setUsePanner(bool usePanner)
@@ -190,19 +181,19 @@ namespace Resonant {
     private:
 
       // Process n samples
-      inline void process(int n)
+      inline void process(int n, const CallbackTime & time)
       {
         assert(m_compiled != false);
         float ** in = m_ins.empty() ? 0 : &m_ins[0];
         float ** out = m_outs.empty() ? 0 : &m_outs[0];
-        m_module->process(in, out, n);
+        m_module->process(in, out, n, time);
       }
 
       void eraseInput(const Connection & c);
-      void eraseInputs(const QString & moduleId);
+      void eraseInputs(const QByteArray & moduleId);
       int findInInput(float * ptr) const;
       int findInOutput(float * ptr) const;
-      void removeInputsFrom(const QString & id);
+      void removeInputsFrom(const QByteArray & id);
 
       Module * m_module;
 
@@ -242,6 +233,9 @@ namespace Resonant {
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
     void markDone(Item &);
+    /** Marks a given DSP module as finished. Once this function has been called the
+        DSP thread will remove the module from the graph, and delete it. */
+    void markDone(Module &);
 
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string
@@ -267,15 +261,17 @@ DSPNetwork::instance().send(control);
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
-    Item * findItem(const QString & id);
+    Item * findItem(const QByteArray & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
-    Module * findModule(const QString & id);
+    Module * findModule(const QByteArray & id);
 
     /// @cond
     void dumpInfo(FILE *f);
     /// @endcond
+
+    bool hasPanner() const { return m_panner != nullptr; }
 
   private:
     /// Creates an empty DSPNetwork object.
@@ -283,17 +279,16 @@ DSPNetwork::instance().send(control);
 
     virtual int callback(const void *in, void *out,
                          unsigned long framesPerBuffer,
-                         int streamid
-                         //       , const PaStreamCallbackTimeInfo* time,
-                         //			 PaStreamCallbackFlags status
-                         );
+                         int streamid,
+                         const PaStreamCallbackTimeInfo & time,
+                         unsigned long flags);
 
-    void doCycle(int);
+    void doCycle(int, const CallbackTime & time);
 
     void checkNewControl();
     void checkNewItems();
     void checkDoneItems();
-    void deliverControl(const QString & moduleid, const char * commandid,
+    void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 
     bool uncompile(Item &);
@@ -302,7 +297,7 @@ DSPNetwork::instance().send(control);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
     void checkValidId(Item &);
-    float * findOutput(const QString & id, int channel);
+    float * findOutput(const QByteArray & id, int channel);
     long countBufferBytes();
     void duDumpInfo(FILE *f);
 
@@ -325,6 +320,12 @@ DSPNetwork::instance().send(control);
     // bool        m_continue;
     long        m_frames;
     int         m_doneCount;
+
+    struct
+    {
+      Radiant::TimeStamp baseTime;
+      int framesProcessed;
+    } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
 

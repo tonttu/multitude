@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of VideoDisplay.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "VideoDisplay.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -26,8 +21,6 @@
 #include <QStringList>
 
 namespace VideoDisplay {
-
-  using namespace Radiant;
 
   SubTitles::SubTitles()
     : m_current(0),
@@ -79,7 +72,7 @@ namespace VideoDisplay {
 
       in.getline(buf, maxn);
 
-      if(strlen(buf) != 0 && buf[0] > 23)
+      if(buf[0] > 23)
         return true;
     }
 
@@ -101,7 +94,7 @@ namespace VideoDisplay {
     // Radiant::trace("Got time: %d %d %d %d", h, m, s, ms);
 
     time = Radiant::TimeStamp::createDHMS(0, h, m, s) + 
-      Radiant::TimeStamp::createSecondsD(ms * 0.001);
+      Radiant::TimeStamp::createSeconds(ms * 0.001);
 
     return h >= 0;
   }
@@ -119,7 +112,6 @@ namespace VideoDisplay {
 
     char buf[LEN];
 
-    m_texts.clear();
     m_index = 0;
     m_current = 0;
 
@@ -194,7 +186,7 @@ namespace VideoDisplay {
     }
 
     if(!m_texts.empty())
-      info("Loaded subtitles with %d items", (int) m_texts.size());
+      Radiant::info("Loaded subtitles with %d items", (int) m_texts.size());
 
     return m_texts.size() != 0 && errors < 10;
   }

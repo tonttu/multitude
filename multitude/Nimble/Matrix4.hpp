@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -21,13 +16,15 @@
 #include "Matrix3.hpp"
 #include "Vector4.hpp"
 
-template <class T>
-inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Matrix4T<T> &);
-
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T> &, const Nimble::Vector4T<T> &);
-
 namespace Nimble {
+
+  /// Compute the product of two matrices
+  template <class T>
+  inline Matrix4T<T> operator*(const Matrix4T<T> &, const Matrix4T<T> &);
+
+  /// Compute the product of the given matrix and vector
+  template <class T>
+  inline Vector4T<T> operator*(const Matrix4T<T> &, const Vector4T<T> &);
 
   /// 4x4 transformation matrix
   /** This class is a row-major 4x4 matrix. The matrix functions
@@ -36,9 +33,12 @@ namespace Nimble {
   class Matrix4T
   {
   public:
+    /// Data-type of the matrix
+    typedef T type;
+
     /// Constructs a matrix and fills it from memory
-    template <class S>
-    Matrix4T(const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
+    template <class K>
+    Matrix4T(const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
     /// Constructs a matrix without initializing it
     Matrix4T() {}
     /// Constructs a matrix and fills it with given values
@@ -65,11 +65,6 @@ namespace Nimble {
     /// Sets the ith column vector
     void               setColumn(int i, const Vector4T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = v[3]; }
 
-    //void               setColumn3(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; m[3][i] = 1.0; }
-    //void               setColumn3b(int i, const Vector3T<T> &v) { m[0][i] = v[0]; m[1][i] = v[1]; m[2][i] = v[2]; }
-    //void               addToColumn(int i, const Vector4T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; m[3][i] += v[3]; }
-    //void               addToColumn(int i, const Vector3T<T> &v) { m[0][i] += v[0]; m[1][i] += v[1]; m[2][i] += v[2]; }
-
     /// Sets the diagonal to given vector
     void               setDiagonal(const Vector4T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] += v[3]; }
     /// void               setDiagonal(const Vector3T<T> &v) { m[0][0] = v[0]; m[1][1] = v[1]; m[2][2] = v[2]; m[3][3] = (T) 1.0; }
@@ -85,7 +80,7 @@ namespace Nimble {
     /// Replaces the upper-left 3x3 matrix
     inline void               setRotation(const Nimble::Matrix3T<T>& that);
     /// Returns the upper-left 3x3 matrix
-    inline Matrix3T<T>        getRotation() const;
+    inline Matrix3T<T>        rotation() const;
     /// Sets the translation part of a 4x4 transformation matrix
     void                      setTranslation(const Vector3T<T> & v)
     {
@@ -95,13 +90,15 @@ namespace Nimble {
     }
 
     /// Returns the translation part of a 4x4 matrix
-    Vector3T<T>               getTranslation() const
+    Vector3T<T>               translation() const
     {
       return Nimble::Vector3T<T>(m[0][3], m[1][3], m[2][3]);
     }
 
     /// Transposes the matrix
     inline Matrix4T<T>&       transpose();
+    /// Make a transpose of a matrix to a given matrix
+    inline void transpose(Matrix4T<T>& ret) const;
     /// Returns a transposed matrix
     inline Matrix4T<T> transposed() const { Matrix4T<T> m(*this); m.transpose(); return m; }
     /// Fills the matrix with zeroes
@@ -143,40 +140,55 @@ namespace Nimble {
     /// Returns a pointer to the first element
     const T * data() const { return m[0].data(); }
 
-		/// Returns an orthonormalized version of this matrix.
-		/// @todo could improve numerical stability easily etc.
-		/// @return Normalized matrix
-		Matrix4T<T> orthoNormalize() const
-		{
-			Matrix4T<T> tmp(transposed());
-			Matrix4T<T> res(tmp);
-			for (int i=0; i < 4; ++i) {
-				Vector4T<T> & v = res.row(i);
-				for (int j=0; j < i; ++j) {
-					v -= projection(res.row(j), tmp.row(i));
-				}
-			}
+    /// Gets the given matrix element
+    T                  get(int r, int c) const{ return m[r][c]; }
 
-			for (int i=0; i < 4; ++i)
-				res.row(i).normalize();
 
-			return res.transposed();
-		}
+    /// Get the 3x3 upper-left matrix
+    inline Matrix3T<T> upperLeft() const {
+      return Matrix3T<T>(get(0, 0), get(0, 1), get(0, 2),
+                         get(1, 0), get(1, 1), get(1, 2),
+                         get(2, 0), get(2, 1), get(2, 2));
+    }
+
+    /// Get the 2x2 upper-left matrix
+    inline Matrix2T<T> upperLeft2() const {
+      return Matrix2T<T>(get(0, 0), get(0, 1),
+                         get(1, 0), get(1, 1));
+    }
+
+        /// Returns an orthonormalized version of this matrix.
+        /// @todo could improve numerical stability easily etc.
+        /// @return Normalized matrix
+        Matrix4T<T> orthoNormalize() const
+        {
+            Matrix4T<T> tmp(transposed());
+            Matrix4T<T> res(tmp);
+            for (int i=0; i < 4; ++i) {
+                Vector4T<T> & v = res.row(i);
+                for (int j=0; j < i; ++j) {
+                    v -= projection(res.row(j), tmp.row(i));
+                }
+            }
+
+            for (int i=0; i < 4; ++i)
+                res.row(i).normalize();
+
+            return res.transposed();
+        }
 
     /// Fills the matrix by copying values from memory
-    template <class S>
-    void copy (const S * x) { const S * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
+    template <class K>
+    void copy (const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = (T) *x++; }
     /// Fills the matrix by copying transposed values from memory
-    template <class S>
-    void copyTranspose (const S * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
+    template <class K>
+    void copyTranspose (const K * x) { for(int i = 0; i < 4; i++) for(int j = 0; j < 4; j++) m[j][i] = (T) x[i*4+j]; }
 
     /// Apply the matrix on a 4D vector.
     /// @param v homogenous 3D vector
     /// @return projected 3D vector
     inline Vector3T<T> project(const Vector4T<T> & v) const
     {
-      /// This is needed because there is an another operator* in Nimble-namespace in Vector3.hpp
-      using ::operator*;
       Nimble::Vector4T<T> p = *this * v;
       return Nimble::Vector3T<T>(p.x / p.w, p.y / p.w, p.z / p.w);
     }
@@ -189,6 +201,17 @@ namespace Nimble {
       return project(Vector4T<T>(v.x, v.y, v.z, T(1.0)));
     }
 
+    /// Apply the matrix on a 2D vector which is interpreted as [x y 0 1]
+    /// @param v 2D vector
+    /// @return transformed 2D vector
+    inline Vector2T<T> project(const Vector2T<T> & v) const
+    {
+      T x = get(0,0)*v.x + get(0,1)*v.y + get(0,3);
+      T y = get(1,0)*v.x + get(1,1)*v.y + get(1,3);
+      T z = get(3,0)*v.x + get(3,1)*v.y + get(3,3);
+      return Nimble::Vector2T<T>(x/z, y/z);
+    }
+
     /// Creates a new WPCV-matrix (window-projection-camera-view -matrix)
     /// Camera is positioned so that 0,0,0 is mapped to 0,0,0 and
     /// w,h,0 is mapped to w,h,0. The projection matrix doesn't have the third
@@ -198,36 +221,31 @@ namespace Nimble {
     /// @param height Height of the viewport
     /// @param fovy Field of view in y-direction in radians
     /// @return New projection matrix
-    static Matrix4T<T> simpleProjection(T width, T height, T fovy = Math::PI*0.5)
+    static Matrix4T<T> simpleProjection(T width, T height, T fovy = Nimble::Math::PI*0.5)
     {
-      using ::operator*;
-
       // Camera distance to the center widget center point (assuming it's resting).
-      T dist = height * T(.5) / Nimble::Math::Tan(fovy * T(.5));
+      T dist = height * T(.5) / std::tan(fovy * T(.5));
       T aspect = width/height;
 
       // we won't be needing depth, so the third column is just zero unlike normally
-      T f = T(1.0) / Nimble::Math::Tan(fovy*T(.5));
+      T f = T(1.0) / std::tan(fovy*T(.5));
       Nimble::Matrix4T<T> projection(f/aspect, 0, 0, 0,
                                      0, f, 0, 0,
                                      0, 0, 0, 0,
                                      0, 0, -1, 0);
 
-      // could just change the projection plane in projection matrix,
-      // but maybe this is a bit more clear
-      Matrix4T<T> camera = makeTranslation(Vector3f(0, 0, -dist));
+      Matrix4T<T> camera = makeTranslation(Vector3T<T>(0, 0, -dist));
 
       Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
                          0, height * 0.5, 0, 0.0+height*0.5,
                          0, 0, 1, 0,
                          0, 0, 0, 1);
 
-      Matrix4T<T> view = makeTranslation(Vector3f(-width*.5f, -height*.5f, 0));
+      Matrix4T<T> view = makeTranslation(Vector3T<T>(-width*.5, -height*.5, 0));
 
       return window * projection * camera * view;
     }
 
-    /// @todo duplicates (makeTranslation vs. translate3D)
     /// Create a rotation matrix
     /// @param radians angle in radians
     /// @param axis axis to rotate around
@@ -241,21 +259,18 @@ namespace Nimble {
       return mm;
     }
 
+    static Matrix4T<T> makeTranslation(const Vector2T<T> & v)
+    {
+      return Matrix4T(1, 0, 0, v[0],
+                      0, 1, 0, v[1],
+                      0, 0, 1, 0,
+                      0, 0, 0, 1);
+    }
+
     /// Create a translation matrix
     /// @param v Translation vector
     /// @return New translation matrix
     static Matrix4T<T> makeTranslation(const Vector3T<T> & v)
-    {
-      Nimble::Matrix4T<T> mm;
-      mm.identity();
-
-      mm.setTranslation(v);
-      return mm;
-    }
-    /// Create a translation matrix
-    /// @param v Translation vector
-    /// @return New translation matrix
-    static Matrix4T<T> translate3D(const Vector3T<T> & v)
     {
       return Matrix4T(1, 0, 0, v[0],
                       0, 1, 0, v[1],
@@ -263,10 +278,23 @@ namespace Nimble {
                       0, 0, 0, 1);
     }
 
+    /// Create a translation matrix
+    /// @param x Tranlation along X-axis
+    /// @param y Tranlation along Y-axis
+    /// @param z Tranlation along Z-axis
+    /// @return New translation matrix
+    static Matrix4T<T> makeTranslation(T x, T y, T z)
+    {
+      return Matrix4T(1, 0, 0, x,
+                      0, 1, 0, y,
+                      0, 0, 1, z,
+                      0, 0, 0, 1);
+    }
+
     /// Create a non-uniform scaling matrix
     /// @param v XYZ scaling factors
     /// @return new Scaling matrix
-    static Matrix4T<T> scale3D(const Vector3T<T> & v)
+    static Matrix4T<T> makeScale(const Vector3T<T> & v)
     {
       return Matrix4T(v[0], 0, 0, 0,
                       0, v[1], 0, 0,
@@ -277,8 +305,8 @@ namespace Nimble {
     /// Create a uniform scaling matrix
     /// @param s Scaling factor
     /// @return new Scaling matrix
-    inline static Matrix4T<T> scaleUniform3D(const T & s)
-    { return scale3D(Vector3T<T>(s, s, s)); }
+    inline static Matrix4T<T> makeUniformScale(const T & s)
+    { return makeScale(Vector3T<T>(s, s, s)); }
 
     /// Creates a perspective projection matrix
     /// @param fovY field of view in degress in the Y direction
@@ -312,39 +340,63 @@ namespace Nimble {
     /// @param right Right clip plane location
     /// @param bottom Bottom clip plane location
     /// @param top Top clip plane location
-    /// @param near Near clip plane location
-    /// @param far Far clip plane location
+    /// @param nearPlane Near clip plane location
+    /// @param farPlane Far clip plane location
     /// @return New projection matrix
-    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T near, T far)
+    static Matrix4T<T> orthogonalProjection(T left, T right, T bottom, T top, T nearPlane, T farPlane)
     {
       Nimble::Matrix4T<T> result;
       result.clear();
       result[0][0] = T(2)/(right-left);
       result[1][1] = T(2)/(top-bottom);
-      result[2][2] = -T(2)/(far-near);
+      result[2][2] = -T(2)/(farPlane-nearPlane);
       result[3][3] = T(1);
       result[0][3] = -(right+left)/(right-left);
       result[1][3] = -(top+bottom)/(top-bottom);
-      result[2][3] = -(far+near)/(far-near);
+      result[2][3] = -(farPlane+nearPlane)/(farPlane-nearPlane);
       return result;
     }
 
+    /// Creates an orthogonal projection matrix in 3D This function works in a
+    /// way similar to glOrtho
+    /// (http://lmb.informatik.uni-freiburg.de/people/reisert/opengl/doc/glOrtho.html).
+    /// @param left left clipping plane
+    /// @param right right clipping plane
+    /// @param bottom bottom clipping plane
+    /// @param top top clipping plane
+    /// @param nearPlane near clipping plane
+    /// @param farPlane far clipping plane
+    /// @return orthogonal projection matrix
+    static Matrix4T<T> ortho3D(T left, T right, T bottom, T top, T nearPlane, T farPlane);
+
     /** Identity matrix. */
-    NIMBLE_API static const Matrix4T<T> IDENTITY;
+    static const Matrix4T<T> IDENTITY;
+
+    /// Returns a 3d transformation matrix that does scale, rotate & translation (in this order)
+    /// @param angle rotation angle (counter-clockwise)
+    /// @param axis rotation axis (normalized)
+    /// @param scale 3D scale
+    /// @param translation 3D translation
+    /// @return New transformation matrix
+    inline static Matrix4T<T> transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> &scale, const Vector3T<T> & translation);
 
   private:
-    inline static void swap(T &a, T& b);
-
     Vector4T<T> m[4];
   };
 
-  /// Swaps two matrices
-  template <class T>
-  inline void Matrix4T<T>::swap(T &a, T& b)
+  template<typename T> const Matrix4T<T> Matrix4T<T>::IDENTITY(
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1);
+
+  template <typename T>
+  Matrix4T<T> Matrix4T<T>::transformation(T angle, const Vector3T<T> & axis, const Vector3T<T> & scale, const Vector3T<T> & translation)
   {
-    T t = a;
-    a = b;
-    b = t;
+    return
+      Matrix4T<T>::makeTranslation(translation) *
+      Matrix4T<T>::makeRotation(angle, axis) *
+      Matrix4T<T>::makeScale(scale);
   }
 
   template <class T>
@@ -356,7 +408,7 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Matrix3T<T> Matrix4T<T>::getRotation() const
+  inline Matrix3T<T> Matrix4T<T>::rotation() const
   {
     Matrix3T<T> res;
     for(int i = 0; i < 3; i++)
@@ -366,15 +418,24 @@ namespace Nimble {
   }
 
   template <class T>
-  inline Matrix4T<T>& Matrix4T<T>::transpose()
+  inline void Matrix4T<T>::transpose(Matrix4T<T>& ret) const
   {
-    swap(m[0][1],m[1][0]);
-    swap(m[0][2],m[2][0]);
-    swap(m[0][3],m[3][0]);
-    swap(m[1][2],m[2][1]);
-    swap(m[1][3],m[3][1]);
-    swap(m[2][3],m[3][2]);
-    return *this;
+    ret[0][0] = m[0][0]; ret[0][1] = m[1][0]; ret[0][2] = m[2][0]; ret[0][3] = m[3][0];
+    ret[1][0] = m[0][1]; ret[1][1] = m[1][1]; ret[1][2] = m[2][1]; ret[1][3] = m[3][1];
+    ret[2][0] = m[0][2]; ret[2][1] = m[1][2]; ret[2][2] = m[2][2]; ret[2][3] = m[3][2];
+    ret[3][0] = m[0][3]; ret[3][1] = m[1][3]; ret[3][2] = m[2][3]; ret[3][3] = m[3][3];
+  }
+
+  template <class T>
+  inline Matrix4T<T> & Matrix4T<T>::transpose()
+  {
+    std::swap(m[0][1],m[1][0]);
+    std::swap(m[0][2],m[2][0]);
+    std::swap(m[0][3],m[3][0]);
+    std::swap(m[1][2],m[2][1]);
+    std::swap(m[1][3],m[3][1]);
+    std::swap(m[2][3],m[3][2]);
+    return * this;
   }
 
   template <class T>
@@ -416,7 +477,7 @@ namespace Nimble {
     T fB5 = my[10]*my[15] - my[11]*my[14];
 
     T fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
-    if ( Math::Abs(fDet) <= 1.0e-10 ) {
+    if ( std::abs(fDet) <= std::numeric_limits<T>::epsilon()) {
       if(ok) *ok = false;
       Matrix4T<T> tmp;
       tmp.identity();
@@ -457,10 +518,10 @@ namespace Nimble {
     for(int i = 0; i < columns(); i++)
       {
     const Vector4T<T> t = column(i);
-    m[0][i] = ::dot(that[0],t);
-    m[1][i] = ::dot(that[1],t);
-    m[2][i] = ::dot(that[2],t);
-    m[3][i] = ::dot(that[3],t);
+    m[0][i] = dot(that[0],t);
+    m[1][i] = dot(that[1],t);
+    m[2][i] = dot(that[2],t);
+    m[3][i] = dot(that[3],t);
       }
     return *this;
   }
@@ -472,77 +533,87 @@ namespace Nimble {
   /// 4x4 matrix of doubles
   typedef Matrix4T<double> Matrix4d;
 
-}
+  template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
+    (T left, T right, T bottom, T top, T zNear, T zFar)
+  {
+    Matrix4T m1 = makeScale(Nimble::Vector3T<T>(1.0 / (right - left),
+      1.0 / (top - bottom),
+      1.0 / (zFar - zNear)));
+    Matrix4T m2 = makeTranslation(Nimble::Vector3T<T>(-left, -bottom, -zNear));
 
-template <class T>
-inline bool Nimble::Matrix4T<T>::operator==(const Nimble::Matrix4T<T>& that) const
-{
-  return m[0] == that.m[0] && m[1] == that.m[1] && m[2] == that.m[2] && m[3] == that.m[3];
-}
+    Matrix4T m3 = makeScale(Nimble::Vector3T<T>(2, 2, 2));
+    Matrix4T m4 = makeTranslation(Nimble::Vector3T<T>(-1, -1, -1));
 
-template <class T>
-inline bool Nimble::Matrix4T<T>::operator!=(const Nimble::Matrix4T<T>& that) const
-{
-  return !(*this == that);
-}
-
-template <class T>
-inline Nimble::Matrix4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Matrix4T<T>& m2)
-{
-  Nimble::Matrix4T<T> res;
-  for(int j = 0; j < 4; j++) {
-    Nimble::Vector4T<T> t = m2.column(j);
-    for(int i = 0; i < 4; i++)
-      res[i][j] = dot(m1.row(i),t);
+    return mul(mul(m4, m3), mul(m1, m2));
   }
-  return res;
-}
 
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector4T<T>& m2)
-{
-  Nimble::Vector4T<T> res;
-  for(int i = 0; i < 4; i++)
-    res[i] = dot(m1.row(i),m2);
-  return res;
-}
+  template <class T>
+  inline bool Matrix4T<T>::operator==(const Matrix4T<T> & that) const
+  {
+    return m[0] == that.m[0] && m[1] == that.m[1] && m[2] == that.m[2] && m[3] == that.m[3];
+  }
+
+  template <class T>
+  inline bool Matrix4T<T>::operator!=(const Matrix4T<T> & that) const
+  {
+    return !(*this == that);
+  }
+
+  template <class T>
+  inline Matrix4T<T> operator*(const Matrix4T<T> & m1, const Matrix4T<T> & m2)
+  {
+    Matrix4T<T> res;
+    for(int j = 0; j < 4; j++) {
+      Vector4T<T> t = m2.column(j);
+      for(int i = 0; i < 4; i++)
+        res[i][j] = dot(m1.row(i),t);
+    }
+    return res;
+  }
+
+  /// Multiply two matrices
+  /// @param m1 first matrix
+  /// @param m2 second matrix
+  /// @return product of the two matrices
+  template <class T>
+  inline Matrix4T<T> mul(const Matrix4T<T> & m1, const Matrix4T<T> & m2)
+  {
+    return m1 * m2;
+  }
+
+  template <class T>
+  inline Vector4T<T> operator*(const Matrix4T<T> & m1, const Vector4T<T> & m2)
+  {
+    Vector4T<T> res;
+    for(int i = 0; i < 4; i++)
+      res[i] = dot(m1.row(i),m2);
+    return res;
+  }
+
+  /// Output the given matrix to a stream
+  /// @param os stream to output to
+  /// @param m matrix to output
+  /// @return reference to the stream
+  template <class T>
+  inline std::ostream& operator<<(std::ostream& os, const Matrix4T<T>& m)
+  {
+    os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3];
+    return os;
+  }
+
+  /// Read a matrix from a stream
+  /// @param is stream to read from
+  /// @param m matrix to read to
+  /// @return reference to the input stream
+  template <class T>
+  inline std::istream& operator>>(std::istream& is, Matrix4T<T> & m)
+  {
+    is >> m[0] >> m[1] >> m[2] >> m[3];
+    return is;
+  }
+} // namespace Nimble
 
 
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Matrix4T<T>& m1,const Nimble::Vector3T<T>& m2)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot4(m1.row(i),m2);
-  return res;
-}
-
-/// @todo Vector4 * Matrix4 is not defined. This implicitly transposes the vector. This should not 
-/// operator should not be defined. Also check other Matrix classes.
-template <class T>
-inline Nimble::Vector4T<T> operator*(const Nimble::Vector4T<T>& m2, const Nimble::Matrix4T<T>& m1)
-{
-  Nimble::Vector4T<T> res;
-  for(int i = 0; i < 4; i++)
-    res[i] = dot(m1.column(i),m2);
-  return res;
-}
-
-template <class T>
-inline Nimble::Vector3T<T> operator*(const Nimble::Vector3T<T>& m2, const Nimble::Matrix4T<T>& m1)
-{
-  Nimble::Vector3T<T> res;
-  for(int i = 0; i < 3; i++)
-    res[i] = dot4(m1.column(i),m2);
-  return res;
-}
-
-template <class T>
-inline std::ostream& operator<<(std::ostream& os, const Nimble::Matrix4T<T>& m)
-{
-  os << m[0] << std::endl << m[1] << std::endl << m[2] << std::endl << m[3] << std::endl;
-  return os;
-}
 
 #endif
 

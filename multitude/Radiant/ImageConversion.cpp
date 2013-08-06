@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -30,7 +25,6 @@ namespace Radiant {
   {
     bool ok = true;
 
-    // trace("ImageConversion::convert");
 
     assert(source != 0 && target != 0);
 
@@ -123,21 +117,7 @@ namespace Radiant {
 
   inline void YUV2RGB(int y, int u, int v, int & r, int & g, int & b)
   {
-    /* u -= 128;
-       v -= 128; */
-
-    /* y -= 16;
-       float yf = 1.164f * y;
-
-       b = clamp((int) (yf + 2.018f * u), 0, 255);
-       g = clamp((int) (yf - 0.813f * v - 0.391f * u), 0, 255);
-       r = clamp((int) (yf + 1.596f * v), 0, 255); */
-
-
     // www.answers.com/topic/yuv-rgb-conversion-formulas
-
-    // u /=2 ;
-    // v /=2 ;
 
     r = clamp(y + ((1167 * v) >> 10), 0, 255);
     g = clamp(y - ((595 * v + 404 * u) >> 10), 0, 255);
@@ -146,69 +126,12 @@ namespace Radiant {
 
   // color conversion functions from Bart Nabbe.
   // corrected by Damien: bad coeficients in YUV2RGB
-  /** These macros were copied from the Coriander. */
-
-  /*
-    #define YUV2RGB(y, u, v, r, g, b)\
-    r = y + ((v*1436) >> 10);\
-    g = y - ((u*352 + v*731) >> 10);\
-    b = y + ((u*1814) >> 10);\
-    r = r < 0 ? 0 : r;\
-    g = g < 0 ? 0 : g;\
-    b = b < 0 ? 0 : b;\
-    r = r > 255 ? 255 : r;\
-    g = g > 255 ? 255 : g;\
-    b = b > 255 ? 255 : b
-  */
-  /*#define RGB2YUV(r, g, b, y, u, v)		\
-    y = (306*r + 601*g + 117*b)  >> 10;\
-    u = ((-172*r - 340*g + 512*b) >> 10)  + 128;\
-    v = ((512*r - 429*g - 83*b) >> 10) + 128;\
-    y = y < 0 ? 0 : y;\
-    u = u < 0 ? 0 : u;\
-    v = v < 0 ? 0 : v;\
-    y = y > 255 ? 255 : y;\
-    u = u > 255 ? 255 : u;\
-    v = v > 255 ? 255 : v
-  */
 
   /* This function contains code copied from the Coriander. */
   void ImageConversion::YUV411ToRGB
       (const VideoImage *, VideoImage *)
   {
     Radiant::trace(FATAL, "ImageConversion::YUV411ToRGB");
-    /*  long numpixels = (long) width * (long) height;
-
-    long i = numpixels + ( numpixels >> 1 ) -1;
-    long j = numpixels * 3 - 1;
-    int y0, y1, y2, y3, u, v, r, g, b;
-
-    while (i > 0)
-    {
-    y3 = (unsigned char) src[i--];
-    y2 = (unsigned char) src[i--];
-    v  = (unsigned char) src[i--] - 128;
-    y1 = (unsigned char) src[i--];
-    y0 = (unsigned char) src[i--];
-    u  = (unsigned char) src[i--] - 128;
-
-    YUV2RGB (y3, u, v, r, g, b);
-    dest[j--] = b;
-    dest[j--] = g;
-    dest[j--] = r;
-    YUV2RGB (y2, u, v, r, g, b);
-    dest[j--] = b;
-    dest[j--] = g;
-    dest[j--] = r;
-    YUV2RGB (y1, u, v, r, g, b);
-    dest[j--] = b;
-    dest[j--] = g;
-    dest[j--] = r;
-    YUV2RGB (y0, u, v, r, g, b);
-    dest[j--] = b;
-    dest[j--] = g;
-    dest[j--] = r;
-    }*/
   }
 
   void ImageConversion::YUV411PToRGB
@@ -352,8 +275,6 @@ namespace Radiant {
 
   }
 
-  /**  */
-
   void ImageConversion::YUV411ToGrayscale
       (const VideoImage *source, VideoImage *target)
   {
@@ -478,7 +399,6 @@ namespace Radiant {
         dest2[3] = 0xFF;
         dest2 += 4;
 
-        //printf("yuv = %d %d %d -> rgb = %d %d %d XXXXXX ", y, u, v, r, g, b);
       }
     }
   }
@@ -552,7 +472,6 @@ namespace Radiant {
         dest2[2] = b;
         dest2 += 3;
 
-        //printf("yuv = %d %d %d -> rgb = %d %d %d XXXXXX ", y, u, v, r, g, b);
       }
     }
   }
@@ -609,7 +528,6 @@ namespace Radiant {
         dest[3] = 0xFF;
         dest += 4;
 
-        //printf("yuv = %d %d %d -> rgb = %d %d %d XXXXXX ", y, u, v, r, g, b);
       }
     }
   }
@@ -667,33 +585,7 @@ namespace Radiant {
   void ImageConversion::YUV420ToRGBA
       (const VideoImage *, VideoImage * )
   {
-    /*
-    bool implemented = false;
-
-    assert(implemented);
-
-      long lw = source->m_planes[0].m_linesize;
-      long w = source->m_width;
-      long h = source->m_height;
-
-      target->m_width  = w;
-      target->m_height = h;
-      target->m_format = IMAGE_GRAYSCALE;
-      target->m_planes[0].m_linesize = w;
-
-      const uchar * src = source->m_planes[0].m_data;
-      uchar * dest = target->m_planes[0].m_data;
-
-      for(long l = 0; l < h; l++) {
-
-      const uchar * src = & src[l * lw];
-      const char * sentinel = src + w;
-
-      while(src < sentinel) {
-
-      }
-
-      }*/
+    Radiant::trace(FATAL, "ImageConversion::YUV420ToRGBA");
   }
 
   void ImageConversion::grayscaleToRGB
@@ -773,18 +665,10 @@ namespace Radiant {
       const uchar * src2 = src1 + lw;
 
       for(long x = 0; x < w; x++) {
-#if 0
-        uint green = (uint) src1[0] + (uint) src2[1];
-        dest[2] = src2[0];
-        dest[0] = src1[1];
-        dest[1] = green >> 1;
-#else
-
         uint green = (uint) src2[0] + (uint) src1[1];
         dest[2] = src2[1];
         dest[0] = src1[0];
         dest[1] = green >> 1;
-#endif
 
         src1 += 2;
         src2 += 2;

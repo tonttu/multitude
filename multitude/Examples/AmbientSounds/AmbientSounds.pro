@@ -11,4 +11,4 @@ win32 {
 }
 unix: PKGCONFIG += sndfile
 
-HEADERS += ../../../Tests/CameraWidget/VideoAnnotations.hpp
+# HEADERS += ../../../Tests/CameraWidget/VideoAnnotations.hpp

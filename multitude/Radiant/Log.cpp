@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -60,8 +55,7 @@ namespace Radiant {
         Sleep::sleepS(1);
         Guard g( m_mutex);
 
-        for(container::iterator it = m_messages.begin();
-        it != m_messages.end(); it++) {
+        for(container::iterator it = m_messages.begin(); it != m_messages.end(); ++it) {
 
           if(m_file) {
             DateTime dt((*it).m_time);
@@ -71,8 +65,6 @@ namespace Radiant {
                     dt.hour(), dt.minute(), dt.second(), dt.milliSecond());
 
             fprintf((FILE *) m_file, "%s,%s\n", m_buf, (*it).m_str.toUtf8().data());
-
-            // info("LOG: %s", m_buf);
           }
         }
 
@@ -85,7 +77,7 @@ namespace Radiant {
     class Item
     {
     public:
-      Item(const char * str) : m_str(str), m_time(TimeStamp::getTime()) {}
+      Item(const char * str) : m_str(str), m_time(TimeStamp::currentTime()) {}
       QString m_str;
       TimeStamp   m_time;
     };
@@ -99,7 +91,6 @@ namespace Radiant {
     char m_buf[4096];
   };
 
-  // int kjh = 23;
   static LogThread * __logthread = 0;
 
   static void makeThread()
@@ -125,23 +116,12 @@ namespace Radiant {
   {
     makeThread();
 
-    DateTime dt(TimeStamp::getTime());
+    DateTime dt(TimeStamp::currentTime());
     char buf[128], buf2[128];
     dt.print(buf2);
     sprintf(buf, "%s-%s-log.txt", prefix, buf2);
     return setLogFile(buf);
   }
-
-  /*
-  void Log::log(const char * str)
-  {
-    assert(str != 0);
-
-    makeThread();
-
-    __logthread->add(str);
-  }
-  */
 
   void Log::log(const char * msg, ...)
   {

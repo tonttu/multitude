@@ -1,17 +1,21 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
-#include "SplinesImpl.hpp"
+#include "Splines.hpp"
 
 #include <Nimble/Vector3.hpp>
-
-template Nimble::Vector3 Nimble::evalCatmullRom(float t, const std::vector<Nimble::Vector3> & cp, size_t index);
-
 
 namespace Nimble
 {
 
-  Vector2 Interpolating::get(float t) const
+  Nimble::Vector2f Interpolating::get(float t) const
   {
     if (m_points.empty()) return Vector2(0, 0);
     if (t <= 0) return m_points.front();
@@ -24,13 +28,13 @@ namespace Nimble
   }
 
 
-  Vector2 Interpolating::get(size_t ii, float h1, float h2, float h3, float h4) const
+  Nimble::Vector2f Interpolating::get(size_t ii, float h1, float h2, float h3, float h4) const
   {
     return h1 * m_points[ii]   + h2 * m_points[ii+1]
         + h3 * m_tangents[ii] + h4 * m_tangents[ii+1];
   }
 
-  Vector2 Interpolating::getPoint(size_t ii, float t) const
+  Nimble::Vector2f Interpolating::getPoint(size_t ii, float t) const
   {
     // Hermite curve
     float tt = t*t;
@@ -43,7 +47,7 @@ namespace Nimble
     return get(ii, h1, h2, h3, h4);
   }
 
-  Vector2 Interpolating::getDerivative(size_t ii, float t) const
+  Nimble::Vector2f Interpolating::getDerivative(size_t ii, float t) const
   {
     // derivative of getPoint with respect to t.
     float tt = t*t;
@@ -66,7 +70,6 @@ namespace Nimble
     if (last >= 1) m_tangents[last] = 0.5f * (point - m_points[last-1]);
     m_points.push_back(point);
     m_tangents.push_back(0.1f * (point - m_points[last]));
-    last++;
   }
 
   void Interpolating::remove(size_t ii) {

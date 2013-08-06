@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,11 +13,14 @@
 
 #include "DOMElement.hpp"
 #include "DOMDocument.hpp"
-#include "AttributeObject.hpp"
 #include "XMLArchive.hpp"
 
+#include <Radiant/IntrusivePtr.hpp>
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/Trace.hpp>
+
+#include <QMap>
+#include <QStringList>
 
 #include <typeinfo>
 
@@ -64,19 +62,6 @@ namespace Valuable
 
     /// @endcond
 
-    /// Removes const from type: remove_const<const Foo>::Type == Foo
-    /// Works also with non-const types, remove_const<Foo>::Type == Foo
-    template <typename T> struct remove_const {
-      /// The original type without const
-      typedef T Type;
-    };
-    /// Removes const from type: remove_const<const Foo>::Type == Foo
-    /// Works also with non-const types, remove_const<Foo>::Type == Foo
-    template <typename T> struct remove_const<const T> {
-      /// The original type without const
-      typedef T Type;
-    };
-
     /// Trait class for compile time separation of different kinds of serializable objects
     /** \code
         Trait<int>::type == Type::other
@@ -102,8 +87,11 @@ namespace Valuable
 
     public:
       /// @cond
-      enum { type = sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
-                    ? sizeof(Type::serializable_trait) : sizeof(test<T>(0)._) };
+      enum { type = sizeof(test<T>(t())._) == sizeof(Type::smart_ptr_trait)
+             ? sizeof(Type::smart_ptr_trait)
+             : sizeof(s_test<T>(t())._) == sizeof(Type::serializable_trait)
+             ? sizeof(Type::serializable_trait)
+             : sizeof(test<T>(0)._) };
       /// @endcond
     };
 
@@ -112,11 +100,11 @@ namespace Valuable
     /// FactoryInfo<T>::have_create is true, if there is T* T::create(const ArchiveElement &)
     template <typename T> struct FactoryInfo {
       typedef T * (*Func)(const ArchiveElement &);
-      //typedef Radiant::IntrusivePtr<T> (*Func2)(ArchiveElement &);
+      typedef Radiant::IntrusivePtr<T> (*Func2)(const ArchiveElement &);
       template <Func> struct Test {};
-      //template <Func2> struct Test2 {};
+      template <Func2> struct Test2 {};
       template <class C> static char test(Test<&C::create>*);
-      //template <class C> static char test(Test2<&C::create>*);
+      template <class C> static char test(Test2<&C::create>*);
       template <class C> static long test(...);
       static const bool have_create = sizeof(test<T>(0)) == sizeof(char);
     };
@@ -140,7 +128,7 @@ namespace Valuable
 
     template <typename T> struct Creator<T, true>
     {
-      inline static typename FactoryInfo<T>::Func func() { return &T::create; }
+      inline static auto func() -> decltype(&T::create) { return &T::create; }
     };
 
     /// @endcond
@@ -159,14 +147,14 @@ namespace Valuable
     /// @param element Serialized element that holds the data that should be deserialized.
     /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserialize(const ArchiveElement & element);
+    typename std::remove_cv<T>::type deserialize(const ArchiveElement & element);
 
     /// Compatibility function that deserializes DOMElement.
     /// Use deserialize(const ArchiveElement&) instead.
     /// @param element XML element that is deserialized
     /// @return Deserialized type
     template <typename T>
-    typename remove_const<T>::Type deserializeXML(const DOMElement & element);
+    typename std::remove_cv<T>::type deserializeXML(const DOMElement & element);
 
     /// @cond
 
@@ -178,17 +166,13 @@ namespace Valuable
       inline static ArchiveElement serialize(Archive &archive, const T & t)
       {
         ArchiveElement elem = archive.createElement(tagName<T>());
-        elem.set(Radiant::StringUtils::stringify(t));
+        elem.set(Radiant::StringUtils::toString(t));
         return elem;
       }
 
-      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
       {
-        /// @todo should use something else than stringstream
-        std::istringstream is(element.get().toUtf8().data());
-        typename remove_const<T>::Type t;
-        is >> t;
-        return t;
+        return Radiant::StringUtils::fromString<typename std::remove_cv<T>::type>(element.get().toUtf8());
       }
     };
 
@@ -196,9 +180,9 @@ namespace Valuable
     template < >
     struct Impl<QString>
     {
-      inline static ArchiveElement serialize(Archive &archive, const QString & t)
+      inline static ArchiveElement serialize(Archive & archive, const QString & t)
       {
-        ArchiveElement elem = archive.createElement("QString");
+        ArchiveElement elem = archive.createElement("string");
         elem.set(t);
         return elem;
       }
@@ -209,6 +193,75 @@ namespace Valuable
       }
     };
 
+    /// Template specialization for QStringList.
+    template < >
+    struct Impl<QStringList>
+    {
+      inline static ArchiveElement serialize(Archive & archive, const QStringList & t)
+      {
+        Valuable::ArchiveElement strlist = archive.createElement("string-list");
+        for (const QString & str: t) {
+          Valuable::ArchiveElement e = archive.createElement("string");
+          e.set(str);
+          strlist.add(e);
+        }
+        return strlist;
+      }
+
+      inline static QStringList deserialize(const ArchiveElement & element)
+      {
+        QStringList lst;
+        for (auto it = element.children(); it; ++it) {
+          if ((*it).name() == "string") {
+            lst << (*it).get();
+          } else {
+            Radiant::warning("deserialize # Unknown tag %s", (*it).name().toUtf8().data());
+          }
+        }
+        return lst;
+      }
+    };
+
+    /// Template specialization for QMap<QString, QString>.
+    template < >
+    struct Impl<QMap<QString, QString> >
+    {
+      inline static ArchiveElement serialize(Archive & archive, const QMap<QString, QString> & t)
+      {
+        Valuable::ArchiveElement strmap = archive.createElement("string-map");
+        for (auto it = t.constBegin(); it != t.constEnd(); ++it) {
+          Valuable::ArchiveElement e = archive.createElement("pair");
+
+          Valuable::ArchiveElement k = archive.createElement("string");
+          k.set(it.key());
+          e.add(k);
+
+          Valuable::ArchiveElement v = archive.createElement("string");
+          v.set(it.value());
+          e.add(v);
+
+          strmap.add(e);
+        }
+        return strmap;
+      }
+
+      inline static QMap<QString, QString> deserialize(const ArchiveElement & element)
+      {
+        QMap<QString, QString> map;
+        for (auto it = element.children(); it; ++it) {
+          if ((*it).name() == "pair") {
+            auto cIt = (*it).children();
+            QString key = (*cIt).get();
+            ++cIt;
+            map[key] = (*cIt).get();
+          } else {
+            Radiant::warning("deserialize # Unknown tag %s", (*it).name().toUtf8().data());
+          }
+        }
+        return map;
+      }
+    };
+
     template <typename T>
     struct Impl<T*, Type::other>
     {
@@ -216,13 +269,13 @@ namespace Valuable
       {
         if(!t) return ArchiveElement();
         ArchiveElement elem = archive.createElement(tagName<T>());
-        elem.set(Radiant::StringUtils::stringify(*t));
+        elem.set(Radiant::StringUtils::toString(*t));
         return elem;
       }
 
       inline static T * deserialize(const ArchiveElement & element)
       {
-        typedef typename remove_const<T>::Type T2;
+        typedef typename std::remove_cv<T>::type T2;
         std::istringstream is(element.get().toStdString());
         T2 * t = new T2;
         is >> *t;
@@ -239,9 +292,24 @@ namespace Valuable
         return Serializer::serialize(archive, t.get());
       }
 
-      inline static typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
       {
         return T(Serializer::deserialize<typename T::element_type*>(element));
+      }
+    };
+
+    template <typename T>
+    struct Impl<Radiant::IntrusivePtr<T>, Type::smart_ptr>
+    {
+      inline static ArchiveElement serialize(Archive & archive, const Radiant::IntrusivePtr<T> & t)
+      {
+        if(!t) return ArchiveElement();
+        return t->serialize(archive);
+      }
+
+      inline static auto deserialize (const ArchiveElement & element) -> decltype(T::create(element))
+      {
+        return T::create(element);
       }
     };
 
@@ -315,17 +383,18 @@ namespace Valuable
     template <typename T>
     inline ArchiveElement serialize(Archive & archive, const T * t)
     {
-      return Impl<T*>::serialize(archive, t);
+      if(!t) return ArchiveElement();
+      return Impl<T>::serialize(archive, *t);
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserialize(const ArchiveElement & element)
+    inline typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
     {
-      return Impl<typename remove_const<T>::Type>::deserialize(element);
+      return Impl<typename std::remove_cv<T>::type>::deserialize(element);
     }
 
     template <typename T>
-    inline typename remove_const<T>::Type deserializeXML(const DOMElement & element)
+    inline typename std::remove_cv<T>::type deserializeXML(const DOMElement & element)
     {
       XMLArchiveElement e(element);
       return deserialize<T>(e);
@@ -334,7 +403,7 @@ namespace Valuable
 
     /// Serialize object to a XML file. Example usage:
     /// @code
-    /// Serializer::serializeXML("widget.xml", widget, SerializationOptions::ONLY_CHANGED);
+    /// Serializer::serializeXML("widget.xml", widget);
     /// @endcode
     /// @param filename output xml filename
     /// @param t Object to be serialized
@@ -350,7 +419,7 @@ namespace Valuable
         return false;
       }
       archive.setRoot(e);
-      return archive.writeToFile(filename.toUtf8().data());
+      return archive.writeToFile(filename);
     }
 
     /// Deserialize object from a XML file. Example usage:
@@ -364,7 +433,7 @@ namespace Valuable
     {
       XMLArchive archive;
 
-      if(!archive.readFromFile(filename.toUtf8().data()))
+      if(!archive.readFromFile(filename))
         return T();
 
       ArchiveElement e = archive.root();

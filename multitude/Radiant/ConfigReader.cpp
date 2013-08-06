@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -152,9 +147,6 @@ namespace Radiant {
     return m_var;
   }
 
-  /** Reads a number of floats from the string. Returns the number of
-      floats successfully read. */
-
   int Variant::getInts(int *p, int n)
   {
     QByteArray ba = m_var.toUtf8();
@@ -167,12 +159,10 @@ namespace Radiant {
       long tmp = strtol(str, &endStr, 10);
       
       if(endStr <= str)
-	return i;
+        return i;
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = int(tmp);
       i++;
     }
@@ -180,8 +170,6 @@ namespace Radiant {
     return i;
   }
 
-  /** Reads a number of floats from the string. Returns the number of
-      floats successfully read. */
 
   int Variant::getFloats(float *p, int n)
   {
@@ -196,21 +184,16 @@ namespace Radiant {
       double tmp = strtod(str, &endStr);
       
       if(endStr <= str)
-	return i;
+        return i;
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = float(tmp);
       i++;
     }
     
     return i;
   }
-
-  /** Reads a number of doubles from the string. Returns the number of
-      doubles successfully read. */
 
   int Variant::getDoubles(double *p, int n)
   {
@@ -231,8 +214,6 @@ namespace Radiant {
       
       str = endStr;
 
-      // printf("Val %d = %lf ", i, tmp);
-      
       *p++ = tmp;
       i++;
     }
@@ -316,15 +297,15 @@ namespace Radiant {
   template <>
   void ChunkT<Variant>::dump(std::ostream& os, int indent) const
   {
-    QString ws(indent, ' ');
+    std::string ws(indent, ' ');
 
-    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(auto it = m_chunks->begin(); it != m_chunks->end(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
     }
 
-    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); ++it) {
       if((*it).second.hasDocumentation() && writedocs((*it).second))
         os << ws << "/* " << (*it).second.documentation() << " */\n";
       os << ws << (*it).first << " = \"" << (*it).second << "\"\n";
@@ -339,16 +320,16 @@ namespace Radiant {
 
 #if 0
   // Debugging function
-  static void DEBUG_PRINT(const std::vector<char> & buf, 
-		       int index, const char * state)
+  static void DEBUG_PRINT(const char * buf,
+                          int index, const char * state)
   {
     int line = 1;
     int ind = 0;
 
     for(int i=0; i < index; i++) {
       if(buf[i] == '\n') {
-	line++;
-	ind = 0;
+        line++;
+        ind = 0;
       }
       ind++;
     }
@@ -464,7 +445,7 @@ namespace Radiant {
           chunkName.clear();
 
           state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_CHUNK_NAME");
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
         }
         else {
           variantName.clear();
@@ -474,7 +455,7 @@ namespace Radiant {
         }
       }
       else if(state == READ_VARIANT_NAME) {
-        if(isspace(c1) || (c1 == '=')) {
+        if(isspace(c1) || (c1 == '=') || (c1 == '{')) {
           state = SCAN_VARIANT_BEGIN;
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_BEGIN");
         }
@@ -482,7 +463,15 @@ namespace Radiant {
           variantName += c1;
       }
       else if(state == SCAN_VARIANT_BEGIN) {
-        if(isspace(c1) || (c1 == '='))
+        if(c1 == '\n' || c1 == '\r') {
+
+          stack.push(std::make_pair(variantName, chunk));
+          chunk.clear();
+
+          state = SCAN_VARIANT_NAME;
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME (after line)");
+        }
+        else if(isspace(c1) || (c1 == '='))
           ;
         else if(c1 == '{') {
           // expected to get a value for current variant
@@ -491,6 +480,7 @@ namespace Radiant {
           chunk.clear();
 
           state = SCAN_VARIANT_NAME;
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
         }
         else if(c1 == '/' && c2 == '*') {
           state = SCAN_COMMENT;
@@ -509,7 +499,7 @@ namespace Radiant {
           chunkName.clear();
           //state = SCAN_CHUNK_NAME;
           state = SCAN_VARIANT_BEGIN;
-          DEBUG_PRINT(buf, i, "SCAN_CHUNK_NAME");
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_BEGIN");
         }
         else {
           variantVal.clear();
@@ -530,12 +520,12 @@ namespace Radiant {
         if(isspace(c1) && !longVariant) {
           chunk.set(variantName, variantVal);
           state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (short)");
         }
         else if(c1 == '"' && longVariant) {
           chunk.set(variantName, variantVal);
           state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (long)");
         }
         else
           variantVal += c1;
@@ -551,7 +541,7 @@ namespace Radiant {
 
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
-    for (Chunk::const_chunk_iterator it = ch.chunkBegin(); it != ch.chunkEnd(); ++it) {
+    for (auto it = ch.chunks()->begin(); it != ch.chunks()->end(); ++it) {
       c->set(it->first, it->second);
     }
 

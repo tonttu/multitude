@@ -1,134 +1,171 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
-#include <Radiant/ResourceLocator.hpp>
+#include "ResourceLocator.hpp"
+#include "Platform.hpp"
 
-#include <Radiant/Trace.hpp>
-#include <Radiant/FileUtils.hpp>
-#include <Radiant/PlatformUtils.hpp>
-#include <Radiant/StringUtils.hpp>
-#include <Radiant/Trace.hpp>
-
-#include <sstream>
-
+#include <QAbstractFileEngineHandler>
 #include <QStringList>
-#include <QDir>
+#include <QVector>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#if defined(RADIANT_WINDOWS)
+# define stat     _stat
+# define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+# define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
+# define S_IWRITE _S_IWRITE
+#endif
+
+namespace {
+
+  // Helper function that does not use Qt I/O
+  bool rawPathExists(const QString & path)
+  {
+    struct stat buf;
+    memset(&buf, 0, sizeof(struct stat));
+
+    return (stat(path.toUtf8().data(), &buf) == 0);
+  }
+
+  bool rawPathIsWriteable(const QString & path)
+  {
+    struct stat buf;
+    memset(&buf, 0, sizeof(struct stat));
+
+    if(stat(path.toUtf8().data(), &buf) != 0)
+      return false;
+
+    return ((buf.st_mode & S_IWRITE) == S_IWRITE);
+  }
+
+  bool rawPathIsDirectory(const QString & path)
+  {
+    struct stat buf;
+    memset(&buf, 0, sizeof(struct stat));
+
+    if(stat(path.toUtf8().data(), &buf) != 0)
+      return false;
+
+    return S_ISDIR(buf.st_mode);
+  }
+
+  bool rawPathIsFile(const QString & path)
+  {
+    struct stat buf;
+    memset(&buf, 0, sizeof(struct stat));
+
+    if(stat(path.toUtf8().data(), &buf) != 0)
+      return false;
+
+    return S_ISREG(buf.st_mode);
+  }
+
+}
 
 namespace Radiant
 {
 
-  ResourceLocator ResourceLocator::s_instance;
+  class ResourceLocator::D : public QAbstractFileEngineHandler
+  {
+  public:
+    QStringList m_searchPaths;
 
-  QString   ResourceLocator::separator = ";";
+    QAbstractFileEngine * create(const QString &fileName) const
+    {
+      // Do not search ff the filename exists or defines an absolute path Note
+      // that we can not use Qt I/O functions (QFileInfo) here because they
+      // would cause infinite loop by calling this function themselves.
+      if(rawPathExists(fileName))
+        return 0;
+
+      // Search for a match
+      QStringList matches = locate(fileName, ResourceLocator::ALL_ENTRIES);
+
+      // If there was no match, return 0 meaning we can't handle this file;
+      // otherwise return the default handler for the new filename
+      if(matches.isEmpty())
+        return 0;
+      else
+        return QAbstractFileEngine::create(matches.front());
+    }
+
+    QStringList locate(const QString & path, ResourceLocator::Filter filter) const
+    {
+      // Always check if the path exists before searching anything
+      // Can't use Qt I/O here either (QFileInfo)
+      if(rawPathExists(path))
+        return QStringList() << path;
+
+      QStringList result;
+
+      foreach(const QString & searchPath, m_searchPaths) {
+        const QString candidate = searchPath + "/" + path;
+
+        // The file/directory should exist
+        if(!rawPathExists(candidate))
+          continue;
+
+        // Apply filters
+        if(filter & FILES && !rawPathIsFile(candidate))
+          continue;
+
+        if(filter & DIRS && !rawPathIsDirectory(candidate))
+          continue;
+
+        if(filter & WRITEABLE && !rawPathIsWriteable(candidate))
+          continue;
+
+        result.append(candidate);
+      }
+
+      return result;
+    }
+
+
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
 
   ResourceLocator::ResourceLocator()
+    : m_d(new D())
   {}
 
   ResourceLocator::~ResourceLocator()
-  {}
-
-  void ResourceLocator::addPath(const QString & path, bool front)
   {
-    if(path.isEmpty()) {
-		  error("ResourceLocator::addPath # attempt to add an empty path");
-		  return;
-	  }
-
-  if(m_paths.isEmpty())
-      m_paths = path;
-    else {
-      if(front)
-        m_paths = path + separator + m_paths;
-      else
-        m_paths += separator + path;
-    }
+    delete m_d;
   }
 
-  void ResourceLocator::addModuleDataPath(const QString & module,
-					  bool front)
+  void ResourceLocator::addSearchPath(const QString &path, bool inFront)
   {
-    QString p1 = 
-      PlatformUtils::getModuleUserDataPath(module.toUtf8().data(), false);
-    QString p2 =
-      PlatformUtils::getModuleGlobalDataPath(module.toUtf8().data(), false);
-
-    addPath(p1 + separator + p2, front);
+    addSearchPaths(QStringList() << path, inFront);
   }
 
-  QString ResourceLocator::locate(const QString & file) const
+  void ResourceLocator::addSearchPaths(const QStringList &paths, bool inFront)
   {
-    if(file.isEmpty()) return file;
-
-    if(FileUtils::fileReadable(file)) return file;
-
-    QString r = FileUtils::findFile(file, m_paths);
-
-    /*if(r.empty()) {
-      Radiant::trace(WARNING, "ResourceLocator::locate # couldn't locate %s", file.c_str());
-    }
-   */
-    return r;
+    if(inFront)
+      m_d->m_searchPaths = paths + m_d->m_searchPaths;
+    else
+      m_d->m_searchPaths.append(paths);
   }
 
-  QString ResourceLocator::locateDirectory(const QString & dir) const
+  const QStringList & ResourceLocator::searchPaths() const
   {
-    if(dir.isEmpty()) return dir;
-
-    if(QDir(dir).exists()) return dir;
-
-    foreach(QString path, m_paths.split(";", QString::SkipEmptyParts)) {
-      QString fullPath = path + "/" + dir;
-
-      if(QDir(fullPath).exists()) return fullPath;
-    }
-    return "";
+    return m_d->m_searchPaths;
   }
 
-  QStringList ResourceLocator::locateDirectories(const QString & name) const
+  QStringList ResourceLocator::locate(const QString &path, Filter filter) const
   {
-    if(name.isEmpty())
-      return QStringList();
-
-    QStringList dirs;
-    foreach(QString path, m_paths.split(";", QString::SkipEmptyParts)) {
-      QString fullPath = path + "/" + name;
-
-      if(QDir(fullPath).exists())
-        dirs.push_back(fullPath);
-    }
-    return dirs;
+    return m_d->locate(path, filter);
   }
 
-  QString ResourceLocator::locateWriteable(const QString & file) const
-  {
-    foreach(QString str, m_paths.split(";", QString::SkipEmptyParts)) {
-      const QString path = str + "/" + file;
-
-      FILE * file = fopen(path.toUtf8().data(), "w");
-      if(file) {
-        fclose(file);
-        return path;
-      }      
-    }
-
-    return QString();
-  }
-
-  QString ResourceLocator::locateOverWriteable(const QString & file)
-    const
-  {
-    return FileUtils::findOverWritable(file, m_paths);
-  }
-
+  DEFINE_SINGLETON(ResourceLocator);
 }

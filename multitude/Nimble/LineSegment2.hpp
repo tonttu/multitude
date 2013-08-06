@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,6 +13,11 @@
 
 #include "Export.hpp"
 #include "Vector2.hpp"
+#include "Matrix3.hpp"
+
+#include "LineIntersection.hpp"
+
+#include <vector>
 
 namespace Nimble {
 
@@ -27,7 +27,7 @@ namespace Nimble {
 
     /// @todo does not really work for floating point values
 template <typename T>
-  class NIMBLE_API LineSegment2T
+  class LineSegment2T
   {
   public:
     /// Construct line segment object, without initializing its values.
@@ -87,7 +87,7 @@ template <typename T>
     inline bool intersects(const LineSegment2T & that,
                            Vector2T<T> * point = 0) const
     {
-      Vector2f tmp;
+      Nimble::Vector2T<T> tmp;
 
       bool r = linesIntersect(m_points[0], m_points[1],
                               that.m_points[0], that.m_points[1], & tmp);
@@ -105,44 +105,6 @@ template <typename T>
     inline bool intersectsInfinite(const LineSegment2T & that,
                                    Vector2T<T> * point) const
     {
-      /*
-      Vector2T<T> v1 = begin();
-      Vector2T<T> v2 = v1 + directionNormalized();
-
-      Vector2T<T> v3 = that.begin();
-      Vector2T<T> v4 = v3 + that.directionNormalized();
-
-      float x1 = v1.x;
-      float y1 = v1.y;
-      float x2 = v2.x;
-      float y2 = v2.y;
-
-      float x3 = v3.x;
-      float y3 = v3.y;
-      float x4 = v4.x;
-      float y4 = v4.y;
-
-      float bx = x2 - x1;
-      float by = y2 - y1;
-      float dx = x4 - x3;
-      float dy = y4 - y3;
-      float b_dot_d_perp = bx*dy - by*dx;
-
-      if(b_dot_d_perp == 0) {
-
-        if(point)
-          point->clear();
-        return false;
-      }
-      float cx = x3-x1;
-      float cy = y3-y1;
-      float t = (cx*dy - cy*dx) / b_dot_d_perp;
-
-      if(point)
-        point->make(x1+t*bx, y1+t*by);
-      return true;
-      */
-
       float a1 = this->end().y - this->begin().y;
       float b1 = this->begin().x - this->end().x;
       float c1 = this->end().x * this->begin().y - this->begin().x * this->end().y;
@@ -153,7 +115,7 @@ template <typename T>
 
       float denom = a1*b2 - a2*b1;
 
-      if(Math::Abs(denom) > 1.0e-6) {
+      if(std::abs(denom) > 1.0e-6) {
         if(point) {
           point->x = (b1*c2 - b2*c1)/denom;
           point->y = (a2*c1 - a1*c2)/denom;
@@ -175,11 +137,11 @@ template <typename T>
     {
       Nimble::Vector2T<T> perp = directionNormalized().perpendicular();
 
-      return Nimble::Math::Abs(dot(perp, point - m_points[0]));
+      return std::abs(dot(perp, point - m_points[0]));
     }
 
     /// Returns true if the line segment intersects with the given bezier curve
-    bool intersectsBezier(Vector2f cp[4]);
+    bool intersectsBezier(Vector2T<T> cp[4]);
 
     /// Returns the first end point of the line segment
     Vector2T<T> & begin() { return m_points[0]; }
@@ -203,6 +165,70 @@ template <typename T>
   /// Line segment of doubles
   typedef LineSegment2T<double> LineSegment2d;
 
+
+  template <typename T>
+  bool LineSegment2T<T>::intersectsBezier(Vector2T<T> cp[4])
+  {
+    // make sure end.x will be >= 0
+    Vector2T<T> start = m_points[0].x < m_points[1].x ? m_points[0] : m_points[1];
+    Vector2T<T> end = m_points[0].x < m_points[1].x ? m_points[1] : m_points[0];
+    end -= start;
+
+    float angle = std::atan2(end.y, end.x);
+
+    // translate and rotate control points so that we can check intersection against { y = 0 }
+    Matrix3T<T> m = Matrix3T<T>::makeRotation(-angle) * Matrix3T<T>::makeTranslation(-start);
+    Vector2T<T> cps[] = {
+      m.project(cp[0]),
+      m.project(cp[1]),
+      m.project(cp[2]),
+      m.project(cp[3])
+    };
+
+    if ((cps[0].y <= 0 && cps[1].y <= 0 && cps[2].y <= 0 && cps[3].y <= 0) ||
+      (cps[0].y >= 0 && cps[1].y >= 0 && cps[2].y >= 0 && cps[3].y >= 0)) {
+        return false;
+    }
+
+    struct Subdivider {
+      Nimble::LineSegment2T<T> check;
+
+      std::vector< Vector2T<T> > & points;
+      int counts;
+
+      bool subdivide(Vector2T<T> p1, Vector2T<T> p2, Vector2T<T> p3, Vector2T<T> p4, int level=0) {
+        ++counts;
+        Vector2T<T> p12 = 0.5f*(p1+p2);
+        Vector2T<T> p23 = 0.5f*(p2+p3);
+        Vector2T<T> p34 = 0.5f*(p3+p4);
+        Vector2T<T> p123 = 0.5f*(p12+p23);
+        Vector2T<T> p234 = 0.5f*(p23+p34);
+        Vector2T<T> p1234 = 0.5f*(p123 + p234);
+
+        const float y0 = p1.y;
+        const float y1 = p2.y;
+        const float y2 = p3.y;
+        const float y3 = p4.y;
+
+        if((y0 <= 0 && y1 <= 0 && y2 <= 0 && y3 <= 0) ||
+          (y0 >= 0 && y1 >= 0 && y2 >= 0 && y3 >= 0)) {
+            return false;
+        } else if(level > 20 || fabs( (p1234 - 0.5f*(p1+p4)).lengthSqr() ) < 1e-1f) {
+          Vector2T<T> iPoint;
+          if(check.intersects(Nimble::LineSegment2T<T>(p1, p4), &iPoint)) {
+            points.push_back(iPoint);
+            return true;
+          }
+        }
+        return subdivide(p1, p12, p123, p1234, level+1) || subdivide(p1234, p234, p34, p4, level+1);
+      }
+    };
+
+    std::vector< Vector2T<T> > p;
+    Subdivider sub = { Nimble::LineSegment2T<T>(Vector2T<T>(0, 0), Vector2T<T>(end.length(), 0)), p, 0 };
+
+    return sub.subdivide( cps[0], cps[1], cps[2], cps[3] );
+  }
 }
 
 #endif

@@ -1,28 +1,27 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #ifndef VALUABLE_VALUE_VECTOR_HPP
 #define VALUABLE_VALUE_VECTOR_HPP
 
-#include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include "Export.hpp"
+#include "Attribute.hpp"
+#include "StyleValue.hpp"
 
 #include <Nimble/Vector4.hpp>
 
 #include <Radiant/StringUtils.hpp>
 
+#include "DOMElement.hpp"
+
+#include <string.h>
 #include <sstream>
 
 namespace Valuable
@@ -38,7 +37,7 @@ namespace Valuable
   {
     typedef AttributeT<VectorType> Base;
     typedef typename VectorType::type ElementType;
-    enum { N = VectorType::Elements };
+    enum { N = VectorType::ELEMENTS };
 
     public:
       using Base::operator =;
@@ -47,10 +46,10 @@ namespace Valuable
       AttributeVector() : Base(0, "", VectorType::null(), false) {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The value of this object
-      AttributeVector(Node * host, const QString & name, const VectorType & v = VectorType::null(), bool transit = false)
+      AttributeVector(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
         : Base(host, name, v, transit) {}
 
-      VALUABLE_API virtual ~AttributeVector();
+      virtual ~AttributeVector();
 
       /// Assigns by addition
       AttributeVector<VectorType> & operator += (const VectorType & v) { *this = value() + v; return *this; }
@@ -73,23 +72,16 @@ namespace Valuable
       const ElementType * data() const
       { return value().data(); }
 
-      VALUABLE_API virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
-      VALUABLE_API virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
-
-      VALUABLE_API const char * type() const OVERRIDE;
+      virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
       /// Sets the value
-      // In some cases this is a override function, but not always
-      /// @todo This should be fixed properly, but it's not important and just
-      ///       fills the compiler output with the same warning
-      VALUABLE_API virtual bool set(const VectorType & v, Attribute::Layer layer = Attribute::MANUAL,
-                                    QList<Attribute::ValueUnit> units = QList<Attribute::ValueUnit>());
+      virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE;
 
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      VALUABLE_API virtual QString asString(bool * const ok = 0) const OVERRIDE;
+      virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }
@@ -108,19 +100,105 @@ namespace Valuable
       }
   };
 
-  /// An integer vector2 value object
-  typedef AttributeVector<Nimble::Vector2i> AttributeVector2i;
-  /// An integer vector3 value object
-  typedef AttributeVector<Nimble::Vector3i> AttributeVector3i;
-  /// An integer vector4 value object
-  typedef AttributeVector<Nimble::Vector4i> AttributeVector4i;
+  /// This class is a utility class that provides a setter for vector
+  /// attributes
+  template <template <typename Y> class VectorT, typename T>
+  class AttributeVectorT : public AttributeVector<VectorT<T> >
+  {
+    typedef VectorT<T> VectorType;
+    typedef AttributeVector<VectorType> Base;
+    enum { N = VectorType::ELEMENTS };
 
-  /// A float vector2 value object
-  typedef AttributeVector<Nimble::Vector2f> AttributeVector2f;
+  public:
+    using Base::operator =;
+    using Base::value;
+
+    AttributeVectorT() : Base() {}
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param v The value of this object
+    AttributeVectorT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
+      : Base(host, name, v, transit) {}
+
+    virtual bool set(const VectorT<float> & v, Attribute::Layer layer = Attribute::USER,
+                     QList<Attribute::ValueUnit> = QList<Attribute::ValueUnit>()) OVERRIDE
+    {
+      this->setValue(v.template cast<T>(), layer);
+      return true;
+    }
+
+    virtual ~AttributeVectorT() {}
+  };
+
+  /// An integer Nimble::Vector2f value object
+  typedef AttributeVectorT<Nimble::Vector2T, int> AttributeVector2i;
+  /// An integer vector3 value object
+  typedef AttributeVectorT<Nimble::Vector3T, int> AttributeVector3i;
+  /// An integer vector4 value object
+  typedef AttributeVectorT<Nimble::Vector4T, int> AttributeVector4i;
+
+  /// A float Nimble::Vector2f value object
+  typedef AttributeVectorT<Nimble::Vector2T, float> AttributeVector2f;
   /// A float vector3 value object
-  typedef AttributeVector<Nimble::Vector3f> AttributeVector3f;
+  typedef AttributeVectorT<Nimble::Vector3T, float> AttributeVector3f;
   /// A float vector4 value object
-  typedef AttributeVector<Nimble::Vector4f> AttributeVector4f;
+  typedef AttributeVectorT<Nimble::Vector4T, float> AttributeVector4f;
+
+  template<class VectorType>
+  QString AttributeVector<VectorType>::asString(bool * const ok, Attribute::Layer layer) const {
+    if(ok) *ok = true;
+
+    return Radiant::StringUtils::toString(value(layer));
+  }
+
+  template<class VectorType>
+  bool AttributeVector<VectorType>::set(const StyleValue & value, Attribute::Layer layer)
+  {
+    if (value.size() != N || !value.isUniform() || !value.isNumber())
+      return false;
+
+    VectorType vector;
+    for (int i = 0; i < N; ++i)
+      vector[i] = value.asFloat(i);
+
+    this->setValue(vector, layer);
+    return true;
+  }
+
+  template <class T>
+  AttributeVector<T>::~AttributeVector()
+  {}
+
+  template <class T>
+  void AttributeVector<T>::eventProcess(const QByteArray & id,
+    Radiant::BinaryData & data)
+  {
+    /// @todo this isn't how eventProcess should be used
+    if(!id.isEmpty()) {
+      int index = id.toInt();
+      if(index >= N || index < 0) {
+        return;
+      }
+
+      bool ok = true;
+
+      ElementType v = data.read<ElementType>(&ok);
+
+      if(ok) {
+        T tmp = value();
+        tmp[index] = v;
+        *this = tmp;
+      }
+    }
+    else {
+
+      bool ok = true;
+
+      T v = data.read<T>(&ok);
+
+      if(ok)
+        (*this) = v;
+    }
+  }
 
 }
 

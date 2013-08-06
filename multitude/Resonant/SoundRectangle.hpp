@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -69,13 +64,13 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     /// Returns the size of the rectangle
     Nimble::Vector2i size() const { return m_size.asVector(); }
     /// Returns amount of stereo panning
-    float stereoPan() const { return m_stereoPan.asFloat(); }
+    float stereoPan() const { return m_stereoPan; }
     /// Returns the width of the fade border
-    int fade() const { return m_fadeWidth.asInt(); }
+    int fade() const { return m_fadeWidth; }
     /// Returns the left channel id
-    int leftChannel() const { return m_leftChannel.asInt(); }
+    int leftChannel() const { return m_leftChannel; }
     /// Returns the right channel id
-    int rightChannel() const { return m_rightChannel.asInt(); }
+    int rightChannel() const { return m_rightChannel; }
 
   private:
     // Corner location of the rectangle in screen coordinates

@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #ifndef RADIANT_MIME_HPP
 #define RADIANT_MIME_HPP
 
@@ -9,14 +19,14 @@
 
 namespace Radiant
 {
-  /// see RFC 2046
+  /// See RFC 2046
   class RADIANT_API MimeType
   {
   public:
     /// Get mime type from string
     /// @param mime string of type "toplevel/subtype",
     /// @sa topLevel subType
-    MimeType(const QString & mime);
+    explicit MimeType(const QString & mime);
 
     /// constructs a type from top-level and sub-type
     /// @param toplevel top-level mime type
@@ -51,22 +61,31 @@ namespace Radiant
     const QString m_subtype; // plain
   };
 
+  /// This class keeps track of matching file extensions to mime types.
   class RADIANT_API MimeManager
   {
   protected:
+    /// Map from file extensions to mime types
     typedef std::map<QString, MimeType> ExtensionMap;
 
-    /// shared extension map
+    /// Global extension map shared by all instances
     static ExtensionMap s_sharedExtensions;
+    /// Extension map specific for this instance
     ExtensionMap m_extensions;
 
+    /// @cond
+
     static void initialize();
+
+    /// @endcond
 
   public:
     MimeManager();
     virtual ~MimeManager();
 
-    /// add or replace a shared mapping from file extension to mime type
+    /// Add or replace a shared mapping from file extension to mime type
+    /// @param extension file extension
+    /// @param type mime type
     static void insertSharedExtension(const QString & extension, const MimeType & type);
 
     /// Add or replace a shared mapping from file extension to mime type
@@ -79,6 +98,9 @@ namespace Radiant
     /// @return The matching MimeType, or NULL if not found
     const MimeType * mimeTypeByExtension(const QString & ext) const;
 
+    /// Get a list of file extensions that match the given mime type
+    /// @param mime mime type to query
+    /// @return list of file extensions
     QStringList extensionsByMimeRegexp(const QString & mime) const;
   };
 }

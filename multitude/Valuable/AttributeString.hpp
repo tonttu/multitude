@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -17,11 +12,9 @@
 #define VALUABLE_VALUE_STRING_HPP
 
 #include <Valuable/Export.hpp>
-#include <Valuable/AttributeObject.hpp>
+#include <Valuable/Attribute.hpp>
 
 #include <QString>
-
-#define VO_TYPE_STRING "string"
 
 namespace Valuable
 {
@@ -38,12 +31,12 @@ namespace Valuable
     typedef QChar char_type;
 
     AttributeString();
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QByteArray &, bool transit)
     /// @param v The string to store in this object
-    AttributeString(Node * host, const QString & name,
+    AttributeString(Node * host, const QByteArray & name,
                 const QString & v = "", bool transit = false);
 
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
+    virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
@@ -62,17 +55,13 @@ namespace Valuable
     bool operator != (const QString & that) const;
 
     /// Returns the value as float
-    virtual float asFloat(bool * const ok = 0) const OVERRIDE;
+    virtual float asFloat(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
     /// Returns the value as integer
-    virtual int asInt(bool * const ok = 0) const OVERRIDE;
+    virtual int asInt(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
     /// Returns the value as string
-    virtual QString asString(bool * const ok = 0) const OVERRIDE;
+    virtual QString asString(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
 
-    virtual bool set(const QString & v, Layer layer = MANUAL, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
-
-    virtual const char * type() const OVERRIDE { return VO_TYPE_STRING; }
-
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 
     /// Makes the string empty
     void clear();

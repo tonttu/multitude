@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -21,7 +16,7 @@
 #include <Radiant/VideoImage.hpp>
 
 #include <vector>
-
+#include <cstdint>
 
 namespace Radiant {
 
@@ -56,8 +51,12 @@ namespace Radiant {
   };
 
   /// Convert enumerated frame rate into floating point
-  RADIANT_API float asFloat(FrameRate);
+  /// @param fr Frame rate to convert
+  /// @return Frame rate as float
+  RADIANT_API float asFloat(FrameRate fr);
   /// Return the closest enumerated frame rate given a floating point value
+  /// @param fps Frame rate to round
+  /// @return Frame rate as an enumeration
   RADIANT_API FrameRate closestFrameRate(float fps);
 
   /// Base class for video input classes.
@@ -67,20 +66,20 @@ namespace Radiant {
 
       @authors Tommi Ilmonen and Juha Laitinen
   */
-
   class RADIANT_API VideoInput
   {
   public:
+    /// Destructor
     virtual ~VideoInput();
 
     /**
      * This method captures an image from the video source. The image
      * is returned in the native format of the device.
-     * @see #imageFormat() for the current format of the device.
-     * @see #Radiant::ImageConversion for conversions into application video formats
+     * @see @ref imageFormat for the current format of the device.
+     * @see Radiant::ImageConversion for conversions into application video formats
      * @note The device has to be initialized, and the stream transmission has
      * to be started before this method can be called.
-     * @see #start()
+     * @see @ref start
      * @returns pointer to the current captured image
      */
     virtual const Radiant::VideoImage * captureImage() = 0;
@@ -114,49 +113,64 @@ namespace Radiant {
    */
     virtual const void * captureAudio(int * frameCount);
     /// Get audio parameters
-    /** @param channels The number of channels in the video sound-track.
-    @param sample_rate Audio sample rate
-    @param format The audio sample format
-     */
+    /// @param channels The number of channels in the video sound-track.
+    /// @param sample_rate Audio sample rate
+    /// @param format The audio sample format
     virtual void getAudioParameters(int * channels,
                                     int * sample_rate,
                                     AudioSampleFormat * format) const;
 
     /// Returns the current width of a frame in the video stream images.
-    // Note that it is quite common for video devices to not report the correct frame
-    // size before at least one frame has been captured.
+    /// Note that it is quite common for video devices to not report the correct frame
+    /// size before at least one frame has been captured.
+    /// @return Width of a frame
     virtual int width() const = 0;
     /// Returns the current height of a frame in the video stream images.
+    /// @return Height of a frame
     virtual int height() const = 0;
     /// Returns the current frame rate (int frames per second) of the video stream.
+    /// @return Current frame rate
     virtual float fps() const = 0;
     /// Returns the current image format of the stream.
+    /// @return Image format of the stream
     virtual ImageFormat imageFormat() const = 0;
     /// Returns the total size of one captured image frame in bytes.
+    /// @return Size of single image
     virtual unsigned int size() const = 0;
     /// Sets the gamma correction value
-    virtual void setGamma(float);
+    /// @param g Value of gamme to set
+    virtual void setGamma(float g);
     /** Sets the shutter time. Larger values lead to longer shutter
     times. Negative values tell the system to use automatic shutter
-    timing. Manual range [0-1]. */
-    virtual void setShutter(float);
-    /** Sets the camera gain (if possible). Negative values sets automatic gain control. Manual range [0-1]. */
-    virtual void setGain(float);
+    timing. Manual range [0-1].
+    @param t Time for shutter
+    */
+    virtual void setShutter(float t);
+    /** Sets the camera gain (if possible). Negative values sets automatic gain control. Manual range [0-1].
+        @param g Gain to set
+    */
+    virtual void setGain(float g);
     /// Set the exposure control of the device (if possible)
-    virtual void setExposure(float);
+    /// @param e Exposure to set
+    virtual void setExposure(float e);
     /// Set the brightness control of the device (if possible)
-    virtual void setBrightness(float);
+    /// @param b Brightness to set
+    virtual void setBrightness(float b);
 
     /// Starts the data transmission.
+    /// @return True if succeeded, false otherwise
     virtual bool start() = 0;
 
     /// Stops the data transmission.
+    /// @return True if succeeded, false otherwise
     virtual bool stop() = 0;
 
     /// Close the device
+    /// @return True if succeeded, false otherwise
     virtual bool close() = 0;
 
     /// Returns the unique identifier for the input device
+    /// @return Identifier of the device
     virtual uint64_t uid();
 
   protected:

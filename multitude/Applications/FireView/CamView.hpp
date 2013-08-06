@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Applications/FireView.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Applications/FireView.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #ifndef FIREVIEW_CAMVIEW_HPP
@@ -18,7 +13,7 @@
 
 #include "Binning.hpp"
 
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Texture.hpp>
 
 #include <Nimble/Rect.hpp>
@@ -41,7 +36,7 @@ namespace FireView {
   {
     Q_OBJECT;
   public:
-    CamView(QWidget * parent);
+    CamView(Luminous::RenderDriver & renderdriver, QWidget * parent);
     virtual ~CamView();
 
     bool start(uint64_t euid64, Radiant::FrameRate fps, float customFps = 0.0f,
@@ -112,7 +107,7 @@ namespace FireView {
     { m_filtering = !m_filtering; }
 
   protected:
-    
+
     enum HalfToThird {
       AS_HALF,
       AS_VGA_THIRD,
@@ -131,7 +126,7 @@ namespace FireView {
     void grabImageLuminosity(int screenx, int screeny);
     Nimble::Vector2i screenToImage(int screenx, int screeny) const;
     Nimble::Vector2i imageToScreen(Nimble::Vector2i) const;
-    
+
     Rect getEffectiveArea();
     void doAnalysis();
     void checkFocus();
@@ -147,7 +142,7 @@ namespace FireView {
         FAILED,
         RUNNING
       };
-      
+
       friend class CamView;
       InputThread();
       virtual ~InputThread();
@@ -158,7 +153,7 @@ namespace FireView {
       void stop();
 
       bool isRunning() const { return m_state == RUNNING; }
-      
+
     protected:
 
       virtual void childLoop();
@@ -178,7 +173,7 @@ namespace FireView {
       std::vector<Radiant::VideoCamera::CameraFeature> m_features;
       std::vector<bool> m_featureSend;
       std::vector<bool> m_autoSend;
-      
+
       volatile State m_state;
       volatile bool  m_continue;
       volatile int   m_frameCount;
@@ -237,7 +232,7 @@ namespace FireView {
 
     Analysis   m_averages[AREA_COUNT]; // Grid.
     QImage     m_foo;
-    Luminous::GLResources m_glrs;
+    Luminous::RenderContext m_context;
 
     static bool m_verbose;
     static Radiant::VideoCamera::TriggerPolarity m_triggerPolarity;

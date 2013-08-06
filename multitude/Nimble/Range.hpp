@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #ifndef NIBMLE_RANGE_HPP
 #define NIBMLE_RANGE_HPP
 
@@ -67,6 +77,14 @@ namespace Nimble {
       return m_low == that.m_low && m_high == that.m_high;
     }
 
+    /// Compares two RangeT objects.
+    /// @param that Other range to compare to
+    /// @return This function returns true if the two ranges are different.
+    inline bool operator != (const RangeT & that) const
+    {
+      return !(*this == that);
+    }
+
     /// Expands the range to include the given value
     inline void expand(const T & v)
     {
@@ -95,15 +113,5 @@ namespace Nimble {
   typedef RangeT<int> Rangei;
 
 }
-
-// These are needed under Windows
-#ifdef WIN32
-#   ifdef NIMBLE_EXPORT
-        template Nimble::RangeT<double>;
-        template Nimble::RangeT<float>;
-        template Nimble::RangeT<long>;
-        template Nimble::RangeT<int>;
-#   endif
-#endif
 
 #endif // RANGE_HPP

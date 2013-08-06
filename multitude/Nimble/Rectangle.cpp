@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -30,14 +25,14 @@ namespace Nimble
       m_extent1(e1)
   {}
 
-  Rectangle::Rectangle(Nimble::Vector2f size, const Nimble::Matrix3f & m)
+  Rectangle::Rectangle(Nimble::SizeF size, const Nimble::Matrix3f & m)
   {
     // Transform the points
-    m_origin = (m * Vector2f(0, 0)).vector2();
-    Vector2f c0 = (m * Vector2f(0.5f * size.x, 0.f)).vector2();
-    Vector2f c1 = (m * Vector2f(0.f, 0.5f * size.y)).vector2();
+    m_origin = m.project(Nimble::Vector2f(0, 0));
+    Nimble::Vector2f c0 = m.project(Vector2f(0.5f * size.width(), 0.f));
+    Nimble::Vector2f c1 = m.project(Vector2f(0.f, 0.5f * size.height()));
 
-    // Compute the axii and extents
+    // Compute the axes and extents
     m_axis0 = c0 - m_origin;
     m_axis1 = c1 - m_origin;
 
@@ -47,78 +42,85 @@ namespace Nimble
     m_axis0.normalize();
     m_axis1.normalize();
   }
-  
-  bool Rectangle::inside(Nimble::Vector2f p) const
+
+  Rectangle::Rectangle(const Nimble::Rectf & rect)
+  {
+    m_origin = rect.center();
+    m_axis0 = Nimble::Vector2f(1, 0);
+    m_axis1 = Nimble::Vector2f(0, 1);
+    m_extent0 = rect.width() * 0.5f;
+    m_extent1 = rect.height() * 0.5f;
+  }
+
+  bool Rectangle::isInside(Nimble::Vector2f p) const
   {
     p -= m_origin;
 
-    float u = Math::Abs(dot(p, m_axis0));
-    float v = Math::Abs(dot(p, m_axis1));
+    float u = std::abs(dot(p, m_axis0));
+    float v = std::abs(dot(p, m_axis1));
 
     return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
   }
 
-  bool Rectangle::inside(const Nimble::Rectangle & r) const
+  bool Rectangle::isInside(const Nimble::Rectangle & r) const
   {
     // rectangle is inside if all points are inside
-    std::vector<Nimble::Vector2f> corners;
-    corners.reserve(4);
+    std::array<Nimble::Vector2f, 4> corners;
     r.computeCorners(corners);
-    assert(corners.size() == 4);
 
     for(int i = 0; i < 4; ++i)
-      if(!inside(corners[i])) return false;
+      if(!isInside(corners[i])) return false;
     return true;
   }
 
   bool Rectangle::intersects(const Rectangle & r) const
   {
     // Difference box centers
-    Vector2f d = r.m_origin - m_origin;
+    Nimble::Vector2f d = r.m_origin - m_origin;
 
     float absAdB[2][2];
 
-    absAdB[0][0] = Math::Abs(dot(m_axis0, r.m_axis0));
-    absAdB[0][1] = Math::Abs(dot(m_axis0, r.m_axis1));
-    float absAdD = Math::Abs(dot(m_axis0, d));
+    absAdB[0][0] = std::abs(dot(m_axis0, r.m_axis0));
+    absAdB[0][1] = std::abs(dot(m_axis0, r.m_axis1));
+    float absAdD = std::abs(dot(m_axis0, d));
     float sum = m_extent0 + r.m_extent0 * absAdB[0][0] + r.m_extent1 * absAdB[0][1];
     if(absAdD > sum)
       return false;
 
-    absAdB[1][0] = Math::Abs(dot(m_axis1, r.m_axis0));
-    absAdB[1][1] = Math::Abs(dot(m_axis1, r.m_axis1));
-    absAdD = Math::Abs(dot(m_axis1, d));
+    absAdB[1][0] = std::abs(dot(m_axis1, r.m_axis0));
+    absAdB[1][1] = std::abs(dot(m_axis1, r.m_axis1));
+    absAdD = std::abs(dot(m_axis1, d));
     sum = m_extent1 + r.m_extent0 * absAdB[1][0] + r.m_extent1 * absAdB[1][1];
     if(absAdD > sum)
       return false;
 
-    absAdD = Math::Abs(dot(r.m_axis0, d));
+    absAdD = std::abs(dot(r.m_axis0, d));
     sum = r.m_extent0 + m_extent0 * absAdB[0][0] + m_extent1 * absAdB[1][0];
     if(absAdD > sum)
       return false;
 
-    absAdD = Math::Abs(dot(r.m_axis1, d));
+    absAdD = std::abs(dot(r.m_axis1, d));
     sum = r.m_extent1 + m_extent0 * absAdB[0][1] + m_extent1 * absAdB[1][1];
     if(absAdD > sum)
-      return false;  
+      return false;
 
     return true;
   }
 
-  Nimble::Vector2 Rectangle::size() const
+  Nimble::SizeF Rectangle::size() const
   {
-    return Nimble::Vector2(2 * m_extent0, 2 * m_extent1);
+    return Nimble::SizeF(2 * m_extent0, 2 * m_extent1);
   }
 
-  void Rectangle::computeCorners(std::vector<Nimble::Vector2f> &corners) const
+  void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const
   {
     Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
     Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
 
-    corners.push_back(m_origin - extAxis0 - extAxis1);
-    corners.push_back(m_origin + extAxis0 - extAxis1);
-    corners.push_back(m_origin + extAxis0 + extAxis1);
-    corners.push_back(m_origin - extAxis0 + extAxis1);
+    corners[0] = m_origin - extAxis0 - extAxis1;
+    corners[1] = m_origin + extAxis0 - extAxis1;
+    corners[2] = m_origin + extAxis0 + extAxis1;
+    corners[3] = m_origin - extAxis0 + extAxis1;
   }
 
   Nimble::Rectangle Nimble::Rectangle::merge(const Nimble::Rectangle &a, const Nimble::Rectangle &b)
@@ -128,8 +130,8 @@ namespace Nimble
     // Average the centers
     box.m_origin = 0.5f * (a.center() + b.center());
 
-    // Average the box axii (and negate if necessary)
-    if(Nimble::dot(a.m_axis0, b.m_axis0) >= 0.f) {
+    // Average the box axes (and negate if necessary)
+    if(dot(a.m_axis0, b.m_axis0) >= 0.f) {
       box.m_axis0 = 0.5f * (a.m_axis0 + b.m_axis0);
       box.m_axis0.normalize();
     } else {
@@ -141,10 +143,10 @@ namespace Nimble
     box.m_axis1.normalize();
 
     // Project input corner points on the new axii and compute the extents
-    std::vector<Nimble::Vector2f> vertex;
+    std::array<Nimble::Vector2f, 4> vertex;
     Nimble::Vector2f min(0, 0);
     Nimble::Vector2f max(0, 0);
-    const Nimble::Vector2f axii[] =  { box.m_axis0, box.m_axis1 };
+    const Nimble::Vector2f axes[] =  { box.m_axis0, box.m_axis1 };
 
     a.computeCorners(vertex);
 
@@ -154,7 +156,7 @@ namespace Nimble
 
       for(int j = 0; j < 2; j++) {
 
-        float dotp = dot(diff, axii[j]);
+        float dotp = dot(diff, axes[j]);
 
         if(dotp > max[j])
           max[j] = dotp;
@@ -163,7 +165,6 @@ namespace Nimble
       }
     }
 
-    vertex.clear();
     b.computeCorners(vertex);
 
     for(int i = 0; i < 4; i++) {
@@ -172,7 +173,7 @@ namespace Nimble
 
       for(int j = 0; j < 2; j++) {
 
-        float dotp = dot(diff, axii[j]);
+        float dotp = dot(diff, axes[j]);
 
         if(dotp > max[j])
           max[j] = dotp;
@@ -191,14 +192,9 @@ namespace Nimble
     return box;
   }
 
-//  void dumpRectangle(const Rectangle & r)
-//  {
-//    Radiant::info("Rectangle o(%f,%f) a0(%f,%f) e0(%f) a1(%f,%f) e1(%f)", r.center().x, r.center().y, r.axis0().x, r.axis0().y, r.extent0(), r.axis1().x, r.axis1().y, r.extent1());
-//  }
-
   void Rectangle::transform(const Nimble::Matrix3 &m)
   {
-    std::vector<Nimble::Vector2> vertex;
+    std::array<Nimble::Vector2, 4> vertex;
     computeCorners(vertex);
 
     for(size_t i = 0; i < 4; i++)
@@ -209,9 +205,23 @@ namespace Nimble
     m_extent0 = 0.5f * m_axis0.length();
     m_axis0.normalize();
 
-    m_extent1 = 0.5f * (vertex[3] - vertex[0]).length();
-    m_axis1 = m_axis0.perpendicular();
+    m_axis1 = vertex[3] - vertex[0];
+    m_extent1 = 0.5f * m_axis1.length();
     m_axis1.normalize();
+  }
+
+  Nimble::Rect Rectangle::boundingBox() const
+  {
+    const Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
+    const Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
+
+    Nimble::Rectf bb;
+    bb.expand(m_origin - extAxis0 - extAxis1);
+    bb.expand(m_origin + extAxis0 - extAxis1);
+    bb.expand(m_origin + extAxis0 + extAxis1);
+    bb.expand(m_origin - extAxis0 + extAxis1);
+
+    return bb;
   }
 
 }

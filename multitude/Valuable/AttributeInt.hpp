@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -21,7 +16,7 @@
 
 #include <Radiant/TimeStamp.hpp>
 
-#define VO_TYPE_INT "int"
+#include <Nimble/Math.hpp>
 
 namespace Valuable
 {
@@ -30,24 +25,28 @@ namespace Valuable
   /** The actual value objects are created by using AttributeIntT<int>
       etc.
 
-      @see AttributeInt, AttributeTimeStamp */
+      @see AttributeInt*/
 
   template<class T>
-  class VALUABLE_API AttributeIntT : public AttributeNumeric<T>
+  class AttributeIntT : public AttributeNumericT<T>
   {
-    typedef AttributeNumeric<T> Base;
+    typedef AttributeNumericT<T> Base;
   public:
     using Base::value;
     using Base::m_current;
     using Base::m_values;
     using Base::m_valueSet;
-    using AttributeT<T>::operator =;
+    using Base::operator =;
+
+#ifdef CLANG_XML
+    virtual int asInt(bool * const ok, Attribute::Layer layer) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value(layer)); }
+#endif
 
     AttributeIntT() : Base() {}
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    AttributeIntT(Node * host, const QString & name, T v, bool transit = false)
-        : AttributeNumeric<T>(host, name, v, transit)
+    AttributeIntT(Node * host, const QByteArray & name, T v, bool transit = false)
+        : AttributeNumericT<T>(host, name, v, transit)
     {}
 
     /// Assignment by subtraction
@@ -71,10 +70,10 @@ namespace Valuable
     /// Prefix increment
     AttributeIntT<T> & operator ++ ()
     {
-      if(m_current != Base::MANUAL) {
-        m_values[Base::MANUAL] = m_values[m_current];
-        m_valueSet[Base::MANUAL] = true;
-        m_current = Base::MANUAL;
+      if(m_current != Base::USER) {
+        m_values[Base::USER] = m_values[m_current];
+        m_valueSet[Base::USER] = true;
+        m_current = Base::USER;
       }
       ++m_values[m_current];
       this->emitChange();
@@ -84,10 +83,10 @@ namespace Valuable
     /// Prefix decrement
     AttributeIntT<T> & operator -- ()
     {
-      if(m_current != Base::MANUAL) {
-        m_values[Base::MANUAL] = m_values[m_current];
-        m_valueSet[Base::MANUAL] = true;
-        m_current = Base::MANUAL;
+      if(m_current != Base::USER) {
+        m_values[Base::USER] = m_values[m_current];
+        m_valueSet[Base::USER] = true;
+        m_current = Base::USER;
       }
       --m_values[m_current];
       this->emitChange();
@@ -100,14 +99,14 @@ namespace Valuable
     AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
-    inline virtual bool set(int v, Attribute::Layer layer = Attribute::MANUAL,
+    inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
-    inline virtual bool set(float v, Attribute::Layer layer = Attribute::MANUAL,
+    inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN)
     {
       this->setValue(Nimble::Math::Round(v), layer);
@@ -123,11 +122,14 @@ namespace Valuable
     /// Compares greater or equal than
     bool operator >= (const T & i) const { return value() >= i; }
 
-    virtual const char * type() const OVERRIDE { return VO_TYPE_INT; }
+    virtual void eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    {
+      bool ok = true;
+      T v = data.read<T>( & ok);
 
-    virtual void processMessage(const QString & id, Radiant::BinaryData & data) OVERRIDE;
-
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
+      if(ok)
+        *this = v;
+    }
   };
 
   /// 32-bit integer value object.
@@ -140,15 +142,6 @@ namespace Valuable
   typedef AttributeIntT<int64_t> AttributeInt64;
   /// 64-bit unsigned integer value object.
   typedef AttributeIntT<uint64_t> AttributeUInt64;
-
-  /// Time-stamp value object.
-  typedef AttributeIntT<Radiant::TimeStamp> AttributeTimeStamp;
-
 }
-
-#ifdef __GCCXML__
-/// These are exported to JS
-template class Valuable::AttributeIntT<int32_t>;
-#endif
 
 #endif

@@ -7,20 +7,21 @@
  * See file "Luminous.hpp" for authors and more details.
  *
  * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
+ * License (LGPL), version 2.1. The LGPL conditions can be found in
+ * file "LGPL.txt" that is distributed with this source package or obtained
  * from the GNU organization (www.gnu.org).
- * 
+ *
  */
 
 #include "Luminous.hpp"
 #include "Image.hpp"
 #include "CodecRegistry.hpp"
 #include "ImageCodecTGA.hpp"
-#include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
 #include "ImageCodecSVG.hpp"
-#include "CPUMipmaps.hpp"
+#include "ImageCodecDDS.hpp"
+#include "ImageCodecQT.hpp"
+#include "GPUAssociation.hpp"
 
 #include <QImageWriter>
 #include <QImageReader>
@@ -29,120 +30,123 @@
 #include <Radiant/Trace.hpp>
 
 #include <QString>
-#include <sstream>
 
 namespace Luminous
 {
-  using namespace Radiant;
+  bool isSampleShadingSupported()
+  {
+#ifdef RADIANT_OSX_MOUNTAIN_LION
+    return false;
+#else
+    static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
+    return s_supported;
+#endif
+  }
 
   bool initLuminous(bool initOpenGL)
   {
     // Only run this function once. First from simpleInit then later from
     // RenderThread if the first run fails.
-    MULTI_ONCE_BEGIN
-
     initDefaultImageCodecs();
 
-    if(initOpenGL) {
+    if (initOpenGL) {
+      static bool s_ok = true;
+      MULTI_ONCE {
 
-      const char * glvendor = (const char *) glGetString(GL_VENDOR);
-      const char * glver = (const char *) glGetString(GL_VERSION);
+#ifndef RADIANT_OSX
+        GLenum err = glewInit();
 
-#ifndef MULTI_WITHOUT_GLEW
-      GLenum err = glewInit();
+        if(err != GLEW_OK) {
+          Radiant::error("Failed to initialize GLEW: %s", glewGetErrorString(err));
+          s_ok = false;
+          return false;
+        }
 
-      std::ostringstream versionMsg;
 
-      if(err != GLEW_OK) {
-        Radiant::error("Failed to initialize GLEW: %s", glewGetErrorString(err));
-        return false;
-      }
+        if(Luminous::GPUAssociation::isSupported()) {
+          unsigned int gpuCount = Luminous::GPUAssociation::numGPUs();
+          Radiant::info("Available GPUs: %u", gpuCount);
+        }
 
-      // Check the OpenGL version
-      bool warn = true;
-      versionMsg << "Luminous initialized: ";
+        // Check for DXT support
+        bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
+        Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
 
-      if(GLEW_VERSION_2_1) {
-        warn = false;
-        versionMsg << "OpenGL 2.1 supported";
-      }
-      else if(GLEW_VERSION_2_0) {
-        warn = false;
-        versionMsg << "OpenGL 2.0 supported";
-      }
-      else if(GLEW_VERSION_1_5) versionMsg << "OpenGL 1.5 supported";
-      else if(GLEW_VERSION_1_4) versionMsg << "OpenGL 1.4 supported";
-      else if(GLEW_VERSION_1_3) versionMsg << "OpenGL 1.3 supported";
-      else if(GLEW_VERSION_1_2) versionMsg << "OpenGL 1.2 supported";
-      else if(GLEW_VERSION_1_1) versionMsg << "OpenGL 1.1 supported";
 
-      char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-      const char * glslMsg = (glsl ? glsl : "GLSL not supported");
+        if (!glewIsSupported("GL_ARB_sample_shading")) {
+          Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
+                           "some multi-sampling features will be disabled.");
+          // This is only a warning, no need to set s_ok to false
+        }
 
-      Radiant::info("%s (%s)", versionMsg.str().c_str(), glslMsg);
-      Radiant::info("%s (%s)", glvendor, glver);
-
-      if(warn) {
-        Radiant::error("OpenGL 2.0 is not supported by this computer, "
-                       "some applications may fail.");
-        return false;
-      }
-#else
-      info("OpenGL without GLEW # %s : %s", glvendor, glver);
+        if (!GLEW_VERSION_3_1 && !glewIsSupported("GL_ARB_uniform_buffer_object")) {
+          Radiant::error("OpenGL 3.1 or GL_ARB_uniform_buffer_object not supported by this computer");
+          /// @todo If we have the extension with older OpenGL, can we call
+          ///       BindBufferRange etc or should we call ARB/EXT -versions of those functions?
+          s_ok = false;
+        }
 #endif
+        const char * glvendor = (const char *) glGetString(GL_VENDOR);
+        const char * glver = (const char *) glGetString(GL_VERSION);
+        const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-      // Check for DXT support
-#ifndef MULTI_WITHOUT_GLEW
-      bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
-      Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
-      Luminous::CPUMipmaps::s_dxtSupported = dxtSupport;
-#endif
+        Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
+
+        if (glsl) {
+          Radiant::info("GLSL: %s", glsl);
+        } else {
+          Radiant::error("GLSL not supported");
+          s_ok = false;
+        }
+
+      } // MULTI_ONCE
+      return s_ok;
     }
-
-    MULTI_ONCE_END
 
     return true;
   }
-  
+
   void initDefaultImageCodecs()
   {
-    static bool done = false;
+    MULTI_ONCE {
 
-    if(done)
-      return;
-
-    done = true;
-
-    // Debug output supported image formats
-    {
-      debugLuminous("Qt image support (read):");
-      QList<QByteArray> formats = QImageReader::supportedImageFormats ();
-      for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
-        QString format(*it);
-        debugLuminous("%s", format.toUtf8().data());
+      {
+        debugLuminous("Qt image support (read):");
+        QList<QByteArray> formats = QImageReader::supportedImageFormats ();
+        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
+          QString format(*it);
+          debugLuminous("%s", format.toUtf8().data());
+        }
       }
-    }
 
-    {
-      debugLuminous("Qt image support (write):");
+      {
+        debugLuminous("Qt image support (write):");
+        QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
+        for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
+          QString format(*it);
+          debugLuminous("%s", format.toUtf8().data());
+        }
+      }
+
+      /// ImageCodecTGA supports some pixel formats that Qt doesn't support, like
+      /// Luminuos::PixelFormat::redUByte(). Give this codec a priority
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
+
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
-      for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
-        QString format(*it);
-        debugLuminous("%s", format.toUtf8().data());
+      for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
+        QByteArray & format = (*it);
+        Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>(format.data()));
       }
-    }
 
-    QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
-    for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); it++) {
-      QByteArray & format = (*it);
-      Image::codecs()->registerCodec(new ImageCodecQT(format.data()));
-    }
-    Image::codecs()->registerCodec(new ImageCodecQT("jpg"));
-    Image::codecs()->registerCodec(new ImageCodecDDS());
-    Image::codecs()->registerCodec(new ImageCodecSVG());
-    /* TGA has to be last, because its ping may return true even if
-       the file has other type. */
-    Image::codecs()->registerCodec(new ImageCodecTGA());
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>("jpg"));
+
+#if !defined(RADIANT_IOS)
+      // Image::codecs()->registerCodec(new ImageCodecSVG());
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecSVG>());
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
+#endif
+
+    } // MULTI_ONCE
   }
 
 }

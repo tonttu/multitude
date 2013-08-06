@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -32,23 +27,19 @@
 
 namespace Luminous
 {
-
-  using namespace Radiant;
-
-  GLResources::GLResources(Radiant::ResourceLocator & rl)
+  GLResources::GLResources()
     : m_deallocationSum(0),
       m_allocationSum(0),
       m_consumingBytes(0),
       m_comfortableGPURAM((1 << 20) * 70), // 70 MB
       m_frame(0),
-      m_brokenProxyTexture2D(false),
-      m_resourceLocator(rl)
+      m_brokenProxyTexture2D(false)
   {
     const char * envgp = getenv("MULTI_GPU_RAM");
 
     if(envgp) {
 
-      m_comfortableGPURAM = Nimble::Math::Max(atol(envgp) * (1 << 20),
+      m_comfortableGPURAM = std::max(atol(envgp) * (1 << 20),
                           m_comfortableGPURAM);
     }
 
@@ -156,17 +147,14 @@ namespace Luminous
         // Radiant::trace("GLResources::eraseResources # Removing old");
 
         delete (*it).second;
-        iterator tmp = it;
-        tmp++;
-        m_resources.erase(it);
-        it = tmp;
+        it = m_resources.erase(it);
       }
       else
-        it++;
+        ++it;
     }
   }
 
-  void GLResources::clear()
+  void GLResources::clearResources()
   {
     while(m_resources.size()) {
       GLResource * res = (*m_resources.begin()).second;
@@ -220,6 +208,7 @@ namespace Luminous
       resource->m_deleteOnFrame = 0;
   }
 
+  /*
   // Doesn't work under windows where pthread_t (id_t) is a struct
   //typedef std::map<Thread::id_t, GLResources *> ResourceMap;
   class TGLRes
@@ -249,7 +238,7 @@ namespace Luminous
     __resources[Thread::myThreadId()] = tmp;
   }
 
-  GLResources * GLResources::getThreadResources()
+  GLResources * GLResources::getThreadContext()
   {
     Guard g(__mutex);
 
@@ -270,7 +259,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return;
     }
 
@@ -287,7 +276,7 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return 0;
     }
 
@@ -301,13 +290,13 @@ namespace Luminous
     ResourceMap::iterator it = __resources.find(Thread::myThreadId());
 
     if(it == __resources.end()) {
-      error("No OpenGL resources for current thread");
+      Radiant::error("No OpenGL resources for current thread");
       return 0;
     }
 
     return (*it).second.m_window;
   }
-
+*/
   bool GLResources::isBrokenProxyTexture2D()
   {
     return m_brokenProxyTexture2D;

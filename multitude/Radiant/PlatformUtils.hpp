@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 #ifndef RADIANT_PLATFORM_UTILS_HPP
@@ -17,49 +12,49 @@
 
 #include <Radiant/Export.hpp>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <QString>
 
 namespace Radiant
 {
   /** Small utility functions to help handle platform-specific functions. */
-
-    /// @todo check that these actually work
-
   namespace PlatformUtils
   {
 
     /// Return absolute path to the executable that was used to launch the process.
+    /// @return Absolute path to the executable used to launch the process
     RADIANT_API QString getExecutablePath();
 
+    /// Returns the current process identifier
+    /// @return Process id of this process
+    RADIANT_API int getProcessId();
+
     /// Return absolute path to the user's home directory.
+    /// @return Absolute path to user's home directory
     RADIANT_API QString getUserHomePath();
 
-    /// Return path to the global data directory of the given module.
-    RADIANT_API QString getModuleGlobalDataPath(const char * module, bool isapplication);
-
     /// Return path to the user data directory of the given module.
+    /// @param module Name of the module whose data directory is being queried
+    /// @param isapplication True if the modul is application, false otherwise.
+    /// @return Absolute path of the given module inside user's home directory
     RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
-
-    /// Determine whether file or directory is readable.
-    /// @todo shouldn't this be in FileUtils?
-    /// @param filename Filename to test for readability
-    /// @returns true if the given file is found and readable
-    RADIANT_API bool fileReadable(const char * filename);
 
     /// Open a dynamic library
     /// @param path Full path to plugin
-    /// @returns Handle to plugin or NULL if failed
+    /// @returns Handle to plugin or nullptr if failed
     RADIANT_API void * openPlugin(const char * path);
 
     /// Returns the memory usage of the process, in bytes
-    /** This function is not implemented for all platforms. */
+    /// This function is not implemented for all platforms.
     /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
 
-    /// Setup an environment variable
-    RADIANT_API void setEnv(const char * name, const char * value);
+    /// This function returns the path to a library the running process is
+    /// linked against.
+    /// @param libraryName (part of) linked library name to search for
+    /// @return absolute path to the library file
+    RADIANT_API QString getLibraryPath(const QString& libraryName);
 
     /// Make a new TCP rule to OS firewall
     /// @param port TCP port to open

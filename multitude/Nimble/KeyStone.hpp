@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -22,6 +17,8 @@
 #include "Rect.hpp"
 #include "Vector4.hpp"
 
+#include <array>
+#include <cstring>
 #include <vector>
 
 namespace Nimble {
@@ -108,13 +105,6 @@ namespace Nimble {
     /// @param p Point in camera coordinates
     /// @return Point in normalized display coordinates
     Nimble::Vector2 project01(const Nimble::Vector2 & p) const;
-    /// Applies a 3x3 correction marix on a 2D vector.
-    static Nimble::Vector2 project(const Nimble::Matrix3 & m,
-                                   const Nimble::Vector2 & v)
-    {
-      Nimble::Vector3 p = m * v;
-      return Nimble::Vector2(p.x / p.z, p.y / p.z);
-    }
 
     /// Do inverse projection (from screen to camera coordinates),
     /// ignoring the camera barrel distortion. Useful as a rough
@@ -188,7 +178,7 @@ namespace Nimble {
     int dpyHeight() const { return m_dpyHeight; }
 
     /// The size of the display area (in pixels) that matches this keystone area
-    Nimble::Vector2f dpySize() const
+    Nimble::Vector2i dpySize() const
     { return Nimble::Vector2i(m_dpyWidth, m_dpyHeight); }
 
     /// The x offset to the origin of the output display area
@@ -197,7 +187,7 @@ namespace Nimble {
     int dpyY()  const { return m_dpyY; }
 
     /// The offset to the origin of the output display area
-    Nimble::Vector2f dpyOffset() const
+    Nimble::Vector2i dpyOffset() const
     { return Nimble::Vector2i(m_dpyX, m_dpyY); }
 
     /// The output area of the screen
@@ -269,7 +259,7 @@ namespace Nimble {
     /// need to invert this.
     /// @param vertices an array of four corner vertices
     /// @return Generated projection matrix
-    static Nimble::Matrix3 projectionMatrix(const Nimble::Vector2 vertices[4]);
+    static Nimble::Matrix3 projectionMatrix(const std::array<Nimble::Vector2, 4> & vertices);
 
   private:
 
@@ -282,9 +272,9 @@ namespace Nimble {
     LensCorrection  m_lensCorrection;
 
     /// Normalized vertices (from 0 to 1)
-    Nimble::Vector2 m_vertices[4];
+    std::array<Nimble::Vector2, 4> m_vertices;
     /// Original vertices (in camera coordinates)
-    Nimble::Vector2 m_originals[4];
+    std::array<Nimble::Vector2, 4> m_originals;
     /// Convert from camera coordinates to [0,1]-space
     Nimble::Matrix3 m_matrix;
     /// Convert from camera coordinates to output (screen) coordinates
@@ -306,7 +296,7 @@ namespace Nimble {
     int            m_dpyWidth;
     int            m_dpyHeight;
 
-    Vector2        m_dpyCenter;
+    Nimble::Vector2f        m_dpyCenter;
 
     // Display area offset
     int            m_dpyX;

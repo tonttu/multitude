@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,11 +13,14 @@
 
 #include "Export.hpp"
 #include "Mutex.hpp"
-#include "RefPtr.hpp"
+#include <memory>
 
-/*!
-    @page singleton Radiant::Singleton<T>
-    Implements singleton of object type T
+
+/// @file Singleton.hpp
+
+/** @ingroup macros
+    @def DEFINE_SINGLETON(T)
+    Implements singleton of object type T.
 
     Singleton is used when there is only one object of type T. The one object
     can be accessed with the function instance(). The object is created the
@@ -88,13 +86,15 @@
   }                                                                \
   std::weak_ptr<T> T::s_multiSingletonInstance;
 
+/// @todo this can not be used to properly export the instace() function from
+/// libraries. The macro needs one more parameter.
 #define DECLARE_SINGLETON(T)                                       \
   public: static std::shared_ptr<T> instance();                    \
   private: static std::weak_ptr<T> s_multiSingletonInstance
 
 namespace Radiant {
 
-  /// Shared mutex for all the @ref singleton macros
+  /// Shared mutex for all the singleton macros
   extern RADIANT_API Radiant::Mutex s_singletonMutex;
 }
 

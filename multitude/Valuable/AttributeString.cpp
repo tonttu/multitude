@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "AttributeString.hpp"
@@ -18,12 +13,12 @@
 namespace Valuable
 {
   AttributeString::AttributeString() {}
-  AttributeString::AttributeString(Node * parent, const QString & name,
+  AttributeString::AttributeString(Node * parent, const QByteArray & name,
                            const QString & v, bool transit)
     : Base(parent, name, v, transit)
   {}
 
-  void AttributeString::processMessage(const QString & /*id*/, Radiant::BinaryData & data)
+  void AttributeString::eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data)
   {
     bool ok = true;
     QString tmp = data.read<QString>(&ok);
@@ -31,26 +26,20 @@ namespace Valuable
       *this = tmp;
   }
 
-  bool AttributeString::deserialize(const ArchiveElement & element)
+  float AttributeString::asFloat(bool * const ok, Layer layer) const
   {
-    *this = element.get();
-    return true;
+    return value(layer).toFloat(ok);
   }
 
-  float AttributeString::asFloat(bool * const ok) const
+  int AttributeString::asInt(bool * const ok, Layer layer) const
   {
-    return value().toFloat(ok);
+    return value(layer).toInt(ok, 0);
   }
 
-  int AttributeString::asInt(bool * const ok) const
-  {
-    return value().toInt(ok, 0);
-  }
-
-  QString AttributeString::asString(bool * const ok) const
+  QString AttributeString::asString(bool * const ok, Layer layer) const
   {
     if(ok) *ok = true;
-    return value().toUtf8().data();
+    return value(layer);
   }
 
   bool AttributeString::set(const QString & v, Layer layer, ValueUnit)

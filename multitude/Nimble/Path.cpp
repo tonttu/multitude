@@ -1,27 +1,17 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
 #include <Nimble/Path.hpp>
-
 #include <Nimble/Random.hpp>
 
-#ifdef WIN32
-#define _USE_MATH_DEFINES
-#include <math.h>
-#endif
-
+#include <cmath>
 #include <numeric>
 
 namespace {
@@ -58,26 +48,6 @@ namespace {
       if(t < 0 || t > LT) return false;
 
       return true;
-
-      /*
-      Nimble::Vector2f u = p1 - p0;
-      Nimble::Vector2f v = seg.p1 - seg.p0;
-      float d = v.x * u.y - v.y * u.x;
-
-      // Parallel?
-      if(fabs(d) < 1e-5) 
-        return false;
-
-      Nimble::Vector2f w = p0 - seg.p0;
-      
-      float s = v.x * w.y - v.y * w.x;
-      if(s < 0 || s > d) return false;
-
-      float t = u.x * w.y - u.y * w.x;
-      if(t < 0 || t > d) return false;
-
-      return true;
-*/
     }
 
   };
@@ -92,13 +62,13 @@ namespace {
     float maxDistSqr = 0;
     Segment segment = { points[beg], points[end] };
     Nimble::Vector2f u = segment.p1 - segment.p0;
-    float cu = Nimble::dot(u, u);
+    float cu = dot(u, u);
 
     // Find the point with the maximum distance to the segment
     for(int i = beg + 1; i < end; i++) {
       // Compute squared distance
       Nimble::Vector2f w = points[i] - segment.p0;
-      float cw = Nimble::dot(w, u);
+      float cw = dot(w, u);
 
       float dv2;
       if(cw <= 0) dv2 = (points[i] - segment.p0).lengthSqr();
@@ -218,25 +188,25 @@ namespace Nimble {
   // Just brute force
   bool Path::intersect(const Path & p1, const Nimble::Matrix3f & m1, const Path & p2, const Nimble::Matrix3f & m2)
   {
-    for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; i1++) {
+    for(container::const_iterator i1 = p1.m_points.begin(); i1 != p1.m_points.end() - 1; ++i1) {
 
-      Nimble::Vector2f v0 = *i1;
-      Nimble::Vector2f v1 = *(i1 + 1);
+      Nimble::Vector3f v0(*i1, 1);
+      Nimble::Vector3f v1(*(i1 + 1), 1);
 
-      v0 = (m1 * v0).vector2();
-      v1 = (m1 * v1).vector2();
+      v0 = (m1 * v0);
+      v1 = (m1 * v1);
 
-      Segment s1 = { v0, v1 };
+      Segment s1 = { v0.vector2(), v1.vector2() };
 
-      for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; i2++) {
+      for(container::const_iterator i2 = p2.m_points.begin(); i2 != p2.m_points.end() - 1; ++i2) {
 
-        Nimble::Vector2f w0 = *i2;
-        Nimble::Vector2f w1 = *(i2 + 1);
+        Nimble::Vector3f w0(*i2, 1);
+        Nimble::Vector3f w1(*(i2 + 1), 1);
 
-        w0 = (m2 * w0).vector2();
-        w1 = (m2 * w1).vector2();
+        w0 = (m2 * w0);
+        w1 = (m2 * w1);
 
-        Segment s2 = { w0, w1 };
+        Segment s2 = { w0.vector2(), w1.vector2() };
 
         if(s1.intersects(s2))
           return true;

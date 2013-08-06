@@ -1,28 +1,26 @@
 include(../multitude.pri)
 
-HEADERS += AudioTransfer.hpp
 HEADERS += Export.hpp
-HEADERS += ShowGL.hpp
 HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
-HEADERS += VideoInFFMPEG.hpp
-HEADERS += VideoIn.hpp
 
-SOURCES += AudioTransfer.cpp
-SOURCES += ShowGL.cpp
 SOURCES += SubTitles.cpp
-SOURCES += VideoIn.cpp
-SOURCES += VideoInFFMPEG.cpp
 
-unix:LIBS += $$MULTI_FFMPEG_LIBS
+HEADERS += AudioTransfer.hpp AVDecoder.hpp LibavDecoder.hpp MemoryPool.hpp
+SOURCES += AudioTransfer.cpp AVDecoder.cpp LibavDecoder.cpp
+
+LIBS += $$MULTI_FFMPEG_LIBS
 
 DEFINES += __STDC_CONSTANT_MACROS
 
 LIBS += $$LIB_RESONANT $$LIB_SCREENPLAY $$LIB_LUMINOUS $$LIB_NIMBLE
-LIBS += $$LIB_RADIANT $$LIB_POETIC $$LIB_OPENGL $$LIB_RESONANT
-LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_GLEW
+LIBS += $$LIB_RADIANT $$LIB_OPENGL $$LIB_RESONANT
+LIBS += $$LIB_PATTERNS $$LIB_VALUABLE
 
-macx:LIBS += -framework,OpenGL
+macx {
+  LIBS += -framework,OpenGL
+  PKGCONFIG += libavdevice
+}
 
 DEFINES += VIDEODISPLAY_EXPORT
 

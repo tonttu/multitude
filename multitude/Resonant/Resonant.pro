@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
-HEADERS += Application.hpp
+unix: PKGCONFIG += sndfile portaudio-2.0
+
 HEADERS += AudioFileHandler.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += AudioLoop_private.hpp
@@ -18,7 +19,6 @@ HEADERS += PulseAudioCore.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
-SOURCES += Application.cpp
 SOURCES += AudioFileHandler.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
@@ -36,21 +36,13 @@ SOURCES += SoundRectangle.cpp
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
 linux-*:LIBS += -lpulse
-unix:LIBS += -lportaudio -lsndfile
 
 include(../library.pri)
 
 DEFINES += RESONANT_EXPORT
 
-win32 {
-  win64 {
-    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-    INCLUDEPATH += ..\\Win64x\\include\\portaudio
-    LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
-  }
-  else {
-    QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\i386
-    INCLUDEPATH += ..\\Win32x\\include\\portaudio ..\\Win32x\\include\\libsndfile
-    LIBS += -llibsndfile-1 -lportaudio_x86
-  }
+win* {
+  QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
+  INCLUDEPATH += ..\\Win64x\\include\\portaudio
+  LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
 }

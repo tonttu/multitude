@@ -1,84 +1,82 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 #ifndef RADIANT_RESOURCE_LOCATOR_HPP
 #define RADIANT_RESOURCE_LOCATOR_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
+#include "Singleton.hpp"
 
 #include <QString>
+#include <QStringList>
 
 namespace Radiant
 {
 
-  /// Class for locating resources. Basically it searches for a given filename
-  /// through a set of paths and returns the first path that contains the given
-  /// file.
-
-  /// @todo Documentation, examples
+  /// This class provides resource location utilities. This class contains a
+  /// list of search paths that get searched for files whenever any Qt I/O
+  /// operation is performed. This includes QFile, QDir, QFileInfo, etc. Other I/O
+  /// APIs are not affected.
   class RADIANT_API ResourceLocator
   {
+    /// @cond
+
+    DECLARE_SINGLETON(ResourceLocator);
+
+    /// @endcond
+
     public:
+      /// Constructs a new ResourceLocator
       ResourceLocator();
+      /// Destroys the ResourceLocator
       ~ResourceLocator();
 
-      /// Character that separates paths.
-      static QString  separator;
+      /// This enum describes filtering options available to ResourceLocator;
+      /// e.g. for ResourceLocator::locate(). The filter value is specified by
+      /// combining values from the following list using bitwise OR operator:
+      enum Filter {
+          FILES     = (1 << 0)        ///< List files
+        , DIRS      = (1 << 1)        ///< List directories
+        , WRITEABLE = (1 << 2)        ///< List files which the application has write access. Must be combined with Dirs or Files.
+        , ALL_ENTRIES = FILES & DIRS   ///< List directories and files
+      };
 
-      /// Return the paths.
-      const QString & paths() const { return  m_paths; }
+      /// Get the defined search paths in the resource locator
+      /// @return list of search paths
+      const QStringList & searchPaths() const;
 
-      /** Add a path to the list to search though.
+      /// Add a search path
+      /// @param path path to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      void addSearchPath(const QString & path, bool inFront = false);
+      /// Add a list of search paths
+      /// @param paths paths to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      void addSearchPaths(const QStringList & paths, bool inFront = false);
 
-          @param path The directory path to be added to the search paths.
+      /// Locate a path. Returns a list of matching paths or an empty list if no matches are found.
+      /// @param path path to search for
+      /// @param filter filter the search results
+      /// @return list of matching paths or an empty list
+      /// @todo change second parameter to be a bitmask instead of single enum value
+      QStringList locate(const QString & path, Filter filter = ALL_ENTRIES) const;
 
-          @param front If true, then the new path is placed in front of the path list, and
-          future searches will start from it. Otherwise the new path is placed at the end
-          of the path list.
-       */
-      void addPath(const QString & path, bool front = false);
-      /** @copybrief addPath
-
-          @param module The name of the module for which we are looking for some data.
-
-          @param front If true, then the new path is placed in front of the path list, and
-          future searches will start from it. Otherwise the new path is placed at the end
-          of the path list.
-      **/
-      void addModuleDataPath(const QString & module, bool front = false);
-
-      /// Locate a file
-      QString locate(const QString & file) const;
-      /// Locate a directory
-      QString locateDirectory(const QString & dir) const;
-
-      /// Locate a directory
-      /// @return All directories found in search path with the matching name
-      QStringList locateDirectories(const QString & name) const;
-
-      /// Locate a file that can be written
-      QString locateWriteable(const QString & file) const;
-      /// Locate an existing file that can be written
-      QString locateOverWriteable(const QString & file) const;
-
-      /// Returns a ResourceLocator instance
-      static ResourceLocator & instance() { return s_instance; }
+      /// Add a search path, this function is mostly for JavaScript code
+      /// @param path path to add
+      /// @param inFront if true, add to the front of the search list; otherwise add to the end
+      /// @todo add shared_ptr support to JSWrapper
+      static void addDefaultSearchPath(const QString & path, bool inFront = false)
+      { instance()->addSearchPath(path, inFront); }
 
     private:
-      QString m_paths;
-
-      static ResourceLocator s_instance;
+      class D;
+      D * m_d;
   };
 
 }

@@ -1,4 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include "Platform.hpp"
@@ -124,12 +131,6 @@ namespace Radiant
     // disable CR-NL translation/mapping
     opts.c_iflag &= ~(INLCR | ICRNL);
     opts.c_oflag &= ~(OCRNL | ONLCR);
-
-#if 0
-    opts.c_iflag = (IGNBRK | IGNPAR);  /* Ignore break & parity errs */
-    opts.c_oflag = 0;                  /* Raw output, leave tabs alone */
-    opts.c_lflag = 0;              /* Raw input (no KILL, etc.), no echo */
-#endif
 
     if(tcsetattr(m_fd, TCSANOW, & opts) < 0) {
       Radiant::error("%s # Failed to set TTY parameters (%s)", fname, strerror(errno));

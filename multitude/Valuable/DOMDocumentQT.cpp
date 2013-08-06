@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -26,8 +21,6 @@
 
 namespace Valuable
 {
-  using namespace Radiant;
-
   struct DOMDocument::Wrapped {
     Wrapped() : x("mtdoc")
     {}
@@ -109,7 +102,7 @@ namespace Valuable
 
     if(!m_wrapped->x.setContent( & file, & errstr, & errline)) {
       file.close();
-      error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
+      Radiant::error("DOMDocument::readFromFile # Cannot read file %s, line %d: %s",
             filename.toUtf8().data(), errline, errstr.toUtf8().data());
       return false;
     }
@@ -124,7 +117,7 @@ namespace Valuable
     int errline = 0;
 
     if(!m_wrapped->x.setContent(buffer, &errstr, &errline)) {
-      error("DOMDocument::readFromMem # Cannot parse line %d: %s",
+      Radiant::error("DOMDocument::readFromMem # Cannot parse line %d: %s",
             errline, errstr.toUtf8().data());
       return false;
     }

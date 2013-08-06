@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -17,11 +12,13 @@
 #define LUMINOUS_CONTEXTVARIABLE_HPP
 
 #include "Collectable.hpp"
-#include "GLResources.hpp"
+#include "RenderContext.hpp"
+
+/// @cond
 
 namespace Luminous {
 
-  class GLResources;
+  class RenderContext;
 
   /// Template class for accessing per-context graphics resources
   /** The purpose of this class is to simplify the management of OpenGL resources,
@@ -34,25 +31,25 @@ namespace Luminous {
     virtual ~ContextVariableT() {}
     /// Gets a reference to the OpenGL resource
     /** Before calling this function you should have a valid OpenGL context, with
-        the right GLResources main object set for this thread.
+        the right RenderContext main object set for this thread.
 
         Since this function
-        gets a direct pointer to the GLResources object, it is slightly faster than
+        gets a direct pointer to the RenderContext object, it is slightly faster than
         the function without this argument.
 
         @param wasCreated true if the resource was created, false if it already existed
         @return Returns a reference to the OpenGL resource.
     */
-    inline T & ref(bool * wasCreated = 0)
+    inline T & ref(bool * wasCreated = 0) const
     {
       if(wasCreated)
         *wasCreated = false;
 
-      Luminous::GLResources * grs = Luminous::GLResources::getThreadResources();
-      T * obj = dynamic_cast<T *> (grs->getResource(this));
+      Luminous::RenderContext * ctx = Luminous::RenderContext::getThreadContext();
+      T * obj = dynamic_cast<T *> (ctx->getResource(this));
       if(!obj) {
-        obj = new T(grs);
-        grs->addResource(this, obj);
+        obj = new T(ctx);
+        ctx->addResource(this, obj);
 
         if(wasCreated)
           *wasCreated = true;
@@ -61,11 +58,19 @@ namespace Luminous {
       return *obj;
     }
 
-    /** @copydoc ref
-        @param rs Pointer to the OpenGL resource container
+    /// Gets a reference to the OpenGL resource
+    /** Before calling this function you should have a valid OpenGL context, with
+        the right RenderContext main object set for this thread.
+
+        Since this function
+        gets a direct pointer to the RenderContext object, it is slightly faster than
+        the function without this argument.
+
         @param wasCreated true if the resource was created, false if it already existed
-        */
-    inline T & ref(GLResources * rs, bool * wasCreated = 0)
+        @param rs Pointer to the OpenGL resource container
+        @return Returns a reference to the OpenGL resource.
+    */
+    inline T & ref(RenderContext * rs, bool * wasCreated = 0) const
     {
       if(!rs) {
         return ref(wasCreated);
@@ -89,5 +94,7 @@ namespace Luminous {
   };
 
 } // namespace
+
+/// @endcond
 
 #endif // CONTEXTVARIABLE_HPP

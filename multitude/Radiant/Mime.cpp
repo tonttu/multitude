@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
+ */
+
 #include "Mime.hpp"
 
 #include "Thread.hpp"
@@ -6,6 +16,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 #include <QStringList>
 #include <QSet>
@@ -24,13 +35,14 @@ namespace Radiant
 
   void MimeManager::initialize()
   {
-    MULTI_ONCE_BEGIN {
-      const QString filename = Radiant::ResourceLocator::instance().locate("Mime/mime.types");
-      if (filename.isEmpty()) {
+    MULTI_ONCE {
+      const QStringList filenames = Radiant::ResourceLocator::instance()->locate("Mime/mime.types");
+      if (filenames.isEmpty()) {
         Radiant::error("FileLoader : Could not find mime.types");
         return;
       }
 
+      const QString filename = filenames.front();
       std::ifstream fileStream(filename.toUtf8().data());
       if (!fileStream) {
         Radiant::info("FileLoader : Could not load mime.types");
@@ -61,7 +73,7 @@ namespace Radiant
           s_sharedExtensions.insert(std::make_pair(extensions[i], mimeType));
         }
       }
-    } MULTI_ONCE_END
+    }
   }
 
   MimeManager::MimeManager() {

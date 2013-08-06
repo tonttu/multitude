@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -32,6 +27,8 @@
 
 #include <QStringList>
 #include <QProcess>
+#include <QCoreApplication>
+#include <QTemporaryFile>
 
 namespace
 {
@@ -78,20 +75,14 @@ namespace Radiant
       return QString::fromUtf8(buf, len);
     }
 
+    int getProcessId()
+    {
+      return getpid();
+    }
+	
     QString getUserHomePath()
     {
       return QString::fromUtf8(getenv("HOME"));
-    }
-
-    QString getModuleGlobalDataPath(const char * module, bool isapplication)
-    {
-      (void) isapplication;
-
-      assert(strlen(module) < 128);
-      char buf[312];
-      sprintf(buf, "/usr/share/%s", module);
-
-      return buf;
     }
 
     QString getModuleUserDataPath(const char * module, bool isapplication)
@@ -104,15 +95,6 @@ namespace Radiant
       sprintf(buf, "%s/.%s", getUserHomePath().toUtf8().data(), module);
 
       return buf;
-    }
-
-    bool fileReadable(const char * filename)
-    {
-      FILE * f = fopen(filename, "r");
-      if(!f)
-        return false;
-      fclose(f);
-      return true;
     }
 
     void * openPlugin(const char * path)
@@ -146,14 +128,24 @@ namespace Radiant
       return uint64_t(vmrss) * pagesize;
     }
 
-    void setEnv(const char * name, const char * value)
+    QString getLibraryPath(const QString& libraryName)
     {
-      if(value)
-        setenv(name, value, 1);
-      else
-        unsetenv(name);
-    }
+      auto pid = QCoreApplication::applicationPid();
 
+      QTemporaryFile file;
+      if(!file.open()) {
+        Radiant::error("getLibraryPath # failed to create temporary file '%s'", file.fileName().toUtf8().data());
+        return QString();
+      }
+
+      const QString cmd = QString("grep %1 /proc/%2/maps | awk '{print $6}'| head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
+
+      if (system(cmd.toUtf8().data()) != 0)
+        Radiant::error("PlatformUtils::getLibraryPath # Failed to get library path for %s", libraryName.toUtf8().data());
+
+      return file.readAll().trimmed();
+    }
+    
     void openFirewallPortTCP(int port, const QString & name)
     {
     }
@@ -175,6 +167,7 @@ namespace Radiant
         return run("sudo", (QStringList() << "-n" << "--" << "shutdown" << "-h" << "-P" << "now")) == 0;
       }
     }
+
   }
 
 }

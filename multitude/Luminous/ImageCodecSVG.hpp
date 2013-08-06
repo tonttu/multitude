@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -30,16 +25,16 @@ class LUMINOUS_API ImageCodecSVG : public Luminous::ImageCodec
 public:
   ImageCodecSVG();
   virtual ~ImageCodecSVG();
-  virtual bool canRead(FILE * file);
+  virtual bool canRead(QFile & file) OVERRIDE;
 
-  virtual QString extensions() const;
-  virtual QString name() const;
-  virtual bool ping(ImageInfo & info, FILE * file);
-  virtual bool read(Image & image, FILE * file);
+  virtual QString extensions() const OVERRIDE;
+  virtual QString name() const OVERRIDE;
+  virtual bool ping(ImageInfo & info, QFile & file) OVERRIDE;
+  virtual bool read(Image & image, QFile & file) OVERRIDE;
   /// not supported
-  virtual bool write(const Image & image, FILE * file);
+  virtual bool write(const Image & image, QFile & file) OVERRIDE;
 private:
-  QSvgRenderer * updateSVG(FILE * file);
+  QSvgRenderer * updateSVG(QFile & file);
 };
 
 } // namespace Luminous

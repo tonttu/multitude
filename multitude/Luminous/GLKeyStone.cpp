@@ -1,8 +1,16 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/GLKeyStone.hpp>
+#include <Luminous/DummyOpenGL.hpp>
 
 #include <Valuable/DOMElement.hpp>
 #include <Nimble/Vector2.hpp>
@@ -14,7 +22,7 @@ namespace Luminous {
   using Nimble::Vector2;
   using Nimble::Vector4;
 
-  GLKeyStone::GLKeyStone(Node * host, const QString & name)
+  GLKeyStone::GLKeyStone(Node * host, const QByteArray & name)
   : Node(host, name, false),
   m_selected(0),
   m_rotations(this, "rotations", false, 0)
@@ -24,10 +32,10 @@ namespace Luminous {
     setVertex(2, 1, 1);
     setVertex(3, 0, 1);
 
-    addValue("v1", &m_vertices[0]);
-    addValue("v2", &m_vertices[1]);
-    addValue("v3", &m_vertices[2]);
-    addValue("v4", &m_vertices[3]);
+    addAttribute("v1", &m_vertices[0]);
+    addAttribute("v2", &m_vertices[1]);
+    addAttribute("v3", &m_vertices[2]);
+    addAttribute("v4", &m_vertices[3]);
 
     calculateMatrix();
   }
@@ -194,6 +202,7 @@ namespace Luminous {
 
   void GLKeyStone::cleanExterior() const
   {
+#ifdef LUMINOUS_OPENGL_FULL
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
@@ -204,7 +213,7 @@ namespace Luminous {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    gluOrtho2D(0, 1, 0, 1);
+    glOrtho(0, 1, 0, 1, -1, 1);
 
     glBegin(GL_TRIANGLE_STRIP);
 
@@ -224,6 +233,7 @@ namespace Luminous {
     glVertex2fv(closest(Nimble::Vector2(0, 0)).data());
 
     glEnd();
+#endif
   }
 
   Nimble::Vector2 GLKeyStone::closest(Nimble::Vector2 loc) const

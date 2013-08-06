@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Valuable.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Valuable.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -25,8 +20,6 @@
 
 namespace Valuable
 {
-  using namespace Radiant;
-
   struct DOMElement::Wrapped
   {
     QDomElement x;
@@ -45,6 +38,18 @@ namespace Valuable
       : m_wrapped(new Wrapped())
   {
     m_wrapped->x = that.m_wrapped->x;
+  }
+
+  DOMElement::DOMElement(DOMElement && that)
+    : m_wrapped(that.m_wrapped)
+  {
+    that.m_wrapped = nullptr;
+  }
+
+  DOMElement & DOMElement::operator=(DOMElement && that)
+  {
+    std::swap(m_wrapped, that.m_wrapped);
+    return *this;
   }
 
   DOMElement::~DOMElement()
@@ -69,6 +74,11 @@ namespace Valuable
       return QString();
     
     return m_wrapped->x.tagName();
+  }
+
+  void DOMElement::setTagName(const QString & name)
+  {
+    m_wrapped->x.setTagName(name);
   }
 
   void DOMElement::appendChild(const DOMElement & element)
@@ -138,7 +148,7 @@ namespace Valuable
   {
     NodeList nodes = getChildNodes();
     
-    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
       DOMElement e = *it;
       if(e.getTagName() == tagname)
         return e;
@@ -177,7 +187,7 @@ namespace Valuable
 
     fflush(f);
 
-    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); it++) {
+    for(NodeList::iterator it = nodes.begin(); it != nodes.end(); ++it) {
       addSpace(f, recursion);
       fprintf(f, "Child %d/%d\n", i, (int) nodes.size());
       (*it).dumpInfo(f, recursion + 1);
@@ -211,8 +221,7 @@ namespace Valuable
           return QString();
       }
 
-      QString tmp(m_wrapped->x.text().toUtf8().data());
-      return tmp;
+      return m_wrapped->x.text();
   }
 
   bool DOMElement::hasAttribute(const QString & name) const

@@ -1,16 +1,11 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in
- * file "LGPL.txt" that is distributed with this source package or obtained
- * from the GNU organization (www.gnu.org).
- *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ * 
  */
 
 
@@ -19,6 +14,7 @@
 
 #include <Radiant/Export.hpp>
 
+#include <QString>
 
 #define FNAME static const char * fname = __FUNCTION__
 
@@ -34,6 +30,7 @@ namespace Radiant {
     /// Useful information to all users.
     /** Info messages are printed out always. */
     INFO,
+    /// Something bad may or may not had happened
     WARNING,
     /// An error occurred
     FAILURE,
@@ -54,15 +51,16 @@ namespace Radiant {
       Radiant includes a series of functions to write debug output on the
       terminal.
 
-      The functions #info, #debug, #error and #fatal print output to the
+      The functions @ref info, @ref debug, @ref error and @ref fatal print output to the
       sceen in standardized format. The debug function only writes data to
-      the screen if verbose reporting is enabled with #enableVerboseOutput. These functions are
-      basically wrappers around printf.
+      the screen if verbose reporting is enabled with @ref enableVerboseOutput
+      (see also @ref MultiWidgets::Application::verbose). These functions are basically
+      wrappers around printf.
 
       The terminal output is protected by mutex lock so that multiple
       threads can write to the same terminal without producing corrupted
       output. This was also the reason why the output is done with
-      functions, rather than than std::cout etc. With the std streams one
+      functions, rather than std::cout etc. With the std streams one
       cannot organize a mutex lock around the text output, which easily
       results in corrupted (and rather useless) output.
 
@@ -70,6 +68,7 @@ namespace Radiant {
       @param msg message format string */
   RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
 
+  /// @copydoc trace
   RADIANT_API void traceMsg(Severity s, const char * msg);
 
   /// @copydoc trace
@@ -126,10 +125,11 @@ namespace Radiant {
       @param enable enable or disable messages
       @param module if given, enables or disables verbose output only for given module.
   */
-  RADIANT_API void enableVerboseOutput(bool enable, const char * module = 0);
-  /// Returns true if the #debug function output is displayed
+  RADIANT_API void enableVerboseOutput(bool enable, const QString & module = QString());
+  /// Returns true if the @ref debug function output is displayed
   RADIANT_API bool enabledVerboseOutput();
   /// Forces ANSI colors to the output even if the output isn't ANSI-capable terminal
+  /// @param enable Are the colors forced.
   RADIANT_API void forceColors(bool enable = true);
 
 
@@ -167,6 +167,36 @@ namespace Radiant {
   /// Uses the given file as the output target for all debug/error output.
   /// @param filename output filename
   RADIANT_API void setTraceFile(const char * filename);
+
+  /// This class provides an output stream for debugging information.
+  class Trace
+  {
+  public:
+    /// Constructor
+    /// @param severity severity of messages in this stream
+    inline Trace(Severity severity) : m_severity(severity) {}
+
+    /// Output message to the stream
+    /// @param s message to append
+    /// @return reference to this
+    inline Trace & operator<< (const QString & s) { trace(m_severity, "%s", s.toUtf8().data()); return *this; }
+
+  private:
+    Severity m_severity;
+  };
+
+  /// Obtain debug stream instance
+  /// @return debug stream
+  inline Trace debug() { return Trace(DEBUG); }
+  /// Obtain info stream instance
+  /// @return info stream
+  inline Trace info() { return Trace(INFO); }
+  /// Obtain warning stream instance
+  /// @return warning stream
+  inline Trace warning() { return Trace(WARNING); }
+  /// Obtain error stream instance
+  /// @return error stream
+  inline Trace error() { return Trace(FAILURE); }
 
 }
 

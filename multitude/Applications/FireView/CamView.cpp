@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Applications/FireView.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Applications/FireView.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -21,8 +16,8 @@
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/ColorUtils.hpp>
 
-#include <Luminous/Utils.hpp>
 #include <Luminous/PixelFormat.hpp>
+// #include <Luminous/DummyOpenGL.hpp>
 
 #include <Radiant/ImageConversion.hpp>
 #include <Radiant/StringUtils.hpp>
@@ -95,7 +90,7 @@ namespace FireView {
     m_continue = true;
     m_frameCount = 0;
 
-    m_lastCheckTime = Radiant::TimeStamp::getTime();
+    m_lastCheckTime = Radiant::TimeStamp::currentTime();
     m_lastCheckFrame = 0;
     m_lastCheckFps = 0;
 
@@ -137,13 +132,13 @@ namespace FireView {
 
     m_state = RUNNING;
 
-    Radiant::TimeStamp starttime(Radiant::TimeStamp::getTime());
+    Radiant::TimeStamp starttime(Radiant::TimeStamp::currentTime());
     Radiant::SleepSync sync;
     sync.resetTiming();
 
     debug("Capturing video");
 
-    m_lastCheckTime = Radiant::TimeStamp::getTime();
+    m_lastCheckTime = Radiant::TimeStamp::currentTime();
 
     while(m_continue) {
 
@@ -218,7 +213,7 @@ namespace FireView {
         m_camera->getFeatures( & m_features);
 
 
-      Radiant::TimeStamp now = Radiant::TimeStamp::getTime();
+      Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
       double dt = Radiant::TimeStamp(now - m_lastCheckTime).secondsD();
 
@@ -238,7 +233,7 @@ namespace FireView {
     // qDebug("CamView::InputThread::childLoop # DONE");
 
     float fps = m_frameCount /
-                Radiant::TimeStamp(Radiant::TimeStamp::getTime() - starttime).secondsD();
+                Radiant::TimeStamp(Radiant::TimeStamp::currentTime() - starttime).secondsD();
 
     m_frame.freeMemory();
 
@@ -430,7 +425,7 @@ namespace FireView {
 
   Nimble::Vector3f CamView::s_colorBalanceCoeffs(1.f, 1.f, 1.f);
 
-  CamView::CamView(QWidget * parent)
+  CamView::CamView(Luminous::RenderDriver & renderDriver, QWidget * parent)
       : QGLWidget(parent),
       m_tex(0),
       m_params(0),
@@ -442,7 +437,7 @@ namespace FireView {
       m_focusidx(0),
       m_peakidx(0),
       m_foo(300, 100, QImage::Format_ARGB32),
-      m_glrs(Radiant::ResourceLocator::instance())
+      m_context(renderDriver)
   {
     m_colorBalance.clear();
     m_chromaticity.clear();
@@ -451,7 +446,7 @@ namespace FireView {
 
     // QTimer::singleShot(1000, this, SLOT(locate()));
     connect( & m_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-    bzero(m_averages, sizeof(m_averages));
+    memset(m_averages, 0, sizeof(m_averages));
     setFocusPolicy(Qt::ClickFocus);
 
     // setAttribute(Qt::WA_DeleteOnClose, true);
@@ -613,12 +608,14 @@ namespace FireView {
 
   void CamView::paintGL()
   {
+#if 0
     // We must initialize GLEW for OpenGL to work
+
     Luminous::initLuminous(true);
 
     using Luminous::PixelFormat;
 
-    Luminous::GLResources::setThreadResources( & m_glrs, 0, 0);
+    Luminous::RenderContext::setThreadContext( & m_context);
 
     if(!m_tex)
       m_tex = new Luminous::Texture2D;
@@ -632,7 +629,7 @@ namespace FireView {
 
         if((m_tex->width()  != frame.width()) || (m_tex->height() != frame.height())) {
 
-          m_tex->loadBytes(GL_LUMINANCE, frame.width(), frame.height(), frame.m_planes[0].m_data, PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE), false);
+          m_tex->loadBytes(GL_RED, frame.width(), frame.height(), frame.m_planes[0].m_data, Luminous::PixelFormat::redUByte(), false);
 
         }
         else {
@@ -856,6 +853,7 @@ namespace FireView {
       Luminous::Utils::glGrayf(m_textColor);
       renderText(sp.x + 10, sp.y, m_text);
     }
+#endif
   }
 
   void CamView::grabImageLuminosity(int screenx, int screeny)

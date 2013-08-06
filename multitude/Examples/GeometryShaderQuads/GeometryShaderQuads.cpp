@@ -4,7 +4,7 @@
 #include <SDL/SDL.h>
 
 #include <Luminous/VertexBuffer.hpp>
-#include <Luminous/GLResources.hpp>
+#include <Luminous/RenderContext.hpp>
 #include <Luminous/Image.hpp>
 #include <Luminous/Shader.hpp>
 #include <Luminous/Utils.hpp>
@@ -49,8 +49,8 @@ int main(int /*argc*/, char ** /*argv*/)
 
   glViewport(0, 0, size.x, size.y);
 
-  Luminous::GLResources rsc(Radiant::ResourceLocator::instance());
-  Luminous::GLResources::setThreadResources( & rsc, 0, 0);
+  Luminous::RenderContext rsc;
+  Luminous::RenderContext::setThreadContext( & rsc);
 
   // Create the GLSL program, and load the various shaders into it
   Luminous::GLSLProgramObject prog;

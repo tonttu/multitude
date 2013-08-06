@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,18 +15,8 @@
 
 #include <Patterns/NotCopyable.hpp>
 
-// Required for __GLIBC__
-#include <cstdlib>
-
 #include <vector>
-
-#if defined(_MSC_VER)
-#include <intrin.h> // For _ReadBarrier/_WriteBarrier
-#endif
-
-#if defined(__APPLE__)
-#include <libkern/OSAtomic.h>
-#endif
+#include <cstdlib>
 
 namespace Radiant {
 
@@ -45,6 +30,7 @@ namespace Radiant {
     /// Construct a mutex
     /// @param recursive if true, create a recursive mutex
     Mutex(bool recursive = false);
+    /// Destructor
     ~Mutex();
 
     /// Lock the mutex    
@@ -97,9 +83,11 @@ namespace Radiant {
   class RADIANT_API Guard : public Patterns::NotCopyable
   {
   public:
-    /// Construct guard
+    /// Construct guard.
+    /// Locks the given mutex.
     /// @param mutex mutex to guard
     Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
+    /// Destructor, unlocks the associated mutex.
     ~Guard() { m_mutex.unlock(); }
 
   private:
@@ -146,7 +134,7 @@ namespace Radiant {
   class ReleaseGuard : public Patterns::NotCopyable
   {
   public:
-    /// Constructs a new guard
+    /// Constructs a new guard. Does not lock the given mutex.
     explicit ReleaseGuard(Mutex & mutex) : m_mutex(mutex) {}
     /// Unlocks the mutex
     ~ReleaseGuard() { m_mutex.unlock(); }
@@ -165,7 +153,8 @@ namespace Radiant {
  * Example usage:
  * @code
  *   void doStuff() {
- *     MULTI_ONCE(initializeStuff();)
+ *     MULTI_ONCE { initializeStuff(); }
+ *     // or MULTI_ONCE initializeStuff();
  *     useStuff();
  *   }
  * @endcode
@@ -173,69 +162,21 @@ namespace Radiant {
  * Another example:
  * @code
  *   void doStuff() {
- *     MULTI_ONCE_BEGIN
+ *     MULTI_ONCE {
  *       initializeStuff();
  *       initializeSomeMoreStuff();
  *       sentSend("initialized");
- *     MULTI_ONCE_END
+ *     }
  *     useStuff();
  *   }
  * @endcode
  */
-#ifdef __GLIBC__
 
-#define MULTI_ONCE_BEGIN                                          \
-  static bool s_multi_once = false;                               \
-  /* hardware memory barrier */                                   \
-  __sync_synchronize();                                           \
-  /* compiler memory barrier */                                   \
-  /** @todo is this implicit when using __sync_synchronize()? */  \
-  __asm __volatile ("":::"memory");                               \
-  if(!s_multi_once) {                                             \
-    Radiant::Guard g(Radiant::s_onceMutex);                       \
-    if(!s_multi_once) {
-#define MULTI_ONCE_END                                            \
-      __sync_synchronize();                                       \
-      __asm __volatile ("":::"memory");                           \
-      s_multi_once = true;                                        \
-    }                                                             \
-  }
-#elif defined(_MSC_VER)
-#define MULTI_ONCE_BEGIN                                          \
-  /* s_multi_once is volatile, so msvc won't reorder stuff */     \
-  static bool volatile s_multi_once = false;                      \
-  /* hardware memory barrier */                                   \
-  _ReadBarrier();                                                 \
-  if(!s_multi_once) {                                             \
-    Radiant::Guard g(Radiant::s_onceMutex);                       \
-    if(!s_multi_once) {
-#define MULTI_ONCE_END                                            \
-      _WriteBarrier();                                            \
-      s_multi_once = true;                                        \
-    }                                                             \
-  }
-#elif defined(__APPLE__)
-#define MULTI_ONCE_BEGIN                                          \
-  static bool s_multi_once = false;                               \
-  /* hardware memory barrier */                                   \
-  OSMemoryBarrier();                                              \
-  /* compiler memory barrier */                                   \
-  /** @todo is this implicit when using __sync_synchronize()? */  \
-  __asm __volatile ("":::"memory");                               \
-  if(!s_multi_once) {                                             \
-    Radiant::Guard g(Radiant::s_onceMutex);                       \
-    if(!s_multi_once) {
-#define MULTI_ONCE_END                                            \
-      OSMemoryBarrier();                                          \
-      __asm __volatile ("":::"memory");                           \
-      s_multi_once = true;                                        \
-    }                                                             \
-  }
-#endif
+#define MULTI_ONCE                                                \
+  static QAtomicInt s_multi_once = 0;                             \
+  if (!s_multi_once)                                              \
+    for (Radiant::Guard multi_once_guard_(Radiant::s_onceMutex);  \
+         !s_multi_once; s_multi_once = 1)
 
-#define MULTI_ONCE(code)                                          \
-  MULTI_ONCE_BEGIN                                                \
-    code                                                          \
-  MULTI_ONCE_END
 
 #endif

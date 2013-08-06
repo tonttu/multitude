@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -32,10 +27,10 @@ namespace Radiant {
   FrameRate closestFrameRate(float fps)
   {
     int best = 0;
-    float diff = Nimble::Math::Abs(fps - table[0]);
+    float diff = std::abs(fps - table[0]);
 
     for(int i = 0; i < FPS_COUNT; i++) {
-      float diff2 = Nimble::Math::Abs(fps - table[i]);
+      float diff2 = std::abs(fps - table[i]);
       if(diff > diff2) {
 	diff = diff2;
 	best = i;

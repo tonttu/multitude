@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -37,23 +32,18 @@
 
 namespace Radiant {
 
-  WatchDog * WatchDog::m_instance = 0;
-
   WatchDog::WatchDog()
     : Radiant::Thread("Watchdog")
     , m_continue(true)
     , m_intervalSeconds(60.0f)
     , m_paused(false)
   {
-    if(!m_instance)
-      m_instance = this;
+    run();
   }
 
   WatchDog::~WatchDog()
   {
     stop();
-    if(m_instance == this)
-      m_instance = 0;
   }
 
   void WatchDog::hostIsAlive(void * key, const QByteArray & name)
@@ -75,8 +65,6 @@ namespace Radiant {
 
   void WatchDog::childLoop()
   {
-    m_continue = true;
-
     while(m_continue) {
       int n = (int) ceilf(m_intervalSeconds * 10.0f);
 
@@ -89,13 +77,13 @@ namespace Radiant {
       /* A single long sleep might get interrupted by system calls and
 	 return early. The method below should be more robust. */
 
-      for(int i = 0; i < n && m_continue; i++)
+      for(int i = 0; i < n && m_continue && !m_paused; i++)
         Radiant::Sleep::sleepMs(100);
 
       QStringList errorItems;
       {
         Radiant::Guard g(m_mutex);
-        for(container::iterator it = m_items.begin(); it != m_items.end(); it++) {
+        for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
           Item & item = it->second;
           if(item.m_check == false)
             errorItems << QString::fromUtf8(item.m_name);
@@ -105,6 +93,8 @@ namespace Radiant {
       }
 
       if(!errorItems.isEmpty() && m_continue) {
+        continue;
+
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
               "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
               "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
@@ -129,7 +119,7 @@ namespace Radiant {
           // If there isn't any fancy core naming rule,
           // put the core in /tmp/core-timestamp directory
           if(strcmp(buffer, "core") == 0) {
-            DateTime dt(TimeStamp::getTime());
+            DateTime dt(TimeStamp::currentTime());
             char filename[255];
             sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
             mkdir(filename, 0700);
@@ -166,13 +156,9 @@ namespace Radiant {
       return;
 
     m_continue = false;
-    if(isRunning())
-      waitEnd();
+    while(isRunning())
+      waitEnd(100);
   }
 
-  WatchDog * WatchDog::instance()
-  {
-    return m_instance;
-  }
-
+  DEFINE_SINGLETON(WatchDog);
 }

@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -32,8 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-
 
 #define FRAMES_PER_BUFFER 128
 
@@ -123,8 +116,22 @@ namespace Resonant {
 
       s.outParams.device = Pa_GetDefaultOutputDevice();
       if(s.outParams.device == paNoDevice) {
-        Radiant::error("AudioLoop::startReadWrite # No default output device available");
-        return false;
+        for (int i = 0; i < Pa_GetDeviceCount();++ i) {
+          const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
+          if (QByteArray("default") == info->name) {
+            s.outParams.device = i;
+            break;
+          }
+        }
+
+        if (s.outParams.device == paNoDevice) {
+          if (Pa_GetDeviceCount() > 0) {
+            s.outParams.device = 0;
+          } else {
+            Radiant::error("AudioLoop::startReadWrite # No default output device available");
+            return false;
+          }
+        }
       }
 
       devices.push_back(Device("", channels));
@@ -195,7 +202,7 @@ namespace Resonant {
         }
       }
 
-      // int minchans = Nimble::Math::Min(info->maxInputChannels, info->maxOutputChannels);
+      // int minchans = std::min(info->maxInputChannels, info->maxOutputChannels);
       int minchans = info->maxOutputChannels;
 
       if(forcechans > 0) {
@@ -298,14 +305,19 @@ namespace Resonant {
 
   int AudioLoop::AudioLoopInternal::paCallback(const void *in, void *out,
                 unsigned long framesPerBuffer,
-                const PaStreamCallbackTimeInfo * /*time*/,
-                PaStreamCallbackFlags /*status*/,
+                const PaStreamCallbackTimeInfo * time,
+                PaStreamCallbackFlags status,
                 void * self)
   {
     std::pair<AudioLoop*, int> stream = *reinterpret_cast<std::pair<AudioLoop*, int>*>(self);
 
-    int r = stream.first->callback(in, out, framesPerBuffer, stream.second /*, time, status*/);
-    return stream.first->m_isRunning ? r : paComplete;
+    if(stream.first->m_isRunning) {
+      int r = stream.first->callback(in, out, framesPerBuffer, stream.second, *time, status);
+      return stream.first->m_isRunning ? r : paComplete;
+    }
+    else {
+      return paComplete;
+    }
   }
 
   void AudioLoop::AudioLoopInternal::paFinished(void * self)

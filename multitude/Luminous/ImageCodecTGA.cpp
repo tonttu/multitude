@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -30,7 +25,7 @@ namespace Luminous
     unsigned char colormapType;
     unsigned char imageType;
 
-    unsigned char ignored[5]; 
+    unsigned char ignored[5];
 
     unsigned char xStartLo;
     unsigned char xStartHi;
@@ -49,20 +44,20 @@ namespace Luminous
   ImageCodecTGA::~ImageCodecTGA()
   {}
 
-  bool ImageCodecTGA::canRead(FILE * file)
-  {    
+  bool ImageCodecTGA::canRead(QFile & file)
+  {
     TGAHeader header;
 
-    long pos = ftell(file);
+    long pos = file.pos();
 
-    size_t r = fread(&header, sizeof(TGAHeader), 1, file);
-    if(r != 1) return false;
+    auto bytesRead = file.read(reinterpret_cast<char *>(&header), sizeof(TGAHeader));
+    file.seek(pos);
+    if(bytesRead != sizeof(TGAHeader)) return false;
 
     int w = header.widthLo + (header.widthHi << 8);
     int h = header.heightLo + (header.heightHi << 8);
     int bpp = header.bpp;
 
-    fseek(file, pos, SEEK_SET);
 
     // Check image type
     bool ok = false;
@@ -89,13 +84,14 @@ namespace Luminous
   {
     return QString("targa");
   }
-  
-  bool ImageCodecTGA::ping(ImageInfo & info, FILE * file)
+
+  bool ImageCodecTGA::ping(ImageInfo & info, QFile & file)
   {
     TGAHeader header;
-
-    size_t r = fread(&header, sizeof(TGAHeader), 1, file);
-    if(r != 1) return false;
+    auto pos = file.pos();
+    auto bytesRead = file.read(reinterpret_cast<char *>(&header), sizeof(TGAHeader));
+    file.seek(pos);
+    if(bytesRead != sizeof(TGAHeader)) return false;
 
     info.width = header.widthLo + (header.widthHi << 8);
     info.height = header.heightLo + (header.heightHi << 8);
@@ -109,25 +105,23 @@ namespace Luminous
         info.pf = PixelFormat(PixelFormat::LAYOUT_BGR, PixelFormat::TYPE_UBYTE);
         break;
       case 1:
-        info.pf = PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE);
+        info.pf = PixelFormat(PixelFormat::LAYOUT_RED, PixelFormat::TYPE_UBYTE);
         break;
       default:
         Radiant::error("Image::readTGAHeader # unsupported bit depth (%d)", header.bpp);
         return false;
     };
-
     return true;
   }
 
-  bool ImageCodecTGA::read(Image & image, FILE * file) 
+  bool ImageCodecTGA::read(Image & image, QFile & file)
   {
     TGAHeader header;
-
     // Read header
-    size_t r = fread(&header, sizeof(TGAHeader), 1, file);
-    if(r != 1) {
+    auto bytesRead = file.read(reinterpret_cast<char *>(&header), sizeof(TGAHeader));
+    if (bytesRead != sizeof(TGAHeader)) {
       Radiant::error("ImageCodecTGA::read # failed to read image header");
-	    return false;
+      return false;
     }
 
     // Check image type
@@ -139,13 +133,13 @@ namespace Luminous
       case 10:  // RGB+RLE
       case 11:  // Grayscale+RLE
         typeGood = true;
-    };  
+    };
 
-    int width = header.widthLo + (header.widthHi << 8);
-    int height = header.heightLo + (header.heightHi << 8);
-    size_t bytesPerPixel = (header.bpp >> 3);
+    const int width = header.widthLo + (header.widthHi << 8);
+    const int height = header.heightLo + (header.heightHi << 8);
+    const int bytesPerPixel = (header.bpp >> 3);
 
-    if(!typeGood || width == 0 || height == 0) 
+    if(!typeGood || width == 0 || height == 0)
       return false;
 
     // Choose pixel format
@@ -158,14 +152,14 @@ namespace Luminous
         pf = PixelFormat(PixelFormat::LAYOUT_BGR, PixelFormat::TYPE_UBYTE);
         break;
       case 1:
-        pf = PixelFormat(PixelFormat::LAYOUT_LUMINANCE, PixelFormat::TYPE_UBYTE);
+        pf = PixelFormat(PixelFormat::LAYOUT_RED, PixelFormat::TYPE_UBYTE);
         break;
       default:
         Radiant::error("ImageCodecTGA::read # unsupported bit depth (%d)", header.bpp);
         return false;
     };
 
-    Radiant::trace(Radiant::INFO, "W %d H %d", width, height);
+    // Radiant::trace(Radiant::INFO, "W %d H %d", width, height);
 
     // Allocate memory
     image.allocate(width, height, pf);
@@ -173,13 +167,14 @@ namespace Luminous
     unsigned int size = (unsigned) (width * height * bytesPerPixel);
 
     // Skip the ident field if present
-    if(header.identSize > 0) 
-      fseek(file, header.identSize, SEEK_CUR);
+    if(header.identSize > 0)
+      file.seek( file.pos() + header.identSize);
 
     if(header.imageType == 2 || header.imageType == 3) {
 
       // Uncompressed image
-      if(fread(image.bytes(), size, 1, file) != 1) {
+      auto bytesRead = file.read(reinterpret_cast<char *>(image.bytes()), size);
+      if (bytesRead != size) {
         Radiant::error("ImageCodecTGA::read # failed to read uncompressed pixel data");
         return false;
       }
@@ -190,11 +185,12 @@ namespace Luminous
       int pixels = width * height;
       int currentPixel = 0;
       size_t currentByte = 0;
-      unsigned char * pixel = new unsigned char [bytesPerPixel];      
+      unsigned char * pixel = new unsigned char [bytesPerPixel];
 
       do {
         unsigned char chunkHeader = 0;
-        if(fread(&chunkHeader, 1, 1, file) != 1) {
+        auto bytesRead = file.read(reinterpret_cast<char *>(&chunkHeader), 1);
+        if (bytesRead != 1) {
           Radiant::error("ImageCodecTGA::read # failed to read compressed chunk header");
           return false;
         }
@@ -204,7 +200,8 @@ namespace Luminous
 
           for(int i = 0; i < chunkHeader; i++) {
             unsigned char * dst = image.bytes() + currentByte;
-            if(fread(dst, bytesPerPixel, 1, file) != 1) {
+            auto bytesRead = file.read(reinterpret_cast<char *>(dst), bytesPerPixel);
+            if(bytesRead != bytesPerPixel) {
               Radiant::error("ImageCodecTGA::read # failed to read pixel data");
               return false;
             }
@@ -214,8 +211,8 @@ namespace Luminous
           }
         } else {
           chunkHeader -= 127;
-
-          if(fread(pixel, 1, bytesPerPixel, file) != bytesPerPixel) {
+          auto bytesRead = file.read(reinterpret_cast<char *>(pixel), bytesPerPixel);
+          if(bytesRead != bytesPerPixel) {
             Radiant::error("ImageCodecTGA::read # failed to read pixel data");
             return false;
           }
@@ -232,7 +229,7 @@ namespace Luminous
 
       delete[] pixel;
     }
-  
+
     // Check flip bit
 //    if(header.descriptor & (1 << 5))
 //      flipVertical();
@@ -241,7 +238,7 @@ namespace Luminous
 
   }
 
-  bool ImageCodecTGA::write(const Image & image, FILE * file)
+  bool ImageCodecTGA::write(const Image & image, QFile & file)
   {
     // Fill the header
     TGAHeader header;
@@ -265,7 +262,8 @@ namespace Luminous
       case PixelFormat::LAYOUT_BGRA:
         header.imageType = 2;
         break;
-      case PixelFormat::LAYOUT_LUMINANCE:
+      case PixelFormat::LAYOUT_RED:
+      case PixelFormat::LAYOUT_ALPHA:
         header.imageType = 3;
         break;
       default:
@@ -278,14 +276,16 @@ namespace Luminous
     header.heightLo = static_cast<unsigned char> (image.height() & 0x00FF);
     header.heightHi = static_cast<unsigned char> ((image.height() >> 8) & 0xFF);
     header.bpp = static_cast<unsigned char> (image.pixelFormat().numChannels() << 3);
+    /// flip y
+    header.descriptor |= (1 << 5);
 
     // Write header
-    fwrite(&header, sizeof(TGAHeader), 1, file);
+    file.write(reinterpret_cast<const char*>(&header), sizeof(TGAHeader));
 
     // Write data
     if(!reverse) {
       int size = image.width() * image.height() * image.pixelFormat().numChannels();
-      fwrite(image.bytes(), 1, size, file);
+      file.write(reinterpret_cast<const char*>(image.bytes()), size);
     } else {
 
       int pixels = image.width() * image.height();
@@ -301,7 +301,7 @@ namespace Luminous
         pixel[0] = image.bytes()[currentByte + 2];
         pixel[2] = image.bytes()[currentByte + 0];
 
-        fwrite(pixel, 1, bytesPerPixel, file);
+        file.write(reinterpret_cast<const char*>(pixel), bytesPerPixel);
 
         currentPixel++;
         currentByte += bytesPerPixel;

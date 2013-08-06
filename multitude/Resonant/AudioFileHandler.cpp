@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -26,18 +21,15 @@
 #endif
 
 #include <string.h>
-#include <strings.h>
 
 #include <cassert>
 
 namespace Resonant {
   
-  using namespace Radiant;
-  
   AudioFileHandler::Handle::Handle
   (AudioFileHandler * host, 
    const char * filename, 
-   IoMode mode, 
+   Radiant::IoMode mode, 
    long startFrame, 
    Radiant::AudioSampleFormat userFormat)
     : m_host(host),
@@ -53,7 +45,7 @@ namespace Resonant {
       m_userDone(false)
   {
     m_info = new SF_INFO();
-    bzero( m_info, sizeof(SF_INFO));
+    memset( m_info, 0, sizeof(SF_INFO));
   }
 
   AudioFileHandler::Handle::~Handle()
@@ -158,7 +150,7 @@ namespace Resonant {
     m_ready = false;
   }
 
-  bool AudioFileHandler::Handle::isReady()
+  bool AudioFileHandler::Handle::isReady() const
   {
     return m_ready && m_rewindTo < 0;
   }
@@ -173,7 +165,7 @@ namespace Resonant {
 
       // puts("Closing the file");
 
-      if(m_status == OPEN_DONE && m_ioMode == IO_OUTPUT)
+      if(m_status == OPEN_DONE && m_ioMode == Radiant::IO_OUTPUT)
 	flushWrite();
       
       close();
@@ -193,7 +185,7 @@ namespace Resonant {
     }
     else if(m_status == OPEN_DONE) {
 
-      if(m_ioMode == IO_INPUT) {
+      if(m_ioMode == Radiant::IO_INPUT) {
 
 	if(m_rewindTo >= 0) {
 	  moveReadHead(m_rewindTo);
@@ -228,7 +220,7 @@ namespace Resonant {
   {
     close();
 
-    int mode = (m_ioMode == IO_INPUT) ? SFM_READ : SFM_WRITE;
+    int mode = (m_ioMode == Radiant::IO_INPUT) ? SFM_READ : SFM_WRITE;
 
     m_file = sf_open(m_fileName.toUtf8().data(), mode, m_info);
 
@@ -243,7 +235,7 @@ namespace Resonant {
     m_data.resize(buffersamples);
 
     if(!m_data.empty())
-      bzero( & m_data[0], buffersamples * sizeof(float));
+      memset( & m_data[0], 0, buffersamples * sizeof(float));
 
     m_fileFrames = 0;
     m_userFrames = 0;
@@ -349,7 +341,7 @@ namespace Resonant {
     m_fileName.toUtf8().data(), frame);
 
     if(!m_data.empty() && clear)
-      bzero( & m_data[0], m_data.size() * sizeof(float));
+      memset( & m_data[0], 0, m_data.size() * sizeof(float));
 
     if(sf_seek(m_file, frame, SEEK_SET) != frame) {
 		Radiant::error("AudioFileHandler::Handle::moveReadHead");
@@ -372,7 +364,8 @@ namespace Resonant {
   AudioFileHandler * AudioFileHandler::m_instance = 0;
 
   AudioFileHandler::AudioFileHandler()
-    : m_done(true)
+    : Thread("AudioFileHandler")
+    , m_done(true)
   {
     if(!m_instance)
       m_instance = this;
@@ -393,7 +386,7 @@ namespace Resonant {
     assert(this);
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
-    Handle * h = new Handle(this, filename, IO_INPUT, startFrame, userFormat);
+    Handle * h = new Handle(this, filename, Radiant::IO_INPUT, startFrame, userFormat);
 
     Radiant::Guard g(m_filesMutex);
     m_files.push_back(h);
@@ -420,7 +413,7 @@ namespace Resonant {
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
 
-    Handle * h = new Handle(this, filename, IO_OUTPUT, 0, userFormat);
+    Handle * h = new Handle(this, filename, Radiant::IO_OUTPUT, 0, userFormat);
 
     h->m_info->channels   = channels;
     h->m_info->samplerate = samplerate;
@@ -471,7 +464,7 @@ namespace Resonant {
 
   bool AudioFileHandler::getInfo(const char * filename, SF_INFO * info)
   {
-    bzero(info, sizeof(SF_INFO));
+    memset(info, 0, sizeof(SF_INFO));
 
     SNDFILE * file = sf_open(filename, SFM_READ, info);
 
@@ -499,12 +492,12 @@ namespace Resonant {
 
     while(!m_done) {
       if(!update()) {
-        Sleep::sleepMs(20);
+        Radiant::Sleep::sleepMs(20);
       }
     }
 
     Radiant::Guard g(m_filesMutex);
-    for(iterator it = m_files.begin(); it != m_files.end(); it++) {
+    for(iterator it = m_files.begin(); it != m_files.end(); ++it) {
       Handle * h = (*it);
       h->m_userDone = true;
       h->update();
@@ -534,7 +527,7 @@ namespace Resonant {
           delete h;
           it = m_files.erase(it);
         } else
-          it++;
+          ++it;
       }
     }
 

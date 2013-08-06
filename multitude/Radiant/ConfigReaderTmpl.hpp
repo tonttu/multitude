@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -23,7 +18,7 @@ namespace Radiant {
   template <class T>
   int ChunkT<T>::numberOf(const QString & id) const
   {
-    const_iterator it = m_variants.find(id);
+    auto it = m_variants.find(id);
     if(it == m_variants.end())
       return 0;
 
@@ -37,7 +32,7 @@ namespace Radiant {
   template <class T>
   T ChunkT<T>::get(const QString &id) const
   {
-    const_iterator it = m_variants.find(id);
+    auto it = m_variants.find(id);
     if(it != m_variants.end())
     return (*it).second;
 
@@ -48,7 +43,7 @@ namespace Radiant {
   T ChunkT<T>::get(const QString &id,
                    const QString &alternateId) const
   {
-    const_iterator it = m_variants.find(id);
+    auto it = m_variants.find(id);
     if(it != m_variants.end())
       return (*it).second;
 
@@ -78,15 +73,15 @@ namespace Radiant {
   template <class T>
   void ChunkT<T>::addChunk(const QString & name, const ChunkT<T> &v)
   {
-    m_chunks.insert(std::make_pair(name, v));
+    m_chunks->insert(std::make_pair(name, v));
   }
 
   template <class T>
   const ChunkT<T> & ChunkT<T>::getChunk(const QString &id) const
   {
     static ChunkT<T> empty;
-    const_chunk_iterator it = m_chunks.find(id);
-    if (it == m_chunks.end())
+    auto it = m_chunks->find(id);
+    if (it == m_chunks->end())
       return empty;
     else
       return it->second;
@@ -102,7 +97,7 @@ namespace Radiant {
   template <class T>
   void ChunkT<T>::override(const QString & name, const T &v)
   { 
-    iterator it;
+    typename std::multimap<QString, T>::iterator it;
     while((it = m_variants.find(name)) != m_variants.end())
       m_variants.erase(it);
     m_variants.insert(std::pair<QString, T>(name, v));
@@ -112,13 +107,13 @@ namespace Radiant {
   void ChunkT<T>::dump(std::ostream& os, int indent) const
   {
     QString ws(indent, ' ');
-    for(const_chunk_iterator it = chunkBegin(); it != chunkEnd(); ++it) {
+    for(auto it = m_chunks->begin(); it != m_chunks->end(); ++it) {
       os << ws << it->first << " {\n";
       it->second.dump(os, indent+2);
       os << ws << "}\n";
     }
 
-    for(const_iterator it = m_variants.begin();it != m_variants.end(); it++) {
+    for(const_iterator it = m_variants.begin();it != m_variants.end(); ++it) {
       os << ws << (*it).first << " {\n";
       (*it).second.dump(os, indent+2);
       os << ws << "}\n\n";

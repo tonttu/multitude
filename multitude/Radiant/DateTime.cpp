@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Radiant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Radiant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -18,7 +13,6 @@
 #include <cassert>
 
 #include <string.h>
-#include <strings.h>
 
 #ifndef WIN32
 #include <sys/time.h>
@@ -63,7 +57,7 @@ namespace Radiant {
     m_second   = tms.tm_sec;
     m_summerTime = (tms.tm_isdst == 0) ? false : true;
 
-    TimeStamp fract = t.fractions();
+    TimeStamp fract = TimeStamp(t.fractions());
     m_microsecond = fract.secondsD() * 1000000.0;
   }
 
@@ -109,7 +103,7 @@ namespace Radiant {
       if(s.length() < 8)
         return false;
 
-      QRegExp r("^(\\d{4}).(\\d{2}).(\\d{4})");
+      QRegExp r("^(\\d{4}).?(\\d{2}).?(\\d{2})");
       if(r.indexIn(s) >= 0) {
         int m = r.cap(2).toInt() - 1;
         int d = r.cap(3).toInt() - 1;
@@ -120,22 +114,26 @@ namespace Radiant {
         m_monthDay = d;
       } else return false;
     } else {
-      if(s.length() < 19)
+      if(s.length() < 14)
         return false;
 
-      QRegExp r("^(\\d{2}).(\\d{2}).(\\d{4}).(\\d{4}).(\\d{4}).(\\d{4})");
+      QRegExp r("^(\\d{4}).?(\\d{2}).?(\\d{2}).?(\\d{2}).?(\\d{2}).?(\\d{2})");
       if(r.indexIn(s) >= 0) {
         int m = r.cap(2).toInt() - 1;
-        int d = r.cap(1).toInt() - 1;
-        if(m >= 12 || d >= 31 || m < 0 || d < 0) return false;
+        int d = r.cap(3).toInt() - 1;
+        int h = r.cap(4).toInt();
+        int min = r.cap(5).toInt();
+        int sec = r.cap(6).toInt();
+        if(m >= 12 || d >= 31 || m < 0 || d < 0 || h > 23 || min > 59 || sec > 59)
+          return false;
 
-        m_year  = r.cap(3).toInt();
+        m_year  = r.cap(1).toInt();
         m_month = m;
         m_monthDay = d;
 
-        m_hour = r.cap(4).toInt();
-        m_minute = r.cap(5).toInt();
-        m_second = r.cap(6).toInt();
+        m_hour = h;
+        m_minute = min;
+        m_second = sec;
         m_microsecond = 0;
         m_summerTime = false;
       } else return false;
@@ -155,9 +153,16 @@ namespace Radiant {
 
     int days = table[month];
     if(month == 1) {
-      // February
-      if((year & 0x3) == 0)
+      // February      
+      if ( year % 400 == 0) {
         days = 29;
+      }
+      else if ( year % 100 == 0) {
+        ;
+      }
+      else if (year % 4 == 0) {
+        days = 29;
+      }
     }
 
     return days;
@@ -172,7 +177,7 @@ namespace Radiant {
   {
     struct tm tms;
 
-    bzero( & tms, sizeof(tms));
+    memset( & tms, 0, sizeof(tms));
 
     tms.tm_year = m_year - 1900;
     tms.tm_mon  = m_month;
@@ -184,9 +189,7 @@ namespace Radiant {
     tms.tm_isdst= m_summerTime;
     time_t tval = mktime(&tms);
 
-    //trace("tval as ctime = %s (%d %d %d)", ctime( & tval), year, month, day);
-
-    return TimeStamp(tval * TimeStamp::ticksPerSecond());
+    return TimeStamp(tval * TimeStamp::ticksPerSecond().value());
   }
 
   void DateTime::print(char * buf, bool isotime)

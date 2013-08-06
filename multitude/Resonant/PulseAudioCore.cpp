@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Resonant.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Resonant.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -33,11 +28,10 @@
 
 namespace
 {
-  using namespace Resonant;
   void s_moduleInfoCb(pa_context * c, const pa_module_info * i, int eol, void * self)
   {
     if(c && self) {
-      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      Resonant::PulseAudioCleaner * pac = static_cast<Resonant::PulseAudioCleaner*>(self);
       if(pac->context() == c) {
         pac->moduleInfo(i, eol);
       }
@@ -47,7 +41,7 @@ namespace
   void s_unloadSuccessCb(pa_context * c, int /*success*/, void * self)
   {
     if(c && self) {
-      PulseAudioCleaner * pac = static_cast<PulseAudioCleaner*>(self);
+      Resonant::PulseAudioCleaner * pac = static_cast<Resonant::PulseAudioCleaner*>(self);
       if(pac->context() == c) {
         pac->ready();
       }

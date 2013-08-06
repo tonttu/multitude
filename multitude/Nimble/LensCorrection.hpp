@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -20,9 +15,6 @@
 #include "Vector4.hpp"
 
 namespace Nimble {
-
-  using Nimble::Vector2;
-  using Nimble::Vector4;
 
   /// Camera distortion correction
   /** Correct camera lens distortion. Uses simple and fast polynomial
@@ -48,7 +40,7 @@ namespace Nimble {
     void setCameraResolution(int w, int h);
 
     /// Performs barrel distortion correction on the given vector
-    Vector2 correct(Vector2 loc) const;
+    Nimble::Vector2f correct(Vector2 loc) const;
 
     /// Set the correction mapping to identity
     void setIdentity()
@@ -77,7 +69,7 @@ namespace Nimble {
 
   private:
 
-    Vector2 m_center;
+    Nimble::Vector2f m_center;
     float   m_radiusInv;
     Vector4 m_params;
   };

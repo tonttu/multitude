@@ -61,7 +61,7 @@ int main(int argc, char ** argv)
 
     player->setId("myplayer");
     player->createAmbientBackground(directory, 1.0f);
-    player->processMessageInt("channels", 2);
+    player->eventProcessInt("channels", 2);
 
     Resonant::DSPNetwork::Item playerItem;
     playerItem.setModule(player);

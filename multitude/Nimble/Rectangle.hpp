@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Nimble.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Nimble.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -19,8 +14,9 @@
 #include "Export.hpp"
 #include "Vector2.hpp"
 #include "Matrix3.hpp"
+#include "Rect.hpp"
 
-#include <vector>
+#include <array>
 
 namespace Nimble {
 
@@ -44,17 +40,21 @@ namespace Nimble {
       /// Constructs a new rectangle
       /// @param size size (width & height) of the rectangle
       /// @param m transformation matrix defining the center of the rectangle
-      Rectangle(Nimble::Vector2f size, const Nimble::Matrix3 & m);
+      Rectangle(Nimble::SizeF size, const Nimble::Matrix3 & m);
+
+      /// Construct a copy of the given rectangle
+      /// @param rect rectangle to copy
+      Rectangle(const Nimble::Rectf & rect);
 
       /// Test if a point is inside the rectangle
       /// @param p point to test
       /// @return true if p is inside or on the rectangle
-      bool inside(Nimble::Vector2f p) const;
+      bool isInside(Nimble::Vector2f p) const;
 
       /// Test if an another rectangle is fully inside this rectangle
       /// @param r rectangle to test
       /// @return true if r is fully inside or on the rectangle
-      bool inside(const Nimble::Rectangle & r) const;
+      bool isInside(const Nimble::Rectangle & r) const;
 
       /// Test if two rectangles intersect
       /// @param r rectangle to test
@@ -73,11 +73,11 @@ namespace Nimble {
       float extent1() const { return m_extent1; }
 
       /// Return the size of the rectangle
-      Nimble::Vector2 size() const;
+      Nimble::SizeF size() const;
 
-      /// Computes the corner vertices of the rectangle and appends the to the given vector
+      /// Computes the corner vertices of the rectangle and appends the to the given array
       /// @param corners vector of points where the four corners are appended
-      void computeCorners(std::vector<Nimble::Vector2f> & corners) const;
+      void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const;
 
       /// Returns a rectangle that contains the two given rectangles. The
       /// result is not guaranteed to be the smallest rectangle containing the
@@ -91,6 +91,10 @@ namespace Nimble {
       /// orthogonal, the results are undefined.
       /// @param m transformation matrix
       void transform(const Nimble::Matrix3 & m);
+
+      /// Get the axis-aligned bounding box of this rectangle.
+      /// @return axis-aligned bounding box
+      Nimble::Rect boundingBox() const;
 
     private:
       Nimble::Vector2f m_origin;

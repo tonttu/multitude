@@ -82,7 +82,7 @@ int main(int argc, char ** argv)
   control.writeInt32(2);
   control.rewind();
 
-  item.module()->processMessage("channels", & control);
+  item.module()->eventProcess("channels", & control);
   
   dsp->addModule(item);
 

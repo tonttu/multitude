@@ -1,15 +1,10 @@
-/* COPYRIGHT
+/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+ * and others.
  *
- * This file is part of Luminous.
- *
- * Copyright: MultiTouch Oy, Helsinki University of Technology and others.
- *
- * See file "Luminous.hpp" for authors and more details.
- *
- * This file is licensed under GNU Lesser General Public
- * License (LGPL), version 2.1. The LGPL conditions can be found in 
- * file "LGPL.txt" that is distributed with this source package or obtained 
- * from the GNU organization (www.gnu.org).
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
  * 
  */
 
@@ -34,11 +29,11 @@ namespace Luminous
   CodecRegistry::~CodecRegistry()
   {}
 
-  ImageCodec * CodecRegistry::getCodec(const QString & filename, FILE * file)
+  std::shared_ptr<ImageCodec> CodecRegistry::getCodec(const QString & filename, QFile * file)
   {
     Luminous::initDefaultImageCodecs();
 
-    ImageCodec * codec = 0;
+    std::shared_ptr<ImageCodec> codec;
 
     // Try a codec that matches the extension first
     const QString ext = Radiant::FileUtils::suffix(filename);
@@ -50,21 +45,19 @@ namespace Luminous
     if(file) {
      
       // Verify our choice
-      if(codec && codec->canRead(file))
+      if(codec && codec->canRead(*file))
         return codec;
 
-      debugLuminous("CodecRegistry::getCodec # Default codec failed for %s (%s, %p)",
-         filename.toUtf8().data(), ext.toUtf8().data(), codec);
-      
       // No codec matched the extension, go through all registered codecs and
       // see if they match
-      for(Codecs::iterator it = m_codecs.begin(); it != m_codecs.end(); it++) {
-        ImageCodec * candidate = *it;
+      for(Codecs::iterator it = m_codecs.begin(); it != m_codecs.end(); ++it) {
+        auto candidate = *it;
 
         // We already tried this
-        if(candidate == codec) continue;
+        if(candidate == codec)
+          continue;
 
-        if(candidate->canRead(file)) 
+        if(candidate->canRead(*file)) 
           return candidate;
       }
     }
@@ -72,18 +65,13 @@ namespace Luminous
     return codec;
   }
 
-  void CodecRegistry::registerCodec(ImageCodec * codec)
+  void CodecRegistry::registerCodec(std::shared_ptr<ImageCodec> codec)
   {
-    debugLuminous("CodecRegistry::registerCodec # %s",
-		   typeid(*codec).name());
-
     m_codecs.push_back(codec);
 
     // Associate extensions with this codec
-    foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts)) {
+    foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts))
       m_aliases.insert(std::make_pair(ext, codec));
-      debugLuminous("Adding codec %p for file type %s", codec, ext.toUtf8().data());
-    }    
   }
 
   
