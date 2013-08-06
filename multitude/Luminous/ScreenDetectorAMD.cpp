@@ -435,6 +435,7 @@ namespace {
     Luminous::ScreenInfo screeninfo;
     screeninfo.setLogicalScreen(0); // Windows doesn't have a logical screen
 
+    int count = 1;
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
       int active;
       checkADL("ADL_Adapter_Active_Get",
@@ -503,7 +504,7 @@ namespace {
             targetMode.size()==0)
           continue;
 
-        screeninfo.setNumId(disp_id);
+        screeninfo.setNumId(count++);
         // Search the 'normal' modes
         std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(),
                                                                     slsModes.end(),
