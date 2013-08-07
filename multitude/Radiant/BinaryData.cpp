@@ -25,6 +25,8 @@
 
 namespace Radiant {
 
+  /// @todo What is this? Shouldn't this be done somewhere else. Debug-prints coming from SDK
+  ///       that can't be avoided should be strongly discouraged.
   static bool __verbose = true;
 
   static void badmarker(const char * func, int32_t marker)
