@@ -14,6 +14,7 @@
 #include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
+#include "AudioFileHandler.hpp"
 
 #include <Nimble/Math.hpp>
 
@@ -21,6 +22,7 @@
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/ResourceLocator.hpp>
 
 #include <sndfile.h>
 #include <cassert>
@@ -108,7 +110,7 @@ namespace Resonant {
 
     memset(&m_d->m_info, 0, sizeof(m_d->m_info));
 
-    SNDFILE * sndf = sf_open(filename, SFM_READ, & m_d->m_info);
+    SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, & m_d->m_info);
 
     if(!sndf)
       return false;
@@ -667,7 +669,7 @@ namespace Resonant {
       n++;
 
       SF_INFO info;
-      SNDFILE * sndf = sf_open(file.toUtf8().data(), SFM_READ, & info);
+      SNDFILE * sndf = AudioFileHandler::open(file, SFM_READ, & info);
 
       if(!sndf) {
         debugResonant("ModuleSamplePlayer::createAmbientBackground # failed to load '%s'",
@@ -701,7 +703,7 @@ namespace Resonant {
   {
 
     SF_INFO info;
-    SNDFILE * sndf = sf_open(filename, SFM_READ, & info);
+    SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, &info);
 
     if(!sndf) {
       Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
@@ -764,10 +766,10 @@ namespace Resonant {
                                                bool loop, Radiant::TimeStamp time)
   {
     SF_INFO info;
-    SNDFILE * sndf = sf_open(filename, SFM_READ, & info);
+    SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, & info);
 
     if(!sndf) {
-      Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
+      Radiant::error("ModuleSamplePlayer::playSampleAtLocation # failed to load '%s'",
                      filename);
       return NoteInfo();
     }
