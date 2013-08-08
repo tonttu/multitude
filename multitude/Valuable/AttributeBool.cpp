@@ -16,9 +16,9 @@
 
 namespace Valuable
 {
-  AttributeBool::AttributeBool(Node * host, const QByteArray & name,
-                       bool value, bool transit)
-    : AttributeT<bool>(host, name, value, transit)
+  AttributeBool::AttributeT(Node * host, const QByteArray & name,
+                            bool value, bool transit)
+    : AttributeBaseT<bool>(host, name, value, transit)
   {}
 
   AttributeBool::~AttributeBool() {}

@@ -22,15 +22,15 @@ namespace Valuable
   /** The actual value classes are inherited from this template
       class. */
   template<class T>
-  class AttributeNumericT : public AttributeT<T>
+  class AttributeNumericT : public AttributeBaseT<T>
   {
-    typedef AttributeT<T> Base;
+    typedef AttributeBaseT<T> Base;
 
   public:
       using Base::value;
       using Base::operator =;
 
-      AttributeNumericT() : AttributeT<T>() {}
+      AttributeNumericT() : Base() {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object.
       AttributeNumericT(Node * host, const QByteArray & name, T v, bool transit = false)

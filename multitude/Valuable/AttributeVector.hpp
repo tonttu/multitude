@@ -33,21 +33,17 @@ namespace Valuable
       objects.
    */
   template<class VectorType>
-  class AttributeVectorT : public AttributeT<VectorType>
+  class AttributeT<VectorType, Attribute::ATTR_VECTOR> : public AttributeBaseT<VectorType>
   {
     /// GetVector<Nimble::Vector2i>::FloatVector == Nimble::Vector2f
-    template <typename T> struct GetVector
-    {
-      typedef Nimble::Vector4f FloatVector;
-    };
-
+    template <typename T> struct GetVector;
     template <typename Y, template <typename> class V>
     struct GetVector<V<Y>>
     {
       typedef V<float> FloatVector;
     };
 
-    typedef AttributeT<VectorType> Base;
+    typedef AttributeBaseT<VectorType> Base;
     typedef typename VectorType::type ElementType;
     enum { N = VectorType::ELEMENTS };
 
@@ -55,18 +51,18 @@ namespace Valuable
       using Base::operator =;
       using Base::value;
 
-      AttributeVectorT() : Base(0, "", VectorType::null(), false) {}
+      AttributeT() : Base(0, "", VectorType::null(), false) {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The value of this object
-      AttributeVectorT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
+      AttributeT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
         : Base(host, name, v, transit) {}
 
-      virtual ~AttributeVectorT();
+      virtual ~AttributeT() {}
 
       /// Assigns by addition
-      AttributeVectorT & operator += (const VectorType & v) { *this = value() + v; return *this; }
+      AttributeT & operator += (const VectorType & v) { *this = value() + v; return *this; }
       /// Assigns by subtraction
-      AttributeVectorT & operator -= (const VectorType & v) { *this = value() - v; return *this; }
+      AttributeT & operator -= (const VectorType & v) { *this = value() - v; return *this; }
 
       /// Subtraction operator
       VectorType operator -
@@ -120,28 +116,28 @@ namespace Valuable
   };
 
   /// An integer Nimble::Vector2f value object
-  typedef AttributeVectorT<Nimble::Vector2i> AttributeVector2i;
+  typedef AttributeT<Nimble::Vector2i> AttributeVector2i;
   /// An integer vector3 value object
-  typedef AttributeVectorT<Nimble::Vector3i> AttributeVector3i;
+  typedef AttributeT<Nimble::Vector3i> AttributeVector3i;
   /// An integer vector4 value object
-  typedef AttributeVectorT<Nimble::Vector4i> AttributeVector4i;
+  typedef AttributeT<Nimble::Vector4i> AttributeVector4i;
 
   /// A float Nimble::Vector2f value object
-  typedef AttributeVectorT<Nimble::Vector2f> AttributeVector2f;
+  typedef AttributeT<Nimble::Vector2f> AttributeVector2f;
   /// A float vector3 value object
-  typedef AttributeVectorT<Nimble::Vector3f> AttributeVector3f;
+  typedef AttributeT<Nimble::Vector3f> AttributeVector3f;
   /// A float vector4 value object
-  typedef AttributeVectorT<Nimble::Vector4f> AttributeVector4f;
+  typedef AttributeT<Nimble::Vector4f> AttributeVector4f;
 
-  template<class VectorType>
-  QString AttributeVectorT<VectorType>::asString(bool * const ok, Attribute::Layer layer) const {
+  template <class VectorType>
+  QString AttributeT<VectorType, Attribute::ATTR_VECTOR>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
     return Radiant::StringUtils::toString(value(layer));
   }
 
-  template<class VectorType>
-  bool AttributeVectorT<VectorType>::set(const StyleValue & value, Attribute::Layer layer)
+  template <class VectorType>
+  bool AttributeT<VectorType, Attribute::ATTR_VECTOR>::set(const StyleValue & value, Attribute::Layer layer)
   {
     if (value.size() != N || !value.isUniform() || !value.isNumber())
       return false;
@@ -154,12 +150,8 @@ namespace Valuable
     return true;
   }
 
-  template <class T>
-  AttributeVectorT<T>::~AttributeVectorT()
-  {}
-
-  template <class T>
-  void AttributeVectorT<T>::eventProcess(const QByteArray & id,
+  template <class VectorType>
+  void AttributeT<VectorType, Attribute::ATTR_VECTOR>::eventProcess(const QByteArray & id,
     Radiant::BinaryData & data)
   {
     /// @todo this isn't how eventProcess should be used
@@ -174,7 +166,7 @@ namespace Valuable
       ElementType v = data.read<ElementType>(&ok);
 
       if(ok) {
-        T tmp = value();
+        VectorType tmp = value();
         tmp[index] = v;
         *this = tmp;
       }
@@ -183,7 +175,7 @@ namespace Valuable
 
       bool ok = true;
 
-      T v = data.read<T>(&ok);
+      VectorType v = data.read<VectorType>(&ok);
 
       if(ok)
         (*this) = v;

@@ -22,10 +22,10 @@ namespace Valuable
 {
 
   /// A matrix value object
-  template<class MatrixType, typename ElementType, int N>
-  class AttributeMatrix : public AttributeT<MatrixType>
+  template <class MatrixType>
+  class AttributeT<MatrixType, Attribute::ATTR_MATRIX> : public AttributeBaseT<MatrixType>
   {
-    typedef AttributeT<MatrixType> Base;
+    typedef AttributeBaseT<MatrixType> Base;
   public:
     using Base::operator =;
 
@@ -34,25 +34,20 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    AttributeMatrix(Node * host, const QByteArray & name, const MatrixType & v = MatrixType(), bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const MatrixType & v = MatrixType(), bool transit = false)
       : Base(host, name, v, transit) {}
 
-    AttributeMatrix() : Base() {}
-    virtual ~AttributeMatrix();
+    AttributeT() : Base() {}
+    virtual ~AttributeT() {}
 
     /// Returns the data in its native format
-    const ElementType * data() const
+    const typename MatrixType::type * data() const
     { return this->value().data(); }
 
     // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
   };
 
-
-  
-  template <class T, typename S, int N>
-  AttributeMatrix<T,S,N>::~AttributeMatrix()
-  {}
 
   /*
   template <class T, typename S, int N>
@@ -87,19 +82,19 @@ namespace Valuable
   }
   */
 
-  template<class MatrixType, typename ElementType, int N>
-  QString AttributeMatrix<MatrixType, ElementType, N>::asString(bool * const ok, Attribute::Layer layer) const {
+  template <class MatrixType>
+  QString AttributeT<MatrixType, Attribute::ATTR_MATRIX>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
     return Radiant::StringUtils::toString(this->value(layer));
   }
 
   /// A float Matrix2 value object
-  typedef AttributeMatrix<Nimble::Matrix2f, float, 4> AttributeMatrix2f;
+  typedef AttributeT<Nimble::Matrix2f> AttributeMatrix2f;
   /// A float Matrix3 value object
-  typedef AttributeMatrix<Nimble::Matrix3f, float, 9> AttributeMatrix3f;
+  typedef AttributeT<Nimble::Matrix3f> AttributeMatrix3f;
   /// A float Matrix4 value object
-  typedef AttributeMatrix<Nimble::Matrix4f, float, 16> AttributeMatrix4f;
+  typedef AttributeT<Nimble::Matrix4f> AttributeMatrix4f;
 }
 
 #endif // VALUEMATRIX_HPP

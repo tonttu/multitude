@@ -16,11 +16,14 @@
 #include "DOMElement.hpp"
 
 #include <Nimble/Vector4.hpp>
+#include <Nimble/Matrix4.hpp>
+#include <Nimble/Rect.hpp>
 
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/MemCheck.hpp>
+#include <Radiant/Flags.hpp>
 
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
@@ -67,6 +70,42 @@ namespace Valuable
   class DOMDocument;
   class StyleValue;
 
+  // We could use SFINAE/sizeof -trick here to do this without listing all the
+  // different types, but that is more difficult to read and slower to compile.
+  // And even including this comment, this is still shorter.
+  /// @todo is that even true? We wouldn't need to include matrix/rect if this
+  ///       was done with sfinae
+
+  template <typename T>
+  struct IsVector { enum { value = 0 }; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector2T<E>> { enum { value = 1 }; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector3T<E>> { enum { value = 1 }; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector4T<E>> { enum { value = 1 }; };
+
+  template <typename T>
+  struct IsMatrix { enum { value = 0 }; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix2T<E>> { enum { value = 1 }; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix3T<E>> { enum { value = 1 }; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix4T<E>> { enum { value = 1 }; };
+
+  template <typename T>
+  struct IsRect { enum { value = 0 }; };
+
+  template <typename E>
+  struct IsRect<Nimble::RectT<E>> { enum { value = 1 }; };
+
   /// The base class for all serializable objects.
   class VALUABLE_API Serializable
   {
@@ -112,6 +151,30 @@ namespace Valuable
   class VALUABLE_API Attribute : public Serializable
   {
   public:
+    enum AttrType {
+      ATTR_INT,
+      ATTR_FLOAT,
+      ATTR_ENUM,
+      ATTR_FLAGS,
+      ATTR_VECTOR,
+      ATTR_MATRIX,
+      ATTR_RECT,
+      ATTR_OTHER
+    };
+
+    template <typename T>
+    struct AttributeType
+    {
+      enum { type = std::is_integral<T>() ? ATTR_INT :
+                    std::is_floating_point<T>() ? ATTR_FLOAT :
+                    std::is_enum<T>() ? ATTR_ENUM :
+                    std::is_base_of<Radiant::Flags, T>() ? ATTR_FLAGS :
+                    IsVector<T>::value ? ATTR_VECTOR :
+                    IsMatrix<T>::value ? ATTR_MATRIX :
+                    IsRect<T>::value ? ATTR_RECT :
+                    ATTR_OTHER };
+    };
+
     /// Attribute has multiple independent attribute values on LAYER_COUNT
     /// different layers. The real effective value of the attribute comes
     /// from an active layer that has the highest priority. By default only
@@ -420,7 +483,7 @@ namespace Valuable
 
   /// Every Attribute is some kind of AttributeT<T> object.
   /// Common functionality should be in either here or in Attribute
-  template <typename T> class AttributeT : public Attribute
+  template <typename T> class AttributeBaseT : public Attribute
   {
   public:
     /// Creates a new AttributeT and stores the default and current value as a separate variables.
@@ -428,7 +491,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default value of the object
     /// @param transit ignored
-    AttributeT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
+    AttributeBaseT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
       m_current(DEFAULT),
       m_values(),
@@ -446,7 +509,7 @@ namespace Valuable
 #endif
     }
 
-    AttributeT()
+    AttributeBaseT()
       : Attribute(),
       m_current(DEFAULT),
       m_values(),
@@ -455,7 +518,7 @@ namespace Valuable
       m_valueSet[DEFAULT] = true;
     }
 
-    virtual ~AttributeT() {}
+    virtual ~AttributeBaseT() {}
 
     /// Access the wrapped object with the dereference operator
     inline const T & operator * () const { return value(); }
@@ -498,7 +561,7 @@ namespace Valuable
     /// Calls setValue with USER layer
     /// @param t new value for the attribute
     /// @returns reference to this
-    inline AttributeT<T> & operator = (const T & t)
+    inline AttributeBaseT<T> & operator = (const T & t)
     {
       setValue(t);
       return *this;
@@ -569,6 +632,8 @@ namespace Valuable
     bool m_valueSet[LAYER_COUNT];
   };
 
+  template <typename T, int type = Attribute::AttributeType<T>::type>
+  class AttributeT;
 
 }
 

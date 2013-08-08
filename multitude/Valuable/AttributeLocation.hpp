@@ -17,11 +17,11 @@ namespace Valuable
 {
 
   /// This class provides an attribute for Nimble::Vector2f.
-  class AttributeLocation2f : public AttributeVectorT<Nimble::Vector2f>
+  class AttributeLocation2f : public AttributeT<Nimble::Vector2f>
   {
-    typedef AttributeVectorT<Nimble::Vector2f> Base;
+    typedef AttributeT<Nimble::Vector2f> Base;
   public:
-    using AttributeVectorT<Nimble::Vector2f>::operator =;
+    using Base::operator =;
 
     AttributeLocation2f(Node * host, const QByteArray & name,
                         const Nimble::Vector2f & v = Nimble::Vector2f(0, 0),

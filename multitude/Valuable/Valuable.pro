@@ -27,7 +27,6 @@ HEADERS += AttributeColor.hpp
 HEADERS += AttributeContainer.hpp
 HEADERS += AttributeEnum.hpp
 HEADERS += AttributeFloat.hpp
-HEADERS += Value.hpp
 HEADERS += AttributeInt.hpp
 HEADERS += AttributeMatrix.hpp
 HEADERS += AttributeNumeric.hpp

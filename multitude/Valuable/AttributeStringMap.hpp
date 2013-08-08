@@ -24,17 +24,18 @@ namespace Valuable
   /// @code
   /// attribute : "key" "value", "key with spaces" "value with spaces";
   /// @endcode
-  class VALUABLE_API AttributeStringMap : public AttributeT<QMap<QString, QString> >
+  template <>
+  class VALUABLE_API AttributeT<QMap<QString, QString> > : public AttributeBaseT<QMap<QString, QString> >
   {
     typedef QMap<QString, QString> StringMap;
-    typedef AttributeT<StringMap> Base;
+    typedef AttributeBaseT<StringMap> Base;
 
   public:
     using Base::operator =;
 
-    AttributeStringMap();
-    AttributeStringMap(Node * host, const QByteArray & name,
-                       const StringMap & v = StringMap(), bool transit = false);
+    AttributeT();
+    AttributeT(Node * host, const QByteArray & name,
+               const StringMap & v = StringMap(), bool transit = false);
 
     /// Returns the value as string
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
@@ -42,6 +43,7 @@ namespace Valuable
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
   };
+  typedef AttributeT<QMap<QString, QString> > AttributeStringMap;
 } // namespace Valuable
 
 #endif // VALUABLE_ATTRIBUTESTRINGLIST_HPP

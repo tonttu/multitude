@@ -23,8 +23,8 @@ namespace Valuable
       etc.
 
       @see AttributeFloat. */
-  template<class T>
-  class AttributeFloatT : public AttributeNumericT<T>
+  template <typename T>
+  class AttributeT<T, Attribute::ATTR_FLOAT> : public AttributeNumericT<T>
   {
     typedef AttributeNumericT<T> Base;
 
@@ -32,14 +32,14 @@ namespace Valuable
       using Base::value;
       using Base::operator =;
 
-      AttributeFloatT() : Base(), m_src(1)
+      AttributeT() : Base(), m_src(1)
       {
         for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
           m_factors[i] = std::numeric_limits<float>::quiet_NaN();
       }
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object
-      AttributeFloatT(Node * host, const QByteArray & name, T v = T(0), bool transit = false)
+      AttributeT(Node * host, const QByteArray & name, T v = T(0), bool transit = false)
       : AttributeNumericT<T>(host, name, v, transit),
         m_src(1)
       {
@@ -48,13 +48,13 @@ namespace Valuable
       }
 
       /// Assignment by subtraction
-      AttributeFloatT<T> & operator -= (T i) { *this = value() - i; return *this; }
+      AttributeT & operator -= (T i) { *this = value() - i; return *this; }
       /// Assignment by addition
-      AttributeFloatT<T> & operator += (T i) { *this = value() + i; return *this; }
+      AttributeT & operator += (T i) { *this = value() + i; return *this; }
       /// Assignment by multiplication
-      AttributeFloatT<T> & operator *= (T i) { *this = value() * i; return *this; }
+      AttributeT & operator *= (T i) { *this = value() * i; return *this; }
       /// Assignment by division
-      AttributeFloatT<T> & operator /= (T i) { *this = value() / i; return *this; }
+      AttributeT & operator /= (T i) { *this = value() / i; return *this; }
 
       /// Sets the numeric value
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
@@ -119,7 +119,7 @@ namespace Valuable
   };
 
   /// Float value object
-  typedef AttributeFloatT<float> AttributeFloat;
+  typedef AttributeT<float> AttributeFloat;
 }
 
 #endif

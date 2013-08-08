@@ -19,16 +19,17 @@
 namespace Valuable
 {
   /// This class provides a QStringList attribute.
-  class VALUABLE_API AttributeStringList : public AttributeT<QStringList>
+  template <>
+  class VALUABLE_API AttributeT<QStringList> : public AttributeBaseT<QStringList>
   {
-    typedef AttributeT<QStringList> Base;
+    typedef AttributeBaseT<QStringList> Base;
 
   public:
     using Base::operator =;
 
-    AttributeStringList();
-    AttributeStringList(Node * host, const QByteArray & name,
-                        const QStringList & v = QStringList(), bool transit = false);
+    AttributeT();
+    AttributeT(Node * host, const QByteArray & name,
+               const QStringList & v = QStringList(), bool transit = false);
 
     /// Returns the value as string
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
@@ -36,6 +37,7 @@ namespace Valuable
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
   };
+  typedef AttributeT<QStringList> AttributeStringList;
 } // namespace Valuable
 
 #endif // VALUABLE_ATTRIBUTESTRINGLIST_HPP

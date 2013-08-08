@@ -17,15 +17,16 @@
 namespace Valuable
 {
   /// This class provides a StyleValue attribute.
-  class AttributeStyleValue : public AttributeT<StyleValue>
+  template <>
+  class AttributeT<StyleValue> : public AttributeBaseT<StyleValue>
   {
   public:
-    using AttributeT<StyleValue>::operator=;
+    using AttributeBaseT<StyleValue>::operator=;
 
-    AttributeStyleValue() {}
-    AttributeStyleValue(Node * host, const QByteArray & name,
+    AttributeT() {}
+    AttributeT(Node * host, const QByteArray & name,
                         const StyleValue & v = StyleValue(), bool transit = false)
-      : AttributeT<StyleValue>(host, name, v, transit)
+      : AttributeBaseT<StyleValue>(host, name, v, transit)
     {}
 
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
@@ -73,6 +74,7 @@ namespace Valuable
       return value(layer).stringify();
     }
   };
+  typedef AttributeT<StyleValue> AttributeStyleValue;
 } // namespace Valuable
 
 #endif // VALUABLE_ATTRIBUTESTYLEVALUE_HPP

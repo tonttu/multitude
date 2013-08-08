@@ -572,7 +572,7 @@ namespace Valuable
     // set of all attributes that this Node is listening to
     QSet<Attribute*> m_attributeListening;
 
-    Valuable::AttributeIntT<Uuid> m_id;
+    Valuable::AttributeT<Uuid> m_id;
 
     // For invalidating the too new ValuePass objects
     int m_frame;

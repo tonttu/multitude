@@ -47,8 +47,6 @@ namespace Valuable {
     long value;
   };
 
-  template <typename T> class AttributeFlagsT;
-
   class FlagAlias : public Attribute
   {
   public:
@@ -66,7 +64,7 @@ namespace Valuable {
   class FlagAliasT : public FlagAlias
   {
   public:
-    FlagAliasT(Node * parent, AttributeFlagsT<T> & master,
+    FlagAliasT(Node * parent, AttributeT<Radiant::FlagsT<T>> & master,
                const QByteArray & name, Radiant::FlagsT<T> flags)
       : FlagAlias(parent, name),
         m_master(master),
@@ -159,9 +157,9 @@ namespace Valuable {
     }
 
   private:
-    friend class AttributeFlagsT<T>;
+    friend class AttributeT<Radiant::FlagsT<T>>;
 
-    AttributeFlagsT<T> & m_master;
+    AttributeT<Radiant::FlagsT<T>> & m_master;
     const Radiant::FlagsT<T> m_flags;
     std::vector<FlagAliasT<T>*> m_sources;
   };
@@ -211,12 +209,12 @@ namespace Valuable {
    *
    * @endcode
    */
-  template <typename T>
-  class AttributeFlagsT : public Attribute
+  template <typename Flags>
+  class AttributeT<Flags, Attribute::ATTR_FLAGS> : public Attribute
   {
   public:
-    typedef Radiant::FlagsT<T> Flags;
-    AttributeFlagsT(Node * parent, const QByteArray & name, const FlagNames * names,
+    typedef typename Flags::Enum T;
+    AttributeT(Node * parent, const QByteArray & name, const FlagNames * names,
                Flags v = Flags(), bool transit = false)
       : Attribute(parent, name, transit)
     {
@@ -273,7 +271,7 @@ namespace Valuable {
         setSerializable(false);
     }
 
-    AttributeFlagsT & operator=(const Flags & b) { setValue(b, USER); return *this; }
+    AttributeT & operator=(const Flags & b) { setValue(b, USER); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
     bool operator!=(const Flags & b) const { return value() != b; }
@@ -285,15 +283,15 @@ namespace Valuable {
     Flags operator|(const Flags & b) const { return value() | b; }
     Flags operator^(const Flags & b) const { return value() ^ b; }
 
-    AttributeFlagsT & operator&=(const Flags & b) { setValue(value() & b, USER); return *this; }
-    AttributeFlagsT & operator|=(const Flags & b) { setValue(value() | b, USER); return *this; }
-    AttributeFlagsT & operator^=(const Flags & b) { setValue(value() ^ b, USER); return *this; }
+    AttributeT & operator&=(const Flags & b) { setValue(value() & b, USER); return *this; }
+    AttributeT & operator|=(const Flags & b) { setValue(value() | b, USER); return *this; }
+    AttributeT & operator^=(const Flags & b) { setValue(value() ^ b, USER); return *this; }
 
     operator Flags() const { return m_cache; }
 
     /// best you can do to emulate c++0x explicit boolean conversion operator
-    typedef void (AttributeFlagsT<T>::*bool_type)();
-    operator bool_type() const { return value() ? &AttributeFlagsT<T>::updateCache : 0; }
+    typedef void (AttributeT<Radiant::FlagsT<T>>::*bool_type)();
+    operator bool_type() const { return value() ? &AttributeT<Radiant::FlagsT<T>>::updateCache : 0; }
 
     Flags value() const
     {

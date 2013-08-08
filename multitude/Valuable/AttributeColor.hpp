@@ -20,31 +20,32 @@
 namespace Valuable
 {
   /** A value object holding a #Radiant::Color value. */
-  class AttributeColor : public AttributeVectorT<Radiant::Color>
+  template <>
+  class AttributeT<Radiant::Color> : public AttributeBaseT<Radiant::Color>
   {
-    typedef AttributeVectorT<Radiant::Color> Base;
+    typedef AttributeBaseT<Radiant::Color> Base;
   public:
-    using AttributeVectorT<Radiant::Color>::operator=;
+    using Base::operator=;
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
-    AttributeColor(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
       : Base(host, name, c, transit)
     {}
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value as string
-    AttributeColor(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
       : Base(host, name, Radiant::Color(c), transit)
     {}
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value as string
-    AttributeColor(Node * host, const QByteArray & name, const char * c, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const char * c, bool transit = false)
       : Base(host, name, Radiant::Color(c), transit)
     {}
 
-    ~AttributeColor()
+    ~AttributeT()
     {}
 
     bool set(const Nimble::Vector4f & color, Layer layer = USER,
@@ -76,19 +77,32 @@ namespace Valuable
       return false;
     }
 
-    /// Converts the value object to color
-    Radiant::Color asColor() const { return asVector(); }
-    
-    /// Returns the red comoponent of the color (0-1).
-    inline float red() const   { return get(0); }
-    /// Returns the green comoponent of the color (0-1).
-    inline float green() const { return get(1); }
-    /// Returns the blue comoponent of the color (0-1).
-    inline float blue() const  { return get(2); }
-    /// Returns the alpha comoponent of the color (0-1).
-    inline float alpha() const { return get(3); }
-  };
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
+    {
+      if (ok)
+        *ok = true;
+      Radiant::Color c = value(layer);
+      int r = Nimble::Math::Clamp<int>(0, 255, c.red()*255);
+      int g = Nimble::Math::Clamp<int>(0, 255, c.green()*255);
+      int b = Nimble::Math::Clamp<int>(0, 255, c.blue()*255);
+      int a = Nimble::Math::Clamp<int>(0, 255, c.alpha()*255);
+      return QString("#%1%2%3%4").arg(r, 2, 16, QChar('0')).arg(g, 2, 16, QChar('0')).
+          arg(b, 2, 16, QChar('0')).arg(a, 2, 16, QChar('0'));
+    }
 
+    /// Converts the value object to color
+    Radiant::Color asColor() const { return value(); }
+
+    /// Returns the red comoponent of the color (0-1).
+    inline float red() const   { return value()[0]; }
+    /// Returns the green comoponent of the color (0-1).
+    inline float green() const { return value()[1]; }
+    /// Returns the blue comoponent of the color (0-1).
+    inline float blue() const  { return value()[2]; }
+    /// Returns the alpha comoponent of the color (0-1).
+    inline float alpha() const { return value()[3]; }
+  };
+  typedef AttributeT<Radiant::Color> AttributeColor;
 }
 
 #endif

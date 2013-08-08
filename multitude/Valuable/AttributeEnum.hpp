@@ -60,7 +60,7 @@ namespace Valuable
    *   };
    *
    *   /// m_mode is either ON or OFF
-   *   AttributeEnumT<Mode> m_mode;
+   *   AttributeT<Mode> m_mode;
    *
    *   /// m_priority is an integer, but has shortcuts low/medium/high
    *   AttributeEnumT<int> m_priority;
@@ -90,7 +90,7 @@ namespace Valuable
    * @endcode
    */
   template <typename T>
-  class AttributeEnumT : public AttributeNumericT<T>, public AttributeEnum
+  class AttributeT<T, Attribute::ATTR_ENUM> : public AttributeNumericT<T>, public AttributeEnum
   {
     typedef AttributeNumericT<T> Base;
 
@@ -98,9 +98,9 @@ namespace Valuable
     using Base::operator =;
     using Base::value;
 
-    AttributeEnumT(Node * host, const QByteArray & name, const EnumNames * names,
+    AttributeT(Node * host, const QByteArray & name, const EnumNames * names,
                   const T & v, bool transit = false)
-      : AttributeNumericT<T>(host, name, v, transit),
+      : Base(host, name, v, transit),
         AttributeEnum()
     {
       for (const EnumNames * it = names; it->name; ++it) {

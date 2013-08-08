@@ -20,9 +20,10 @@ namespace Valuable
 {
 
   /// String value
-  class VALUABLE_API AttributeString : public AttributeT<QString>
+  template <>
+  class VALUABLE_API AttributeT<QString> : public AttributeBaseT<QString>
   {
-    typedef AttributeT<QString> Base;
+    typedef AttributeBaseT<QString> Base;
 
   public:
     using Base::operator =;
@@ -30,18 +31,18 @@ namespace Valuable
     /// The character type of this string class
     typedef QChar char_type;
 
-    AttributeString();
+    AttributeT();
     /// @copydoc Attribute::Attribute(Node *, const QByteArray &, bool transit)
     /// @param v The string to store in this object
-    AttributeString(Node * host, const QByteArray & name,
-                const QString & v = "", bool transit = false);
+    AttributeT(Node * host, const QByteArray & name,
+               const QString & v = "", bool transit = false);
 
     virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data) OVERRIDE;
 
     /// Concatenates two strings
     /// @param i The string to be appended to this string
     /// @return A new string that contains both this string, and the argument string.
-    QString operator + (const AttributeString & i) const;
+    QString operator + (const AttributeT & i) const;
 
     /// Concatenates two strings
     QString operator + (const QString & i) const;
@@ -69,6 +70,7 @@ namespace Valuable
     /// Returns the length of the string
     unsigned size() const;
   };
+  typedef AttributeT<QString> AttributeString;
 }
 
 VALUABLE_API QString operator + (const QString & a, const Valuable::AttributeString & b);

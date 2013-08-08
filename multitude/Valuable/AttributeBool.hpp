@@ -17,15 +17,16 @@ namespace Valuable
 {
 
   /// A value object for boolean.
-  class VALUABLE_API AttributeBool : public AttributeT<bool>
+  template <>
+  class VALUABLE_API AttributeT<bool> : public AttributeBaseT<bool>
   {
   public:
-    using AttributeT<bool>::operator =;
+    using AttributeBaseT<bool>::operator =;
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param value The value of this object
-    AttributeBool(Node * host, const QByteArray &name, bool value, bool transit = false);
-    virtual ~AttributeBool();
+    AttributeT(Node * host, const QByteArray &name, bool value, bool transit = false);
+    virtual ~AttributeT();
 
     /// @cond
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE;
@@ -38,7 +39,7 @@ namespace Valuable
     virtual int asInt(bool * const ok, Layer layer) const OVERRIDE;
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
   };
-
+  typedef AttributeT<bool> AttributeBool;
 }
 
 #endif // VALUABLE_VALUE_BOOL_HPP

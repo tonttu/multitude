@@ -20,9 +20,10 @@ namespace Valuable
 {
 
   /// This class provides a Radiant::TimeStamp attribute.
-  class AttributeTimeStamp : public AttributeT<Radiant::TimeStamp>
+  template <>
+  class AttributeT<Radiant::TimeStamp> : public AttributeBaseT<Radiant::TimeStamp>
   {
-    typedef AttributeT<Radiant::TimeStamp> Base;
+    typedef AttributeBaseT<Radiant::TimeStamp> Base;
   public:
 
     using Base::value;
@@ -31,9 +32,9 @@ namespace Valuable
     using Base::m_valueSet;
     using Base::operator =;
 
-    AttributeTimeStamp() : Base() {}
+    AttributeT() : Base() {}
 
-    AttributeTimeStamp(Node * host, const QByteArray & name, Radiant::TimeStamp v, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, Radiant::TimeStamp v, bool transit = false)
         : Base(host, name, v, transit)
     {}
 
@@ -46,7 +47,7 @@ namespace Valuable
     }
 
   };
-
+  typedef AttributeT<Radiant::TimeStamp> AttributeTimeStamp;
 }
 
 #endif // ATTRIBUTETIMESTAMP_HPP

@@ -23,15 +23,18 @@ namespace Radiant
   template <> struct IntOfSize<8> { typedef uint64_t Type; };
   /// @endcond
 
+  struct Flags {};
+
   /// This class implements type-safe flags.
   /// @tparam T Type of the flag type (enum)
   /// @tparam S Internal type for storing the flags
   template <typename T, typename S = typename IntOfSize<sizeof(T)>::Type>
-  class FlagsT
+  class FlagsT : public Flags
   {
   public:
     /// Internal type used to store the flags
     typedef S Int;
+    typedef T Enum;
 
     /// Construct empty flags object
     FlagsT() : m_value(0) {}

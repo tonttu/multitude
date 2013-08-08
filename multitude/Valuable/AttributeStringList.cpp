@@ -14,12 +14,12 @@
 
 namespace Valuable
 {
-  AttributeStringList::AttributeStringList()
+  AttributeStringList::AttributeT()
   {
   }
 
-  AttributeStringList::AttributeStringList(Node * host, const QByteArray & name,
-                                           const QStringList & v, bool transit)
+  AttributeStringList::AttributeT(Node * host, const QByteArray & name,
+                                  const QStringList & v, bool transit)
     : Base(host, name, v, transit)
   {
   }

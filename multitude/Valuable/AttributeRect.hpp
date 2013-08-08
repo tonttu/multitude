@@ -22,15 +22,16 @@ namespace Valuable
 
   /// A valuable object holding a Nimble::Rect object
   template <class T>
-  class AttributeRectT : public AttributeT<Nimble::RectT<T> >
+  class AttributeT<T, Attribute::ATTR_RECT> : public AttributeBaseT<T>
   {
-    typedef AttributeT<Nimble::RectT<T> > Base;
+    typedef AttributeBaseT<T> Base;
   public:
     using Base::operator =;
 
     /// @copydoc Attribute::Attribute(Node *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the AttributeRect
-    AttributeRectT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false);
+    AttributeRectT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false)
+      : Base(host, name, r, transit) {}
 
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
 
@@ -39,22 +40,16 @@ namespace Valuable
   };
 
   /// Default floating point AttributeRectT typedef
-  typedef AttributeRectT<float> AttributeRect;
+  typedef AttributeT<Nimble::Rectf> AttributeRect;
   /// AttributeRectT of floats
-  typedef AttributeRectT<float> AttributeRectf;
+  typedef AttributeT<Nimble::Rectf> AttributeRectf;
   /// AttributeRectT of doubles
-  typedef AttributeRectT<double> AttributeRectd;
+  typedef AttributeT<Nimble::Rectd> AttributeRectd;
   /// AttributeRectT of ints
-  typedef AttributeRectT<int> AttributeRecti;
-
-
-  template <class T>
-  AttributeRectT<T>::AttributeRectT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit)
-    : Base(host, name, r, transit)
-  {}
+  typedef AttributeT<Nimble::Recti> AttributeRecti;
 
   template <class T>
-  QString AttributeRectT<T>::asString(bool * const ok, Attribute::Layer layer) const {
+  QString AttributeT<T, Attribute::ATTR_RECT>::asString(bool * const ok, Attribute::Layer layer) const {
     if(ok) *ok = true;
 
     return Radiant::StringUtils::toString(this->value(layer));

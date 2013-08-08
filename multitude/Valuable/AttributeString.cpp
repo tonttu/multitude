@@ -12,9 +12,9 @@
 
 namespace Valuable
 {
-  AttributeString::AttributeString() {}
-  AttributeString::AttributeString(Node * parent, const QByteArray & name,
-                           const QString & v, bool transit)
+  AttributeString::AttributeT() {}
+  AttributeString::AttributeT(Node * parent, const QByteArray & name,
+                              const QString & v, bool transit)
     : Base(parent, name, v, transit)
   {}
 

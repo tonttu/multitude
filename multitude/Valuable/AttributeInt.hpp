@@ -28,7 +28,7 @@ namespace Valuable
       @see AttributeInt*/
 
   template<class T>
-  class AttributeIntT : public AttributeNumericT<T>
+  class AttributeT<T, Attribute::ATTR_INT> : public AttributeNumericT<T>
   {
     typedef AttributeNumericT<T> Base;
   public:
@@ -42,33 +42,33 @@ namespace Valuable
     virtual int asInt(bool * const ok, Attribute::Layer layer) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value(layer)); }
 #endif
 
-    AttributeIntT() : Base() {}
+    AttributeT() : Base() {}
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    AttributeIntT(Node * host, const QByteArray & name, T v, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, T v, bool transit = false)
         : AttributeNumericT<T>(host, name, v, transit)
     {}
 
     /// Assignment by subtraction
-    AttributeIntT<T> & operator -= (T i) { *this = value() - i; return *this; }
+    AttributeT & operator -= (T i) { *this = value() - i; return *this; }
     /// Assignment by addition
-    AttributeIntT<T> & operator += (T i) { *this = value() + i; return *this; }
+    AttributeT & operator += (T i) { *this = value() + i; return *this; }
     /// Assignment by multiplication
-    AttributeIntT<T> & operator *= (T i) { *this = value() * i; return *this; }
+    AttributeT & operator *= (T i) { *this = value() * i; return *this; }
     /// Assignment by division
-    AttributeIntT<T> & operator /= (T i) { *this = value() / i; return *this; }
+    AttributeT & operator /= (T i) { *this = value() / i; return *this; }
 
     /// Does a logical OR for the integer
-    AttributeIntT<T> & operator |= (T i) { *this = value() | i; return *this; }
+    AttributeT & operator |= (T i) { *this = value() | i; return *this; }
     /// Does a logical AND for the integer
-    AttributeIntT<T> & operator &= (T i) { *this = value() & i; return *this; }
+    AttributeT & operator &= (T i) { *this = value() & i; return *this; }
     /// Modulo operator
-    AttributeIntT<T> & operator %= (T i) { *this = value() % i; return *this; }
+    AttributeT & operator %= (T i) { *this = value() % i; return *this; }
     /// Does a bitwise exclusive OR
-    AttributeIntT<T> & operator ^= (T i) { *this = value() ^ i; return *this; }
+    AttributeT & operator ^= (T i) { *this = value() ^ i; return *this; }
 
     /// Prefix increment
-    AttributeIntT<T> & operator ++ ()
+    AttributeT & operator ++ ()
     {
       if(m_current != Base::USER) {
         m_values[Base::USER] = m_values[m_current];
@@ -81,7 +81,7 @@ namespace Valuable
     }
 
     /// Prefix decrement
-    AttributeIntT<T> & operator -- ()
+    AttributeT & operator -- ()
     {
       if(m_current != Base::USER) {
         m_values[Base::USER] = m_values[m_current];
@@ -94,9 +94,9 @@ namespace Valuable
     }
 
     /// Shift left
-    AttributeIntT<T> & operator <<= (int i) { *this = value() << i; return *this; }
+    AttributeT & operator <<= (int i) { *this = value() << i; return *this; }
     /// Shift right
-    AttributeIntT<T> & operator >>= (int i) { *this = value() >> i; return *this; }
+    AttributeT & operator >>= (int i) { *this = value() >> i; return *this; }
 
     /// Sets the numeric value
     inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
@@ -133,15 +133,15 @@ namespace Valuable
   };
 
   /// 32-bit integer value object.
-  typedef AttributeIntT<int32_t> AttributeInt;
+  typedef AttributeT<int32_t> AttributeInt;
   /// 32-bit integer value object.
-  typedef AttributeIntT<int32_t> AttributeInt32;
+  typedef AttributeT<int32_t> AttributeInt32;
   /// 32-bit unsigned integer value object.
-  typedef AttributeIntT<uint32_t> AttributeUInt32;
+  typedef AttributeT<uint32_t> AttributeUInt32;
   /// 64-bit integer value object.
-  typedef AttributeIntT<int64_t> AttributeInt64;
+  typedef AttributeT<int64_t> AttributeInt64;
   /// 64-bit unsigned integer value object.
-  typedef AttributeIntT<uint64_t> AttributeUInt64;
+  typedef AttributeT<uint64_t> AttributeUInt64;
 }
 
 #endif
