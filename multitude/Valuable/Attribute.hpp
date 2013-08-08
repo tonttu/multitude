@@ -493,7 +493,7 @@ namespace Valuable
     /// @param transit ignored
     AttributeBaseT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
-      m_current(DEFAULT),
+      m_currentLayer(DEFAULT),
       m_values(),
       m_valueSet()
     {
@@ -511,7 +511,7 @@ namespace Valuable
 
     AttributeBaseT()
       : Attribute(),
-      m_current(DEFAULT),
+      m_currentLayer(DEFAULT),
       m_values(),
       m_valueSet()
     {
@@ -536,10 +536,10 @@ namespace Valuable
     inline const T & value(Layer layer) const { return m_values[layer == LAYER_CURRENT ? currentLayer() : layer]; }
 
     /// @returns attribute active value
-    inline const T & value() const { return m_values[m_current]; }
+    inline const T & value() const { return m_values[m_currentLayer]; }
 
     /// @returns the active layer that has the highest priority
-    Layer currentLayer() const { return m_current; }
+    Layer currentLayer() const { return m_currentLayer; }
 
     /// Sets a new value for a specific layer. If currentLayer() is more important
     /// than the layer given as a parameter, the active value of the attribute
@@ -550,9 +550,9 @@ namespace Valuable
     inline void setValue(const T & t, Layer layer = USER)
     {
       layer = layer == LAYER_CURRENT ? currentLayer() : layer;
-      bool top = layer >= m_current;
+      bool top = layer >= m_currentLayer;
       bool sendSignal = top && value() != t;
-      if(top) m_current = layer;
+      if(top) m_currentLayer = layer;
       m_values[layer] = t;
       m_valueSet[layer] = true;
       if (sendSignal) this->emitChange();
@@ -569,7 +569,7 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE
     {
-      return m_current > DEFAULT;
+      return m_currentLayer > DEFAULT;
     }
 
     /// Unsets the value from a specific layer
@@ -578,11 +578,11 @@ namespace Valuable
     {
       assert(layout > DEFAULT);
       m_valueSet[layout] = false;
-      if(m_current == layout) {
+      if(m_currentLayer == layout) {
         assert(m_valueSet[DEFAULT]);
         int l = int(layout) - 1;
         while(!m_valueSet[l]) --l;
-        m_current = Layer(l);
+        m_currentLayer = Layer(l);
         if(m_values[l] != m_values[layout])
           this->emitChange();
       }
@@ -626,8 +626,8 @@ namespace Valuable
       return m_valueSet[layer];
     }
 
-  protected:
-    Layer m_current;
+  private:
+    Layer m_currentLayer;
     T m_values[LAYER_COUNT];
     bool m_valueSet[LAYER_COUNT];
   };

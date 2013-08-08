@@ -33,9 +33,6 @@ namespace Valuable
     typedef AttributeNumericT<T> Base;
   public:
     using Base::value;
-    using Base::m_current;
-    using Base::m_values;
-    using Base::m_valueSet;
     using Base::operator =;
 
 #ifdef CLANG_XML
@@ -70,26 +67,16 @@ namespace Valuable
     /// Prefix increment
     AttributeT & operator ++ ()
     {
-      if(m_current != Base::USER) {
-        m_values[Base::USER] = m_values[m_current];
-        m_valueSet[Base::USER] = true;
-        m_current = Base::USER;
-      }
-      ++m_values[m_current];
-      this->emitChange();
+      auto v = value();
+      this->setValue(++v);
       return *this;
     }
 
     /// Prefix decrement
     AttributeT & operator -- ()
     {
-      if(m_current != Base::USER) {
-        m_values[Base::USER] = m_values[m_current];
-        m_valueSet[Base::USER] = true;
-        m_current = Base::USER;
-      }
-      --m_values[m_current];
-      this->emitChange();
+      auto v = value();
+      this->setValue(--v);
       return *this;
     }
 

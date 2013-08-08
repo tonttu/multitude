@@ -82,7 +82,7 @@ namespace Valuable
       m_src.x = src;
       for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
           l = Attribute::Layer(l + 1)) {
-        if(!m_valueSet[l]) continue;
+        if(!isValueDefinedOnLayer(l)) continue;
         if(!Nimble::Math::isNAN(m_factors[l].x))
           this->setValue(Nimble::Vector2f(src * m_factors[l].x, value().y), l);
       }
@@ -93,7 +93,7 @@ namespace Valuable
       m_src.y = src;
       for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
           l = Attribute::Layer(l + 1)) {
-        if(!m_valueSet[l]) continue;
+        if(!isValueDefinedOnLayer(l)) continue;
         if(!Nimble::Math::isNAN(m_factors[l].y))
           this->setValue(Nimble::Vector2f(value().x, src * m_factors[l].y), l);
       }

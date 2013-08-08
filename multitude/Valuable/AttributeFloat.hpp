@@ -82,7 +82,7 @@ namespace Valuable
         m_src = src;
         for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
             l = Attribute::Layer(l + 1)) {
-          if(!this->m_valueSet[l]) continue;
+          if(!this->isValueDefinedOnLayer(l)) continue;
           if(!Nimble::Math::isNAN(m_factors[l]))
             this->setValue(m_factors[l] * src, l);
         }
