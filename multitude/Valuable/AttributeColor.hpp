@@ -20,27 +20,28 @@
 namespace Valuable
 {
   /** A value object holding a #Radiant::Color value. */
-  class AttributeColor : public AttributeVector<Radiant::Color>
+  class AttributeColor : public AttributeVectorT<Radiant::Color>
   {
+    typedef AttributeVectorT<Radiant::Color> Base;
   public:
-    using AttributeVector<Radiant::Color>::operator=;
+    using AttributeVectorT<Radiant::Color>::operator=;
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
     AttributeColor(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
-      : AttributeVector<Radiant::Color>(host, name, c, transit)
+      : Base(host, name, c, transit)
     {}
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value as string
     AttributeColor(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
-      : AttributeVector<Radiant::Color>(host, name, Radiant::Color(c), transit)
+      : Base(host, name, Radiant::Color(c), transit)
     {}
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value as string
     AttributeColor(Node * host, const QByteArray & name, const char * c, bool transit = false)
-      : AttributeVector<Radiant::Color>(host, name, Radiant::Color(c), transit)
+      : Base(host, name, Radiant::Color(c), transit)
     {}
 
     ~AttributeColor()

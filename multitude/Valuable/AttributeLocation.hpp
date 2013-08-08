@@ -17,15 +17,16 @@ namespace Valuable
 {
 
   /// This class provides an attribute for Nimble::Vector2f.
-  class AttributeLocation2f : public AttributeVector<Nimble::Vector2f>
+  class AttributeLocation2f : public AttributeVectorT<Nimble::Vector2f>
   {
+    typedef AttributeVectorT<Nimble::Vector2f> Base;
   public:
-    using AttributeVector<Nimble::Vector2f>::operator =;
+    using AttributeVectorT<Nimble::Vector2f>::operator =;
 
     AttributeLocation2f(Node * host, const QByteArray & name,
                         const Nimble::Vector2f & v = Nimble::Vector2f(0, 0),
                         bool transit = false)
-      : AttributeVector<Nimble::Vector2f>(host, name, v, transit)
+      : Base(host, name, v, transit)
       , m_src(0, 0)
     {
       for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
@@ -132,7 +133,7 @@ namespace Valuable
     {
       for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
         m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      AttributeVector<Nimble::Vector2f>::clearValue(layer);
+      Base::clearValue(layer);
     }
 
   private:
