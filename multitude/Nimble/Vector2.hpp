@@ -174,6 +174,13 @@ namespace Nimble {
     {
       return Nimble::Vector2T<S>(S(x), S(y));
     }
+
+    /// Cast the vector to another type and round the values with std::round
+    template<typename S>
+    Nimble::Vector2T<S> round() const
+    {
+      return Nimble::Vector2T<S>(S(std::round(x)), S(std::round(y)));
+    }
   };
 
   /// Add two vectors
