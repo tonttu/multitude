@@ -46,6 +46,14 @@ namespace Valuable
 
     // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
+
+    // We don't really know how the matrix is being used, so we can't have
+    // good interpolation code for it
+    static inline MatrixType interpolate(MatrixType a, MatrixType b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
+
   };
 
 

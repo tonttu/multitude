@@ -73,6 +73,11 @@ namespace Valuable
       if (ok) *ok = true;
       return value(layer).stringify();
     }
+
+    static inline StyleValue interpolate(StyleValue a, StyleValue b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
   };
   typedef AttributeT<StyleValue> AttributeStyleValue;
 } // namespace Valuable

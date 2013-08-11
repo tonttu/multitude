@@ -69,6 +69,11 @@ namespace Valuable
 
     /// Returns the length of the string
     unsigned size() const;
+
+    static inline QString interpolate(QString a, QString b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
   };
   typedef AttributeT<QString> AttributeString;
 }

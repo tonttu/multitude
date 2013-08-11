@@ -113,6 +113,14 @@ namespace Valuable
         vector.normalize(len);
         *this = vector;
       }
+
+      /// Interpolate integer vectors with normally, but round the final value back to int
+      template <typename V>
+      static inline typename std::enable_if<std::is_integral<typename V::type>::value, V>::type
+      interpolate(V a, V b, float m)
+      {
+        return (a * (1.0f - m) + b * m).template round<typename V::type>();
+      }
   };
 
   /// An integer Nimble::Vector2f value object

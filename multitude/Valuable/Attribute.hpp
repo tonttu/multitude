@@ -14,6 +14,7 @@
 #include "Export.hpp"
 #include "Archive.hpp"
 #include "DOMElement.hpp"
+#include "TransitionManager.hpp"
 
 #include <Nimble/Vector4.hpp>
 #include <Nimble/Matrix4.hpp>
@@ -441,6 +442,8 @@ namespace Valuable
       return true;
     }
 
+    virtual void setTransitionAnim(float durationSeconds, float delaySeconds);
+
   protected:
 
     /// Invokes the change valueChanged function of all listeners
@@ -493,6 +496,8 @@ namespace Valuable
     /// @param transit ignored
     AttributeBaseT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
       : Attribute(host, name, transit),
+      m_transition(nullptr),
+      m_currentValue(v),
       m_currentLayer(DEFAULT),
       m_values(),
       m_valueSet()
@@ -511,6 +516,8 @@ namespace Valuable
 
     AttributeBaseT()
       : Attribute(),
+      m_transition(nullptr),
+      m_currentValue(),
       m_currentLayer(DEFAULT),
       m_values(),
       m_valueSet()
@@ -518,7 +525,10 @@ namespace Valuable
       m_valueSet[DEFAULT] = true;
     }
 
-    virtual ~AttributeBaseT() {}
+    virtual ~AttributeBaseT() {
+      if (m_transition)
+        TransitionManagerT<T>::remove(m_transition);
+    }
 
     /// Access the wrapped object with the dereference operator
     inline const T & operator * () const { return value(); }
@@ -536,7 +546,7 @@ namespace Valuable
     inline const T & value(Layer layer) const { return m_values[layer == LAYER_CURRENT ? currentLayer() : layer]; }
 
     /// @returns attribute active value
-    inline const T & value() const { return m_values[m_currentLayer]; }
+    inline const T & value() const { return m_currentValue; }
 
     /// @returns the active layer that has the highest priority
     Layer currentLayer() const { return m_currentLayer; }
@@ -626,7 +636,44 @@ namespace Valuable
       return m_valueSet[layer];
     }
 
+    virtual void setTransitionAnim(float durationSeconds, float delaySeconds) FINAL
+    {
+      if (durationSeconds <= 0.0f) {
+        if (m_transition) {
+          TransitionManagerT<T>::remove(m_transition);
+          m_transition = nullptr;
+        }
+      } else {
+        if (!m_transition)
+          m_transition = TransitionManagerT<T>::create(this);
+        m_transition->setDuration(durationSeconds);
+        m_transition->setDelay(delaySeconds);
+      }
+    }
+
+    void setAnimatedValue(T t)
+    {
+      if (m_currentValue != t) {
+        m_currentValue = t;
+        Attribute::emitChange();
+      }
+    }
+
+  protected:
+    virtual void emitChange() FINAL
+    {
+      if (m_transition) {
+        m_transition->setTarget(m_values[m_currentLayer]);
+      } else {
+        m_currentValue = m_values[m_currentLayer];
+        Attribute::emitChange();
+      }
+    }
+
   private:
+    friend class TransitionAnimT<T>;
+    TransitionAnimT<T> * m_transition;
+    T m_currentValue;
     Layer m_currentLayer;
     T m_values[LAYER_COUNT];
     bool m_valueSet[LAYER_COUNT];
@@ -634,7 +681,8 @@ namespace Valuable
 
   template <typename T, int type = Attribute::AttributeType<T>::type>
   class AttributeT;
-
 }
+
+#include "TransitionImpl.hpp"
 
 #endif

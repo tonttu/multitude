@@ -415,6 +415,11 @@ namespace Valuable {
       return (m_masks[layer] & flags) == flags;
     }
 
+    static inline Flags interpolate(Flags a, Flags b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
+
   private:
 
     QString stringify(Flags v) const

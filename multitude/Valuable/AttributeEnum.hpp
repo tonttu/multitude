@@ -154,6 +154,11 @@ namespace Valuable
       }
       return QString::number(v);
     }
+
+    static inline T interpolate(T a, T b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
   };
 
 }

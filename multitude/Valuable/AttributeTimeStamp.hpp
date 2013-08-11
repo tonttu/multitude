@@ -43,6 +43,10 @@ namespace Valuable
       return QString::number(ts.value());
     }
 
+    static inline Radiant::TimeStamp interpolate(Radiant::TimeStamp a, Radiant::TimeStamp b, float m)
+    {
+      return Radiant::TimeStamp(std::round(a.value() * (1.0f - m) + b.value() * m));
+    }
   };
   typedef AttributeT<Radiant::TimeStamp> AttributeTimeStamp;
 }

@@ -38,6 +38,11 @@ namespace Valuable
 
     virtual int asInt(bool * const ok, Layer layer) const OVERRIDE;
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
+
+    static inline bool interpolate(bool a, bool b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
   };
   typedef AttributeT<bool> AttributeBool;
 }

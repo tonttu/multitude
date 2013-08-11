@@ -213,6 +213,12 @@ namespace Valuable
     return nullptr;
   }
 
+  void Attribute::setTransitionAnim(float, float)
+  {
+    Radiant::warning("Attribute::setTransitionAnim # Class %s (%s) doesn't support transition animations",
+                     Radiant::StringUtils::demangle(typeid(*this).name()).data(), name().data());
+  }
+
   void Attribute::emitChange()
   {
     // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());

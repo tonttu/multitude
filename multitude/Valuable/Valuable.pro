@@ -8,7 +8,10 @@ HEADERS += Archive.hpp \
     AttributeStringList.hpp \
     AttributeStyleValue.hpp \
     AttributeSize.hpp \
-    AttributeStringMap.hpp
+    AttributeStringMap.hpp \
+    TransitionManager.hpp \
+    TransitionImpl.hpp \
+    TransitionAnim.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -41,7 +44,8 @@ HEADERS += v8.hpp
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
     AttributeStringList.cpp \
-    AttributeStringMap.cpp
+    AttributeStringMap.cpp \
+    TransitionManager.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
