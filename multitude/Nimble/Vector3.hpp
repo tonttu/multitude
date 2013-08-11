@@ -156,6 +156,13 @@ namespace Nimble {
     {
       return Nimble::Vector3T<S>(S(x), S(y), S(z));
     }
+
+    /// Cast the vector to another type and round the values with std::round
+    template<typename S>
+    Nimble::Vector3T<S> round() const
+    {
+      return Nimble::Vector3T<S>(S(std::round(x)), S(std::round(y)), S(std::round(z)));
+    }
   };
 
   /// Vector of three floats
