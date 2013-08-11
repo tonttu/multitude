@@ -27,9 +27,6 @@ namespace Valuable
   public:
 
     using Base::value;
-    using Base::m_current;
-    using Base::m_values;
-    using Base::m_valueSet;
     using Base::operator =;
 
     AttributeT() : Base() {}
