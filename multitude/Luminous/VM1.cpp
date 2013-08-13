@@ -126,7 +126,7 @@ namespace Luminous
 {
   static Radiant::Mutex s_vm1Mutex;
 
-  class VM1::D : public Radiant::Task, public std::enable_shared_from_this<VM1::D>
+  class VM1::D : public Radiant::Task
   {
   public:
     D();
@@ -248,8 +248,7 @@ namespace Luminous
     m_data += ba;
     if (state() == DONE) {
       setState(WAITING);
-      /// @todo make this work
-      //Radiant::BGThread::instance()->addTask(shared_from_this());
+      Radiant::BGThread::instance()->addTask(shared_from_this());
     }
   }
 
@@ -263,8 +262,7 @@ namespace Luminous
       Radiant::Guard g(s_vm1Mutex);
       m_d = D::s_d.lock();
       if (!m_d) {
-        /// @todo make this work
-        //m_d.reset(new D());
+        m_d.reset(new D());
         D::s_d = m_d;
       }
     }
