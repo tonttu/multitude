@@ -179,7 +179,7 @@ namespace Nimble {
     template<typename S>
     Nimble::Vector2T<S> round() const
     {
-      return Nimble::Vector2T<S>(S(std::round(x)), S(std::round(y)));
+      return Nimble::Vector2T<S>(S(Nimble::Math::Roundf(x)), S(Nimble::Math::Roundf(y)));
     }
   };
 
