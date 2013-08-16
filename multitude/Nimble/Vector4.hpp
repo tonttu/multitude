@@ -188,7 +188,8 @@ namespace Nimble {
     template <typename S>
     Nimble::Vector4T<S> round() const
     {
-      return Nimble::Vector4T<S>(S(std::round(x)), S(std::round(y)), S(std::round(z)), S(std::round(w)));
+      return Nimble::Vector4T<S>(S(Nimble::Math::Roundf(x)), S(Nimble::Math::Roundf(y)),
+                                 S(Nimble::Math::Roundf(z)), S(Nimble::Math::Roundf(w)));
     }
   };
 
