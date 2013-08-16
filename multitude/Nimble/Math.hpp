@@ -160,6 +160,10 @@ namespace Nimble {
     inline int Round(float x) { return x > 0.0f ? (int) (x + 0.5f) : (int) (x - 0.5f); }
     /// Rounds the given number to nearest integer
     inline int Round(double x) { return x > 0.0 ? (int) (x + 0.5) : (int) (x - 0.5); }
+    /// Same thing as std::round with floating point types
+    /// Only exists because visual studio 2012 doesn't implement std::round
+    template <typename T>
+    T Roundf(T x) { return x >= T(0) ? std::floor(x + T(0.5)) : std::ceil(x - T(0.5)); }
 
     /// Clamp a value between minimum and maximum values
     /// @param x The input value to limit.
