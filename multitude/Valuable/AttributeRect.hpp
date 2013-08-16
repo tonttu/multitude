@@ -30,7 +30,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the AttributeRect
-    AttributeRectT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false)
       : Base(host, name, r, transit) {}
 
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;

@@ -166,10 +166,10 @@ namespace Valuable
     template <typename T>
     struct AttributeType
     {
-      enum { type = std::is_integral<T>() ? ATTR_INT :
-                    std::is_floating_point<T>() ? ATTR_FLOAT :
-                    std::is_enum<T>() ? ATTR_ENUM :
-                    std::is_base_of<Radiant::Flags, T>() ? ATTR_FLAGS :
+      enum { type = std::is_integral<T>::value ? ATTR_INT :
+                    std::is_floating_point<T>::value ? ATTR_FLOAT :
+                    std::is_enum<T>::value ? ATTR_ENUM :
+                    std::is_base_of<Radiant::Flags, T>::value ? ATTR_FLAGS :
                     IsVector<T>::value ? ATTR_VECTOR :
                     IsMatrix<T>::value ? ATTR_MATRIX :
                     IsRect<T>::value ? ATTR_RECT :
