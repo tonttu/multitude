@@ -1036,7 +1036,7 @@ namespace Luminous
 
     // Fill is an affine transform of a circle
     {
-      Luminous::TransformGuard transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * m);
+      Luminous::TransformGuard::RightMul transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * m);
       drawCircle(Nimble::Vector2(0, 0), 1.0f, s, lineSegments, fromRadians, toRadians);
     }
 
