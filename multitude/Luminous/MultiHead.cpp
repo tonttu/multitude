@@ -440,6 +440,17 @@ namespace Luminous
     m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
+
+    m_hwColorCorrectionEnabled.addListener([&]()
+    {
+      if(m_hwColorCorrectionEnabled && !m_windows.empty()) {
+        auto w = m_windows[0];
+        if(w->areaCount() > 0)
+          m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
+      } else {
+        m_hwColorCorrection.syncWith(0);
+      }
+    });
   }
 
   MultiHead::~MultiHead()
