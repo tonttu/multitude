@@ -180,6 +180,7 @@ return self;
       return;            // reject dead keys
     if ( [theArrow length] == 1 ) {
       keyChar = [theArrow characterAtIndex:0];
+
       if ( keyChar == NSLeftArrowFunctionKey ) {
         key = Qt::Key_Left;
       }
@@ -200,29 +201,19 @@ return self;
   if([theEvent isARepeat])
     repeat = true;
 
-  // QKeyEvent xke;
-  // QKeyEvent qkev(QEvent::KeyPress, (int) unichar, Qt::NoModifier));
-
-  switch(key) {
-
-  //esc
-  case 27 :
-    if( [[self window] styleMask] & NSFullScreenWindowMask) {
+  if(key == 0x1b) {
+    key = Qt::Key_Escape;
+    /*if( [[self window] styleMask] & NSFullScreenWindowMask) {
       [[self window] toggleFullScreen:nil];
+      break;
     }
-    break;
-
-  default:
-  {
-    // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
-    if(key == 0xffef)
-      return; // Unhandled conversion
-    // hook->handleKeyboardEvent(key, true, 0, repeat);
-    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
+    */
   }
-    break;
-  };
 
+  // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
+  if(key == 0xffef)
+    return; // Unhandled conversion
+  hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
 }
 
 -(void) keyUp:(NSEvent *)theEvent
