@@ -525,6 +525,11 @@ namespace Valuable
     /// @param attribute removed attribute
     virtual void attributeRemoved(Attribute * attribute);
 
+    /// Controls what to do when an event mismatch is detected
+    /// The default behavior is to output a warning to the terminal (haltApplication = false).
+    /// The application can also be stopped by calling Radiant::fatal (haltApplication = true).
+    static void setFatalOnEventMismatch(bool haltApplication);
+
   private:
     /// Adds an event source
     void eventAddSource(Valuable::Node * source);
