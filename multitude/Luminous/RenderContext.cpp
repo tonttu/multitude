@@ -1533,7 +1533,7 @@ namespace Luminous
     PostProcessContextPtr first = *chain.begin();
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
-      Luminous::FrameBufferGuard(*this, first->frameBuffer());
+      Luminous::FrameBufferGuard g(*this, first->frameBuffer());
       blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
     }
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);

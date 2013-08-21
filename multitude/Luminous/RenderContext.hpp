@@ -275,7 +275,6 @@ namespace Luminous
     /// Push the given opacity to render context. The resulting opacity will be
     /// the current opacity multiplied by the given value.
     /// @param opacity opacity to push
-    /// @return Guard for pushed opacity.
     void pushOpacity(float opacity);
     /// Pop the current opacity from the stack
     void popOpacity();

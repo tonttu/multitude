@@ -13,7 +13,6 @@
 #include <Radiant/Mutex.hpp>
 
 #include <Valuable/StyleValue.hpp>
-
 #include <Luminous/RenderManager.hpp>
 
 #include <QFontMetricsF>
@@ -88,7 +87,11 @@ bool operator==(const QTextOption & o1, const QTextOption & o2)
       o1.tabStop() == o2.tabStop() &&
       o1.tabs() == o2.tabs() &&
       o1.textDirection() == o2.textDirection() &&
+#ifndef RADIANT_WINDOWS
+      // On Windows we need to control this manually because it conflicts with
+      // font-stretch attribute, so do not use it as a part of cache key.
       o1.useDesignMetrics() == o2.useDesignMetrics() &&
+#endif
       o1.wrapMode() == o2.wrapMode();
 }
 
@@ -191,6 +194,21 @@ namespace Luminous
     } else {
       font.setLetterSpacing(QFont::PercentageSpacing, s_defaultLetterSpacing * 100.0f);
     }
+
+#ifdef RADIANT_WINDOWS
+    // If enabling design metrics and font stretching the whole layout will collapse.
+    // Also the layouting will be bad if not using design metrics with small fonts
+    // so this is resolved using somewhat questionable heuristic
+    if(font.stretch() != QFont::Unstretched) {
+      if(font.pointSizeF() >= 10.f) {
+        auto option = m_layout.textOption();
+        option.setUseDesignMetrics(false);
+        m_layout.setTextOption(option);
+      } else {
+        font.setStretch(QFont::Unstretched);
+      }
+    }
+#endif
     m_layout.setFont(font);
 
     QFontMetricsF fontMetrics(font);
