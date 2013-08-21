@@ -31,7 +31,7 @@ namespace Valuable
                         const QStringList & v = QStringList(), bool transit = false);
 
     /// Returns the value as string
-    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
+    virtual QString asString(bool * const ok = nullptr, Layer layer = USER) const OVERRIDE;
 
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;

@@ -25,6 +25,10 @@ namespace Valuable
   public:
     using AttributeVector<Radiant::Color>::operator=;
 
+    /// @copydoc Attribute::Attribute()
+    AttributeColor() : AttributeVector<Radiant::Color>()
+    {}
+
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
     AttributeColor(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
