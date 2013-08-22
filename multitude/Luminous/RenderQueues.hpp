@@ -64,6 +64,8 @@ namespace Luminous
       return m_vec[m_usedSize++];
     }
 
+    bool empty() const { return m_usedSize == 0; }
+
     std::size_t size() const { return m_usedSize; }
 
     const T& operator[](int i) const { return m_vec[i]; }
