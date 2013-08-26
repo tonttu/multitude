@@ -21,8 +21,28 @@
 #include <QList>
 #include <Radiant/Trace.hpp>
 
+#ifdef RADIANT_WINDOWS
+  /* get the real monitor name (e.g. Prisma2 1080p) from GDI Device
+   * name (e.g. \\.\DISPLAY1). This is needed because EnumDisplayDevices
+   * doesn't always return the correct name, returning instead the dreaded
+   * 'Generic PnP Monitor'
+  */
+#  include <windows.h>
+#endif //RADIANT_WINDOW
+
 namespace Luminous
 {
+#ifdef RADIANT_WINDOWS
+  /* get the real monitor name (e.g. Prisma2 1080p) from GDI Device
+   * name (e.g. \\.\DISPLAY1). This is needed because EnumDisplayDevices
+   * doesn't always return the correct name, returning instead the dreaded
+   * 'Generic PnP Monitor'
+  */
+#  include <windows.h>
+
+extern LUMINOUS_API QString monitorFriendlyNameFromGDIName(QString GDIName);
+#endif //RADIANT_WINDOWS
+
   class ScreenInfo
   {
   public:
@@ -91,7 +111,6 @@ namespace Luminous
   private:
     QList<ScreenInfo> m_results;
   };
-
 }
 
 /// @endcond
