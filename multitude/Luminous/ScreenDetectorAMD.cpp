@@ -455,7 +455,7 @@ namespace {
       screeninfo.setGpuName(adapterInfo[adapterIdx].strAdapterName);
 
 
-      QString monitor_name = Luminous::monitorFriendlyNameFromGDIName(QString(adapterInfo[adapterIdx].strDisplayName));
+      QString monitor_name = Luminous::ScreenDetector::monitorFriendlyNameFromGDIName(QString(adapterInfo[adapterIdx].strDisplayName));
 
       screeninfo.setName(monitor_name);
 

@@ -408,7 +408,7 @@ namespace
       EnumDisplaySettingsExA(displayName, ENUM_CURRENT_SETTINGS, &devMode, 0);
 
 
-      QString monitor_name = Luminous::monitorFriendlyNameFromGDIName(QString(displayName));
+      QString monitor_name = Luminous::ScreenDetector::monitorFriendlyNameFromGDIName(QString(displayName));
 
       // Write the screen information
       Luminous::ScreenInfo info;

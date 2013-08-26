@@ -56,7 +56,6 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
 
   QMap<QString, QString> queryMonitorNames()
   {
-    Radiant::info("queryMonitorNames()");
     QMap<QString, QString> monitor_name_map;
     UINT32 num_of_paths = 0;
     UINT32 num_of_modes = 0;
@@ -95,23 +94,6 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     free(displayModes);
     return monitor_name_map;
   }
-
-  QString monitorFriendlyNameFromGDIName(QString GDIName)
-  {
-    QMap<QString, QString> map = queryMonitorNames();
-
-    QString monitor_name = map[GDIName];
-    if(monitor_name.isEmpty())
-    {
-      DISPLAY_DEVICEA dd;
-      memset(&dd, 0, sizeof(dd));
-      dd.cb = sizeof(dd);
-      EnumDisplayDevicesA(GDIName.toUtf8().data(), 0, &dd, 0);
-      monitor_name = dd.DeviceString;
-    }
-
-    return monitor_name;
-  }
 #endif //RADIANT_WINDOWS
 
   void ScreenDetector::scan(bool /*forceRescan*/)
@@ -130,4 +112,23 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
 #endif
   }
 
+
+#ifdef RADIANT_WINDOWS
+  QString ScreenDetector::monitorFriendlyNameFromGDIName(QString GDIName)
+  {
+    QMap<QString, QString> map = queryMonitorNames();
+
+    QString monitor_name = map[GDIName];
+    if(monitor_name.isEmpty())
+    {
+      DISPLAY_DEVICEA dd;
+      memset(&dd, 0, sizeof(dd));
+      dd.cb = sizeof(dd);
+      EnumDisplayDevicesA(GDIName.toUtf8().data(), 0, &dd, 0);
+      monitor_name = dd.DeviceString;
+    }
+
+    return monitor_name;
+  }
+#endif
 }
