@@ -128,6 +128,11 @@ namespace Radiant
       assert(false && "PlatformUtils::GetModuleGlobalDataPath # Root in SOFTWARE\\MultiTouch\\MTSvc not set");
     }
 
+    QString getUserDocumentsPath()
+    {
+      return getUserHomePath() + "\\My Documents";
+    }
+
     QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;

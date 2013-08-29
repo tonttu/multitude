@@ -34,6 +34,10 @@ namespace Radiant
     /// @return Absolute path to user's home directory
     RADIANT_API QString getUserHomePath();
 
+    /// Return absolute path to the user's "Documents" directory.
+    /// @return Absolute path to user's Documents directory
+    RADIANT_API QString getUserDocumentsPath();
+
     /// Return path to the user data directory of the given module.
     /// @param module Name of the module whose data directory is being queried
     /// @param isapplication True if the modul is application, false otherwise.
