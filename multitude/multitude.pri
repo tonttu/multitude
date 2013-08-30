@@ -112,6 +112,9 @@ linux-*{
     else:checkCompiler(gcc-4.8): QMAKE_CC=gcc-4.8
   }
   !checkCompiler($$QMAKE_LINK): QMAKE_LINK=$$QMAKE_CXX
+  !checkCompiler($$QMAKE_CXX) {
+    error("$$QMAKE_CXX is too old, need at least g++ 4.6")
+  }
 }
 
 contains(MEMCHECK,yes) {
