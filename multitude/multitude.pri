@@ -254,3 +254,5 @@ disable-deprecation-warnings {
     QMAKE_CXXFLAGS += -wd4996
   }
 }
+
+*g++*:QMAKE_LFLAGS += -Wl,--exclude-libs,ALL
