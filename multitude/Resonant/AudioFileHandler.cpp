@@ -13,6 +13,7 @@
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
+#include <Radiant/ResourceLocator.hpp>
 
 #include <sndfile.h>
 
@@ -26,6 +27,15 @@
 
 namespace Resonant {
   
+  SNDFILE* AudioFileHandler::open(const QString& filename, int openMode, SF_INFO *info)
+  {
+    QStringList files = Radiant::ResourceLocator::instance()->locate(filename);
+    SNDFILE * sndf = nullptr;
+    if(!files.empty())
+      sndf = sf_open(files.front().toUtf8().data(), openMode, info);
+    return sndf;
+  }
+
   AudioFileHandler::Handle::Handle
   (AudioFileHandler * host, 
    const char * filename, 
@@ -222,7 +232,7 @@ namespace Resonant {
 
     int mode = (m_ioMode == Radiant::IO_INPUT) ? SFM_READ : SFM_WRITE;
 
-    m_file = sf_open(m_fileName.toUtf8().data(), mode, m_info);
+    m_file = AudioFileHandler::open(m_fileName, mode, m_info);
 
     if(!m_file)
       return false;
@@ -466,7 +476,7 @@ namespace Resonant {
   {
     memset(info, 0, sizeof(SF_INFO));
 
-    SNDFILE * file = sf_open(filename, SFM_READ, info);
+    SNDFILE * file = open(filename, SFM_READ, info);
 
     if(!file)
       return false;

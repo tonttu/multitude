@@ -190,6 +190,8 @@ namespace Resonant {
     */
     static bool getInfo(const char * filename, SF_INFO * info);
 
+    static SNDFILE_tag * open(const QString& filename, int openMode, SF_INFO *info);
+
   private:
 
     virtual void childLoop();

@@ -28,17 +28,10 @@ namespace Valuable
   {
     if (ok) *ok = true;
     const QMap<QString, QString> &map = value(layer);
-    QString ret;
-    for(auto it =  map.begin(); ; ) {
-      ret.append(QString("\"%1\" \"%2\"").arg(it.value()).arg(it.key()));
-
-      if(++it != map.end())
-        ret.append(",");
-      else
-        break;
-    }
-
-    return ret;
+    QStringList ret;
+    for (auto it = map.begin(); it != map.end(); ++it)
+      ret << QString("\"%1\" \"%2\"").arg(it.key(), it.value());
+    return ret.join(",");
   }
 
   bool AttributeStringMap::set(const QString & v, Attribute::Layer layer, Attribute::ValueUnit)
