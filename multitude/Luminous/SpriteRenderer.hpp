@@ -105,6 +105,8 @@ namespace Luminous {
     /// @return velocity scaling factor
     float velocityScale() const;
 
+    ///
+    void uploadData();
   private:
     class D;
     D * m_d;
