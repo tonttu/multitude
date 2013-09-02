@@ -793,6 +793,13 @@ namespace Luminous
     if(vertexArrayGL.generation() < vertexArray.generation())
       vertexArrayGL.upload(vertexArray, program);
 
+    // Check if any of the associated buffers have changed
+    for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
+      auto & binding = vertexArray.binding(i);
+      auto & buffergl = handle(*binding.buffer);
+      buffergl.upload(*binding.buffer, Buffer::VERTEX);
+    }
+    
     return vertexArrayGL;
   }
 
