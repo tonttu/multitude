@@ -730,19 +730,14 @@ namespace Luminous
         //opaque.usedSize = 0;
       }
 
-      /* glDepthMask must be set to false. Otherwise there may be Z-fighting when multiple geometries are
-         rendered on the same depth. This happens easily in the particle system etc. See #4827. */
-      if(!queues.translucentQueue.queue->empty()) {
-        glDepthMask(GL_FALSE);
-        for(std::size_t i = 0; i < queues.translucentQueue.queue->size(); ++i) {
-          auto p = (*queues.translucentQueue.queue)[i];
-          const RenderState & state = p.first;
-          const RenderCommand & cmd = p.second;
-          m_d->setState(state);
-          m_d->render(cmd, state.uniformBuffer->handle(), 0);
-        }
-        glDepthMask(GL_TRUE);
+      for(std::size_t i = 0; i < queues.translucentQueue.queue->size(); ++i) {
+        auto p = (*queues.translucentQueue.queue)[i];
+        const RenderState & state = p.first;
+        const RenderCommand & cmd = p.second;
+        m_d->setState(state);
+        m_d->render(cmd, state.uniformBuffer->handle(), 0);
       }
+
       //if(queues.translucentQueue.usedSize * 10 > queues.translucentQueue.queue.capacity())
       //  queues.translucentQueue.frame = m_d->m_frame;
 
