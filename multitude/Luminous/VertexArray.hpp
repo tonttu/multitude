@@ -14,6 +14,7 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexDescription.hpp"
+#include "Luminous/Buffer.hpp"
 
 #include <memory>
 #include <vector>
@@ -33,11 +34,11 @@ namespace Luminous
     struct Binding
     {
       /// Buffer id
-      RenderResource::Id buffer;
+      const Luminous::Buffer * buffer;
       /// Description of vertex data
       Luminous::VertexDescription description;
       /// Compares buffer ids
-      bool operator==(RenderResource::Id id) const { return buffer==id; }
+      bool operator==(RenderResource::Id id) const { return buffer->resourceId()==id; }
     };
 
   public:
