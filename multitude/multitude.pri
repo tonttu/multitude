@@ -25,8 +25,19 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
   *clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 }
 
+# On taction tracker build, enable deft & cuda but disable js by default
+# JS can still be enabled with enable-js
+enable-taction:CONFIG += enable-deft
+enable-taction:CONFIG += enable-deft-cuda
+enable-taction:CONFIG += disable-js
+
+# deft can be disabled with -config disable-deft
+disable-deft:CONFIG -= enable-deft enable-deft-cuda
+disable-deft-cuda:CONFIG -= enable-deft-cuda
+
 # JS is enabled by default
 !disable-js:CONFIG += enable-js
+enable-js:CONFIG -= disable-js
 enable-js:DEFINES += CORNERSTONE_JS=1
 
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
