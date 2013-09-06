@@ -31,6 +31,8 @@
 
 #include "GPUAssociation.hpp"
 
+#include <QIcon>
+
 namespace Luminous
 {
 
@@ -491,6 +493,19 @@ namespace Luminous
   void QtWindow::doneCurrent()
   {
     m_d->m_glWidget->doneCurrent();
+  }
+
+  bool QtWindow::setIcon(const QString &filename)
+  {
+    QIcon icon(filename);
+
+    if(icon.isNull())
+      return false;
+
+    Radiant::info("QtWindow::setIcon # %s %d", filename.toUtf8().data(), (int) icon.isNull());
+
+    m_d->m_mainWindow->setWindowIcon(icon);
+    return true;
   }
 
   unsigned QtWindow::gpuId() const
