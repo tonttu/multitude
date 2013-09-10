@@ -30,6 +30,7 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 enable-taction:CONFIG += enable-deft
 enable-taction:CONFIG += enable-deft-cuda
 enable-taction:CONFIG += disable-js
+enable-taction:DEFINES += MULTITACTION_FIRMWARE
 
 # deft can be disabled with -config disable-deft
 disable-deft:CONFIG -= enable-deft enable-deft-cuda
