@@ -160,9 +160,11 @@ namespace Luminous
         Nimble::Vector3 colorSum(0.f, 0.f, 0.f);
 
         // Take 'floor' of the limits in order to avoid floating point accuracy problems
-        int maxX = sy * y0 + sy, maxY = sx * x0 + sx;
-        for(int j = sy * y0; j < maxX; ++j) {
-          for(int i = sx * x0; i < maxY; ++i) {
+        int maxY = sy * y0 + sy;
+        int maxX = sx * x0 + sx;
+
+        for(int j = sy * y0; j < maxY; ++j) {
+          for(int i = sx * x0; i < maxX; ++i) {
             Nimble::Vector4 p = src.pixel(i,j);
             // If this pixel contributes any color, scale by alpha and add it to the sum
             if (p.w > std::numeric_limits<float>::epsilon()) {
