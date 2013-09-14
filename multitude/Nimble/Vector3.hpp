@@ -179,7 +179,7 @@ namespace Nimble {
   auto operator* (const Nimble::Vector3T<T> & v, S s) -> Nimble::Vector3T<decltype(T()*S())>
   {
     static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
-    return Nimble::Vector3T<decltype(v.x*s)>(v.x * s, v.y * s, v.z * s);
+    return Nimble::Vector3T<decltype(T()*S())>(v.x * s, v.y * s, v.z * s);
   }
 
   /// Multiply vector with a scalar (s * v)
