@@ -796,8 +796,10 @@ namespace Luminous
     // Check if any of the associated buffers have changed
     for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
       auto & binding = vertexArray.binding(i);
-      auto & buffergl = handle(*binding.buffer);
-      buffergl.upload(*binding.buffer, Buffer::VERTEX);
+      auto * buffer = RenderManager::getResource<Buffer>(binding.buffer);
+      assert(buffer != nullptr);
+      auto & buffergl = handle(*buffer);
+      buffergl.upload(*buffer, Buffer::VERTEX);
     }
     
     return vertexArrayGL;
