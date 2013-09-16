@@ -90,15 +90,17 @@ namespace Luminous
     for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
       VertexArray::Binding b = vertexArray.binding(i);
       // Attach buffer
-      auto & bufferGL = m_state.driver().handle(*b.buffer);
-      /// Upload new data if we need to
-      bufferGL.upload(*b.buffer, Buffer::VERTEX);
+      auto * buffer = RenderManager::getResource<Buffer>(b.buffer);
+      assert(buffer != nullptr);
 
-      // Set vertex attributes
+      auto & bufferGL = m_state.driver().handle(*buffer);
       bufferGL.bind(Buffer::VERTEX);
+      /// Upload new data if we need to
+      bufferGL.upload(*buffer, Buffer::VERTEX);
+
       setVertexDescription(b.description, program);
 
-      m_associatedBuffers.insert(m_state.driver().bufferPtr(*b.buffer));
+      m_associatedBuffers.insert(m_state.driver().bufferPtr(*buffer));
     }
   }
 
