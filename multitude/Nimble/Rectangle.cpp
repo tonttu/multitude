@@ -73,38 +73,51 @@ namespace Nimble
     return true;
   }
 
+  namespace
+  {
+    float cross(Nimble::Vector2f v, Nimble::Vector2f w)
+    {
+      return v.x*w.y - v.y*w.x;
+    }
+  }
+
   bool Rectangle::intersects(const Rectangle & r) const
   {
-    // Difference box centers
+    // Check if other center is inside another rectangle
+    if(r.isInside(m_origin) || isInside(r.m_origin))
+        return true;
+
+    // Fast negation in clear cases
     Nimble::Vector2f d = r.m_origin - m_origin;
+    if(d.length() > Nimble::Math::Max(m_extent0, m_extent1) + Nimble::Math::Max(r.m_extent0, r.m_extent1))
+        return false;
 
-    float absAdB[2][2];
+    // Do brute force checking of line segments
+    std::array<Nimble::Vector2f, 4> corners;
+    std::array<Nimble::Vector2f, 4> thatCorners;
+    computeCorners(corners);
+    r.computeCorners(thatCorners);
 
-    absAdB[0][0] = std::abs(dot(m_axis0, r.m_axis0));
-    absAdB[0][1] = std::abs(dot(m_axis0, r.m_axis1));
-    float absAdD = std::abs(dot(m_axis0, d));
-    float sum = m_extent0 + r.m_extent0 * absAdB[0][0] + r.m_extent1 * absAdB[0][1];
-    if(absAdD > sum)
-      return false;
+    for(int i = 0; i < 4; ++i) {
+      int nextI = (i+1) % 4;
+      for(int j = 0; j < 4; ++j) {
+        int nextJ = (j+1) % 4;
 
-    absAdB[1][0] = std::abs(dot(m_axis1, r.m_axis0));
-    absAdB[1][1] = std::abs(dot(m_axis1, r.m_axis1));
-    absAdD = std::abs(dot(m_axis1, d));
-    sum = m_extent1 + r.m_extent0 * absAdB[1][0] + r.m_extent1 * absAdB[1][1];
-    if(absAdD > sum)
-      return false;
+        Nimble::Vector2f diff = corners[nextI] - corners[i];
+        Nimble::Vector2f thatDiff = thatCorners[nextJ] - thatCorners[j];
 
-    absAdD = std::abs(dot(r.m_axis0, d));
-    sum = r.m_extent0 + m_extent0 * absAdB[0][0] + m_extent1 * absAdB[1][0];
-    if(absAdD > sum)
-      return false;
+        float a = cross(diff, thatDiff);
+        if(a == 0.f) continue; // lines are parallel, just ignore
 
-    absAdD = std::abs(dot(r.m_axis1, d));
-    sum = r.m_extent1 + m_extent0 * absAdB[0][1] + m_extent1 * absAdB[1][1];
-    if(absAdD > sum)
-      return false;
+        Nimble::Vector2f startDiff = corners[j] - corners[i];
+        float u = cross(startDiff, diff) / a;
+        float t = cross(startDiff, thatDiff) / a;
 
-    return true;
+        if(0 <= u && u <= 1 && 0 <= t && t <= 1)
+          return true;
+      }
+    }
+    return false;
   }
 
   Nimble::SizeF Rectangle::size() const
