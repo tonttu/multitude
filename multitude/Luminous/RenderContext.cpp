@@ -1131,7 +1131,7 @@ namespace Luminous
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid())
-        uniform.colorIn = Radiant::Color(group.color);
+        uniform.colorIn = Radiant::Color(group.color) * opacity();
 
       for (int i = 0; i < int(group.items.size());) {
         const int count = std::min<int>(group.items.size() - i, maxGlyphsPerCmd);
