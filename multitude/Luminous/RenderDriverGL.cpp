@@ -781,7 +781,6 @@ namespace Luminous
     if(it == m_d->m_vertexArrays.end()) {
       it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(vertexArray.expiration());
-      it->second.upload(vertexArray, program);
     }
 
     VertexArrayGL & vertexArrayGL = it->second;
@@ -800,7 +799,15 @@ namespace Luminous
       auto & buffergl = handle(*buffer);
       buffergl.upload(*buffer, Buffer::VERTEX);
     }
-    
+
+    RenderResource::Id indexBufferId = vertexArray.indexBuffer();
+    if (indexBufferId) {
+      auto * buffer = RenderManager::getResource<Buffer>(indexBufferId);
+      assert(buffer);
+      auto & buffergl = handle(*buffer);
+      buffergl.upload(*buffer, Buffer::INDEX);
+    }
+
     return vertexArrayGL;
   }
 
