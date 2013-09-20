@@ -59,8 +59,6 @@ namespace Luminous
     void setVertexDescription(const VertexDescription & description, ProgramGL * program);
 
     int m_generation;
-
-    std::set<std::shared_ptr<BufferGL> > m_associatedBuffers;
   };
 }
 

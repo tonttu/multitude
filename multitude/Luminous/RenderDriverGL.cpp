@@ -775,15 +775,6 @@ namespace Luminous
     return *it->second;
   }
 
-  std::shared_ptr<BufferGL> RenderDriverGL::bufferPtr(const Buffer & buffer)
-  {
-    // Never creates resources, only used internally
-    auto it = m_d->m_buffers.find(buffer.resourceId());
-    assert(it != m_d->m_buffers.end());
-
-    return it->second;
-  }
-
   VertexArrayGL & RenderDriverGL::handle(const VertexArray & vertexArray, ProgramGL * program)
   {
     auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());

@@ -71,10 +71,6 @@ namespace Luminous
     if(program)
       program->bind();
 
-    // Clear the associated buffers. Nothing will be released, as the driver
-    // owns a copy of them, too.
-    m_associatedBuffers.clear();
-
     setVertexAttributes(vertexArray, program);
 
     Buffer * index = RenderManager::getResource<Buffer>(vertexArray.indexBuffer());
@@ -85,7 +81,6 @@ namespace Luminous
       bufferGL.bind(Buffer::INDEX);
       /// Upload new data if we need to
       bufferGL.upload(*index, Buffer::INDEX);
-      m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
 
     unbind();
@@ -107,8 +102,6 @@ namespace Luminous
       bufferGL.upload(*buffer, Buffer::VERTEX);
 
       setVertexDescription(b.description, program);
-
-      m_associatedBuffers.insert(m_state.driver().bufferPtr(*buffer));
     }
   }
 
