@@ -55,6 +55,12 @@ namespace Luminous
     touch();
   }
 
+  void VertexArrayGL::unbind()
+  {
+    if (m_state.setVertexArray(0))
+      glBindVertexArray(0);
+  }
+
   void VertexArrayGL::upload(const VertexArray & vertexArray, ProgramGL * program)
   {
     m_generation = vertexArray.generation();
@@ -81,6 +87,8 @@ namespace Luminous
       bufferGL.upload(*index, Buffer::INDEX);
       m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
+
+    unbind();
   }
 
   void VertexArrayGL::setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program)

@@ -249,6 +249,8 @@ namespace Luminous
 
     if(state.vertexArray) {
       state.vertexArray->bind();
+    } else if (m_stateGL.setVertexArray(0)) {
+      glBindVertexArray(0);
     }
   }
 
@@ -340,7 +342,8 @@ namespace Luminous
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
-    if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
+    /// @todo why did we do this, makes no sense?
+    //if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
 
     // In case of non-shared buffers, we'll re-upload if anything has changed
     m_state.uniformBuffer->upload(uniformBuffer, Buffer::UNIFORM);
@@ -745,6 +748,11 @@ namespace Luminous
 
       // Remove the processed segment from the master queue
       m_d->m_masterRenderQueue.pop_front();
+    }
+
+    // VAO should be bound only when rendering something or modifying the VAO state
+    if (m_d->m_stateGL.setVertexArray(0)) {
+      glBindVertexArray(0);
     }
   }
 
