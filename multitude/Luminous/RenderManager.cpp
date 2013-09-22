@@ -40,7 +40,7 @@ namespace Luminous
   template <typename T>
   T * getResource( RenderResource::Id id )
   {
-    /// @todo shouldn't there be a lock here?
+    Radiant::Guard g(s_resourceMapMutex);
     auto descr = s_resourceMap.find(id);
     if (descr != std::end(s_resourceMap))
       return reinterpret_cast<T*>(descr->second);
