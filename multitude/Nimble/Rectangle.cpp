@@ -73,14 +73,6 @@ namespace Nimble
     return true;
   }
 
-  namespace
-  {
-    float cross(Nimble::Vector2f v, Nimble::Vector2f w)
-    {
-      return v.x*w.y - v.y*w.x;
-    }
-  }
-
   bool Rectangle::intersects(const Rectangle & r) const
   {
     // Check if other center is inside another rectangle
@@ -88,8 +80,11 @@ namespace Nimble
         return true;
 
     // Fast negation in clear cases
+    // "Place" rectangles in enclosing balls and see whether the balls intersect.
     Nimble::Vector2f d = r.m_origin - m_origin;
-    if(d.length() > Nimble::Math::Max(m_extent0, m_extent1) + Nimble::Math::Max(r.m_extent0, r.m_extent1))
+
+    float b = m_extent0 + m_extent1 + r.m_extent0 + r.m_extent1;
+    if(d.lengthSqr() > b*b)
         return false;
 
     // Do brute force checking of line segments
@@ -106,12 +101,12 @@ namespace Nimble
         Nimble::Vector2f diff = corners[nextI] - corners[i];
         Nimble::Vector2f thatDiff = thatCorners[nextJ] - thatCorners[j];
 
-        float a = cross(diff, thatDiff);
-        if(a == 0.f) continue; // lines are parallel, just ignore
+        float a = Nimble::cross(diff, thatDiff);
+        if(std::abs(a) < 0.00001f) continue; // lines are parallel, just ignore
 
         Nimble::Vector2f startDiff = corners[j] - corners[i];
-        float u = cross(startDiff, diff) / a;
-        float t = cross(startDiff, thatDiff) / a;
+        float u = Nimble::cross(startDiff, diff) / a;
+        float t = Nimble::cross(startDiff, thatDiff) / a;
 
         if(0 <= u && u <= 1 && 0 <= t && t <= 1)
           return true;
