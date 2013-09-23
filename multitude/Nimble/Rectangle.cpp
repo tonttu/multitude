@@ -101,12 +101,12 @@ namespace Nimble
         Nimble::Vector2f diff = corners[nextI] - corners[i];
         Nimble::Vector2f thatDiff = thatCorners[nextJ] - thatCorners[j];
 
-        float a = Nimble::cross(diff, thatDiff);
+        float a = cross(diff, thatDiff);
         if(std::abs(a) < 0.00001f) continue; // lines are parallel, just ignore
 
         Nimble::Vector2f startDiff = corners[j] - corners[i];
-        float u = Nimble::cross(startDiff, diff) / a;
-        float t = Nimble::cross(startDiff, thatDiff) / a;
+        float u = cross(startDiff, diff) / a;
+        float t = cross(startDiff, thatDiff) / a;
 
         if(0 <= u && u <= 1 && 0 <= t && t <= 1)
           return true;
