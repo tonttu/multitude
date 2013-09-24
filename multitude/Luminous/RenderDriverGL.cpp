@@ -974,6 +974,11 @@ namespace Luminous
 #  warning "setVSync not implemented on this platform"
 #endif
   }
+
+  void RenderDriverGL::setUpdateFrequency(float fps)
+  {
+    m_d->m_stateGL.setUpdateFrequency(Nimble::Math::Round(fps));
+  }
 }
 
 #undef GLERROR
