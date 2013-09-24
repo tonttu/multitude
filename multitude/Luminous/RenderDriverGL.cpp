@@ -61,6 +61,21 @@
 #define TEXTURE_FREE_MEMORY_ATI                 0x87FC
 #define RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
 
+namespace
+{
+#if defined (RADIANT_WINDOWS)
+  bool checkSwapGroupExtension() { return glewGetExtension("WGL_NV_swap_group"); }
+  bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) { return wglQueryMaxSwapGroupsNV(wglGetCurrentDC(), &maxGroups, &maxBarriers); }
+  bool joinSwapGroup(int group) { return wglJoinSwapGroupNV(wglGetCurrentDC(), group); }
+  bool setSwapBarrier(int group, int barrier) { return wglBindSwapBarrierNV(group, barrier); }
+#elif defined (RADIANT_LINUX)
+  bool checkSwapGroupExtension() { return glewGetExtension("GLX_NV_swap_group"); }
+  bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) { return glXQueryMaxSwapGroupsNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), &maxGroups, &maxBarriers); }
+  bool joinSwapGroup(int group) { return glXJoinSwapGroupNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), group); }
+  bool setSwapBarrier(int group, int barrier) { return glXBindSwapBarrierNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), group, barrier); }
+#endif
+}
+ 
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
@@ -937,6 +952,35 @@ namespace Luminous
       return alignment;
     Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
     return 256;
+  }
+
+  bool RenderDriverGL::setSwapGroup(unsigned int group, unsigned int barrier)
+  {
+    if (checkSwapGroupExtension()) {
+      GLuint maxGroups, maxBarriers;
+      if (!queryMaxSwapGroup(maxGroups, maxBarriers)) {
+        Radiant::error("RenderDriverGL::setSwapGroup # Unable to get max group and barrier counts");
+      }
+      if (group > maxGroups || barrier > maxBarriers) {
+        Radiant::error("RenderDriverGL::setSwapGroup # Group or barrier out of range (%d>%d | %d>%d)", group, maxGroups, barrier, maxBarriers);
+        return false;
+      }
+      if (!joinSwapGroup(group)) {
+        Radiant::error("RenderDriverGL::setSwapGroup # Failed to join swap group %d", group);
+        return false;
+      }
+
+      if (!setSwapBarrier(group, barrier)) {
+        Radiant::error("RenderDriverGL::setSwapGroup # Failed to set swap barrier %d for group %d", barrier, group);
+        return false;
+      }
+    }
+    else {
+      Radiant::info("RenderDriverGL::setSwapGroup # Swap group extension not available");
+      return false;
+    }
+
+    return true;
   }
 
   void RenderDriverGL::setVSync(bool vsync)

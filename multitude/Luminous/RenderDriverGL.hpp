@@ -100,6 +100,7 @@ namespace Luminous
 
     LUMINOUS_API int uniformBufferOffsetAlignment() const;
 
+    LUMINOUS_API bool setSwapGroup(unsigned int group, unsigned int barrier) OVERRIDE;
     LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
   private:
 

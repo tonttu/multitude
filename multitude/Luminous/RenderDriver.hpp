@@ -105,6 +105,7 @@ namespace Luminous
 
     LUMINOUS_API virtual int uniformBufferOffsetAlignment() const = 0;
 
+    LUMINOUS_API virtual bool setSwapGroup(unsigned int group, unsigned int barrier) = 0;
     LUMINOUS_API virtual void setVSync(bool vsync) = 0;
 
     // Driver factory
