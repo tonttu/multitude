@@ -180,6 +180,7 @@ return self;
       return;            // reject dead keys
     if ( [theArrow length] == 1 ) {
       keyChar = [theArrow characterAtIndex:0];
+
       if ( keyChar == NSLeftArrowFunctionKey ) {
         key = Qt::Key_Left;
       }
@@ -200,29 +201,19 @@ return self;
   if([theEvent isARepeat])
     repeat = true;
 
-  // QKeyEvent xke;
-  // QKeyEvent qkev(QEvent::KeyPress, (int) unichar, Qt::NoModifier));
-
-  switch(key) {
-
-  //esc
-  case 27 :
-    if( [[self window] styleMask] & NSFullScreenWindowMask) {
+  if(key == 0x1b) {
+    key = Qt::Key_Escape;
+    /*if( [[self window] styleMask] & NSFullScreenWindowMask) {
       [[self window] toggleFullScreen:nil];
+      break;
     }
-    break;
-
-  default:
-  {
-    // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
-    if(key == 0xffef)
-      return; // Unhandled conversion
-    // hook->handleKeyboardEvent(key, true, 0, repeat);
-    hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
+    */
   }
-    break;
-  };
 
+  // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
+  if(key == 0xffef)
+    return; // Unhandled conversion
+  hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
 }
 
 -(void) keyUp:(NSEvent *)theEvent
@@ -562,28 +553,58 @@ return self;
 
 @end
 
-@interface CocoaWindow : NSWindow
+@interface CocoaNSWindow : NSWindow
 {
 }
 
 -(BOOL) canBecomeKeyWindow;
 -(BOOL) acceptsFirstResponder;
+  - (void) deminiaturize;
 
 @end
 
-@implementation CocoaWindow
+@implementation CocoaNSWindow
 
 -(BOOL) canBecomeKeyWindow { return YES; }
 -(BOOL) acceptsFirstResponder { return YES; }
 
+- (void) deminiaturize:(id)sender
+{
+    Radiant::info("deminiaturize:(id)sender");
+  [super deminiaturize:sender];
+}
+
+  -(void) windowDidDeminiaturize:(NSNotification *) note {
+    Radiant::info("windowDidDeminiaturize:(NSNotification *) note");
+  }
 @end
 
+@interface CocoaNSWindowDelegate : NSObject <NSWindowDelegate>
+{
+  @public
+  Luminous::CocoaWindow * m_window;
+}
+@end
+
+@implementation CocoaNSWindowDelegate
+- (void)windowDidMiniaturize:(NSNotification *)notification {
+    Luminous::WindowEventHook * hook = m_window->eventHook();
+    hook->handleWindowIconifyEvent();
+    // Radiant::info("MINI");
+}
+  - (void)windowDidDeminiaturize:(NSNotification *)notification {
+    Luminous::WindowEventHook * hook = m_window->eventHook();
+    hook->handleWindowRestoreEvent();
+      // Radiant::info("DEMINI");
+  }
+@end
 
 
 @interface Controller : NSWindowController
 {
-
-  CocoaWindow *glWindow;
+  @public
+  CocoaNSWindow *glWindow;
+  CocoaNSWindowDelegate *glWindowDelegate;
 
   CocoaView *glView;
 
@@ -632,6 +653,8 @@ return self;
 
 - (void) newWindow
 {
+    Radiant::info("NEW WINDOW");
+
   // Use the first display
   int display = 0;
 
@@ -640,7 +663,7 @@ return self;
   if(m_hint->frameless())
     styleMask |= NSBorderlessWindowMask;
   else if(!m_hint->fullscreen())
-    styleMask |= NSTitledWindowMask;
+    styleMask |= (NSTitledWindowMask | NSMiniaturizableWindowMask);
 
   NSScreen * screen = [[NSScreen screens] objectAtIndex:display];
   NSRect displayRect = [screen frame];
@@ -649,11 +672,15 @@ return self;
   displayRect.origin.y = displayRect.size.height - m_hint->location().y - m_hint->height();
   displayRect.size.width = m_hint->width();
   displayRect.size.height = m_hint->height();
-  glWindow = [[CocoaWindow alloc] initWithContentRect: displayRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
+  glWindow = [[CocoaNSWindow alloc] initWithContentRect: displayRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
 
   [glWindow setHasShadow:NO];
 
   [glWindow setAcceptsMouseMovedEvents:YES];
+
+  glWindowDelegate = [CocoaNSWindowDelegate alloc];
+  glWindowDelegate->m_window = m_window;
+  [glWindow setDelegate:glWindowDelegate];
 
   glView = [ [CocoaView alloc] initWithFrame:[glWindow frame]
       colorBits:8 depthBits:24 fullscreen:m_hint->fullscreen()
@@ -755,7 +782,11 @@ void CocoaWindow::swapBuffers()
 
 void CocoaWindow::minimize()
 {
-  Radiant::error("CocoaWindow::minimize # unimplemented");
+  Radiant::info("CocoaWindow::minimize # 1");
+  CocoaNSWindow * cocoaNS = m_d->controller->glWindow;
+  // Radiant::error("CocoaWindow::minimize # %p", cocoaNS);
+  // [cocoaNS performMiniaturize];
+  [cocoaNS miniaturize:nil];
 }
 
 void CocoaWindow::maximize()
@@ -765,7 +796,9 @@ void CocoaWindow::maximize()
 
 void CocoaWindow::restore()
 {
-  Radiant::error("CocoaWindow::restore # unimplemented");
+  CocoaNSWindow * cocoaNS = m_d->controller->glWindow;
+  [cocoaNS deminiaturize:nil];
+  // Radiant::error("CocoaWindow::restore # unimplemented");
 }
 
 void CocoaWindow::showCursor(bool visible)

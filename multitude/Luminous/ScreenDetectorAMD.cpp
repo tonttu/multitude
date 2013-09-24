@@ -14,11 +14,9 @@
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Trace.hpp>
 
-#if defined (RADIANT_WINDOWS)
-#  include <windows.h>
-#elif defined (RADIANT_WINDOWS)
+#if defined (RADIANT_LINUX)
 #  include "XRandR.hpp"
-#elif defined (RADIONT_OSX)
+#elif defined (RADIANT_OSX)
 #  error "Not supported on OSX"
 #endif
 
@@ -456,12 +454,10 @@ namespace {
       screeninfo.setGpu(QString("GPU-0x") + QString::number(gpuID,16));
       screeninfo.setGpuName(adapterInfo[adapterIdx].strAdapterName);
 
-      // Retrieve display device name
-      DISPLAY_DEVICEA dd;
-      memset(&dd, 0, sizeof(dd));
-      dd.cb = sizeof(dd);
-      EnumDisplayDevicesA(adapterInfo[adapterIdx].strDisplayName, 0, &dd, 0);
-      screeninfo.setName(dd.DeviceString);
+
+      QString monitor_name = Luminous::ScreenDetector::monitorFriendlyNameFromGDIName(QString(adapterInfo[adapterIdx].strDisplayName));
+
+      screeninfo.setName(monitor_name);
 
       //
       std::vector<ADLDisplayMap> displayMaps;

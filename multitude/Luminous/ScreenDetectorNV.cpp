@@ -23,7 +23,6 @@
 #  include <NVCtrl/NVCtrlLib.h>
 #elif defined (RADIANT_WINDOWS)
 #  include <NVAPI/nvapi.h>
-#  include <windows.h>
 #endif
 
 #include <map>
@@ -401,23 +400,22 @@ namespace
       err = NvAPI_GetAssociatedNvidiaDisplayName(displayHandle, displayName);
       assert(err == NVAPI_OK);
 
+
       DEVMODEA devMode;
       memset(&devMode, 0, sizeof(devMode));
       devMode.dmSize = sizeof(devMode);
       /// @todo errorcheck
       EnumDisplaySettingsExA(displayName, ENUM_CURRENT_SETTINGS, &devMode, 0);
 
-      DISPLAY_DEVICEA dd;
-      memset(&dd, 0, sizeof(dd));
-      dd.cb = sizeof(dd);
-      EnumDisplayDevicesA(displayName, 0, &dd, 0);
+
+      QString monitor_name = Luminous::ScreenDetector::monitorFriendlyNameFromGDIName(QString(displayName));
 
       // Write the screen information
       Luminous::ScreenInfo info;
       info.setLogicalScreen(0);
 
       // Screen device name
-      info.setName(dd.DeviceString);
+      info.setName(monitor_name);
 
       // GPU id and description
       info.setGpu(gpuInfo);

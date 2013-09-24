@@ -55,6 +55,12 @@ namespace Luminous
     touch();
   }
 
+  void VertexArrayGL::unbind()
+  {
+    if (m_state.setVertexArray(0))
+      glBindVertexArray(0);
+  }
+
   void VertexArrayGL::upload(const VertexArray & vertexArray, ProgramGL * program)
   {
     m_generation = vertexArray.generation();
@@ -64,10 +70,6 @@ namespace Luminous
 
     if(program)
       program->bind();
-
-    // Clear the associated buffers. Nothing will be released, as the driver
-    // owns a copy of them, too.
-    m_associatedBuffers.clear();
 
     setVertexAttributes(vertexArray, program);
 
@@ -79,8 +81,9 @@ namespace Luminous
       bufferGL.bind(Buffer::INDEX);
       /// Upload new data if we need to
       bufferGL.upload(*index, Buffer::INDEX);
-      m_associatedBuffers.insert(m_state.driver().bufferPtr(*index));
     }
+
+    unbind();
   }
 
   void VertexArrayGL::setVertexAttributes(const VertexArray & vertexArray, ProgramGL * program)
@@ -99,8 +102,6 @@ namespace Luminous
       bufferGL.upload(*buffer, Buffer::VERTEX);
 
       setVertexDescription(b.description, program);
-
-      m_associatedBuffers.insert(m_state.driver().bufferPtr(*buffer));
     }
   }
 

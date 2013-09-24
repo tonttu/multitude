@@ -51,8 +51,18 @@ namespace Luminous
     virtual void handleTouchEvent(const Radiant::TouchEvent & event) = 0;
     /// Handle resize events
     virtual void handleWindowMove(int x, int y, int width, int height) = 0;
+
+    /// Handle the event where a window is iconified
+    virtual void handleWindowIconifyEvent() = 0;
+    /// Handle the case where a window is de-iconified
+    virtual void handleWindowRestoreEvent() = 0;
+    /// Handle the case where a window is closed.
+    /// This is typically triggered when the user clicks on the window-close icon.
+    virtual void handleWindowCloseEvent() = 0;
+
     /// Time since last keyboard or mouse activity
     virtual double lastActivity() const = 0;
+
   };
 
 }

@@ -38,6 +38,9 @@ namespace Nimble {
     /// @param height height to initialize the size to
     SizeT(T width, T height);
 
+    /// Copy constructor
+    SizeT(const SizeT &other);
+
     /// Returns a size holding the minimum width and height of this and the given size
     /// @param size size to compare to
     /// @return bounded size
@@ -202,6 +205,13 @@ namespace Nimble {
     : m_width(v.x)
     , m_height(v.y)
   {}
+
+  template<typename T>
+  SizeT<T>::SizeT(const SizeT &other)
+    : m_width(other.m_width)
+    , m_height(other.m_height)
+  {
+  }
 
   template<typename T>
   SizeT<T> SizeT<T>::boundedTo(const SizeT &size) const

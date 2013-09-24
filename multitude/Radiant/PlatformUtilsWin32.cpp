@@ -81,6 +81,11 @@ namespace Radiant
       return path;
     }
 
+    QString getUserDocumentsPath()
+    {
+      return getUserHomePath() + "\\My Documents";
+    }
+
     QString getModuleUserDataPath(const char * module, bool isapplication)
     {
       (void) isapplication;

@@ -20,6 +20,10 @@ namespace
   /// Specify the internal format (number of channels or explicitly requested format)
   GLenum internalFormat(const Luminous::Texture & texture)
   {
+    // Check for compressed formats
+    if (texture.dataFormat().compression() != Luminous::PixelFormat::COMPRESSION_NONE)
+      return texture.dataFormat().compression();
+
     /// Specify the internal format (number of channels or explicitly requested format)
     GLenum intFormat = texture.internalFormat();
     if(intFormat == 0) {

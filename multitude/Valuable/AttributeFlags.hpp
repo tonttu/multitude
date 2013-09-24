@@ -348,6 +348,15 @@ namespace Valuable {
       updateCache();
     }
 
+    virtual void setAsDefaults() OVERRIDE
+    {
+      if (!m_masks[USER])
+        return;
+      auto v = value(USER);
+      m_masks[USER].clear();
+      setValue(v, DEFAULT);
+    }
+
     QString asString(bool * const ok, Layer layer) const
     {
       if (ok)

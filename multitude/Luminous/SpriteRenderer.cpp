@@ -40,6 +40,35 @@ namespace Luminous {
       // Build a texture that will be used in this widget
       /// @todo Share default texture between instances of the renderer
       createFuzzyTexture(64, 0.5f, 0.5f, 0.5f);
+
+      QStringList shaderPaths = Radiant::ResourceLocator::instance()->locate("Luminous/GLSL150");
+
+      if(shaderPaths.isEmpty()) {
+        Radiant::error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
+      }
+      else {
+        const QString shaderPath = shaderPaths.front();
+        m_program.loadShader(shaderPath + "/sprites.fs", Luminous::Shader::Fragment);
+        m_program.loadShader(shaderPath + "/sprites.vs", Luminous::Shader::Vertex);
+        m_program.loadShader(shaderPath + "/sprites.gs", Luminous::Shader::Geometry);
+
+        Luminous::VertexDescription vdescr;
+        vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
+        vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
+        vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
+        vdescr.addAttribute<float>("vertex_rotation");
+        vdescr.addAttribute<float>("vertex_size");
+        m_program.setVertexDescription(vdescr);
+        m_varray.addBinding(m_vbo, vdescr);
+      }
+
+      // Particles should always pass Z-test since they're drawn on the same depth
+      m_depthMode.setFunction(DepthMode::ALWAYS);
+    }
+
+    void updateData()
+    {
+      m_vbo.setData(m_sprites.data(), m_sprites.size() * sizeof(Sprite), Buffer::DYNAMIC_DRAW);
     }
 
     void createFuzzyTexture(int dim, float centerDotSize,
@@ -79,7 +108,7 @@ namespace Luminous {
     SpriteRenderer::SpriteVector m_sprites;
 
     Luminous::Program m_program;
-    Luminous::VertexDescription m_vdescr;
+    Luminous::VertexArray m_varray;
     Luminous::Buffer m_vbo;
 
     Luminous::BlendMode m_blendMode;
@@ -94,26 +123,6 @@ namespace Luminous {
   SpriteRenderer::SpriteRenderer()
     : m_d(new D())
   {
-    QStringList shaderPaths = Radiant::ResourceLocator::instance()->locate("Luminous/GLSL150");
-
-    if(shaderPaths.isEmpty()) {
-      Radiant::error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
-    }
-    else {
-      const QString shaderPath = shaderPaths.front();
-      m_d->m_program.loadShader(shaderPath + "/sprites.fs", Luminous::Shader::Fragment);
-      m_d->m_program.loadShader(shaderPath + "/sprites.vs", Luminous::Shader::Vertex);
-      m_d->m_program.loadShader(shaderPath + "/sprites.gs", Luminous::Shader::Geometry);
-
-      m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
-      m_d->m_vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
-      m_d->m_vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
-      m_d->m_vdescr.addAttribute<float>("vertex_rotation");
-      m_d->m_vdescr.addAttribute<float>("vertex_size");
-      m_d->m_program.setVertexDescription(m_d->m_vdescr);
-    }
-
-    m_d->m_depthMode.setFunction(DepthMode::LESS_EQUAL);
   }
 
   SpriteRenderer::~SpriteRenderer()
@@ -142,25 +151,26 @@ namespace Luminous {
     if (m_d->m_sprites.empty())
       return;
 
-    /// @todo If this gets too slow we can always convert this to use a persistent vertex buffer instead of always creating this anew
-    bool translucent = true;
-
     rc.setBlendMode(m_d->m_blendMode);
     rc.setDepthMode(m_d->m_depthMode);
 
-    auto b = rc.render<Sprite, D::SpriteUniform>(translucent, Luminous::PRIMITIVE_POINT, 0, spriteCount(), 1.f,
-                                                  m_d->m_program, &m_d->m_texture);
+    bool transparent = m_d->m_texture["tex"]->dataFormat().hasAlpha();
 
+    auto b = rc.render<Sprite, D::SpriteUniform>(transparent, Luminous::PRIMITIVE_POINT, 0, spriteCount(), 1.f,
+                                                  m_d->m_varray, m_d->m_program, &m_d->m_texture);
     b.uniform->velocityScale = m_d->m_velocityScale;
     b.uniform->depth = b.depth;
 
-    auto v = b.vertex;
-
-    // Copy vertex data
-    std::copy(m_d->m_sprites.begin(), m_d->m_sprites.end(), v);
+    rc.viewTransform().transpose(b.uniform->projMatrix);
+    rc.transform().transpose(b.uniform->modelMatrix);
 
     rc.setBlendMode(Luminous::BlendMode::Default());
     rc.setDepthMode(Luminous::DepthMode::Default());
+  }
+
+  void SpriteRenderer::uploadData()
+  {
+    m_d->updateData();
   }
 
   void SpriteRenderer::setImage(const Luminous::Image & image)

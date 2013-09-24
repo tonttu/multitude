@@ -249,6 +249,8 @@ namespace Luminous
 
     if(state.vertexArray) {
       state.vertexArray->bind();
+    } else if (m_stateGL.setVertexArray(0)) {
+      glBindVertexArray(0);
     }
   }
 
@@ -340,7 +342,8 @@ namespace Luminous
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
-    if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
+    /// @todo why did we do this, makes no sense?
+    //if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
 
     // In case of non-shared buffers, we'll re-upload if anything has changed
     m_state.uniformBuffer->upload(uniformBuffer, Buffer::UNIFORM);
@@ -746,6 +749,11 @@ namespace Luminous
       // Remove the processed segment from the master queue
       m_d->m_masterRenderQueue.pop_front();
     }
+
+    // VAO should be bound only when rendering something or modifying the VAO state
+    if (m_d->m_stateGL.setVertexArray(0)) {
+      glBindVertexArray(0);
+    }
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
@@ -767,22 +775,12 @@ namespace Luminous
     return *it->second;
   }
 
-  std::shared_ptr<BufferGL> RenderDriverGL::bufferPtr(const Buffer & buffer)
-  {
-    // Never creates resources, only used internally
-    auto it = m_d->m_buffers.find(buffer.resourceId());
-    assert(it != m_d->m_buffers.end());
-
-    return it->second;
-  }
-
   VertexArrayGL & RenderDriverGL::handle(const VertexArray & vertexArray, ProgramGL * program)
   {
     auto it = m_d->m_vertexArrays.find(vertexArray.resourceId());
     if(it == m_d->m_vertexArrays.end()) {
       it = m_d->m_vertexArrays.insert(std::make_pair(vertexArray.resourceId(), VertexArrayGL(m_d->m_stateGL))).first;
       it->second.setExpirationSeconds(vertexArray.expiration());
-      it->second.upload(vertexArray, program);
     }
 
     VertexArrayGL & vertexArrayGL = it->second;
@@ -792,6 +790,23 @@ namespace Luminous
     /// @todo should this be done somewhere else? Should the old VertexArrayGL be destroyed?
     if(vertexArrayGL.generation() < vertexArray.generation())
       vertexArrayGL.upload(vertexArray, program);
+
+    // Check if any of the associated buffers have changed
+    for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
+      auto & binding = vertexArray.binding(i);
+      auto * buffer = RenderManager::getResource<Buffer>(binding.buffer);
+      assert(buffer != nullptr);
+      auto & buffergl = handle(*buffer);
+      buffergl.upload(*buffer, Buffer::VERTEX);
+    }
+
+    RenderResource::Id indexBufferId = vertexArray.indexBuffer();
+    if (indexBufferId) {
+      auto * buffer = RenderManager::getResource<Buffer>(indexBufferId);
+      assert(buffer);
+      auto & buffergl = handle(*buffer);
+      buffergl.upload(*buffer, Buffer::INDEX);
+    }
 
     return vertexArrayGL;
   }

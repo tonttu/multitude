@@ -23,7 +23,87 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
-#endif
+
+namespace {
+  class PreciseTimeWrapper
+  {
+  public:
+    typedef void (WINAPI *PWINFUNC)(LPFILETIME);
+    typedef ULONGLONG (*PFUNC)();
+    static LONGLONG performanceCounter()
+    {
+        LARGE_INTEGER li;
+        QueryPerformanceCounter(&li);
+        return li.QuadPart;
+    }
+
+    static LONGLONG performanceFrequency()
+    {
+        LARGE_INTEGER li;
+        QueryPerformanceFrequency(&li);
+        return li.QuadPart;
+    }
+
+    static ULONGLONG dullFileTime()
+    {
+        FILETIME ft;
+        ULONGLONG ullft;
+        GetSystemTimeAsFileTime(&ft);
+        ullft = (ULONGLONG)ft.dwHighDateTime<<32|ft.dwLowDateTime;
+        return ullft;
+    }
+
+    static ULONGLONG fakePreciseFileTime()
+    {
+        ULONGLONG delta = (ULONGLONG)((double)(performanceCounter() - s_base_performance_time)/s_performance_frequency*s_filetime_ticks_per_sec);
+        return s_base_file_time + delta;
+    }
+
+    static ULONGLONG realPreciseFileTime()
+    {
+        PWINFUNC f = (PWINFUNC) GetProcAddress(
+                GetModuleHandle(TEXT("kernel32.dll")),
+                "GetSystemTimePreciseAsFileTime");
+        if(f)
+        {
+          FILETIME ft;
+          ULONGLONG ullft;
+          f(&ft);
+          ullft = (ULONGLONG)ft.dwHighDateTime<<32|ft.dwLowDateTime;
+          return ullft;
+        }
+        return 0;
+    }
+
+    static PFUNC preciseFuncPointer()
+    {
+        PWINFUNC f = (PWINFUNC) GetProcAddress(
+              GetModuleHandle(TEXT("kernel32.dll")),
+              "GetSystemTimePreciseAsFileTime");
+        if(f)
+        {
+        return &PreciseTimeWrapper::realPreciseFileTime;
+        }
+        else
+        {
+        return &PreciseTimeWrapper::fakePreciseFileTime;
+        }
+    }
+
+    static ULONGLONG s_base_file_time;
+    static LONGLONG s_base_performance_time;
+    static LONGLONG s_performance_frequency;
+    static int s_filetime_ticks_per_sec;
+    static PFUNC s_precise_time_func;
+  };
+
+  ULONGLONG PreciseTimeWrapper::s_base_file_time = PreciseTimeWrapper::dullFileTime();
+  LONGLONG PreciseTimeWrapper::s_base_performance_time = PreciseTimeWrapper::performanceCounter();
+  LONGLONG PreciseTimeWrapper::s_performance_frequency = PreciseTimeWrapper::performanceFrequency();
+  int PreciseTimeWrapper::s_filetime_ticks_per_sec = 10000000;
+  PreciseTimeWrapper::PFUNC PreciseTimeWrapper::s_precise_time_func = PreciseTimeWrapper::preciseFuncPointer();
+}
+#endif //WIN32
 
 #include <QStringList>
 
@@ -45,17 +125,12 @@ namespace Radiant {
  
   int gettimeofday(struct timeval *tv, struct timezone *tz)
   {
-    FILETIME ft;
     unsigned __int64 tmpres = 0;
     static int tzflag;
     
     if (NULL != tv)
       {
-	GetSystemTimeAsFileTime(&ft);
-	
-	tmpres |= ft.dwHighDateTime;
-	tmpres <<= 32;
-	tmpres |= ft.dwLowDateTime;
+    tmpres = PreciseTimeWrapper::s_precise_time_func();
 	
 	/*converting file time to unix epoch*/
 	tmpres /= 10;  /*convert into microseconds*/

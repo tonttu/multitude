@@ -33,6 +33,7 @@ namespace Luminous
     struct Binding
     {
       /// Buffer id
+      // This can't be a raw pointer, since we will std::move the original buffer
       RenderResource::Id buffer;
       /// Description of vertex data
       Luminous::VertexDescription description;

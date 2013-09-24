@@ -27,6 +27,7 @@
 #include <QMouseEvent>
 #include <QDesktopWidget>
 #include <QGLFormat>
+#include <QWindowStateChangeEvent>
 
 #include "GPUAssociation.hpp"
 
@@ -178,6 +179,8 @@ namespace Luminous
 
     virtual bool event(QEvent * e) OVERRIDE
     {
+      // Radiant::info("QtWindow::event # %s", typeid(*e).name());
+
       QTouchEvent * te = dynamic_cast<QTouchEvent *>(e);
       if(te) {
 
@@ -198,10 +201,53 @@ namespace Luminous
   ////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////
 
+  class WindowWidget : public QWidget
+  {
+  public:
+    WindowWidget( QtWindow & window, QWidget * parent, Qt::WindowFlags flags)
+      : QWidget(parent, flags)
+      , m_window(window)
+    {}
+
+    virtual ~WindowWidget() {}
+
+
+  protected:
+    virtual bool event(QEvent * e) OVERRIDE
+    {
+      // Radiant::info("MainWidget::event # %s %d", typeid(*e).name(), (int) e->type() );
+
+      if(e->type() == QEvent::WindowStateChange) {
+        QWindowStateChangeEvent * windowChange = dynamic_cast<QWindowStateChangeEvent *>(e);
+        if(!isMinimized() && (windowChange->oldState() & Qt::WindowMinimized)) {
+          m_window.eventHook()->handleWindowRestoreEvent();
+          // Radiant::info("restored");
+        }
+
+        else if(isMinimized() && !(windowChange->oldState() & Qt::WindowMinimized)) {
+          m_window.eventHook()->handleWindowIconifyEvent();
+          // Radiant::info("iconified");
+        }
+      }
+      else if(e->type() == QEvent::Close) {
+        m_window.eventHook()->handleWindowCloseEvent();
+      }
+
+      return QWidget::event(e);
+    }
+
+  private:
+    QtWindow & m_window;
+
+  };
+
+  ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+
   class QtWindow::D
   {
   public:
-    D()
+    D(QtWindow * host)
       : m_mainWindow(0)
       , m_glWidget(0)
       , m_deferredActivateWindow(false)
@@ -211,6 +257,7 @@ namespace Luminous
       , m_dc(nullptr)
   #endif
       , m_gpuId(0)
+      , m_host(*host)
     {}
 
     ~D()
@@ -223,7 +270,7 @@ namespace Luminous
     }
 
     // Get the host widget for our OpenGL context
-    static QWidget * getHostWidget(int screenNumber, Qt::WindowFlags flags)
+    QWidget * getHostWidget(int screenNumber, Qt::WindowFlags flags)
     {
       QDesktopWidget * desktop = QApplication::desktop();
 
@@ -235,7 +282,7 @@ namespace Luminous
 
       QWidget * parent = desktop->screen(screenNumber);
 
-      return new QWidget(parent, flags);
+      return new WindowWidget(m_host, parent, flags);
     }
 
     QWidget * m_mainWindow;
@@ -247,6 +294,7 @@ namespace Luminous
 #endif
     OpenGLContextHandle m_rc;
     int m_gpuId;
+    QtWindow & m_host;
   };
 
   ////////////////////////////////////////////////////////////
@@ -254,7 +302,7 @@ namespace Luminous
 
   QtWindow::QtWindow(const MultiHead::Window & window, const QString & windowTitle)
     : Window()
-    , m_d(new D())
+    , m_d(new D(this))
   {
 
     // The code below opens a new OpenGL window at desired location. Extra

@@ -391,6 +391,8 @@ namespace Luminous {
     auto b = r.render<Vertex, UniformBlock>(translucent, Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, vertices, 1.f, m_shader);
     std::copy(m_vertices.begin(), m_vertices.end(), b.vertex);
 
+    /// @todo what color to use here?
+    b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
     b.uniform->time = time;
     b.uniform->depth = b.depth;
   }
