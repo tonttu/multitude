@@ -21,7 +21,7 @@ namespace Valuable
     : AttributeBaseT<bool>(host, name, value, transit)
   {}
 
-  AttributeBool::~AttributeBool() {}
+  AttributeBool::~AttributeT() {}
 
   void AttributeBool::eventProcess(const QByteArray &, Radiant::BinaryData & data)
   {
