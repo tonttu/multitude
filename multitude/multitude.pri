@@ -124,11 +124,7 @@ contains(MEMCHECK,yes) {
 # Platform specific: Apple OS X
 #
 macx {
-  CORNERSTONE_DEPS_DIR = /opt/multitouch
-  exists(/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_MAJOR
-  exists(/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
-  exists(/opt/multitouch-$${CORNERSTONE_VERSION}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION
-  exists(/opt/multitouch-$${CORNERSTONE_VERSION_STR}/include):CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
+  CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
 
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
