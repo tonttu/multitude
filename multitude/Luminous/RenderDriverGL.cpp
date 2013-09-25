@@ -63,16 +63,20 @@
 
 namespace
 {
+/* Utility functions for the NV_swap_group extension */
 #if defined (RADIANT_WINDOWS)
-  bool checkSwapGroupExtension() { return glewGetExtension("WGL_NV_swap_group"); }
+  bool checkSwapGroupExtension() { return wglewIsSupported("WGL_NV_swap_group"); }
   bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) { return wglQueryMaxSwapGroupsNV(wglGetCurrentDC(), &maxGroups, &maxBarriers); }
   bool joinSwapGroup(int group) { return wglJoinSwapGroupNV(wglGetCurrentDC(), group); }
   bool setSwapBarrier(int group, int barrier) { return wglBindSwapBarrierNV(group, barrier); }
 #elif defined (RADIANT_LINUX)
-  bool checkSwapGroupExtension() { return glewGetExtension("GLX_NV_swap_group"); }
-  bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) { return glXQueryMaxSwapGroupsNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), &maxGroups, &maxBarriers); }
+  bool checkSwapGroupExtension() { return glxewIsSupported("GLX_NV_swap_group"); }
+  bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) {
+    auto dpy = glXGetCurrentDisplay();
+    return glXQueryMaxSwapGroupsNV(dpy, DefaultScreen(dpy), &maxGroups, &maxBarriers);
+  }
   bool joinSwapGroup(int group) { return glXJoinSwapGroupNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), group); }
-  bool setSwapBarrier(int group, int barrier) { return glXBindSwapBarrierNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), group, barrier); }
+  bool setSwapBarrier(int group, int barrier) { return glXBindSwapBarrierNV(glXGetCurrentDisplay(), group, barrier); }
 #endif
 }
  
@@ -960,6 +964,7 @@ namespace Luminous
       GLuint maxGroups, maxBarriers;
       if (!queryMaxSwapGroup(maxGroups, maxBarriers)) {
         Radiant::error("RenderDriverGL::setSwapGroup # Unable to get max group and barrier counts");
+        return false;
       }
       if (group > maxGroups || barrier > maxBarriers) {
         Radiant::error("RenderDriverGL::setSwapGroup # Group or barrier out of range (%d>%d | %d>%d)", group, maxGroups, barrier, maxBarriers);
@@ -970,16 +975,20 @@ namespace Luminous
         return false;
       }
 
+      /// @todo This might only be required when doing multi-node rendering
+      /*
       if (!setSwapBarrier(group, barrier)) {
         Radiant::error("RenderDriverGL::setSwapGroup # Failed to set swap barrier %d for group %d", barrier, group);
         return false;
       }
+      */
     }
     else {
       Radiant::info("RenderDriverGL::setSwapGroup # Swap group extension not available");
       return false;
     }
 
+    Radiant::info("RenderDriverGL::setSwapGroup # Set group %d/barrier %d", group, barrier);
     return true;
   }
 
