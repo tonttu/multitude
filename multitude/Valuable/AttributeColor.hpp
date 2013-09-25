@@ -28,7 +28,7 @@ namespace Valuable
     using Base::operator=;
 
     /// @copydoc Attribute::Attribute()
-    AttributeColor() : AttributeVector<Radiant::Color>()
+    AttributeT() : Base()
     {}
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)

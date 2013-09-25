@@ -35,15 +35,11 @@ namespace Valuable
     using Base::value;
     using Base::operator =;
 
-<<<<<<< HEAD
 #ifdef CLANG_XML
     virtual int asInt(bool * const ok, Attribute::Layer layer) const OVERRIDE { if(ok) *ok = true; return static_cast<int> (value(layer)); }
 #endif
 
     AttributeT() : Base() {}
-=======
-    AttributeIntT() : Base() {}
->>>>>>> 2.0
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
     AttributeT(Node * host, const QByteArray & name, T v, bool transit = false)
