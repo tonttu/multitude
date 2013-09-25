@@ -77,6 +77,12 @@ namespace
   }
   bool joinSwapGroup(int group) { return glXJoinSwapGroupNV(glXGetCurrentDisplay(), glXGetCurrentDrawable(), group); }
   bool setSwapBarrier(int group, int barrier) { return glXBindSwapBarrierNV(glXGetCurrentDisplay(), group, barrier); }
+#else
+  // Not implemented on other platforms
+  bool checkSwapGroupExtension() { return false; }
+  bool queryMaxSwapGroup(GLuint & maxGroups, GLuint & maxBarriers) { return false; }
+  bool joinSwapGroup(int group) { return false; }
+  bool setSwapBarrier(int group, int barrier) { return false; }
 #endif
 }
  
