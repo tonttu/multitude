@@ -83,6 +83,11 @@ namespace Luminous
     /// @param margin minimum number of bytes to upload per second
     inline void setUploadLimits(int64_t limit, int64_t margin);
 
+    /// Set the target update frequency. This is only used to calculate
+    /// frame-based upload limits
+    /// @param fps target frames per second
+    inline void setUpdateFrequency(int64_t fps);
+
     /// Get the maximum number of bytes per second used for uploading content to the GPU
     /// @return number of bytes per second
     inline int64_t uploadLimit() const;
@@ -148,6 +153,7 @@ namespace Luminous
     int64_t m_uploadedBytes;
     int64_t m_uploadLimit;
     int64_t m_uploadMargin;
+    int64_t m_updateFrequency;
 
     BufferMaps m_bufferMaps;
 
@@ -170,6 +176,7 @@ namespace Luminous
     , m_uploadedBytes(0)
     , m_uploadLimit(0)
     , m_uploadMargin(0)
+    , m_updateFrequency(60)
     , m_driver(driver)
     , m_currentReadFrameBuffer(0)
     , m_currentDrawFrameBuffer(0)
@@ -209,14 +216,18 @@ namespace Luminous
   int64_t StateGL::availableUploadBytes() const
   {
     // Return the available number of bytes for this frame.
-    // We assume an average of 60 fps here
-    return std::max(uploadMargin()/60, (uploadLimit()/60 - m_uploadedBytes));
+    return std::max(uploadMargin()/m_updateFrequency, (uploadLimit()/m_updateFrequency - m_uploadedBytes));
   }
 
   void StateGL::setUploadLimits(int64_t limit, int64_t margin)
   {
     m_uploadLimit = limit;
     m_uploadMargin = margin;
+  }
+
+  void StateGL::setUpdateFrequency(int64_t fps)
+  {
+    m_updateFrequency = fps;
   }
 
   int64_t StateGL::uploadLimit() const

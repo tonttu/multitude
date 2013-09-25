@@ -54,12 +54,15 @@ namespace Nimble
 
   bool Rectangle::isInside(Nimble::Vector2f p) const
   {
+    /// @todo we need a separate class for some kind of quadrilateral shapes
+    /// This function works for parallelograms, but it would be simpler for just rectangles
     p -= m_origin;
 
-    float u = std::abs(dot(p, m_axis0));
-    float v = std::abs(dot(p, m_axis1));
+    Nimble::Matrix2f m(m_axis0.x, m_axis1.x,
+                       m_axis0.y, m_axis1.y);
+    p = m.inverse() * p;
 
-    return (0 <= u && u <= m_extent0) && (0 <= v && v <= m_extent1);
+    return std::abs(p.x) <= m_extent0 && std::abs(p.y) <= m_extent1;
   }
 
   bool Rectangle::isInside(const Nimble::Rectangle & r) const

@@ -102,6 +102,9 @@ namespace Luminous
 
     LUMINOUS_API bool setSwapGroup(unsigned int group, unsigned int barrier) OVERRIDE;
     LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
+
+    LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
+
   private:
 
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
