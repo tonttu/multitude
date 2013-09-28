@@ -1218,7 +1218,7 @@ namespace Luminous
     return t_threadContext;
   }
 
-  void RenderContext::flush()
+  void RenderContext::flushBuffers()
   {
     int bufferIndex = m_data->m_bufferIndex;
     m_data->m_indexBuffers[bufferIndex].flush(*this);
@@ -1227,7 +1227,10 @@ namespace Luminous
       it->second.flush(*this);
     for(auto it = m_data->m_uniformBuffers[bufferIndex].begin(); it != m_data->m_uniformBuffers[bufferIndex].end(); ++it)
       it->second.flush(*this);
+  }
 
+  void RenderContext::flush()
+  {
     m_data->m_driver.flush();
   }
 
