@@ -21,7 +21,6 @@ HEADERS += Color.hpp
 HEADERS += ColorUtils.hpp
 HEADERS += Condition.hpp
 HEADERS += ConfigReader.hpp
-HEADERS += ConfigReaderEmpty.hpp
 HEADERS += ConfigReaderTmpl.hpp
 HEADERS += cycle.h
 HEADERS += CycleRecord.hpp

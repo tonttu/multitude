@@ -653,8 +653,6 @@ return self;
 
 - (void) newWindow
 {
-    Radiant::info("NEW WINDOW");
-
   // Use the first display
   int display = 0;
 

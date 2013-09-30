@@ -107,7 +107,7 @@ namespace Nimble
         float a = cross(diff, thatDiff);
         if(std::abs(a) < 0.00001f) continue; // lines are parallel, just ignore
 
-        Nimble::Vector2f startDiff = corners[j] - corners[i];
+        Nimble::Vector2f startDiff = thatCorners[j] - corners[i];
         float u = cross(startDiff, diff) / a;
         float t = cross(startDiff, thatDiff) / a;
 
