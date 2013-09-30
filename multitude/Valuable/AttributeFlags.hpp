@@ -352,11 +352,15 @@ namespace Valuable {
 
     virtual void setAsDefaults() OVERRIDE
     {
-      if (!m_masks[USER])
+      const Flags mask = m_masks[USER];
+      if (!mask)
         return;
-      auto v = value(USER);
+
+      const auto valueUser = value(USER);
+      const auto valueDefault = value(DEFAULT);
+
       m_masks[USER].clear();
-      setValue(v, DEFAULT);
+      setValue((valueUser & mask) | (valueDefault & ~mask), DEFAULT);
     }
 
     QString asString(bool * const ok, Layer layer) const
