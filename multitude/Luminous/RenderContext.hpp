@@ -508,11 +508,6 @@ namespace Luminous
     /// is not recommended
     void setDefaultState();
 
-    /// Forces all index- and vertexbuffers to upload their data. This is
-    /// called internally at the end of the frame. There is no need to call this
-    /// manually.
-    void flushBuffers();
-
     /// Forces all queued rendering commands to execute. Is called internally
     /// at the end of frame so under normal conditions there is no need call
     /// it manually.
