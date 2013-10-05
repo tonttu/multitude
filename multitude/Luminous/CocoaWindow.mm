@@ -557,10 +557,6 @@ return self;
 {
 }
 
--(BOOL) canBecomeKeyWindow;
--(BOOL) acceptsFirstResponder;
-  - (void) deminiaturize;
-
 @end
 
 @implementation CocoaNSWindow
