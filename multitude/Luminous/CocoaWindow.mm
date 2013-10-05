@@ -348,14 +348,7 @@ return self;
     return;
   }
 
-
-  Luminous::WindowEventHook::MouseButtonMask button =
-      Luminous::WindowEventHook::NoButton;
-
   int buttonNumber = [theEvent buttonNumber];
-
-  if(buttonNumber == 1)
-    button = Luminous::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
