@@ -622,10 +622,7 @@ namespace Resonant {
 
     if(mchans) {
       Item * oi = findItem(m_collect->id());
-
-      if(!oi)
-        Radiant::fatal("DSPNetwork::checkNewItems # No collector \"%s\"",
-            m_collect->id().data());
+      assert(oi);
 
       m_controlData.rewind();
       m_controlData.writeString(m->id());
