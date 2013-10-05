@@ -123,14 +123,13 @@ namespace Radiant {
     if(__outfile)
       out = __outfile;
 
-    bool use_colors = g_forceColors || (out == stderr && stderr_is_tty) ||
-        (out == stdout && stdout_is_tty);
-
     const char * timestamp_color = "";
     const char * color = "";
     const char * colors_end = "";
 
 #ifndef RADIANT_OSX
+    bool use_colors = g_forceColors || (out == stderr && stderr_is_tty) || (out == stdout && stdout_is_tty);
+
     /* On OSX Mountain Lion the color switching code seems to corrupt the terminal
        if the application crashes. It is easier to just not use the colors. */
     if(use_colors) {
