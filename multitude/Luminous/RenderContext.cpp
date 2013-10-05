@@ -866,6 +866,8 @@ namespace Luminous
 
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
+    assert(vertices);
+    assert(uvs);
     if (style.fillColor().w > 0.f) {
       if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
