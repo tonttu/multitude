@@ -511,7 +511,7 @@ return self;
     NSPasteboard *pboard;
     NSDragOperation sourceDragMask;
 
-    sourceDragMask = [sender draggingSourceOperationMask];
+    //sourceDragMask = [sender draggingSourceOperationMask];
     pboard = [sender draggingPasteboard];
     Luminous::WindowEventHook * hook = m_window->eventHook();
 
