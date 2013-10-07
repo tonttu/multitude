@@ -116,6 +116,15 @@ namespace Radiant
       return file.readAll().trimmed();
     }
 
+    void setEnv(const QString & name, const QString & value)
+    {
+      if (setenv(name.toUtf8().data(), value.toUtf8().data(), 1) != 0) {
+        int e = errno;
+        Radiant::error("PlatformUtils::setEnv # Failed to set environment variable %s: %s",
+                       name.toUtf8().data(), strerror(e));
+      }
+    }
+
   }
 
 }
