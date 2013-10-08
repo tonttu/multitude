@@ -203,11 +203,9 @@ namespace Radiant {
     int i=0;
 
     while(str < ba.data() + ba.size() && i < n) {
-      const char * endStr = str;
-
       char * end = 0;
       double tmp = strtod(str, &end);
-      endStr = end;
+      const char * endStr = end;
       
       if(endStr <= str)
 	return i;

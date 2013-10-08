@@ -168,6 +168,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
+      /// @todo what is this supposed to do? Isn't (x % 1) = 0 with all x? alignment is always one.
       int alignment = 1;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;

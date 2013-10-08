@@ -38,7 +38,6 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-#ifndef RADIANT_IOS
     QString getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
@@ -47,10 +46,10 @@ namespace Radiant
       buf[0] = '\0';
 
       CFURLGetFileSystemRepresentation(url, true, (UInt8*) buf, 512);
+      CFRelease(url);
 
       return buf;
     }
-#endif
 
     /// Returns the current process identifier
     int getProcessId()
