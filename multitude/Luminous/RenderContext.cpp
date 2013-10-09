@@ -867,7 +867,6 @@ namespace Luminous
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
     assert(vertices);
-    assert(uvs);
     if (style.fillColor().w > 0.f) {
       if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
@@ -878,6 +877,7 @@ namespace Luminous
         b.vertex[3].location = vertices[3];
       }
       else {
+        assert(uvs);
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
         auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
