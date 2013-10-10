@@ -10,6 +10,8 @@
 
 #include "XMLArchive.hpp"
 
+#include <QRegExp>
+
 namespace Valuable
 {
   XMLArchiveElement::XMLIterator::XMLIterator(const XMLArchiveElement & parent)
@@ -161,5 +163,18 @@ namespace Valuable
   DOMDocument * XMLArchive::xml()
   {
     return m_document.get();
+  }
+
+  QString XMLArchive::cleanElementName(QString name)
+  {
+    if (name.isEmpty())
+      return "_";
+
+    QRegExp startChar("^[A-Za-z:_]");
+    if (startChar.indexIn(name) != 0)
+      name[0] = '_';
+
+    QRegExp nonNameChar("[^A-Za-z0-9:_-.]");
+    return name.replace(nonNameChar, "_");
   }
 }
