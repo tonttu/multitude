@@ -24,7 +24,9 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
+#ifdef CORNERSTONE_JS
   v8::Persistent<v8::Context> s_defaultV8Context;
+#endif
 
   bool Serializable::deserializeXML(const DOMElement &element)
   {
