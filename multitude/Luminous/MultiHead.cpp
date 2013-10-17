@@ -27,9 +27,8 @@
 namespace Luminous
 {
 
-  MultiHead::Area::Area(Window * window)
+  MultiHead::Area::Area()
       : Node(0, "Area"),
-      m_window(window),
       m_keyStone(this, "keystone"),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
@@ -138,14 +137,6 @@ namespace Luminous
     return ok;
   }
 
-  bool MultiHead::Area::isSoftwareColorCorrection() const
-  {
-    const bool isSW = m_rgbCube.isDefined() || !m_colorCorrection.isIdentity();
-    const bool isHW = window()->m_screen->hwColorCorrection().ok();
-
-    return !isHW && isSW;
-  }
-
   GLKeyStone & MultiHead::Area::keyStone()
   {
     return m_keyStone;
@@ -247,11 +238,6 @@ namespace Luminous
   {
     m_graphicsSize = m_graphicsSize.asVector().shuffle();
     updateBBox();
-  }
-
-  const MultiHead::Window * MultiHead::Area::window() const
-  {
-    return m_window;
   }
 
   bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
@@ -359,7 +345,6 @@ namespace Luminous
     if(!a)
       return;
 
-    m_areas.push_back(std::move(a));
     addAttribute(a.get());
 
     if (m_screen) {
@@ -367,6 +352,8 @@ namespace Luminous
       Radiant::BinaryData bd;
       m_screen->eventProcess("graphics-bounds-changed", bd);
     }
+
+    m_areas.push_back(std::move(a));
   }
 
   Nimble::Vector2f MultiHead::Window::windowToGraphics(Nimble::Vector2f loc, bool & convOk) const
@@ -402,6 +389,14 @@ namespace Luminous
     eventSend("graphics-bounds-changed");
   }
 
+  bool MultiHead::Window::isAreaSoftwareColorCorrected(int areaIndex) const
+  {
+    const bool isSW = m_areas[areaIndex]->rgbCube().isDefined() || !m_areas[areaIndex]->colorCorrection().isIdentity();
+    const bool isHW = m_screen->hwColorCorrection().ok();
+
+    return !isHW && isSW;
+  }
+
   Nimble::Recti MultiHead::Window::getRect() const {
     return Nimble::Recti(location().x,
                          location().y,
@@ -424,7 +419,7 @@ namespace Luminous
     const QString & type = ce.get("type");
 
     if(type == QString("area")) {
-      auto area = std::unique_ptr<Area>(new Area(this));
+      auto area = std::unique_ptr<Area>(new Area());
       // Add as child & recurse
       addAttribute(name, area.get());
       ok &= area->deserialize(ce);
@@ -635,7 +630,7 @@ namespace Luminous
     // Add a default layout of 1920x1080
     auto win = new Window();
     win->setGeometry(0,0,1920,1080);
-    auto area = std::unique_ptr<Area>(new Area(win));
+    auto area = std::unique_ptr<Area>(new Area());
     area->setGeometry(0,0,1920,1080);
     win->addArea(std::move(area));
 

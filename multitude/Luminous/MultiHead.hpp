@@ -64,7 +64,7 @@ namespace Luminous {
     public:
 
       /// Constructs a new area for the given window
-      Area(Window * window = 0);
+      Area();
       virtual ~Area();
       /// Deserializes this area from an archive element
       bool deserialize(const Valuable::ArchiveElement & element);
@@ -145,9 +145,6 @@ namespace Luminous {
       /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight();
 
-      /// Returns a pointer to the window that holds this area
-      const Window * window() const;
-
       /// Get the 3D color-correction RGB cube associated with this area. The
       /// 3D color-correction is used by Cornerstone.
       /// @return 3D color-correction
@@ -161,12 +158,6 @@ namespace Luminous {
       ColorCorrection & colorCorrection();
       /// @copydoc colorCorrection
       const ColorCorrection & colorCorrection() const;
-
-      /// Checks if software color correction is in use. This function returns
-      /// true if 3D RGB cube color-correction is used, false if the 2D
-      /// color-correction is used or the 3D color-correction is disabled.
-      /// @return true if 3D color-correction is used; otherwise false
-      bool isSoftwareColorCorrection() const;
 
       /// Get the viewport defined by the area in window coordinates.
       /// @return the viewport defined by the area
@@ -190,7 +181,6 @@ namespace Luminous {
 
       void updateBBox();
 
-      Window * m_window;
       GLKeyStone m_keyStone;
       Valuable::AttributeVector2i   m_location;
       Valuable::AttributeVector2i   m_size;
@@ -318,6 +308,14 @@ namespace Luminous {
 
       /// Remove all areas for all windows.
       void deleteAreas();
+
+      /// Checks if software color correction is in use for the specified area.
+      /// This function returns true if 3D RGB cube color-correction is used,
+      /// false if the 2D color-correction is used or the 3D color-correction is
+      /// disabled.
+      /// @param areaIndex area index
+      /// @return true if 3D color-correction is used; otherwise false
+      bool isAreaSoftwareColorCorrected(int areaIndex) const;
 
       /// Get the window rectangle
       /// @return window rectangle
