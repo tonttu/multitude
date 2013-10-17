@@ -631,6 +631,61 @@ namespace Luminous
     addWindow(std::move(win));
   }
 
+  void MultiHead::mergeConfiguration(const MultiHead &source)
+  {
+    QSet<QByteArray> oldWindows, newWindows;
+
+    // Collect old windows
+    for(size_t i = 0; i < windowCount(); ++i)
+      oldWindows.insert(window(i).name());
+
+    // Collect new windows
+    for(size_t i = 0; i < source.windowCount(); ++i)
+      newWindows.insert(source.window(i).name());
+
+    // Find windows in both configurations to copy
+    auto windowsToCopy = oldWindows;
+    windowsToCopy.intersect(newWindows);
+
+    // Find windows to remove
+    auto windowsToRemove = oldWindows;
+    windowsToRemove.subtract(windowsToCopy);
+
+    // Find windows to add
+    auto windowsToAdd = newWindows;
+    windowsToAdd.subtract(windowsToCopy);
+
+    // Remove windows not present in the source configuration
+    std::remove_if(m_windows.begin(), m_windows.end(), [windowsToRemove](const std::unique_ptr<Window> & p)
+    {
+      return windowsToRemove.contains(p->name());
+    });
+
+    // Create new windows to add
+    for(auto & name : windowsToAdd) {
+
+      auto w = std::unique_ptr<Window>(new Window(this));
+      w->setName(name);
+
+      addWindow(std::move(w));
+
+      // Add new windows to be copied later
+      windowsToCopy.insert(name);
+    }
+
+    // Copy values
+    for(auto & name : windowsToCopy) {
+
+      auto src = static_cast<Node*>(source.attribute(name));
+      auto dst = static_cast<Node*>(attribute(name));
+
+      Node::copyValues(*src, *dst);
+    }
+
+    // Copy other values
+    Node::copyValues(source, *this);
+  }
+
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
     const QString & type = ce.get("type");

@@ -453,6 +453,7 @@ namespace Luminous {
 
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
+    void mergeConfiguration(const Luminous::MultiHead & source);
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
