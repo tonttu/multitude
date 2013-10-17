@@ -401,7 +401,7 @@ namespace Luminous {
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
-    void addWindow(Window * w);
+    void addWindow(std::unique_ptr<Window> w);
 
     /// Raise the edited flag for the configuration. Typically used to check if
     /// the settings need to be saved when exiting an application.
@@ -458,7 +458,7 @@ namespace Luminous {
     virtual bool readElement(const Valuable::ArchiveElement & ce);
     virtual void dpmsChanged();
 
-    std::vector<std::shared_ptr<Window> > m_windows;
+    std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;

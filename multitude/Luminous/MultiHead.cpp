@@ -579,8 +579,6 @@ namespace Luminous
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     m_hwColorCorrection.syncWith(0);
-    for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      removeAttribute(it->get());
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -591,10 +589,10 @@ namespace Luminous
     return ok;
   }
 
-  void MultiHead::addWindow(Window * w)
+  void MultiHead::addWindow(std::unique_ptr<Window> w)
   {
-    addAttribute(w);
-    m_windows.push_back(std::shared_ptr<Window>(w));
+    addAttribute(w.get());
+
     if(m_hwColorCorrectionEnabled) {
       /// @todo this is a wrong assumption that area 0 would contain a color
       /// correction profile. Do this correctly..
@@ -602,6 +600,8 @@ namespace Luminous
     } else {
       m_hwColorCorrection.syncWith(0);
     }
+
+    m_windows.push_back(std::move(w));
     eventSend("graphics-bounds-changed");
   }
 
@@ -609,12 +609,6 @@ namespace Luminous
   {
     /// @todo this should remove listeners that refer to Areas within the windows
     m_hwColorCorrection.syncWith(0);
-    for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-    {
-      //delete window's areas
-      it->get()->deleteAreas();
-      removeAttribute(it->get());
-    }
     m_windows.clear();
   }
 
@@ -628,13 +622,13 @@ namespace Luminous
   void MultiHead::createFullHDConfig()
   {
     // Add a default layout of 1920x1080
-    auto win = new Window();
+    auto win = std::unique_ptr<Window>(new Window());
     win->setGeometry(0,0,1920,1080);
     auto area = std::unique_ptr<Area>(new Area());
     area->setGeometry(0,0,1920,1080);
     win->addArea(std::move(area));
 
-    addWindow(win);
+    addWindow(std::move(win));
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
@@ -642,7 +636,7 @@ namespace Luminous
     const QString & type = ce.get("type");
 
     if(type == "window") {
-      Window * win = new Window(this);
+      auto win = std::unique_ptr<Window>(new Window(this));
 
       bool ok = win->deserialize(ce);
       if(!ok) {
@@ -650,7 +644,7 @@ namespace Luminous
         return false;
       }
 
-      addWindow(win);
+      addWindow(std::move(win));
     } else {
       Radiant::warning("MultiHead::readElement # Ignoring unknown element %s", ce.name().toUtf8().data());
     }
