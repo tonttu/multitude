@@ -244,7 +244,7 @@ namespace Luminous {
       LUMINOUS_API void setSeam(float seam);
 
       /// Adds an area to the window
-      LUMINOUS_API void addArea(Area * a);
+      LUMINOUS_API void addArea(std::unique_ptr<Area> a);
 
       /// Location of the window in desktop coordinates
       const Vector2i & location() const { return m_location; }
@@ -317,24 +317,11 @@ namespace Luminous {
       const MultiHead * screen() const { return m_screen; }
 
       /// Remove all areas for all windows.
-      void deleteAreas()
-      {
-        for (auto area: m_areas) {
-          removeAttribute(area.get());
-          area->eventRemoveListener(m_screen);
-        }
-        m_areas.clear();
-        eventSend("graphics-bounds-changed");
-      }
+      void deleteAreas();
 
       /// Get the window rectangle
       /// @return window rectangle
-      Nimble::Recti getRect() const {
-        return Nimble::Recti(location().x,
-                             location().y,
-                             location().x + width(),
-                             location().y + height());
-      }
+      Nimble::Recti getRect() const;
 
       /// Element type used during serialization
       /// @return "window"
@@ -361,7 +348,7 @@ namespace Luminous {
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
 
-      std::vector<std::shared_ptr<Area> > m_areas;
+      std::vector<std::unique_ptr<Area> > m_areas;
     };
 
     /// Construct an empty configuration
@@ -450,18 +437,7 @@ namespace Luminous {
     /// @endcond
 
     /// Remove all windows from the configuration
-    void deleteWindows()
-    {
-      /// @todo this should remove listeners that refer to Areas within the windows
-      m_hwColorCorrection.syncWith(0);
-      for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      {
-        //delete window's areas
-        it->get()->deleteAreas();
-        removeAttribute(it->get());
-      }
-      m_windows.clear();
-    }
+    void deleteWindows();
 
     /// Get the dots-per-inch
     /// @return the DPI of the display
@@ -476,6 +452,9 @@ namespace Luminous {
     /// implemented with the video-multiplex hardware inside MultiTaction Cells.
     bool isHardwareColorCorrectionEnabled() const { return m_hwColorCorrectionEnabled; }
     void setHardwareColorCorrection(bool enabled) { m_hwColorCorrectionEnabled = enabled; }
+
+    /// Create a default fullscreen configuration for a single 1080p display
+    void createFullHDConfig();
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);

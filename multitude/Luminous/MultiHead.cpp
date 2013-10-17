@@ -354,12 +354,13 @@ namespace Luminous
     }
   }
 
-  void MultiHead::Window::addArea(Area * a)
+  void MultiHead::Window::addArea(std::unique_ptr<Area> a)
   {
-    if (!a)
+    if(!a)
       return;
-    m_areas.push_back(std::shared_ptr<Area>(a));
-    addAttribute(a);
+
+    m_areas.push_back(std::move(a));
+    addAttribute(a.get());
 
     if (m_screen) {
       a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
@@ -395,6 +396,19 @@ namespace Luminous
     return QPointF(nloc.x, nloc.y);
   }
 
+  void MultiHead::Window::deleteAreas()
+  {
+    m_areas.clear();
+    eventSend("graphics-bounds-changed");
+  }
+
+  Nimble::Recti MultiHead::Window::getRect() const {
+    return Nimble::Recti(location().x,
+                         location().y,
+                         location().x + width(),
+                         location().y + height());
+  }
+
   bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
     /// @todo Remove this function and use the correct serialization API
@@ -410,11 +424,11 @@ namespace Luminous
     const QString & type = ce.get("type");
 
     if(type == QString("area")) {
-      Area * area = new Area(this);
+      auto area = std::unique_ptr<Area>(new Area(this));
       // Add as child & recurse
-      addAttribute(name, area);
+      addAttribute(name, area.get());
       ok &= area->deserialize(ce);
-      m_areas.push_back(std::shared_ptr<Area>(area));
+      m_areas.push_back(std::move(area));
       if (m_screen) {
         Radiant::BinaryData bd;
         m_screen->eventProcess("graphics-bounds-changed", bd);
@@ -596,11 +610,36 @@ namespace Luminous
     eventSend("graphics-bounds-changed");
   }
 
+  void MultiHead::deleteWindows()
+  {
+    /// @todo this should remove listeners that refer to Areas within the windows
+    m_hwColorCorrection.syncWith(0);
+    for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
+    {
+      //delete window's areas
+      it->get()->deleteAreas();
+      removeAttribute(it->get());
+    }
+    m_windows.clear();
+  }
+
   void MultiHead::eventProcess(const QByteArray & messageId, Radiant::BinaryData & data)
   {
     if (messageId == "graphics-bounds-changed") {
       eventSend("graphics-bounds-changed");
     } else Node::eventProcess(messageId, data);
+  }
+
+  void MultiHead::createFullHDConfig()
+  {
+    // Add a default layout of 1920x1080
+    auto win = new Window();
+    win->setGeometry(0,0,1920,1080);
+    auto area = std::unique_ptr<Area>(new Area(win));
+    area->setGeometry(0,0,1920,1080);
+    win->addArea(std::move(area));
+
+    addWindow(win);
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
