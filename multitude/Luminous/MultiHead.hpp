@@ -457,7 +457,6 @@ namespace Luminous {
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
-    virtual void dpmsChanged();
 
     std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;

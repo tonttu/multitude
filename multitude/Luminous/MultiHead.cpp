@@ -446,7 +446,6 @@ namespace Luminous
       m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_edited(false)
   {
-    m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
   }
@@ -707,15 +706,4 @@ namespace Luminous
     return true;
   }
 
-  void MultiHead::dpmsChanged()
-  {
-#ifdef RADIANT_LINUX
-    /// runSystem shouldn't be run with temporary cstr, so we use system() instead
-    /// @todo shouldn't this be done in MultiHead, actually?
-    int err = system(QString("xset dpms %1 %2 %3").arg(m_dpms[0]).arg(m_dpms[1]).arg(m_dpms[2]).toUtf8().data());
-    if(err)
-      Radiant::warning("MultiHead::dpmsChanged # Failed to execute xset dpms %d %d %d (return value %d)",
-                       m_dpms[0], m_dpms[1], m_dpms[2], err);
-#endif
-  }
 }
