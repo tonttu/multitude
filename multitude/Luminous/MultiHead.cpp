@@ -655,10 +655,12 @@ namespace Luminous
     windowsToAdd.subtract(windowsToCopy);
 
     // Remove windows not present in the source configuration
-    std::remove_if(m_windows.begin(), m_windows.end(), [windowsToRemove](const std::unique_ptr<Window> & p)
+    auto pend = std::remove_if(m_windows.begin(), m_windows.end(), [windowsToRemove](const std::unique_ptr<Window> & p)
     {
       return windowsToRemove.contains(p->name());
     });
+
+    m_windows.erase(pend, m_windows.end());
 
     // Create new windows to add
     for(auto & name : windowsToAdd) {
@@ -681,8 +683,27 @@ namespace Luminous
       Node::copyValues(*src, *dst);
     }
 
-    // Copy other values
-    Node::copyValues(source, *this);
+    // To copy the values in MultiHead object itself, we can't use copyValues()
+    // because it would re-create the windows and areas as well. We need to
+    // copy these values manually.
+    for(auto it : source.attributes()) {
+
+      Valuable::XMLArchive archive(Valuable::SerializationOptions::LAYER_USER);
+
+      auto attributeName = it.first;
+      auto element = it.second->serialize(archive);
+
+      // If the attribute was serialized (e.g. was set on LAYER_USER)
+      if(!element.isNull()) {
+
+        // Check if the same attribute is available in dest (might not be when
+        // window or areas are different)
+        auto dstAttribute = attribute(attributeName);
+
+        if(dstAttribute)
+          dstAttribute->deserialize(element);
+      }
+    }
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
