@@ -36,6 +36,11 @@
 #include <QProcess>
 #include <QThread>
 
+#ifdef RADIANT_LINUX
+#include <errno.h>
+#include <sys/file.h>
+#endif
+
 #ifdef RADIANT_WINDOWS
 #include <io.h>
 #include <stdlib.h>
@@ -55,12 +60,189 @@ namespace {
   void (*s_fileWriterInit)() = 0;
   void (*s_fileWriterDeinit)() = 0;
   volatile int s_fileWriterCount = 0;
+
+#ifdef RADIANT_LINUX
+  /// @todo these functions are copied from TactionModule.cpp, these should be
+  ///       in some utility library
+  int run(QString cmd, QStringList argv = QStringList(),
+          QByteArray * stdout = 0, QByteArray * stderr = 0)
+  {
+    QProcess p;
+    p.start(cmd, argv, QProcess::ReadOnly);
+    p.waitForStarted();
+    p.waitForFinished(-1);
+    if(stdout) *stdout = p.readAllStandardOutput();
+    if(stderr) {
+      *stderr = p.readAllStandardError();
+    } else {
+      QByteArray err = p.readAllStandardError();
+      if(!err.isEmpty())
+        Radiant::error("%s: %s", cmd.toUtf8().data(), err.data());
+    }
+    return p.exitCode();
+  }
+
+  /// @todo almost all of these runAsRoot-things should be replaced with
+  ///       external scripts on Linux, maybe (ba)sh or perl
+  int runAsRoot(QString cmd, QStringList argv = QStringList(),
+                QByteArray * stdout = 0, QByteArray * stderr = 0)
+  {
+    if(geteuid() == 0) {
+      return run(cmd, argv, stdout, stderr);
+    } else {
+      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, stdout, stderr);
+    }
+  }
+
+  bool do_flock(QFile & file, int flags = LOCK_EX) {
+    while(flock(file.handle(), flags) == -1) {
+      if(errno != EINTR) return false;
+    }
+    return true;
+  }
+
+  bool try_flock(QFile & file, bool exclusive = true) {
+    while(flock(file.handle(), (exclusive ? LOCK_EX : LOCK_SH) | LOCK_NB) == -1) {
+      if(errno == EWOULDBLOCK) return false;
+      if(errno != EINTR) return false;
+    }
+    return true;
+  }
+
+  QFile s_globalLockfile;
+  QFile s_usersLockfile;
+
+  bool s_initLocks()
+  {
+    if(!s_globalLockfile.isOpen()) {
+      s_globalLockfile.setFileName("/tmp/mount-rw-lock");
+      if(!s_globalLockfile.open(QFile::WriteOnly)) {
+        Radiant::error("Failed to open /tmp/mount-rw-lock: %s", s_globalLockfile.errorString().toUtf8().data());
+        return false;
+      }
+    }
+
+    if(!s_usersLockfile.isOpen()) {
+      s_usersLockfile.setFileName("/tmp/mount-rw-users");
+      if(!s_usersLockfile.open(QFile::WriteOnly)) {
+        Radiant::error("Failed to open /tmp/mount-rw-users: %s", s_usersLockfile.errorString().toUtf8().data());
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  void s_mountRW()
+  {
+    if(!s_initLocks()) return;
+
+    if(!do_flock(s_globalLockfile)) {
+      Radiant::error("Failed to acquire the global lock: %s", strerror(errno));
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(try_flock(s_usersLockfile)) {
+      Radiant::info("Remounting root filesystem to read-write -mode");
+      runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
+      runAsRoot("sleep", QStringList() << "5");
+
+      if(!do_flock(s_usersLockfile, LOCK_UN)) {
+        Radiant::error("Failed to release the users lock: %s", strerror(errno));
+        s_globalLockfile.close();
+        s_usersLockfile.close();
+        return;
+      }
+    }
+
+    if(!do_flock(s_usersLockfile, LOCK_SH)) {
+      Radiant::error("Failed to increase the use count");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(!do_flock(s_globalLockfile, LOCK_UN)) {
+      Radiant::error("Failed to release the global lock");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+  }
+
+  void s_mountRO()
+  {
+    if(!s_initLocks()) return;
+
+    if(!do_flock(s_globalLockfile)) {
+      Radiant::error("Failed to acquire the global lock: %s", strerror(errno));
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(!do_flock(s_usersLockfile, LOCK_UN)) {
+      Radiant::error("Failed to decrease the use count");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(try_flock(s_usersLockfile)) {
+      Radiant::info("Remounting root filesystem to read-only -mode");
+      /// @todo should this happen asynchronously?
+      run("sync");
+      runAsRoot("mount", QStringList() << "-o" << "remount,ro" << "/");
+
+      if(!do_flock(s_usersLockfile, LOCK_UN)) {
+        Radiant::error("Failed to release the users lock: %s", strerror(errno));
+        s_globalLockfile.close();
+        s_usersLockfile.close();
+        return;
+      }
+    }
+
+    if(!do_flock(s_globalLockfile, LOCK_UN)) {
+      Radiant::error("Failed to release the global lock");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+  }
+
+  void filewriterInit()
+  {
+    /// We are looking at /etc/fstab instead of /proc/mounts, because we want
+    /// to know if we prefer to have the root filesystem in ro-state, instead
+    /// of looking at the current state, that could be temporarily different.
+    QFile file("/etc/fstab");
+    if(file.open(QFile::ReadOnly)) {
+      // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
+      // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
+      QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
+      if(re.indexIn(QString::fromUtf8(file.readAll()))) {
+        QStringList mountOptions = re.cap(1).split(",");
+        if(mountOptions.contains("ro")) {
+          Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
+          Radiant::FileWriter::setInitFunction(&s_mountRW);
+          Radiant::FileWriter::setDeinitFunction(&s_mountRO);
+        }
+      }
+    }
+  }
+#endif
 }
 
 namespace Radiant
 {
   FileWriter::FileWriter()
   {
+#ifdef RADIANT_LINUX
+    MULTI_ONCE(filewriterInit();)
+#endif
+
     if(!s_fileWriterInit) return;
     Guard g(s_fileWriterMutex);
     if(s_fileWriterCount++ == 0)
