@@ -307,7 +307,7 @@ namespace Luminous {
       const MultiHead * screen() const { return m_screen; }
 
       /// Remove all areas for all windows.
-      void deleteAreas();
+      LUMINOUS_API void deleteAreas();
 
       /// Checks if software color correction is in use for the specified area.
       /// This function returns true if 3D RGB cube color-correction is used,
@@ -315,11 +315,11 @@ namespace Luminous {
       /// disabled.
       /// @param areaIndex area index
       /// @return true if 3D color-correction is used; otherwise false
-      bool isAreaSoftwareColorCorrected(int areaIndex) const;
+      LUMINOUS_API bool isAreaSoftwareColorCorrected(int areaIndex) const;
 
       /// Get the window rectangle
       /// @return window rectangle
-      Nimble::Recti getRect() const;
+      LUMINOUS_API Nimble::Recti getRect() const;
 
       /// Element type used during serialization
       /// @return "window"
