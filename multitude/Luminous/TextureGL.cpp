@@ -168,7 +168,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
+      int alignment = 8;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
@@ -278,7 +278,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
+      int alignment = 8;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
@@ -409,7 +409,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
+      int alignment = 8;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 

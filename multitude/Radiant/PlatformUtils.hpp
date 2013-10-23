@@ -60,6 +60,11 @@ namespace Radiant
     /// @return absolute path to the library file
     RADIANT_API QString getLibraryPath(const QString& libraryName);
 
+    /// Sets environment variable
+    /// @param name name of the environment variable
+    /// @param value value of the environment variable
+    RADIANT_API void setEnv(const QString & name, const QString & value);
+
     /// Make a new TCP rule to OS firewall
     /// @param port TCP port to open
     /// @param name rule name

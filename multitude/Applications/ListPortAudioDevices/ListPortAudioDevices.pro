@@ -13,7 +13,7 @@ win* {
 	INCLUDEPATH += ../../Win64x/include/libsndfile
 
   QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-  LIBS += -llibsndfile-1 -lportaudio -lole32 -luser32
+  LIBS += -llibsndfile-1 -lportaudio_x64 -lole32 -luser32
 }
 
 include(../Applications_end.pri)

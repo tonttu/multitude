@@ -55,6 +55,11 @@ namespace Radiant
     /// @returns the length of the file. Returns 0 if the file is empty or the file could not be found
     static unsigned long getFileLen(const QString & filename);
 
+    /// Check if the given file or path is writable
+    /// @param path path to check
+    /// @return true if the process can write to the specified path
+    static bool isWritable(const QString & path);
+
     /// Load a text file. If the reading fails, the returned QByteArray.isNull().
     /// @param filename Name of file
     /// @returns the contents of the text file

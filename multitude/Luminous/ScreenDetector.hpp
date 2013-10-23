@@ -21,6 +21,8 @@
 #include <QList>
 #include <Radiant/Trace.hpp>
 
+#include <Valuable/XMLArchive.hpp>
+
 #ifdef RADIANT_WINDOWS
 #  include <windows.h>
 #endif //RADIANT_WINDOW
@@ -41,7 +43,7 @@ namespace Luminous
 
     /// For example "GPU-0" or "GPU-0,GPU-1"
     const QString & gpu() const { return m_gpu; }
-    void setGpu(const QString & gpu) { m_gpu = gpu; }
+    inline void setGpu(const QString & gpu);
 
     /// Display adapter name, for example "GeForce 9800 GT"
     const QString & gpuName() const { return m_gpuName; }
@@ -49,7 +51,7 @@ namespace Luminous
 
     /// For example "DFP-0"
     const QString & connection() const { return m_connection; }
-    void setConnection(const QString & connection) { m_connection = connection; }
+    inline void setConnection(const QString & connection);
 
     /// With X11 this is the X screen number
     int logicalScreen() const { return m_logicalScreen; }
@@ -102,6 +104,17 @@ namespace Luminous
   private:
     QList<ScreenInfo> m_results;
   };
+
+  void ScreenInfo::setGpu(const QString & gpu)
+  {
+    m_gpu = Valuable::XMLArchive::cleanElementName(gpu);
+  }
+
+  void ScreenInfo::setConnection(const QString & connection)
+  {
+    m_connection = Valuable::XMLArchive::cleanElementName(connection);
+  }
+
 }
 
 /// @endcond

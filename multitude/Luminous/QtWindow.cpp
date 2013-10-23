@@ -229,6 +229,9 @@ namespace Luminous
           // Radiant::info("iconified");
         }
       }
+      else if(e->type() == QEvent::Close) {
+        m_window.eventHook()->handleWindowCloseEvent();
+      }
 
       return QWidget::event(e);
     }

@@ -273,7 +273,7 @@ namespace
       }
       Radiant::debug("geometry for screen %d display 0x%x %d %d %d %d", screen, d, rect.low().x, rect.low().y,rect.width(), rect.height());
       info.setGeometry(rect);
-      info.setGpu(gpu_ids.join(","));
+      info.setGpu(gpu_ids.join(":"));
       info.setGpuName(gpu_names.join(","));
       info.setConnection(connectionName(port));
       if(logical_screen != -1)
@@ -382,7 +382,7 @@ namespace
       for (NvU32 i = 0; i < displayGpuCount; ++i) {
         for (NvU32 j = 0; j < gpuCount; ++j) {
           if (displayGpu[i] == gpu[j]) {
-            if (!gpuInfo.isEmpty()) gpuInfo += ",";
+            if (!gpuInfo.isEmpty()) gpuInfo += ":";
             gpuInfo += QString("GPU-%1").arg(j);
             break;
           }

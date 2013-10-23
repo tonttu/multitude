@@ -44,5 +44,5 @@ DEFINES += RESONANT_EXPORT
 win* {
   QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
   INCLUDEPATH += ..\\Win64x\\include\\portaudio
-  LIBS += -llibsndfile-1 -lportaudio -lOle32 -lUser32
+  LIBS += -llibsndfile-1 -lportaudio_x64 -lOle32 -lUser32
 }

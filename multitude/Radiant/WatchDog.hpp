@@ -84,8 +84,8 @@ namespace Radiant {
 
     Radiant::Mutex m_mutex;
     volatile bool m_continue;
-    float m_intervalSeconds;
-    bool m_paused;
+    volatile float m_intervalSeconds;
+    volatile bool m_paused;
   };
 
 }

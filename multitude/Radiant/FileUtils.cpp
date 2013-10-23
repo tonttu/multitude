@@ -283,6 +283,11 @@ namespace Radiant
     return getFileLen(file);
   }
 
+  bool FileUtils::isWritable(const QString &path)
+  {
+    return QFileInfo(path).isWritable();
+  }
+
   bool FileUtils::fileReadable(const QString & filename)
   {
     QFileInfo fi(filename);

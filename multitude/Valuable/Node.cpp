@@ -764,9 +764,17 @@ namespace Valuable
       // can't call "delete item" here, because that eventProcess call could
       // call some destructors that iterate s_queue
     }
-    for(QueueItem* item : s_queue)
-      delete item;
+
     int r = s_queue.size();
+
+    {
+      // Make a temporary copy to prevent weird callback recursion bugs
+      auto tempQueue = std::move(s_queue);
+      s_queue.clear();
+
+      for(QueueItem* item : tempQueue)
+        delete item;
+    }
 
     // Since we are locking two mutexes at the same time also in queueEvent,
     // it's important that the lock order is right. Always lock
@@ -775,7 +783,6 @@ namespace Valuable
     // already locked s_processingQueueMutex and is waiting for s_queueMutex.
     // Also remember to clear s_queue, otherwise ~Node() could be reading old
     // deleted values from it
-    s_queue.clear();
     s_queueMutex.unlock();
     Radiant::Guard g2(s_processingQueueMutex);
     s_queueMutex.lock();

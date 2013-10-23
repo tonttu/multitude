@@ -441,7 +441,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   FontCache::FileCacheIndexLoader::FileCacheIndexLoader(FontCache::D & cache)
-    : m_cache(cache)
+    : Radiant::Task(PRIORITY_HIGH+1),
+      m_cache(cache)
   {}
 
   void FontCache::FileCacheIndexLoader::doTask()
@@ -476,7 +477,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   FontCache::FileCacheLoader::FileCacheLoader(FontCache::D & cache)
-    : m_cache(cache)
+    : Radiant::Task(PRIORITY_HIGH+1),
+      m_cache(cache)
   {}
 
   void FontCache::FileCacheLoader::doTask()

@@ -116,6 +116,9 @@ namespace Valuable
     /// @return The wrapped DOMDocument
     DOMDocument * xml();
 
+    /// Clean string so that it is a valid XML element name
+    static QString cleanElementName(QString name);
+
   private:
     std::shared_ptr<DOMDocument> m_document;
   };

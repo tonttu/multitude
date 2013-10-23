@@ -289,6 +289,7 @@ namespace VideoDisplay
       , m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN())
       , m_lastDecodedVideoPts(std::numeric_limits<double>::quiet_NaN())
     {
+      memset(&m_av, 0, sizeof(m_av));
       m_av.videoStreamIndex = -1;
       m_av.audioStreamIndex = -1;
       m_av.videoSize = Nimble::Size();

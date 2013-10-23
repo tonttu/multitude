@@ -866,6 +866,7 @@ namespace Luminous
 
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
+    assert(vertices);
     if (style.fillColor().w > 0.f) {
       if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
@@ -876,6 +877,7 @@ namespace Luminous
         b.vertex[3].location = vertices[3];
       }
       else {
+        assert(uvs);
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
         auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
@@ -1130,8 +1132,10 @@ namespace Luminous
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
-      if (group.color.isValid())
+      if (group.color.isValid()) {
         uniform.colorIn = Radiant::Color(group.color);
+        uniform.colorIn.w *= opacity();
+      }
 
       for (int i = 0; i < int(group.items.size());) {
         const int count = std::min<int>(group.items.size() - i, maxGlyphsPerCmd);

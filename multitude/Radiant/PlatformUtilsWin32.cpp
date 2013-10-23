@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 
 #include <Windows.h>
+
+#include <stdlib.h>
 #include <vector>
 
 namespace {
@@ -209,6 +211,15 @@ namespace Radiant
       }
 
       return QString::fromStdWString(std::wstring(buffer.begin(), buffer.begin() + got));
+    }
+
+    void setEnv(const QString & name, const QString & value)
+    {
+      int err = _putenv_s(name.toUtf8().data(), value.toUtf8().data());
+      if (err != 0) {
+        Radiant::error("PlatformUtils::setEnv # Failed to set environment variable %s: error %d",
+                       name.toUtf8().data(), err);
+      }
     }
 
     void openFirewallPortTCP(int port, const QString & name)

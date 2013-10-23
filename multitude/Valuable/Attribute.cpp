@@ -24,6 +24,7 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
+  v8::Persistent<v8::Context> s_defaultV8Context;
 
   bool Serializable::deserializeXML(const DOMElement &element)
   {
@@ -223,9 +224,13 @@ namespace Valuable
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
+          /// @todo all of these v8 listeners should be implemented non-intrusive way,
+          ///       like with normal event listeners
+          v8::Locker lock;
+          v8::Context::Scope scope(s_defaultV8Context);
+          v8::HandleScope handle_scope;
           /// @todo what is the correct receiver ("this" in the callback)?
-          /// @todo is this legal without v8::HandleScope handle_scope;
-          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
 #endif
         } else l.func();
       }
@@ -242,8 +247,11 @@ namespace Valuable
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
+          v8::Locker lock;
+          v8::Context::Scope scope(s_defaultV8Context);
+          v8::HandleScope handle_scope;
           /// @todo what is the correct receiver ("this" in the callback)?
-          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
 #endif
         } else l.func();
       }

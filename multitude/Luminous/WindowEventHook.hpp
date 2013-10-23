@@ -56,6 +56,9 @@ namespace Luminous
     virtual void handleWindowIconifyEvent() = 0;
     /// Handle the case where a window is de-iconified
     virtual void handleWindowRestoreEvent() = 0;
+    /// Handle the case where a window is closed.
+    /// This is typically triggered when the user clicks on the window-close icon.
+    virtual void handleWindowCloseEvent() = 0;
 
     /// Time since last keyboard or mouse activity
     virtual double lastActivity() const = 0;

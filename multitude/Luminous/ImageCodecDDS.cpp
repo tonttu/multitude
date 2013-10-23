@@ -162,7 +162,7 @@ bool parse(QFile & file, DDS_header & header, ImageInfo & info)
     info.width = header.dwWidth;
     info.height = header.dwHeight;
     /// @todo RGB or RGBA?
-    if(dxt1) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT1);
+    if(dxt1) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGB_DXT1);
     if(dxt3) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT3);
     if(dxt5) info.pf = PixelFormat(PixelFormat::COMPRESSED_RGBA_DXT5);
 

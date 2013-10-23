@@ -569,7 +569,17 @@ namespace Valuable
     bool m_valueSet[LAYER_COUNT];
   };
 
+#ifdef CORNERSTONE_JS
 
+  /// @cond
+
+  /// @todo This should be removed and all v8 related things should be implemented
+  ///       the same way as Scripting::eventAddListener is implemented.
+  VALUABLE_API extern v8::Persistent<v8::Context> s_defaultV8Context;
+
+  /// @endcond
+
+#endif
 }
 
 #endif

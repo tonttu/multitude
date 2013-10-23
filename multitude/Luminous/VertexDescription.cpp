@@ -53,15 +53,9 @@ namespace Luminous
 
   uint VertexDescription::vertexSize() const
   {
-    uint maxOffset = 0;
     uint size = 0;
-
-    for (size_t i = 0; i < m_attributes.size(); ++i) {
-      if (m_attributes[i].offset >= maxOffset) {
-        maxOffset = m_attributes[i].offset;
-        size = m_attributes[i].offset + m_attributes[i].size;
-      }
-    }
+    for (size_t i = 0; i < m_attributes.size(); ++i)
+      size = std::max(size,m_attributes[i].offset + m_attributes[i].size);
     return size;
   }
 

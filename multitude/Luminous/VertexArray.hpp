@@ -14,7 +14,6 @@
 #include "Luminous/Luminous.hpp"
 #include "Luminous/RenderResource.hpp"
 #include "Luminous/VertexDescription.hpp"
-#include "Luminous/Buffer.hpp"
 
 #include <memory>
 #include <vector>
@@ -34,11 +33,12 @@ namespace Luminous
     struct Binding
     {
       /// Buffer id
-      const Luminous::Buffer * buffer;
+      // This can't be a raw pointer, since we will std::move the original buffer
+      RenderResource::Id buffer;
       /// Description of vertex data
       Luminous::VertexDescription description;
       /// Compares buffer ids
-      bool operator==(RenderResource::Id id) const { return buffer->resourceId()==id; }
+      bool operator==(RenderResource::Id id) const { return buffer==id; }
     };
 
   public:

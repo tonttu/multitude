@@ -41,6 +41,9 @@ namespace Luminous
     /// Bind the vertex array
     LUMINOUS_API void bind();
 
+    /// Unbind the vertex array
+    LUMINOUS_API void unbind();
+
     /// Upload he vertex array given specification to the GPU.
     /// @param vertexArray vertex array
     /// @param program shader program to use with the vertex array
@@ -56,8 +59,6 @@ namespace Luminous
     void setVertexDescription(const VertexDescription & description, ProgramGL * program);
 
     int m_generation;
-
-    std::set<std::shared_ptr<BufferGL> > m_associatedBuffers;
   };
 }
 
