@@ -58,6 +58,17 @@ bool operator<(const ADLDisplayID & a,
   return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0;
 }
 
+Luminous::ScreenInfo::Rotation parseRotation(int rot)
+{
+  if (rot == 90)
+    return Luminous::ScreenInfo::ROTATE_90;
+  if (rot == 180)
+    return Luminous::ScreenInfo::ROTATE_180;
+  if (rot == 270)
+    return Luminous::ScreenInfo::ROTATE_270;
+  return Luminous::ScreenInfo::ROTATE_0;
+}
+
 namespace {
   // Error checking for ADL functions
   bool checkADL(const std::string & msg, int err)
@@ -530,6 +541,7 @@ namespace {
 
           screeninfo.setGeometry(Nimble::Recti(posX, posY, posX + width, posY + height));
           screeninfo.setConnection(QString("DFP-%1").arg(slsTargetIter->displayTarget.displayID.iDisplayLogicalIndex));
+          screeninfo.setRotation(parseRotation(targetMode[0].iOrientation));
           results.push_back(screeninfo);
         } else
         {
@@ -558,6 +570,7 @@ namespace {
             int bottom = top + slsOffsets[currentSLSOffset].iDisplayHeight;
 
             screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setRotation(parseRotation(bezelIter->displayMode.iOrientation));
             screeninfo.setConnection(QString("DFP-%1").arg(slsOffsets[currentSLSOffset].displayID.iDisplayLogicalIndex));
             results.push_back(screeninfo);
           }
@@ -574,6 +587,7 @@ namespace {
             int bottom = top + (portrait ? targetMode[0].iXRes : targetMode[0].iYRes);
 
             screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setRotation(parseRotation(targetMode[0].iOrientation));
             screeninfo.setConnection(QString("DFP-%1").arg(targetMode[0].displayID.iDisplayLogicalIndex));
             results.push_back(screeninfo);
           }
