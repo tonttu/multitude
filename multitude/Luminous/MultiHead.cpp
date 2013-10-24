@@ -452,7 +452,7 @@ namespace Luminous
     m_hwColorCorrectionEnabled.addListener([&]()
     {
       if(m_hwColorCorrectionEnabled && !m_windows.empty()) {
-        auto w = m_windows[0];
+        auto & w = m_windows[0];
         if(w->areaCount() > 0)
           m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
       } else {
