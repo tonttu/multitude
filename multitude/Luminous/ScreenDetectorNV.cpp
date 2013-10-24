@@ -436,15 +436,21 @@ namespace
       for (int i = 0; i < 32; ++i)
         if (outputId & (1<<i)) { outputNumber = i; break; }
 
-        info.setConnection(QString("DFP-%1").arg(outputNumber));
+      info.setConnection(QString("DFP-%1").arg(outputNumber));
 
-        // Geometry
-        Nimble::Recti rect;
-        rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
-        rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
-        info.setGeometry(rect);
-        info.setNumId(results.size()+1);
-        results.push_back(info);
+      // Geometry
+      Nimble::Recti rect;
+      rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
+      rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
+      info.setGeometry(rect);
+      info.setNumId(results.size()+1);
+      if (devMode.dmDisplayOrientation == DMDO_90)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_90);
+      else if (devMode.dmDisplayOrientation == DMDO_180)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_180);
+      else if (devMode.dmDisplayOrientation == DMDO_270)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_270);
+      results.push_back(info);
     }
 
     /// @todo Unloading may fail if resources are locked. Do more error checking
