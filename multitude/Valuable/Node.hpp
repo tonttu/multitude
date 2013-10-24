@@ -231,7 +231,7 @@ namespace Valuable
     typedef container::const_iterator const_iterator;
 
     /// @returns attribute container
-    const container & attributes() { return m_attributes; }
+    const container & attributes() const { return m_attributes; }
 
     /** Add an event listener to this object.
         This function is part of the event passing framework. After calling this,

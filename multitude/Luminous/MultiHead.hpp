@@ -64,7 +64,7 @@ namespace Luminous {
     public:
 
       /// Constructs a new area for the given window
-      Area(Window * window = 0);
+      Area();
       virtual ~Area();
       /// Deserializes this area from an archive element
       bool deserialize(const Valuable::ArchiveElement & element);
@@ -145,9 +145,6 @@ namespace Luminous {
       /// Swaps the width and height of the graphics size
       void swapGraphicsWidthHeight();
 
-      /// Returns a pointer to the window that holds this area
-      const Window * window() const;
-
       /// Get the 3D color-correction RGB cube associated with this area. The
       /// 3D color-correction is used by Cornerstone.
       /// @return 3D color-correction
@@ -161,12 +158,6 @@ namespace Luminous {
       ColorCorrection & colorCorrection();
       /// @copydoc colorCorrection
       const ColorCorrection & colorCorrection() const;
-
-      /// Checks if software color correction is in use. This function returns
-      /// true if 3D RGB cube color-correction is used, false if the 2D
-      /// color-correction is used or the 3D color-correction is disabled.
-      /// @return true if 3D color-correction is used; otherwise false
-      bool isSoftwareColorCorrection() const;
 
       /// Get the viewport defined by the area in window coordinates.
       /// @return the viewport defined by the area
@@ -190,7 +181,6 @@ namespace Luminous {
 
       void updateBBox();
 
-      Window * m_window;
       GLKeyStone m_keyStone;
       Valuable::AttributeVector2i   m_location;
       Valuable::AttributeVector2i   m_size;
@@ -244,7 +234,7 @@ namespace Luminous {
       LUMINOUS_API void setSeam(float seam);
 
       /// Adds an area to the window
-      LUMINOUS_API void addArea(Area * a);
+      LUMINOUS_API void addArea(std::unique_ptr<Area> a);
 
       /// Location of the window in desktop coordinates
       const Vector2i & location() const { return m_location; }
@@ -317,24 +307,19 @@ namespace Luminous {
       const MultiHead * screen() const { return m_screen; }
 
       /// Remove all areas for all windows.
-      void deleteAreas()
-      {
-        for (auto area: m_areas) {
-          removeAttribute(area.get());
-          area->eventRemoveListener(m_screen);
-        }
-        m_areas.clear();
-        eventSend("graphics-bounds-changed");
-      }
+      LUMINOUS_API void deleteAreas();
+
+      /// Checks if software color correction is in use for the specified area.
+      /// This function returns true if 3D RGB cube color-correction is used,
+      /// false if the 2D color-correction is used or the 3D color-correction is
+      /// disabled.
+      /// @param areaIndex area index
+      /// @return true if 3D color-correction is used; otherwise false
+      LUMINOUS_API bool isAreaSoftwareColorCorrected(int areaIndex) const;
 
       /// Get the window rectangle
       /// @return window rectangle
-      Nimble::Recti getRect() const {
-        return Nimble::Recti(location().x,
-                             location().y,
-                             location().x + width(),
-                             location().y + height());
-      }
+      LUMINOUS_API Nimble::Recti getRect() const;
 
       /// Element type used during serialization
       /// @return "window"
@@ -361,7 +346,7 @@ namespace Luminous {
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
 
-      std::vector<std::shared_ptr<Area> > m_areas;
+      std::vector<std::unique_ptr<Area> > m_areas;
     };
 
     /// Construct an empty configuration
@@ -416,7 +401,7 @@ namespace Luminous {
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
-    void addWindow(Window * w);
+    void addWindow(std::unique_ptr<Window> w);
 
     /// Raise the edited flag for the configuration. Typically used to check if
     /// the settings need to be saved when exiting an application.
@@ -450,18 +435,7 @@ namespace Luminous {
     /// @endcond
 
     /// Remove all windows from the configuration
-    void deleteWindows()
-    {
-      /// @todo this should remove listeners that refer to Areas within the windows
-      m_hwColorCorrection.syncWith(0);
-      for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      {
-        //delete window's areas
-        it->get()->deleteAreas();
-        removeAttribute(it->get());
-      }
-      m_windows.clear();
-    }
+    void deleteWindows();
 
     /// Get the dots-per-inch
     /// @return the DPI of the display
@@ -477,11 +451,14 @@ namespace Luminous {
     bool isHardwareColorCorrectionEnabled() const { return m_hwColorCorrectionEnabled; }
     void setHardwareColorCorrection(bool enabled) { m_hwColorCorrectionEnabled = enabled; }
 
+    /// Create a default fullscreen configuration for a single 1080p display
+    void createFullHDConfig();
+    void mergeConfiguration(const Luminous::MultiHead & source);
+
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
-    virtual void dpmsChanged();
 
-    std::vector<std::shared_ptr<Window> > m_windows;
+    std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;

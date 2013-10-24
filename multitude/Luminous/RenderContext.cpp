@@ -310,10 +310,10 @@ namespace Luminous
     delete m_data;
   }
 
-  void RenderContext::setArea(const Luminous::MultiHead::Area * area)
+  void RenderContext::setWindowArea(const MultiHead::Window *window, const Luminous::MultiHead::Area * area)
   {
+    m_data->m_window = window;
     m_data->m_area = area;
-    m_data->m_window = area->window();
   }
 
   const Luminous::MultiHead::Window * RenderContext::window() const
@@ -1499,9 +1499,8 @@ namespace Luminous
 
     // Add color correction filter if any of the areas have a profile defined
     for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
-      const MultiHead::Area & area = m_data->m_window->area(i);
 
-      if(area.isSoftwareColorCorrection()) {
+      if(m_data->m_window->isAreaSoftwareColorCorrected(i)) {
         Radiant::info("Enabling software color correction for area %lu", i);
 
         // Check if filter already exists
@@ -1575,7 +1574,7 @@ namespace Luminous
         m_data->m_driver.setScissor(area.viewport());
 
         // Sets the current area to be rendered
-        setArea(&area);
+        setWindowArea(m_data->m_window, &area);
 
         ppf->doFilter(*this);
       }
