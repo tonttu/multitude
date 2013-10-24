@@ -375,6 +375,12 @@ namespace Luminous
     return m_d->m_layout;
   }
 
+  void SimpleTextLayout::clearCache()
+  {
+    Radiant::Guard g(s_layoutCacheMutex);
+    s_layoutCache.clear();
+  }
+
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
                                                           const Nimble::SizeF & size,
                                                           const QFont & font,
@@ -391,13 +397,7 @@ namespace Luminous
 #endif
 
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & tptr = s_layoutCache[key];
-
-      bool reset = tptr && !tptr->correctAtlas();
-      if(reset) {
-        s_layoutCache.clear();
-      }
-      std::unique_ptr<SimpleTextLayout> & ptr = reset?s_layoutCache[key]:tptr;
+      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
 
       if (!ptr) {
         ptr.reset(new SimpleTextLayout(text, size, font, option));
