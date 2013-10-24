@@ -32,7 +32,15 @@ namespace Luminous
   class ScreenInfo
   {
   public:
-    ScreenInfo() : m_logicalScreen(0),m_numid(-1) {}
+    enum Rotation
+    {
+      ROTATE_0   = 0,
+      ROTATE_90  = 90000,
+      ROTATE_180 = 180000,
+      ROTATE_270 = 270000
+    };
+
+    ScreenInfo() : m_logicalScreen(0), m_numid(-1), m_rotation(ROTATE_0) {}
 
     /// For example "GPU-0.DFP-3"
     QString id() const { return m_gpu + "." + m_connection; }
@@ -60,6 +68,16 @@ namespace Luminous
     /// Size and location relative to this logical screen
     const Nimble::Recti & geometry() const { return m_geometry; }
     void setGeometry(const Nimble::Recti & geometry) { m_geometry = geometry; }
+
+    /// Screen resolution. With full hd displays, this will return 1920x1080 regardless of the rotation
+    Nimble::Size resolution() const
+    {
+      auto s = geometry().size();
+      if (m_rotation == ROTATE_90 || m_rotation == ROTATE_270)
+        s.transpose();
+      return s;
+    }
+
     /// Unique Number that identifies the screen
     void setNumId(int nid) {
       m_numid = nid;
@@ -78,6 +96,11 @@ namespace Luminous
         return name().contains("MultiTouchVM1");
     }
 
+    Rotation rotation() const { return m_rotation; }
+    void setRotation(Rotation r) { m_rotation = r; }
+
+    float rotationRadians() const { return m_rotation / 1000.0f / 180.0f * Nimble::Math::PI; }
+
   private:
     QString m_name;
     QString m_gpu;
@@ -86,6 +109,7 @@ namespace Luminous
     int m_logicalScreen;
     Nimble::Recti m_geometry;
     int m_numid;
+    Rotation m_rotation;
   };
 
   class LUMINOUS_API ScreenDetector

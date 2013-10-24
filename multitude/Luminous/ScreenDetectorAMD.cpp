@@ -407,13 +407,18 @@ namespace {
                          "Name_Get: %d", err);
           continue;
         }
-        Nimble::Recti rect;
+        bool found = false;
         Luminous::XRandR xrandr;
-        if(xrandr.getGeometry(screen, name, rect)) {
-          screenInfo.setGeometry(rect);
-        } else {
-          continue;
+        for (auto & info: xrandr.screens(nullptr, screen)) {
+          if (info.connection() == name) {
+            screenInfo.setGeometry(info.geometry());
+            screenInfo.setRotation(info.rotation());
+            found = true;
+            break;
+          }
         }
+        if (!found)
+          continue;
 
         ok = true;
         results.push_back(screenInfo);

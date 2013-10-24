@@ -14,8 +14,11 @@
 /// @cond
 
 #include "Export.hpp"
+#include "ScreenDetector.hpp"
 
 #include <Nimble/Rect.hpp>
+
+#include <QX11Info>
 
 class QString;
 namespace Luminous
@@ -24,7 +27,8 @@ namespace Luminous
   {
   public:
     XRandR();
-    bool getGeometry(int screen, const QString & display, Nimble::Recti & rect);
+
+    std::vector<ScreenInfo> screens(Display * display, int screen);
   };
 }
 
