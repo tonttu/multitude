@@ -564,8 +564,8 @@ namespace {
             }
 
             // Set geometry
-            int left = slsOffsets[currentSLSOffset].iBezelOffsetX;
-            int top = slsOffsets[currentSLSOffset].iBezelOffsetY;
+            int left = targetMode[0].iXPos + slsOffsets[currentSLSOffset].iBezelOffsetX;
+            int top = targetMode[0].iYPos + slsOffsets[currentSLSOffset].iBezelOffsetY;
             int right = left + slsOffsets[currentSLSOffset].iDisplayWidth;
             int bottom = top + slsOffsets[currentSLSOffset].iDisplayHeight;
 
