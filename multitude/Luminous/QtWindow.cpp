@@ -323,6 +323,7 @@ namespace Luminous
     if(window.frameless()) {
       flags |= Qt::FramelessWindowHint;
       flags |= Qt::X11BypassWindowManagerHint;
+      flags |= Qt::WindowStaysOnTopHint;
     }
 
     m_d->m_mainWindow = m_d->getHostWidget(window.screennumber(), flags);
