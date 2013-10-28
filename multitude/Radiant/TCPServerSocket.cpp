@@ -17,7 +17,6 @@
 #include "TCPSocket.hpp"
 
 #include <Radiant/Trace.hpp>
-
 #include <string.h>
 
 #ifndef WIN32

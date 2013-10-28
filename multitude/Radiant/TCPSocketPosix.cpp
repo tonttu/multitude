@@ -224,6 +224,7 @@ namespace Radiant
 
   int TCPSocket::write(const void * buffer, int bytes)
   {
+
     if(m_d->m_fd < 0) {
       Radiant::error("TCPSocket::write # invalid socket (file descriptor = %d)", m_d->m_fd);
       return -1;
@@ -257,13 +258,14 @@ namespace Radiant
       } else if(SocketWrapper::err() == EINTR) {
         continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
-        if(timeoutSeconds > 0 && timer->time() > timeoutSeconds)
+        if(timeoutSeconds > 0 && timer->time() >= timeoutSeconds)
           return pos;
 
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
-        SocketWrapper::poll(&pfd, 1, 5000);
+        int maxWait = timer ? std::min<int>(std::max<int>(timeoutSeconds - timer->time(), 0) * 1000, 5000) : 5000;
+        SocketWrapper::poll(&pfd, 1, maxWait);
       } else {
         error("TCPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
