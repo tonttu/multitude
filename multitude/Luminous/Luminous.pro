@@ -194,7 +194,7 @@ macx {
 
 # Platform specific: GNU Linux
 linux-* {
-  LIBS += -lXNVCtrl -lXrandr -lXext -lX11
+  LIBS += -lXNVCtrl -lXrandr -lXext -lX11 -lXinerama
 
   HEADERS += XRandR.hpp
   HEADERS += Xinerama.hpp
