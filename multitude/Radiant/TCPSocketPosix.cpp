@@ -29,23 +29,47 @@ namespace Radiant
 
   class TCPSocket::D {
     public:
+      enum Parameters {
+        PARAM_NODELAY      = 1,
+        PARAM_SEND_TIMEOUT = 1 << 1,
+        PARAM_ALL          = PARAM_NODELAY | PARAM_SEND_TIMEOUT
+      };
+
       D(int fd = -1)
         : m_fd(fd),
         m_port(0),
         m_noDelay(0),
+        m_sendTimeoutMs(0),
         m_rxBytes(0),
         m_txBytes(0)
       {}
 
-      bool setOpts()
+      bool setOpts(Parameters params = PARAM_ALL)
       {
         if(m_fd < 0) return true;
 
         bool ok = true;
 
-        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
-          ok = false;
-          error("Failed to set TCP_NODELAY: %s", SocketWrapper::strerror(SocketWrapper::err()));
+        if(params & PARAM_NODELAY) {
+          if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
+            ok = false;
+            error("Failed to set TCP_NODELAY: %s", SocketWrapper::strerror(SocketWrapper::err()));
+          }
+        }
+
+        if(params & PARAM_SEND_TIMEOUT) {
+#ifdef RADIANT_WINDOWS
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)m_sendTimeoutMs, sizeof(m_sendTimeoutMs));
+#else
+          struct timeval tv;
+          tv.tv_sec = m_sendTimeoutMs / 1000;
+          tv.tv_usec = (m_sendTimeoutMs % 1000) * 1000;
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
+#endif
+          if(!timeoutOk) {
+            ok = false;
+            error("Failed to set SO_SNDTIMEO: %s", SocketWrapper::strerror(SocketWrapper::err()));
+          }
         }
 
         return ok;
@@ -54,6 +78,7 @@ namespace Radiant
       int m_fd;
       int m_port;
       int m_noDelay;
+      int m_sendTimeoutMs;
       unsigned long m_rxBytes, m_txBytes;
       QString m_host;
   };
@@ -87,8 +112,15 @@ namespace Radiant
   bool TCPSocket::setNoDelay(bool noDelay)
   {
     m_d->m_noDelay = noDelay;
-    return m_d->setOpts();
+    return m_d->setOpts(TCPSocket::D::PARAM_NODELAY);
   }
+
+  bool TCPSocket::setSendTimeout(int timeoutMs)
+  {
+    m_d->m_sendTimeoutMs = timeoutMs;
+    return m_d->setOpts(TCPSocket::D::PARAM_SEND_TIMEOUT);
+  }
+
 
   int TCPSocket::open(const char * host, int port)
   {

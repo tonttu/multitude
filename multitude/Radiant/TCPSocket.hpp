@@ -55,6 +55,12 @@ namespace Radiant {
     /// @return true on success
     bool setNoDelay(bool noDelay);
 
+    /// Sets the send timeout for write operations. The default value is 0, which means
+    /// write operations do not time out.
+    /// @param timeoutMs how many milliseconds write operations can take before failing
+    /// @return true on success
+    bool setSendTimeout(int timeoutMs);
+
     /// Opens a TCP socket to desired host:port
     /// @param host hostname
     /// @param port port
