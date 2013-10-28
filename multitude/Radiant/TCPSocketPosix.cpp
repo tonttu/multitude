@@ -18,6 +18,7 @@
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
+#include "Timer.hpp"
 
 #include <sys/types.h>
 #include <strings.h>
@@ -59,12 +60,12 @@ namespace Radiant
 
         if(params & PARAM_SEND_TIMEOUT) {
 #ifdef RADIANT_WINDOWS
-          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)m_sendTimeoutMs, sizeof(m_sendTimeoutMs));
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)m_sendTimeoutMs, sizeof(m_sendTimeoutMs)) != -1;
 #else
           struct timeval tv;
           tv.tv_sec = m_sendTimeoutMs / 1000;
           tv.tv_usec = (m_sendTimeoutMs % 1000) * 1000;
-          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv));
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv)) != -1;
 #endif
           if(!timeoutOk) {
             ok = false;
@@ -236,6 +237,15 @@ namespace Radiant
     int pos = 0;
     const char * data = reinterpret_cast<const char*>(buffer);
 
+    double timeoutSeconds = m_d->m_sendTimeoutMs / 1000.0;
+
+    char timer_storage[sizeof(Radiant::Timer)];
+
+    Radiant::Timer * timer = 0;
+
+    if(timeoutSeconds > 0)
+      timer = new (timer_storage) Radiant::Timer;
+
     while(pos < bytes) {
       SocketWrapper::clearErr();
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
@@ -247,6 +257,9 @@ namespace Radiant
       } else if(SocketWrapper::err() == EINTR) {
         continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
+        if(timeoutSeconds > 0 && timer->time() > timeoutSeconds)
+          return pos;
+
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
