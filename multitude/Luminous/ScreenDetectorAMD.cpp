@@ -16,6 +16,7 @@
 
 #if defined (RADIANT_LINUX)
 #  include "XRandR.hpp"
+#  include "Xinerama.hpp"
 #elif defined (RADIANT_OSX)
 #  error "Not supported on OSX"
 #endif
@@ -433,6 +434,14 @@ namespace {
 
         ok = true;
         results.push_back(screenInfo);
+      }
+    }
+
+    if (!ok) {
+      Luminous::Xinerama xinerama;
+      for (auto & info: xinerama.screens(nullptr, screen)) {
+        ok = true;
+        results.push_back(info);
       }
     }
     return ok;

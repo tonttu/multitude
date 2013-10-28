@@ -197,7 +197,9 @@ linux-* {
   LIBS += -lXNVCtrl -lXrandr -lXext -lX11
 
   HEADERS += XRandR.hpp
+  HEADERS += Xinerama.hpp
   SOURCES += XRandR.cpp
+  SOURCES += Xinerama.cpp
 }
 
 include(../library.pri)
