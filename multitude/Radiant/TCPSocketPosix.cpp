@@ -60,7 +60,7 @@ namespace Radiant
 
         if(params & PARAM_SEND_TIMEOUT) {
 #ifdef RADIANT_WINDOWS
-          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)m_sendTimeoutMs, sizeof(m_sendTimeoutMs)) != -1;
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&m_sendTimeoutMs, sizeof(m_sendTimeoutMs)) != -1;
 #else
           struct timeval tv;
           tv.tv_sec = m_sendTimeoutMs / 1000;
