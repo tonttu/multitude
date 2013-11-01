@@ -11,6 +11,7 @@
 #ifndef LUMINOUS_XRANDR_HPP
 #define LUMINOUS_XRANDR_HPP
 
+#ifdef RADIANT_LINUX
 /// @cond
 
 #include "Export.hpp"
@@ -31,5 +32,5 @@ namespace Luminous
 }
 
 /// @endcond
-
+#endif
 #endif // LUMINOUS_XRANDR_HPP
