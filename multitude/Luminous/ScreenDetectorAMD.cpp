@@ -334,6 +334,8 @@ namespace {
   #if defined (RADIANT_LINUX)
   bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
+    Luminous::X11Display display;
+
     std::vector<AdapterInfo> adapterInfo;
     getAdapterInformation(adapterInfo);
     if (adapterInfo.empty())
@@ -421,7 +423,7 @@ namespace {
         }
         bool found = false;
         Luminous::XRandR xrandr;
-        for (auto & info: xrandr.screens(nullptr, screen)) {
+        for (auto & info: xrandr.screens(display, screen)) {
           if (info.connection() == name) {
             screenInfo.setGeometry(info.geometry());
             screenInfo.setRotation(info.rotation());
@@ -439,7 +441,7 @@ namespace {
 
     if (!ok) {
       Luminous::Xinerama xinerama;
-      for (auto & info: xinerama.screens(nullptr, screen)) {
+      for (auto & info: xinerama.screens(display, screen)) {
         ok = true;
         results.push_back(info);
       }
@@ -616,13 +618,13 @@ namespace Luminous
   {
     MULTI_ONCE {
       adlAvailable = initADL();
+      checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
     }
 
     if (!adlAvailable)
       return false;
 
     Radiant::Guard g(detector_mutex);
-    checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
 
 #if defined (RADIANT_LINUX)
     bool success = detectLinux(screen, results);
@@ -633,7 +635,8 @@ namespace Luminous
 #  error "ScreenDetectorAMD Not implemented on this platform"
 #endif
 
-    ADL_Main_Control_Destroy();
+    /// AMD drivers crash when we deinitialize this library (at least on fglrx-8.960)
+    //checkADL("ADL_Main_Control_Destroy", ADL_Main_Control_Destroy());
 
     return success;
   }

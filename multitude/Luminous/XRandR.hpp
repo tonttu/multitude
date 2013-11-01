@@ -18,8 +18,6 @@
 
 #include <Nimble/Rect.hpp>
 
-#include <QX11Info>
-
 class QString;
 namespace Luminous
 {

@@ -15,7 +15,6 @@
 #include <Radiant/Trace.hpp>
 
 #include <QStringList>
-#include <QX11Info>
 #include <QRect>
 #include <QDesktopWidget>
 
@@ -297,7 +296,7 @@ namespace
 
   bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
-    Display * display = QX11Info::display();
+    Luminous::X11Display display;
     int event_base, error_base;
     if(XNVCTRLQueryExtension(display, &event_base, &error_base) == False)
       return false;

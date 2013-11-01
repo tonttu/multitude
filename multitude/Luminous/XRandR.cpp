@@ -25,10 +25,9 @@ namespace Luminous
 
   std::vector<ScreenInfo> XRandR::screens(Display * display, int screen)
   {
+    assert(display);
     std::vector<ScreenInfo> res;
 
-    if (!display)
-      display = QX11Info::display();
     Window root = XRootWindow(display, screen);
 
     if(!root) {

@@ -25,10 +25,8 @@ namespace Luminous
 
   std::vector<ScreenInfo> Xinerama::screens(Display * display, int screen)
   {
+    assert(display);
     std::vector<ScreenInfo> res;
-
-    if (!display)
-      display = QX11Info::display();
 
     int event_base = 0, error_base = 0;
     if (!XineramaQueryExtension(display, &event_base, &error_base)) {

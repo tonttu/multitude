@@ -27,6 +27,9 @@
 #  include <windows.h>
 #endif //RADIANT_WINDOW
 
+#ifdef RADIANT_LINUX
+#  include <QX11Info>
+#endif
 namespace Luminous
 {
   class ScreenInfo
@@ -138,6 +141,22 @@ namespace Luminous
   {
     m_connection = Valuable::XMLArchive::cleanElementName(connection);
   }
+
+#ifdef RADIANT_LINUX
+  class LUMINOUS_API X11Display
+  {
+  public:
+    X11Display();
+    X11Display(const QByteArray & displayName);
+
+    ~X11Display();
+
+    operator Display * ();
+
+  private:
+    Display * m_display;
+  };
+#endif
 
 }
 
