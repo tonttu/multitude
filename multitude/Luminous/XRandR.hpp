@@ -5,19 +5,19 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef LUMINOUS_XRANDR_HPP
 #define LUMINOUS_XRANDR_HPP
 
-#ifdef RADIANT_LINUX
 /// @cond
 
 #include "Export.hpp"
 #include "ScreenDetector.hpp"
 
 #include <Nimble/Rect.hpp>
+#ifdef RADIANT_LINUX
 
 class QString;
 namespace Luminous
@@ -30,7 +30,7 @@ namespace Luminous
     std::vector<ScreenInfo> screens(Display * display, int screen);
   };
 }
+#endif
 
 /// @endcond
-#endif
 #endif // LUMINOUS_XRANDR_HPP
