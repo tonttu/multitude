@@ -13,6 +13,7 @@
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
+#include "Timer.hpp"
 
 #include <sys/types.h>
 
@@ -23,23 +24,47 @@ namespace Radiant
 
   class TCPSocket::D {
     public:
+      enum Parameters {
+        PARAM_NODELAY      = 1,
+        PARAM_SEND_TIMEOUT = 1 << 1,
+        PARAM_ALL          = PARAM_NODELAY | PARAM_SEND_TIMEOUT
+      };
+
       D(int fd = -1)
         : m_fd(fd),
         m_port(0),
         m_noDelay(0),
+        m_sendTimeoutMs(0),
         m_rxBytes(0),
         m_txBytes(0)
       {}
 
-      bool setOpts()
+      bool setOpts(Parameters params = PARAM_ALL)
       {
         if(m_fd < 0) return true;
 
         bool ok = true;
 
-        if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
-          ok = false;
-          error("Failed to set TCP_NODELAY: %s", SocketWrapper::strerror(SocketWrapper::err()));
+        if(params & PARAM_NODELAY) {
+          if(setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&m_noDelay, sizeof(m_noDelay))) {
+            ok = false;
+            error("Failed to set TCP_NODELAY: %s", SocketWrapper::strerror(SocketWrapper::err()));
+          }
+        }
+
+        if(params & PARAM_SEND_TIMEOUT) {
+#ifdef RADIANT_WINDOWS
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&m_sendTimeoutMs, sizeof(m_sendTimeoutMs)) != -1;
+#else
+          struct timeval tv;
+          tv.tv_sec = m_sendTimeoutMs / 1000;
+          tv.tv_usec = (m_sendTimeoutMs % 1000) * 1000;
+          bool timeoutOk = setsockopt(m_fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv)) != -1;
+#endif
+          if(!timeoutOk) {
+            ok = false;
+            error("Failed to set SO_SNDTIMEO: %s", SocketWrapper::strerror(SocketWrapper::err()));
+          }
         }
 
         return ok;
@@ -48,6 +73,7 @@ namespace Radiant
       int m_fd;
       int m_port;
       int m_noDelay;
+      int m_sendTimeoutMs;
       unsigned long m_rxBytes, m_txBytes;
       QString m_host;
   };
@@ -99,8 +125,15 @@ namespace Radiant
   bool TCPSocket::setNoDelay(bool noDelay)
   {
     m_d->m_noDelay = noDelay;
-    return m_d->setOpts();
+    return m_d->setOpts(TCPSocket::D::PARAM_NODELAY);
   }
+
+  bool TCPSocket::setSendTimeout(int timeoutMs)
+  {
+    m_d->m_sendTimeoutMs = timeoutMs;
+    return m_d->setOpts(TCPSocket::D::PARAM_SEND_TIMEOUT);
+  }
+
 
   int TCPSocket::open(const char * host, int port)
   {
@@ -202,6 +235,7 @@ namespace Radiant
 
   int TCPSocket::write(const void * buffer, int bytes)
   {
+
     if(m_d->m_fd < 0) {
       Radiant::error("TCPSocket::write # invalid socket (file descriptor = %d)", m_d->m_fd);
       return -1;
@@ -215,6 +249,15 @@ namespace Radiant
     int pos = 0;
     const char * data = reinterpret_cast<const char*>(buffer);
 
+    double timeoutSeconds = m_d->m_sendTimeoutMs / 1000.0;
+
+    char timer_storage[sizeof(Radiant::Timer)];
+
+    Radiant::Timer * timer = 0;
+
+    if(timeoutSeconds > 0)
+      timer = new (timer_storage) Radiant::Timer;
+
     while(pos < bytes) {
       SocketWrapper::clearErr();
       // int max = bytes - pos > SSIZE_MAX ? SSIZE_MAX : bytes - pos;
@@ -226,10 +269,14 @@ namespace Radiant
       } else if(SocketWrapper::err() == EINTR) {
         continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
+        if(timeoutSeconds > 0 && timer->time() >= timeoutSeconds)
+          return pos;
+
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
         pfd.events = POLLOUT;
-        SocketWrapper::poll(&pfd, 1, 5000);
+        int maxWait = timer ? std::min<int>(std::max<int>(timeoutSeconds - timer->time(), 0) * 1000, 5000) : 5000;
+        SocketWrapper::poll(&pfd, 1, maxWait);
       } else {
         error("TCPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
