@@ -181,6 +181,23 @@ namespace Radiant
   typedef std::shared_ptr<Task> TaskPtr;
 
   /// This class executes the given function within BGThread.
+  /// Task is given as a parameter to the function that is being executed
+  /// in task because function needs to finish task explicitly ie. call
+  /// @ref Task::setFinished when everything is ready. The following example
+  /// shows how to create and use FunctionTask:
+  ///
+  /// @code
+  ///  std::function<void (Task &)> taskFunction = [] (Radiant::Task& t) {
+  ///    // This will do some costly computing. It is called repeatedly as
+  ///    // long as task is alive.
+  ///    if(ready)
+  ///      t.setFinished();
+  ///  };
+  ///
+  ///  Radiant::TaskPtr task = std::make_shared<Radiant::FunctionTask>(taskFunction);
+  ///  Radiant::BGThread::instance()->addTask(task);
+  ///
+  /// @endcode
   class RADIANT_API FunctionTask : public Task
   {
     public:
