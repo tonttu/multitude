@@ -422,7 +422,13 @@ namespace Luminous
     QRegExp totalLines("Total lines: (\\d+)");
     QRegExp activeLines("Actives? lines: (\\d+)");
     QRegExp colorCorrection("Color gamma is (on|off)");
-    QRegExp sdram("SDRAM status (\\d+) / (\\d+)");
+    // Some VM1 firmware version changed this
+    //   SDRAM status \d+ / \d+
+    // to:
+    //   SDRAM status: \d+ / eye: \d+
+    //
+    // At least VM1 version 3.3 uses the latter format.
+    QRegExp sdram("SDRAM status:? (\\d+) / (eye: )?(\\d+)");
 
     QRegExp split("\\s*[\\r\\n]+\\s*", Qt::CaseInsensitive, QRegExp::RegExp2);
 
@@ -476,7 +482,7 @@ namespace Luminous
         map["color-correction"] = activeLines.cap(1) == "on" ? "1" : "";
       } else if(sdram.exactMatch(line)) {
         map["sdram-status"] = sdram.cap(1).toInt();
-        map["sdram-total"] = sdram.cap(2).toInt();
+        map["sdram-total"] = sdram.cap(3).toInt();
       } else {
         Radiant::warning("VM1::parseInfo # Failed to parse line '%s'", line.toUtf8().data());
       }
