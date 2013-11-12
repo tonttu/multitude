@@ -57,7 +57,7 @@ namespace {
   Radiant::Mutex s_fileWriterMutex;
   //std::function<void ()> s_fileWriterInit;
   //std::function<void ()> s_fileWriterDeinit;
-  void (*s_fileWriterInit)() = 0;
+  void (*s_fileWriterInit)(const QString &) = 0;
   void (*s_fileWriterDeinit)() = 0;
   volatile int s_fileWriterCount = 0;
 
@@ -133,7 +133,7 @@ namespace {
     return true;
   }
 
-  void s_mountRW()
+  void s_mountRW(const QString & name)
   {
     if(!s_initLocks()) return;
 
@@ -145,7 +145,7 @@ namespace {
     }
 
     if(try_flock(s_usersLockfile)) {
-      Radiant::info("Remounting root filesystem to read-write -mode");
+      Radiant::info("Remounting root filesystem to read-write -mode (reason: %s)", name.toUtf8().data());
       runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
       runAsRoot("sleep", QStringList() << "5");
 
@@ -237,7 +237,7 @@ namespace {
 
 namespace Radiant
 {
-  FileWriter::FileWriter()
+  FileWriter::FileWriter(const QString & name)
   {
 #ifdef RADIANT_LINUX
     MULTI_ONCE(filewriterInit();)
@@ -246,7 +246,7 @@ namespace Radiant
     if(!s_fileWriterInit) return;
     Guard g(s_fileWriterMutex);
     if(s_fileWriterCount++ == 0)
-      s_fileWriterInit();
+      s_fileWriterInit(name);
   }
 
   FileWriter::~FileWriter()
@@ -257,7 +257,7 @@ namespace Radiant
       s_fileWriterDeinit();
   }
 
-  void FileWriter::setInitFunction(void (*f)())
+  void FileWriter::setInitFunction(void (*f)(const QString &))
   {
     s_fileWriterInit = f;
   }
@@ -315,14 +315,14 @@ namespace Radiant
 
   bool FileUtils::renameFile(const char * from, const char * to)
   {
-    FileWriter writer;
+    FileWriter writer("FileUtils::renameFile");
     int ok = rename(from, to);
     return (ok == 0);
   }
 
   bool FileUtils::removeFile(const char * filename)
   {
-    FileWriter writer;
+    FileWriter writer("FileUtils::removeFile");
     return remove(filename) == 0;
   }
 
@@ -336,7 +336,7 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
-    FileWriter writer;
+    FileWriter writer("FileUtils::writeTextFile");
     uint32_t len = uint32_t(strlen(contents));
 
     QString tmpname = QString(filename)+".cornerstone_tmp";
@@ -524,7 +524,7 @@ namespace Radiant
 
   void FileUtils::writeAsRoot(const QString & filename, const QByteArray & data, bool quiet)
   {
-    Radiant::FileWriter writer;
+    Radiant::FileWriter writer("FileUtils::writeAsRoot");
     int id = (int)QThread::currentThreadId();
     QFile file(QString("/tmp/taction.tmpfile.%1").arg(id));
     if(file.open(QFile::WriteOnly)) {
