@@ -90,6 +90,10 @@ namespace Valuable
 
     /// Adds a new Attribute to the list of attribute objects.
     /// Copies the name of the attribute from the given object.
+    /// After successful adding of attribute to node, the node handle memory
+    /// management of attribute.
+    /// @param attribute Attribute to be added
+    /// @return True if attribute was successfully added, false otherwise
     bool addAttribute(Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
     MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
