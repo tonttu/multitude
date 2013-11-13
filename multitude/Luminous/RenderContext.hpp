@@ -140,7 +140,7 @@ namespace Luminous
 
     /// Sets the associated area for this context at the moment
     /// @param area area to associate
-    void setArea(const Luminous::MultiHead::Area * area);
+    void setWindowArea(const Luminous::MultiHead::Window * window, const Luminous::MultiHead::Area * area);
 
     /// Returns the window associated to the current area.
     /// @return Pointer to current window.

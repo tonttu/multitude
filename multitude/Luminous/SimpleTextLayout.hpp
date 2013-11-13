@@ -50,6 +50,7 @@ namespace Luminous
     LUMINOUS_API QTextLayout & layout();
     LUMINOUS_API const QTextLayout & layout() const;
 
+    LUMINOUS_API static void clearCache();
     LUMINOUS_API static const SimpleTextLayout & cachedLayout(const QString & text,
                                                               const Nimble::SizeF & size,
                                                               const QFont & font,

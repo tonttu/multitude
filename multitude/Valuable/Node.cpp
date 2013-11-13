@@ -62,15 +62,15 @@ namespace
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
-  std::list<QueueItem*> s_queue;
+  std::list<std::unique_ptr<QueueItem> > s_queue;
   QSet<void *> s_queueOnce;
 
   Radiant::Mutex s_processingQueueMutex;
   bool s_processingQueue = false;
-  std::list<QueueItem*> s_queueTmp;
+  std::list<std::unique_ptr<QueueItem> > s_queueTmp;
   QSet<void *> s_queueOnceTmp;
 
-  void queueEvent(QueueItem * item, void * once)
+  void queueEvent(std::unique_ptr<QueueItem> item, void * once)
   {
     s_processingQueueMutex.lock();
     {
@@ -82,7 +82,7 @@ namespace
           }
           s_queueOnceTmp << once;
         }
-        s_queueTmp.push_back(item);
+        s_queueTmp.push_back(std::move(item));
         s_processingQueueMutex.unlock();
         return;
       }
@@ -95,26 +95,26 @@ namespace
       if (s_queueOnce.contains(once)) return;
       s_queueOnce << once;
     }
-    s_queue.push_back(item);
+    s_queue.push_back(std::move(item));
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
                   const QByteArray & to, const Radiant::BinaryData & data,
                   void * once)
   {
-    queueEvent(new QueueItem(sender, target, to, data), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, to, data)), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncVoid func,
                   void * once)
   {
-    queueEvent(new QueueItem(sender, func), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func)), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
-    queueEvent(new QueueItem(sender, func, data), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func, data)), once);
   }
 }
 
@@ -180,14 +180,14 @@ namespace Valuable
     {
       Radiant::Guard g(s_queueMutex);
       for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
-        QueueItem* item = *it;
+        auto & item = *it;
         if(item->target == this)
           item->target = 0;
         if(item->sender == this)
           item->sender = 0;
       }
       for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
-        QueueItem* item = *it;
+        auto & item = *it;
         if(item->target == this)
           item->target = 0;
         if(item->sender == this)
@@ -751,7 +751,7 @@ namespace Valuable
     // Can not use range-based loop here because it doesn't iterate all
     // elements when the QList gets modified inside the loop.
     for(auto i = s_queue.begin(); i != s_queue.end(); ++i) {
-      auto item = *i;
+      auto & item = *i;
       if(item->target) {
         std::swap(item->target->m_sender, item->sender);
         item->target->eventProcess(item->to, item->data);
@@ -771,9 +771,6 @@ namespace Valuable
       // Make a temporary copy to prevent weird callback recursion bugs
       auto tempQueue = std::move(s_queue);
       s_queue.clear();
-
-      for(QueueItem* item : tempQueue)
-        delete item;
     }
 
     // Since we are locking two mutexes at the same time also in queueEvent,
@@ -787,7 +784,7 @@ namespace Valuable
     Radiant::Guard g2(s_processingQueueMutex);
     s_queueMutex.lock();
 
-    s_queue = s_queueTmp;
+    s_queue = std::move(s_queueTmp);
     s_queueOnce = s_queueOnceTmp;
     s_queueTmp.clear();
     s_queueOnceTmp.clear();
