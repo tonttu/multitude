@@ -44,7 +44,7 @@ namespace Luminous
     virtual void restore() OVERRIDE;
 
     /// @todo set icon for real
-    virtual void setIcon(const QString&) OVERRIDE {}
+    virtual bool setIcon(const QString&) OVERRIDE { return false; }
 
     virtual void showCursor(bool visible);
 

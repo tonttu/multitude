@@ -502,8 +502,6 @@ namespace Luminous
     if(icon.isNull())
       return false;
 
-    Radiant::info("QtWindow::setIcon # %s %d", filename.toUtf8().data(), (int) icon.isNull());
-
     m_d->m_mainWindow->setWindowIcon(icon);
     return true;
   }
