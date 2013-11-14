@@ -43,6 +43,9 @@ namespace Luminous
     virtual void maximize() OVERRIDE;
     virtual void restore() OVERRIDE;
 
+    /// @todo set icon for real
+    virtual void setIcon(const QString&) OVERRIDE {}
+
     virtual void showCursor(bool visible);
 
   private:

@@ -49,7 +49,7 @@ namespace Luminous
     virtual void doneCurrent() = 0;
 
     /// Sets the icon for the window
-    virtual bool setIcon(const QString & filename);
+    virtual bool setIcon(const QString & filename) = 0;
 
     /// Gets the native GPU id for the OpenGL context of this window
     virtual unsigned gpuId() const { return 0; };
