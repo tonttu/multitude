@@ -82,6 +82,8 @@ namespace Radiant {
         Radiant::Sleep::sleepMs(100);
 
       bool ok = true;
+
+      if(isEnabled())
       {
         Radiant::Guard g(m_mutex);
         for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
