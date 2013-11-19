@@ -48,6 +48,7 @@ namespace Radiant {
         @param removeQuotations Are the quotations around the value removed
         @return number of rows read */
     int load(const QString & filename, const char * delimiter = ",", bool removeQuotations = true);
+    bool save(const QString & filename, const char * delimiter = ",", bool useQuotations = true);
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
         matches the argument key.
@@ -92,6 +93,13 @@ namespace Radiant {
       @return the ith row
     */
     Row * row(unsigned i);
+    /** Adds a new row to the end of the table.
+        @return The newly created row.
+    */
+    Row * appendRow();
+
+    /// Clears (empties) the entire CSVDocument
+    void clear();
 
   private:
 
