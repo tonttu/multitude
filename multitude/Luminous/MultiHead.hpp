@@ -378,6 +378,10 @@ namespace Luminous {
     /// Returns the total graphics size
     Rect graphicsBounds() const;
 
+    /// Moves graphics locations of areas so that their bounding
+    /// box is located in origin.
+    void adjustGraphicsToOrigin();
+
     /// Returns the size of the total display in graphics pixels
     Nimble::SizeF size()
     { return Nimble::SizeF(width(), height()); }

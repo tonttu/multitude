@@ -704,6 +704,19 @@ namespace Luminous
           dstAttribute->deserialize(element);
       }
     }
+    adjustGraphicsToOrigin();
+  }
+
+  void MultiHead::adjustGraphicsToOrigin()
+  {
+    Nimble::Rect bb = graphicsBounds();
+    Nimble::Vector2f diff = bb.low();
+    for(size_t j = 0; j < windowCount(); ++j) {
+      for(size_t i = 0; i < window(j).areaCount(); ++i) {
+        Area& a = window(j).area(i);
+        a.setGraphicsLocation(a.graphicsLocation(false) - diff);
+      }
+    }
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
