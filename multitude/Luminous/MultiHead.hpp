@@ -213,6 +213,13 @@ namespace Luminous {
         m_size = Nimble::Vector2i(w, h);
       }
 
+      /// Set the location and size of this window
+      void setGeometry(Nimble::Vector2i loc, Nimble::Size s)
+      {
+        m_location = loc;
+        m_size = s.toVector();
+      }
+
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child
           area, and automatially changes the size of the area to match
