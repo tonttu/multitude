@@ -243,6 +243,10 @@ namespace Luminous {
       /// Adds an area to the window
       LUMINOUS_API void addArea(std::unique_ptr<Area> a);
 
+      /// Remove area from given index. Note that after this ordering
+      /// of the areas in greater indices will be changed
+      LUMINOUS_API void removeArea(size_t i);
+
       /// Location of the window in desktop coordinates
       const Vector2i & location() const { return m_location; }
       void setLocation(Nimble::Vector2i loc) { m_location = loc; }
@@ -388,6 +392,9 @@ namespace Luminous {
     /// Moves graphics locations of areas so that their bounding
     /// box is located in origin.
     void adjustGraphicsToOrigin();
+
+    /// Remove areas that are included in larger areas
+    void removeDuplicateAreas();
 
     /// Returns the size of the total display in graphics pixels
     Nimble::SizeF size()
