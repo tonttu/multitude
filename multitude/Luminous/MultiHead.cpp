@@ -711,7 +711,6 @@ namespace Luminous
           dstAttribute->deserialize(element);
       }
     }
-    adjustGraphicsToOrigin();
     removeDuplicateAreas();
   }
 
