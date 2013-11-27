@@ -1607,9 +1607,10 @@ namespace Luminous
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
     // Push the original frame buffer
-    Luminous::FrameBufferGuard bufferGuard(*this, sourceFrameBuffer);
-    Luminous::ScissorGuard scissorGuard(*this, viewport);
-    filterCtx->doFilter(*this);
+    {
+      Luminous::ScissorGuard scissorGuard(*this, viewport);
+      filterCtx->doFilter(*this);
+    }
   }
 
   bool RenderContext::initialize()
