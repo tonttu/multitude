@@ -618,7 +618,8 @@ namespace Luminous
   {
     MULTI_ONCE {
       adlAvailable = initADL();
-      checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
+      if(adlAvailable)
+        checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
     }
 
     if (!adlAvailable)
