@@ -46,23 +46,37 @@ namespace
     return written;
   }
 
-#ifdef RADIANT_WINDOWS
-  QString scanPorts(int timeoutMs)
+
+  bool checkForVM1(Radiant::SerialPort & port, int timeoutMs)
   {
     QByteArray buffer(2048, '\0');
+
+    if (port.write("?", 1) != 1)
+      return false;
+
+    // we don't want partial response, so we sleep
+    Radiant::Sleep::sleepMs(timeoutMs);
+
+    int bytes = port.read(buffer.data(), buffer.size(), true);
+
+    if (bytes > 0) {
+      buffer.resize(bytes);
+      if (buffer.contains("VM1") || buffer.contains("LVDS power"))
+        return true;
+    }
+
+    return false;
+  }
+
+#ifdef RADIANT_WINDOWS
+
+  QString scanPorts(int timeoutMs)
+  {
     foreach (const QString dev, Radiant::SerialPort::scan()) {
       Radiant::SerialPort port;
       if (port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, timeoutMs*1000)) {
-        if (port.write("?", 1) != 1)
-          continue;
-        // we don't want partial response, so we sleep
-        Radiant::Sleep::sleepMs(timeoutMs);
-        buffer.resize(2048);
-        int bytes = port.read(buffer.data(), buffer.size(), true);
-        if (bytes > 0) {
-          buffer.resize(bytes);
-          if (buffer.contains("VM1") || buffer.contains("LVDS power"))
-            return dev;
+        if(checkForVM1(port, timeoutMs)) {
+          return dev;
         }
       }
     }
@@ -226,9 +240,16 @@ namespace Luminous
     if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 30000)) {
       vm1Opened(false);
       return false;
+    } else {
+      // Port was successfully opened - actually check that there is a VM1 on the other end
+      bool isVM1 = checkForVM1(m_port, 1000);
+
+      if(!isVM1)
+        m_port.close();
+
+      vm1Opened(isVM1);
     }
 
-    vm1Opened(true);
     return true;
   }
 
