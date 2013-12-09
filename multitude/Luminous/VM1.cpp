@@ -248,9 +248,8 @@ namespace Luminous
         m_port.close();
 
       vm1Opened(isVM1);
+      return isVM1;
     }
-
-    return true;
   }
 
   void VM1::D::sendCommand(const QByteArray & ba)
