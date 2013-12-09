@@ -28,6 +28,9 @@
 #include <set>
 #include <map>
 
+#include <QRegion>
+#include <QVector>
+
 // Compare display modes
 bool operator==(const ADLMode & lhs, const ADLMode & rhs) {
   return (lhs.iXRes == rhs.iXRes && lhs.iYRes == rhs.iYRes);
@@ -58,6 +61,14 @@ bool operator<(const ADLDisplayID & a,
                const ADLDisplayID & b) {
   return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0;
 }
+
+struct rectcmp
+{
+  bool operator()(const Nimble::Recti & a, const Nimble::Recti & b)
+  {
+    return a.low() == b.low() ? a.high() < b.high() : a.low() < b.low();
+  }
+};
 
 Luminous::ScreenInfo::Rotation parseRotation(int rot)
 {
@@ -450,6 +461,62 @@ namespace {
   }
 
   #elif defined (RADIANT_WINDOWS)
+
+  // On some setups (at least HD 6??? card with 6 screens in landscape mode
+  // without bezels in one display group) causes normal SLS API to fail,
+  // so we are forced to guess individual screen locations when given the
+  // full display group size
+  void guessScreenInfo(Nimble::Vector2i displayGroupSize,
+                       Nimble::Vector2i offset,
+                       int adapterIndex, int displayIndex,
+                       Luminous::ScreenInfo tpl,
+                       const QList<Luminous::ScreenInfo> & results,
+                       QList<Luminous::ScreenInfo> & output)
+  {
+    int w, h, dw, dh, mw, mh, maw, mah, sw, sh;
+    if (!checkADL("ADL_Display_Size_Get", ADL_Display_Size_Get(
+                   adapterIndex, displayIndex,
+                   &w, &h, &dw, &dh, &mw, &mh, &maw, &mah, &sw, &sh)))
+      return;
+
+    if (displayGroupSize.x <= 0 || displayGroupSize.y <= 0 || w <= 0 || h <= 0)
+      return;
+
+    QList<Luminous::ScreenInfo> test = results;
+    test += output;
+
+    // Try to fit this screen inside this display group
+    // This is only needed when there are no bezels set
+    if ((displayGroupSize.x % w) == 0 && (displayGroupSize.y % h) == 0) {
+      Nimble::Vector2i location(0, 0);
+      while (true) {
+        bool found = false;
+        for (const Luminous::ScreenInfo & si: test) {
+          if (si.gpu() == tpl.gpu() && si.geometry().low() == offset + location) {
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          tpl.setGeometry(Nimble::Recti(offset + location, Nimble::Size(w, h)));
+          tpl.setConnection(QString("DFP-%1").arg(displayIndex));
+          output << tpl;
+          break;
+        }
+
+        location.x += w;
+        if (location.x >= displayGroupSize.x) {
+          location.x = 0;
+          location.y += h;
+        }
+
+        if (location.y >= displayGroupSize.y)
+          break;
+      }
+    }
+  }
+
   bool detectWindows(QList< Luminous::ScreenInfo> & results)
   {
     std::vector<AdapterInfo> adapterInfo;
@@ -460,7 +527,8 @@ namespace {
     Luminous::ScreenInfo screeninfo;
     screeninfo.setLogicalScreen(0); // Windows doesn't have a logical screen
 
-    int count = 1;
+    QList<Luminous::ScreenInfo> fallbackResults;
+
     for (int adapterIdx = 0; adapterIdx < adapterInfo.size(); ++adapterIdx) {
       int active;
       checkADL("ADL_Adapter_Active_Get",
@@ -524,10 +592,35 @@ namespace {
         if (!getDisplayTargetMode(adapterInfo[adapterIdx].iAdapterIndex,
                                   disp_id,
                                   targetMode) ||
-            targetMode.size()==0)
-          continue;
+            targetMode.size()==0) {
+          bool found = false;
+          for (ADLSLSOffset o: slsOffsets) {
+            if (o.iAdapterIndex != adapterInfo[adapterIdx].iAdapterIndex ||
+                o.displayID.iDisplayLogicalIndex != disp_id)
+              continue;
 
-        screeninfo.setNumId(count++);
+            screeninfo.setGeometry(Nimble::Recti(Nimble::Vector2i(o.iBezelOffsetX, o.iBezelOffsetY),
+                                                 Nimble::Size(o.iDisplayWidth, o.iDisplayHeight)));
+            screeninfo.setConnection(QString("DFP-%1").arg(disp_id));
+            // No way to reliable detect orientation here, keep it unchanged
+            found = true;
+          }
+          if (found) {
+            fallbackResults.push_back(screeninfo);
+          } else {
+            const int mapIndex = displayTargets[displayTargetIdx].iDisplayMapIndex;
+            for (int i = 0; i < displayMaps.size(); ++i) {
+              if (displayMaps[i].iDisplayMapIndex == mapIndex) {
+                guessScreenInfo(Nimble::Vector2i(displayMaps[i].displayMode.iXRes, displayMaps[i].displayMode.iYRes),
+                                Nimble::Vector2i(displayMaps[i].displayMode.iXPos, displayMaps[i].displayMode.iYPos),
+                                adapterInfo[adapterIdx].iAdapterIndex, disp_id,
+                                screeninfo, results, fallbackResults);
+              }
+            }
+          }
+          continue;
+        }
+
         // Search the 'normal' modes
         std::vector<ADLSLSMode>::const_iterator slsIter = std::find(slsModes.begin(),
                                                                     slsModes.end(),
@@ -605,6 +698,54 @@ namespace {
         }
       }
     }
+
+    std::map<Nimble::Recti, std::vector<Luminous::ScreenInfo>, rectcmp> screensByGeometry;
+
+    std::set<QString> reserved;
+    for (auto r: results) {
+      reserved.insert(QString("%1/%2").arg(r.displayGroup(), r.connection()));
+      screensByGeometry[r.geometry()].push_back(r);
+    }
+
+    QList<Luminous::ScreenInfo> ignoredResults;
+    for (auto r: fallbackResults) {
+      auto key = QString("%1/%2").arg(r.displayGroup(), r.connection());
+      if (reserved.count(key)) {
+        ignoredResults << r;
+        continue;
+      }
+
+      reserved.insert(key);
+      results.push_back(r);
+    }
+
+    for (auto p: screensByGeometry) {
+      // We have a duplicate screens. Most likely these are actually separate
+      // screens inside one display group, but the detection just failed.
+      // Let's see if alternative APIs provided us better guesses
+      if (p.second.size() > 1) {
+        QRegion region;
+        QList<Luminous::ScreenInfo> tmp;
+        for (auto r: ignoredResults) {
+          if (p.first.contains(r.geometry())) {
+            tmp << r;
+            region |= r.geometry().toQRect();
+          }
+        }
+        if (region.rectCount() == 1 && region.rects()[0] == p.first.toQRect()) {
+          for (auto r: p.second)
+            results.removeAll(r);
+          for (auto r: tmp)
+            ignoredResults.removeAll(r);
+          results += tmp;
+        }
+      }
+    }
+
+    int count = 0;
+    for (auto & r: results)
+      r.setNumId(++count);
+
     return true;
   }
   #endif // PLATFORM
