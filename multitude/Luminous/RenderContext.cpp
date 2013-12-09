@@ -80,7 +80,7 @@ namespace Luminous
       m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
 
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
@@ -1537,7 +1537,7 @@ namespace Luminous
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
       Luminous::FrameBufferGuard g(*this, first->frameBuffer());
-      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH_STENCIL);
     }
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
@@ -1602,14 +1602,15 @@ namespace Luminous
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
       Luminous::FrameBufferGuard bufferGuard(*this, filterCtx->frameBuffer());
-      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH_STENCIL);
     }
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
     // Push the original frame buffer
-    Luminous::FrameBufferGuard bufferGuard(*this, sourceFrameBuffer);
-    Luminous::ScissorGuard scissorGuard(*this, viewport);
-    filterCtx->doFilter(*this);
+    {
+      Luminous::ScissorGuard scissorGuard(*this, viewport);
+      filterCtx->doFilter(*this);
+    }
   }
 
   bool RenderContext::initialize()

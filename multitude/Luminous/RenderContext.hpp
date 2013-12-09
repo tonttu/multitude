@@ -742,7 +742,6 @@ namespace Luminous
                       FontUniformBlock & uniform, const Program & program,
                       const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign);
 
-    Luminous::RenderContext * m_resources;
     class Internal;
     Internal * m_data;
   };

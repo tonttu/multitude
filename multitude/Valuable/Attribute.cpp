@@ -50,6 +50,10 @@ namespace Valuable
       m_transit(transit),
       m_listenersId(0)
   {
+
+    if(host == this)
+      Radiant::fatal("Attribute::Attribute # host = this! # check your code");
+
     if(host) {
       host->addAttribute(name, this);
 #ifdef MULTI_DOCUMENTER

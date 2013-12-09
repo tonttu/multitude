@@ -9,6 +9,7 @@
  */
 
 #include "FontCache.hpp"
+#include "SimpleTextLayout.hpp"
 
 #include <Luminous/Texture.hpp>
 
@@ -566,6 +567,7 @@ namespace Luminous
       Radiant::Guard g(s_atlasMutex);
       s_atlas.clear();
     }
+    SimpleTextLayout::clearCache();
   }
 
   int FontCache::generation()

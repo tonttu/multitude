@@ -54,7 +54,6 @@ namespace Luminous
 
     if(copyToGraphics) {
       setGraphicsGeometry(x, y, w, h);
-      updateBBox();
     }
   }
 
@@ -352,8 +351,16 @@ namespace Luminous
       Radiant::BinaryData bd;
       m_screen->eventProcess("graphics-bounds-changed", bd);
     }
-
     m_areas.push_back(std::move(a));
+  }
+
+  void MultiHead::Window::removeArea(size_t i)
+  {
+    if(m_areas.size() <= i) return;
+
+    removeAttribute(m_areas[i].get());
+    m_areas.erase(m_areas.begin() + i);
+
   }
 
   Nimble::Vector2f MultiHead::Window::windowToGraphics(Nimble::Vector2f loc, bool & convOk) const
@@ -715,6 +722,47 @@ namespace Luminous
           dstAttribute->deserialize(element);
       }
     }
+    removeDuplicateAreas();
+  }
+
+  void MultiHead::adjustGraphicsToOrigin()
+  {
+    Nimble::Rect bb = graphicsBounds();
+    Nimble::Vector2f diff = bb.low();
+    for(size_t j = 0; j < windowCount(); ++j) {
+      for(size_t i = 0; i < window(j).areaCount(); ++i) {
+        Area& a = window(j).area(i);
+        a.setGraphicsLocation(a.graphicsLocation(false) - diff);
+      }
+    }
+  }
+
+  void MultiHead::removeDuplicateAreas()
+  {
+    for(size_t j = 0; j < windowCount(); ++j) {
+      Window& win = window(j);
+
+      size_t areas = win.areaCount();
+      for(size_t i = 0; i < areas; ++i) {
+        Area & a = win.area(i);
+        Nimble::Recti areaA(a.location(), a.size());
+
+        for(size_t k = 0; k < areas;) {
+          Area & b = win.area(k);
+          Nimble::Recti areaB(b.location(), b.size());
+
+          if(k != i && areaA.contains(areaB) && areaA.area() > areaB.area()) {
+            win.removeArea(k);
+            if(i > k) --i;
+            --areas;
+          }
+          else
+            ++k;
+        }
+      }
+
+    }
+
   }
 
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)

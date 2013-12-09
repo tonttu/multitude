@@ -30,6 +30,10 @@
 
 #include <QStringList>
 
+namespace {
+  static bool s_watchdogEnabled = true;
+}
+
 namespace Radiant {
 
   WatchDog::WatchDog()
@@ -81,6 +85,7 @@ namespace Radiant {
         Radiant::Sleep::sleepMs(100);
 
       QStringList errorItems;
+      if(isEnabled())
       {
         Radiant::Guard g(m_mutex);
         for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
@@ -92,9 +97,10 @@ namespace Radiant {
         }
       }
 
-      if(!errorItems.isEmpty() && m_continue) {
+      if (m_paused)
         continue;
 
+      if(!errorItems.isEmpty() && m_continue) {
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
               "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
               "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
@@ -158,6 +164,16 @@ namespace Radiant {
     m_continue = false;
     while(isRunning())
       waitEnd(100);
+  }
+
+  bool WatchDog::isEnabled()
+  {
+    return s_watchdogEnabled;
+  }
+
+  void WatchDog::setEnabled(bool enabled)
+  {
+    s_watchdogEnabled = enabled;
   }
 
   DEFINE_SINGLETON(WatchDog);

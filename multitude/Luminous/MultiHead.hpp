@@ -213,6 +213,13 @@ namespace Luminous {
         m_size = Nimble::Vector2i(w, h);
       }
 
+      /// Set the location and size of this window
+      void setGeometry(Nimble::Vector2i loc, Nimble::Size s)
+      {
+        m_location = loc;
+        m_size = s.toVector();
+      }
+
       /// Resize the window, and automatically one child area
       /** This method is used when the window contains only one child
           area, and automatially changes the size of the area to match
@@ -235,6 +242,10 @@ namespace Luminous {
 
       /// Adds an area to the window
       LUMINOUS_API void addArea(std::unique_ptr<Area> a);
+
+      /// Remove area from given index. Note that after this ordering
+      /// of the areas in greater indices will be changed
+      LUMINOUS_API void removeArea(size_t i);
 
       /// Location of the window in desktop coordinates
       const Vector2i & location() const { return m_location; }
@@ -377,6 +388,13 @@ namespace Luminous {
 
     /// Returns the total graphics size
     Rect graphicsBounds() const;
+
+    /// Moves graphics locations of areas so that their bounding
+    /// box is located in origin.
+    void adjustGraphicsToOrigin();
+
+    /// Remove areas that are included in larger areas
+    void removeDuplicateAreas();
 
     /// Returns the size of the total display in graphics pixels
     Nimble::SizeF size()

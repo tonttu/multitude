@@ -126,6 +126,8 @@ namespace Luminous
         return GL_DEPTH_COMPONENT;
       else if(attachment == GL_STENCIL_ATTACHMENT)
         return GL_STENCIL_INDEX;
+      else if (attachment == GL_DEPTH_STENCIL_ATTACHMENT)
+        return GL_DEPTH24_STENCIL8;
       else
         return GL_RGBA;
     }

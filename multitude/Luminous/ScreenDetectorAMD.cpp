@@ -16,6 +16,7 @@
 
 #if defined (RADIANT_LINUX)
 #  include "XRandR.hpp"
+#  include "Xinerama.hpp"
 #elif defined (RADIANT_OSX)
 #  error "Not supported on OSX"
 #endif
@@ -56,6 +57,17 @@ template <typename T> bool operator==(const T & lhs,
 bool operator<(const ADLDisplayID & a,
                const ADLDisplayID & b) {
   return memcmp(&a, &b, sizeof(ADLDisplayID)) < 0;
+}
+
+Luminous::ScreenInfo::Rotation parseRotation(int rot)
+{
+  if (rot == 90)
+    return Luminous::ScreenInfo::ROTATE_90;
+  if (rot == 180)
+    return Luminous::ScreenInfo::ROTATE_180;
+  if (rot == 270)
+    return Luminous::ScreenInfo::ROTATE_270;
+  return Luminous::ScreenInfo::ROTATE_0;
 }
 
 namespace {
@@ -322,6 +334,8 @@ namespace {
   #if defined (RADIANT_LINUX)
   bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
+    Luminous::X11Display display;
+
     std::vector<AdapterInfo> adapterInfo;
     getAdapterInformation(adapterInfo);
     if (adapterInfo.empty())
@@ -407,16 +421,29 @@ namespace {
                          "Name_Get: %d", err);
           continue;
         }
-        Nimble::Recti rect;
+        bool found = false;
         Luminous::XRandR xrandr;
-        if(xrandr.getGeometry(screen, name, rect)) {
-          screenInfo.setGeometry(rect);
-        } else {
-          continue;
+        for (auto & info: xrandr.screens(display, screen)) {
+          if (info.connection() == name) {
+            screenInfo.setGeometry(info.geometry());
+            screenInfo.setRotation(info.rotation());
+            found = true;
+            break;
+          }
         }
+        if (!found)
+          continue;
 
         ok = true;
         results.push_back(screenInfo);
+      }
+    }
+
+    if (!ok) {
+      Luminous::Xinerama xinerama;
+      for (auto & info: xinerama.screens(display, screen)) {
+        ok = true;
+        results.push_back(info);
       }
     }
     return ok;
@@ -525,6 +552,7 @@ namespace {
 
           screeninfo.setGeometry(Nimble::Recti(posX, posY, posX + width, posY + height));
           screeninfo.setConnection(QString("DFP-%1").arg(slsTargetIter->displayTarget.displayID.iDisplayLogicalIndex));
+          screeninfo.setRotation(parseRotation(targetMode[0].iOrientation));
           results.push_back(screeninfo);
         } else
         {
@@ -547,12 +575,13 @@ namespace {
             }
 
             // Set geometry
-            int left = slsOffsets[currentSLSOffset].iBezelOffsetX;
-            int top = slsOffsets[currentSLSOffset].iBezelOffsetY;
+            int left = targetMode[0].iXPos + slsOffsets[currentSLSOffset].iBezelOffsetX;
+            int top = targetMode[0].iYPos + slsOffsets[currentSLSOffset].iBezelOffsetY;
             int right = left + slsOffsets[currentSLSOffset].iDisplayWidth;
             int bottom = top + slsOffsets[currentSLSOffset].iDisplayHeight;
 
             screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setRotation(parseRotation(bezelIter->displayMode.iOrientation));
             screeninfo.setConnection(QString("DFP-%1").arg(slsOffsets[currentSLSOffset].displayID.iDisplayLogicalIndex));
             results.push_back(screeninfo);
           }
@@ -569,6 +598,7 @@ namespace {
             int bottom = top + (portrait ? targetMode[0].iXRes : targetMode[0].iYRes);
 
             screeninfo.setGeometry(Nimble::Recti(left, top, right, bottom));
+            screeninfo.setRotation(parseRotation(targetMode[0].iOrientation));
             screeninfo.setConnection(QString("DFP-%1").arg(targetMode[0].displayID.iDisplayLogicalIndex));
             results.push_back(screeninfo);
           }
@@ -588,13 +618,14 @@ namespace Luminous
   {
     MULTI_ONCE {
       adlAvailable = initADL();
+      if(adlAvailable)
+        checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
     }
 
     if (!adlAvailable)
       return false;
 
     Radiant::Guard g(detector_mutex);
-    checkADL("ADL_Main_Control_Create", ADL_Main_Control_Create(adlAlloc, 1));
 
 #if defined (RADIANT_LINUX)
     bool success = detectLinux(screen, results);
@@ -605,7 +636,8 @@ namespace Luminous
 #  error "ScreenDetectorAMD Not implemented on this platform"
 #endif
 
-    ADL_Main_Control_Destroy();
+    /// AMD drivers crash when we deinitialize this library (at least on fglrx-8.960)
+    //checkADL("ADL_Main_Control_Destroy", ADL_Main_Control_Destroy());
 
     return success;
   }

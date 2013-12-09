@@ -42,6 +42,7 @@ namespace Luminous
 
     virtual void doneCurrent() OVERRIDE;
 
+    virtual bool setIcon(const QString & filename) OVERRIDE;
     virtual unsigned gpuId() const OVERRIDE;
 
   private:

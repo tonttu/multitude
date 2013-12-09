@@ -31,6 +31,8 @@
 
 #include "GPUAssociation.hpp"
 
+#include <QIcon>
+
 namespace Luminous
 {
 
@@ -323,6 +325,7 @@ namespace Luminous
     if(window.frameless()) {
       flags |= Qt::FramelessWindowHint;
       flags |= Qt::X11BypassWindowManagerHint;
+      flags |= Qt::WindowStaysOnTopHint;
     }
 
     m_d->m_mainWindow = m_d->getHostWidget(window.screennumber(), flags);
@@ -490,6 +493,17 @@ namespace Luminous
   void QtWindow::doneCurrent()
   {
     m_d->m_glWidget->doneCurrent();
+  }
+
+  bool QtWindow::setIcon(const QString &filename)
+  {
+    QIcon icon(filename);
+
+    if(icon.isNull())
+      return false;
+
+    m_d->m_mainWindow->setWindowIcon(icon);
+    return true;
   }
 
   unsigned QtWindow::gpuId() const
