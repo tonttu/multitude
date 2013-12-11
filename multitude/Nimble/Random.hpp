@@ -68,12 +68,14 @@ namespace Nimble {
     /// Random numbers between 0 and x-1
     inline uint32_t rand0X(uint32_t x)
     {
+      assert(x != 0);
       return rand32() % x;
     }
 
     /// 64-bit random numbers between 0 and x-1
     inline uint64_t rand0X64(uint64_t x)
     {
+      assert(x != 0);
       uint64_t tmp1 = rand();
       uint64_t tmp2 = rand();
 
