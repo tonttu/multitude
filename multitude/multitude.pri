@@ -183,16 +183,18 @@ win32 {
     # Use multiprocessor compilation
     QMAKE_CXXFLAGS += -MP
 
-    exists("C:/Cornerstone-deps/libav/include") {
-      INCLUDEPATH += "C:/Cornerstone-deps/libav/include"
-      LIBS += -L"C:/Cornerstone-deps/libav/bin"
+	CORNERSTONE_DEPS_PATH=/Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+
+    exists($$CORNERSTONE_DEPS_PATH) {
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
+      LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
       enable-js {
-        INCLUDEPATH += "C:/Cornerstone-deps/node/include"
-        LIBS += -L"C:/Cornerstone-deps/node/bin"
-        QMAKE_LIBDIR += "C:/Cornerstone-deps/node/lib"
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/node/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin
+        QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/node/lib
       }
     } else {
-      error(Requires the Cornerstone dependency package to compile)
+      error(Requires the Cornerstone dependency package ($$CORNERSTONE_DEPS_PATH) to compile)
     }
 
     # These libs have an extra extension for debug builds
