@@ -27,6 +27,7 @@ namespace Radiant
   /// @cond
 
   /// This class is used by MultiTaction firmware to implement mount_rw
+  /// It is in a guard-pattern
   class RADIANT_API FileWriter : public Patterns::NotCopyable
   {
   public:
