@@ -183,7 +183,7 @@ win32 {
     # Use multiprocessor compilation
     QMAKE_CXXFLAGS += -MP
 
-	CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+    CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
 
     exists($$CORNERSTONE_DEPS_PATH) {
       INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include

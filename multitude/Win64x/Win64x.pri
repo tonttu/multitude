@@ -1,3 +1,7 @@
+# Construct path to dependency package
+CORNERSTONE_VERSION_STR = $$cat(../../VERSION)
+CORNERSTONE_DEPS_PATH=C:/Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+
 # Install Windows 3rd party dlls to bin
 win64_runtime_dlls.path = /bin
 win64_runtime_dlls.files = $$PWD/bin64/*
@@ -28,23 +32,23 @@ win64_sdk_project.files = $$PWD/Win64x.pri
 
 
 win64_libav_bins.path = /bin
-win64_libav_bins.files = C:/Cornerstone-deps/libav/bin/*dll
-win64_libav_bins.files += C:/Cornerstone-deps/libav/bin/*exe
+win64_libav_bins.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*dll
+win64_libav_bins.files += $$CORNERSTONE_DEPS_PATH/libav/bin/*exe
 
 win64_libav_bins2.path = /src/multitude/Win64x/bin64
 win64_libav_bins2.files = $${win64_libav_bins.files}
 
 win64_libav_libs1.path = /lib
-win64_libav_libs1.files = C:/Cornerstone-deps/libav/bin/*lib
+win64_libav_libs1.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*lib
 
 win64_libav_libs2.path = /src/multitude/Win64x/lib64
-win64_libav_libs2.files = C:/Cornerstone-deps/libav/bin/*lib
+win64_libav_libs2.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*lib
 
 win64_libav_headers1.path = /include
-win64_libav_headers1.files = C:/Cornerstone-deps/libav/include/*
+win64_libav_headers1.files = $$CORNERSTONE_DEPS_PATH/libav/include/*
 
 win64_libav_headers2.path = /src/multitude/Win64x/include
-win64_libav_headers2.files = C:/Cornerstone-deps/libav/include/*
+win64_libav_headers2.files = $$CORNERSTONE_DEPS_PATH/libav/include/*
 
 INSTALLS += win64_libav_bins
 INSTALLS += win64_libav_bins2
@@ -54,33 +58,33 @@ INSTALLS += win64_libav_headers1
 INSTALLS += win64_libav_headers2
 
 win64_ghostscript.path = /bin
-win64_ghostscript.files = C:/Cornerstone-deps/ghostscript/*
+win64_ghostscript.files = $$CORNERSTONE_DEPS_PATH/ghostscript/*
 
 INSTALLS += win64_ghostscript
 
 win64_node_dlls1.path = /bin
-win64_node_dlls1.files = C:/Cornerstone-deps/node/bin/node.exe
-win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/*.cmd
-win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/*.dll
-win64_node_dlls1.files += C:/Cornerstone-deps/node/bin/node_modules
+win64_node_dlls1.files = $$CORNERSTONE_DEPS_PATH/node/bin/node.exe
+win64_node_dlls1.files += $$CORNERSTONE_DEPS_PATH/node/bin/*.cmd
+win64_node_dlls1.files += $$CORNERSTONE_DEPS_PATH/node/bin/*.dll
+win64_node_dlls1.files += $$CORNERSTONE_DEPS_PATH/node/bin/node_modules
 
 win64_node_dlls2.path = /src/multitude/Win64x/bin64
-win64_node_dlls2.files = C:/Cornerstone-deps/node/bin/node.exe
-win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/*.cmd
-win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/*.dll
-win64_node_dlls2.files += C:/Cornerstone-deps/node/bin/node_modules
+win64_node_dlls2.files = $$CORNERSTONE_DEPS_PATH/node/bin/node.exe
+win64_node_dlls2.files += $$CORNERSTONE_DEPS_PATH/node/bin/*.cmd
+win64_node_dlls2.files += $$CORNERSTONE_DEPS_PATH/node/bin/*.dll
+win64_node_dlls2.files += $$CORNERSTONE_DEPS_PATH/node/bin/node_modules
 
 win64_node_libs1.path = /lib
-win64_node_libs1.files = C:/Cornerstone-deps/node/lib/*lib
+win64_node_libs1.files = $$CORNERSTONE_DEPS_PATH/node/lib/*lib
 
 win64_node_libs2.path = /src/multitude/Win64x/lib64
-win64_node_libs2.files = C:/Cornerstone-deps/node/lib/*lib
+win64_node_libs2.files = $$CORNERSTONE_DEPS_PATH/node/lib/*lib
 
 win64_node_headers1.path = /include
-win64_node_headers1.files = C:/Cornerstone-deps/node/include/*
+win64_node_headers1.files = $$CORNERSTONE_DEPS_PATH/node/include/*
 
 win64_node_headers2.path = /src/multitude/Win64x/include
-win64_node_headers2.files = C:/Cornerstone-deps/node/include/*
+win64_node_headers2.files = $$CORNERSTONE_DEPS_PATH/node/include/*
 
 INSTALLS += win64_node_dlls1
 INSTALLS += win64_node_dlls2
@@ -90,7 +94,7 @@ INSTALLS += win64_node_headers1
 INSTALLS += win64_node_headers2
 
 win64_argyll.path = /bin
-win64_argyll.files = C:/Cornerstone-deps/argyll/spotread.exe
+win64_argyll.files = $$CORNERSTONE_DEPS_PATH/argyll/spotread.exe
 
 INSTALLS += win64_argyll
 
