@@ -42,7 +42,12 @@ namespace Nimble {
     void setTarget(const T & target, N n)
     {
       m_target = target;
-      m_step = (T) ((target - m_current) / (double) n);
+      if(n != 0)
+        m_step = (T) ((target - m_current) / (double) n);
+      else {
+        m_step = 0;
+        m_current = target;
+      }
       m_left = n;
     }
 

@@ -69,6 +69,8 @@ namespace Resonant {
 
       NoteStatus m_status;
       int m_noteId;
+      float m_sampleLengthSeconds;
+      float m_playHeadPosition;
     };
 
     typedef std::shared_ptr<NoteInfoInternal> NoteInfoInternalPtr;
@@ -92,6 +94,11 @@ namespace Resonant {
 
       /// Returns true if the note is playing
       bool isPlaying() const { return status() == NOTE_PLAYING; }
+
+      /// Returns the length of the sample in seconds
+      float sampleLengthSeconds() const;
+      /// Returns the current playhead location in seconds
+      float playHeadSeconds() const;
 
     private:
 
@@ -214,6 +221,10 @@ namespace Resonant {
     void stopSample(int noteId);
 
     void stopSample(const NoteInfo & info) { stopSample(info.noteId()); }
+    void setSampleGain(const NoteInfo & info, float gain, float interpolationTimeSeconds = 0.02f);
+    void setSampleRelativePitch(const NoteInfo & info, float relativePitch, float interpolationTimeSeconds = 0.02f);
+    void setSamplePlayHead(const NoteInfo & info, float playHeadTimeSeconds, float interpolationTimeSeconds = 0.02f);
+    void setSampleLooping(const NoteInfo & info, bool looping);
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
@@ -237,6 +248,7 @@ namespace Resonant {
 
     void loadSamples();
     void stopSampleInternal(Radiant::BinaryData & data);
+    void controlSample(int voiceId, const QByteArray & parameter, Radiant::BinaryData & data);
 
     class SampleInfo
     {
@@ -281,12 +293,14 @@ namespace Resonant {
         : m_state(INACTIVE), m_gain(1), m_relPitch(1.0f),
           m_dpos(0), m_noteId(0), m_finishCounter(-1),
           m_sampleChannel(0), m_targetChannel(0),
-          m_sample(s), m_position(0)
+          m_sample(s), m_position(0), m_startPosition(0), m_startFadeInDurationSamples(0), m_startGain(1.0f),
+          m_autoRestartAfterStop(false)
       {}
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
       void init(ModuleSamplePlayer *, std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
+      void processMessage(ModuleSamplePlayer * host, const QByteArray &parameter, Radiant::BinaryData &data);
 
       bool isActive() { return m_state != INACTIVE; }
 
@@ -311,7 +325,7 @@ namespace Resonant {
       State m_state;
 
       Nimble::Rampd m_gain;
-      float m_relPitch;
+      Nimble::Rampd m_relPitch;
       double m_dpos;
       int m_noteId;
       int m_finishCounter;
@@ -321,6 +335,13 @@ namespace Resonant {
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;
+      // Start/restart position
+      unsigned m_startPosition;
+      unsigned m_startFadeInDurationSamples;
+      // Gain to be used when restarting the sample
+      float    m_startGain;
+      bool m_autoRestartAfterStop;
+
       Radiant::TimeStamp m_startTime;
       NoteInfoInternalPtr m_info;
     };
