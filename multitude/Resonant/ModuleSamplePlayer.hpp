@@ -108,6 +108,84 @@ namespace Resonant {
       NoteInfoInternalPtr m_info;
     };
 
+    /// Parameters for note-on (aka play-sample) events
+    /** This class is used to pass parameters to the sample player. */
+    class NoteParameters
+    {
+    public:
+      NoteParameters(const QString & filename = QString::null)
+        : m_fileName(filename)
+        , m_gain(1.0f)
+        , m_relativePitch(1.0f)
+        , m_targetChanggel(0)
+        , m_sampleChannel(0)
+        , m_loop(false)
+        , m_playbackTime(0)
+        , m_samplePlayhead(0)
+      {}
+
+      /// Returns the name of the file to be played
+      QString fileName() const;
+      /// Sets the name of the file to be played
+      void setFileName(const QString &fileName);
+
+      /// The gain coefficient for playback. Setting gain to one
+      /// plays the file back at the original volume.
+      float gain() const;
+      /// Sets the gain of this note
+      void setGain(float gain);
+
+      /** The pitch for the playback. If the pitch is set to one,
+      then the file will play back at the original speed. With pitch of 0.5
+      the file will play back one octave below original pitch, and last
+      twice as long as nominal file duration.
+      */
+      float relativePitch() const;
+      /// Sets the relative pitch of this note
+      void setRelativePitch(float relativePitch);
+
+      /** Select the channel where the sound is going to.
+          For example in 8-channel environment, this parameter can range from zero
+          to seven.
+      */
+      int targetChanggel() const;
+      /// Sets the target playback channel
+      void setTargetChanggel(int targetChanggel);
+
+      /// Returns the channel of the source file that should be used as the source.
+      int sampleChannel() const;
+      /// Sets the channel of the source file that should be used as the source.
+      void setSampleChannel(int sampleChannel);
+
+      /// Turns on looping if necessary. With looping the sample will play
+      /// back for-ever.
+      bool loop() const;
+      /// Set the looping mode
+      void setLoop(bool loop);
+
+      /// Returns the timestamp when to play the sample.
+      Radiant::TimeStamp playbackTime() const;
+      /// Sets the timestamp when to play the sample.
+      void setPlaybackTime(const Radiant::TimeStamp &playbackTime);
+
+      /// Returns the time of sample when the playback should begin
+      float samplePlayhead() const;
+      /// Sets the time when the playback should begin.
+      /// @param samplePlayhead The time in seconds
+      void setSamplePlayhead(float samplePlayhead);
+
+    private:
+
+      QString m_fileName;
+      float m_gain;
+      float m_relativePitch;
+      int   m_targetChanggel;
+      int   m_sampleChannel;
+      bool  m_loop;
+      Radiant::TimeStamp m_playbackTime;
+      float m_samplePlayhead;
+    };
+
     /// Audio sample player module
     ModuleSamplePlayer();
     /// Delete the sample player
@@ -180,6 +258,13 @@ namespace Resonant {
                         int sampleChannel,
                         bool loop = false,
                         Radiant::TimeStamp time = Radiant::TimeStamp(0));
+
+    /// Plays an audio sample
+    /** This function starts the playback of an audio sample.
+
+        @param parameters An object containing all the parameters for the playback of the sample
+      */
+    NoteInfo playSample(const NoteParameters & parameters);
 
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.

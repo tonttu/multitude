@@ -90,6 +90,90 @@ namespace Resonant {
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
+  QString ModuleSamplePlayer::NoteParameters::fileName() const
+  {
+    return m_fileName;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setFileName(const QString &fileName)
+  {
+    m_fileName = fileName;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::samplePlayhead() const
+  {
+    return m_samplePlayhead;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setSamplePlayhead(float samplePlayhead)
+  {
+    m_samplePlayhead = samplePlayhead;
+  }
+
+  Radiant::TimeStamp ModuleSamplePlayer::NoteParameters::playbackTime() const
+  {
+    return m_playbackTime;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setPlaybackTime(const Radiant::TimeStamp &playbackTime)
+  {
+    m_playbackTime = playbackTime;
+  }
+
+  bool ModuleSamplePlayer::NoteParameters::loop() const
+  {
+    return m_loop;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setLoop(bool loop)
+  {
+    m_loop = loop;
+  }
+
+  int ModuleSamplePlayer::NoteParameters::sampleChannel() const
+  {
+    return m_sampleChannel;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setSampleChannel(int sampleChannel)
+  {
+    m_sampleChannel = sampleChannel;
+  }
+
+  int ModuleSamplePlayer::NoteParameters::targetChanggel() const
+  {
+    return m_targetChanggel;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setTargetChanggel(int targetChanggel)
+  {
+    m_targetChanggel = targetChanggel;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::relativePitch() const
+  {
+    return m_relativePitch;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setRelativePitch(float relativePitch)
+  {
+    m_relativePitch = relativePitch;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::gain() const
+  {
+    return m_gain;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setGain(float gain)
+  {
+    m_gain = gain;
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+
   class ModuleSamplePlayer::Sample::Internal
   {
   public:
@@ -254,7 +338,7 @@ namespace Resonant {
         m_dpos = m_position;
         m_gain = 0.0f;
         m_gain.setTarget(m_startGain, m_startFadeInDurationSamples);
-        Radiant::info("ModuleSamplePlayer::SampleVoice::synthesize # Restart");
+        // Radiant::info("ModuleSamplePlayer::SampleVoice::synthesize # Restart");
       }
       else {
 
@@ -372,8 +456,6 @@ namespace Resonant {
       }
     }
 
-    m_dpos = 0.0;
-
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
     if(m_info) {
@@ -390,7 +472,7 @@ namespace Resonant {
   void ModuleSamplePlayer::SampleVoice::processMessage(ModuleSamplePlayer * host, const QByteArray &parameter,
                                                        Radiant::BinaryData &data)
   {
-    Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # %s", parameter.data());
+    // Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # %s", parameter.data());
 
     if(parameter == "control") {
 
@@ -435,10 +517,10 @@ namespace Resonant {
         else
           ok = data.readString(name, buflen);
       }
-
+      /*
       Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # Control %s %f %f %f %f %d",
                     ok ? "OK" : "FAIL", gain, relPitch, interpolationTimeSeconds, playheadSeconds, (int) loop);
-
+                    */
       if(!ok)
         return;
 
@@ -653,7 +735,7 @@ namespace Resonant {
 
     bool ok = true;
 
-    Radiant::info("ModuleSamplePlayer::eventProcess # %s", id.data());
+    // Radiant::info("ModuleSamplePlayer::eventProcess # %s", id.data());
 
     if(id == "playsample" || id == "playsample-at-location") {
       int voiceind = findFreeVoice();
@@ -860,12 +942,28 @@ namespace Resonant {
                                                               bool loop,
                                                               Radiant::TimeStamp time)
   {
+    NoteParameters parameters(QString::fromUtf8(filename));
+
+    parameters.setGain(gain);
+    parameters.setRelativePitch(relpitch);
+    parameters.setTargetChanggel(targetChannel);
+    parameters.setSampleChannel(samplechannel);
+    parameters.setLoop(loop);
+    parameters.setPlaybackTime(time);
+
+    return playSample(parameters);
+  }
+
+  ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSample(const ModuleSamplePlayer::NoteParameters &parameters)
+  {
+    QByteArray fileName8(parameters.fileName().toLocal8Bit());
+
     SF_INFO info;
-    SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, &info);
+    SNDFILE * sndf = AudioFileHandler::open(fileName8.data(), SFM_READ, &info);
 
     if(!sndf) {
       Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
-                     filename);
+                     fileName8.data());
       return NoteInfo();
     }
 
@@ -883,32 +981,35 @@ namespace Resonant {
     Radiant::BinaryData control;
     control.writeString(id() + "/playsample");
 
-    control.writeString(filename);
+    control.writeString(parameters.fileName());
 
     control.writeString("gain");
-    control.writeFloat32(gain);
+    control.writeFloat32(parameters.gain());
 
     // Relative pitch
     control.writeString("relpitch");
-    control.writeFloat32(relpitch * info.samplerate / 44100.0f);
+    control.writeFloat32(parameters.relativePitch() * info.samplerate / 44100.0f);
 
     // Infinite looping;
     control.writeString("loop");
-    control.writeInt32(loop);
+    control.writeInt32(parameters.loop());
 
     // Select a channel from the sample
     control.writeString("samplechannel");
-    control.writeInt32(samplechannel);
+    control.writeInt32(parameters.sampleChannel());
 
     // Select the target channel for the sample
     control.writeString("targetchannel");
-    control.writeInt32(targetChannel);
+    control.writeInt32(parameters.targetChanggel());
 
     control.writeString("time");
-    control.writeTimeStamp(time);
+    control.writeTimeStamp(parameters.playbackTime());
 
     control.writeString("note-id");
     control.writeInt64(noteId);
+
+    control.writeString("playhead-seconds");
+    control.writeFloat32(parameters.samplePlayhead());
 
     // Finish parameters
     control.writeString("end");
