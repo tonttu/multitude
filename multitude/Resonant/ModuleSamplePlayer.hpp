@@ -110,7 +110,7 @@ namespace Resonant {
 
     /// Parameters for note-on (aka play-sample) events
     /** This class is used to pass parameters to the sample player. */
-    class NoteParameters
+    class RESONANT_API NoteParameters
     {
     public:
       NoteParameters(const QString & filename = QString::null)
