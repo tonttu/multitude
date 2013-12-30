@@ -117,7 +117,7 @@ namespace Resonant {
         : m_fileName(filename)
         , m_gain(1.0f)
         , m_relativePitch(1.0f)
-        , m_targetChanggel(0)
+        , m_targetChannel(0)
         , m_sampleChannel(0)
         , m_loop(false)
         , m_playbackTime(0)
@@ -148,9 +148,9 @@ namespace Resonant {
           For example in 8-channel environment, this parameter can range from zero
           to seven.
       */
-      int targetChanggel() const;
+      int targetChannel() const;
       /// Sets the target playback channel
-      void setTargetChanggel(int targetChanggel);
+      void setTargetChannel(int targetChannel);
 
       /// Returns the channel of the source file that should be used as the source.
       int sampleChannel() const;
@@ -179,7 +179,7 @@ namespace Resonant {
       QString m_fileName;
       float m_gain;
       float m_relativePitch;
-      int   m_targetChanggel;
+      int   m_targetChannel;
       int   m_sampleChannel;
       bool  m_loop;
       Radiant::TimeStamp m_playbackTime;

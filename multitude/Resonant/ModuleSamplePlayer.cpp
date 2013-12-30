@@ -140,14 +140,14 @@ namespace Resonant {
     m_sampleChannel = sampleChannel;
   }
 
-  int ModuleSamplePlayer::NoteParameters::targetChanggel() const
+  int ModuleSamplePlayer::NoteParameters::targetChannel() const
   {
-    return m_targetChanggel;
+    return m_targetChannel;
   }
 
-  void ModuleSamplePlayer::NoteParameters::setTargetChanggel(int targetChanggel)
+  void ModuleSamplePlayer::NoteParameters::setTargetChannel(int targetChanggel)
   {
-    m_targetChanggel = targetChanggel;
+    m_targetChannel = targetChanggel;
   }
 
   float ModuleSamplePlayer::NoteParameters::relativePitch() const
@@ -946,7 +946,7 @@ namespace Resonant {
 
     parameters.setGain(gain);
     parameters.setRelativePitch(relpitch);
-    parameters.setTargetChanggel(targetChannel);
+    parameters.setTargetChannel(targetChannel);
     parameters.setSampleChannel(samplechannel);
     parameters.setLoop(loop);
     parameters.setPlaybackTime(time);
@@ -1000,7 +1000,7 @@ namespace Resonant {
 
     // Select the target channel for the sample
     control.writeString("targetchannel");
-    control.writeInt32(parameters.targetChanggel());
+    control.writeInt32(parameters.targetChannel());
 
     control.writeString("time");
     control.writeTimeStamp(parameters.playbackTime());
