@@ -365,7 +365,10 @@ namespace Resonant {
 
     if(m_info) {
       m_info->m_playHeadPosition = m_dpos / 44100.0;
-      // Radiant::info("Playhead at %d %f %lf", (int) m_dpos, m_info->m_playHeadPosition, m_dpos);
+      /*
+      Radiant::info("Playhead at %d %f %lf %d", (int) m_position, m_info->m_playHeadPosition, m_dpos,
+                    (int) m_sample ? m_sample->frames() : 0u);
+                    */
     }
 
     return more != 0;
