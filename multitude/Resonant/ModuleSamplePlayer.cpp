@@ -462,17 +462,19 @@ namespace Resonant {
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
     if(m_info) {
-      m_info->m_playHeadPosition = 0.0f;
+      m_info->m_playHeadPosition = m_dpos;
       if(sample)
         m_info->m_sampleLengthSeconds = sample->frames() / 44100.0f;
     }
+
+    m_startGain = m_gain;
 
     debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
                   "rp = %.3f, ss = %ld, ts = %ld", this, m_gain.value(), m_relPitch.value(),
                   m_sampleChannel, m_targetChannel);
   }
 
-  void ModuleSamplePlayer::SampleVoice::processMessage(ModuleSamplePlayer * host, const QByteArray &parameter,
+  void ModuleSamplePlayer::SampleVoice::processMessage(ModuleSamplePlayer * /*host*/, const QByteArray &parameter,
                                                        Radiant::BinaryData &data)
   {
     // Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # %s", parameter.data());
@@ -520,10 +522,12 @@ namespace Resonant {
         else
           ok = data.readString(name, buflen);
       }
+
       /*
       Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # Control %s %f %f %f %f %d",
-                    ok ? "OK" : "FAIL", gain, relPitch, interpolationTimeSeconds, playheadSeconds, (int) loop);
-                    */
+                    ok ? "OK" : "FAIL", gain, relPitch, interpolationTimeSeconds, playheadSeconds,
+                    (int) loop);
+      */
       if(!ok)
         return;
 
@@ -537,6 +541,7 @@ namespace Resonant {
 
       if(gain >= 0.0f) {
         m_gain.setTarget(gain, interpolationSamples);
+        m_startGain = gain;
       }
       if(relPitch >= 0.0f) {
         m_relPitch.setTarget(relPitch, interpolationSamples);
@@ -550,7 +555,6 @@ namespace Resonant {
         interpolationSamples /= 2;
 
         m_startPosition = playheadSeconds * sampleRate;
-        m_startGain = m_gain.target();
         m_autoRestartAfterStop = true;
         m_startFadeInDurationSamples = interpolationSamples;
 
