@@ -273,6 +273,8 @@ namespace Resonant {
     if((int) avail > n)
       avail = n;
 
+    // Radiant::info("avail = %u", avail);
+
     if(m_targetChannel >= host->channels()) {
       Radiant::error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
                      "%ld >= %ld", m_sample->name().toUtf8().data(),
@@ -289,7 +291,10 @@ namespace Resonant {
 
     int chans = m_sample->channels();
 
-    if(pitch == 1.0f && !pitch.left()) {
+    if(avail == 0) {
+      more = false;
+    }
+    else if(pitch == 1.0f && !pitch.left()) {
       const float * src = m_sample->buf(m_position) + m_sampleChannel;
 
       for(unsigned i = 0; i < avail; i++) {
