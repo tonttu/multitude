@@ -390,7 +390,7 @@ namespace Resonant {
       buf[0] = 0;
 
       if(!m_incopy.readString(buf, 512)) {
-        Radiant::error("DSPNetwork::checkNewControl # Could not read string");
+        Radiant::error("DSPNetwork::checkNewControl # Could not read string at %d", m_incopy.pos());
         continue;
       }
 
@@ -593,8 +593,8 @@ namespace Resonant {
   }
 
   void DSPNetwork::deliverControl(const QByteArray & moduleid,
-      const QByteArray & commandid,
-      Radiant::BinaryData & data)
+                                  const QByteArray & commandid,
+                                  Radiant::BinaryData & data)
   {
     debugResonant("DSPNetwork::deliverControl # %p %s %s %d", this, moduleid.data(), commandid.data(),
           data.total());

@@ -32,7 +32,7 @@ namespace Resonant {
     QStringList files = Radiant::ResourceLocator::instance()->locate(filename);
     SNDFILE * sndf = nullptr;
     if(!files.empty())
-      sndf = sf_open(files.front().toUtf8().data(), openMode, info);
+      sndf = sf_open(files.front().toLocal8Bit().data(), openMode, info);
     return sndf;
   }
 

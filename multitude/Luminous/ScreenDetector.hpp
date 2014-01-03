@@ -104,6 +104,14 @@ namespace Luminous
 
     float rotationRadians() const { return m_rotation / 1000.0f / 180.0f * Nimble::Math::PI; }
 
+    bool operator==(const ScreenInfo & s) const
+    {
+      return m_name == s.m_name && m_gpu == s.m_gpu && m_gpuName == s.m_gpuName &&
+          m_connection == s.m_connection && m_logicalScreen == s.m_logicalScreen &&
+          m_logicalScreen == s.m_logicalScreen && m_geometry == s.m_geometry &&
+          m_numid == s.m_numid && m_rotation == s.m_rotation;
+    }
+
   private:
     QString m_name;
     QString m_gpu;

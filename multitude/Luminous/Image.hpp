@@ -90,14 +90,14 @@ namespace Luminous
 
     /// Get a pointer to image data
     /// @return pointer to image data
-    unsigned char * bytes() { return & m_data[0]; }
+    unsigned char * bytes() { return m_data; }
     /// @copydoc bytes
-    const unsigned char * bytes() const { return & m_data[0]; }
+    const unsigned char * bytes() const { return m_data; }
 
     /// @copydoc bytes
-    unsigned char * data() { return & m_data[0]; }
+    unsigned char * data() { return bytes(); }
     /// @copydoc bytes
-    const unsigned char * data() const { return & m_data[0]; }
+    const unsigned char * data() const { return bytes(); }
 
     /// Get basic image information from a file. This function does not decode
     /// the actual image data, typically just the header.

@@ -69,6 +69,8 @@ namespace Resonant {
 
       NoteStatus m_status;
       int m_noteId;
+      float m_sampleLengthSeconds;
+      float m_playHeadPosition;
     };
 
     typedef std::shared_ptr<NoteInfoInternal> NoteInfoInternalPtr;
@@ -93,12 +95,95 @@ namespace Resonant {
       /// Returns true if the note is playing
       bool isPlaying() const { return status() == NOTE_PLAYING; }
 
+      /// Returns the length of the sample in seconds
+      float sampleLengthSeconds() const;
+      /// Returns the current playhead location in seconds
+      float playHeadSeconds() const;
+
     private:
 
       friend class ModuleSamplePlayer;
       void init(int id);
 
       NoteInfoInternalPtr m_info;
+    };
+
+    /// Parameters for note-on (aka play-sample) events
+    /** This class is used to pass parameters to the sample player. */
+    class RESONANT_API NoteParameters
+    {
+    public:
+      NoteParameters(const QString & filename = QString::null)
+        : m_fileName(filename)
+        , m_gain(1.0f)
+        , m_relativePitch(1.0f)
+        , m_targetChannel(0)
+        , m_sampleChannel(0)
+        , m_loop(false)
+        , m_playbackTime(0)
+        , m_samplePlayhead(0)
+      {}
+
+      /// Returns the name of the file to be played
+      QString fileName() const;
+      /// Sets the name of the file to be played
+      void setFileName(const QString &fileName);
+
+      /// The gain coefficient for playback. Setting gain to one
+      /// plays the file back at the original volume.
+      float gain() const;
+      /// Sets the gain of this note
+      void setGain(float gain);
+
+      /** The pitch for the playback. If the pitch is set to one,
+      then the file will play back at the original speed. With pitch of 0.5
+      the file will play back one octave below original pitch, and last
+      twice as long as nominal file duration.
+      */
+      float relativePitch() const;
+      /// Sets the relative pitch of this note
+      void setRelativePitch(float relativePitch);
+
+      /** Select the channel where the sound is going to.
+          For example in 8-channel environment, this parameter can range from zero
+          to seven.
+      */
+      int targetChannel() const;
+      /// Sets the target playback channel
+      void setTargetChannel(int targetChannel);
+
+      /// Returns the channel of the source file that should be used as the source.
+      int sampleChannel() const;
+      /// Sets the channel of the source file that should be used as the source.
+      void setSampleChannel(int sampleChannel);
+
+      /// Turns on looping if necessary. With looping the sample will play
+      /// back for-ever.
+      bool loop() const;
+      /// Set the looping mode
+      void setLoop(bool loop);
+
+      /// Returns the timestamp when to play the sample.
+      Radiant::TimeStamp playbackTime() const;
+      /// Sets the timestamp when to play the sample.
+      void setPlaybackTime(const Radiant::TimeStamp &playbackTime);
+
+      /// Returns the time of sample when the playback should begin
+      float samplePlayhead() const;
+      /// Sets the time when the playback should begin.
+      /// @param samplePlayhead The time in seconds
+      void setSamplePlayhead(float samplePlayhead);
+
+    private:
+
+      QString m_fileName;
+      float m_gain;
+      float m_relativePitch;
+      int   m_targetChannel;
+      int   m_sampleChannel;
+      bool  m_loop;
+      Radiant::TimeStamp m_playbackTime;
+      float m_samplePlayhead;
     };
 
     /// Audio sample player module
@@ -177,6 +262,13 @@ namespace Resonant {
     /// Plays an audio sample
     /** This function starts the playback of an audio sample.
 
+        @param parameters An object containing all the parameters for the playback of the sample
+      */
+    NoteInfo playSample(const NoteParameters & parameters);
+
+    /// Plays an audio sample
+    /** This function starts the playback of an audio sample.
+
         @param filename The name of the audio sample file.
 
         @param gain The gain coefficient for playback. Setting gain to one
@@ -214,6 +306,10 @@ namespace Resonant {
     void stopSample(int noteId);
 
     void stopSample(const NoteInfo & info) { stopSample(info.noteId()); }
+    void setSampleGain(const NoteInfo & info, float gain, float interpolationTimeSeconds = 0.02f);
+    void setSampleRelativePitch(const NoteInfo & info, float relativePitch, float interpolationTimeSeconds = 0.02f);
+    void setSamplePlayHead(const NoteInfo & info, float playHeadTimeSeconds, float interpolationTimeSeconds = 0.02f);
+    void setSampleLooping(const NoteInfo & info, bool looping);
 
     /** Sets the master gain */
     void setMasterGain(float gain) { m_masterGain = gain; }
@@ -237,6 +333,7 @@ namespace Resonant {
 
     void loadSamples();
     void stopSampleInternal(Radiant::BinaryData & data);
+    void controlSample(int voiceId, const QByteArray & parameter, Radiant::BinaryData & data);
 
     class SampleInfo
     {
@@ -281,12 +378,14 @@ namespace Resonant {
         : m_state(INACTIVE), m_gain(1), m_relPitch(1.0f),
           m_dpos(0), m_noteId(0), m_finishCounter(-1),
           m_sampleChannel(0), m_targetChannel(0),
-          m_sample(s), m_position(0)
+          m_sample(s), m_position(0), m_startPosition(0), m_startFadeInDurationSamples(0), m_startGain(1.0f),
+          m_autoRestartAfterStop(false)
       {}
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
 
       void init(ModuleSamplePlayer *, std::shared_ptr<Sample> sample, Radiant::BinaryData & data);
+      void processMessage(ModuleSamplePlayer * host, const QByteArray &parameter, Radiant::BinaryData &data);
 
       bool isActive() { return m_state != INACTIVE; }
 
@@ -311,7 +410,7 @@ namespace Resonant {
       State m_state;
 
       Nimble::Rampd m_gain;
-      float m_relPitch;
+      Nimble::Rampd m_relPitch;
       double m_dpos;
       int m_noteId;
       int m_finishCounter;
@@ -321,6 +420,13 @@ namespace Resonant {
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;
+      // Start/restart position
+      unsigned m_startPosition;
+      unsigned m_startFadeInDurationSamples;
+      // Gain to be used when restarting the sample
+      float    m_startGain;
+      bool m_autoRestartAfterStop;
+
       Radiant::TimeStamp m_startTime;
       NoteInfoInternalPtr m_info;
     };
