@@ -15,6 +15,10 @@
 
 #include <sys/types.h>
 
+#ifdef RADIANT_LINUX
+#include <sys/ioctl.h>
+#endif
+
 namespace Radiant
 {
 
@@ -213,4 +217,21 @@ namespace Radiant
     }
     return true;
   }
+
+#ifdef RADIANT_LINUX
+  TimeStamp UDPSocket::timestamp() const
+  {
+    if (m_d->m_fd < 0)
+      return TimeStamp();
+
+    struct timeval tv;
+    if (ioctl(m_d->m_fd, SIOCGSTAMP, &tv) == -1)
+      return TimeStamp();
+
+    int64_t tmp = tv.tv_sec;
+    tmp <<= 24;
+    tmp |= (int64_t) (tv.tv_usec * (TimeStamp::FRACTIONS_PER_SECOND * 0.000001));
+    return TimeStamp(tmp);
+  }
+#endif
 }
