@@ -86,18 +86,28 @@ win64_node_headers1.files = $$CORNERSTONE_DEPS_PATH/node/include/*
 win64_node_headers2.path = /src/multitude/Win64x/include
 win64_node_headers2.files = $$CORNERSTONE_DEPS_PATH/node/include/*
 
+win64_argyll.path = /bin
+win64_argyll.files = $$CORNERSTONE_DEPS_PATH/argyll/spotread.exe
+
+win64_ruby.path = /tools
+win64_ruby.files = $$CORNERSTONE_DEPS_PATH/ruby
+
+win64_clang_headers.path = /include/libcxx
+win64_clang_headers.files = $$CORNERSTONE_DEPS_PATH/libcxx/include/*
+
+win64_clangxml.path = /bin
+win64_clangxml.files = $$CORNERSTONE_DEPS_PATH/clangxml/ClangXML.exe
+
 INSTALLS += win64_node_dlls1
 INSTALLS += win64_node_dlls2
 INSTALLS += win64_node_libs1
 INSTALLS += win64_node_libs2
 INSTALLS += win64_node_headers1
 INSTALLS += win64_node_headers2
-
-win64_argyll.path = /bin
-win64_argyll.files = $$CORNERSTONE_DEPS_PATH/argyll/spotread.exe
-
+INSTALLS += win64_ruby
+INSTALLS += win64_clang_headers
+INSTALLS += win64_clangxml
 INSTALLS += win64_argyll
-
 INSTALLS += win64_runtime_dlls
 INSTALLS += win64_sdk_libs1
 INSTALLS += win64_sdk_libs2

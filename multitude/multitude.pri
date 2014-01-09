@@ -183,6 +183,7 @@ win32 {
     # Use multiprocessor compilation
     QMAKE_CXXFLAGS += -MP
 
+    # For official builds by MultiTouch Ltd.
     CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
 
     exists($$CORNERSTONE_DEPS_PATH) {
@@ -194,7 +195,16 @@ win32 {
         QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/node/lib
       }
     } else {
-      error(Requires the Cornerstone dependency package ($$CORNERSTONE_DEPS_PATH) to compile)
+      # Builds from distributed source code
+      CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_VERSION_STR}
+
+      exists($$CORNERSTONE_DEPS_PATH) {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/bin
+        QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/lib
+      } else {
+        error(No dependency package found. Build requires the Cornerstone SDK package ($$CORNERSTONE_DEPS_PATH) to proceed.)
+      }
     }
 
     # These libs have an extra extension for debug builds
