@@ -58,6 +58,7 @@ namespace Radiant {
     /// Checks for pending connections and optionally blocks for the given timeout.
     /// @param waitMicroSeconds micro seconds to block
     /// @return true if there are pending connections
+    /// @todo change the units to milliseconds in 2.1
     bool isPendingConnection(unsigned int waitMicroSeconds = 0);
 
     /// Accepts new connections. Blocks until a connection is received or the socket is closed.
