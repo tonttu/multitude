@@ -117,7 +117,8 @@ namespace Radiant
     memset( & pfd, 0, sizeof(pfd));
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
-    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
+    int millis = (waitMicroSeconds + 999) / 1000;
+    int status = SocketWrapper::poll(&pfd, 1, millis);
     if(status == -1) {
       Radiant::error("TCPServerSocket::isPendingConnection %s", SocketWrapper::strerror(SocketWrapper::err()));
     }

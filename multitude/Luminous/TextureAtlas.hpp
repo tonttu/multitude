@@ -87,7 +87,7 @@ namespace Luminous
   /// allocates fixed-size large textures to use for storing smaller textures. If
   /// more space is required to fit all contents, new textures are allocated.
   template <typename Item>
-  class TextureAtlasGroup : public Valuable::Node
+  class TextureAtlasGroup
   {
   public:
     /// Construct a new texture atlas group with the given pixel format
@@ -125,7 +125,6 @@ namespace Luminous
   TextureAtlasGroup<Item>::TextureAtlasGroup(const Luminous::PixelFormat & pixelFormat)
     : m_pixelFormat(pixelFormat)
   {
-    eventAddOut("changed");
   }
 
   template <typename Item>
@@ -150,7 +149,6 @@ namespace Luminous
       if (i == s) {
         int size = std::min(maxSize, baseSize << i);
         m_atlases.emplace_back(new TextureAtlas(Nimble::Size(size, size), m_pixelFormat));
-        eventSend("changed");
       }
       TextureAtlas & atlas = *m_atlases[i];
       TextureAtlas::NodePtr node = atlas.insert(size);
