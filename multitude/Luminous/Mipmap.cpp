@@ -227,7 +227,6 @@ namespace Luminous
 
     const QString m_filenameAbs;
     Nimble::Size m_nativeSize;
-    Nimble::Size m_level1Size;
     int m_maxLevel;
 
     QDateTime m_fileModified;
@@ -389,18 +388,9 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      Nimble::Size ss = imsrc.size();
-      Nimble::Size is = mipmap.mipmapSize(level);
+      const Nimble::Size is = mipmap.mipmapSize(level);
 
-      if (is * 2 == ss) {
-        if (!imageTex.image->quarterSize(imsrc)) {
-          Radiant::error("LoadImageTask::recursiveLoad # failed to resize image");
-          unlock(mipmap, level - 1);
-          return false;
-        }
-      } else {
-        imageTex.image->minify(imsrc, is.width(), is.height());
-      }
+      imageTex.image->minify(imsrc, is.width(), is.height());
       unlock(mipmap, level - 1);
     }
 
@@ -505,7 +495,6 @@ namespace Luminous
     }
 
     mipmap.m_nativeSize.make(mipmap.m_sourceInfo.width, mipmap.m_sourceInfo.height);
-    mipmap.m_level1Size = mipmap.m_nativeSize / 2;
     mipmap.m_maxLevel = 0;
     for(int s = mipmap.m_nativeSize.maximum(); s > 4; s >>= 1)
       ++mipmap.m_maxLevel;
@@ -547,19 +536,9 @@ namespace Luminous
     else
 #endif // LUMINOUS_OPENGLES
     if(mipmap.m_sourceInfo.pf.compression() == Luminous::PixelFormat::COMPRESSION_NONE) {
-      // Make sure that we can make "s_resizes" amount of resizes with quarterSize
-      // after first resize
-      const int mask = (1 << s_resizes) - 1;
-      auto w = mipmap.m_level1Size.width(), h = mipmap.m_level1Size.height();
-      mipmap.m_level1Size.setWidth(w + (((~(w & mask) & mask) + 1) & mask));
-      mipmap.m_level1Size.setHeight(h + (((~(h & mask) & mask) + 1) & mask));
 
-      // m_maxLevel, m_firstLevelSize and m_nativeSize have to be set before running level()
+      // m_maxLevel and m_nativeSize have to be set before running level()
       mipmap.m_maxLevel = mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage));
-
-/*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage)); ++i)
-        m_mipmap.m_shouldSave.insert(i);*/
-
     }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
@@ -651,7 +630,6 @@ namespace Luminous
     : m_mipmap(mipmap)
     , m_filenameAbs(filenameAbs)
     , m_nativeSize(0, 0)
-    , m_level1Size(0, 0)
     , m_maxLevel(0)
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
@@ -828,41 +806,30 @@ namespace Luminous
   {
     const float ask = pixelSize.maximum();
 
-    // Dimension of the first mipmap level (quarter-size from original)
-    const float first = m_d->m_level1Size.maximum();
+    // We could try to calculate correct blending and level parameter with
+    // log(ask/size) / log(0.5), but that doesn't take into account the
+    // rounding errors we get by >> 1
 
-    // The size of mipmap level 0 might be anything between (level1, level1*2)
-    // need to handle that as a special case
-    if(ask >= first) {
-      const float native = m_d->m_nativeSize.maximum();
-      if(trilinearBlending)
-        *trilinearBlending = std::max(0.0f, 1.0f - (ask - first) / (native - first));
+    int size = m_d->m_nativeSize.maximum();
+    if (ask >= size) {
+      if (trilinearBlending)
+        *trilinearBlending = 0;
       return 0;
     }
 
-    // if the size is really small, the calculation later does funny things
-    if(ask <= (int(first) >> m_d->m_maxLevel)) {
-      if(trilinearBlending)
-        *trilinearBlending = 0;
-      return m_d->m_maxLevel;
+    for (int level = 1; level <= m_d->m_maxLevel; ++level) {
+      int newsize = size >> 1;
+      if (ask > newsize) {
+        if (trilinearBlending)
+          *trilinearBlending = std::max(0.f, 1.0f-(ask-newsize)/(size-newsize));
+        return level - 1;
+      }
+      size = newsize;
     }
 
-    float blending = log(ask / first) / log(0.5);
-    int bestlevel = blending;
-    blending -= bestlevel;
-    bestlevel++;
-
-    if(bestlevel > m_d->m_maxLevel) {
-      bestlevel = m_d->m_maxLevel;
-      if(trilinearBlending)
-        *trilinearBlending = 0.0f;
-    } else if(trilinearBlending) {
-      *trilinearBlending = blending;
-    }
-
-    assert(bestlevel >= 0 && bestlevel <= m_d->m_maxLevel);
-
-    return bestlevel;
+    if (trilinearBlending)
+      *trilinearBlending = 0;
+    return m_d->m_maxLevel;
   }
 
   const Nimble::Size & Mipmap::nativeSize() const
@@ -954,20 +921,11 @@ namespace Luminous
   Nimble::Size Mipmap::mipmapSize(unsigned int level)
   {
     if(level == 0) return m_d->m_nativeSize;
-    if(level <= s_resizes+1) {
-      return Nimble::Size(m_d->m_level1Size.width() >> (level-1),
-                          m_d->m_level1Size.height() >> (level-1));
-    } else {
-      Nimble::Size v(m_d->m_level1Size.width() >> s_resizes,
-                     m_d->m_level1Size.height() >> s_resizes);
-      level -= s_resizes+1;
-      while(level-- > 0) {
-        v = v / 2;
-        if (v.width() == 0 || v.height() == 0)
-          return Nimble::Size(0, 0);
-      }
-      return v;
-    }
+    Nimble::Size size(m_d->m_nativeSize.width() >> level,
+                      m_d->m_nativeSize.height() >> level);
+    if (size.width() == 0 || size.height() == 0)
+      return Nimble::Size(0, 0);
+    return size;
   }
 
   const QString & Mipmap::filename() const
