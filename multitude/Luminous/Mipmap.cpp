@@ -33,13 +33,6 @@ namespace
   MipmapStore s_mipmapStore;
   Radiant::Mutex s_mipmapStoreMutex;
 
-  // after first resize modify the dimensions so that we can resize
-  // 5 times with quarterSize
-  const unsigned int s_resizes = 5;
-  // default save sizes
-  const unsigned int s_defaultSaveSize1 = 64;
-  const unsigned int s_defaultSaveSize2 = 512;
-  const unsigned int s_defaultSaveSize3 = 2048;
   const unsigned int s_smallestImage = 32;
   const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
@@ -237,9 +230,6 @@ namespace Luminous
     Nimble::Size m_level1Size;
     int m_maxLevel;
 
-    // what levels should be saved to file
-    std::set<int> m_shouldSave;
-
     QDateTime m_fileModified;
 
     QString m_compressedMipmapFile;
@@ -361,29 +351,25 @@ namespace Luminous
       }
     }
 
-    // Could the mipmap be already saved on disk?
-    if (mipmap.m_d->m_shouldSave.find(level) != mipmap.m_d->m_shouldSave.end()) {
+    // Try loading a pre-generated smaller-scale mipmap
+    const QString filename = Mipmap::cacheFileName(m_filename, level);
 
-      // Try loading a pre-generated smaller-scale mipmap
-      const QString filename = Mipmap::cacheFileName(m_filename, level);
+    const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
+    if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
+        Radiant::FileUtils::lastModified(filename) > origTs) {
 
-      const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
-      if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
-          Radiant::FileUtils::lastModified(filename) > origTs) {
+      if (!imageTex.image)
+        imageTex.image.reset(new Image());
 
-        if (!imageTex.image)
-          imageTex.image.reset(new Image());
-
-        if (!imageTex.image->read(filename.toUtf8().data())) {
-          Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
-        } else if (mipmap.mipmapSize(level) != imageTex.image->size()) {
-          // unexpected size (corrupted or just old image)
-          Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
-                filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
-                         mipmap.mipmapSize(level).width(), mipmap.mipmapSize(level).height());
-        } else {
-          return true;
-        }
+      if (!imageTex.image->read(filename.toUtf8().data())) {
+        Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
+      } else if (mipmap.mipmapSize(level) != imageTex.image->size()) {
+        // unexpected size (corrupted or just old image)
+        Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
+              filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
+                       mipmap.mipmapSize(level).width(), mipmap.mipmapSize(level).height());
+      } else {
+        return true;
       }
     }
 
@@ -418,11 +404,8 @@ namespace Luminous
       unlock(mipmap, level - 1);
     }
 
-    if (mipmap.m_d->m_shouldSave.find(level) != mipmap.m_d->m_shouldSave.end()) {
-      const QString filename = Mipmap::cacheFileName(m_filename, level);
-      QDir().mkpath(Radiant::FileUtils::path(filename));
-      imageTex.image->write(filename.toUtf8().data());
-    }
+    QDir().mkpath(Radiant::FileUtils::path(filename));
+    imageTex.image->write(filename);
 
     return true;
   }
@@ -577,12 +560,6 @@ namespace Luminous
 /*      for (int i = 1; i <= m_mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage)); ++i)
         m_mipmap.m_shouldSave.insert(i);*/
 
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize1, s_defaultSaveSize1)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize2, s_defaultSaveSize2)));
-      mipmap.m_shouldSave.insert(mipmap.m_mipmap.level(Nimble::SizeF(s_defaultSaveSize3, s_defaultSaveSize3)));
-      // Don't save the original image as mipmap
-      mipmap.m_shouldSave.erase(0);
     }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
