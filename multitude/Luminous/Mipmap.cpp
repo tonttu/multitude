@@ -226,6 +226,9 @@ namespace Luminous
     D(Mipmap & mipmap, const QString & filenameAbs);
     ~D();
 
+    MipmapLevel * find(unsigned int level, unsigned int * returnedLevel,
+                       int priorityChange);
+
   public:
     Mipmap & m_mipmap;
 
@@ -698,29 +701,17 @@ namespace Luminous
       Radiant::BGThread::instance()->removeTask(m_mipmapGenerator);
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
-  Mipmap::Mipmap(const QString & filenameAbs)
-    : m_d(new D(*this, filenameAbs))
-  {}
-
-  Mipmap::~Mipmap()
-  {
-    delete m_d;
-  }
-
-  Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
+  MipmapLevel * Mipmap::D::find(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
     // If a mipmap is invalid, it means that there is no way ever to read this file
-    if (!isValid())
+    if (!m_mipmap.isValid())
       return nullptr;
 
     // If we haven't pinged the image yet, and it seems that this is (un)important image,
     // reschedule the ping task with updated priority
-    if (!isHeaderReady()) {
+    if (!m_mipmap.isHeaderReady()) {
       if (priorityChange != 0) {
-        auto ping = m_d->m_ping;
+        auto ping = m_ping;
 
         const int newPriority = s_defaultPingPriority + priorityChange;
         if (ping && newPriority != ping->priority())
@@ -729,12 +720,12 @@ namespace Luminous
       return nullptr;
     }
 
-    const int req = std::min<int>(requestedLevel, m_d->m_maxLevel);
+    const int req = std::min<int>(requestedLevel, m_maxLevel);
 
     // If the image isn't yet loaded, lets check if we could reschedule mipmap
     // generator task or the correct Load(Compressed)ImageTask.
-    if (!isReady()) {
-      auto gen = m_d->m_mipmapGenerator;
+    if (!m_mipmap.isReady()) {
+      auto gen = m_mipmapGenerator;
       if (gen) {
         const int newGenPriority = MipMapGenerator::defaultPriority() + priorityChange;
         if (newGenPriority != gen->priority())
@@ -745,14 +736,14 @@ namespace Luminous
     }
 
     int time = frameTime();
-    const int newLoadPriority = m_d->m_loadingPriority + priorityChange;
+    const int newLoadPriority = m_loadingPriority + priorityChange;
 
-    for(int level = req, diff = -1; level <= m_d->m_maxLevel; level += diff) {
+    for(int level = req, diff = -1; level <= m_maxLevel; level += diff) {
       if(level < 0) {
         level = req;
         diff = 1;
       } else {
-        MipmapLevel & imageTex = m_d->m_levels[level];
+        MipmapLevel & imageTex = m_levels[level];
 
         int old = imageTex.lastUsed;
 
@@ -761,7 +752,7 @@ namespace Luminous
           if(now == old) {
             if(returnedLevel)
               *returnedLevel = level;
-            return &imageTex.texture;
+            return &imageTex;
           }
 
           // Reschedule loader tasks
@@ -785,18 +776,18 @@ namespace Luminous
           if(imageTex.lastUsed.testAndSetOrdered(old, now)) {
             if(now == Loading) {
               Radiant::TaskPtr task;
-              if(m_d->m_useCompressedMipmaps) {
-                task = std::make_shared<LoadCompressedImageTask>(shared_from_this(), imageTex,
-                                                                 m_d->m_loadingPriority + priorityChange,
-                                                                 m_d->m_compressedMipmapFile, level);
-              } else if(m_d->m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
-                task = std::make_shared<LoadCompressedImageTask>(shared_from_this(), imageTex,
-                                                                 m_d->m_loadingPriority + priorityChange,
-                                                                 m_d->m_filenameAbs, level);
+              if(m_useCompressedMipmaps) {
+                task = std::make_shared<LoadCompressedImageTask>(m_mipmap.shared_from_this(), imageTex,
+                                                                 m_loadingPriority + priorityChange,
+                                                                 m_compressedMipmapFile, level);
+              } else if(m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
+                task = std::make_shared<LoadCompressedImageTask>(m_mipmap.shared_from_this(), imageTex,
+                                                                 m_loadingPriority + priorityChange,
+                                                                 m_filenameAbs, level);
               } else {
-                task = std::make_shared<LoadImageTask>(shared_from_this(),
-                                                       m_d->m_loadingPriority + priorityChange,
-                                                       m_d->m_filenameAbs, level);
+                task = std::make_shared<LoadImageTask>(m_mipmap.shared_from_this(),
+                                                       m_loadingPriority + priorityChange,
+                                                       m_filenameAbs, level);
               }
               Radiant::BGThread::instance()->addTask(task);
               imageTex.loadingPriority = task->priority();
@@ -805,7 +796,7 @@ namespace Luminous
             }
             if(returnedLevel)
               *returnedLevel = level;
-            return &imageTex.texture;
+            return &imageTex;
           } else {
             old = imageTex.lastUsed;
           }
@@ -814,6 +805,36 @@ namespace Luminous
     }
 
     return nullptr;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  Mipmap::Mipmap(const QString & filenameAbs)
+    : m_d(new D(*this, filenameAbs))
+  {}
+
+  Mipmap::~Mipmap()
+  {
+    delete m_d;
+  }
+
+  Texture * Mipmap::texture(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
+  {
+    MipmapLevel * level = m_d->find(requestedLevel, returnedLevel, priorityChange);
+    return level ? &level->texture : nullptr;
+  }
+
+  Image * Mipmap::image(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
+  {
+    MipmapLevel * level = m_d->find(requestedLevel, returnedLevel, priorityChange);
+    return level ? level->image.get() : nullptr;
+  }
+
+  CompressedImage * Mipmap::compressedImage(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
+  {
+    MipmapLevel * level = m_d->find(requestedLevel, returnedLevel, priorityChange);
+    return level ? level->cimage.get() : nullptr;
   }
 
   unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize,
