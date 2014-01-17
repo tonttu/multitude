@@ -95,6 +95,13 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
 
+      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.vs", Shader::Vertex);
+      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.fs", Shader::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_trilinearTexShader.setVertexDescription(desc);
+
       m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", Shader::Vertex);
       m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
@@ -231,6 +238,7 @@ namespace Luminous
 
     Program m_basicShader;
     Program m_texShader;
+    Program m_trilinearTexShader;
     Program m_fontShader;
 
     Luminous::RenderDriver & m_driver;
@@ -1333,6 +1341,11 @@ namespace Luminous
   const Program & RenderContext::texShader() const
   {
     return m_data->m_texShader;
+  }
+
+  const Program & RenderContext::trilinearTexShader() const
+  {
+    return m_data->m_trilinearTexShader;
   }
 
   float RenderContext::approximateScaling() const

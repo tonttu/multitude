@@ -666,6 +666,13 @@ namespace Luminous
     /// @return Shader program used for texturing in Luminous.
     const Program & texShader() const;
 
+    /// Returns the shader used for trilinear texturing in Luminous. Similar to
+    /// texShader, but needs two textures "tex[0]" and "tex[1]" and works only
+    /// with TrilinearFilteringUniformBlock. This is mostly used internally by
+    /// ImageWidget and Widget background image renderer
+    /// @return Shader program used for trilinear filtering
+    const Program & trilinearTexShader() const;
+
     /// Get the approximate scaling factor applied by the transform.
     /// @return approximate scaling applied
     float approximateScaling() const;
