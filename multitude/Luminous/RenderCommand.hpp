@@ -85,6 +85,14 @@ namespace Luminous
     float depth;
   };
 
+  /// Uniform block to be used with trilinear texture filtering
+  struct TrilinearFilteringUniformBlock : public Luminous::BasicUniformBlock
+  {
+    /// Blend parameter, will be used like mix(tex[0], tex[1], blending)
+    float blending;
+  };
+
+
 /// @cond
   struct FontUniformBlock
   {
