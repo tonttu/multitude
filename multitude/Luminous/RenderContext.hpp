@@ -205,12 +205,14 @@ namespace Luminous
     /// @return Recursion limit
     size_t recursionLimit() const;
 
-    /// Sets the current recursion depth.
-    /// @param rd Recursion depth
-    void setRecursionDepth(size_t rd);
-    /// Returns current recursion depth
-    /// @return Current recursion depth
-    size_t recursionDepth() const;
+    /// Increment the current clip mask recursion depth
+    void pushClipMaskDepth();
+    /// Get current clip mask recursion depth
+    /// @return Current clip mask recursion depth
+    size_t currentClipMaskDepth() const;
+
+    /// Decrement the current clip mask recursion depth
+    void popClipMaskDepth();
 
     /// Save the current clipping stack and start with a empty one
     void pushClipStack();
@@ -985,10 +987,12 @@ namespace Luminous
     RenderContext * m_rc;
   };
 
-  /// This class provides a simple guard for setting the active clipping area. It will
-  /// automatically pop the area in its destructor so the user doesn't need to
-  /// remember to do it manually. It is equivalent to calling
-  /// "RenderContext::pushClipRect(const Nimble::Rectangle &)" and "RenderContext::popClipRect"
+  /// This class provides a simple guard for setting the active clipping area
+  /// for widgets. It will automatically pop the area in its destructor so the
+  /// user doesn't need to remember to do it manually. It is equivalent to
+  /// calling "RenderContext::pushClipRect(const Nimble::Rectangle &)" and
+  /// "RenderContext::popClipRect" This clipping only affects clipping
+  /// individual widgets.
   class ClipGuard : public Patterns::NotCopyable
   {
   public:
