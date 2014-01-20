@@ -372,16 +372,20 @@ namespace Luminous
     return m_data->m_recursionLimit;
   }
 
-  void RenderContext::setRecursionDepth(size_t rd)
+  void RenderContext::pushClipMaskDepth()
   {
-    m_data->m_recursionDepth = rd;
+    ++m_data->m_recursionDepth;
   }
 
-  size_t RenderContext::recursionDepth() const
+  size_t RenderContext::currentClipMaskDepth() const
   {
     return m_data->m_recursionDepth;
   }
 
+  void RenderContext::popClipMaskDepth()
+  {
+    --m_data->m_recursionDepth;
+  }
 
   /// Save the current clipping stack and start with a empty one
   void RenderContext::pushClipStack()
