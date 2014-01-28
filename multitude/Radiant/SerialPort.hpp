@@ -39,6 +39,9 @@ namespace Radiant
     /// Delete the object and close the port
     virtual ~SerialPort();
 
+    /// Move serialport
+    SerialPort(SerialPort && port);
+
     /// Opens a serial port for communications
     /** If the port was open, this method will close it before opening it.
       @param device name of the device to open
@@ -84,6 +87,7 @@ namespace Radiant
     const QString & deviceName() { return m_device; }
 
   private:
+    SerialPort(const SerialPort & port);
 
     QString m_device;
 

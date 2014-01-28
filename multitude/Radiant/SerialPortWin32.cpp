@@ -28,6 +28,14 @@ namespace Radiant
   : m_hPort(0)
   {}
 
+  SerialPort::SerialPort(SerialPort && port)
+    : m_device(port.m_device),
+      m_hPort(port.m_hPort)
+  {
+    port.m_device.clear();
+    port.m_hPort = 0;
+  }
+
   SerialPort::~SerialPort()
   {
     close();

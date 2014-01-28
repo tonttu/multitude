@@ -33,6 +33,14 @@ namespace Radiant
   : m_fd(-1)
   {}
 
+  SerialPort::SerialPort(SerialPort && port)
+    : m_device(port.m_device),
+      m_fd(port.m_fd)
+  {
+    port.m_device.clear();
+    port.m_fd = -1;
+  }
+
   SerialPort::~SerialPort()
   {
     close();
