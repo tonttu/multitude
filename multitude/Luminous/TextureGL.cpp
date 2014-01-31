@@ -181,6 +181,9 @@ namespace Luminous
       /// @todo Use upload limiter
       glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
 
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(m_target);
+
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
     }
@@ -248,6 +251,10 @@ namespace Luminous
           glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
             texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
         }
+        /// @todo is it more efficient to call glGenerateMipmap here to pre-allocate the mipmap levels?
+        /// We should use glTexStorage2D, but it's OpenGL 4.
+        // if (texture.mipmapsEnabled())
+        //   glGenerateMipmap(GL_TEXTURE_2D);
         GLERROR("TextureGL::upload # glTexImage2D");
       }
     }
@@ -324,6 +331,8 @@ namespace Luminous
           }
         }
       }
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(GL_TEXTURE_2D);
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
@@ -421,6 +430,9 @@ namespace Luminous
       int uploaded = texture.dataSize();
       glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(m_target);
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
