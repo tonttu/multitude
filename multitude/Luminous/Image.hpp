@@ -109,7 +109,7 @@ namespace Luminous
     /// Load an image from the given filename.
     /// @param filename name of the file to read from
     /// @return true if the image was successfully read
-    bool read(const QString & filename);
+    bool read(const QString & filename, bool usePreMultipliedAlpha);
     /// Save the image to a file
     /// @param filename name of the file to write to
     /// @return true if the image was successfully written
@@ -238,6 +238,13 @@ namespace Luminous
     /// @return texture matching the image
     Luminous::Texture & texture() const;
 
+    /// Convert this image to pre-multiplied alpha, assumes that the image is
+    /// using post-multiplied pixel values
+    void toPreMultipliedAlpha();
+    /// Convert this image to post-multiplied alpha, assumes that the image is
+    /// using pre-multiplied pixel values
+    void toPostMultipliedAlpha();
+
   protected:
 
     /// Width of the image in pixels
@@ -256,6 +263,8 @@ namespace Luminous
   private:
     mutable std::unique_ptr<Texture> m_texture;
     mutable Radiant::Mutex m_textureMutex;
+
+    bool m_hasPreMultipliedAlpha;
   };
 
 #ifndef LUMINOUS_OPENGLES

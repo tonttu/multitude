@@ -342,7 +342,7 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      if (!imageTex.image->read(m_filename.toUtf8().data())) {
+      if (!imageTex.image->read(m_filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
         return false;
       } else {
@@ -360,7 +360,7 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      if (!imageTex.image->read(filename.toUtf8().data())) {
+      if (!imageTex.image->read(filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
       } else if (mipmap.mipmapSize(level) != imageTex.image->size()) {
         // unexpected size (corrupted or just old image)

@@ -53,7 +53,7 @@ namespace Luminous {
     }
 
     Image img;
-    if(!img.read(m_src.toUtf8().data())) {
+    if(!img.read(m_src, false)) {
       Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.toUtf8().data());
       setFinished();
       return;

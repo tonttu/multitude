@@ -186,7 +186,7 @@ namespace Luminous
   bool Texture2D::loadImage(const char * filename, bool buildMipmaps) {
     Luminous::Image img;
 
-    if(!img.read(filename)) return false;
+    if(!img.read(filename, false)) return false;
 
     return loadImage(img, buildMipmaps);
   }
@@ -458,7 +458,7 @@ namespace Luminous
   Texture2D * Texture2D::fromFile(const char * filename, bool buildMipmaps, RenderContext * rs)
   {
     Luminous::Image img;
-    if(!img.read(filename)) return 0;
+    if(!img.read(filename, false)) return 0;
 
     return fromImage(img, buildMipmaps, rs);
   }
