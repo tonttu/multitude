@@ -328,6 +328,10 @@ namespace Luminous
         imageTex.lastUsed = Nimble::Math::Clamp<int>(now - 10.0f * mipmap.m_d->m_expireSeconds + 0.3f, StateCount, now);
         MipmapReleaseTask::check(0.31f);
       }
+      if (level == mipmap.m_d->m_maxLevel) {
+        imageTex.texture.setMinFilter(Texture::FILTER_LINEAR_MIPMAP_LINEAR);
+        imageTex.texture.setMipmapsEnabled(true);
+      }
     } else {
       imageTex.image.reset();
       imageTex.lastUsed = LoadError;

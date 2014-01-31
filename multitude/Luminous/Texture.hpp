@@ -34,7 +34,15 @@ namespace Luminous
       /// Point-sampled filtering
       FILTER_NEAREST = GL_NEAREST,
       /// Linear filtering
-      FILTER_LINEAR = GL_LINEAR
+      FILTER_LINEAR = GL_LINEAR,
+      /// Point-sampled filtering, nearest mipmap level
+      FILTER_NEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST,
+      /// Point-sampled filtering, linear filtering between mipmap levels
+      FILTER_NEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR,
+      /// Linear filtering, nearest mipmap level
+      FILTER_LINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST,
+      /// Linear filtering, linear filtering between mipmap levels (trilinear filtering)
+      FILTER_LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR
     };
 
     /// Texture wrap mode
@@ -217,6 +225,12 @@ namespace Luminous
     /// Get the texture border color
     /// @return border color
     LUMINOUS_API const Radiant::Color & borderColor() const;
+
+    /// Enables or disables automatic GPU mipmap generation
+    LUMINOUS_API void setMipmapsEnabled(bool enabled);
+
+    /// True if automatic GPU mipmap generation is enabled
+    LUMINOUS_API bool mipmapsEnabled() const;
 
     /// Get the generation number for texture parameters. This is increased
     /// every time border color, wrap mode or min/mag filters are changed
