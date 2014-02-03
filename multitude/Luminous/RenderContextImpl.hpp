@@ -92,10 +92,8 @@ namespace Luminous
                                           style.fill().textures(),
                                           style.fill().uniforms());
 
-    // Set the color
-    b.uniform->color = color;
-    // Apply opacity
-    b.uniform->color.w *= opacity();
+    // Set the color and apply opacity
+    b.uniform->color = color.toPreMultipliedAlpha() * opacity();
     // Set default depth
     b.uniform->depth = b.depth;
 
