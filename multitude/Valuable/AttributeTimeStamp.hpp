@@ -33,7 +33,7 @@ namespace Valuable
 
     AttributeTimeStamp() : Base() {}
 
-    AttributeTimeStamp(Node * host, const QByteArray & name, Radiant::TimeStamp v, bool transit = false)
+    AttributeTimeStamp(Node * host, const QByteArray & name, Radiant::TimeStamp v = Radiant::TimeStamp(), bool transit = false)
         : Base(host, name, v, transit)
     {}
 

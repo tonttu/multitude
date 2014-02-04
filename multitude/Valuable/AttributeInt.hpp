@@ -41,7 +41,7 @@ namespace Valuable
     AttributeIntT() : Base() {}
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param v The numeric value of this object
-    AttributeIntT(Node * host, const QByteArray & name, T v, bool transit = false)
+    AttributeIntT(Node * host, const QByteArray & name, T v = T(), bool transit = false)
         : AttributeNumericT<T>(host, name, v, transit)
     {}
 
