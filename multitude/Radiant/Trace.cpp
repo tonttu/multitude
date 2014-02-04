@@ -24,6 +24,10 @@
 #include <set>
 #include <ctime>
 
+#ifdef RADIANT_LINUX
+#include <syslog.h>
+#endif
+
 #ifndef RADIANT_WINDOWS
 #include <unistd.h> // for istty
 #else
@@ -32,6 +36,28 @@
 #include <windows.h>
 #endif
 
+
+namespace
+{
+#ifdef RADIANT_LINUX
+  static int syslogPriority(Radiant::Severity severity)
+  {
+    switch (severity) {
+    case Radiant::FATAL:
+      return LOG_ALERT;
+    case Radiant::FAILURE:
+      return LOG_ERR;
+    case Radiant::WARNING:
+      return LOG_WARNING;
+    case Radiant::INFO:
+      return LOG_INFO;
+    case Radiant::DEBUG:
+    default:
+      return LOG_DEBUG;
+    }
+  }
+#endif
+}
 
 namespace Radiant {
 
@@ -43,6 +69,8 @@ namespace Radiant {
   static bool g_forceColors = false;
   static bool g_enableThreadId = false;
   static std::set<QString> g_verboseModules;
+  static int s_syslogMinSeverity = -1;
+  static QByteArray s_syslogIdent;
 
   QString g_appname;
 
@@ -205,6 +233,14 @@ namespace Radiant {
             int(now.subSecondsUS()) / 1000, colors_end, storage,
             colors_end);
 
+#ifdef RADIANT_LINUX
+    if (s_syslogMinSeverity != -1 && s >= s_syslogMinSeverity) {
+      // In Linux we cant call vsyslog with msg and args without first copying
+      // args with va_copy. It's easier to just use pre-formatted buffer instead
+      syslog(syslogPriority(s), "%s", buffer);
+    }
+#endif
+
 #ifdef _WIN32
     // Log to the Windows debug-console as well
     char logmsg[256];
@@ -334,4 +370,20 @@ namespace Radiant {
     }
   }
 
+#ifdef RADIANT_LINUX
+  void openSyslog(const QString & ident, Severity minSeverity)
+  {
+    // GNU openlog doesn't make a copy of the ident, so we need to save it
+    s_syslogIdent = ident.toUtf8();
+    openlog(s_syslogIdent.data(), LOG_NDELAY, LOG_USER);
+    s_syslogMinSeverity = minSeverity;
+  }
+
+  void closeSyslog()
+  {
+    s_syslogMinSeverity = -1;
+    closelog();
+    s_syslogIdent.clear();
+  }
+#endif
 }
