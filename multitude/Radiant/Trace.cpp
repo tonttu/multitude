@@ -373,6 +373,12 @@ namespace Radiant {
 #ifdef RADIANT_LINUX
   void openSyslog(const QString & ident, Severity minSeverity)
   {
+    if (s_syslogMinSeverity == minSeverity && s_syslogIdent == ident.toUtf8())
+      return;
+
+    if (s_syslogMinSeverity != -1)
+      closeSyslog();
+
     // GNU openlog doesn't make a copy of the ident, so we need to save it
     s_syslogIdent = ident.toUtf8();
     openlog(s_syslogIdent.data(), LOG_NDELAY, LOG_USER);
@@ -381,9 +387,11 @@ namespace Radiant {
 
   void closeSyslog()
   {
-    s_syslogMinSeverity = -1;
-    closelog();
-    s_syslogIdent.clear();
+    if (s_syslogMinSeverity != -1) {
+      s_syslogMinSeverity = -1;
+      closelog();
+      s_syslogIdent.clear();
+    }
   }
 #endif
 }
