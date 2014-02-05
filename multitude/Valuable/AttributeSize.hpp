@@ -161,6 +161,22 @@ namespace Valuable {
       return true;
     }
 
+    bool handleShorthand(const Valuable::StyleValue & value,
+                         QMap<Valuable::Attribute *, Valuable::StyleValue> & expanded) OVERRIDE
+    {
+
+      if (value.size() == 1 && value.isNumber()) {
+        expanded[m_values[0]] = value;
+        expanded[m_values[1]] = value;
+      } else if (value.size() == 2 && value.isUniform()) {
+        expanded[m_values[0]] = value[0];
+        expanded[m_values[1]] = value[1];
+      } else {
+        return false;
+      }
+      return true;
+    }
+
     virtual bool isChanged() const OVERRIDE
     {
       for(int i = 0; i < 2; ++i)
