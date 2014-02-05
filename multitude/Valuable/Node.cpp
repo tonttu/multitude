@@ -137,19 +137,26 @@ namespace Valuable
       : Attribute(),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId()),
+      m_id(nullptr, "id", generateId()),
       m_frame(0),
       m_listenersId(0)
-  {}
+  {
+    eventAddOut("attribute-added");
+    eventAddOut("attribute-removed");
+    addAttribute("id", &m_id);
+  }
 
   Node::Node(Node * host, const QByteArray & name, bool transit)
       : Attribute(host, name, transit),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId()),
+      m_id(nullptr, "id", generateId()),
       m_frame(0),
       m_listenersId(0)
   {
+    eventAddOut("attribute-added");
+    eventAddOut("attribute-removed");
+    addAttribute("id", &m_id);
   }
 
   Node::~Node()
@@ -304,6 +311,7 @@ namespace Valuable
 
     m_attributes[attribute->name()] = attribute;
     attribute->m_host  = this;
+    eventSend("attribute-added", attribute->name());
     attributeAdded(attribute);
 
     return true;
@@ -320,6 +328,7 @@ namespace Valuable
       if (it->second == attribute) {
         m_attributes.erase(it);
         attribute->m_host = nullptr;
+        eventSend("attribute-removed", attribute->name());
         attributeRemoved(attribute);
         return;
       }
