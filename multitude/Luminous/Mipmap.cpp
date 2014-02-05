@@ -33,7 +33,7 @@ namespace
   MipmapStore s_mipmapStore;
   Radiant::Mutex s_mipmapStoreMutex;
 
-  const unsigned int s_smallestImage = 32;
+  const unsigned int s_smallestImage = 4;
   const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
   bool s_dxtSupported = true;
