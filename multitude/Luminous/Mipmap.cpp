@@ -503,7 +503,7 @@ namespace Luminous
 
     mipmap.m_nativeSize.make(mipmap.m_sourceInfo.width, mipmap.m_sourceInfo.height);
     mipmap.m_maxLevel = 0;
-    for (int w = mipmap.m_nativeSize.width(), h = mipmap.m_nativeSize.height();
+    for (unsigned int w = mipmap.m_nativeSize.width(), h = mipmap.m_nativeSize.height();
         std::max(w, h) > s_smallestImage && w > 1 && h > 1; w >>= 1, h >>= 1)
       ++mipmap.m_maxLevel;
 

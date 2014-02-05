@@ -115,7 +115,7 @@ namespace Valuable
   void Attribute::eventProcess(const QByteArray &, Radiant::BinaryData & )
   {
     Radiant::error("Attribute::eventProcess # Unimplemented for %s",
-                   typeid(*this).name());
+                   Radiant::StringUtils::type(*this).data());
   }
 
   void Attribute::eventProcessString(const char * id, const QString & str)

@@ -45,6 +45,14 @@ namespace Valuable
       return QString::number(ts.value());
     }
 
+    virtual void eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    {
+      bool ok = true;
+      auto ts = data.readTimeStamp(&ok);
+      if (ok)
+        *this = ts;
+    }
+
   };
 
 }

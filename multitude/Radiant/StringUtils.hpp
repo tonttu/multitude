@@ -110,6 +110,11 @@ namespace Radiant
     /// @returns Demangled symbol name
     RADIANT_API QByteArray demangle(const char * name);
 
+    template <typename T>
+    inline QByteArray type(const T & t)
+    {
+      return demangle(typeid(t).name());
+    }
   }
 }
 
