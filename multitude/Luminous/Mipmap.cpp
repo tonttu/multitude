@@ -347,7 +347,7 @@ namespace Luminous
         imageTex.image.reset(new Image());
 
       if (!imageTex.image->read(m_filename, true)) {
-        Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", m_filename.toUtf8().data());
+        Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [original image]", m_filename.toUtf8().data());
         return false;
       } else {
         return true;
@@ -364,13 +364,16 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
+      Nimble::Size expectedSize = mipmap.mipmapSize(level);
       if (!imageTex.image->read(filename, true)) {
-        Radiant::error("LoadImageTask::recursiveLoad # Could not read %s", filename.toUtf8().data());
-      } else if (mipmap.mipmapSize(level) != imageTex.image->size()) {
+        Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [mipmap level %d/%d of image %s, expected size: (%d, %d)]",
+                       filename.toUtf8().data(), level, mipmap.m_d->m_maxLevel,
+                       m_filename.toUtf8().data(), expectedSize.width(), expectedSize.height());
+      } else if (expectedSize != imageTex.image->size()) {
         // unexpected size (corrupted or just old image)
         Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
               filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
-                       mipmap.mipmapSize(level).width(), mipmap.mipmapSize(level).height());
+                       expectedSize.width(), expectedSize.height());
       } else {
         return true;
       }
@@ -500,7 +503,8 @@ namespace Luminous
 
     mipmap.m_nativeSize.make(mipmap.m_sourceInfo.width, mipmap.m_sourceInfo.height);
     mipmap.m_maxLevel = 0;
-    for(int s = mipmap.m_nativeSize.maximum(); s > 4; s >>= 1)
+    for (int w = mipmap.m_nativeSize.width(), h = mipmap.m_nativeSize.height();
+        std::max(w, h) > s_smallestImage && w > 1 && h > 1; w >>= 1, h >>= 1)
       ++mipmap.m_maxLevel;
 
     // Use DXT compression if it is requested and supported
@@ -537,13 +541,7 @@ namespace Luminous
         });
       }
     }
-    else
 #endif // LUMINOUS_OPENGLES
-    if(mipmap.m_sourceInfo.pf.compression() == Luminous::PixelFormat::COMPRESSION_NONE) {
-
-      // m_maxLevel and m_nativeSize have to be set before running level()
-      mipmap.m_maxLevel = mipmap.m_mipmap.level(Nimble::SizeF(s_smallestImage, s_smallestImage));
-    }
 
     mipmap.m_levels.resize(mipmap.m_maxLevel+1);
     mipmap.m_state = Valuable::STATE_HEADER_READY;
