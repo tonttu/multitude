@@ -349,7 +349,7 @@ namespace Luminous
   {
     bool bound = false;
 
-    const bool paramsDirty = updateParams(texture);
+    bool paramsDirty = updateParams(texture);
     const bool dirty = m_generation != texture.generation();
     if (dirty) {
       m_generation = texture.generation();
@@ -390,6 +390,7 @@ namespace Luminous
           texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
       }
       GLERROR("TextureGL::upload # glTexImage3D");
+      paramsDirty = true;
     }
 
     if(!bound && forceBind) {
