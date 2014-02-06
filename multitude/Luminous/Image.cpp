@@ -94,7 +94,7 @@ namespace Luminous
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
       m_generation(0),
-      m_hasPreMultipliedAlpha(false)
+      m_hasPreMultipliedAlpha(img.m_hasPreMultipliedAlpha)
       // m_dataReady(false),
       // m_ready(false)
   {
@@ -152,7 +152,8 @@ namespace Luminous
     const float sx = float(src.width()) / float(w);
     const float sy = float(src.height()) / float(h);
 
-    if (m_hasPreMultipliedAlpha) {
+    m_hasPreMultipliedAlpha = src.m_hasPreMultipliedAlpha;
+    if (m_hasPreMultipliedAlpha || !hasAlpha()) {
       for(int y0 = 0; y0 < h; y0++) {
 
         for(int x0 = 0; x0 < w; x0++) {

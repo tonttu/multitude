@@ -238,6 +238,8 @@ namespace Luminous
     /// @return texture matching the image
     Luminous::Texture & texture() const;
 
+    bool hasPreMultipliedAlpha() const { return m_hasPreMultipliedAlpha; }
+
     /// Convert this image to pre-multiplied alpha, assumes that the image is
     /// using post-multiplied pixel values
     void toPreMultipliedAlpha();
