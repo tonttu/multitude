@@ -63,6 +63,9 @@ namespace Luminous {
     LUMINOUS_API bool isComplete() const;
     LUMINOUS_API void generate();
 
+    LUMINOUS_API bool autoGenerate() const;
+    LUMINOUS_API void setAutoGenerate(bool autogenerate);
+
     LUMINOUS_API bool correctAtlas() const;
 
     LUMINOUS_API void invalidate();
@@ -81,9 +84,10 @@ namespace Luminous {
     LUMINOUS_API QUrl findUrl(Nimble::Vector2f location) const;
 
   protected:
-    LUMINOUS_API virtual void generateInternal() const = 0;
     LUMINOUS_API void setVerticalOffset(float offset);
 
+    LUMINOUS_API void doGenerateInternal() const;
+    LUMINOUS_API bool isGenerating() const;
 
     LUMINOUS_API TextLayout(const Nimble::SizeF & maximumSize);
 
@@ -95,6 +99,8 @@ namespace Luminous {
                                      const QGlyphRun & glyphRun, const QTextCharFormat * format = nullptr);
 
   private:
+    LUMINOUS_API virtual void generateInternal() const = 0;
+
     class D;
     D * m_d;
   };

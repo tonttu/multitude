@@ -77,6 +77,7 @@ namespace Luminous
 
   RichTextLayout::D::D(RichTextLayout & host)
     : m_host(host)
+    , m_generateMutex(true)
     , m_listBullet("∙")
   {
   }
@@ -125,6 +126,8 @@ namespace Luminous
   void RichTextLayout::D::changed()
   {
     m_host.setLayoutReady(false);
+    if (m_host.autoGenerate() && !m_host.isGenerating())
+      m_host.doGenerateInternal();
   }
 
   /////////////////////////////////////////////////////////////////////////////

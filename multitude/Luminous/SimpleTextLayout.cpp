@@ -127,7 +127,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   SimpleTextLayout::D::D()
-    : m_layoutThread(nullptr)
+    : m_generateMutex(true),
+      m_layoutThread(nullptr)
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
