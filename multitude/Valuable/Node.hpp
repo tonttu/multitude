@@ -397,6 +397,12 @@ namespace Valuable
     /// Registers a new event that this class handles in eventProcess
     void eventAddIn(const QByteArray & messageId);
 
+    /// Unregisters an existing event this class can send with eventSend
+    void eventRemoveOut(const QByteArray & eventId);
+
+    /// Unregisters an existing event that this class handles in eventProcess
+    void eventRemoveIn(const QByteArray & messageId);
+
     /// Register a deprecated event that is automatically converted to new
     /// event id and a warning is issued when it is used.
     /// @param deprecatedId deprecated event id

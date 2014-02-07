@@ -710,7 +710,7 @@ namespace Valuable
   void Node::eventAddOut(const QByteArray & id)
   {
     if (m_eventSendNames.contains(id)) {
-      Radiant::warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.data());
+      Radiant::warning("Node::eventAddOut # Trying to register event '%s' that is already registered", id.data());
     } else {
       m_eventSendNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -722,12 +722,31 @@ namespace Valuable
   void Node::eventAddIn(const QByteArray &id)
   {
     if (m_eventListenNames.contains(id)) {
-      Radiant::warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.data());
+      Radiant::warning("Node::eventAddIn # Trying to register duplicate event handler for event '%s'", id.data());
     } else {
       m_eventListenNames.insert(id);
 #ifdef MULTI_DOCUMENTER
       s_eventListenNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
 #endif
+    }
+  }
+
+  void Node::eventRemoveOut(const QByteArray & eventId)
+  {
+    if (m_eventSendNames.contains(eventId)) {
+      m_eventSendNames.remove(eventId);
+    } else {
+      Radiant::warning("Node::eventRemoveOut # Couldn't find event '%s'", eventId.data());
+    }
+
+  }
+
+  void Node::eventRemoveIn(const QByteArray & messageId)
+  {
+    if (m_eventListenNames.contains(messageId)) {
+      m_eventListenNames.remove(messageId);
+    } else {
+      Radiant::warning("Node::eventRemoveIn # Couldn't find event '%s'", messageId.data());
     }
   }
 
