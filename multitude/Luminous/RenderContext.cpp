@@ -453,7 +453,7 @@ namespace Luminous
       const float tolerance = 0.5f;
       const float actualRadius = scale * (radius + 0.5f * style.strokeWidth());
 
-      linesegments = Nimble::Math::PI / acos(1.f - (tolerance / actualRadius));
+      linesegments = std::max<int>(16, Nimble::Math::PI / acos(1.f - (tolerance / actualRadius)));
     }
 
     // Filler function: Generates vertices in a circle
