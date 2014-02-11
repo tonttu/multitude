@@ -53,6 +53,8 @@ namespace Valuable
     /// Sets the value of the target object
     virtual bool set(const StyleValue & v, Layer layer = USER);
 
+    virtual QByteArray type() const;
+
     virtual ArchiveElement serialize(Archive & archive) const;
     virtual bool deserialize(const ArchiveElement & element);
 
@@ -69,14 +71,18 @@ namespace Valuable
 
     virtual bool handleShorthand(const StyleValue & value, QMap<Attribute *, StyleValue> & expanded);
 
+    virtual bool isValueDefinedOnLayer(Layer layer) const;
+
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
     virtual Attribute * attribute(const QByteArray & name) const;
 
+    virtual void setAsDefaults();
+
   private:
     Attribute * m_attribute;
-    long m_event;
+    long m_eventDelete, m_eventChange;
   };
 }
 
