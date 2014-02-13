@@ -313,7 +313,7 @@ namespace Valuable
 
     /// Unsets the value from a specific layer
     /// @param layer layer to clear, must not be DEFAULT, since DEFAULT layer should always be set
-    virtual void clearValue(Layer layer);
+    virtual void clearValue(Layer layer = USER);
 
     /// If attribute supports shorthand properties, this should be used to parse those.
     /// For example "background: url('image.png') repeat" is a shorhand for setting
