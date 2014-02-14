@@ -936,6 +936,14 @@ namespace Valuable
       i->second->setAsDefaults();
   }
 
+  bool Node::isChanged() const
+  {
+    for (auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
+      if (i->second->isChanged())
+        return true;
+    return false;
+  }
+
   void Node::eventAddDeprecated(const QByteArray &deprecatedId, const QByteArray &newId)
   {
     m_deprecatedEventCompatibility[deprecatedId] = newId;

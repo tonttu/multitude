@@ -89,8 +89,6 @@ namespace Valuable
       return true;
     }
 
-    virtual bool isChanged() const OVERRIDE { return !m_container.empty(); }
-
     /// Typecast operator for the wrapped container
     operator T & () { return m_container; }
     /// Typecast operator for the const reference of the wrapped container

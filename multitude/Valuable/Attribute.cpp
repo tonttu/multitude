@@ -335,7 +335,7 @@ namespace Valuable
 
   bool Attribute::isChanged() const
   {
-    return true;
+    return false;
   }
 
   void Attribute::clearValue(Layer)

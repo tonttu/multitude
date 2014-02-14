@@ -308,7 +308,7 @@ namespace Valuable
     bool removeListener(long id);
 
     /// @returns true if the current value of the object is different from
-    ///          the default value. Default implementation always returns true
+    ///          the default value. Default implementation always returns false
     virtual bool isChanged() const;
 
     /// Unsets the value from a specific layer
@@ -506,7 +506,7 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE
     {
-      return m_current > DEFAULT;
+      return m_current > DEFAULT && value() != value(DEFAULT);
     }
 
     /// Unsets the value from a specific layer
