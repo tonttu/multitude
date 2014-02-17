@@ -35,6 +35,7 @@ HEADERS += Attribute.hpp
 HEADERS += AttributeRect.hpp
 HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
+HEADERS += AttributeGrid.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
 HEADERS += v8.hpp
