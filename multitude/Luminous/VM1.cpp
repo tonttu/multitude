@@ -21,6 +21,7 @@
 #include <QStringList>
 #include <QFile>
 #include <QSettings>
+#include <QSystemSemaphore>
 
 #ifdef RADIANT_UNIX
 #include <sys/types.h>
@@ -31,7 +32,14 @@
 
 namespace
 {
-  static Radiant::Mutex s_vm1Mutex;
+  static QSystemSemaphore s_vm1Lock("MultiTouchVM1", 1);
+
+  class VM1Guard
+  {
+  public:
+    VM1Guard() { s_vm1Lock.acquire(); }
+    ~VM1Guard() { s_vm1Lock.release(); }
+  };
 
   static int writeAll(const char * data, int len, Radiant::SerialPort & port, int timeoutMS)
   {
@@ -219,7 +227,7 @@ namespace Luminous
       }
     }
 
-    Radiant::Guard g(s_vm1Mutex);
+    VM1Guard g;
     if (!open()) {
       ++m_errors;
       if (m_errors > 5) {
@@ -285,7 +293,7 @@ namespace Luminous
 
   QByteArray VM1::D::readInfo()
   {
-    Radiant::Guard g(s_vm1Mutex);
+    VM1Guard g;
     /// @todo there should be a timeout parameter
     if (!open()) {
       Radiant::Sleep::sleepS(1);
@@ -297,14 +305,17 @@ namespace Luminous
     /// Empty the read buffer
     char buffer[256];
 
-    QByteArray ba("i");
-    if (writeAll(ba.data(), ba.size(), m_port, 300) != ba.size())
+    const QByteArray ba("i");
+    if (writeAll(ba.data(), ba.size(), m_port, 300) != ba.size()) {
+      m_port.close();
       return QByteArray();
+    }
 
     QByteArray res;
     int prev = 0;
     for (int i = 0; i < 100; ++i) {
       /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
+      errno = 0;
       int r = m_port.read(buffer, sizeof(buffer));
 #ifdef RADIANT_WINDOWS
       if (r == 0) {
@@ -320,16 +331,25 @@ namespace Luminous
         break;
       } else
 #endif
+      Radiant::info("r: %d, err %d", r, errno);
       if (r > 0) {
         res.append(buffer, r);
         prev = r;
       } else if (r == 0 || errno != EAGAIN) {
+        if (res.size() == 0 && i == 0) {
+          m_port.close();
+          if (!open())
+            break;
+          if (writeAll(ba.data(), ba.size(), m_port, 300) != ba.size())
+            break;
+          continue;
+        }
         break;
       } else {
         if (res.size() > 0 && prev == 0)
           break;
         prev = 0;
-        Radiant::Sleep::sleepMs(4);
+        Radiant::Sleep::sleepMs(10);
       }
     }
 
@@ -363,7 +383,7 @@ namespace Luminous
     : m_d(D::s_d.lock())
   {
     if (!m_d) {
-      Radiant::Guard g(s_vm1Mutex);
+      VM1Guard g;
       m_d = D::s_d.lock();
       if (!m_d) {
         m_d.reset(new D());
