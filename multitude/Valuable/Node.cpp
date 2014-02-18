@@ -806,8 +806,14 @@ namespace Valuable
   {
     XMLArchive archive;
     ArchiveElement e = Valuable::Serializer::serialize(archive, from);
-    if(!e.isNull())
-      return to.deserialize(e);
+    Uuid toId = to.id();
+
+    if(!e.isNull()) {
+      bool ok = to.deserialize(e);
+      to.m_id = toId;
+      return ok;
+    }
+
     return false;
   }
 
