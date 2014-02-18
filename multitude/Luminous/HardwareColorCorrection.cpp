@@ -17,7 +17,7 @@ namespace Luminous
   class HardwareColorCorrection::Private : public Valuable::Node
   {
   public:
-    Private() : m_cc(0), m_ok(false)
+    Private() : m_vm1(VM1::instance()), m_cc(0), m_ok(false)
     {
       eventAddIn("sync");
     }
@@ -29,15 +29,15 @@ namespace Luminous
     }
 
     void doSync() {
-      if(m_cc && m_vm1.detected()) {
-        m_vm1.setColorCorrection(*m_cc);
+      if(m_cc && m_vm1->detected(true)) {
+        m_vm1->setColorCorrection(*m_cc);
         m_ok = true;
       } else {
         m_ok = false;
       }
     }
 
-    VM1 m_vm1;
+    VM1Ptr m_vm1;
     ColorCorrection * m_cc;
     bool m_ok;
   };

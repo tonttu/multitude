@@ -31,6 +31,8 @@
 
 namespace
 {
+  static Radiant::Mutex s_vm1Mutex;
+
   static int writeAll(const char * data, int len, Radiant::SerialPort & port, int timeoutMS)
   {
     int written = 0;
@@ -56,9 +58,18 @@ namespace
     return written;
   }
 
+  void clearReadBuffer(Radiant::SerialPort & port, int timeoutMs)
+  {
+    char buffer[256];
+    Radiant::Sleep::sleepMs(timeoutMs);
+    while (port.read(buffer, sizeof(buffer)) > 0)
+      Radiant::Sleep::sleepMs(timeoutMs);
+  }
 
   bool checkForVM1(Radiant::SerialPort & port, int timeoutMs)
   {
+    clearReadBuffer(port, timeoutMs);
+
     QByteArray buffer(2048, '\0');
 
     if (port.write("?", 1) != 1)
@@ -71,8 +82,10 @@ namespace
 
     if (bytes > 0) {
       buffer.resize(bytes);
-      if (buffer.contains("VM1") || buffer.contains("LVDS power"))
+      if (buffer.contains("VM1") || buffer.contains("LVDS power")) {
+        clearReadBuffer(port, timeoutMs);
         return true;
+      }
     }
 
     return false;
@@ -82,6 +95,7 @@ namespace
 
   QString scanPorts(int timeoutMs)
   {
+    Radiant::Guard g(s_vm1Mutex);
     foreach (const QString dev, Radiant::SerialPort::scan()) {
       Radiant::SerialPort port;
       if (port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, timeoutMs*1000)) {
@@ -138,24 +152,29 @@ namespace
 
 namespace Luminous
 {
-  static Radiant::Mutex s_vm1Mutex;
-
   class VM1::D : public Radiant::Task
   {
   public:
     D();
     void sendCommand(const QByteArray & ba);
+    void sendColorCorrection(const QByteArray & ba);
 
     QString findVM1();
 
     virtual void doTask() OVERRIDE;
 
     bool open();
+    QByteArray readInfo();
 
   public:
-    QByteArray m_data;
     Radiant::Mutex m_dataMutex;
+    QByteArray m_data;
+    QByteArray m_dataColorCorrection;
     Radiant::SerialPort m_port;
+
+    Radiant::Mutex m_infoMutex;
+    QByteArray m_info;
+    Radiant::TimeStamp m_infoTimeStamp;
 
     int m_errors;
 
@@ -194,19 +213,21 @@ namespace Luminous
   {
     {
       Radiant::Guard g(m_dataMutex);
-      if (m_data.isEmpty()) {
+      if (m_data.isEmpty() && m_dataColorCorrection.isEmpty()) {
         setFinished();
         return;
       }
     }
 
+    Radiant::Guard g(s_vm1Mutex);
     if (!open()) {
       ++m_errors;
       if (m_errors > 5) {
         Radiant::error("VM1 # Failed to open VM1");
         m_errors = 0;
-        Radiant::Guard g(m_dataMutex);
+        Radiant::Guard g2(m_dataMutex);
         m_data.clear();
+        m_dataColorCorrection.clear();
         setFinished();
         return;
       }
@@ -216,22 +237,22 @@ namespace Luminous
 
     QByteArray ba;
     {
-      Radiant::Guard g(m_dataMutex);
-      if (m_data.isEmpty()) {
+      Radiant::Guard g2(m_dataMutex);
+      if (m_data.isEmpty() && m_dataColorCorrection.isEmpty()) {
         setFinished();
         return;
       }
-      std::swap(ba, m_data);
+      if (!m_data.isEmpty())
+        std::swap(ba, m_data);
+      else
+        std::swap(ba, m_dataColorCorrection);
     }
 
-    {
-      Radiant::Guard g(s_vm1Mutex);
-      writeAll(ba.data(), ba.size(), m_port, 500);
-    }
+    writeAll(ba.data(), ba.size(), m_port, 500);
     m_errors = 0;
 
-    Radiant::Guard g(m_dataMutex);
-    if (m_data.isEmpty()) {
+    Radiant::Guard g2(m_dataMutex);
+    if (m_data.isEmpty() && m_dataColorCorrection.isEmpty()) {
       setFinished();
     } else {
       scheduleFromNowSecs(0);
@@ -262,10 +283,73 @@ namespace Luminous
     }
   }
 
+  QByteArray VM1::D::readInfo()
+  {
+    Radiant::Guard g(s_vm1Mutex);
+    /// @todo there should be a timeout parameter
+    if (!open()) {
+      Radiant::Sleep::sleepS(1);
+      if (!open())
+        return QByteArray();
+    }
+
+    clearReadBuffer(m_port, 1);
+    /// Empty the read buffer
+    char buffer[256];
+
+    QByteArray ba("i");
+    if (writeAll(ba.data(), ba.size(), m_port, 300) != ba.size())
+      return QByteArray();
+
+    QByteArray res;
+    int prev = 0;
+    for (int i = 0; i < 100; ++i) {
+      /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
+      int r = m_port.read(buffer, sizeof(buffer));
+#ifdef RADIANT_WINDOWS
+      if (r == 0) {
+        DWORD err = GetLastError();
+        if (err == ERROR_SUCCESS || err == ERROR_IO_PENDING) {
+          if (res.size() > 0 && prev == 0)
+            break;
+
+          prev = 0;
+          Radiant::Sleep::sleepMs(30);
+          continue;
+        }
+        break;
+      } else
+#endif
+      if (r > 0) {
+        res.append(buffer, r);
+        prev = r;
+      } else if (r == 0 || errno != EAGAIN) {
+        break;
+      } else {
+        if (res.size() > 0 && prev == 0)
+          break;
+        prev = 0;
+        Radiant::Sleep::sleepMs(4);
+      }
+    }
+
+    return res;
+  }
+
   void VM1::D::sendCommand(const QByteArray & ba)
   {
     Radiant::Guard g(m_dataMutex);
     m_data += ba;
+    if (state() == DONE) {
+      setState(WAITING);
+      Radiant::BGThread::instance()->addTask(shared_from_this());
+    }
+  }
+
+  void VM1::D::sendColorCorrection(const QByteArray & ba)
+  {
+    Radiant::Guard g(m_dataMutex);
+    m_dataColorCorrection = ba;
     if (state() == DONE) {
       setState(WAITING);
       Radiant::BGThread::instance()->addTask(shared_from_this());
@@ -286,19 +370,15 @@ namespace Luminous
         D::s_d = m_d;
       }
     }
+    eventAddOut("info-updated");
   }
 
   VM1::~VM1()
   {}
 
-  bool VM1::detected() const
+  bool VM1::detected(bool useCachedValue, Radiant::TimeStamp * ts)
   {
-#ifdef RADIANT_LINUX
-    struct stat tmp;
-    return stat(m_d->findVM1().toUtf8().data(), &tmp) == 0 && (tmp.st_mode & S_IFCHR);
-#else
-    return !m_d->findVM1().isEmpty();
-#endif
+    return !info(useCachedValue, ts).isEmpty();
   }
 
   void VM1::setColorCorrection(const ColorCorrection & cc)
@@ -321,7 +401,7 @@ namespace Luminous
     // Enable gamma
     ba += 'g';
 
-    m_d->sendCommand(ba);
+    m_d->sendColorCorrection(ba);
   }
 
   void VM1::setLCDPower(bool enable)
@@ -374,66 +454,37 @@ namespace Luminous
     m_d->sendCommand(state ? "g" : "c");
   }
 
-  QString VM1::info()
+  QByteArray VM1::rawInfo(bool useCachedValue, Radiant::TimeStamp * ts)
   {
-    /// @todo there should be a timeout parameter
-    if (!m_d->open()) {
-      if (detected()) {
-        Radiant::Sleep::sleepS(1);
-        if (!m_d->open())
-          return QString();
-      } else {
-        return QString();
+    {
+      Radiant::Guard g(m_d->m_infoMutex);
+      if (useCachedValue && m_d->m_infoTimeStamp != Radiant::TimeStamp()) {
+        if (ts) *ts = m_d->m_infoTimeStamp;
+        return m_d->m_info;
       }
     }
-    Radiant::Guard g(s_vm1Mutex);
 
-    char buffer[256];
-    Radiant::Sleep::sleepMs(1);
-    while (m_d->m_port.read(buffer, 256) > 0) {
-      Radiant::Sleep::sleepMs(1);
+    QByteArray ba = m_d->readInfo();
+
+    {
+      Radiant::Guard g(m_d->m_infoMutex);
+      m_d->m_infoTimeStamp = Radiant::TimeStamp::currentTime();
+      m_d->m_info = ba;
+      if (ts) *ts = m_d->m_infoTimeStamp;
     }
-
-    QByteArray ba("i");
-    if(writeAll(ba.data(), ba.size(), m_d->m_port, 300) != ba.size())
-      return QString();
-
-    QByteArray res;
-    int prev = 0;
-    for (int i = 0; i < 100; ++i) {
-      /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
-      int r = m_d->m_port.read(buffer, 256);
-#ifdef RADIANT_WINDOWS
-      if (r == 0) {
-        DWORD err = GetLastError();
-        if (err == ERROR_SUCCESS || err == ERROR_IO_PENDING) {
-          if (res.size() > 0 && prev == 0) {
-            break;
-          }
-          prev = 0;
-          Radiant::Sleep::sleepMs(30);
-          continue;
-        }
-        break;
-      } else
-#endif
-      if(r > 0) {
-        res.append(buffer, r);
-        prev = r;
-      } else if (r == 0 || errno != EAGAIN) {
-        break;
-      } else {
-        if (res.size() > 0 && prev == 0)
-          break;
-        prev = 0;
-        Radiant::Sleep::sleepMs(4);
-      }
-    }
-    return res;
+    eventSend("info-updated");
+    return ba;
   }
 
-  QMap<QString, QString> VM1::parseInfo(const QString & info)
+  VM1::Info VM1::info(bool useCachedValue, Radiant::TimeStamp * ts)
   {
+    return parseInfo(rawInfo(useCachedValue, ts));
+  }
+
+  VM1::Info VM1::parseInfo(const QByteArray & data)
+  {
+    VM1::Info info;
+
     QRegExp header("Info");
     QRegExp version("Firmware version (.+)");
     QRegExp board("Board revision (.+)");
@@ -445,7 +496,7 @@ namespace Luminous
     QRegExp pixelsLines("Total pixels: (\\d+) Actives pixels: (\\d+) Total lines: (\\d+) Actives lines: (\\d+)");
     QRegExp uptime("Operation time (\\d+) hours and (\\d+) minutes");
     QRegExp screensaver("Screensaver time (\\d+) minutes");
-    QRegExp temp("Temperature (\\d+) degrees");
+    QRegExp temp("Temperature (-?\\d+) degrees");
     QRegExp src("Video source is (.+)");
     QRegExp totalPixels("Total pixels: (\\d+)");
     QRegExp activePixels("Actives? pixels: (\\d+)");
@@ -460,65 +511,64 @@ namespace Luminous
     // At least VM1 version 3.3 uses the latter format.
     QRegExp sdram("SDRAM status:? (\\d+) / (eye: )?(\\d+)");
 
-    QRegExp split("\\s*[\\r\\n]+\\s*", Qt::CaseInsensitive, QRegExp::RegExp2);
-
-    QMap<QString, QString> map;
-
-    QSet<QString> outputs;
-    foreach(const QString & line, info.split(split, QString::SkipEmptyParts)) {
-      if(header.exactMatch(line)) {
+    for (QByteArray lineRaw: data.split('\n')) {
+      lineRaw = lineRaw.trimmed();
+      if (lineRaw.isEmpty())
         continue;
-      } else if(version.exactMatch(line)) {
-        map["version"] = version.cap(1);
-      } else if(board.exactMatch(line)) {
-        map["board-revision"] = board.cap(1);
-      } else if(autosel.exactMatch(line)) {
-        map["autoselect"] = autosel.cap(1) == "on" ? "1" : "";
-      } else if(priority.exactMatch(line)) {
-        outputs << priority.cap(1);
-        map["priority"] = priority.cap(1);
-      } else if(notConnected.exactMatch(line)) {
-        map[notConnected.cap(1)] = "not connected";
-        outputs << notConnected.cap(1);
-      } else if(detected.exactMatch(line)) {
-        map[detected.cap(1)] = "detected";
-        outputs << detected.cap(1);
-      } else if(active.exactMatch(line)) {
-        map[active.cap(1)] = "active";
-        outputs << active.cap(1);
-      } else if(pixelsLines.exactMatch(line)) {
-        map["total-pixels"] = pixelsLines.cap(1);
-        map["active-pixels"] = pixelsLines.cap(2);
-        map["total-lines"] = pixelsLines.cap(3);
-        map["active-lines"] = pixelsLines.cap(4);
-      } else if(uptime.exactMatch(line)) {
-        map["uptime"] = QString::number(uptime.cap(1).toInt() * 60 + uptime.cap(2).toInt());
-      } else if(screensaver.exactMatch(line)) {
-        map["screensaver"] = screensaver.cap(1);
-      } else if(temp.exactMatch(line)) {
-        map["temperature"] = temp.cap(1);
-      } else if(src.exactMatch(line)) {
-        map["source"] = src.cap(1);
-        outputs << src.cap(1);
-      } else if(totalPixels.exactMatch(line)) {
-        map["total-pixels"] = totalPixels.cap(1);
-      } else if(activePixels.exactMatch(line)) {
-        map["active-pixels"] = activePixels.cap(1);
-      } else if(totalLines.exactMatch(line)) {
-        map["total-lines"] = totalLines.cap(1);
-      } else if(activeLines.exactMatch(line)) {
-        map["active-lines"] = activeLines.cap(1);
-      } else if(colorCorrection.exactMatch(line)) {
-        map["color-correction"] = activeLines.cap(1) == "on" ? "1" : "";
-      } else if(sdram.exactMatch(line)) {
-        map["sdram-status"] = sdram.cap(1).toInt();
-        map["sdram-total"] = sdram.cap(3).toInt();
+      const QString line = lineRaw;
+
+      if (header.exactMatch(line)) {
+        info.header = true;
+      } else if (version.exactMatch(line)) {
+        info.version = version.cap(1);
+      } else if (board.exactMatch(line)) {
+        info.boardRevision = board.cap(1);
+      } else if (autosel.exactMatch(line)) {
+        info.autoselect = autosel.cap(1) == "on" ? Info::INFO_TRUE : Info::INFO_FALSE;
+      } else if (priority.exactMatch(line)) {
+        info.sources[priority.cap(1)] = std::max(info.sources[priority.cap(1)], Info::STATUS_UNKNOWN);
+        info.prioritySource = priority.cap(1);
+      } else if (notConnected.exactMatch(line)) {
+        info.sources[notConnected.cap(1)] = std::max(info.sources[notConnected.cap(1)], Info::STATUS_NOT_CONNECTED);
+      } else if (detected.exactMatch(line)) {
+        info.sources[detected.cap(1)] = std::max(info.sources[detected.cap(1)], Info::STATUS_DETECTED);
+      } else if (active.exactMatch(line)) {
+        info.sources[active.cap(1)] = std::max(info.sources[active.cap(1)], Info::STATUS_ACTIVE);
+      } else if (pixelsLines.exactMatch(line)) {
+        info.totalPixels = pixelsLines.cap(1).toInt();
+        info.activePixels = pixelsLines.cap(2).toInt();
+        info.totalLines = pixelsLines.cap(3).toInt();
+        info.activeLines = pixelsLines.cap(4).toInt();
+      } else if (uptime.exactMatch(line)) {
+        info.uptimeMins = uptime.cap(1).toInt() * 60 + uptime.cap(2).toInt();
+      } else if (screensaver.exactMatch(line)) {
+        info.screensaverMins = screensaver.cap(1).toInt();
+      } else if (temp.exactMatch(line)) {
+        info.temperature = temp.cap(1).toInt();
+      } else if (src.exactMatch(line)) {
+        info.videoSource = src.cap(1);
+        info.sources[src.cap(1)] = std::max(info.sources[src.cap(1)], Info::STATUS_ACTIVE);
+      } else if (totalPixels.exactMatch(line)) {
+        info.totalPixels = totalPixels.cap(1).toInt();
+      } else if (activePixels.exactMatch(line)) {
+        info.activePixels = activePixels.cap(1).toInt();
+      } else if (totalLines.exactMatch(line)) {
+        info.totalLines = totalLines.cap(1).toInt();
+      } else if (activeLines.exactMatch(line)) {
+        info.activeLines = activeLines.cap(1).toInt();
+      } else if (colorCorrection.exactMatch(line)) {
+        info.colorCorrectionEnabled = colorCorrection.cap(1) == "on" ? Info::INFO_TRUE : Info::INFO_FALSE;
+      } else if (sdram.exactMatch(line)) {
+        info.sdramStatus = sdram.cap(1).toInt();
+        info.sdramTotal = sdram.cap(3).toInt();
       } else {
+        info.extraLines << lineRaw;
         Radiant::warning("VM1::parseInfo # Failed to parse line '%s'", line.toUtf8().data());
       }
     }
-    if(!outputs.isEmpty())
-      map["outputs"] = QStringList(outputs.toList()).join("\n");
-    return map;
+
+    return info;
   }
+
+  DEFINE_SINGLETON(VM1)
 }
