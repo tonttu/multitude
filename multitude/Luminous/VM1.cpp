@@ -331,7 +331,6 @@ namespace Luminous
         break;
       } else
 #endif
-      Radiant::info("r: %d, err %d", r, errno);
       if (r > 0) {
         res.append(buffer, r);
         prev = r;
