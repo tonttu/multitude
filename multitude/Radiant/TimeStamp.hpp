@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <QString>
 
+class QDateTime;
+
 namespace Radiant {
 
   /** A high-resolution time-stamp object. A time-stamp has 40 bits
@@ -71,6 +73,10 @@ namespace Radiant {
     /// Construct timestamp with the given time internal representation
     /// @param val internal time presentation
     explicit TimeStamp(type val) : m_val(val) {}
+
+    /// Construct timestamp from QDateTime object
+    explicit TimeStamp(const QDateTime & datetime);
+
     ~TimeStamp() {}
 
     /// Returns a reference to the current timestamp native value

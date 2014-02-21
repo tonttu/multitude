@@ -16,6 +16,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <QDateTime>
+
 #ifndef WIN32
 #include <sys/time.h>
 #else
@@ -154,6 +156,11 @@ namespace Radiant {
   }
 
 #endif // WIN32
+
+  TimeStamp::TimeStamp(const QDateTime & datetime)
+    : m_val(datetime.toTime_t() * ticksPerSecond().value())
+  {
+  }
 
   TimeStamp TimeStamp::createDate(const char * date,
 				  const char * delim,
