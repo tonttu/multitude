@@ -20,7 +20,7 @@
 namespace Valuable
 {
   template<class T>
-  class VALUABLE_API AttributeGrid : public Attribute
+  class AttributeGrid : public Attribute
   {
     typedef Radiant::GridT<T, Radiant::GridMemT<T>> GridType;
 

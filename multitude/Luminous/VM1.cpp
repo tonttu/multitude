@@ -103,7 +103,7 @@ namespace
 
   QString scanPorts(int timeoutMs)
   {
-    Radiant::Guard g(s_vm1Mutex);
+    VM1Guard g;
     foreach (const QString dev, Radiant::SerialPort::scan()) {
       Radiant::SerialPort port;
       if (port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, timeoutMs*1000)) {
