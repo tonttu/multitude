@@ -13,6 +13,7 @@
 
 #include "AttributeFloat.hpp"
 #include "AttributeInt.hpp"
+#include "StyleValue.hpp"
 
 #include <Nimble/Size.hpp>
 
