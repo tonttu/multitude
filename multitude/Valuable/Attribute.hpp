@@ -218,9 +218,7 @@ namespace Valuable
     */
     virtual void eventProcess(const QByteArray &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
-    void eventProcessString(const char * id, const QString &str);
-    /// Utility function for sending string message to the object
-    void eventProcessString(const char * id, const char * str);
+    void eventProcessString(const QByteArray & id, const QString & str);
     /// Utility function for sending a float message to the object
     void eventProcessFloat(const char * id, float v);
     /// Utility function for sending an int message to the object

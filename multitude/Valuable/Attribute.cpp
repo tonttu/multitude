@@ -118,17 +118,12 @@ namespace Valuable
                    Radiant::StringUtils::type(*this).data());
   }
 
-  void Attribute::eventProcessString(const char * id, const QString & str)
+  void Attribute::eventProcessString(const QByteArray & id, const QString & str)
   {
     Radiant::BinaryData bd;
     bd.writeString(str);
     bd.rewind();
     eventProcess(id, bd);
-  }
-
-  void Attribute::eventProcessString(const char *id, const char *str)
-  {
-    eventProcessString(id, QString(str));
   }
 
   void Attribute::eventProcessFloat(const char * id, float v)
