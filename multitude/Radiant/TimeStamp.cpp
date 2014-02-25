@@ -275,6 +275,11 @@ namespace Radiant {
 
   }
 
+  QDateTime TimeStamp::asQDateTime() const
+  {
+    return QDateTime::fromTime_t(m_val / ticksPerSecond().value());
+  }
+
   std::ostream & operator<<(std::ostream & os, const TimeStamp & ts)
   {
     return os << ts.value();

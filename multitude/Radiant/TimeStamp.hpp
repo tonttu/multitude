@@ -299,6 +299,9 @@ namespace Radiant {
     /// @return time-stamp as string
     QString asString() const;
 
+    /// Converts the time-stamp to QDateTime object
+    QDateTime asQDateTime() const;
+
     /// @cond
     TimeStamp operator+(const TimeStamp & o) const { return TimeStamp(m_val + o.m_val); }
     TimeStamp operator-(const TimeStamp & o) const { return TimeStamp(m_val - o.m_val); }
