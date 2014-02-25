@@ -98,6 +98,33 @@ namespace Radiant
       while(m_pos < 0) m_pos += m_data.size();
     }
 
+    std::pair<T, Radiant::TimeStamp> interpolatedSample(Radiant::TimeStamp ts) const
+    {
+      if (m_data[(m_pos+1) % m_data.size()].ts >= ts) {
+        // This was the oldest sample, ts is before our time window started, return the oldest sample
+        auto s = m_data[(m_pos+1) % m_data.size()];
+        return std::make_pair(s.value, s.ts);
+      }
+
+      for (int i = 1; i < m_data.size(); ++i) {
+        int idx = (m_pos + i + 1) % m_data.size();
+        if (m_data[idx].ts >= ts) {
+          auto s0 = m_data[(m_pos + i) % m_data.size()];
+          auto s1 = m_data[idx];
+
+          // This is uninitialized sample, so s1 is the actual oldest sample, just return it
+          if (s0.ts.value() == 0)
+            return std::make_pair(s1.value, s1.ts);
+
+          double t = double((ts - s0.ts).value()) / (s1.ts - s0.ts).value();
+          return std::make_pair(Nimble::Math::lerp(s0.value, s1.value, t), ts);
+        }
+      }
+
+      // Processed all samples, ts is after any samples, give the latest sample
+      return std::make_pair(m_data[m_pos].value, m_data[m_pos].ts);
+    }
+
   private:
     struct BufferValue
     {
