@@ -366,27 +366,17 @@ namespace Luminous
     void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
 
     /// Draws a rectangle
-    /// @param min Bottom left corner of a rectangle
-    /// @param max Top right corner of a rectangle
-    /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
-
-    /// Draws a rectangle
-    /// @param min Bottom left corner of a rectangle
-    /// @param size Rectangle size
-    /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style);
-
-    /// Draws a rectangle
     /// @param rext Rectangle to draw
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Rectf & rect, const Style & style);
+    template<typename T>
+    void drawRect(const Nimble::RectT<T>& rect, const Style & style);
 
     /// Draws a rectangle
     /// @param rect Rectangle to draw
     /// @param uvs Texture coordinates
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
+    template<typename T>
+    void drawRect(const Nimble::RectT<T>& rect, const Nimble::Rectf & uvs, const Style & style);
 
     /// Draws a quad with two triangles.
     /// The vertices of the first triangle are v[0], v[1], v[2]. The second triangle is
@@ -750,6 +740,8 @@ namespace Luminous
                       const Nimble::Rectf & viewRect, const TextStyle & style,
                       FontUniformBlock & uniform, const Program & program,
                       const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign);
+    template<typename T>
+    void drawRectStroke(const Nimble::RectT<T>& rect, const Style & style);
 
     class Internal;
     Internal * m_data;

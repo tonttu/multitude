@@ -120,6 +120,83 @@ namespace Luminous
     for (size_t i = 0; i < numVertices; ++i, ++begin)
       b.vertex[i].location = *begin;
   }
+
+  template<typename T>
+  void RenderContext::drawRect(const Nimble::RectT<T> &rect, const Style & style)
+  {
+    if(style.fill().hasTextures()) {
+
+      // Automatically generate texture coordinates for the rectangle since the
+      // style uses textures
+      drawRect(rect, Nimble::Rect(0, 0, 1, 1), style);
+
+    } else {
+
+      // Is this a non-textured fill?
+      if(style.fillColor().w > 0.f) {
+
+        // Draw rectangle without texture coordinates
+        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
+        b.vertex[0].location = rect.low().template cast<float>();
+        b.vertex[1].location = rect.highLow().template cast<float>();
+        b.vertex[2].location = rect.lowHigh().template cast<float>();
+        b.vertex[3].location = rect.high().template cast<float>();
+      }
+
+      // Draw stroke
+      drawRectStroke(rect, style);
+    }
+  }
+
+  template<typename T>
+  void RenderContext::drawRect(const Nimble::RectT<T>& rect, const Nimble::Rectf & uvs, const Style & style)
+  {
+    // Draw rectangle with texture coordinates
+    if (style.fillColor().w > 0.f) {
+      const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+      auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
+
+      b.vertex[0].location = rect.low().template cast<float>();
+      b.vertex[0].texCoord = uvs.low();
+
+      b.vertex[1].location = rect.highLow().template cast<float>();
+      b.vertex[1].texCoord = uvs.highLow();
+
+      b.vertex[2].location = rect.lowHigh().template cast<float>();
+      b.vertex[2].texCoord = uvs.lowHigh();
+
+      b.vertex[3].location = rect.high().template cast<float>();
+      b.vertex[3].texCoord = uvs.high();
+    }
+
+    // Draw stroke
+    drawRectStroke(rect, style);
+  }
+
+  template<typename T>
+  void RenderContext::drawRectStroke(const Nimble::RectT<T>& rect, const Style &style)
+  {
+    // Draw the outline
+    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+
+      Luminous::Style s = style;
+      s.stroke().clear();
+      s.setFillColor(style.strokeColor());
+      if(style.strokeProgram())
+        s.setFillProgram(*style.strokeProgram());
+      else
+        s.setDefaultFillProgram();
+
+      Nimble::Rectf outer = rect.template cast<float>();
+      Nimble::Rectf inner = outer;
+      outer.grow(0.5f*style.strokeWidth());
+      inner.shrink(0.5f*style.strokeWidth());
+
+      drawRectWithHole(outer, inner, s);
+    }
+  }
+
 }
 
 #endif // LUMINOUS_RENDER_CONTEXT_IMPL_HPP
