@@ -106,8 +106,8 @@ namespace Radiant
         return std::make_pair(s.value, s.ts);
       }
 
-      for (int i = 1; i < m_data.size(); ++i) {
-        int idx = (m_pos + i + 1) % m_data.size();
+      for (std::size_t i = 1; i < m_data.size(); ++i) {
+        std::size_t idx = (m_pos + i + 1) % m_data.size();
         if (m_data[idx].ts >= ts) {
           auto s0 = m_data[(m_pos + i) % m_data.size()];
           auto s1 = m_data[idx];
