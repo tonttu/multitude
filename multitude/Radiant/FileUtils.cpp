@@ -51,11 +51,9 @@
 
 namespace {
   Radiant::Mutex s_fileWriterMutex;
-  //std::function<void ()> s_fileWriterInit;
-  //std::function<void ()> s_fileWriterDeinit;
-  void (*s_fileWriterInit)(const QString &) = 0;
-  void (*s_fileWriterDeinit)() = 0;
-  volatile int s_fileWriterCount = 0;
+  bool s_fileWriterMountedRW = false;
+  bool s_fileWriterEnabled = false;
+  int s_fileWriterCount = 0;
 
 #ifdef RADIANT_LINUX
   /// @todo these functions are copied from TactionModule.cpp, these should be
@@ -208,7 +206,7 @@ namespace {
     }
   }
 
-  void filewriterInit()
+  void fileWriterInit()
   {
     /// We are looking at /etc/fstab instead of /proc/mounts, because we want
     /// to know if we prefer to have the root filesystem in ro-state, instead
@@ -222,8 +220,7 @@ namespace {
         QStringList mountOptions = re.cap(1).split(",");
         if(mountOptions.contains("ro")) {
           Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
-          Radiant::FileWriter::setInitFunction(&s_mountRW);
-          Radiant::FileWriter::setDeinitFunction(&s_mountRO);
+          s_fileWriterEnabled = true;
         }
       }
     }
@@ -236,31 +233,41 @@ namespace Radiant
   FileWriter::FileWriter(const QString & name)
   {
 #ifdef RADIANT_LINUX
-    MULTI_ONCE{ filewriterInit(); }
+    MULTI_ONCE{ fileWriterInit(); }
 #endif
-
-    if(!s_fileWriterInit) return;
+    if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
-    if(s_fileWriterCount++ == 0)
-      s_fileWriterInit(name);
+    s_fileWriterCount++;
+    if (!s_fileWriterMountedRW) {
+      s_mountRW(name);
+      s_fileWriterMountedRW = true;
+    }
   }
 
   FileWriter::~FileWriter()
   {
-    if(!s_fileWriterDeinit) return;
+    if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
-    if(--s_fileWriterCount == 0)
-      s_fileWriterDeinit();
+    if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+      s_mountRO();
+      s_fileWriterMountedRW = false;
+    }
   }
 
-  void FileWriter::setInitFunction(void (*f)(const QString &))
+  FileWriterMerger::FileWriterMerger()
   {
-    s_fileWriterInit = f;
+    Guard g(s_fileWriterMutex);
+    s_fileWriterCount++;
   }
 
-  void FileWriter::setDeinitFunction(void (*f)())
+  FileWriterMerger::~FileWriterMerger()
   {
-    s_fileWriterDeinit = f;
+    if (!s_fileWriterEnabled) return;
+    Guard g(s_fileWriterMutex);
+    if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+      s_mountRO();
+      s_fileWriterMountedRW = false;
+    }
   }
 
   /////////////////////////////////////////////////////////////////////

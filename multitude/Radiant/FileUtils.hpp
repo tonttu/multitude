@@ -33,12 +33,17 @@ namespace Radiant
   public:
     FileWriter(const QString & name);
     ~FileWriter();
+  };
 
-    /// with std::function<void ()> f GCC 4.4 gives internal compiler error:
-    /// /usr/include/c++/4.4/tr1_impl/functional:1535: internal compiler error: Segmentation fault
-    /// so we use plain function pointers
-    static void setInitFunction(void (*f)(const QString &));
-    static void setDeinitFunction(void (*f)());
+  /// Guard class that minimizes the number of mounts done by FileWriter.
+  /// This doesn't actually mount anything, but makes sure that nobody unmounts
+  /// the device during the lifetime of this object. In practice it will merge
+  /// multiple FileWriter guards to one by keeping the device mounted.
+  class RADIANT_API FileWriterMerger : public Patterns::NotCopyable
+  {
+  public:
+    FileWriterMerger();
+    ~FileWriterMerger();
   };
 
   /// @endcond
