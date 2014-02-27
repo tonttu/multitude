@@ -94,12 +94,7 @@ namespace Radiant
     {
       (void) isapplication;
 
-      assert(strlen(module) < 128);
-      char buf[312];
-
-      sprintf(buf, "%s/.%s", getUserHomePath().toUtf8().data(), module);
-
-      return buf;
+      return QString("%1/.%2").arg(getUserHomePath(), module);
     }
 
     void * openPlugin(const char * path)
