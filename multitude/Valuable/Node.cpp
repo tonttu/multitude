@@ -411,7 +411,7 @@ namespace Valuable
   }
 #endif
 
-  bool Node::saveToFileXML(const QString & filename, unsigned int opts)
+  bool Node::saveToFileXML(const QString & filename, unsigned int opts) const
   {
     bool ok = Serializer::serializeXML(filename, this, opts);
     if (!ok) {
@@ -420,7 +420,7 @@ namespace Valuable
     return ok;
   }
 
-  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts)
+  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts) const
   {
     XMLArchive archive(opts);
     archive.setRoot(serialize(archive));
