@@ -216,12 +216,15 @@ namespace Valuable
     , m_eventSources(std::move(node.m_eventSources))
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_attributeListening(std::move(node.m_attributeListening))
-    , m_id(std::move(node.m_id))
+    , m_id(nullptr, "id", node.m_id)
     , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
   {
+    node.m_id.m_host = nullptr;
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
   }
 
   Node & Node::operator=(Node && node)
@@ -233,11 +236,18 @@ namespace Valuable
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_attributeListening = std::move(node.m_attributeListening);
-    m_id = std::move(node.m_id);
     m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
+
+    node.m_id.m_host = nullptr;
+    m_id = node.m_id.value();
+    m_id.setAsDefaults();
+    m_id.m_host = nullptr;
+    m_id.setName("id");
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
     return *this;
   }
 
