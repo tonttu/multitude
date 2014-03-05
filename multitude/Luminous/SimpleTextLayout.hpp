@@ -48,6 +48,9 @@ namespace Luminous
     LUMINOUS_API void setLetterSpacing(const Valuable::StyleValue & spacing);
     LUMINOUS_API const Valuable::StyleValue & letterSpacing() const;
 
+    LUMINOUS_API void setIndent(float indent);
+    LUMINOUS_API float indent() const;
+
     /// If the QTextLayout is modified, it's required to call invalidate() manually
     LUMINOUS_API QTextLayout & layout();
     LUMINOUS_API const QTextLayout & layout() const;
