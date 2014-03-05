@@ -28,8 +28,10 @@ namespace Luminous
     /// Makes a new layout object based on another SimpleTextLayout,
     /// doesn't copy anything from Valuable::Node
     LUMINOUS_API SimpleTextLayout(const SimpleTextLayout & that);
+    LUMINOUS_API SimpleTextLayout(SimpleTextLayout && that);
     LUMINOUS_API SimpleTextLayout(const QString & text, const Nimble::SizeF & maximumSize,
                                   const QFont & font, const QTextOption & textOption);
+    LUMINOUS_API SimpleTextLayout & operator=(SimpleTextLayout && that);
     LUMINOUS_API virtual ~SimpleTextLayout();
 
     LUMINOUS_API void setText(const QString & text);
@@ -60,7 +62,7 @@ namespace Luminous
 
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 } // namespace Luminous
 
