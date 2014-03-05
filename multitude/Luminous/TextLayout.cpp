@@ -155,7 +155,6 @@ namespace Luminous
     : Node(std::move(t))
     , m_d(t.m_d)
   {
-    eventAddOut("layout");
     t.m_d = nullptr;
   }
 
