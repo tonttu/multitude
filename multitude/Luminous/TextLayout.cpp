@@ -148,14 +148,12 @@ namespace Luminous
 
   TextLayout::~TextLayout()
   {
-    delete m_d;
   }
 
   TextLayout::TextLayout(TextLayout && t)
     : Node(std::move(t))
-    , m_d(t.m_d)
+    , m_d(std::move(t.m_d))
   {
-    t.m_d = nullptr;
   }
 
   TextLayout & TextLayout::operator=(TextLayout && t)

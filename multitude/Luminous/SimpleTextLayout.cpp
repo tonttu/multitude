@@ -291,6 +291,19 @@ namespace Luminous
     m_d->m_lineHeight = that.m_d->m_lineHeight;
   }
 
+  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that)
+    : TextLayout(std::move(that)),
+      m_d(std::move(that.m_d))
+  {
+  }
+
+  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that)
+  {
+    TextLayout::operator=(std::move(that));
+    m_d = std::move(that.m_d);
+    return *this;
+  }
+
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::SizeF & maximumSize,
                                      const QFont & font, const QTextOption & textOption)
     : TextLayout(maximumSize)
@@ -303,7 +316,6 @@ namespace Luminous
 
   SimpleTextLayout::~SimpleTextLayout()
   {
-    delete m_d;
   }
 
   void SimpleTextLayout::setText(const QString & text)

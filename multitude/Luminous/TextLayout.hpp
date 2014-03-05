@@ -102,7 +102,7 @@ namespace Luminous {
     LUMINOUS_API virtual void generateInternal() const = 0;
 
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 } // namespace Luminous
 
