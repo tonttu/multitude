@@ -30,6 +30,7 @@
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Splines.hpp>
+#include <Nimble/ClipStack.hpp>
 
 #include <Radiant/Defines.hpp>
 
@@ -216,6 +217,8 @@ namespace Luminous
     void pushClipRect(const Nimble::Rectangle & r);
     /// Pops a clipping rectangle from the context
     void popClipRect();
+
+    const Nimble::ClipStack & clipStack() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     /// @param area Area to check
