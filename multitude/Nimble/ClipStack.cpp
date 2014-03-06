@@ -122,4 +122,12 @@ bool ClipStack::isVisible(const Nimble::Vector2 & p) const
   return true;
 }
 
+Rect ClipStack::boundingBox() const
+{
+  if (m_d->m_stack.empty())
+    return Rect();
+
+  return m_d->m_stack.back().m_compoundedBoundingBox;
+}
+
 }

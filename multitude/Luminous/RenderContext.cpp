@@ -14,8 +14,6 @@
 
 #include "RenderCommand.hpp"
 
-#include <Nimble/ClipStack.hpp>
-
 // Luminous v2
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -407,6 +405,12 @@ namespace Luminous
   {
     assert(!m_data->m_clipStacks.empty());
     m_data->m_clipStacks.top().pop();
+  }
+
+  const Nimble::ClipStack & RenderContext::clipStack() const
+  {
+    assert(!m_data->m_clipStacks.empty());
+    return m_data->m_clipStacks.top();
   }
 
   bool RenderContext::isVisible(const Nimble::Rectangle & area)

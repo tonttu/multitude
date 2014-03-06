@@ -54,6 +54,8 @@ namespace Nimble
     /// @return true if the point is visible: otherwise false
     bool isVisible(const Nimble::Vector2 & p) const;
 
+    Nimble::Rect boundingBox() const;
+
   private:
     class D;
     D * m_d;
