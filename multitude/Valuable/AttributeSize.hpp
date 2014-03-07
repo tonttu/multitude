@@ -86,6 +86,14 @@ namespace Valuable {
       return *m_values[1];
     }
 
+    /// Returns true if width or height is defined on the given layer
+    /// @param layer Layer to inspect
+    /// @return False if neither width nor height is defined on given layer
+    virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
+    {
+      return m_values[0]->isValueDefinedOnLayer(layer) || m_values[1]->isValueDefinedOnLayer(layer);
+    }
+
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
     {
       if(ok) *ok = true;
