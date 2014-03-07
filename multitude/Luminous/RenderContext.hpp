@@ -364,6 +364,18 @@ namespace Luminous
     void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
 
     /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param max Top right corner of a rectangle
+    /// @param style Stroke, fill and texturing options
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style));
+
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param size Rectangle size
+    /// @param style Stroke, fill and texturing options
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style));
+
+    /// Draws a rectangle
     /// @param rext Rectangle to draw
     /// @param style Stroke, fill and texturing options
     template<typename T>

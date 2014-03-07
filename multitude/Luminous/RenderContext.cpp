@@ -798,6 +798,16 @@ namespace Luminous
   /// Drawing utility commands
   //////////////////////////////////////////////////////////////////////////
 
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style & style)
+  {
+    drawRect(Nimble::Rect(min, max), style);
+  }
+
+  void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style)
+  {
+    drawRect(Nimble::Rect(min, size), style);
+  }
+
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
     assert(vertices);
