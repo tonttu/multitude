@@ -267,9 +267,9 @@ namespace Radiant
         std::shared_ptr<Task> task = nextTask->second;
         m_reserved.insert(task);
         double waitTime = wait.secondsD() * 1000.0;
-        if(waitTime > std::numeric_limits<unsigned int>::max())
-          waitTime = std::numeric_limits<unsigned int>::max() - 1;
-        m_wait.wait(m_mutexWait, (unsigned int)waitTime);
+        unsigned int waitTimei = waitTime > std::numeric_limits<unsigned int>::max()
+            ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTime);
+        m_wait.wait(m_mutexWait, waitTimei);
         m_reserved.erase(task);
       }
     }
