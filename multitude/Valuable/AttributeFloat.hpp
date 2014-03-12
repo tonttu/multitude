@@ -117,11 +117,9 @@ namespace Valuable
       {
         if (!this->m_valueSet[Attribute::USER])
           return;
-        const T current = this->value(Attribute::USER);
-        float factor = m_factors[Attribute::USER];
+        m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
+        this->setValue(this->value(Attribute::USER), Attribute::DEFAULT);
         clearValue(Attribute::USER);
-        this->setValue(current, Attribute::DEFAULT);
-        m_factors[Attribute::DEFAULT] = factor;
       }
 
   private:
