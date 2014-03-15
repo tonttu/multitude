@@ -414,7 +414,9 @@ namespace Nimble {
   typedef SizeT<int> Size;
   /// Two-dimensional size using floating-point precision
   typedef SizeT<float> SizeF;
-  
+  /// Two-dimensional size using integer precision
+  typedef SizeT<int> SizeI;
+
 } // namespace Nimble
 
 #endif // NIMBLE_SIZE_HPP
