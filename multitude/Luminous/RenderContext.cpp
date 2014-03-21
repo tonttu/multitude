@@ -478,7 +478,7 @@ namespace Luminous
     };
 
     // Draw fill
-    if (style.fillColor().w > 0.f) {
+    if (style.hasFill()) {
       const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
       auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_FAN, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
       // Center is the first vertex in a fan
@@ -488,7 +488,7 @@ namespace Luminous
     }
 
     // Draw stroke
-    if(style.strokeWidth() > 0.f && style.strokeColor().alpha() > 0.f) {
+    if (style.hasStroke()) {
       Luminous::Style s = style;
       s.stroke().clear();
       s.setFillColor(style.strokeColor());
