@@ -23,6 +23,7 @@
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcessFilter.hpp>
+
 #include "FrameBufferGL.hpp"
 #include "BufferGL.hpp"
 #include "CullMode.hpp"
@@ -37,6 +38,12 @@
 #include <QRectF>
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
+
+namespace Nimble
+  {
+  class ClipStack;
+
+  }
 
 namespace Luminous
 {
@@ -216,7 +223,15 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
+    /// Get the active clip stack. The clip stack is only valid during
+    /// rendering. Do not call this function if the clip stack is empty.
+    /// @return current clip stack
+    /// @sa isClipStackEmpty()
     const Nimble::ClipStack & clipStack() const;
+
+    /// Check if the current clip stack is empty.
+    /// @return true if the clip stack is empty; otherwise false
+    bool isClipStackEmpty() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     /// @param area Area to check

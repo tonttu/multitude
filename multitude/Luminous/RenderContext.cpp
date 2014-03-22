@@ -413,6 +413,11 @@ namespace Luminous
     return m_data->m_clipStacks.top();
   }
 
+  bool RenderContext::isClipStackEmpty() const
+  {
+    return m_data->m_clipStacks.empty();
+  }
+
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
     if(m_data->m_clipStacks.empty())
