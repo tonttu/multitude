@@ -66,9 +66,9 @@ namespace Luminous
     Nimble::Vector3 brightness() const;
     void setBrightness(const Nimble::Vector3 & brightness);
 
-    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
-    virtual bool deserialize(const Valuable::ArchiveElement & element);
-    virtual bool readElement(const Valuable::ArchiveElement &);
+//    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
+//    virtual bool deserialize(const Valuable::ArchiveElement & element);
+//    virtual bool readElement(const Valuable::ArchiveElement &);
 
     const RGBCube & asRGBCube() const;
 
