@@ -109,6 +109,10 @@ namespace Valuable
     void setClearOnDeserialize(bool v) { m_clearOnDeserialize = v; }
     bool clearOnDeserialize() const { return m_clearOnDeserialize; }
 
+    // Make public to allow container transmission to be controlled from
+    // outside (to make AttributeContainers usable over Mushy 1.5)
+    virtual void emitChange() OVERRIDE { Attribute::emitChange(); }
+
   protected:
     AttributeContainerT() : m_clearOnDeserialize(true) {}
 

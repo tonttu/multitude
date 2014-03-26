@@ -61,7 +61,7 @@ namespace {
     return t;
   }
 
-  class ColorSpline : Valuable::Node
+  class ColorSpline : public Valuable::Node
   {
   public:
     ColorSpline(Valuable::Node* host, const QByteArray& name, bool transit = false);
@@ -71,7 +71,7 @@ namespace {
     void changeUniform(float v);
 
     bool isIdentity() const;
-    int nearestControlPoint(float x, Nimble::Vector2f & controlPointOut);
+    int nearestControlPoint(float x, Nimble::Vector2f & controlPointOut) const;
     float value(float x) const;
 
     const std::vector<Nimble::Vector2f> & points() const { return m_points; }
@@ -83,6 +83,11 @@ namespace {
     bool deserialize(const QByteArray & str);
 
     void fixEdges();
+
+    void changed() {
+      m_points.emitChange();
+      m_intermediatePoints.emitChange();
+    }
 
   private:
     void update();
@@ -96,6 +101,8 @@ namespace {
     , m_points(this, "points")
     , m_intermediatePoints(this, "intermediate-points")
   {
+    m_points.addListener([this] { emitChange(); });
+    m_intermediatePoints.addListener([this] { emitChange(); });
   }
 
   void ColorSpline::clear()
@@ -130,7 +137,7 @@ namespace {
     return true;
   }
 
-  int ColorSpline::nearestControlPoint(float x, Nimble::Vector2f & controlPointOut)
+  int ColorSpline::nearestControlPoint(float x, Nimble::Vector2f & controlPointOut) const
   {
     if (m_points->empty())
       return -1;
@@ -334,6 +341,9 @@ namespace Luminous
     m_d->m_gamma.addListener(std::bind(&ColorCorrection::changed, this));
     m_d->m_contrast.addListener(std::bind(&ColorCorrection::changed, this));
     m_d->m_brightness.addListener(std::bind(&ColorCorrection::changed, this));
+
+    for(auto & colorSpline : m_d->m_splines)
+      colorSpline->addListener([this] { eventSend("changed"); });
   }
 
   ColorCorrection::~ColorCorrection()
@@ -637,6 +647,10 @@ namespace Luminous
 
   void ColorCorrection::changed()
   {
+    // Notify AttributeContainers have changed
+    for(auto & colorSpline : m_d->m_splines)
+      colorSpline->changed();
+
     eventSend("changed");
   }
 
