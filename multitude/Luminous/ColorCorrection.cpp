@@ -589,14 +589,14 @@ namespace Luminous
 //    return element;
 //  }
 
-//  bool ColorCorrection::deserialize(const Valuable::ArchiveElement & element)
-//  {
-//    bool b = Node::deserialize(element);
-//    for (int c = 0; c < 3; ++c)
-//      m_d->m_splines[c].fixEdges();
-//    checkChanged();
-//    return b;
-//  }
+  bool ColorCorrection::deserialize(const Valuable::ArchiveElement & element)
+  {
+    bool b = Node::deserialize(element);
+    for (int c = 0; c < 3; ++c)
+      m_d->m_splines[c]->fixEdges();
+    checkChanged();
+    return b;
+  }
 
 //  bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)
 //  {

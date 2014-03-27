@@ -66,8 +66,11 @@ namespace Luminous
     Nimble::Vector3 brightness() const;
     void setBrightness(const Nimble::Vector3 & brightness);
 
+    /// @todo this breaks backwards compatibility. The firmware update process
+    /// should migrate the configuration from screen.xml to separate
+    /// color-correction.xml (see PictureModule::save())
 //    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
-//    virtual bool deserialize(const Valuable::ArchiveElement & element);
+    virtual bool deserialize(const Valuable::ArchiveElement & element);
 //    virtual bool readElement(const Valuable::ArchiveElement &);
 
     const RGBCube & asRGBCube() const;
