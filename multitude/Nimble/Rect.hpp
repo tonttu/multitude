@@ -89,7 +89,7 @@ namespace Nimble {
     template<typename S>
     RectT<S> cast() const
     {
-      return RectT<S>(m_low.cast<S>(), m_high.cast<S>());
+      return RectT<S>(m_low.template cast<S>(), m_high.template cast<S>());
     }
 
     /// Resets both low and high point to origin.
