@@ -16,7 +16,7 @@ namespace Radiant
 
     // Typedefs
 
-    typedef typename std::vector<std::pair<const Key, T>, Allocator> container;
+    typedef typename std::vector<std::pair<Key, T>, Allocator> container;
 
     typedef Key key_type;
     typedef T mapped_type;
