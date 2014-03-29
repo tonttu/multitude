@@ -129,7 +129,7 @@ namespace Valuable {
     }
 
     virtual bool handleShorthand(const Valuable::StyleValue & value,
-                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
+                                 Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
     {
       if (m_sources.empty())
         return false;

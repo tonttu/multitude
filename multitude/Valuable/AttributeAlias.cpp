@@ -154,7 +154,7 @@ namespace Valuable
       m_attribute->clearValue(layout);
   }
 
-  bool AttributeAlias::handleShorthand(const StyleValue & value, QMap<Attribute *, StyleValue> & expanded)
+  bool AttributeAlias::handleShorthand(const StyleValue & value, Radiant::ArrayMap<Attribute *, StyleValue> & expanded)
   {
     if (m_attribute)
       return m_attribute->handleShorthand(value, expanded);

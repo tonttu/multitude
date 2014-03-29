@@ -19,6 +19,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Radiant/ArrayMap.hpp>
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/MemCheck.hpp>
 
@@ -324,7 +325,7 @@ namespace Valuable
     /// @returns true if shorthand was successfully handled
     /// @sa http://www.w3.org/TR/CSS21/about.html#shorthand
     virtual bool handleShorthand(const Valuable::StyleValue & value,
-                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
+                                 Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
 
 
     /// Check if the given layer defines a value
