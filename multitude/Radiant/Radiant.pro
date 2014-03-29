@@ -1,6 +1,7 @@
 
 include(../multitude.pri)
 
+HEADERS += ArrayMap.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
