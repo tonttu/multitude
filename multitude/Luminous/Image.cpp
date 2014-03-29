@@ -1111,7 +1111,7 @@ namespace Luminous
     auto bytesRead = file.read(m_d->ptr, size);
     if (bytesRead != size) {
       Radiant::error("CompressedImage::loadImage # Failed to read image");
-      delete m_d->ptr;
+      delete[] m_d->ptr;
       m_d->ptr = 0;
     }
     m_d->size = size;
