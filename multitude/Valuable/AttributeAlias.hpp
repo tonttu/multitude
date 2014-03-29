@@ -69,7 +69,7 @@ namespace Valuable
 
     virtual void clearValue(Layer layout);
 
-    virtual bool handleShorthand(const StyleValue & value, QMap<Attribute *, StyleValue> & expanded);
+    virtual bool handleShorthand(const StyleValue & value, Radiant::ArrayMap<Attribute *, StyleValue> & expanded);
 
     virtual bool isValueDefinedOnLayer(Layer layer) const;
 

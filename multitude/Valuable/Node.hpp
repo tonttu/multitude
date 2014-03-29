@@ -229,7 +229,7 @@ namespace Valuable
     void debugDump();
 
     /// Container for attributes, key is the attribute name
-    typedef std::map<QByteArray, Attribute *> container;
+    typedef Radiant::ArrayMap<QByteArray, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;

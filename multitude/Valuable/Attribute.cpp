@@ -338,7 +338,7 @@ namespace Valuable
   }
 
   bool Attribute::handleShorthand(const StyleValue &,
-                                  QMap<Attribute *, StyleValue> &)
+                                  Radiant::ArrayMap<Attribute *, StyleValue> &)
   {
     return false;
   }

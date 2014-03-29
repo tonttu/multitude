@@ -163,7 +163,7 @@ namespace Valuable {
     }
 
     bool handleShorthand(const Valuable::StyleValue & value,
-                         QMap<Valuable::Attribute *, Valuable::StyleValue> & expanded) OVERRIDE
+                         Radiant::ArrayMap<Valuable::Attribute *, Valuable::StyleValue> & expanded) OVERRIDE
     {
 
       if (value.size() == 1 && value.isNumber()) {

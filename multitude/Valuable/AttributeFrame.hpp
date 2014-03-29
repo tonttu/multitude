@@ -234,7 +234,7 @@ namespace Valuable
     }
 
     bool handleShorthand(const StyleValue & value,
-                         QMap<Attribute *, StyleValue> & expanded) OVERRIDE
+                         Radiant::ArrayMap<Attribute *, StyleValue> & expanded) OVERRIDE
     {
       if (value.size() > 0 && value.size() < 5) {
         for (int i = 0; i < 4; ++i) {
