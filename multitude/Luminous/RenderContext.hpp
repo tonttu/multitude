@@ -881,6 +881,21 @@ namespace Luminous
     RenderContext * m_rc;
   };
 
+  class ClipStackGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Constructor. Automatically calls RenderContext::pushClipStack()
+    /// @param r render context
+    ClipStackGuard(RenderContext& r) : m_rc(&r) { r.pushClipStack(); }
+    /// Move constructor
+    ClipStackGuard(ClipStackGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popClipStack()
+    ~ClipStackGuard() { if(m_rc) m_rc->popClipStack(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
   /// This class provides a simple guard for setting the active view transform. It will
   /// automatically pop the transform in its destructor so the user doesn't need to
   /// remember to do it manually. It is equivalent to calling
