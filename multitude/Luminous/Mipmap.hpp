@@ -114,6 +114,9 @@ namespace Luminous
     LUMINOUS_API static QString cacheFileName(const QString & src, int level = -1,
                                               const QString & suffix = "png");
 
+    /// Returns path to dir that contains all cached mipmaps
+    LUMINOUS_API static QString imageCachePath();
+
   private:
     Mipmap(const QString & filenameAbs);
 

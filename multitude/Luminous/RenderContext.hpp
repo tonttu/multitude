@@ -23,6 +23,7 @@
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcessFilter.hpp>
+
 #include "FrameBufferGL.hpp"
 #include "BufferGL.hpp"
 #include "CullMode.hpp"
@@ -37,6 +38,12 @@
 #include <QRectF>
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
+
+namespace Nimble
+  {
+  class ClipStack;
+
+  }
 
 namespace Luminous
 {
@@ -218,7 +225,15 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
+    /// Get the active clip stack. The clip stack is only valid during
+    /// rendering. Do not call this function if the clip stack is empty.
+    /// @return current clip stack
+    /// @sa isClipStackEmpty()
     const Nimble::ClipStack & clipStack() const;
+
+    /// Check if the current clip stack is empty.
+    /// @return true if the clip stack is empty; otherwise false
+    bool isClipStackEmpty() const;
 
     /// Checks if the given rectangle is visible (not clipped).
     /// @param area Area to check
@@ -367,6 +382,18 @@ namespace Luminous
     /// @tparam InputIterator Iterator to vertices. Needs to have operator++ and operator*
     template <typename InputIterator>
     void drawPoints(InputIterator begin, size_t numPoints, const Luminous::Style & style);
+
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param max Top right corner of a rectangle
+    /// @param style Stroke, fill and texturing options
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style));
+
+    /// Draws a rectangle
+    /// @param min Bottom left corner of a rectangle
+    /// @param size Rectangle size
+    /// @param style Stroke, fill and texturing options
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style));
 
     /// Draws a rectangle
     /// @param rext Rectangle to draw
@@ -866,6 +893,21 @@ namespace Luminous
     OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popOpacity().
     ~OpacityGuard() { if(m_rc) m_rc->popOpacity(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  class ClipStackGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Constructor. Automatically calls RenderContext::pushClipStack()
+    /// @param r render context
+    ClipStackGuard(RenderContext& r) : m_rc(&r) { r.pushClipStack(); }
+    /// Move constructor
+    ClipStackGuard(ClipStackGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popClipStack()
+    ~ClipStackGuard() { if(m_rc) m_rc->popClipStack(); }
 
   private:
     RenderContext * m_rc;

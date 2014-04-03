@@ -127,6 +127,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), 1, 1);
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       }
     }
@@ -217,6 +218,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), texture.height(), 1);
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       } else {
         m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
@@ -365,6 +367,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), texture.height(), texture.depth());
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       }
     }

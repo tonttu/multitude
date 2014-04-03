@@ -530,7 +530,6 @@ namespace Luminous
   bool RenderDriverGL::initialize()
   {
     setDefaultState();
-    glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     return true;
   }
 

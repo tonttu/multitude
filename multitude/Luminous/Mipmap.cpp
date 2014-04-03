@@ -36,6 +36,9 @@ namespace
   const unsigned int s_smallestImage = 4;
   const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
+  /// Update this when there is incompatible change in imagecache
+  const unsigned int s_imageCacheVersion = 1;
+
   bool s_dxtSupported = true;
 
   /// Special time values in MipmapLevel::lastUsed
@@ -1010,17 +1013,6 @@ namespace Luminous
   {
     QFileInfo fi(src);
 
-    static QString s_basePath;
-
-    MULTI_ONCE {
-      QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/imagecache";
-      if(!QDir().mkpath(basePath)) {
-        basePath = QDir::tempPath() + "/cornerstone-imagecache";
-        QDir().mkpath(basePath);
-      }
-      s_basePath = basePath;
-    }
-
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
     const qint64 s = fi.size();
@@ -1036,9 +1028,25 @@ namespace Luminous
     const QString postfix = level < 0 ? QString(".%1").arg(suffix) :
         QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
 
-    const QString fullPath = s_basePath + QString("/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
+    const QString fullPath = imageCachePath() + QString("/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
 
     return fullPath;
+  }
+
+  static QString s_basePath;
+  QString Mipmap::imageCachePath()
+  {
+    MULTI_ONCE {
+      QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
+            Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
+      if(!QDir().mkpath(basePath)) {
+        basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
+        QDir().mkpath(basePath);
+      }
+      s_basePath = basePath;
+    }
+
+    return s_basePath;
   }
 
   void Mipmap::startLoading(bool compressedMipmaps)

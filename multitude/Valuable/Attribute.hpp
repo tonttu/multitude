@@ -528,9 +528,8 @@ namespace Valuable
     {
       if (!m_valueSet[USER])
         return;
-      const T current = value(USER);
+      setValue(value(USER), DEFAULT);
       clearValue(USER);
-      setValue(current, DEFAULT);
     }
 
     virtual QString asString(bool * const ok, Layer layer) const = 0;

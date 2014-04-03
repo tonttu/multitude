@@ -269,7 +269,13 @@ namespace Valuable
       const QByteArray part1 = name.left(slashIndex);
       const QByteArray part2 = name.mid(slashIndex + 1);
 
-      const Attribute * attr = attribute(part1);
+      Attribute * attr;
+      if(part1 == "..") {
+        attr = host();
+      } else {
+        attr = attribute(part1);
+      }
+
       if(attr) {
         return attr->attribute(part2);
       }

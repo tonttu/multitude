@@ -372,9 +372,10 @@ namespace Radiant {
   /** @param c The configuration object to fill.
       @param buf The configuration string.
       @param n The length of the configuration string
+      @param sourceName filename or other source identification that is used with error messages
       @return false if nothing was read, otherwise true
   */
-  bool  RADIANT_API readConfig(Config *c, const char * buf, int n);
+  bool  RADIANT_API readConfig(Config *c, const char * buf, int n, const QString & sourceName);
 
   /// Write the given configuration into a file
   /// @param c Configuration object to write
