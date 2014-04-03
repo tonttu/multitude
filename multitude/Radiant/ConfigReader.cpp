@@ -14,9 +14,10 @@
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <QFile>
+
 #include <math.h>
 #include <stdlib.h>
-
 
 #include <fstream>
 #include <iostream>
@@ -617,25 +618,16 @@ namespace Radiant {
   {
     const char * fname = "Radiant::readConfig";
 
-    FILE * in = fopen(filename, "rb");
+    QFile in(filename);
 
-    if(!in) {
+    if(!in.open(QIODevice::ReadOnly)) {
       fprintf(stderr, "%s # Failed to open file \"%s\"\n", fname, filename);
       return false;
     }
 
-    fseek(in, 0, SEEK_END);
-    int size = ftell(in);
-    fseek(in, 0, SEEK_SET);
+    QByteArray buf = in.readAll();
 
-
-
-    std::vector<char> buf;
-    buf.resize(size);    
-    size_t n = fread(&buf[0], 1, size, in);
-    fclose(in);
-
-    return n <= 0 ? true : readConfig(c, &buf[0], size, filename);
+    return readConfig(c, buf.data(), buf.size(), filename);
   }
 
   bool writeConfig(Config *config, const char *filename)
