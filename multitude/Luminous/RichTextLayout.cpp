@@ -47,6 +47,7 @@
 #include <QTextBlock>
 #include <QAbstractTextDocumentLayout>
 #include <QTextList>
+#include <QThread>
 
 #include <memory>
 
@@ -65,6 +66,7 @@ namespace Luminous
   public:
     RichTextLayout & m_host;
     std::unique_ptr<QTextDocument> m_doc;
+    Qt::HANDLE m_docThread;
     Radiant::Mutex m_generateMutex;
     QString m_listBullet; // Bullet used in QTextLists
 
@@ -77,6 +79,7 @@ namespace Luminous
 
   RichTextLayout::D::D(RichTextLayout & host)
     : m_host(host)
+    , m_docThread(Qt::HANDLE())
     , m_generateMutex(true)
     , m_listBullet("∙")
   {
@@ -105,10 +108,11 @@ namespace Luminous
 
   QTextDocument & RichTextLayout::D::doc()
   {
-    if (m_doc)
+    if (m_doc && m_docThread == QThread::currentThreadId())
       return *m_doc;
 
-    m_doc.reset(new QTextDocument());
+    m_doc.reset(m_doc ? m_doc->clone() : new QTextDocument());
+    m_docThread = QThread::currentThreadId();
 
     QTextOption textOption = m_doc->defaultTextOption();
     textOption.setUseDesignMetrics(true);
@@ -118,8 +122,8 @@ namespace Luminous
     font.setHintingPreference(QFont::PreferNoHinting);
     m_doc->setDefaultFont(font);
 
-    connect(m_doc.get(), SIGNAL(contentsChanged()), this, SLOT(changed()));
-    connect(m_doc.get(), SIGNAL(documentLayoutChanged()), this, SLOT(changed()));
+    connect(m_doc.get(), SIGNAL(contentsChanged()), this, SLOT(changed()), Qt::DirectConnection);
+    connect(m_doc.get(), SIGNAL(documentLayoutChanged()), this, SLOT(changed()), Qt::DirectConnection);
     return *m_doc;
   }
 
@@ -268,6 +272,8 @@ namespace Luminous
 
   const QTextDocument & RichTextLayout::document() const
   {
+    if (m_d->m_doc)
+      return *m_d->m_doc;
     return m_d->doc();
   }
 
