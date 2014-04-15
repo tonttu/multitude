@@ -288,7 +288,7 @@ namespace Luminous
 
       // Set proper alignment
       int alignment = 8;
-      while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
+      while ((texture.lineSizePixels() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
