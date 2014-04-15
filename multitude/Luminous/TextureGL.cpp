@@ -118,7 +118,7 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = 
+      bool recreate =
         (m_target != GL_TEXTURE_1D) ||
         (m_size[0] != texture.width()) ||
         (m_internalFormat != texture.internalFormat()) ||
@@ -209,8 +209,7 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = 
-          (m_target != GL_TEXTURE_2D && m_target != GL_TEXTURE_2D_MULTISAMPLE) ||
+      bool recreate =
           (m_size[0] != texture.width() || m_size[1] != texture.height()) ||
           (m_internalFormat != texture.internalFormat()) ||
           (m_samples != texture.samples());
@@ -311,22 +310,22 @@ namespace Luminous
         m_dirtyRegion2D = QRegion();
       } else {
         for(const QRect & rect : m_dirtyRegion2D.rects()) {
-          const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
-          // Number of scanlines to upload
-          const size_t scanLines = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerScanline, 1, rect.height());
+          const int bytesPerRectScanline = rect.width() * texture.dataFormat().bytesPerPixel();
 
-          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
-            texture.dataFormat().bytesPerPixel();
+          const int scanlinesToUpload = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerRectScanline, 1, rect.height());
+
+          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.lineSizePixels()) *
+                      texture.dataFormat().bytesPerPixel();
 
           // Upload data
-          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
+          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanlinesToUpload,
             texture.dataFormat().layout(), texture.dataFormat().type(), data);
           GLERROR("TextureGL::upload # glTexSubImage2D");
-          uploaded += bytesPerScanline * scanLines;
-          bytesFree -= bytesPerScanline * scanLines;
+          uploaded += bytesPerRectScanline * scanlinesToUpload;
+          bytesFree -= bytesPerRectScanline * scanlinesToUpload;
 
-          if (int(scanLines) != rect.height()) {
-            m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
+          if (int(scanlinesToUpload) != rect.height()) {
+            m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanlinesToUpload);
             break;
           } else {
             m_dirtyRegion2D -= rect;
