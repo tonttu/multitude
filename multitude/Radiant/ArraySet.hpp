@@ -1,3 +1,6 @@
+#ifndef RADIANT_ARRAY_SET_HPP
+#define RADIANT_ARRAY_SET_HPP
+
 #include <vector>
 
 #include <QByteArray>
@@ -324,3 +327,5 @@ namespace Radiant
     a.swap(b);
   }
 }
+
+#endif // RADIANT_ARRAY_SET_HPP
