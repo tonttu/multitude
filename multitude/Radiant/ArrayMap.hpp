@@ -1,3 +1,6 @@
+#ifndef RADIANT_ARRAY_MAP_HPP
+#define RADIANT_ARRAY_MAP_HPP
+
 #include <vector>
 
 namespace Radiant
@@ -267,3 +270,4 @@ namespace Radiant
   }
 }
 
+#endif // RADIANT_ARRAY_MAP_HPP
