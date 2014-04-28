@@ -134,7 +134,7 @@ namespace Radiant
     int compare(const ArraySet & set) const;
 
     bool contains(const Key & key) const;
-    bool contains(const ArraySet & set) const;
+    bool containsAll(const ArraySet & set) const;
 
   private:
     container m_data;
@@ -302,7 +302,7 @@ namespace Radiant
   }
 
   template <typename Key, typename Allocator>
-  bool ArraySet<Key, Allocator>::contains(const ArraySet & set) const
+  bool ArraySet<Key, Allocator>::containsAll(const ArraySet & set) const
   {
     using Radiant::compare;
     for (std::size_t a = 0, b = 0, ae = m_data.size(), be = set.m_data.size(); b < be; ) {
