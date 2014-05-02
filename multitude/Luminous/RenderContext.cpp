@@ -876,7 +876,11 @@ namespace Luminous
     }
   }
 
-  //
+  void RenderContext::javascriptDrawRect(const Nimble::Rectf &rect, const Style &style)
+  {
+    drawRect(rect, style);
+  }
+
   void RenderContext::drawRectWithHole(const Nimble::Rectf & area,
                                        const Nimble::Rectf & hole,
                                        const Luminous::Style & style)
