@@ -462,6 +462,13 @@ namespace Luminous {
     /// @param dpi dots-per-inch of the display
     void setDpi(float dpi);
 
+    /// Set if vertical sync should be enabled.
+    /// @param v true to enabled vertical sync; false to disable it
+    void setIsVSyncEnabled(bool v) { m_vsync = v; }
+    /// Is vertical sync enabled?
+    /// @return true if vertical sync is enabled; otherwise false
+    bool isVSyncEnabled() const { return m_vsync; }
+
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
     /// Is the hardware color-correction enabled. Hardware color-correction is
@@ -482,6 +489,7 @@ namespace Luminous {
     Valuable::AttributeFloat m_dpi;
     Valuable::AttributeBool m_hwColorCorrectionEnabled;
     HardwareColorCorrection m_hwColorCorrection;
+    Valuable::AttributeBool m_vsync;
 
     bool m_edited;
   };
