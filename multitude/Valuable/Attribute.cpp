@@ -109,7 +109,7 @@ namespace Valuable
     if(m_host)
       return m_host->path() + "/" + m_name;
 
-    return "/" + m_name;
+    return m_name;
   }
 
   void Attribute::eventProcess(const QByteArray &, Radiant::BinaryData & )
