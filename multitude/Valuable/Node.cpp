@@ -258,12 +258,10 @@ namespace Valuable
 
   Attribute * Node::attribute(const QByteArray & name) const
   {
-    size_t slashIndex = name.indexOf('/');
+    const int slashIndex = name.indexOf('/');
 
-    if(slashIndex == std::string::npos) {
-      container::const_iterator it = m_attributes.find(name);
-
-      return it == m_attributes.end() ? 0 : it->second;
+    if(slashIndex == -1) {
+      return m_attributes.value(name);
     }
     else {
       const QByteArray part1 = name.left(slashIndex);
