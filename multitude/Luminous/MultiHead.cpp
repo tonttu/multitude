@@ -451,8 +451,8 @@ namespace Luminous
       m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
-      m_edited(false),
-      m_vsync(this, "vsync", false)
+      m_vsync(this, "vsync", false),
+      m_edited(false)
   {
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
