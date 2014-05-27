@@ -45,6 +45,17 @@ namespace Valuable
       return *this;
     }
 
+    template<typename U>
+    inline void setValue(const U & that)
+    {
+      *this = that;
+    }
+
+    const GridType & value() const
+    {
+      return m_grid;
+    }
+
     const GridType & operator*() const
     {
       return m_grid;
