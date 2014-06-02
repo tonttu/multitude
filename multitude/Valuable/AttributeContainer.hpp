@@ -113,6 +113,9 @@ namespace Valuable
     // outside (to make AttributeContainers usable over Mushy 1.5)
     virtual void emitChange() OVERRIDE { Attribute::emitChange(); }
 
+    void setValue(const T & t) { m_container = t; }
+    const T & value() const { return m_container; }
+
   protected:
     AttributeContainerT() : m_clearOnDeserialize(true) {}
 
