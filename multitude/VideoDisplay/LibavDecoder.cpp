@@ -1411,6 +1411,9 @@ namespace VideoDisplay
                   if(decodedAudioBuffer) break;
                   if(!m_running) return gotFrames;
                   Radiant::Sleep::sleepMs(10);
+                  // Make sure that we don't get stuck with a file that doesn't
+                  // have video frames in the beginning
+                  m_audioTransfer->setEnabled(true);
                 }
 
                 /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
@@ -1910,6 +1913,9 @@ namespace VideoDisplay
 
     auto & av = m_d->m_av;
 
+    if (av.videoCodec && m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setEnabled(false);
+
     m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
     while(m_d->m_running) {
@@ -2003,6 +2009,8 @@ namespace VideoDisplay
           av.packet.stream_index = av.videoStreamIndex;
         }
         gotFrames = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
+        if (gotFrames && m_d->m_audioTransfer)
+          m_d->m_audioTransfer->setEnabled(true);
       }
 
       av.frame->opaque = nullptr;
