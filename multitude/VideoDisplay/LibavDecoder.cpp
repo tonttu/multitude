@@ -2069,6 +2069,8 @@ namespace VideoDisplay
 
     state() = STATE_FINISHED;
     s_src = nullptr;
+    if (m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setGain(0.f);
   }
 
   void libavInit()
