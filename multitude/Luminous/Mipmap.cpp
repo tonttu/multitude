@@ -950,7 +950,7 @@ namespace Luminous
 
   Radiant::TaskPtr Mipmap::loadingTask()
   {
-    for (std::size_t level = 0; level <= m_d->m_levels.size(); ++level) {
+    for (std::size_t level = 0; level < m_d->m_levels.size(); ++level) {
       MipmapLevel & imageTex = m_d->m_levels[level];
       auto loader = imageTex.loader.lock();
       if (loader)
