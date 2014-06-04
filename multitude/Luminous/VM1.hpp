@@ -92,6 +92,9 @@ namespace Luminous
 
     static Info parseInfo(const QByteArray & info);
 
+    static bool enabled();
+    static void setEnabled(bool enabled);
+
   private:
     VM1();
 

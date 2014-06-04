@@ -33,6 +33,7 @@
 namespace
 {
   static QSystemSemaphore s_vm1Lock("MultiTouchVM1", 1);
+  static bool s_enabled = true;
 
   class VM1Guard
   {
@@ -208,6 +209,7 @@ namespace Luminous
 
   QString VM1::D::findVM1()
   {
+    if (!s_enabled) return QString();
 #ifdef RADIANT_LINUX
     return "/dev/ttyVM1";
 #elif defined(RADIANT_WINDOWS)
@@ -219,6 +221,10 @@ namespace Luminous
 
   void VM1::D::doTask()
   {
+    if (!s_enabled) {
+      setFinished();
+      return;
+    }
     {
       Radiant::Guard g(m_dataMutex);
       if (m_data.isEmpty() && m_dataColorCorrection.isEmpty()) {
@@ -293,6 +299,7 @@ namespace Luminous
 
   QByteArray VM1::D::readInfo()
   {
+    if (!s_enabled) return QByteArray();
     VM1Guard g;
     /// @todo there should be a timeout parameter
     if (!open()) {
@@ -357,6 +364,7 @@ namespace Luminous
 
   void VM1::D::sendCommand(const QByteArray & ba)
   {
+    if (!s_enabled) return;
     Radiant::Guard g(m_dataMutex);
     m_data += ba;
     if (state() == DONE) {
@@ -367,6 +375,7 @@ namespace Luminous
 
   void VM1::D::sendColorCorrection(const QByteArray & ba)
   {
+    if (!s_enabled) return;
     Radiant::Guard g(m_dataMutex);
     m_dataColorCorrection = ba;
     if (state() == DONE) {
@@ -587,6 +596,16 @@ namespace Luminous
     }
 
     return info;
+  }
+
+  bool VM1::enabled()
+  {
+    return s_enabled;
+  }
+
+  void VM1::setEnabled(bool enabled)
+  {
+    s_enabled = enabled;
   }
 
   DEFINE_SINGLETON(VM1)
