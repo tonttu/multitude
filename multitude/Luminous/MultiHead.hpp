@@ -469,6 +469,12 @@ namespace Luminous {
     /// @return true if vertical sync is enabled; otherwise false
     bool isVSyncEnabled() const { return m_vsync; }
 
+    /// Set if glFinish() should be called every frame.
+    /// @param v true to enable glFinish() call
+    void setGlFinish(bool v);
+    /// @return true if glFinish() should be called every frame
+    bool useGlFinish() const;
+
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
     /// Is the hardware color-correction enabled. Hardware color-correction is
@@ -490,6 +496,7 @@ namespace Luminous {
     Valuable::AttributeBool m_hwColorCorrectionEnabled;
     HardwareColorCorrection m_hwColorCorrection;
     Valuable::AttributeBool m_vsync;
+    Valuable::AttributeBool m_glFinish;
 
     bool m_edited;
   };
