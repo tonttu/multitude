@@ -452,6 +452,7 @@ namespace Luminous
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_vsync(this, "vsync", false),
+      m_glFinish(this, "gl-finish", true),
       m_edited(false)
   {
     eventAddIn("graphics-bounds-changed");
@@ -592,6 +593,16 @@ namespace Luminous
   void MultiHead::setDpi(float dpi)
   {
     m_dpi = dpi;
+  }
+
+  void MultiHead::setGlFinish(bool v)
+  {
+    m_glFinish = v;
+  }
+
+  bool MultiHead::useGlFinish() const
+  {
+    return m_glFinish;
   }
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)

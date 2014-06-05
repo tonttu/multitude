@@ -85,6 +85,9 @@ namespace VideoDisplay
     float gain() const;
     void setGain(float gain);
 
+    void setEnabled(bool enabled);
+    bool isEnabled() const;
+
   private:
     class D;
     D * m_d;
