@@ -288,6 +288,7 @@ namespace VideoDisplay
       , m_maxAudioDelay(0.3)
       , m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN())
       , m_lastDecodedVideoPts(std::numeric_limits<double>::quiet_NaN())
+      , m_index(0)
     {
       memset(&m_av, 0, sizeof(m_av));
       m_av.videoStreamIndex = -1;
@@ -345,6 +346,8 @@ namespace VideoDisplay
     LockFreeQueue<AVFilterBufferRef*, 40> m_consumedBufferRefs;
 
     LockFreeQueue<VideoFrameLibav, 40> m_decodedVideoFrames;
+
+    int m_index;
 
   public:
     bool initFilters(FilterGraph & filterGraph, const QString & description,
@@ -1249,6 +1252,7 @@ namespace VideoDisplay
 
             frame->bufferRef = output;
             frame->setImageBuffer(nullptr);
+            frame->setIndex(m_index++);
 
             auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(output->format));
             setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(output->video->w, output->video->h));
@@ -1297,6 +1301,7 @@ namespace VideoDisplay
 
       frame->bufferRef = nullptr;
       frame->setImageBuffer(buffer);
+      frame->setIndex(m_index++);
 
       auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(m_av.frame->format));
       int bytes = 0;
@@ -1707,7 +1712,7 @@ namespace VideoDisplay
     } else return Timestamp();
   }
 
-  VideoFrame * LibavDecoder::getFrame(const Timestamp & ts) const
+  VideoFrame * LibavDecoder::getFrame(const Timestamp & ts, ErrorFlags & errors) const
   {
     VideoFrameLibav * ret = 0;
     for(int i = 0;; ++i) {
@@ -1723,7 +1728,7 @@ namespace VideoDisplay
       }
       ret = frame;
     }
-    // Radiant::warning("Frame is late");
+    errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
     return ret;
   }
 
