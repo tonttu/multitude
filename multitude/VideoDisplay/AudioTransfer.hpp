@@ -88,6 +88,8 @@ namespace VideoDisplay
     void setEnabled(bool enabled);
     bool isEnabled() const;
 
+    static uint64_t bufferUnderrun();
+
   private:
     class D;
     D * m_d;

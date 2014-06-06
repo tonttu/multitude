@@ -27,6 +27,7 @@ namespace
 
 namespace VideoDisplay
 {
+  uint64_t s_bufferUnderrun = 0;
   const int s_decodedBufferCount = 200;
 
   void DecodedAudioBuffer::fill(Timestamp timestamp, int channels, int samples,
@@ -190,6 +191,7 @@ namespace VideoDisplay
       DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
       if(!decodedBuffer) {
         zero(out, m_d->m_channels, remaining, processed);
+        s_bufferUnderrun += remaining;
         break;
       } else {
         const int offset = decodedBuffer->offset();
@@ -316,5 +318,10 @@ namespace VideoDisplay
   bool AudioTransfer::isEnabled() const
   {
     return m_d->m_enabled;
+  }
+
+  uint64_t AudioTransfer::bufferUnderrun()
+  {
+    return s_bufferUnderrun;
   }
 }
