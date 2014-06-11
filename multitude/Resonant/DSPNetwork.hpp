@@ -273,6 +273,8 @@ DSPNetwork::instance().send(control);
 
     bool hasPanner() const { return m_panner != nullptr; }
 
+    std::size_t itemCount() const { return m_items.size(); }
+
   private:
     /// Creates an empty DSPNetwork object.
     DSPNetwork();
