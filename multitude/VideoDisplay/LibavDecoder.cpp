@@ -30,6 +30,7 @@
 #include <QSet>
 #include <QString>
 #include <QThread>
+#include <QFileInfo>
 
 #include <array>
 #include <cassert>
@@ -597,6 +598,20 @@ namespace VideoDisplay
         }
       }
     }
+
+#ifdef RADIANT_LINUX
+    /// Detect video4linux2 devices automatically
+    if (m_options.format().isEmpty()) {
+      QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
+      if (v4l2m.exactMatch(src)) {
+        m_options.setFormat("video4linux2");
+      } else {
+        QFileInfo fi(src);
+        if (fi.isSymLink() && v4l2m.exactMatch(fi.symLinkTarget()))
+          m_options.setFormat("video4linux2");
+      }
+    }
+#endif
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
