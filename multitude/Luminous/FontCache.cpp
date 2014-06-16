@@ -16,6 +16,7 @@
 #include <Luminous/Image.hpp>
 #include <Luminous/DistanceFieldGenerator.hpp>
 #include <Luminous/RenderManager.hpp>
+#include <Luminous/ImageCodecCS.hpp>
 
 #include <Radiant/BGThread.hpp>
 #include <Radiant/PlatformUtils.hpp>
@@ -90,25 +91,11 @@ namespace
   /// saving or loading 16 bit grayscale images.
   bool saveImage(const Luminous::Image & image, const QString & filename)
   {
-    Radiant::BinaryData bd;
-    bd.write("cornerstone img");
-    bd.writeInt32(0); // version
-    bd.writeInt32(1); // compression
-    bd.writeInt32(image.width());
-    bd.writeInt32(image.height());
-    bd.writeInt32(image.pixelFormat().layout());
-    bd.writeInt32(image.pixelFormat().type());
-
-    QByteArray data = qCompress(image.data(), image.lineSize() * image.height());
-    bd.writeInt32(data.size());
 
     QFile file(filename);
     if (file.open(QFile::WriteOnly)) {
-      const int offset = bd.pos();
-      file.write((const char*)&offset, sizeof(offset));
-      qint64 total = file.write(bd.data(), offset);
-      total += file.write(data);
-      return total == offset + data.size();
+      Luminous::ImageCodecCS codec;
+      return codec.write(image, file);
     } else {
       Radiant::error("saveImage # Failed to open '%s': %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());
@@ -120,44 +107,8 @@ namespace
   {
     QFile file(filename);
     if (file.open(QFile::ReadOnly)) {
-      Radiant::BinaryData bd;
-      int offset = 0;
-      file.read((char*)&offset, sizeof(offset));
-
-      QByteArray buffer = file.read(offset);
-      bd.linkTo(buffer.data(), buffer.size());
-      bd.setTotal(buffer.size());
-
-      QString hdr;
-      if (bd.readString(hdr) && hdr != "cornerstone img") {
-        Radiant::warning("loadImage # header error: '%s'", hdr.toUtf8().data());
-        return false;
-      }
-
-      int version = bd.readInt32();
-      (void)version;
-      int compression = bd.readInt32();
-      int width = bd.readInt32();
-      int height = bd.readInt32();
-      int layout = bd.readInt32();
-      int type = bd.readInt32();
-      int dataSize = bd.readInt32();
-
-      image.allocate(width, height, Luminous::PixelFormat(Luminous::PixelFormat::ChannelLayout(layout),
-                                                          Luminous::PixelFormat::ChannelType(type)));
-      const int size = image.lineSize() * image.height();
-
-      if (compression == 0) {
-        return size == dataSize && size == file.read((char*)image.data(), size);
-      } else {
-        QByteArray data = qUncompress(file.read(dataSize));
-        if (data.size() != size) {
-          Radiant::warning("loadImage # uncompressed data size: %d (should be %d)", data.size(), size);
-          return false;
-        }
-        memcpy(image.data(), data.data(), size);
-        return true;
-      }
+      Luminous::ImageCodecCS codec;
+      return codec.read(image, file);
     } else {
       Radiant::error("loadImage # Failed to open '%s': %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());
