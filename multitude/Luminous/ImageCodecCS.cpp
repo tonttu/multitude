@@ -37,12 +37,16 @@ QString ImageCodecCS::name() const
 bool ImageCodecCS::ping(ImageInfo & info, QFile & file)
 {  
   Radiant::BinaryData bd;
+  auto original_pos = file.pos();
+
   int offset = 0;
   file.read((char*)&offset, sizeof(offset));
 
   QByteArray buffer = file.read(offset);
   bd.linkTo(buffer.data(), buffer.size());
   bd.setTotal(buffer.size());
+
+  file.seek(original_pos);
 
   QString hdr;
   if (bd.readString(hdr) && hdr != "cornerstone img") {
