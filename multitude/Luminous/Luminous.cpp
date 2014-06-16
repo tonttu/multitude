@@ -21,6 +21,7 @@
 #include "ImageCodecSVG.hpp"
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
+#include "ImageCodecCS.hpp"
 #include "GPUAssociation.hpp"
 
 #include <QImageWriter>
@@ -145,6 +146,7 @@ namespace Luminous
       Image::codecs()->registerCodec(std::make_shared<ImageCodecSVG>());
       Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
 #endif
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecCS>());
 
     } // MULTI_ONCE
   }
