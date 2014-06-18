@@ -131,7 +131,7 @@ namespace VideoDisplay
       m_data[plane] = nullptr;
     }
 
-    int bytes(int plane)
+    int bytes(int plane) const
     {
       return m_lineSize[plane] * m_planeSize[plane].y;
     }
