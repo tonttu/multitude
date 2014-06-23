@@ -472,7 +472,8 @@ namespace Luminous {
     /// Set if glFinish() should be called every frame.
     /// @param v true to enable glFinish() call
     void setGlFinish(bool v);
-    /// @return true if glFinish() should be called every frame
+    /// Should glFinish() called every every frame to flush rendering.
+    /// @return true if glFinish() is called; otherwise false
     bool useGlFinish() const;
 
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
