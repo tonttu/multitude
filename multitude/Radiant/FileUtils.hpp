@@ -31,8 +31,19 @@ namespace Radiant
   class RADIANT_API FileWriter : public Patterns::NotCopyable
   {
   public:
+    enum FileWriterMode {
+      READ_ONLY,
+      READ_WRITE
+    };
+
     FileWriter(const QString & name);
     ~FileWriter();
+
+    static void setCallback(std::function<void (FileWriterMode mode)> callback);
+
+#ifdef RADIANT_LINUX
+    static bool isRootFileSystemReadOnly();
+#endif
   };
 
   /// Guard class that minimizes the number of mounts done by FileWriter.

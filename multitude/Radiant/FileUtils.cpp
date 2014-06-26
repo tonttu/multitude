@@ -54,6 +54,7 @@ namespace {
   bool s_fileWriterMountedRW = false;
   bool s_fileWriterEnabled = false;
   int s_fileWriterCount = 0;
+  std::function<void (Radiant::FileWriter::FileWriterMode mode)> s_callback = nullptr;
 
 #ifdef RADIANT_LINUX
   /// @todo these functions are copied from TactionModule.cpp, these should be
@@ -208,22 +209,9 @@ namespace {
 
   void fileWriterInit()
   {
-    /// We are looking at /etc/fstab instead of /proc/mounts, because we want
-    /// to know if we prefer to have the root filesystem in ro-state, instead
-    /// of looking at the current state, that could be temporarily different.
-    QFile file("/etc/fstab");
-    if(file.open(QFile::ReadOnly)) {
-      // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
-      // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
-      QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
-      if(re.indexIn(QString::fromUtf8(file.readAll()))) {
-        QStringList mountOptions = re.cap(1).split(",");
-        if(mountOptions.contains("ro")) {
-          Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
-          s_fileWriterEnabled = true;
-        }
-      }
-    }
+    s_fileWriterEnabled = Radiant::FileWriter::isRootFileSystemReadOnly();
+    if(s_fileWriterEnabled)
+      Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
   }
 #endif
 }
@@ -241,6 +229,8 @@ namespace Radiant
     if (!s_fileWriterMountedRW) {
       s_mountRW(name);
       s_fileWriterMountedRW = true;
+      if(s_callback)
+        s_callback(READ_WRITE);
     }
   }
 
@@ -251,7 +241,33 @@ namespace Radiant
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
       s_mountRO();
       s_fileWriterMountedRW = false;
+      if(s_callback)
+        s_callback(READ_ONLY);
     }
+  }
+
+  bool FileWriter::isRootFileSystemReadOnly()
+  {
+    /// We are looking at /etc/fstab instead of /proc/mounts, because we want
+    /// to know if we prefer to have the root filesystem in ro-state, instead
+    /// of looking at the current state, that could be temporarily different.
+    QFile file("/etc/fstab");
+    if(file.open(QFile::ReadOnly)) {
+      // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
+      // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
+      QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
+      if(re.indexIn(QString::fromUtf8(file.readAll()))) {
+        QStringList mountOptions = re.cap(1).split(",");
+        return mountOptions.contains("ro");
+      }
+    }
+
+    return false;
+  }
+
+  void FileWriter::setCallback(std::function<void (FileWriter::FileWriterMode)> callback)
+  {
+    s_callback = callback;
   }
 
   FileWriterMerger::FileWriterMerger()
