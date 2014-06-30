@@ -60,7 +60,7 @@ namespace Luminous {
     /// @todo rename to ViewPort?
     class LUMINOUS_API Area : public Valuable::Node, public Collectable
     {
-      MEMCHECKED_USING(Collectable);
+      MEMCHECKED_USING(Collectable)
     public:
 
       /// Constructs a new area for the given window

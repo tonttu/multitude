@@ -33,7 +33,7 @@ namespace Luminous {
   class LUMINOUS_API ShaderDeprecated : public ContextVariableT<GLSLProgramObject>,
   public Valuable::Node
   {
-    MEMCHECKED_USING(Valuable::Node);
+    MEMCHECKED_USING(Valuable::Node)
   public:
     ShaderDeprecated();
     /// Constructs a shader
