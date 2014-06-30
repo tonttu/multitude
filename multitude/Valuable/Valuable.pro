@@ -39,6 +39,7 @@ HEADERS += AttributeGrid.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
 HEADERS += v8.hpp
+HEADERS += ListenerHolder.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
