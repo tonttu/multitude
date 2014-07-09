@@ -405,17 +405,6 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
-    /// Get the DPMS settings. This function returns a triplet of values
-    /// corresponding to the DPMS settings. The values are in seconds for
-    /// 'standby', 'suspend', and 'power off'.
-    /// @return DPMS settings
-    /// @sa setDpms
-    Nimble::Vector3i dpms() const { return m_dpms; }
-    /// Set the DPMS settings.
-    /// @param dpms dpms settings
-    /// @sa dpms
-    void setDpms(const Nimble::Vector3i & dpms);
-
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
@@ -492,7 +481,6 @@ namespace Luminous {
 
     std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
-    Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;
     Valuable::AttributeBool m_hwColorCorrectionEnabled;
     HardwareColorCorrection m_hwColorCorrection;
