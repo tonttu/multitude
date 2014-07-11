@@ -27,6 +27,11 @@ namespace Valuable
       m_allowIntegers = allow;
     }
 
+    bool allowIntegers() const
+    {
+      return m_allowIntegers;
+    }
+
     const QMap<QString, int> & enumValues() const { return m_enumValues; }
 
   protected:
