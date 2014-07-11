@@ -83,6 +83,11 @@ namespace Radiant
     /// @return Name of the device
     const QString & deviceName() { return m_device; }
 
+#ifdef RADIANT_UNIX
+    /// @returns file descriptor
+    int fd() const { return m_fd; }
+#endif
+
 #ifdef RADIANT_WINDOWS
     /// @todo implement this on all platforms
     /// @returns list of all found serial ports on the system
