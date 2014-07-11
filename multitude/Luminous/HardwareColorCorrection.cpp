@@ -29,7 +29,7 @@ namespace Luminous
     }
 
     void doSync() {
-      if(m_cc && m_vm1->detected(true)) {
+      if(m_cc && m_vm1->waitForConnection(10.0)) {
         m_vm1->setColorCorrection(*m_cc);
         m_ok = true;
       } else {

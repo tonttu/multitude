@@ -15,15 +15,7 @@
 
 #include "Export.hpp"
 
-#include <Radiant/Mutex.hpp>
-#include <Radiant/SerialPort.hpp>
-#include <Radiant/TimeStamp.hpp>
-
 #include <Valuable/Node.hpp>
-
-#include <QMap>
-
-#include <memory>
 
 namespace Luminous
 {
@@ -31,114 +23,103 @@ namespace Luminous
 
   // This class is internal to MultiTouch Ltd. Do not use this class. It will
   // be removed in future revisions.
+  // Use VM1 class only from the main thread.
   class LUMINOUS_API VM1 : public Valuable::Node
   {
     DECLARE_SINGLETON(VM1);
 
   public:
-    struct Info
-    {
-      enum SourceStatus {
-        STATUS_UNKNOWN,
-        STATUS_NOT_CONNECTED,
-        STATUS_DETECTED,
-        STATUS_ACTIVE
-      };
+    /// Values used in VM1
+    enum VideoSource {
+      SOURCE_NONE         = 0,
+      SOURCE_EXTERNAL_DVI = 1,
+      SOURCE_INTERNAL_DVI = 2,
+      SOURCE_TEST_IMAGE   = 3,
+      SOURCE_LOGO         = 4
+    };
 
-      enum Maybe {
-        INFO_FALSE,
-        INFO_TRUE,
-        INFO_UNKNOWN
-      };
+    enum SourceStatus {
+      STATUS_UNKNOWN,
+      STATUS_NOT_CONNECTED,
+      STATUS_DETECTED,
+      STATUS_ACTIVE
+    };
 
-      inline Info();
-      inline bool operator==(const Info & o) const;
-      inline bool isEmpty() const { return *this == Info(); }
-
-      bool header;
-      QString version;
-      QString boardRevision;
-      Maybe autoselect;
-      QMap<QString, SourceStatus> sources;
-      QString prioritySource;
-      int totalPixels;
-      int activePixels;
-      int totalLines;
-      int activeLines;
-      int uptimeMins;
-      int screensaverMins;
-      int temperature;
-      QString videoSource;
-      Maybe colorCorrectionEnabled;
-      int sdramStatus;
-      int sdramTotal;
-
-      QList<QByteArray> extraLines;
+    enum Maybe {
+      MAYBE_FALSE,
+      MAYBE_TRUE,
+      MAYBE_UNKNOWN
     };
 
     ~VM1();
 
-    bool detected(bool useCachedValue, Radiant::TimeStamp * ts = nullptr);
+    /// @returns True if this computer has VM1 and we have connected to it.
+    ///          False doesn't necessary mean that there is no VM1, we might
+    ///          be still trying to connect to it.
+    bool isConnected() const;
+
+    /// @param timeoutFromBeginningSecs how long to wait to connect from the
+    ///                                 point when we started to open VM1.
+    bool waitForConnection(double timeoutFromBeginningSecs) const;
+
+    QString version() const;
+    QString boardRevision() const;
+
+    Maybe isAutoselectEnabled() const;
+    VideoSource priorityVideoSource() const;
+
+    SourceStatus videoSourceStatus(VideoSource) const;
+    VideoSource activeVideoSource() const;
+
+    Nimble::Vector2i totalSize() const;
+    Nimble::Vector2i activeSize() const;
+
+    Radiant::TimeStamp bootTime() const;
+
+    /// @return logo timeout in minutes
+    int logoTimeout() const;
+
+    /// @return VM1 temperature in celsius degrees
+    int temperature(Radiant::TimeStamp * timestamp = nullptr) const;
+
+    Maybe isColorCorrectionEnabled() const;
+
+    int sdramStatus() const;
+    int sdramTotal() const;
+
+    /// Lines that couldn't been parsed since last time VM1 info was read
+    QStringList unknownLines();
+
     void setColorCorrection(const ColorCorrection & cc);
     void setLCDPower(bool enable);
-    void setLogoTimeout(int timeout);
-    void setVideoAutoselect();
-    void setVideoInput(int input);
-    void setVideoInputPriority(int input);
-    void enableGamma(bool state);
+    void setLogoTimeout(int timeoutMins);
 
-    QByteArray rawInfo(bool useCachedValue, Radiant::TimeStamp * ts = nullptr);
+    void setAutoselect(bool enabled);
+
+    void setActiveVideoSource(VideoSource);
+    void setPriorityVideoSource(VideoSource);
+    void setColorCorrectionEnabled(bool enabled);
+
+/*    QByteArray rawInfo(bool useCachedValue, Radiant::TimeStamp * ts = nullptr);
     Info info(bool useCachedValue, Radiant::TimeStamp * ts = nullptr);
 
-    static Info parseInfo(const QByteArray & info);
+    static Info parseInfo(const QByteArray & info);*/
+
+    void write(const QByteArray & data);
+
+    void reconnect();
 
     static bool enabled();
     static void setEnabled(bool enabled);
 
   private:
     VM1();
+    void run();
 
     class D;
-    std::shared_ptr<D> m_d;
+    std::unique_ptr<D> m_d;
   };
   typedef std::shared_ptr<VM1> VM1Ptr;
-
-  VM1::Info::Info()
-    : header(false),
-      autoselect(INFO_UNKNOWN),
-      totalPixels(std::numeric_limits<int>::min()),
-      activePixels(std::numeric_limits<int>::min()),
-      totalLines(std::numeric_limits<int>::min()),
-      activeLines(std::numeric_limits<int>::min()),
-      uptimeMins(std::numeric_limits<int>::min()),
-      screensaverMins(std::numeric_limits<int>::min()),
-      temperature(std::numeric_limits<int>::min()),
-      colorCorrectionEnabled(INFO_UNKNOWN),
-      sdramStatus(std::numeric_limits<int>::min()),
-      sdramTotal(std::numeric_limits<int>::min())
-  {}
-
-  bool VM1::Info::operator==(const VM1::Info & o) const
-  {
-    return header == o.header &&
-        version == o.version &&
-        boardRevision == o.boardRevision &&
-        autoselect == o.autoselect &&
-        sources == o.sources &&
-        prioritySource == o.prioritySource &&
-        totalPixels == o.totalPixels &&
-        activePixels == o.activePixels &&
-        totalLines == o.totalLines &&
-        activeLines == o.activeLines &&
-        uptimeMins == o.uptimeMins &&
-        screensaverMins == o.screensaverMins &&
-        temperature == o.temperature &&
-        videoSource == o.videoSource &&
-        colorCorrectionEnabled == o.colorCorrectionEnabled &&
-        sdramStatus == o.sdramStatus &&
-        sdramTotal == o.sdramTotal &&
-        extraLines == o.extraLines;
-  }
 }
 
 /// @endcond
