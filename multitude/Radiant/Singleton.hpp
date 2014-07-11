@@ -69,9 +69,9 @@
 
     This class is thread-safe. */
 #define DEFINE_SINGLETON(T)                                        \
-  DEFINE_SINGLETON2(T, )
+  DEFINE_SINGLETON2(T,,)
 
-#define DEFINE_SINGLETON2(T, INIT)                                 \
+#define DEFINE_SINGLETON2(T, INIT, INIT2)                          \
   std::shared_ptr<T> T :: instance() {                             \
     std::shared_ptr<T> p = s_multiSingletonInstance.lock();        \
     if(!p) {                                                       \
@@ -81,12 +81,13 @@
       p.reset(new T());                                            \
       INIT                                                         \
       s_multiSingletonInstance = p;                                \
+      INIT2                                                        \
     }                                                              \
     return p;                                                      \
   }                                                                \
   std::weak_ptr<T> T::s_multiSingletonInstance;
 
-/// @todo this can not be used to properly export the instace() function from
+/// @todo this can not be used to properly export the instance() function from
 /// libraries. The macro needs one more parameter.
 #define DECLARE_SINGLETON(T)                                       \
   public: static std::shared_ptr<T> instance();                    \
