@@ -111,12 +111,13 @@ namespace Luminous
 
     void reconnect();
 
+    void run();
+
     static bool enabled();
     static void setEnabled(bool enabled);
 
   private:
     VM1();
-    void run();
 
     class D;
     std::unique_ptr<D> m_d;

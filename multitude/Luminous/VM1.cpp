@@ -301,7 +301,7 @@ namespace Luminous
 
   void VM1::D::childLoop()
   {
-    {
+    if (!m_infoPoller) {
       auto weak = m_host->s_multiSingletonInstance;
       auto gen = std::make_shared<int>(-1);
       m_infoPoller = std::make_shared<Radiant::FunctionTask>([weak, gen] (Radiant::Task & t) {
@@ -788,7 +788,7 @@ namespace Luminous
 
   void VM1::run()
   {
-    m_d->run();
+    if (s_enabled && !m_d->isRunning()) m_d->run();
   }
 
   VM1::~VM1()
