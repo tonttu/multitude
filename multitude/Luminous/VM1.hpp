@@ -35,7 +35,9 @@ namespace Luminous
       SOURCE_EXTERNAL_DVI = 1,
       SOURCE_INTERNAL_DVI = 2,
       SOURCE_TEST_IMAGE   = 3,
-      SOURCE_LOGO         = 4
+      SOURCE_LOGO         = 4,
+
+      SOURCE_SCREENSAVER  = 1000
     };
 
     enum SourceStatus {

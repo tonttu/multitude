@@ -234,7 +234,7 @@ namespace Luminous
                   "Type \\? to display available commands\\.|Color gamma load start|"
                   "Switching to binary mode|Color gamma load end|"
                   "Returning to text mode)"),
-      m_reSelect("(DVI1|DVI2|Colorbar|Logo) selected"),
+      m_reSelect("(DVI1|DVI2|Colorbar|Logo|Screensaver) selected"),
       m_reBoot("(Warm|Cold) boot"),
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
       m_reFrameRate("Set ([0-9.]+) Hz frame rate")
@@ -364,7 +364,11 @@ namespace Luminous
           m_readBuffer += buffer;
           scheduleUpdate();
         } else {
-          Radiant::error("Failed to open VM1 at %s", m_device.toUtf8().data());
+          if (m_device.isEmpty()) {
+            Radiant::error("Failed to detect VM1");
+          } else {
+            Radiant::error("Failed to open VM1 at %s", m_device.toUtf8().data());
+          }
           m_port.close();
 
           if (m_deviceCandidates.isEmpty()) {
@@ -739,6 +743,8 @@ namespace Luminous
           m_statusInternalDVI = STATUS_ACTIVE;
         } else if (m_reSelect.cap(1) == "Colorbar") {
           m_activeVideoSource = SOURCE_TEST_IMAGE;
+        } else if (m_reSelect.cap(1) == "Screensaver") {
+          m_activeVideoSource = SOURCE_SCREENSAVER;
         } else {
           m_activeVideoSource = SOURCE_LOGO;
         }
