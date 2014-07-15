@@ -13,11 +13,13 @@ namespace Valuable
   public:
     void add(Valuable::Attribute * attr, Valuable::Attribute::ListenerFunc func)
     {
+      assert(attr);
       m_listeners.push_back(std::make_pair(attr, attr->addListener(func)));
     }
 
     void add(Valuable::Node * node, const QByteArray & name, Valuable::Node::ListenerFuncVoid func)
     {
+      assert(node);
       m_eventListeners.push_back(std::make_pair(node, node->eventAddListener(name, func)));
     }
 
