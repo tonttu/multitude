@@ -18,6 +18,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <fstream>
+#include <functional>
 
 #include <QStringList>
 
