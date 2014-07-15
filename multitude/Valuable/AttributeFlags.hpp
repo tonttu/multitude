@@ -61,6 +61,7 @@ namespace Valuable {
   /// @code
   /// Widget {
   ///   input-pass-to-children: true;
+  /// }
   /// @endcode
   template <typename T>
   class FlagAliasT : public FlagAlias
@@ -158,6 +159,11 @@ namespace Valuable {
       return (m_master.value(layer) & m_flags) == m_flags ? 1 : 0;
     }
 
+    std::vector<FlagAliasT<T>*> & sources()
+    {
+      return m_sources;
+    }
+
   private:
     friend class AttributeFlagsT<T>;
 
@@ -226,27 +232,36 @@ namespace Valuable {
 
       assert(names);
 
+      std::map<Flags, FlagAliasT<T>*> aliases;
       std::map<T, FlagAliasT<T>*> bits;
       for (const FlagNames * it = names; it->name; ++it) {
         auto flag = Flags::fromInt(it->value);
-        m_flags[QByteArray(it->name).toLower()] = flag;
+        auto & d = m_flags[QByteArray(it->name).toLower()];
+        d.flags = flag;
         if (parent && it->value && it->createAlias) {
-          auto alias = new FlagAliasT<T>(parent, *this, it->name, flag);
-          m_aliases << alias;
+          d.alias = new FlagAliasT<T>(parent, *this, it->name, flag);
+          d.link = d.alias;
+          aliases[flag] = d.alias;
 
           std::bitset<sizeof(T)*8> bitset(it->value);
           if (bitset.count() == 1) {
             const T t = T(it->value);
             if (bits.find(t) == bits.end())
-              bits[t] = alias;
+              bits[t] = d.alias;
           }
         }
       }
 
       // mark some of the aliases to be shorthands, for example this would
       // mark "input-translate-xy" to be a shorhand for "input-translate-x" and "...-y"
-      for (auto alias: m_aliases) {
-        std::bitset<sizeof(T)*8> bitset(alias->flags().asInt());
+      for (auto & d: m_flags) {
+        if (!d.alias) {
+          auto it = aliases.find(d.flags);
+          if (it != aliases.end())
+            d.link = it->second;
+          continue;
+        }
+        std::bitset<sizeof(T)*8> bitset(d.alias->flags().asInt());
         bool found = true;
         std::vector<FlagAliasT<T>*> sources;
         for (std::size_t i = 0; i < bitset.size(); ++i) {
@@ -255,7 +270,7 @@ namespace Valuable {
 
           const T t = T(1 << i);
           auto it = bits.find(t);
-          if (it == bits.end() || it->second == alias) {
+          if (it == bits.end() || it->second == d.alias) {
             found = false;
             break;
           }
@@ -263,13 +278,13 @@ namespace Valuable {
         }
 
         if (found)
-          alias->setSources(sources);
+          d.alias->setSources(sources);
 
         if (sources.empty())
-          alias->setOwnerShorthand(this);
+          d.alias->setOwnerShorthand(this);
       }
 
-      if (!m_aliases.isEmpty())
+      if (!aliases.empty())
         setSerializable(false);
     }
 
@@ -382,7 +397,7 @@ namespace Valuable {
         for (auto str: tmp.split(QRegExp("\\s+"), QString::SkipEmptyParts)) {
           auto it = m_flags.find(str.toUtf8().toLower());
           if (it == m_flags.end()) return false;
-          newValue |= *it;
+          newValue |= it->flags;
         }
         *this = newValue;
       }
@@ -419,7 +434,7 @@ namespace Valuable {
       for(const auto & var : v.components()) {
         auto it = m_flags.find(var.asKeyword().toLower());
         if (it == m_flags.end()) return false;
-        newValue |= *it;
+        newValue |= it->flags;
       }
       setValue(newValue, layer);
       return true;
@@ -428,6 +443,47 @@ namespace Valuable {
     bool isFlagDefinedOnLayer(Radiant::FlagsT<T> flags, Layer layer) const
     {
       return (m_masks[layer] & flags) == flags;
+    }
+
+    // If we have a css rule input-flags: translate-xy; it actually means that
+    // we are setting all individual flags to false, except translate-x and
+    // translate-y that are set to true. We expand given set of flag names to
+    // full set of attributes with either true or false as values.
+    virtual bool handleShorthand(const Valuable::StyleValue & value,
+                                 Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
+    {
+      // First set everything to false
+      // If CSS parser could order components to some order and m_flags would
+      // be in the same order, we could iterate them with two iterators
+      // without need to have two passes.
+      for (auto it = m_flags.begin(); it != m_flags.end(); ++it) {
+        auto alias = it->link;
+        if (!alias || !alias->sources().empty())
+          continue;
+
+        expanded[alias] = 0;
+      }
+
+      for (const auto & var: value.components()) {
+        auto it = m_flags.find(var.asKeyword().toLower());
+        /// this is not a flag, probably a typo in CSS file
+        if (it == m_flags.end())
+          return false;
+        if (!it->flags)
+          continue;
+        if (!it->link)
+          return false;
+
+        auto & sources = it->link->sources();
+        if (sources.empty()) {
+          expanded[it->link] = 1;
+        } else {
+          for (auto s: sources)
+            expanded[s] = 1;
+        }
+      }
+
+      return true;
     }
 
   private:
@@ -442,9 +498,9 @@ namespace Valuable {
 
       int i = 0;
       for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
-        if ((v & *it) == *it) {
-          std::bitset<sizeof(T)*8> bitset(it->asInt());
-          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), *it)));
+        if ((v & it->flags) == it->flags) {
+          std::bitset<sizeof(T)*8> bitset(it->flags.asInt());
+          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), it->flags)));
         }
       }
 
@@ -475,18 +531,25 @@ namespace Valuable {
       m_cache = value(Layer(LAYER_COUNT - 1), Layer(0));
       Flags changedBits = before ^ m_cache;
       if (changedBits) {
-        for (auto * alias: m_aliases)
-          if (alias->flags() & changedBits)
-            alias->emitChange();
+        for (auto & d: m_flags)
+          if (d.alias && (d.flags & changedBits))
+            d.alias->emitChange();
         emitChange();
       }
     }
 
+    struct FlagData
+    {
+      FlagData() : flags(), alias(nullptr), link(nullptr) {}
+      Flags flags;
+      FlagAliasT<T> * alias;
+      FlagAliasT<T> * link;
+    };
+
     Flags m_cache;
     Flags m_values[LAYER_COUNT];
     Flags m_masks[LAYER_COUNT];
-    QList<FlagAliasT<T>*> m_aliases;
-    QMap<QByteArray, Flags> m_flags;
+    QMap<QByteArray, FlagData> m_flags;
   };
 }
 
