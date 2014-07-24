@@ -282,6 +282,8 @@ namespace Radiant
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
       s_mountRO();
       s_fileWriterMountedRW = false;
+      if(s_callback)
+        s_callback(FileWriter::READ_ONLY);
     }
   }
 
