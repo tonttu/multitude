@@ -278,7 +278,6 @@ namespace Radiant
 
   FileWriterMerger::~FileWriterMerger()
   {
-    if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
       s_mountRO();
