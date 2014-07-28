@@ -220,6 +220,7 @@ namespace Radiant
 {
   FileWriter::FileWriter(const QString & name)
   {
+    (void)name;
 #ifdef RADIANT_LINUX
     MULTI_ONCE{ fileWriterInit(); }
 #endif
@@ -227,7 +228,9 @@ namespace Radiant
     Guard g(s_fileWriterMutex);
     s_fileWriterCount++;
     if (!s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
       s_mountRW(name);
+#endif
       s_fileWriterMountedRW = true;
       if(s_callback)
         s_callback(READ_WRITE);
@@ -239,7 +242,9 @@ namespace Radiant
     if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
       s_mountRO();
+#endif
       s_fileWriterMountedRW = false;
       if(s_callback)
         s_callback(READ_ONLY);
@@ -248,6 +253,7 @@ namespace Radiant
 
   bool FileWriter::isRootFileSystemReadOnly()
   {
+#ifdef RADIANT_LINUX
     /// We are looking at /etc/fstab instead of /proc/mounts, because we want
     /// to know if we prefer to have the root filesystem in ro-state, instead
     /// of looking at the current state, that could be temporarily different.
@@ -261,7 +267,7 @@ namespace Radiant
         return mountOptions.contains("ro");
       }
     }
-
+#endif
     return false;
   }
 
@@ -280,7 +286,9 @@ namespace Radiant
   {
     Guard g(s_fileWriterMutex);
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
       s_mountRO();
+#endif
       s_fileWriterMountedRW = false;
       if(s_callback)
         s_callback(FileWriter::READ_ONLY);
