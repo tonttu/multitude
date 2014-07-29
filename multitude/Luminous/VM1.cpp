@@ -423,6 +423,7 @@ namespace Luminous
     }
   }
 
+
   QStringList VM1::D::findVM1()
   {
     if (!s_enabled) return QStringList();
@@ -433,7 +434,7 @@ namespace Luminous
     tmp.insert(0, "/dev/ttyVM1");
     return tmp;
 #elif defined(RADIANT_WINDOWS)
-    return discover();
+    return Radiant::SerialPort::scan();
 #else
     return QStringList();
 #endif
@@ -465,17 +466,18 @@ namespace Luminous
 
   void VM1::D::opened(bool ok)
   {
-    (void)ok;
 #ifdef RADIANT_WINDOWS
     QSettings settings("SOFTWARE\\MultiTouch\\MTSvc", QSettings::NativeFormat);
     if (ok) {
       settings.setValue("VM1", m_device);
-    } else {r
+    } else {
       if (settings.value("VM1") == m_device) {
         Radiant::warning("Failed to open VM1, clearing VM1 device name");
         settings.setValue("VM1", "");
       }
     }
+#else
+    (void)ok;
 #endif
   }
 

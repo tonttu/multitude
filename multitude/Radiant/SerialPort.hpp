@@ -57,28 +57,54 @@ namespace Radiant
           int bits,
           int waitBytes,
           int waitTimeUS);
+
     /// Close the serial port.
     bool close();
 
-    /// Write bytes to the port
+    /// Write bytes to the port. Does not block.
     /// @param buf buffer to write from
     /// @param bytes bytes to write
     /// @return number of bytes written
     virtual int write(const void * buf, int bytes);
+
+    /// Performs a blocking write. Can call interrupt() to stop before
+    /// timeout expires.
+    /// @param ok pointer to boolean that holds error status. Will be set
+    /// to false in case of an error. Timeouts and calling interrupt() are not
+    /// errors. Can be null.
+    /// @returns number of bytes written. Might be lower than requested
+    /// due to timeout or interruption
+    int blockingWrite(const QByteArray &buffer,
+                      double timeoutSeconds,
+                      bool *ok = nullptr);
+
     /// Writes a byte to the port
     /// @param byte Byte to write
     /// @return Number of bytes written
     int writeByte(uint8_t byte);
-    /// Read bytes from the port
+
+    /// Read bytes from the port. Does not block.
     /// @param[out] buf output buffer
     /// @param bytes max bytes to read
     /// @param waitfordata ignored
     /// @return number of bytes read
-    virtual int read(void * buf, int bytes, bool waitfordata = true);
+    virtual int read(void *buf, int bytes, bool waitfordata = true);
+
+    /// Performs a blocking read. Can call interrupt() to stop before
+    /// the timeout expires.
+    /// If you need number of bytes read, then check output before and
+    /// after the call.
+    /// @returns false in case of an error, true otherwise. Timeouts or
+    /// calling interrupt() are not errors.
+    bool blockingRead(QByteArray *output, double timeoutSeconds);
+
+    /// Interrupts a blocking read or write before the timeout expires.
+    void interrupt();
 
     /// Checks if the port is open
     /// @return True if the port is open, false otherwise
     bool isOpen() const;
+
     /// Returns the name of the device
     /// @return Name of the device
     const QString & deviceName() { return m_device; }
@@ -95,13 +121,17 @@ namespace Radiant
 #endif
 
   private:
-
     QString m_device;
 
 #ifdef WIN32
     HANDLE  m_hPort;
 #else
-    int   m_fd;
+    int m_fd;
+    // Will poll on both the serial port and one of the interrupt pipe ends.
+    // if an interrupt is desired, we can write to the other end of the pipe
+    // to break out of the poll call.
+    int m_interruptPipe[2];
+    bool wait(int events, double timeoutSeconds);
 #endif
 
   };
