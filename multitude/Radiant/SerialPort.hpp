@@ -67,6 +67,16 @@ namespace Radiant
     /// @return number of bytes written
     virtual int write(const void * buf, int bytes);
 
+    enum class WriteStatus {
+      Ok,
+      WouldBlock,
+      WriteError,
+    };
+    /// Writes as many bytes from buf as possible, up to bytes.
+    /// @param status status after write operation. Can be null
+    /// @return number of bytes written
+    int write(const char *buf, int bytes, WriteStatus *status);
+
     /// Performs a blocking write. Can call interrupt() to stop before
     /// timeout expires.
     /// @param ok pointer to boolean that holds error status. Will be set
@@ -98,8 +108,10 @@ namespace Radiant
     /// calling interrupt() are not errors.
     bool blockingRead(QByteArray *output, double timeoutSeconds);
 
-    /// Interrupts a blocking read or write before the timeout expires.
-    void interrupt();
+    /// Interrupts a blocking read before the timeout expires.
+    void interruptRead();
+    /// Interrupts a blocking write before the timeout expires.
+    void interruptWrite();
 
     /// Checks if the port is open
     /// @return True if the port is open, false otherwise
@@ -108,6 +120,9 @@ namespace Radiant
     /// Returns the name of the device
     /// @return Name of the device
     const QString & deviceName() { return m_device; }
+
+    /// If name is not null, will print all read and written data
+    void setTraceName(const char *name);
 
 #ifdef RADIANT_UNIX
     /// @returns file descriptor
@@ -122,6 +137,7 @@ namespace Radiant
 
   private:
     QString m_device;
+    const char *m_traceName;
 
 #ifdef WIN32
     HANDLE  m_hPort;
@@ -130,12 +146,13 @@ namespace Radiant
     // Will poll on both the serial port and one of the interrupt pipe ends.
     // if an interrupt is desired, we can write to the other end of the pipe
     // to break out of the poll call.
-    int m_interruptPipe[2];
-    bool wait(int events, double timeoutSeconds);
+    int m_readInterruptPipe[2];
+    int m_writeInterruptPipe[2];
+    enum class WaitStatus { Ok, Error, Interrupt };
+    WaitStatus wait(int events, double timeoutSeconds, int pipe);
+    void interrupt(int pipe);
 #endif
-
   };
-
 }
 
 #endif

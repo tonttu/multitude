@@ -26,13 +26,17 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <poll.h>
+#include <assert.h>
 
 namespace Radiant
 {
 
   SerialPort::SerialPort()
-  : m_fd(-1),
-    m_interruptPipe{-1, -1}
+  : m_traceName(nullptr),
+    m_fd(-1),
+    m_readInterruptPipe{-1, -1},
+    m_writeInterruptPipe{-1, -1}
   {}
 
   SerialPort::~SerialPort()
@@ -141,59 +145,132 @@ namespace Radiant
       return false;
     }
 
-    if(pipe2(m_interruptPipe, O_NONBLOCK) != 0) {
-      Radiant::error("Failed to create interrupt pipe: %s", strerror(errno));
+    if(pipe2(m_readInterruptPipe, O_NONBLOCK) != 0) {
+      Radiant::error("Failed to create read interrupt pipe: %s", strerror(errno));
+      return false;
+    }
+
+    if(pipe2(m_writeInterruptPipe, O_NONBLOCK) != 0) {
+      Radiant::error("Failed to create write interrupt pipe: %s", strerror(errno));
       return false;
     }
 
     return true;
+  }
+
+  void SerialPort::setTraceName(const char *name)
+  {
+    m_traceName = name;
+  }
+
+  static void printBuffer(const char *buffer, int len, const char *op, const char *traceName)
+  {
+    const char *begin = buffer;
+    const char *end = buffer + len;
+    while(begin < end) {
+      const char* zeroPtr = (const char*)memchr(begin, 0, end - begin);
+      if(zeroPtr == nullptr) {
+        zeroPtr = end;
+      }
+      // print chars before null
+      int lenToPrint = zeroPtr - begin;
+      if(lenToPrint > 0) {
+        Radiant::info("%s%s: %.*s", traceName, op, lenToPrint, begin);
+      }
+      begin = begin + lenToPrint;
+      // now consume all nulls
+      while(*begin == '\0' && begin < end) {
+        // todo - get rid of newlines
+        Radiant::info("%s%s: \0", traceName, op);
+        begin++;
+      }
+    }
+  }
+
+  static void closePipe(int pipe[2])
+  {
+    for(int i = 0; i < 2; ++i) {
+      if(pipe[i] >= 0) {
+        ::close(pipe[i]);
+        pipe[i] = -1;
+      }
+    }
   }
 
   bool SerialPort::close()
   {
     if(m_fd < 0)
       return false;
-
     ::close(m_fd);
-
     m_fd = -1;
+
+    closePipe(m_readInterruptPipe);
+    closePipe(m_writeInterruptPipe);
 
     return true;
   }
 
   int SerialPort::write(const void * buf, int bytes)
   {
-    return ::write(m_fd, buf, bytes);
-  }
-
-  static void setError(bool *ok)
-  {
-    if(ok != nullptr) {
-      *ok = false;
+    int r = ::write(m_fd, buf, bytes);
+    if(r > 0 && m_traceName != nullptr) {
+      printBuffer((const char*)buf, r, "<", m_traceName);
     }
+    return r;
   }
 
-  bool wait(int events, double timeoutSecs)
+  SerialPort::WaitStatus SerialPort::wait(int events, double timeoutSecs, int pipe)
   {
     struct pollfd fds[2];
     memset(fds, 0, sizeof(fds));
-    fds[0].fd = m_interruptPipe[0];
+    fds[0].fd = pipe;
     fds[0].events = POLLIN;
-    fds[1].fd = m_port.fd();
+    fds[1].fd = fd();
     fds[1].events = events;
     int ret = poll(fds, 2, std::max<int>(1, timeoutSecs*1000));
     if (ret == -1) {
-      return false;
+      return WaitStatus::Error;
     }
 
     static char buffer[64];
     if (ret > 0 && (fds[0].revents & POLLIN) == POLLIN) {
+      int r = 0;
       do {
-        int r = read(m_interruptPipe[0], buffer, sizeof(buffer);
+        r = ::read(pipe, buffer, sizeof(buffer));
       } while(r > 0);
+      return WaitStatus::Interrupt;
     }
 
-    return ret == 1 && (fds[1].revents & events) == events;
+    bool expected = ret == 1 && (fds[1].revents & events) == events;
+    return expected ? WaitStatus::Ok : WaitStatus::Error;
+  }
+
+  template<class T>
+  static void safeset(T *outp, const T &value)
+  {
+    if(outp != nullptr) {
+      *outp = value;
+    }
+  }
+
+  int SerialPort::write(const char *buf, int bytes, WriteStatus *status)
+  {
+    safeset(status, WriteStatus::Ok);
+    int written = 0;
+    do {
+      int r = write(buf + written, bytes - written);
+      if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
+        safeset(status, WriteStatus::WouldBlock);
+        return written;
+      } else if (r < 0) {
+        Radiant::error("Failed to write to serial port: %s", strerror(errno));
+        safeset(status, WriteStatus::WriteError);
+        return written;
+      } else {
+        written += r;
+      }
+    } while(written < bytes);
+    return written;
   }
 
   int SerialPort::blockingWrite(const QByteArray &buffer,
@@ -202,9 +279,7 @@ namespace Radiant
   {
     Timer timer;
     int written = 0;
-    if(ok != nullptr) {
-      *ok = true;
-    }
+    safeset(ok, true);
     while(isOpen()) {
       if(buffer.size() == written) {
         return written;
@@ -213,26 +288,28 @@ namespace Radiant
       if(timeRemaining < 0) {
         return written;
       }
-      bool haveError = wait(POLLOUT, timeRemaining);
-      if(haveError) {
-        setError(ok);
+      WaitStatus waitStatus = wait(POLLOUT, timeRemaining, m_writeInterruptPipe[0]);
+      switch(waitStatus) {
+      case WaitStatus::Interrupt:
+        return written;
+      case WaitStatus::Error:
+        safeset(ok, false);
         return written;
       }
       do {
-        int r = write(buffer.data() + written, buffer.size() - written);
-        if(r < 0) {
-          if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            break;
-          } else {
-            Radiant::error("Failed to write to serial port: %s", strerror(errno));
-            setError(ok);
-            return written;
-          }
-        } else if(r == 0) {
-          Radiant::error("Write to serial port returned 0. This should not occur.")
-          break;
-        } else {
+        WriteStatus status;
+        int r = write(buffer.data() + written,
+                      buffer.size() - written,
+                      &status);
+        switch(status) {
+        case WriteStatus::Ok:
           written += r;
+          break;
+        case WriteStatus::WouldBlock:
+          break;
+        case WriteStatus::WriteError:
+          safeset(ok, false);
+          return written;
         }
       } while(written < buffer.size());
     }
@@ -249,45 +326,58 @@ namespace Radiant
     if(!waitfordata) {
       error("SerialPort::read # !waitfordata nor supported yet.");
     }
-    return ::read(m_fd, buf, bytes);
+    int r = ::read(m_fd, buf, bytes);
+    if(r > 0 && m_traceName != nullptr) {
+      printBuffer((const char*)buf, r, ">", m_traceName);
+    }
+    return r;
   }
 
   bool SerialPort::blockingRead(QByteArray *output, double timeoutSeconds)
   {
     assert(output != nullptr);
-    bool ok = wait(POLLIN, timeoutSeconds);
-    if (!ok) {
+    WaitStatus waitStatus = wait(POLLIN, timeoutSeconds, m_readInterruptPipe[0]);
+    switch(waitStatus) {
+    case WaitStatus::Interrupt:
+      return true;
+    case WaitStatus::Error:
       return false;
+    case WaitStatus::Ok:
+      break;
     }
-    static const int BLOCK_SIZE = 512;
-    int oldSize = output->size();
-    ouput->resize(oldSize + BLOCK_SIZE);
-    char *buffer = output->data() + oldSize;
-    int newSize = oldSize;
+    char buffer[256];
     while(true) {
       errno = 0;
-      int r = m_port.read(buffer, BLOCK_SIZE);
+      int r = read(buffer, 256);
       if (r > 0) {
-        newSize += r;
-      } else if (r == 0 || errno == EAGAIN || errno == EWOULDBLOCK) {
+        output->append(buffer, r);
+      } else if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
         break;
       } else if (r < 0) {
         return false;
       }
     }
-    output->truncate(newSize);
     return true;
   }
 
-  void SerialPort::interrupt()
+  void SerialPort::interrupt(int fd)
   {
-    int fd = m_interruptPipe[1];
     if(fd >= 0) {
       int r = ::write(fd, "!", 1);
       if(r < 0) {
         Radiant::error("Error writing to interrupt pipe: %s", strerror(errno));
       }
     }
+  }
+
+  void SerialPort::interruptRead()
+  {
+    interrupt(m_readInterruptPipe[1]);
+  }
+
+  void SerialPort::interruptWrite()
+  {
+    interrupt(m_writeInterruptPipe[1]);
   }
 
   bool SerialPort::isOpen() const

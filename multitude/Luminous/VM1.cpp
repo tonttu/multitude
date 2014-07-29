@@ -28,7 +28,6 @@
 #include <QDir>
 
 #ifdef RADIANT_UNIX
-#include <poll.h>
 #include <string.h>
 #endif
 
@@ -73,11 +72,7 @@ namespace Luminous
     void closePort();
 
     void writeColorCorrection();
-    bool wait(int events, double timeoutSecs);
-    QByteArray interruptibleRead(double timeoutSecs);
 
-    bool writeAll(const QByteArray & buffer, double timeout);
-    int write(const QByteArray & buffer);
     void queueWrite(const QByteArray & data);
 
     QList<QByteArray> takeLines();
@@ -127,7 +122,6 @@ namespace Luminous
     QString m_device;
     QStringList m_deviceCandidates;
 
-    int m_interruptPipe[2];
     QByteArray m_readBuffer;
     Radiant::Mutex m_readBufferMutex;
 
@@ -239,9 +233,6 @@ namespace Luminous
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
       m_reFrameRate("Set ([0-9.]+) Hz frame rate")
   {
-    m_interruptPipe[0] = -1;
-    m_interruptPipe[1] = -1;
-
     // These are required so that Mushy serialization works
     m_autoSelect.setAllowIntegers(true);
     m_priorityVideoSource.setAllowIntegers(true);
@@ -297,6 +288,10 @@ namespace Luminous
       if (m_listenersEnabled)
         queueWrite(*m_colorCorrectionEnabled ? "g" : "c");
     });
+
+    // you can enable this to get prints of everything the serial
+    // port reads and writes
+    // m_port.setTraceName("VM1");
   }
 
   void VM1::D::childLoop()
@@ -343,8 +338,12 @@ namespace Luminous
             const double timeRemaining = timeout - timer.time();
             if (timeRemaining <= 0.0)
               break;
-            buffer += interruptibleRead(timeRemaining);
+            bool readOk = m_port.blockingRead(&buffer, timeRemaining);
+            if(!readOk) {
+              closePort();
+            }
             if (buffer.contains("Firmware version")) {
+              Radiant::info("Found VM1 output at %s", m_device.toUtf8().data());
               ok = true;
               break;
             }
@@ -387,7 +386,11 @@ namespace Luminous
 
       writeColorCorrection();
 
-      QByteArray buffer = interruptibleRead(20.0);
+      QByteArray buffer;
+      bool ok = m_port.blockingRead(&buffer, 20.0);
+      if(!ok) {
+        closePort();
+      }
       if (!buffer.isEmpty()) {
         Radiant::Guard g(m_readBufferMutex);
         m_readBuffer += buffer;
@@ -400,7 +403,11 @@ namespace Luminous
         std::swap(buffer, m_writeBuffer);
       }
       if (!buffer.isEmpty()) {
-        int written = write(buffer);
+        Radiant::SerialPort::WriteStatus status;
+        int written = m_port.write(buffer.data(), buffer.size(), &status);
+        if(status == Radiant::SerialPort::WriteStatus::WriteError) {
+          closePort();
+        }
         if (buffer.size() != written) {
           Radiant::Guard g(m_writeBufferMutex);
           m_writeBuffer = buffer.mid(written) + m_writeBuffer;
@@ -442,16 +449,6 @@ namespace Luminous
 
   bool VM1::D::open()
   {
-    if (m_interruptPipe[0] >= 0)
-      close(m_interruptPipe[0]);
-    if (m_interruptPipe[1] >= 0)
-      close(m_interruptPipe[1]);
-
-    if (pipe(m_interruptPipe) != 0) {
-      Radiant::error("Failed to create interrupt pipe: %s", strerror(errno));
-      return false;
-    }
-
     if (m_deviceCandidates.isEmpty())
       m_deviceCandidates = findVM1();
 
@@ -495,7 +492,9 @@ namespace Luminous
       std::swap(data, m_colorCorrection);
     }
     if (!data.isEmpty()) {
-      if (!writeAll(data, 5.0)) {
+      bool ok;
+      m_port.blockingWrite(data, 5.0, &ok);
+      if (!ok) {
         Radiant::error("VM1: Failed to write color correction");
         Radiant::Guard g(m_colorCorrectionMutex);
         if (m_colorCorrection.isEmpty())
@@ -506,106 +505,13 @@ namespace Luminous
     }
   }
 
-  bool VM1::D::wait(int events, double timeoutSecs)
-  {
-    struct pollfd fds[2];
-    memset(fds, 0, sizeof(fds));
-    fds[0].fd = m_interruptPipe[0];
-    fds[0].events = POLLIN;
-    fds[1].fd = m_port.fd();
-    fds[1].events = events;
-    int ret = poll(fds, 2, std::max<int>(1, timeoutSecs*1000));
-    if (ret == -1) {
-      if (errno == EINTR) return false;
-      closePort();
-      return false;
-    }
-
-    char buffer[64];
-    if (ret > 0 && (fds[0].revents & POLLIN) == POLLIN) {
-      auto r = read(m_interruptPipe[0], buffer, sizeof(buffer));
-      (void)r;
-    }
-
-    return ret == 1 && (fds[1].revents & events) == events;
-  }
-
-  QByteArray VM1::D::interruptibleRead(double timeoutSecs)
-  {
-    bool ok = wait(POLLIN, timeoutSecs);
-    if (!ok) return QByteArray();
-
-    QByteArray tmp;
-    char buffer[256];
-    while (m_running) {
-      errno = 0;
-      int r = m_port.read(buffer, sizeof(buffer));
-
-      if (r > 0) {
-        tmp.append(buffer, r);
-      } else if (r == 0 || errno == EAGAIN) {
-        break;
-      } else {
-        closePort();
-        break;
-      }
-    }
-    return tmp;
-  }
-
-  int VM1::D::write(const QByteArray & buffer)
-  {
-    int written = 0;
-    do {
-      int r = m_port.write(buffer.data() + written, buffer.size() - written);
-      if (r < 0) {
-        if (errno == EAGAIN)
-          break;
-#ifdef RADIANT_LINUX
-        Radiant::error("Failed to write to VM1 serial port: %s", strerror(errno));
-#else
-        Radiant::error("Failed to write to VM1 serial port");
-#endif
-        closePort();
-        break;
-      } else if (r == 0) {
-        break;
-      } else {
-        written += r;
-      }
-    } while (written < buffer.size());
-
-    return written;
-  }
-
-  bool VM1::D::writeAll(const QByteArray & buffer, double timeout)
-  {
-    Radiant::Timer timer;
-    while (m_port.isOpen() && m_running) {
-      double timeRemaining = timeout - timer.time();
-      if (timeRemaining < 0)
-        return false;
-
-      if (wait(POLLOUT, timeRemaining)) {
-        int written = write(buffer);
-        if (buffer.size() == written)
-          return true;
-      }
-    }
-    return false;
-  }
-
-  void VM1::D::queueWrite(const QByteArray & data)
+  void VM1::D::queueWrite(const QByteArray &data)
   {
     {
       Radiant::Guard g(m_writeBufferMutex);
       m_writeBuffer.append(data);
     }
-    int fd = m_interruptPipe[1];
-    if (fd >= 0) {
-      auto w = ::write(fd, "!", 1);
-      (void)w;
-    }
+    m_port.interruptRead();
   }
 
   // Extract lines that have \n in the end from m_buffer, returned strings don't have \n
@@ -797,11 +703,8 @@ namespace Luminous
   {
     m_d->m_running = false;
     m_d->m_connected = false;
-    int fd = m_d->m_interruptPipe[1];
-    if (fd >= 0) {
-      auto w = ::write(fd, "!", 1);
-      (void)w;
-    }
+    m_d->m_port.interruptRead();
+    // don't interrupt writes, it messes with VM1
     m_d->m_port.close();
     m_d->waitEnd();
   }
@@ -974,12 +877,8 @@ namespace Luminous
   void VM1::reconnect()
   {
     m_d->m_connected = false;
+    m_d->m_port.interruptRead();
     m_d->m_port.close();
-    int fd = m_d->m_interruptPipe[1];
-    if (fd >= 0) {
-      auto w = ::write(fd, "!", 1);
-      (void)w;
-    }
   }
 
   bool VM1::enabled()
