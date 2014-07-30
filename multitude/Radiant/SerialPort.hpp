@@ -16,9 +16,7 @@
 #include <cstdint>
 
 #ifdef WIN32
-# define NOMINMAX
-# define WIN32_LEAN_AND_MEAN
-# include <windows.h>
+#include <memory>
 #endif
 
 #include <QStringList>
@@ -31,13 +29,22 @@ namespace Radiant
 
       @author Tommi Ilmonen
   */
-  class RADIANT_API SerialPort : public Radiant::BinaryStream
+
+  // Doesn't inherit from BinaryStream because there doesn't seem to
+  // be a decent way to do a non-blocking write on windows on anything
+  // except sockets. You can do asynchronous writes, but they can't be
+  // stopped if they would block. They happen in the background and write
+  // all their data or error out.
+  // However, non-blocking writes to serial ports are not currently used, so
+  // we can delay this problem to the hopefully distant future when we might
+  // actually need that functionality.
+  class RADIANT_API SerialPort
   {
   public:
     /// Constructor
     SerialPort();
     /// Delete the object and close the port
-    virtual ~SerialPort();
+    ~SerialPort();
 
     /// Opens a serial port for communications
     /** If the port was open, this method will close it before opening it.
@@ -61,44 +68,36 @@ namespace Radiant
     /// Close the serial port.
     bool close();
 
-    /// Write bytes to the port. Does not block.
-    /// @param buf buffer to write from
-    /// @param bytes bytes to write
-    /// @return number of bytes written
-    virtual int write(const void * buf, int bytes);
-
-    enum class WriteStatus {
-      Ok,
-      WouldBlock,
-      WriteError,
-    };
-    /// Writes as many bytes from buf as possible, up to bytes.
-    /// @param status status after write operation. Can be null
-    /// @return number of bytes written
-    int write(const char *buf, int bytes, WriteStatus *status);
-
     /// Performs a blocking write. Can call interrupt() to stop before
     /// timeout expires.
+    /// @param timeoutSeconds zero or negative timeout means block until write is done
     /// @param ok pointer to boolean that holds error status. Will be set
     /// to false in case of an error. Timeouts and calling interrupt() are not
     /// errors. Can be null.
     /// @returns number of bytes written. Might be lower than requested
     /// due to timeout or interruption
-    int blockingWrite(const QByteArray &buffer,
-                      double timeoutSeconds,
-                      bool *ok = nullptr);
+    int write(const char *buf, int bytes,
+              double timeoutSeconds = -1,
+              bool *ok = nullptr);
 
-    /// Writes a byte to the port
-    /// @param byte Byte to write
-    /// @return Number of bytes written
-    int writeByte(uint8_t byte);
+    /// Performs a blocking write. Can call interrupt() to stop before
+    /// timeout expires.
+    /// @param timeoutSeconds zero or negative timeout means block until write is done
+    /// @param ok pointer to boolean that holds error status. Will be set
+    /// to false in case of an error. Timeouts and calling interrupt() are not
+    /// errors. Can be null.
+    /// @returns number of bytes written. Might be lower than requested
+    /// due to timeout or interruption
+    int write(const QByteArray &buffer,
+              double timeoutSeconds = -1,
+              bool *ok = nullptr);
 
-    /// Read bytes from the port. Does not block.
-    /// @param[out] buf output buffer
-    /// @param bytes max bytes to read
-    /// @param waitfordata ignored
-    /// @return number of bytes read
-    virtual int read(void *buf, int bytes, bool waitfordata = true);
+    /// Performs a blocking read. Can call interrupt() to stop before
+    /// the timeout expires.
+    /// @param timeoutSeconds zero or negative timeout means block until there is data to read
+    /// @param ok true if success, false on error
+    /// @returns number of bytes read
+    int read(char *buf, int bytes, double timeoutSeconds = -1, bool *ok = nullptr);
 
     /// Performs a blocking read. Can call interrupt() to stop before
     /// the timeout expires.
@@ -106,11 +105,13 @@ namespace Radiant
     /// after the call.
     /// @returns false in case of an error, true otherwise. Timeouts or
     /// calling interrupt() are not errors.
-    bool blockingRead(QByteArray *output, double timeoutSeconds);
+    bool read(QByteArray *output, double timeoutSeconds = -1);
 
-    /// Interrupts a blocking read before the timeout expires.
+    /// Interrupts a blocking read before the timeout expires. On POSIX
+    /// it might block while writing to a pipe (should be very short).
     void interruptRead();
-    /// Interrupts a blocking write before the timeout expires.
+    /// Interrupts a blocking write before the timeout expires. On POSIX it
+    /// might block while writing to a pipe (should be very short).
     void interruptWrite();
 
     /// Checks if the port is open
@@ -140,7 +141,8 @@ namespace Radiant
     const char *m_traceName;
 
 #ifdef WIN32
-    HANDLE  m_hPort;
+    struct Impl;
+    std::unique_ptr<Impl> m_d;
 #else
     int m_fd;
     // Will poll on both the serial port and one of the interrupt pipe ends.
@@ -148,8 +150,20 @@ namespace Radiant
     // to break out of the poll call.
     int m_readInterruptPipe[2];
     int m_writeInterruptPipe[2];
+
     enum class WaitStatus { Ok, Error, Interrupt };
     WaitStatus wait(int events, double timeoutSeconds, int pipe);
+
+    int doRead(void *buf, int bytes);
+    int doWrite(const void * buf, int bytes);
+
+    enum class WriteStatus {
+      Ok,
+      WouldBlock,
+      WriteError,
+    };
+    int doWrite(const char *buf, int bytes, WriteStatus *status);
+
     void interrupt(int pipe);
 #endif
   };

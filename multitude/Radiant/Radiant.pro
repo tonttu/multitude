@@ -1,7 +1,8 @@
 
 include(../multitude.pri)
 
-HEADERS += ArrayMap.hpp
+HEADERS += ArrayMap.hpp \
+    SerialPortHelpers.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp

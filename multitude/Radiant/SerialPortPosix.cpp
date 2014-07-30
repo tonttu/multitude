@@ -28,6 +28,7 @@
 #include <string.h>
 #include <poll.h>
 #include <assert.h>
+#include "SerialPortHelpers.hpp"
 
 namespace Radiant
 {
@@ -145,12 +146,12 @@ namespace Radiant
       return false;
     }
 
-    if(pipe2(m_readInterruptPipe, O_NONBLOCK) != 0) {
+    if(pipe(m_readInterruptPipe) != 0) {
       Radiant::error("Failed to create read interrupt pipe: %s", strerror(errno));
       return false;
     }
 
-    if(pipe2(m_writeInterruptPipe, O_NONBLOCK) != 0) {
+    if(pipe(m_writeInterruptPipe) != 0) {
       Radiant::error("Failed to create write interrupt pipe: %s", strerror(errno));
       return false;
     }
@@ -161,30 +162,6 @@ namespace Radiant
   void SerialPort::setTraceName(const char *name)
   {
     m_traceName = name;
-  }
-
-  static void printBuffer(const char *buffer, int len, const char *op, const char *traceName)
-  {
-    const char *begin = buffer;
-    const char *end = buffer + len;
-    while(begin < end) {
-      const char* zeroPtr = (const char*)memchr(begin, 0, end - begin);
-      if(zeroPtr == nullptr) {
-        zeroPtr = end;
-      }
-      // print chars before null
-      int lenToPrint = zeroPtr - begin;
-      if(lenToPrint > 0) {
-        Radiant::info("%s%s: %.*s", traceName, op, lenToPrint, begin);
-      }
-      begin = begin + lenToPrint;
-      // now consume all nulls
-      while(*begin == '\0' && begin < end) {
-        // todo - get rid of newlines
-        Radiant::info("%s%s: \0", traceName, op);
-        begin++;
-      }
-    }
   }
 
   static void closePipe(int pipe[2])
@@ -210,7 +187,7 @@ namespace Radiant
     return true;
   }
 
-  int SerialPort::write(const void * buf, int bytes)
+  int SerialPort::doWrite(const void * buf, int bytes)
   {
     int r = ::write(m_fd, buf, bytes);
     if(r > 0 && m_traceName != nullptr) {
@@ -245,20 +222,12 @@ namespace Radiant
     return expected ? WaitStatus::Ok : WaitStatus::Error;
   }
 
-  template<class T>
-  static void safeset(T *outp, const T &value)
-  {
-    if(outp != nullptr) {
-      *outp = value;
-    }
-  }
-
-  int SerialPort::write(const char *buf, int bytes, WriteStatus *status)
+  int SerialPort::doWrite(const char *buf, int bytes, WriteStatus *status)
   {
     safeset(status, WriteStatus::Ok);
     int written = 0;
     do {
-      int r = write(buf + written, bytes - written);
+      int r = doWrite(buf + written, bytes - written);
       if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
         safeset(status, WriteStatus::WouldBlock);
         return written;
@@ -273,9 +242,16 @@ namespace Radiant
     return written;
   }
 
-  int SerialPort::blockingWrite(const QByteArray &buffer,
-                                double timeoutSeconds,
-                                bool *ok)
+  int SerialPort::write(const QByteArray &buffer,
+                        double timeoutSeconds,
+                        bool *ok)
+  {
+    return write(buffer.data(), buffer.size(), timeoutSeconds, ok);
+  }
+
+  int SerialPort::write(const char *buffer, int bytes,
+                        double timeoutSeconds,
+                        bool *ok)
   {
     Timer timer;
     int written = 0;
@@ -285,8 +261,12 @@ namespace Radiant
         return written;
       }
       double timeRemaining = timeoutSeconds - timer.time();
-      if(timeRemaining < 0) {
+      if(timeRemaining < 0 && timeoutSeconds > 0) {
         return written;
+      }
+      if(timeoutSeconds <= 0) {
+        // wait forever
+        timeRemaining = -1;
       }
       WaitStatus waitStatus = wait(POLLOUT, timeRemaining, m_writeInterruptPipe[0]);
       switch(waitStatus) {
@@ -298,9 +278,9 @@ namespace Radiant
       }
       do {
         WriteStatus status;
-        int r = write(buffer.data() + written,
-                      buffer.size() - written,
-                      &status);
+        int r = doWrite(buffer + written,
+                        bytes - written,
+                        &status);
         switch(status) {
         case WriteStatus::Ok:
           written += r;
@@ -316,16 +296,8 @@ namespace Radiant
     return written;
   }
 
-  int SerialPort::writeByte(uint8_t byte)
+  int SerialPort::doRead(void * buf, int bytes)
   {
-    return write( & byte, 1);
-  }
-
-  int SerialPort::read(void * buf, int bytes, bool waitfordata)
-  {
-    if(!waitfordata) {
-      error("SerialPort::read # !waitfordata nor supported yet.");
-    }
     int r = ::read(m_fd, buf, bytes);
     if(r > 0 && m_traceName != nullptr) {
       printBuffer((const char*)buf, r, ">", m_traceName);
@@ -333,9 +305,12 @@ namespace Radiant
     return r;
   }
 
-  bool SerialPort::blockingRead(QByteArray *output, double timeoutSeconds)
+  bool SerialPort::read(QByteArray *output, double timeoutSeconds)
   {
     assert(output != nullptr);
+    if(timeoutSeconds <= 0) {
+      timeoutSeconds = -1;
+    }
     WaitStatus waitStatus = wait(POLLIN, timeoutSeconds, m_readInterruptPipe[0]);
     switch(waitStatus) {
     case WaitStatus::Interrupt:
@@ -348,7 +323,7 @@ namespace Radiant
     char buffer[256];
     while(true) {
       errno = 0;
-      int r = read(buffer, 256);
+      int r = doRead(buffer, 256);
       if (r > 0) {
         output->append(buffer, r);
       } else if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
@@ -358,6 +333,37 @@ namespace Radiant
       }
     }
     return true;
+  }
+
+  int read(char *buffer, int bytes, double timeoutSeconds, bool *ok)
+  {
+    safeset(ok, true);
+    if(timeoutSeconds <= 0) {
+      timeoutSeconds = -1;
+    }
+    WaitStatus waitStatus = wait(POLLIN, timeoutSeconds, m_readInterruptPipe[0]);
+    switch(waitStatus) {
+    case WaitStatus::Interrupt:
+      return true;
+    case WaitStatus::Error:
+      return false;
+    case WaitStatus::Ok:
+      break;
+    }
+    int count = 0;
+    while(count < bytes) {
+      errno = 0;
+      int r = doRead(buffer + count, bytes - count);
+      if (r > 0) {
+        count += r;
+      } else if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
+        break;
+      } else if (r < 0) {
+        safeset(ok, false);
+        return count;
+      }
+    }
+    return count;
   }
 
   void SerialPort::interrupt(int fd)

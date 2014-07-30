@@ -26,6 +26,7 @@
 #include <Valuable/AttributeTimeStamp.hpp>
 
 #include <QDir>
+#include <QSettings>
 
 #ifdef RADIANT_UNIX
 #include <string.h>
@@ -338,7 +339,7 @@ namespace Luminous
             const double timeRemaining = timeout - timer.time();
             if (timeRemaining <= 0.0)
               break;
-            bool readOk = m_port.blockingRead(&buffer, timeRemaining);
+            bool readOk = m_port.read(&buffer, timeRemaining);
             if(!readOk) {
               closePort();
             }
@@ -387,7 +388,7 @@ namespace Luminous
       writeColorCorrection();
 
       QByteArray buffer;
-      bool ok = m_port.blockingRead(&buffer, 20.0);
+      bool ok = m_port.read(&buffer, 20.0);
       if(!ok) {
         closePort();
       }
@@ -403,9 +404,9 @@ namespace Luminous
         std::swap(buffer, m_writeBuffer);
       }
       if (!buffer.isEmpty()) {
-        Radiant::SerialPort::WriteStatus status;
-        int written = m_port.write(buffer.data(), buffer.size(), &status);
-        if(status == Radiant::SerialPort::WriteStatus::WriteError) {
+        bool ok = false;
+        int written = m_port.write(buffer.data(), buffer.size(), 1, &ok);
+        if(!ok) {
           closePort();
         }
         if (buffer.size() != written) {
@@ -493,7 +494,7 @@ namespace Luminous
     }
     if (!data.isEmpty()) {
       bool ok;
-      m_port.blockingWrite(data, 5.0, &ok);
+      m_port.write(data, 5.0, &ok);
       if (!ok) {
         Radiant::error("VM1: Failed to write color correction");
         Radiant::Guard g(m_colorCorrectionMutex);
