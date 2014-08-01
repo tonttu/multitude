@@ -136,6 +136,8 @@ namespace Radiant
     static QStringList scan();
 #endif
 
+    enum class WaitStatus { Ok, Error, Interrupt };
+
   private:
     QString m_device;
     const char *m_traceName;
@@ -151,7 +153,7 @@ namespace Radiant
     int m_readInterruptPipe[2];
     int m_writeInterruptPipe[2];
 
-    enum class WaitStatus { Ok, Error, Interrupt };
+
     WaitStatus wait(int events, double timeoutSeconds, int pipe);
 
     int doRead(void *buf, int bytes);

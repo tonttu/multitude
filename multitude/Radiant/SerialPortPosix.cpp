@@ -335,7 +335,7 @@ namespace Radiant
     return true;
   }
 
-  int read(char *buffer, int bytes, double timeoutSeconds, bool *ok)
+  int SerialPort::read(char *buffer, int bytes, double timeoutSeconds, bool *ok)
   {
     safeset(ok, true);
     if(timeoutSeconds <= 0) {
