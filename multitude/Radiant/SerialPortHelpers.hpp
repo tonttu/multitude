@@ -30,7 +30,7 @@ namespace Radiant {
       // now consume all nulls
       while(*begin == '\0' && begin < end) {
         // todo - get rid of newlines
-        Radiant::info("%s%s: \0", traceName, op);
+        Radiant::info("%s%s: \\0", traceName, op);
         begin++;
       }
     }

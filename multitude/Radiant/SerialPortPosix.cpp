@@ -257,7 +257,7 @@ namespace Radiant
     int written = 0;
     safeset(ok, true);
     while(isOpen()) {
-      if(buffer.size() == written) {
+      if(bytes == written) {
         return written;
       }
       double timeRemaining = timeoutSeconds - timer.time();
@@ -291,7 +291,7 @@ namespace Radiant
           safeset(ok, false);
           return written;
         }
-      } while(written < buffer.size());
+      } while(written < bytes);
     }
     return written;
   }
@@ -341,7 +341,7 @@ namespace Radiant
     if(timeoutSeconds <= 0) {
       timeoutSeconds = -1;
     }
-    WaitStatus waitStatus = wait(POLLIN, timeoutSeconds, m_readInterruptPipe[0]);
+    SerialPort::WaitStatus waitStatus = wait(POLLIN, timeoutSeconds, m_readInterruptPipe[0]);
     switch(waitStatus) {
     case WaitStatus::Interrupt:
       return true;
