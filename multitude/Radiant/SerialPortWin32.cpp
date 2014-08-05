@@ -205,20 +205,29 @@ namespace Radiant
 
     ZeroMemory(&m_d->m_overlappedWrite, sizeof(m_d->m_overlappedWrite));
     ret = WriteFile(m_d->m_hPort, buf, bytes, NULL, &m_d->m_overlappedWrite);
-    if(ret == 0
-       && GetLastError() != ERROR_IO_PENDING
-       && GetLastError() != ERROR_OPERATION_ABORTED) {
+    bool pending = ret == 0 && GetLastError() == ERROR_IO_PENDING;
+    bool completedSynchronously = ret != 0;
+    if(ret == 0 && !pending && GetLastError() != ERROR_OPERATION_ABORTED) {
       printLastError("Write - WriteFile");
       safeset(ok, false);
       return 0;
     }
 
     DWORD bytesWritten = 0;
-    ret = GetOverlappedResult(m_d->m_hPort, &m_d->m_overlappedWrite, &bytesWritten, TRUE);
-    if(ret == 0) {
-      printLastError("Write - GetOverlappedResult");
-      safeset(ok, false);
-      return 0;
+    if(pending || completedSynchronously) {
+      // make sure we don't call GetOverlappedResult when aborted, else it will hang
+      ret = GetOverlappedResult(m_d->m_hPort, &m_d->m_overlappedWrite, &bytesWritten, TRUE);
+      if(ret == 0
+         && GetLastError() != ERROR_OPERATION_ABORTED
+         && GetLastError() != ERROR_IO_INCOMPLETE) {
+        printLastError("Write - GetOverlappedResult");
+        safeset(ok, false);
+        return 0;
+      }
+
+      if(ret == 0 && bytesWritten > 0) {
+        Radiant::info("************* Can get bytes written in case of interrupts. Yay ********************");
+      }
     }
 
     if(bytesWritten > 0 && m_traceName != nullptr) {
@@ -255,20 +264,29 @@ namespace Radiant
 
     ZeroMemory(&m_d->m_overlappedRead, sizeof(m_d->m_overlappedRead));
     ret = ReadFile(m_d->m_hPort, buffer, maxRead, NULL, &m_d->m_overlappedRead);
-    if(ret == 0
-       && GetLastError() != ERROR_IO_PENDING
-       && GetLastError() != ERROR_OPERATION_ABORTED) {
+    bool pending = ret == 0 && GetLastError() == ERROR_IO_PENDING;
+    bool completedSynchronously = ret != 0;
+    if(ret == 0 && !pending && GetLastError() != ERROR_OPERATION_ABORTED) {
       printLastError("Read - ReadFile");
       safeset(ok, false);
       return 0;
     }
 
     DWORD bytesRead = 0;
-    ret = GetOverlappedResult(m_d->m_hPort, &m_d->m_overlappedRead, &bytesRead, TRUE);
-    if(ret == 0) {
-      printLastError("Write - GetOverlappedResult");
-      safeset(ok, false);
-      return 0;
+    if(pending || completedSynchronously) {
+      // make sure we don't call GetOverlappedResult if the operation was aborted
+      ret = GetOverlappedResult(m_d->m_hPort, &m_d->m_overlappedRead, &bytesRead, TRUE);
+      if(ret == 0
+         && GetLastError() != ERROR_OPERATION_ABORTED
+         && GetLastError() != ERROR_IO_INCOMPLETE) {
+        printLastError("Write - GetOverlappedResult");
+        safeset(ok, false);
+        return 0;
+      }
+
+      if(ret == 0 && bytesRead > 0) {
+        Radiant::info("************* Can get bytes written in case of interrupts. Yay ********************");
+      }
     }
 
     if(bytesRead > 0 && m_traceName != nullptr) {

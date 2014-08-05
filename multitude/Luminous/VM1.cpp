@@ -305,7 +305,10 @@ namespace Luminous
         if (vm1) {
           if (vm1->isConnected()) {
             if (*gen != -1 && *gen == vm1->m_d->m_headerGeneration) {
-              vm1->reconnect();
+              // why is this needed? It just closes the connection from a different thread.
+              // Since it is not synchronized that can be problematic
+              // Instead, let's just queue a new i command at some point
+              // vm1->reconnect();
             } else {
               *gen = vm1->m_d->m_headerGeneration;
               vm1->write("i");
@@ -511,8 +514,12 @@ namespace Luminous
     {
       Radiant::Guard g(m_writeBufferMutex);
       m_writeBuffer.append(data);
+      if(m_connected) {
+        // only interrupt read if we are connected. Else it doesn't help at all,
+        // and might delay discovery of VM1
+        m_port.interruptRead();
+      }
     }
-    m_port.interruptRead();
   }
 
   // Extract lines that have \n in the end from m_buffer, returned strings don't have \n
