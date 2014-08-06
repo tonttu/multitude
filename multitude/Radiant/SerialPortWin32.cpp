@@ -224,10 +224,6 @@ namespace Radiant
         safeset(ok, false);
         return 0;
       }
-
-      if(ret == 0 && bytesWritten > 0) {
-        Radiant::info("************* Can get bytes written in case of interrupts. Yay ********************");
-      }
     }
 
     if(bytesWritten > 0 && m_traceName != nullptr) {
@@ -282,10 +278,6 @@ namespace Radiant
         printLastError("Write - GetOverlappedResult");
         safeset(ok, false);
         return 0;
-      }
-
-      if(ret == 0 && bytesRead > 0) {
-        Radiant::info("************* Can get bytes written in case of interrupts. Yay ********************");
       }
     }
 
