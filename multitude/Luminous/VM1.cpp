@@ -305,10 +305,11 @@ namespace Luminous
         if (vm1) {
           if (vm1->isConnected()) {
             if (*gen != -1 && *gen == vm1->m_d->m_headerGeneration) {
-              // why is this needed? It just closes the connection from a different thread.
-              // Since it is not synchronized that can be problematic
-              // Instead, let's just queue a new i command at some point
-              // vm1->reconnect();
+              // If the generation is the same than previously, we didn't get any reply in 20
+              // seconds, so there is something wrong with the connection. For example someone
+              // could have opened the same device elsewhere which would have invalidated our
+              // handle. Reopen it and try again.
+              vm1->reconnect();
             } else {
               *gen = vm1->m_d->m_headerGeneration;
               vm1->write("i");
