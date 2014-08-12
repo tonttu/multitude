@@ -12,6 +12,8 @@
 
 #include "ColorCorrection.hpp"
 
+#include <atomic>
+
 #include <Radiant/BGThread.hpp>
 #include <Radiant/SerialPort.hpp>
 #include <Radiant/Sleep.hpp>
@@ -129,6 +131,8 @@ namespace Luminous
     QByteArray m_writeBuffer;
     Radiant::Mutex m_writeBufferMutex;
 
+    std::atomic<bool> m_requestReconnect;
+
     bool m_updateScheduled;
 
     Radiant::TaskPtr m_infoPoller;
@@ -232,7 +236,8 @@ namespace Luminous
       m_reSelect("(DVI1|DVI2|Colorbar|Logo|Screensaver) selected"),
       m_reBoot("(Warm|Cold) boot"),
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
-      m_reFrameRate("Set ([0-9.]+) Hz frame rate")
+      m_reFrameRate("Set ([0-9.]+) Hz frame rate"),
+      m_requestReconnect(false)
   {
     // These are required so that Mushy serialization works
     m_autoSelect.setAllowIntegers(true);
@@ -327,6 +332,11 @@ namespace Luminous
     m_startTime = Radiant::TimeStamp::currentTime();
     int openFailures = 0;
     while (m_running) {
+      if(m_requestReconnect) {
+        m_requestReconnect = false;
+        closePort();
+      }
+
       if (!m_port.isOpen()) {
         QByteArray buffer;
         bool ok = open();
@@ -343,7 +353,7 @@ namespace Luminous
             const double timeRemaining = timeout - timer.time();
             if (timeRemaining <= 0.0)
               break;
-            bool readOk = m_port.read(&buffer, timeRemaining);
+            bool readOk = m_port.read(buffer, timeRemaining);
             if(!readOk) {
               closePort();
             }
@@ -392,7 +402,7 @@ namespace Luminous
       writeColorCorrection();
 
       QByteArray buffer;
-      bool ok = m_port.read(&buffer, 20.0);
+      bool ok = m_port.read(buffer, 20.0);
       if(!ok) {
         closePort();
       }
@@ -885,9 +895,7 @@ namespace Luminous
 
   void VM1::reconnect()
   {
-    m_d->m_connected = false;
-    m_d->m_port.interruptRead();
-    m_d->m_port.close();
+    m_d->m_requestReconnect = true;
   }
 
   bool VM1::enabled()

@@ -45,23 +45,42 @@ namespace Radiant
     LocalFree(msgBuf);
   }
 
-  struct SerialPort::Impl {
+  struct SerialPort::D {
+    SerialPort &m_host;
     HANDLE m_hPort;
     OVERLAPPED m_overlappedRead;
     OVERLAPPED m_overlappedWrite;
 
     void interrupt(OVERLAPPED *overlapped);
-    Impl() : m_hPort(0) { }
+    WaitStatus waitUntilCanRead(double timeoutSeconds);
+    int doRead(char *buf, int maxSize, bool *ok);
+
+    D(SerialPort& host) : m_host(host), m_hPort(0) {
+      m_overlappedRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+      m_overlappedWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    }
   };
 
   SerialPort::SerialPort()
-  : m_d(new Impl()),
+  : m_d(new D(*this)),
     m_traceName(nullptr)
   {}
 
   SerialPort::~SerialPort()
   {
     close();
+  }
+
+  void SerialPort::setTraceName(const char *name)
+  {
+    m_traceName = name;
+  }
+
+  static void clearOverlapped(OVERLAPPED &overlapped)
+  {
+    overlapped.Internal = 0;
+    overlapped.InternalHigh = 0;
+    overlapped.Pointer = 0;
   }
 
   bool SerialPort::open(const char * device, bool /*stopBit*/, bool parityBit,
@@ -169,7 +188,7 @@ namespace Radiant
       return true;
     }
 
-    bool  closed = false;
+    bool closed = false;
     if(CloseHandle(m_d->m_hPort))
     {
       closed = true;
@@ -238,77 +257,158 @@ namespace Radiant
     return write(buffer.data(), buffer.size(), timeoutSeconds, ok);
   }
 
-  int SerialPort::read(char *buffer, int maxRead, double timeoutSeconds, bool *ok)
+  SerialPort::WaitStatus SerialPort::D::waitUntilCanRead(double timeoutSeconds)
   {
-    safeset(ok, true);
-
-    if(!isOpen()) {
+    if(m_hPort == 0) {
       error("SerialPort::read # device not open");
-      safeset(ok, false);
-      return 0;
+      return WaitStatus::Error;
     }
 
+    // wait only for RXCHAR events
+    BOOL ok = SetCommMask(m_hPort, EV_RXCHAR);
+    if(!ok) {
+      printLastError("Read - SetCommMask");
+      return WaitStatus::Error;
+    }
+
+    DWORD event = -1;
+    OVERLAPPED& overlapped = m_overlappedRead;
+    clearOverlapped(overlapped);
+    ok = WaitCommEvent(m_hPort, &event, &overlapped);
+    bool pending = !ok && GetLastError() == ERROR_IO_PENDING;
+    if(!ok && !pending) {
+      printLastError("Read - WaitCommEvent");
+      return WaitStatus::Error;
+    }
+
+    if(pending) {
+      DWORD res = WaitForSingleObject(overlapped.hEvent, timeoutSeconds * 1000);
+      switch(res) {
+      case WAIT_OBJECT_0:
+        // got notified of some available bytes.
+        return WaitStatus::Ok;
+      case WAIT_TIMEOUT:
+        // timeout, skip reading, return 0 bytes read
+        return WaitStatus::Interrupt;
+      default:
+        // An error occured
+        printLastError("Read - WaitForSingleObject");
+        return WaitStatus::Error;
+      }
+    }
+
+    return WaitStatus::Ok;
+  }
+
+  int SerialPort::D::doRead(char *buffer, int maxRead, bool *readOk)
+  {
+    // set magic timeouts that mean - give me available data immediately and
+    // do not block even when I ask for more data than you have.
     COMMTIMEOUTS timeouts;
     ZeroMemory(&timeouts, sizeof(timeouts));
-    timeouts.ReadTotalTimeoutConstant = timeoutSeconds * 1000;
-    BOOL ret = SetCommTimeouts(m_d->m_hPort, &timeouts);
-    if(ret == 0) {
+    timeouts.ReadIntervalTimeout = MAXDWORD;
+    BOOL ok = SetCommTimeouts(m_hPort, &timeouts);
+    if(!ok) {
       printLastError("Read - SetCommTimeouts");
-      safeset(ok, false);
+      safeset(readOk, false);
       return 0;
     }
 
-    ZeroMemory(&m_d->m_overlappedRead, sizeof(m_d->m_overlappedRead));
-    ret = ReadFile(m_d->m_hPort, buffer, maxRead, NULL, &m_d->m_overlappedRead);
+    // can now read and it should not block due to magic timeouts
+    OVERLAPPED& overlapped = m_overlappedRead;
+    clearOverlapped(overlapped);
+    DWORD ret = ReadFile(m_hPort, buffer, maxRead, NULL, &m_overlappedRead);
     bool pending = ret == 0 && GetLastError() == ERROR_IO_PENDING;
     bool completedSynchronously = ret != 0;
     if(ret == 0 && !pending && GetLastError() != ERROR_OPERATION_ABORTED) {
       printLastError("Read - ReadFile");
-      safeset(ok, false);
+      safeset(readOk, false);
       return 0;
+    }
+    if(pending) {
+      Radiant::error("Win32 SerialPort - Pending ReadFile in spite of magic timeouts");
     }
 
     DWORD bytesRead = 0;
     if(pending || completedSynchronously) {
-      // make sure we don't call GetOverlappedResult if the operation was aborted
-      ret = GetOverlappedResult(m_d->m_hPort, &m_d->m_overlappedRead, &bytesRead, TRUE);
+      // make sure we don't call GetOverlappedResult if the operation was aborted.
+      // this should not block.
+      ret = GetOverlappedResult(m_hPort, &m_overlappedRead, &bytesRead, TRUE);
       if(ret == 0
          && GetLastError() != ERROR_OPERATION_ABORTED
          && GetLastError() != ERROR_IO_INCOMPLETE) {
-        printLastError("Write - GetOverlappedResult");
-        safeset(ok, false);
+        printLastError("Read - GetOverlappedResult");
+        safeset(readOk, false);
         return 0;
       }
     }
 
-    if(bytesRead > 0 && m_traceName != nullptr) {
-      printBuffer(buffer, (int)bytesRead, ">", m_traceName);
+    if(bytesRead > 0 && m_host.m_traceName != nullptr) {
+      printBuffer(buffer, (int)bytesRead, ">", m_host.m_traceName);
     }
 
     return bytesRead;
   }
 
-  bool SerialPort::read(QByteArray *output, double timeoutSeconds)
+  int SerialPort::read(char *buffer, int maxRead, double timeoutSeconds, bool *readOk)
   {
-    // will read at most 4k of data. It's a stupid limitation but
-    // this API is horrible. There's no easy way to iterate through the
-    // available data while blocking only once if there is more data
-    // than we have space for it. If it reports reading exactly maxRead
-    // bytes it might mean that there is more data, or it might block.
-    // It would work in non-overlapped mode with some magic values for the
-    // timeouts, but that makes canceling only reads or only writes impossible.
-    int maxRead = 4 * 1024;
-    int oldSize = output->size();
-    output->resize(output->size() + maxRead);
-    char *buffer = output->data() + oldSize;
-    bool ok;
-    int bytes = read(buffer, maxRead, timeoutSeconds, &ok);
-    if(ok) {
-      output->resize(oldSize + bytes);
-    } else {
-      output->resize(oldSize);
+    safeset(readOk, true);
+
+    if(!isOpen()) {
+      error("SerialPort::read # device not open");
+      safeset(readOk, false);
+      return 0;
     }
-    return ok;
+
+    WaitStatus status = m_d->waitUntilCanRead(timeoutSeconds);
+    switch(status) {
+    case WaitStatus::Ok:
+      break;
+    case WaitStatus::Interrupt:
+      return 0;  // time's up, did not read anything
+    default:
+      // an error occured, return without reading
+      safeset(readOk, false);
+      return 0;
+    }
+
+    return m_d->doRead(buffer, maxRead, readOk);
+  }
+
+  bool SerialPort::read(QByteArray &output, double timeoutSeconds)
+  {
+    if(!isOpen()) {
+      error("SerialPort::read # device not open");
+      return false;
+    }
+
+    WaitStatus status = m_d->waitUntilCanRead(timeoutSeconds);
+    switch(status) {
+    case WaitStatus::Ok:
+      break;
+    case WaitStatus::Interrupt:
+      return true;  // time's up, did not read anything
+    default:
+      // an error occured, return without reading
+      return false;
+    }
+
+    int maxRead = 1024;
+    int bytes = -1;
+    do {
+      int oldSize = output.size();
+      output.resize(output.size() + maxRead);
+      char *buffer = output.data() + oldSize;
+      bool ok;
+      bytes = m_d->doRead(buffer, maxRead, &ok);
+      if(ok) {
+        output.resize(oldSize + bytes);
+      } else {
+        output.resize(oldSize);
+        return false;
+      }
+    } while(bytes > 0);
+    return true;
   }
 
   bool SerialPort::isOpen() const
@@ -316,7 +416,7 @@ namespace Radiant
     return (m_d->m_hPort != 0);
   }
 
-  void SerialPort::Impl::interrupt(OVERLAPPED *overlapped)
+  void SerialPort::D::interrupt(OVERLAPPED *overlapped)
   {
     if(m_hPort == 0) {
       return;

@@ -305,9 +305,8 @@ namespace Radiant
     return r;
   }
 
-  bool SerialPort::read(QByteArray *output, double timeoutSeconds)
+  bool SerialPort::read(QByteArray &output, double timeoutSeconds)
   {
-    assert(output != nullptr);
     if(timeoutSeconds <= 0) {
       timeoutSeconds = -1;
     }
@@ -325,7 +324,7 @@ namespace Radiant
       errno = 0;
       int r = doRead(buffer, 256);
       if (r > 0) {
-        output->append(buffer, r);
+        output.append(buffer, r);
       } else if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
         break;
       } else if (r < 0) {
