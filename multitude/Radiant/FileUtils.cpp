@@ -142,7 +142,6 @@ namespace {
     if(try_flock(s_usersLockfile)) {
       Radiant::info("Remounting root filesystem to read-write -mode (reason: %s)", name.toUtf8().data());
       runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
-      runAsRoot("sleep", QStringList() << "5");
 
       if(!do_flock(s_usersLockfile, LOCK_UN)) {
         Radiant::error("Failed to release the users lock: %s", strerror(errno));
