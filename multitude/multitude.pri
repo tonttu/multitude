@@ -229,6 +229,13 @@ win32 {
       LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
       enable-js:LIB_V8 = -lv8_d -lnode_d
     }
+
+  # output pdbs for release builds as well. Otherwise, profiling is impossible
+  CONFIG(release):pdb-in-release {
+    QMAKE_LFLAGS += /MAP
+    QMAKE_CFLAGS += /Zi
+    QMAKE_LFLAGS += /debug /opt:ref
+  }
 }
 
 #
