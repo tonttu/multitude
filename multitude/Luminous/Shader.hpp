@@ -25,9 +25,9 @@ namespace Luminous
     /// Type of the shader
     enum Type
     {
-      Vertex,   /// Vertex shader
-      Fragment, /// Fragment shader
-      Geometry, /// Geometry shader
+      Vertex,   ///< Vertex shader
+      Fragment, ///< Fragment shader
+      Geometry, ///< Geometry shader
     };
   public:
     /// Constructor of shader
