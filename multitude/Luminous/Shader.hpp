@@ -25,9 +25,12 @@ namespace Luminous
     /// Type of the shader
     enum Type
     {
-      Vertex,   ///< Vertex shader
-      Fragment, ///< Fragment shader
-      Geometry, ///< Geometry shader
+      Vertex,       ///< Vertex shader
+      Fragment,     ///< Fragment shader
+      Geometry,     ///< Geometry shader
+      TessControl,  ///< Tessellation control shader
+      TessEval,     ///< Tessellation evaluation shader
+      Compute,      ///< Compute shader
     };
   public:
     /// Constructor of shader
