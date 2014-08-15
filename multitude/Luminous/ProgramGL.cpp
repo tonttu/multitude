@@ -63,6 +63,7 @@ namespace Luminous
         m_handle = glCreateShader(GL_GEOMETRY_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_GEOMETRY_SHADER)");
         break;
+#if !defined (RADIANT_OSX)
       case Shader::TessControl:
         m_handle = glCreateShader(GL_TESS_CONTROL_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_TESS_CONTROL_SHADER)");
@@ -74,11 +75,11 @@ namespace Luminous
       case Shader::Compute:
         m_handle = glCreateShader(GL_COMPUTE_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_COMPUTE_SHADER)");
-        Radiant::warning("ShaderGL::compile # Compute shaders not implemented yet");
-        return false;
+        Radiant::warning("ShaderGL::compile # Compute shaders not fully implemented yet");
         break;
+#endif
       default:
-        Radiant::error("Unknown shader type");
+        Radiant::error("Unknown shader type/Not implemented on this platform");
         return false;
       }
     }
