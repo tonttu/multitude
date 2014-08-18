@@ -71,7 +71,7 @@ namespace Valuable
     DOMElement getChildNode(const QString & tagname);
 
     /// Dumps this elements into the given file
-    void dumpInfo(FILE *, int recursion = 0);
+    void dumpInfo(FILE *, int recursion = 0) const;
 
   private:
     struct Wrapped;

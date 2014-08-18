@@ -164,7 +164,7 @@ namespace Valuable
     }
   }
 
-  void DOMElement::dumpInfo(FILE * f, int recursion)
+  void DOMElement::dumpInfo(FILE * f, int recursion) const
   {
     NodeList nodes = getChildNodes();
 
