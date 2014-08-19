@@ -16,6 +16,7 @@
 #include "Directory.hpp"
 #include "Radiant.hpp"
 #include "Trace.hpp"
+#include "Timer.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -531,10 +532,16 @@ namespace Radiant
 #ifdef RADIANT_LINUX
   int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
+    Radiant::Timer timer;
     QProcess p;
     p.start(cmd, argv, QProcess::ReadOnly);
-    p.waitForStarted();
-    p.waitForFinished(-1);
+    do {
+      // Apparently there is a bug in Qt 4.* that waitForFinished might miss
+      // finished() signal if it was emitted before we call this function,
+      // and therefore it might block forever. We work around that by polling.
+      if (p.waitForFinished(500) || p.state() == QProcess::NotRunning)
+        break;
+    } while (timer.time() < 300);
     if(out) *out = p.readAllStandardOutput();
     if(err) {
       *err = p.readAllStandardError();
