@@ -117,19 +117,6 @@ namespace Radiant
       return path;
     }
 
-    /// @todo check if this can be removed (use MultiTouch::cornerstoneRoot() instead)
-    QString getModuleGlobalDataPath(const char * module, bool isapplication)
-    {
-      (void) isapplication;
-
-      QSettings settings("SOFTWARE\\MultiTouch\\MTSvc", QSettings::NativeFormat);
-      QString root = settings.value("Root").toString();
-      if(!root.isEmpty())
-        return root + QString("\\share");
-
-      assert(false && "PlatformUtils::GetModuleGlobalDataPath # Root in SOFTWARE\\MultiTouch\\MTSvc not set");
-    }
-
     QString getUserDocumentsPath()
     {
       return getUserHomePath() + "\\My Documents";
