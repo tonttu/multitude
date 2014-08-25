@@ -195,6 +195,11 @@ namespace Valuable
     }
   }
 
+  const QDomElement & DOMElement::qDomElement() const
+  {
+    return m_wrapped->x;
+  }
+
   void DOMElement::setTextContent(const QString & s)
   {
       if(isNull()) {
