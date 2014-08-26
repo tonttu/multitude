@@ -10,6 +10,8 @@
 
 #include <QMap>
 #include <QPair>
+#include <QDir>
+
 #include "ScreenDetector.hpp"
 #include <Radiant/Platform.hpp>
 
@@ -130,9 +132,20 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
 
 
 #ifdef RADIANT_LINUX
-  X11Display::X11Display()
-    : m_display(XOpenDisplay(nullptr))
-  {}
+  X11Display::X11Display(X11Display &&display)
+    : m_display(std::move(display.m_display))
+  {
+
+  }
+
+  X11Display::X11Display(bool detectDisplay)
+    : m_display(nullptr)
+  {
+    if(!detectDisplay)
+      return;
+
+    open();
+  }
 
   X11Display::X11Display(const QByteArray & displayName)
     : m_display(XOpenDisplay(displayName.data()))
@@ -140,10 +153,56 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
 
   X11Display::~X11Display()
   {
-    XCloseDisplay(m_display);
+    close();
+  }
+
+  bool X11Display::open(const QByteArray &displayName)
+  {
+    close();
+
+    if(!displayName.isEmpty()) {
+      m_display = XOpenDisplay(displayName.data());
+      return m_display;
+    } else {
+      // First try using DISPLAY environment variable
+      m_display = XOpenDisplay(nullptr);
+
+      if(!m_display) {
+        QDir socketsDir("/tmp/.X11-unix");
+        QStringList files = socketsDir.entryList(QDir::System);
+        QRegExp displayRegex = QRegExp("^X([0-9]).*");
+        for(const QString &file : files) {
+          if(displayRegex.exactMatch(file)) {
+            QString displayName = QString(":%1").arg(displayRegex.cap(1));
+            m_display = XOpenDisplay(displayName.toAscii().data());
+            if(m_display) {
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return m_display != nullptr;
+  }
+
+  bool X11Display::close()
+  {
+    if(m_display) {
+      XCloseDisplay(m_display);
+      m_display = nullptr;
+      return true;
+    }
+
+    return false;
   }
 
   X11Display::operator Display * ()
+  {
+    return m_display;
+  }
+
+  X11Display::operator const Display * () const
   {
     return m_display;
   }
