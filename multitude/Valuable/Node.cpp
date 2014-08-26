@@ -759,6 +759,11 @@ namespace Valuable
     return m_id;
   }
 
+  void Node::setId(Node::Uuid newId)
+  {
+    m_id = newId;
+  }
+
   void Node::eventAddOut(const QByteArray & id)
   {
     if (m_eventSendNames.contains(id)) {

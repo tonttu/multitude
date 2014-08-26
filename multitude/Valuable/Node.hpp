@@ -393,6 +393,8 @@ namespace Valuable
     static Uuid generateId();
     /// Returns the unique id
     Uuid id() const;
+    /// Sets the unique id
+    void setId(Uuid newId);
 
     /// Registers a new event this class can send with eventSend
     void eventAddOut(const QByteArray & eventId);
