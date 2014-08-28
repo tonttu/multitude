@@ -383,10 +383,11 @@ namespace Valuable
       return true;
     }
 
-  protected:
-
     /// Invokes the change valueChanged function of all listeners
     virtual void emitChange();
+
+  protected:
+
     /// Invokes the change valueDeleted function of all listeners
     virtual void emitDelete();
 
