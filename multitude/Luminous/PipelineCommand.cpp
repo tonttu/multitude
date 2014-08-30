@@ -248,4 +248,17 @@ namespace Luminous
         glDisable(GL_CLIP_DISTANCE0 + m_planes.at(i));
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  CommandDrawBuffers::CommandDrawBuffers(const std::vector<int> & buffers)
+    : m_buffers(buffers)
+  {
+  }
+
+  void CommandDrawBuffers::execute()
+  {
+    glDrawBuffers( m_buffers.size(), reinterpret_cast<GLenum *>(m_buffers.data()));
+  }
 }
