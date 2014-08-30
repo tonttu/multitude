@@ -1664,6 +1664,19 @@ namespace Luminous
     m_data->m_driverGL->setCullMode(mode);
   }
 
+  void RenderContext::setDrawBuffers(const std::vector<int> & buffers)
+  {
+    m_data->m_driverGL->setDrawBuffers(buffers);
+  }
+
+  void RenderContext::setDefaultDrawBuffers()
+  {
+    std::vector<int> buffers;
+    buffers.push_back(GL_FRONT_LEFT);
+    buffers.push_back(GL_FRONT_RIGHT);
+    setDrawBuffers(buffers);
+  }
+
   void RenderContext::setFrontFace(FaceWinding winding)
   {
     m_data->m_driverGL->setFrontFace(winding);
