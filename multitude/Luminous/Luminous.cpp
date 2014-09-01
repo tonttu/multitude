@@ -43,6 +43,8 @@ namespace Luminous
 #endif
   }
 
+  static bool s_luminousInitialized = false;
+
   bool initLuminous(bool initOpenGL)
   {
     // Only run this function once. First from simpleInit then later from
@@ -100,10 +102,19 @@ namespace Luminous
         }
 
       } // MULTI_ONCE
+      if(s_ok)
+        s_luminousInitialized = true;
       return s_ok;
     }
 
+    s_luminousInitialized = true;
+
     return true;
+  }
+
+  bool isLuminousInitialized()
+  {
+    return s_luminousInitialized;
   }
 
   void initDefaultImageCodecs()

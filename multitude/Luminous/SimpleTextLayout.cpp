@@ -147,6 +147,9 @@ namespace Luminous
 
   void SimpleTextLayout::D::layout(const Nimble::SizeF & size)
   {
+    if(!isLuminousInitialized())
+      Radiant::error("SimpleTextLayout::D::layout # Luminous has not been initialized yet");
+
     const float lineWidth = size.width();
 
     bool forceHeight = false;
