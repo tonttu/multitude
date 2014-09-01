@@ -32,6 +32,22 @@
 
 namespace Radiant
 {
+  static bool createPipe(int p[2])
+  {
+    if (pipe(p) != 0) {
+      Radiant::error("Failed to create read interrupt pipe: %s", strerror(errno));
+      return false;
+    }
+
+    // pipe needs to be non-blocking on the readable end
+    if (fcntl(p[0], F_SETFL, O_NONBLOCK)) {
+      close(p[0]);
+      close(p[1]);
+      return false;
+    }
+
+    return true;
+  }
 
   SerialPort::SerialPort()
   : m_traceName(nullptr),
@@ -146,13 +162,8 @@ namespace Radiant
       return false;
     }
 
-    if(pipe(m_readInterruptPipe) != 0) {
-      Radiant::error("Failed to create read interrupt pipe: %s", strerror(errno));
-      return false;
-    }
-
-    if(pipe(m_writeInterruptPipe) != 0) {
-      Radiant::error("Failed to create write interrupt pipe: %s", strerror(errno));
+    if (!createPipe(m_readInterruptPipe) || !createPipe(m_writeInterruptPipe)) {
+      close();
       return false;
     }
 
