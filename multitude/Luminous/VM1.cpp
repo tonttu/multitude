@@ -856,6 +856,8 @@ namespace Luminous
 
     Radiant::Guard g(m_d->m_colorCorrectionMutex);
     m_d->m_colorCorrection = ba;
+    if (m_d->m_connected)
+      m_d->m_port.interruptRead();
   }
 
   void VM1::setLCDPower(bool enable)
