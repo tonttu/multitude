@@ -23,6 +23,13 @@ namespace Valuable
       m_eventListeners.push_back(std::make_pair(node, node->eventAddListener(name, func)));
     }
 
+    void add(Valuable::Node* fromNode, const QByteArray& from, const QByteArray& to, Valuable::Node* toNode)
+    {
+      assert(fromNode);
+      assert(toNode);
+      m_eventListeners.push_back(std::make_pair(fromNode, fromNode->eventAddListener(from, to, toNode)));
+    }
+
     ~ListenerHolder()
     {
       for (auto p: m_listeners)
