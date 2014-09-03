@@ -399,9 +399,8 @@ namespace Luminous
   bool MultiHead::Window::isAreaSoftwareColorCorrected(int areaIndex) const
   {
     const bool isSW = m_areas[areaIndex]->rgbCube().isDefined() || !m_areas[areaIndex]->colorCorrection().isIdentity();
-    const bool isHW = m_screen->hwColorCorrection().ok();
 
-    return !isHW && isSW;
+    return isSW;
   }
 
   Nimble::Recti MultiHead::Window::getRect() const {
@@ -449,24 +448,12 @@ namespace Luminous
       : Node(0, "MultiHead", false),
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
-      m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_vsync(this, "vsync", false),
       m_glFinish(this, "gl-finish", true),
       m_edited(false)
   {
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
-
-    m_hwColorCorrectionEnabled.addListener([&]()
-    {
-      if(m_hwColorCorrectionEnabled && !m_windows.empty()) {
-        auto & w = m_windows[0];
-        if(w->areaCount() > 0)
-          m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
-      } else {
-        m_hwColorCorrection.syncWith(0);
-      }
-    });
   }
 
   MultiHead::~MultiHead()
@@ -608,7 +595,6 @@ namespace Luminous
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
-    m_hwColorCorrection.syncWith(0);
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -623,14 +609,6 @@ namespace Luminous
   {
     addAttribute(w.get());
 
-    if(m_hwColorCorrectionEnabled) {
-      /// @todo this is a wrong assumption that area 0 would contain a color
-      /// correction profile. Do this correctly..
-      m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
-    } else {
-      m_hwColorCorrection.syncWith(0);
-    }
-
     m_windows.push_back(std::move(w));
     eventSend("graphics-bounds-changed");
   }
@@ -638,7 +616,6 @@ namespace Luminous
   void MultiHead::deleteWindows()
   {
     /// @todo this should remove listeners that refer to Areas within the windows
-    m_hwColorCorrection.syncWith(0);
     m_windows.clear();
   }
 

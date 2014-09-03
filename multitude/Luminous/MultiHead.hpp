@@ -427,20 +427,6 @@ namespace Luminous {
     /// @param iconify true to iconify windows
     void setIconify(bool iconify) { m_iconify = iconify; }
 
-    /// @cond
-
-    const HardwareColorCorrection & hwColorCorrection() const
-    {
-      return m_hwColorCorrection;
-    }
-
-    HardwareColorCorrection & hwColorCorrection()
-    {
-      return m_hwColorCorrection;
-    }
-
-    /// @endcond
-
     /// Remove all windows from the configuration
     void deleteWindows();
 
@@ -467,11 +453,6 @@ namespace Luminous {
 
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
-    /// Is the hardware color-correction enabled. Hardware color-correction is
-    /// implemented with the video-multiplex hardware inside MultiTaction Cells.
-    bool isHardwareColorCorrectionEnabled() const { return m_hwColorCorrectionEnabled; }
-    void setHardwareColorCorrection(bool enabled) { m_hwColorCorrectionEnabled = enabled; }
-
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
@@ -482,8 +463,6 @@ namespace Luminous {
     std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
     Valuable::AttributeFloat m_dpi;
-    Valuable::AttributeBool m_hwColorCorrectionEnabled;
-    HardwareColorCorrection m_hwColorCorrection;
     Valuable::AttributeBool m_vsync;
     Valuable::AttributeBool m_glFinish;
 
