@@ -175,7 +175,8 @@ win32 {
         ShLwApi.lib \
         shell32.lib \
         psapi.lib \
-        Advapi32.lib
+        Advapi32.lib \
+        Ole32.lib
     CONFIG += qt
     QT = core network
 
