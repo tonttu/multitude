@@ -237,6 +237,22 @@ namespace Radiant
       return systemShutdown(false);
     }
 
+    QString windowsProgramDataPath()
+    {
+      PWSTR path;
+      HRESULT res = SHGetKnownFolderPath(FOLDERID_ProgramData, KF_FLAG_CREATE, nullptr, &path);
+      if(res != S_OK) {
+        CoTaskMemFree(path);
+        Radiant::error("Failed to get ProgramData path. ShGetKnownFolderPath failed with error code %d", res);
+
+        return QString();
+      }
+
+      QString programData = QString::fromWCharArray(path);
+      CoTaskMemFree(path);
+      return programData;
+    }
+
   }
 
 }

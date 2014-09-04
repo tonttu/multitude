@@ -10,7 +10,8 @@
 #ifndef RADIANT_PLATFORM_UTILS_HPP
 #define RADIANT_PLATFORM_UTILS_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
+#include "Platform.hpp"
 
 #include <cstdint>
 
@@ -78,6 +79,12 @@ namespace Radiant
     /// Shutdown the system immediately
     /// @return true on success
     RADIANT_API bool shutdown();
+
+#ifdef RADIANT_WINDOWS
+    /// Get path to folder used for application data that is not user specific (i.e. ProgramData)
+    RADIANT_API QString windowsProgramDataPath();
+#endif
+
   }
 
 }
