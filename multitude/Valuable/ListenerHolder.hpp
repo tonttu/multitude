@@ -1,45 +1,27 @@
 #ifndef VALUABLE_LISTENERHOLDER_HPP
 #define VALUABLE_LISTENERHOLDER_HPP
 
-#include "Attribute.hpp"
+#include "Export.hpp"
+#include "Node.hpp"
 
 /// @todo document, make movable and not copyable, or alternatively, make
 ///       similar functionality part of node (again)
 
 namespace Valuable
 {
-  class ListenerHolder
+  class VALUABLE_API ListenerHolder
   {
   public:
-    void add(Valuable::Attribute * attr, Valuable::Attribute::ListenerFunc func)
-    {
-      assert(attr);
-      m_listeners.push_back(std::make_pair(attr, attr->addListener(func)));
-    }
+    ~ListenerHolder();
 
-    void add(Valuable::Node * node, const QByteArray & name, Valuable::Node::ListenerFuncVoid func)
-    {
-      assert(node);
-      m_eventListeners.push_back(std::make_pair(node, node->eventAddListener(name, func)));
-    }
-
-    void add(Valuable::Node* fromNode, const QByteArray& from, const QByteArray& to, Valuable::Node* toNode)
-    {
-      assert(fromNode);
-      assert(toNode);
-      m_eventListeners.push_back(std::make_pair(fromNode, fromNode->eventAddListener(from, to, toNode)));
-    }
-
-    ~ListenerHolder()
-    {
-      for (auto p: m_listeners)
-        p.first->removeListener(p.second);
-
-      for (auto p: m_eventListeners)
-        p.first->eventRemoveListener(p.second);
-    }
+    void add(Valuable::Attribute * attr, Valuable::Attribute::ListenerFunc func);
+    void add(Valuable::Node * node, const QByteArray & name, Valuable::Node::ListenerFuncVoid func);
+    void add(Valuable::Node* fromNode, const QByteArray& from, const QByteArray& to, Valuable::Node* toNode);
 
   private:
+    void setupAttributeRemoveListener(Valuable::Attribute* attr);
+    void setupNodeRemoveListener(Valuable::Node* node);
+
     std::vector<std::pair<Valuable::Attribute *, long>> m_listeners;
     std::vector<std::pair<Valuable::Node *, long>> m_eventListeners;
   };
