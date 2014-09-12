@@ -723,9 +723,11 @@ namespace Luminous
     m_d->m_running = false;
     m_d->m_connected = false;
     m_d->m_port.interruptRead();
+    // Do not close the serial port before the thread has finished, otherwise
+    // we will both call close at the same time at cause an exception on windows
+    m_d->waitEnd();
     // don't interrupt writes, it messes with VM1
     m_d->m_port.close();
-    m_d->waitEnd();
   }
 
   bool VM1::waitForConnection(double timeoutFromBeginningSecs) const
