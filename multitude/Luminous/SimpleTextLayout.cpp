@@ -226,7 +226,8 @@ namespace Luminous
       if (!line.isValid())
         break;
 
-      line.setLineWidth(lineWidth);
+      // first line has more or less available width due to the indent
+      line.setLineWidth(lineWidth - indent);
       y += leading;
       line.setPosition(QPointF(indent, y));
       if (forceHeight)
