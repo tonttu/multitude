@@ -834,6 +834,17 @@ namespace Valuable
     return r;
   }
 
+  void Node::clearQueue()
+  {
+    Radiant::Guard g(s_processingQueueMutex);
+    Radiant::Guard g2(s_queueMutex);
+
+    s_queue.clear();
+    s_queueOnce.clear();
+    s_queueTmp.clear();
+    s_queueOnceTmp.clear();
+  }
+
   bool Node::copyValues(const Node & from, Node & to)
   {
     XMLArchive archive;

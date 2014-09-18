@@ -435,6 +435,9 @@ namespace Valuable
     /// @returns number of processes items
     static int processQueue();
 
+    /// Removes all pending AFTER_UPDATE-events without calling them.
+    static void clearQueue();
+
     /// Copies attribute values from one node to another
     /// @param from source node
     /// @param to target node
