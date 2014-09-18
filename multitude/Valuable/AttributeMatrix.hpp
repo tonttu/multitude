@@ -34,7 +34,7 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    AttributeMatrix(Node * host, const QByteArray & name, const MatrixType & v = MatrixType(), bool transit = false)
+    AttributeMatrix(Node * host, const QByteArray & name, const MatrixType & v = MatrixType::IDENTITY, bool transit = false)
       : Base(host, name, v, transit) {}
 
     AttributeMatrix() : Base() {}
