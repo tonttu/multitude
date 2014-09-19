@@ -130,7 +130,7 @@ namespace Nimble {
     inline T           sum             (void) const { return x + y; }
     /// Returns a vector with components reordered.
     inline Vector2T    shuffle         (int i1 = 1, int i2 = 0) const { return Vector2T(get(i1), get(i2)); }
-    /// Returns a perpendicular vector
+    /// Returns a perpendicular vector. Same as rotating the vector by 90 degrees.
     inline Vector2T    perpendicular   () const { return Vector2T(-y, x); }
 
     /// Returns the ith component
