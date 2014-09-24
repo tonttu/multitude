@@ -104,6 +104,24 @@ namespace Radiant
     return true;
   }
 
+  bool UDPSocket::isPendingInput(unsigned int waitMicroSeconds)
+  {
+    if(m_d->m_fd < 0)
+      return false;
+
+    struct pollfd pfd;
+    memset( & pfd, 0, sizeof(pfd));
+
+    pfd.fd = m_d->m_fd;
+    pfd.events = POLLRDNORM;
+    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("UDPSocket::isPendingInput %s", SocketWrapper::strerror(SocketWrapper::err()));
+    }
+
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
+  }
+
   bool UDPSocket::isOpen() const
   {
     return m_d->m_fd >= 0;

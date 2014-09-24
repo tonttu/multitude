@@ -72,6 +72,8 @@ namespace Radiant
     /// @return True if the socket was succesfully closed.
     bool close();
 
+    virtual bool isPendingInput(unsigned int waitMicroSeconds);
+
     /** Reads datagram packets from the socket.
         @param buffer buffer to write to
         @param bytes maximum bytes to read
