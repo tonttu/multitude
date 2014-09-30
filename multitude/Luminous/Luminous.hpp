@@ -49,6 +49,8 @@ namespace Luminous
       too low OpenGL version).
   */
   LUMINOUS_API bool initLuminous(bool initOpenGL = true);
+  /** Checks if the initLuminous function has been called successfully. */
+  LUMINOUS_API bool isLuminousInitialized();
 
   /** Initializes the default image codecs.
   The image codecs are loaded as plugins that need to be loaded before they can

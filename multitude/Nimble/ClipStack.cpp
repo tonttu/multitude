@@ -122,4 +122,23 @@ bool ClipStack::isVisible(const Nimble::Vector2 & p) const
   return true;
 }
 
+Rect ClipStack::boundingBox() const
+{
+  if (m_d->m_stack.empty())
+    return Rect();
+
+  return m_d->m_stack.back().m_compoundedBoundingBox;
+}
+
+size_t ClipStack::stackDepth() const
+{
+  return m_d->m_stack.size();
+}
+
+Rectangle ClipStack::stackRectangle(size_t index) const
+{
+  assert(index < m_d->m_stack.size());
+  return m_d->m_stack.at(index).m_rectangle;
+}
+
 }

@@ -29,8 +29,6 @@ namespace Luminous
     LUMINOUS_API RichTextLayout(RichTextLayout && t);
     LUMINOUS_API RichTextLayout & operator=(RichTextLayout && t);
 
-    LUMINOUS_API virtual void generateInternal() const OVERRIDE;
-
     LUMINOUS_API QTextDocument & document();
     LUMINOUS_API const QTextDocument & document() const;
 
@@ -42,6 +40,8 @@ namespace Luminous
     LUMINOUS_API const QString& listBullet() const;
 
   private:
+    LUMINOUS_API virtual void generateInternal() const OVERRIDE;
+
     class D;
     D * m_d;
   };

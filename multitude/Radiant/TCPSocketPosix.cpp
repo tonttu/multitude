@@ -180,6 +180,9 @@ namespace Radiant
       if(tmp > 0) {
         pos += tmp;
         m_d->m_rxBytes += tmp;
+      } else if(tmp == 0) {
+        close();
+        return pos;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
@@ -190,6 +193,7 @@ namespace Radiant
         pfd.events = POLLIN;
         SocketWrapper::poll(&pfd, 1, 5000);
       } else {
+        close();
         error("TCPSocket::read # Failed to read: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }

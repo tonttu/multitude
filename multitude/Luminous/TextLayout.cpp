@@ -46,6 +46,9 @@ namespace Luminous
     /// Do we have all glyphs == no need to call regenerate()
     bool m_glyphsReady;
 
+    bool m_autoGenerate;
+    int m_generating;
+
     std::vector<std::pair<Nimble::Rectf, QUrl> > m_urls;
 
     int m_atlasGeneration;
@@ -61,6 +64,8 @@ namespace Luminous
     , m_verticalOffset(0.f)
     , m_layoutReady(false)
     , m_glyphsReady(false)
+    , m_autoGenerate(false)
+    , m_generating(0)
     , m_atlasGeneration(-1)
   {
   }
@@ -143,15 +148,12 @@ namespace Luminous
 
   TextLayout::~TextLayout()
   {
-    delete m_d;
   }
 
   TextLayout::TextLayout(TextLayout && t)
     : Node(std::move(t))
-    , m_d(t.m_d)
+    , m_d(std::move(t.m_d))
   {
-    eventAddOut("layout");
-    t.m_d = nullptr;
   }
 
   TextLayout & TextLayout::operator=(TextLayout && t)
@@ -189,12 +191,24 @@ namespace Luminous
   void TextLayout::invalidate()
   {
     m_d->m_layoutReady = false;
+    if (autoGenerate())
+      doGenerateInternal();
   }
 
   void TextLayout::generate()
   {
     if(!isComplete())
-      generateInternal();
+      doGenerateInternal();
+  }
+
+  bool TextLayout::autoGenerate() const
+  {
+    return m_d->m_autoGenerate;
+  }
+
+  void TextLayout::setAutoGenerate(bool autogenerate)
+  {
+    m_d->m_autoGenerate = autogenerate;
   }
 
   void TextLayout::setMaximumSize(const Nimble::SizeF & size)
@@ -202,6 +216,8 @@ namespace Luminous
     m_d->m_maximumSize = size;
     m_d->m_layoutReady = false;
     m_d->m_glyphsReady = false;
+    if (autoGenerate() && m_d->m_generating == 0)
+      doGenerateInternal();
   }
 
   Nimble::SizeF TextLayout::maximumSize() const
@@ -214,7 +230,7 @@ namespace Luminous
     // Updates the internal state if needed so the user gets
     // always the current state
     if (!isLayoutReady())
-      generateInternal();
+      doGenerateInternal();
     return m_d->m_boundingBox;
   }
 
@@ -279,5 +295,17 @@ namespace Luminous
     if (glyphRun.glyphIndexes().isEmpty())
       return false;
     return m_d->generate(location, glyphRun, format);
+  }
+
+  void TextLayout::doGenerateInternal() const
+  {
+    ++m_d->m_generating;
+    generateInternal();
+    --m_d->m_generating;
+  }
+
+  bool TextLayout::isGenerating() const
+  {
+    return m_d->m_generating > 0;
   }
 } // namespace Luminous

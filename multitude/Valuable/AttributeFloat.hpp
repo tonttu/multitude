@@ -113,6 +113,15 @@ namespace Valuable
           *this = v;
       }
 
+      virtual void setAsDefaults() OVERRIDE
+      {
+        if (!this->m_valueSet[Attribute::USER])
+          return;
+        m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
+        this->setValue(this->value(Attribute::USER), Attribute::DEFAULT);
+        clearValue(Attribute::USER);
+      }
+
   private:
       float m_factors[Attribute::LAYER_COUNT];
       float m_src;

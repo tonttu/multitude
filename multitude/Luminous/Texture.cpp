@@ -36,6 +36,7 @@ namespace Luminous
       , m_minFilter(FILTER_LINEAR)
       , m_magFilter(FILTER_LINEAR)
       , m_borderColor(0, 0, 0, 0)
+      , m_mipmapsEnabled(false)
       , m_paramsGeneration(0)
     {
       // Set default texture wrap modes
@@ -60,6 +61,7 @@ namespace Luminous
     Filter m_minFilter, m_magFilter;
     Wrap m_wrap[3];
     Radiant::Color m_borderColor;
+    bool m_mipmapsEnabled;
     // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
     int m_paramsGeneration;
 
@@ -321,6 +323,19 @@ namespace Luminous
   const Radiant::Color & Texture::borderColor() const
   {
     return m_d->m_borderColor;
+  }
+
+  void Texture::setMipmapsEnabled(bool enabled)
+  {
+    if (m_d->m_mipmapsEnabled == enabled)
+      return;
+    m_d->m_mipmapsEnabled = enabled;
+    invalidate();
+  }
+
+  bool Texture::mipmapsEnabled() const
+  {
+    return m_d->m_mipmapsEnabled;
   }
 
   int Texture::paramsGeneration() const

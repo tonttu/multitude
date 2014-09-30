@@ -23,6 +23,7 @@
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcessFilter.hpp>
+
 #include "FrameBufferGL.hpp"
 #include "BufferGL.hpp"
 #include "CullMode.hpp"
@@ -30,12 +31,19 @@
 #include <Nimble/Rectangle.hpp>
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Splines.hpp>
+#include <Nimble/ClipStack.hpp>
 
 #include <Radiant/Defines.hpp>
 
 #include <QRectF>
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
+
+namespace Nimble
+  {
+  class ClipStack;
+
+  }
 
 namespace Luminous
 {
@@ -215,6 +223,16 @@ namespace Luminous
     /// Pops a clipping rectangle from the context
     void popClipRect();
 
+    /// Get the active clip stack. The clip stack is only valid during
+    /// rendering. Do not call this function if the clip stack is empty.
+    /// @return current clip stack
+    /// @sa isClipStackEmpty()
+    const Nimble::ClipStack & clipStack() const;
+
+    /// Check if the current clip stack is empty.
+    /// @return true if the clip stack is empty; otherwise false
+    bool isClipStackEmpty() const;
+
     /// Checks if the given rectangle is visible (not clipped).
     /// @param area Area to check
     /// @return Was the area visible
@@ -367,24 +385,26 @@ namespace Luminous
     /// @param min Bottom left corner of a rectangle
     /// @param max Top right corner of a rectangle
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style);
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style &style));
 
     /// Draws a rectangle
     /// @param min Bottom left corner of a rectangle
     /// @param size Rectangle size
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style);
+    MULTI_ATTR_DEPRECATED("This version of drawRect is deprecated, use drawRect(RectT, style) instead.", void drawRect(const Nimble::Vector2f & min, const Nimble::SizeF & size, const Style & style));
 
     /// Draws a rectangle
     /// @param rext Rectangle to draw
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Rectf & rect, const Style & style);
+    template<typename T>
+    void drawRect(const Nimble::RectT<T>& rect, const Style & style);
 
     /// Draws a rectangle
     /// @param rect Rectangle to draw
     /// @param uvs Texture coordinates
     /// @param style Stroke, fill and texturing options
-    void drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style);
+    template<typename T>
+    void drawRect(const Nimble::RectT<T>& rect, const Nimble::Rectf & uvs, const Style & style);
 
     /// Draws a quad with two triangles.
     /// The vertices of the first triangle are v[0], v[1], v[2]. The second triangle is
@@ -395,6 +415,12 @@ namespace Luminous
     /// @param style Stroke, fill and texturing options
     void drawQuad(const Nimble::Vector2 * v, const Nimble::Vector2 * uvs, const Style & style);
 
+    /// @cond
+
+    // Only for JavaScript. Do not use directly.
+    void javascriptDrawRect(const Nimble::Rectf& rect, const Style& style);
+
+    /// @endcond
 
     /// Draws text
     /// @param layout Text object to render
@@ -473,6 +499,16 @@ namespace Luminous
     /// Set the active cull mode
     /// @param mode Cull mode to use
     void setCullMode(const CullMode & mode);
+
+    /// Set the active draw buffers
+    /// @param buffers List of buffers to use
+    /// The buffers may be one or more of the following:
+    /// GL_NONE, GL_FRONT_LEFT, GL_FRONT_RIGHT, GL_BACK_LEFT, GL_BACK_RIGHT, GL_COLOR_ATTACHMENTn
+    /// where n is a numerical value starting at 0
+    void setDrawBuffers(const std::vector<int> & buffers);
+
+    /// Reset the active draw buffers to the default
+    void setDefaultDrawBuffers();
 
     /// Specify front-facing polygons
     /// @param winding Winding of the front-facing polygons
@@ -666,6 +702,13 @@ namespace Luminous
     /// @return Shader program used for texturing in Luminous.
     const Program & texShader() const;
 
+    /// Returns the shader used for trilinear texturing in Luminous. Similar to
+    /// texShader, but needs two textures "tex[0]" and "tex[1]" and works only
+    /// with TrilinearFilteringUniformBlock. This is mostly used internally by
+    /// ImageWidget and Widget background image renderer
+    /// @return Shader program used for trilinear filtering
+    const Program & trilinearTexShader() const;
+
     /// Get the approximate scaling factor applied by the transform.
     /// @return approximate scaling applied
     float approximateScaling() const;
@@ -741,6 +784,8 @@ namespace Luminous
                       const Nimble::Rectf & viewRect, const TextStyle & style,
                       FontUniformBlock & uniform, const Program & program,
                       const Nimble::Matrix4f & modelview, bool ignoreVerticalAlign);
+    template<typename T>
+    void drawRectStroke(const Nimble::RectT<T>& rect, const Style & style);
 
     class Internal;
     Internal * m_data;
@@ -862,6 +907,21 @@ namespace Luminous
     OpacityGuard(OpacityGuard && o) : m_rc(o.m_rc) { o.m_rc = nullptr; }
     /// Destructor. This function automatically calls RenderContext::popOpacity().
     ~OpacityGuard() { if(m_rc) m_rc->popOpacity(); }
+
+  private:
+    RenderContext * m_rc;
+  };
+
+  class ClipStackGuard : public Patterns::NotCopyable
+  {
+  public:
+    /// Constructor. Automatically calls RenderContext::pushClipStack()
+    /// @param r render context
+    ClipStackGuard(RenderContext& r) : m_rc(&r) { r.pushClipStack(); }
+    /// Move constructor
+    ClipStackGuard(ClipStackGuard && rhs) : m_rc(rhs.m_rc) { rhs.m_rc = nullptr; }
+    /// Destructor. This function automatically calls RenderContext::popClipStack()
+    ~ClipStackGuard() { if(m_rc) m_rc->popClipStack(); }
 
   private:
     RenderContext * m_rc;

@@ -49,7 +49,7 @@ namespace VideoDisplay
 
     virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
     virtual Timestamp latestDecodedVideoTimestamp() const OVERRIDE;
-    virtual VideoFrame * getFrame(const Timestamp & ts) const OVERRIDE;
+    virtual VideoFrame * getFrame(const Timestamp & ts, ErrorFlags & errors) const OVERRIDE;
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;

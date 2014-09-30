@@ -49,17 +49,37 @@ namespace Luminous
   bool ShaderGL::compile(const Shader & shader)
   {
     if(!m_handle) {
-      if(shader.type() == Shader::Vertex) {
+      switch (shader.type())
+      {
+      case Shader::Vertex:
         m_handle = glCreateShader(GL_VERTEX_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_VERTEX_SHADER)");
-      } else if(shader.type() == Shader::Fragment) {
+        break;
+      case Shader::Fragment:
         m_handle = glCreateShader(GL_FRAGMENT_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_FRAGMENT_SHADER)");
-      } else if(shader.type() == Shader::Geometry) {
+        break;
+      case Shader::Geometry:
         m_handle = glCreateShader(GL_GEOMETRY_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_GEOMETRY_SHADER)");
-      } else {
-        Radiant::error("Unknown shader type");
+        break;
+#if !defined (RADIANT_OSX)
+      case Shader::TessControl:
+        m_handle = glCreateShader(GL_TESS_CONTROL_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_TESS_CONTROL_SHADER)");
+        break;
+      case Shader::TessEval:
+        m_handle = glCreateShader(GL_TESS_EVALUATION_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_TESS_EVALUATION_SHADER)");
+        break;
+      case Shader::Compute:
+        m_handle = glCreateShader(GL_COMPUTE_SHADER);
+        GLERROR("ShaderGL::compile # glCreateShader(GL_COMPUTE_SHADER)");
+        Radiant::warning("ShaderGL::compile # Compute shaders not fully implemented yet");
+        break;
+#endif
+      default:
+        Radiant::error("Unknown shader type/Not implemented on this platform");
         return false;
       }
     }

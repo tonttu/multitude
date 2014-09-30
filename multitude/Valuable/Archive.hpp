@@ -45,7 +45,9 @@ namespace Valuable
       /// Normal behaviour, serialize manually set values
       DEFAULTS              = LAYER_USER,
       /// Serialize only values that are different from the original values
-      ONLY_CHANGED          = LAYER_STYLE | LAYER_USER | LAYER_STYLE_IMPORTANT
+      ONLY_CHANGED          = LAYER_STYLE | LAYER_USER | LAYER_STYLE_IMPORTANT,
+      /// Serialize all values
+      EVERYTHING            = LAYER_DEFAULT | LAYER_STYLE | LAYER_USER | LAYER_STYLE_IMPORTANT
     };
 
     /// Construct an options object with given flags.

@@ -209,12 +209,15 @@ namespace Valuable
     , m_eventSources(std::move(node.m_eventSources))
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_attributeListening(std::move(node.m_attributeListening))
-    , m_id(std::move(node.m_id))
+    , m_id(nullptr, "id", node.m_id)
     , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
   {
+    node.m_id.m_host = nullptr;
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
   }
 
   Node & Node::operator=(Node && node)
@@ -226,11 +229,18 @@ namespace Valuable
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_attributeListening = std::move(node.m_attributeListening);
-    m_id = std::move(node.m_id);
     m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
+
+    node.m_id.m_host = nullptr;
+    m_id = node.m_id.value();
+    m_id.setAsDefaults();
+    m_id.m_host = nullptr;
+    m_id.setName("id");
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
     return *this;
   }
 
@@ -252,7 +262,13 @@ namespace Valuable
       const QByteArray part1 = name.left(slashIndex);
       const QByteArray part2 = name.mid(slashIndex + 1);
 
-      const Attribute * attr = attribute(part1);
+      Attribute * attr;
+      if(part1 == "..") {
+        attr = host();
+      } else {
+        attr = attribute(part1);
+      }
+
       if(attr) {
         return attr->attribute(part2);
       }
@@ -402,7 +418,7 @@ namespace Valuable
   }
 #endif
 
-  bool Node::saveToFileXML(const QString & filename, unsigned int opts)
+  bool Node::saveToFileXML(const QString & filename, unsigned int opts) const
   {
     bool ok = Serializer::serializeXML(filename, this, opts);
     if (!ok) {
@@ -411,7 +427,7 @@ namespace Valuable
     return ok;
   }
 
-  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts)
+  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts) const
   {
     XMLArchive archive(opts);
     archive.setRoot(serialize(archive));
@@ -796,8 +812,14 @@ namespace Valuable
   {
     XMLArchive archive;
     ArchiveElement e = Valuable::Serializer::serialize(archive, from);
-    if(!e.isNull())
-      return to.deserialize(e);
+    Uuid toId = to.id();
+
+    if(!e.isNull()) {
+      bool ok = to.deserialize(e);
+      to.m_id = toId;
+      return ok;
+    }
+
     return false;
   }
 

@@ -85,6 +85,13 @@ namespace Nimble {
           m_high[i] = m_low[i];
     }
 
+    /// Cast the rectangle to different basic type
+    template<typename S>
+    RectT<S> cast() const
+    {
+      return RectT<S>(m_low.template cast<S>(), m_high.template cast<S>());
+    }
+
     /// Resets both low and high point to origin.
     inline void clear() { m_low.clear(); m_high.clear(); }
     /// Resets both low and high point to the given argument point.

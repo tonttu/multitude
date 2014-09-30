@@ -10,6 +10,7 @@
 #include <Radiant/Allocators.hpp>
 #include <Radiant/TimeStamp.hpp>
 #include <Radiant/Thread.hpp>
+#include <Radiant/Flags.hpp>
 
 #include <Valuable/Node.hpp>
 #include <Valuable/State.hpp>
@@ -104,7 +105,8 @@ namespace VideoDisplay
       : m_imageSize(0, 0),
         m_imageBuffer(nullptr),
         m_format(UNKNOWN),
-        m_planes(0)
+        m_planes(0),
+        m_index(-1)
     {}
 
     Timestamp timestamp() const { return m_timestamp; }
@@ -144,6 +146,12 @@ namespace VideoDisplay
     int planes() const { return m_planes; }
     void setPlanes(int planes) { m_planes = planes; }
 
+    // Decoder sets a new unique frame index to every decoded frame.
+    // Index means how many frames was decoded before this frame.
+    // It is not the same as frame number.
+    int index() const { return m_index; }
+    void setIndex(int index) { m_index = index; }
+
   private:
     Timestamp m_timestamp;
 
@@ -157,6 +165,7 @@ namespace VideoDisplay
 
     Format m_format;
     int m_planes;
+    int m_index;
 
   private:
     VideoFrame(const VideoFrame &);
@@ -221,6 +230,12 @@ namespace VideoDisplay
       PAUSE,                  ///< Media is playing
       PLAY                    ///< Media is paused
     };
+
+    enum ErrorFlagsEnum
+    {
+      ERROR_VIDEO_FRAME_BUFFER_UNDERRUN = 1 << 0
+    };
+    typedef Radiant::FlagsT<ErrorFlagsEnum> ErrorFlags;
 
     /// Seeking request that can be sent to the decoder
     class SeekRequest
@@ -650,8 +665,9 @@ namespace VideoDisplay
     /// Gets a video frame from buffer that should be visible at the given timestamp.
     /// If this frame can't be found, then the closest frame will be used.
     /// @param ts video timestamp
+    /// @param[out] errors ErrorFlags
     /// @returns decoded video frame from a buffer, or null if the buffer is empty
-    virtual VideoFrame * getFrame(const Timestamp & ts) const = 0;
+    virtual VideoFrame * getFrame(const Timestamp & ts, ErrorFlags & errors) const = 0;
     /// Deletes older video frames from the buffer, this needs to be called after
     /// the frame has been consumed, otherwise the buffer will fill quickly.
     /// @param ts timestamp of the previous consumed frame
