@@ -187,6 +187,8 @@ namespace Nimble {
     /// Clamps the argument vector to be inside this rectangle
     inline Vector2T<T> clamp(const Vector2T<T> &) const;
 
+    /// Clamps the argument rectangle to be inside this rectangle
+    inline RectT clamp(const RectT &) const;
     /// Transforms the rectangle with the given matrix
     inline void transform(const Matrix3T<T>& m);
     /// Scales the rectangle
@@ -423,6 +425,12 @@ namespace Nimble {
       if(r[i] > m_high[i]) r[i] = m_high[i];
 
     return r;
+  }
+
+  template <class T>
+  inline RectT<T> RectT<T>::clamp(const RectT<T> & that) const
+  {
+    return RectT<T>(clamp(that.low()), clamp(that.high()));
   }
 
   /// @cond
