@@ -196,6 +196,9 @@ namespace Luminous
     typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ViewportStack;
     ViewportStack m_viewportStack;
 
+    typedef std::stack<RenderContext::ObjectMask, std::vector<RenderContext::ObjectMask> > BlockObjectsStack;
+    BlockObjectsStack m_blockObjectsStack;
+
     // Scissor rectangles
     typedef std::stack<Nimble::Recti, std::vector<Nimble::Recti> > ScissorStack;
     ScissorStack m_scissorStack;
@@ -1115,7 +1118,6 @@ namespace Luminous
     Nimble::Matrix4f m;
     m.identity();
 
-
     Nimble::Vector2f renderLocation = renderOffset - viewRect.low();
     if(!ignoreVerticalAlign)
       renderLocation.y += layout.verticalOffset();
@@ -1388,6 +1390,23 @@ namespace Luminous
 
     m_data->m_renderCalls.pop();
     m_data->m_driverGL->popFrameBuffer();
+  }
+
+  void RenderContext::pushBlockOcjects(ObjectMask objectMask)
+  {
+    m_data->m_blockObjectsStack.push(objectMask);
+  }
+
+  void RenderContext::popBlockOcjects()
+  {
+    m_data->m_blockObjectsStack.pop();
+  }
+
+  bool RenderContext::blockObject(RenderContext::ObjectMask mask) const
+  {
+    if(m_data->m_blockObjectsStack.empty())
+      return false;
+    return (m_data->m_blockObjectsStack.top() & mask) != 0;
   }
 
   void RenderContext::beginFrame()

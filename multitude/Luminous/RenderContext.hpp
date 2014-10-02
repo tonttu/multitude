@@ -326,6 +326,11 @@ namespace Luminous
     /// Pops the current frame buffer from the stack.
     void popFrameBuffer();
 
+    typedef uint64_t ObjectMask;
+    void pushBlockOcjects(ObjectMask objectMask);
+    void popBlockOcjects();
+    bool blockObject(ObjectMask mask) const;
+
     //////////////////////////////////////////////////////////////////////////
     // Implementation
 
