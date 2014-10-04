@@ -1057,6 +1057,21 @@ namespace Luminous
     RenderContext * m_rc;
   };
 
+  class BlockObjectsGuard : public Patterns::NotCopyable
+  {
+  public:
+    BlockObjectsGuard(Luminous::RenderContext & r, RenderContext::ObjectMask mask)
+      : m_rc(&r)
+    {
+      r.pushBlockOcjects(mask);
+    }
+
+    ~BlockObjectsGuard() { if (m_rc) m_rc->popBlockOcjects(); }
+
+  private:
+    Luminous::RenderContext * m_rc;
+  };
+
   /// This class provides a simple guard for setting transformations. It will
   /// automatically pop transforms in its destructor so the user doesn't need to
   /// remember to do it manually. It is equivalent to calling
