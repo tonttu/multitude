@@ -54,6 +54,15 @@ namespace Radiant {
 #endif
   }
 
+  void Sleep::sleepSome(double seconds)
+  {
+#ifdef WIN32
+    ::Sleep(seconds * 1000);
+#else
+    usleep(seconds * 1000000);
+#endif
+  }
+
   /** Sleep in synchronous mode. The argument value is added to current time value.*/
   void SleepSync::sleepSynchroUs(long us)
   {

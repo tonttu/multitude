@@ -164,7 +164,7 @@ namespace Valuable
     }
   }
 
-  void DOMElement::dumpInfo(FILE * f, int recursion)
+  void DOMElement::dumpInfo(FILE * f, int recursion) const
   {
     NodeList nodes = getChildNodes();
 
@@ -193,6 +193,11 @@ namespace Valuable
       (*it).dumpInfo(f, recursion + 1);
       i++;
     }
+  }
+
+  const QDomElement & DOMElement::qDomElement() const
+  {
+    return m_wrapped->x;
   }
 
   void DOMElement::setTextContent(const QString & s)

@@ -26,8 +26,8 @@ namespace Nimble {
   class NIMBLE_API Rectangle
   {
     public:
-    /// Constructs a new rectangle. Does not initialize values.
-    Rectangle();
+      /// Constructs a new rectangle. Does not initialize values.
+      Rectangle();
 
       /// Constructs a new rectangle.
       /// @param origin center of the box
@@ -39,7 +39,7 @@ namespace Nimble {
 
       /// Constructs a new rectangle
       /// @param size size (width & height) of the rectangle
-      /// @param m transformation matrix defining the center of the rectangle
+      /// @param m the resulting rectangle is formed by transforming the axis-aligned rectangle from -size/2 to size/2 with this matrix
       Rectangle(Nimble::SizeF size, const Nimble::Matrix3 & m);
 
       /// Construct a copy of the given rectangle
@@ -75,7 +75,7 @@ namespace Nimble {
       /// Return the size of the rectangle
       Nimble::SizeF size() const;
 
-      /// Computes the corner vertices of the rectangle and appends the to the given array
+      /// Computes the corner vertices of the rectangle and writes them to the given array
       /// @param corners vector of points where the four corners are appended
       void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const;
 

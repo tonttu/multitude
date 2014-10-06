@@ -219,9 +219,7 @@ namespace Valuable
     */
     virtual void eventProcess(const QByteArray &id, Radiant::BinaryData &data);
     /// Utility function for sending string message to the object
-    void eventProcessString(const char * id, const QString &str);
-    /// Utility function for sending string message to the object
-    void eventProcessString(const char * id, const char * str);
+    void eventProcessString(const QByteArray & id, const QString & str);
     /// Utility function for sending a float message to the object
     void eventProcessFloat(const char * id, float v);
     /// Utility function for sending an int message to the object
@@ -309,12 +307,12 @@ namespace Valuable
     bool removeListener(long id);
 
     /// @returns true if the current value of the object is different from
-    ///          the default value. Default implementation always returns true
+    ///          the default value. Default implementation always returns false
     virtual bool isChanged() const;
 
     /// Unsets the value from a specific layer
     /// @param layer layer to clear, must not be DEFAULT, since DEFAULT layer should always be set
-    virtual void clearValue(Layer layer);
+    virtual void clearValue(Layer layer = USER);
 
     /// If attribute supports shorthand properties, this should be used to parse those.
     /// For example "background: url('image.png') repeat" is a shorhand for setting
@@ -507,7 +505,7 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE
     {
-      return m_current > DEFAULT;
+      return m_current > DEFAULT && value() != value(DEFAULT);
     }
 
     /// Unsets the value from a specific layer

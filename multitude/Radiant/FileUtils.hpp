@@ -18,8 +18,9 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <fstream>
+#include <functional>
 
-#include <QString>
+#include <QStringList>
 
 namespace Radiant
 {
@@ -27,17 +28,32 @@ namespace Radiant
   /// @cond
 
   /// This class is used by MultiTaction firmware to implement mount_rw
+  /// It is in a guard-pattern
   class RADIANT_API FileWriter : public Patterns::NotCopyable
   {
   public:
-    FileWriter();
+    enum FileWriterMode {
+      READ_ONLY,
+      READ_WRITE
+    };
+
+    FileWriter(const QString & name);
     ~FileWriter();
 
-    /// with std::function<void ()> f GCC 4.4 gives internal compiler error:
-    /// /usr/include/c++/4.4/tr1_impl/functional:1535: internal compiler error: Segmentation fault
-    /// so we use plain function pointers
-    static void setInitFunction(void (*f)());
-    static void setDeinitFunction(void (*f)());
+    static void setCallback(std::function<void (FileWriterMode mode)> callback);
+
+    static bool isRootFileSystemReadOnly();
+  };
+
+  /// Guard class that minimizes the number of mounts done by FileWriter.
+  /// This doesn't actually mount anything, but makes sure that nobody unmounts
+  /// the device during the lifetime of this object. In practice it will merge
+  /// multiple FileWriter guards to one by keeping the device mounted.
+  class RADIANT_API FileWriterMerger : public Patterns::NotCopyable
+  {
+  public:
+    FileWriterMerger();
+    ~FileWriterMerger();
   };
 
   /// @endcond
@@ -176,6 +192,15 @@ namespace Radiant
 		/// Returns the directory separator for the current platform
     /// @return Directory separator for the current platform
     static QString directorySeparator();
+
+#ifdef RADIANT_LINUX
+    /// @todo these run-functions are in a wrong place
+    static int run(QString cmd, QStringList argv = QStringList(),
+                   QByteArray * out = 0, QByteArray * err = 0, bool quiet = false);
+    static int runAsRoot(QString cmd, QStringList argv = QStringList(),
+                         QByteArray * out = 0, QByteArray * err = 0, bool quiet = false);
+    static void writeAsRoot(const QString & filename, const QByteArray & data, bool quiet = false);
+#endif
   };
 }
 

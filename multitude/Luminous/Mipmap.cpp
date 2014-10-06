@@ -349,7 +349,7 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      if (!imageTex.image->read(m_filename)) {
+      if (!imageTex.image->read(m_filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [original image]", m_filename.toUtf8().data());
         return false;
       } else {
@@ -368,7 +368,7 @@ namespace Luminous
         imageTex.image.reset(new Image());
 
       Nimble::Size expectedSize = mipmap.mipmapSize(level);
-      if (!imageTex.image->read(filename)) {
+      if (!imageTex.image->read(filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [mipmap level %d/%d of image %s, expected size: (%d, %d)]",
                        filename.toUtf8().data(), level, mipmap.m_d->m_maxLevel,
                        m_filename.toUtf8().data(), expectedSize.width(), expectedSize.height());

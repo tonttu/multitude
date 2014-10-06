@@ -89,8 +89,6 @@ namespace Valuable
       return true;
     }
 
-    virtual bool isChanged() const OVERRIDE { return !m_container.empty(); }
-
     /// Typecast operator for the wrapped container
     operator T & () { return m_container; }
     /// Typecast operator for the const reference of the wrapped container
@@ -110,6 +108,13 @@ namespace Valuable
 
     void setClearOnDeserialize(bool v) { m_clearOnDeserialize = v; }
     bool clearOnDeserialize() const { return m_clearOnDeserialize; }
+
+    // Make public to allow container transmission to be controlled from
+    // outside (to make AttributeContainers usable over Mushy 1.5)
+    virtual void emitChange() OVERRIDE { Attribute::emitChange(); }
+
+    void setValue(const T & t) { m_container = t; }
+    const T & value() const { return m_container; }
 
   protected:
     AttributeContainerT() : m_clearOnDeserialize(true) {}

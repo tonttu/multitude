@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <QByteArray>
+#include <QList>
 
 namespace Radiant
 {
@@ -135,6 +136,8 @@ namespace Radiant
 
     bool contains(const Key & key) const;
     bool containsAll(const ArraySet & set) const;
+
+    QList<Key> toList() const;
 
   private:
     container m_data;
@@ -319,6 +322,17 @@ namespace Radiant
     }
 
     return true;
+  }
+
+  template<typename Key, typename Allocator>
+  QList<Key> ArraySet<Key, Allocator>::toList() const
+  {
+    QList<Key> result;
+
+    for(auto & i : *this)
+      result.append(i);
+
+    return result;
   }
 
   template <typename Key, typename Allocator>

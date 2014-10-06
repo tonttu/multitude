@@ -60,7 +60,7 @@ INSTALLS += win64_libav_headers2
 win64_ghostscript.path = /bin
 win64_ghostscript.files = $$CORNERSTONE_DEPS_PATH/ghostscript/*
 
-INSTALLS += win64_ghostscript
+!enable-taction:INSTALLS += win64_ghostscript
 
 win64_node_dlls1.path = /bin
 win64_node_dlls1.files = $$CORNERSTONE_DEPS_PATH/node/bin/node.exe
@@ -98,15 +98,17 @@ win64_clang_headers.files = $$CORNERSTONE_DEPS_PATH/libcxx/include/*
 win64_clangxml.path = /bin
 win64_clangxml.files = $$CORNERSTONE_DEPS_PATH/clangxml/ClangXML.exe
 
-INSTALLS += win64_node_dlls1
-INSTALLS += win64_node_dlls2
-INSTALLS += win64_node_libs1
-INSTALLS += win64_node_libs2
-INSTALLS += win64_node_headers1
-INSTALLS += win64_node_headers2
-INSTALLS += win64_ruby
-INSTALLS += win64_clang_headers
-INSTALLS += win64_clangxml
+!enable-taction {
+  INSTALLS += win64_node_dlls1
+  INSTALLS += win64_node_dlls2
+  INSTALLS += win64_node_libs1
+  INSTALLS += win64_node_libs2
+  INSTALLS += win64_node_headers1
+  INSTALLS += win64_node_headers2
+  INSTALLS += win64_ruby
+  INSTALLS += win64_clang_headers
+  INSTALLS += win64_clangxml
+}
 INSTALLS += win64_argyll
 INSTALLS += win64_runtime_dlls
 INSTALLS += win64_sdk_libs1
@@ -117,9 +119,15 @@ INSTALLS += win64_sdk_headers2
 INSTALLS += win64_sdk_project
 
 # Install Qt
-qt_bin_files.path = /
-qt_bin_files.files = $$[QT_INSTALL_BINS]
-
+enable-taction {
+  qt_bin_files.path = /bin
+  qt_bin_files.files = $$files($$[QT_INSTALL_BINS]/*.dll)
+  qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*d4.dll)
+  qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*WebKit*.dll)
+} else {
+  qt_bin_files.path = /
+  qt_bin_files.files = $$[QT_INSTALL_BINS]
+}
 qt_conf_files.path = /bin
 qt_conf_files.files = $$PWD/qt.conf
 

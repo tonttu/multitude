@@ -10,7 +10,8 @@
 #ifndef RADIANT_PLATFORM_UTILS_HPP
 #define RADIANT_PLATFORM_UTILS_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
+#include "Platform.hpp"
 
 #include <cstdint>
 
@@ -64,6 +65,26 @@ namespace Radiant
     /// @param name name of the environment variable
     /// @param value value of the environment variable
     RADIANT_API void setEnv(const QString & name, const QString & value);
+
+    /// Make a new TCP rule to OS firewall
+    /// @param port TCP port to open
+    /// @param name rule name
+    RADIANT_API void openFirewallPortTCP(int port, const QString & name);
+
+    /// Reboot the system
+    /// @throw QString error message
+    /// @return true on success
+    RADIANT_API bool reboot();
+
+    /// Shutdown the system immediately
+    /// @return true on success
+    RADIANT_API bool shutdown();
+
+#ifdef RADIANT_WINDOWS
+    /// Get path to folder used for application data that is not user specific (i.e. ProgramData)
+    RADIANT_API QString windowsProgramDataPath();
+#endif
+
   }
 
 }

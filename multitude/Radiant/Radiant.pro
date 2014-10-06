@@ -1,7 +1,8 @@
 
 include(../multitude.pri)
 
-HEADERS += ArrayMap.hpp
+HEADERS += ArrayMap.hpp \
+    SerialPortHelpers.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -142,7 +143,7 @@ ios {
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
 
-linux-*: LIBS += -lX11 -lXtst
+linux-*: LIBS += -lX11
 
 macx:LIBS += -framework,CoreFoundation
 
@@ -150,8 +151,8 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += $$LIB_RT -ldl
-  PKGCONFIG += libdc1394-2
-  !mobile*:DEFINES += CAMERA_DRIVER_1394
+  #PKGCONFIG += libdc1394-2
+  #!mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network gui
 }
@@ -187,12 +188,14 @@ win32 {
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \
-        psapi.lib
+        psapi.lib \
+        Advapi32.lib \
+        Ole32.lib
     CONFIG += qt
     QT = core network opengl gui
 
     PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
-    !exists($$PTGREY_PATH/include):warning("PTGrey driver not installed, not building CameraDriverPTGrey")
+    !exists($$PTGREY_PATH/include):message("PTGrey driver not installed, not building CameraDriverPTGrey")
     exists($$PTGREY_PATH/include) {
         DEFINES += CAMERA_DRIVER_PGR
         message(Using PTGrey camera drivers)

@@ -397,6 +397,12 @@ namespace Valuable
     /// Registers a new event that this class handles in eventProcess
     void eventAddIn(const QByteArray & messageId);
 
+    /// Unregisters an existing event this class can send with eventSend
+    void eventRemoveOut(const QByteArray & eventId);
+
+    /// Unregisters an existing event that this class handles in eventProcess
+    void eventRemoveIn(const QByteArray & messageId);
+
     /// Register a deprecated event that is automatically converted to new
     /// event id and a warning is issued when it is used.
     /// @param deprecatedId deprecated event id
@@ -429,6 +435,9 @@ namespace Valuable
     /// @returns number of processes items
     static int processQueue();
 
+    /// Removes all pending AFTER_UPDATE-events without calling them.
+    static void clearQueue();
+
     /// Copies attribute values from one node to another
     /// @param from source node
     /// @param to target node
@@ -440,6 +449,8 @@ namespace Valuable
     static void invokeAfterUpdate(ListenerFuncVoid function);
 
     virtual void setAsDefaults() OVERRIDE;
+
+    virtual bool isChanged() const OVERRIDE;
 
     /// Controls what to do when an event mismatch is detected
     /// The default behavior is to output a warning to the terminal (haltApplication = false).

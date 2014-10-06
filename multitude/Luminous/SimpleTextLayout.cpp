@@ -121,6 +121,7 @@ namespace Luminous
     QTextLayout m_layout;
     QRectF m_boundingBox;
     QThread * m_layoutThread;
+    float m_indent;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -128,7 +129,8 @@ namespace Luminous
 
   SimpleTextLayout::D::D()
     : m_generateMutex(true),
-      m_layoutThread(nullptr)
+      m_layoutThread(nullptr),
+      m_indent(0)
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
@@ -141,6 +143,7 @@ namespace Luminous
   SimpleTextLayout::D::D(const QTextLayout & copy)
     : m_layout(copy.text(), copy.font())
     , m_layoutThread(nullptr)
+    , m_indent(0)
   {
     m_layout.setTextOption(copy.textOption());
   }
@@ -220,20 +223,23 @@ namespace Luminous
 
     m_boundingBox = QRectF();
     m_layout.beginLayout();
+    float indent = m_indent;
     while (true) {
       QTextLine line = m_layout.createLine();
       if (!line.isValid())
         break;
 
-      line.setLineWidth(lineWidth);
+      // first line has more or less available width due to the indent
+      line.setLineWidth(lineWidth - indent);
       y += leading;
-      line.setPosition(QPointF(0, y));
+      line.setPosition(QPointF(indent, y));
       if (forceHeight)
         y += height;
       else
         y += line.height() * heightFactor;
 
       m_boundingBox |= line.naturalTextRect();
+      indent = 0;
     }
 
     m_layout.endLayout();
@@ -292,6 +298,7 @@ namespace Luminous
   {
     m_d->m_letterSpacing = that.m_d->m_letterSpacing;
     m_d->m_lineHeight = that.m_d->m_lineHeight;
+    m_d->m_indent = that.m_d->m_indent;
   }
 
   SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that)
@@ -379,6 +386,19 @@ namespace Luminous
   const Valuable::StyleValue & SimpleTextLayout::letterSpacing() const
   {
     return m_d->m_letterSpacing;
+  }
+
+  void SimpleTextLayout::setIndent(float indent)
+  {
+    if (m_d->m_indent == indent)
+      return;
+    m_d->m_indent = indent;
+    invalidate();
+  }
+
+  float SimpleTextLayout::indent() const
+  {
+    return m_d->m_indent;
   }
 
   QTextLayout & SimpleTextLayout::layout()

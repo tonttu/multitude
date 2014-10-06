@@ -392,7 +392,8 @@ namespace Luminous {
     std::copy(m_vertices.begin(), m_vertices.end(), b.vertex);
 
     /// @todo what color to use here?
-    b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
+    const float opacity = r.opacity();
+    b.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
     b.uniform->time = time;
     b.uniform->depth = b.depth;
   }

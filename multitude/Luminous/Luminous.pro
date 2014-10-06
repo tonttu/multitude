@@ -13,7 +13,8 @@ HEADERS += ProgramGL.hpp \
     RenderQueues.hpp \
     PostProcessContext.hpp \
     PostProcessFilter.hpp \
-    GPUAssociation.hpp
+    GPUAssociation.hpp \
+    MaskGuard.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -83,6 +84,7 @@ HEADERS += VM1.hpp
 HEADERS += WindowEventHook.hpp
 HEADERS += Window.hpp
 HEADERS += ImageCodecDDS.hpp
+HEADERS += ImageCodecCS.hpp
 HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
 HEADERS += XRandR.hpp
@@ -90,7 +92,9 @@ HEADERS += Xinerama.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     DummyOpenGL.cpp \
-    GPUAssociation.cpp
+    GPUAssociation.cpp \
+    MaskGuard.cpp
+SOURCES += ImageCodecCS.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
 SOURCES += SpriteRenderer.cpp

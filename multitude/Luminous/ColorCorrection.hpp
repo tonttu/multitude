@@ -45,8 +45,8 @@ namespace Luminous
 
     /// @param modifiers include gamma, brightness and contrast
     float value(float x, int channel, bool clamp, bool modifiers) const;
+    Nimble::Vector3f value(float x) const;
     Nimble::Vector3f valueRGB(float x, bool clamp = true, bool modifiers = true) const;
-
     bool isIdentity() const;
     void setIdentity();
     void setIdentity(const std::vector<float> & points);
@@ -66,8 +66,12 @@ namespace Luminous
     Nimble::Vector3 brightness() const;
     void setBrightness(const Nimble::Vector3 & brightness);
 
-    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
-    virtual bool readElement(const Valuable::ArchiveElement &);
+    /// @todo this breaks backwards compatibility. The firmware update process
+    /// should migrate the configuration from screen.xml to separate
+    /// color-correction.xml (see PictureModule::save())
+//    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
+    virtual bool deserialize(const Valuable::ArchiveElement & element);
+//    virtual bool readElement(const Valuable::ArchiveElement &);
 
     const RGBCube & asRGBCube() const;
 

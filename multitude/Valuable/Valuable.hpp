@@ -31,6 +31,8 @@
 namespace Valuable
 {
   class StyleValue;
+  class Node;
+  class Attribute;
 }
 
 #endif

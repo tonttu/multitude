@@ -60,7 +60,7 @@ namespace Luminous {
     /// @todo rename to ViewPort?
     class LUMINOUS_API Area : public Valuable::Node, public Collectable
     {
-      MEMCHECKED_USING(Collectable);
+      MEMCHECKED_USING(Collectable)
     public:
 
       /// Constructs a new area for the given window
@@ -405,17 +405,6 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
-    /// Get the DPMS settings. This function returns a triplet of values
-    /// corresponding to the DPMS settings. The values are in seconds for
-    /// 'standby', 'suspend', and 'power off'.
-    /// @return DPMS settings
-    /// @sa setDpms
-    Nimble::Vector3i dpms() const { return m_dpms; }
-    /// Set the DPMS settings.
-    /// @param dpms dpms settings
-    /// @sa dpms
-    void setDpms(const Nimble::Vector3i & dpms);
-
     bool deserialize(const Valuable::ArchiveElement & element);
 
     /// Adds a window to the collection
@@ -437,20 +426,6 @@ namespace Luminous {
     /// Set the iconify flag for windows
     /// @param iconify true to iconify windows
     void setIconify(bool iconify) { m_iconify = iconify; }
-
-    /// @cond
-
-    const HardwareColorCorrection & hwColorCorrection() const
-    {
-      return m_hwColorCorrection;
-    }
-
-    HardwareColorCorrection & hwColorCorrection()
-    {
-      return m_hwColorCorrection;
-    }
-
-    /// @endcond
 
     /// Remove all windows from the configuration
     void deleteWindows();
@@ -478,11 +453,6 @@ namespace Luminous {
 
     virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
 
-    /// Is the hardware color-correction enabled. Hardware color-correction is
-    /// implemented with the video-multiplex hardware inside MultiTaction Cells.
-    bool isHardwareColorCorrectionEnabled() const { return m_hwColorCorrectionEnabled; }
-    void setHardwareColorCorrection(bool enabled) { m_hwColorCorrectionEnabled = enabled; }
-
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
@@ -492,10 +462,7 @@ namespace Luminous {
 
     std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
-    Valuable::AttributeVector3i m_dpms;
     Valuable::AttributeFloat m_dpi;
-    Valuable::AttributeBool m_hwColorCorrectionEnabled;
-    HardwareColorCorrection m_hwColorCorrection;
     Valuable::AttributeBool m_vsync;
     Valuable::AttributeBool m_glFinish;
 

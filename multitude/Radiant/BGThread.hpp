@@ -70,7 +70,7 @@ namespace Radiant
         @param task The task to be removed
         @param cancel Should the task be cancelled if succesfully removed
         @param wait Block until the task execution returns, if the task is currently running
-        @return True if the task was successfully removes, false otherwise.
+        @return True if the task was successfully removed, false otherwise.
         @sa Radiant::Task::setFinished
         @sa Radiant::Task::schedule
     */

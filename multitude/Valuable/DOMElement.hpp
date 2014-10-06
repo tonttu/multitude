@@ -16,6 +16,8 @@
 #include <QString>
 #include <list>
 
+class QDomElement;
+
 namespace Valuable
 {
 
@@ -71,8 +73,13 @@ namespace Valuable
     DOMElement getChildNode(const QString & tagname);
 
     /// Dumps this elements into the given file
-    void dumpInfo(FILE *, int recursion = 0);
+    void dumpInfo(FILE *, int recursion = 0) const;
 
+    /// @cond
+
+    const QDomElement & qDomElement() const;
+
+    /// @endcond
   private:
     struct Wrapped;
 

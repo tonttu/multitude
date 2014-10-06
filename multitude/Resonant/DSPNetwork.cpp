@@ -134,6 +134,12 @@ namespace Resonant {
 
     for(container::iterator i = m_items.begin(); i != m_items.end(); ++i)
       i->deleteModule();
+
+    // We must delete any pending new items that may not have been added to
+    // m_items yet.
+    Radiant::Guard g(m_newMutex);
+    for(auto i : m_newItems)
+      i.deleteModule();
   }
 
   bool DSPNetwork::start(const QString & device)

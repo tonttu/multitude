@@ -23,6 +23,8 @@
 
 #include <Valuable/XMLArchive.hpp>
 
+#include <Patterns/NotCopyable.hpp>
+
 #ifdef RADIANT_WINDOWS
 #  include <windows.h>
 #endif //RADIANT_WINDOW
@@ -151,15 +153,22 @@ namespace Luminous
   }
 
 #ifdef RADIANT_LINUX
-  class LUMINOUS_API X11Display
+  class LUMINOUS_API X11Display : public Patterns::NotCopyable
   {
   public:
-    X11Display();
+    X11Display(X11Display && display);
+    X11Display(bool detectDisplay = true);
     X11Display(const QByteArray & displayName);
 
     ~X11Display();
 
+    /// @param displayName name of display to open. If not given, name is autodetected.
+    /// @return true if a display was opened
+    bool open(const QByteArray & displayName="");
+    /// @return true if the display was closed
+    bool close();
     operator Display * ();
+    operator const Display * () const;
 
   private:
     Display * m_display;

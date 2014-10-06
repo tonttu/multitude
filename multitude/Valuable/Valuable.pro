@@ -35,14 +35,17 @@ HEADERS += Attribute.hpp
 HEADERS += AttributeRect.hpp
 HEADERS += AttributeString.hpp
 HEADERS += AttributeVector.hpp
+HEADERS += AttributeGrid.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
 HEADERS += v8.hpp
+HEADERS += ListenerHolder.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
     AttributeStringList.cpp \
-    AttributeStringMap.cpp
+    AttributeStringMap.cpp \
+    ListenerHolder.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
