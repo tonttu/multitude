@@ -327,8 +327,8 @@ namespace Luminous
     void popFrameBuffer();
 
     typedef uint64_t ObjectMask;
-    void pushBlockOcjects(ObjectMask objectMask);
-    void popBlockOcjects();
+    void pushBlockObjects(ObjectMask objectMask);
+    void popBlockObjects();
     bool blockObject(ObjectMask mask) const;
 
     //////////////////////////////////////////////////////////////////////////
@@ -1063,10 +1063,10 @@ namespace Luminous
     BlockObjectsGuard(Luminous::RenderContext & r, RenderContext::ObjectMask mask)
       : m_rc(&r)
     {
-      r.pushBlockOcjects(mask);
+      r.pushBlockObjects(mask);
     }
 
-    ~BlockObjectsGuard() { if (m_rc) m_rc->popBlockOcjects(); }
+    ~BlockObjectsGuard() { if (m_rc) m_rc->popBlockObjects(); }
 
   private:
     Luminous::RenderContext * m_rc;

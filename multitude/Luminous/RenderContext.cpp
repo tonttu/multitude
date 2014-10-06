@@ -1392,12 +1392,12 @@ namespace Luminous
     m_data->m_driverGL->popFrameBuffer();
   }
 
-  void RenderContext::pushBlockOcjects(ObjectMask objectMask)
+  void RenderContext::pushBlockObjects(ObjectMask objectMask)
   {
     m_data->m_blockObjectsStack.push(objectMask);
   }
 
-  void RenderContext::popBlockOcjects()
+  void RenderContext::popBlockObjects()
   {
     m_data->m_blockObjectsStack.pop();
   }
