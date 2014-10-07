@@ -117,4 +117,9 @@ namespace Radiant
   {
     m_func(*this);
   }
+
+  void FunctionTask::executeInBGThread(std::function<void (Task &)> func)
+  {
+    BGThread::instance()->addTask(std::make_shared<FunctionTask>(func));
+  }
 }
