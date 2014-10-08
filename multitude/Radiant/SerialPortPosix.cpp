@@ -226,6 +226,9 @@ namespace Radiant
     int ret = poll(fds, 2, std::max<int>(1, timeoutSecs*1000));
     if (ret == -1) {
       return WaitStatus::Error;
+    } else if (ret == 0) {
+      // timedout
+      return WaitStatus::Ok;
     }
 
     static char buffer[64];
