@@ -297,6 +297,8 @@ namespace Radiant
       case WaitStatus::Error:
         safeset(ok, false);
         return written;
+      default:
+        break;
       }
       do {
         WriteStatus status;
