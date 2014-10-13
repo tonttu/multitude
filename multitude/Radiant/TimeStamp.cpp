@@ -275,6 +275,27 @@ namespace Radiant {
 
   }
 
+  QString TimeStamp::asStringISO8601() const
+  {
+    QDateTime datetime = QDateTime::fromMSecsSinceEpoch(milliseconds()).toUTC();
+    QDate date = datetime.date();
+    QTime time = datetime.time();
+
+    QChar fill = QLatin1Char('0');
+
+    /// YYYY-MM-DDTHH:mm:ss.SSSZ
+    QString str = QString("%1-%2-%3T%4:%5:%6.%7Z")
+        .arg(date.year(), 4, 10, fill)
+        .arg(date.month(), 2, 10, fill)
+        .arg(date.day(), 2, 10, fill)
+        .arg(time.hour(), 2, 10, fill)
+        .arg(time.minute(), 2, 10, fill)
+        .arg(time.second(), 2, 10, fill)
+        .arg(time.msec(), 3, 10, fill);
+
+    return str;
+  }
+
   QDateTime TimeStamp::asQDateTime() const
   {
     return QDateTime::fromTime_t(m_val / ticksPerSecond().value());
