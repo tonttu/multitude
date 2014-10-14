@@ -326,6 +326,11 @@ namespace Luminous
     delete m_data;
   }
 
+  RenderDriver &RenderContext::renderDriver()
+  {
+    return m_data->m_driver;
+  }
+
   void RenderContext::setWindowArea(const MultiHead::Window *window, const Luminous::MultiHead::Area * area)
   {
     m_data->m_window = window;

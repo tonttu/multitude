@@ -146,6 +146,8 @@ namespace Luminous
     /// However note, that CPU equivalents of GL classes are still valid.
     virtual ~RenderContext();
 
+    Luminous::RenderDriver &renderDriver();
+
     /// Sets the associated area for this context at the moment
     /// @param area area to associate
     void setWindowArea(const Luminous::MultiHead::Window * window, const Luminous::MultiHead::Area * area);
