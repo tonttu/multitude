@@ -77,6 +77,7 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
+HEADERS += DeviceMonitor.hpp
 
 SOURCES += Mime.cpp
 SOURCES += DropEvent.cpp
@@ -128,17 +129,7 @@ SOURCES += LockFilePosix.cpp
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
-SOURCES += CallStackW32.cpp
-SOURCES += VideoCameraCMU.cpp
-SOURCES += VideoCamera1394.cpp
-SOURCES += VideoCameraPTGrey.cpp
-SOURCES += IntrusivePtr.cpp
-
-# ios:OTHER_FILES += PlatformUtilsIOS.mm
-ios {
-  OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
-
-}
+SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
@@ -151,8 +142,7 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += $$LIB_RT -ldl
-  #PKGCONFIG += libdc1394-2
-  #!mobile*:DEFINES += CAMERA_DRIVER_1394
+  PKGCONFIG += libudev
   CONFIG += qt
   QT = core network gui
 }
