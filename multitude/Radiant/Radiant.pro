@@ -72,6 +72,8 @@ HEADERS += Singleton.hpp
 HEADERS += XFaker.hpp
 HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
+HEADERS += DeviceMonitor.hpp
+
 SOURCES += Mime.cpp
 SOURCES += RefPtr.cpp
 SOURCES += CameraDriver.cpp
@@ -123,7 +125,8 @@ SOURCES += VideoCameraCMU.cpp
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
- 
+SOURCES += DeviceMonitor.cpp
+
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
 
@@ -135,7 +138,7 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
-  PKGCONFIG += libdc1394-2
+  PKGCONFIG += libdc1394-2 libudev
   DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network
