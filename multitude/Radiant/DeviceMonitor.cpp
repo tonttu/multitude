@@ -90,6 +90,7 @@ namespace Radiant
         bool ok = true;
         while(it != params.constEnd()) {
           ok &= device->getProperty(it.key()) == it.value();
+          ++it;
         }
 
         if(ok) {
