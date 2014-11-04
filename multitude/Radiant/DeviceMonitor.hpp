@@ -4,6 +4,7 @@
 #include "Export.hpp"
 #include "RefPtr.hpp"
 
+#include <QMap>
 #include <QString>
 
 #include <vector>
@@ -28,7 +29,7 @@ namespace Radiant
   class DeviceMonitor {
   public:
     virtual Devices findDevices(const QString &subsystem,
-                                const QString& vendorId, const QString& modelId) = 0;
+                                const QMap<QString, QString>& params) = 0;
     virtual ~DeviceMonitor() { }
 
     static QString decode(const QString & value);
