@@ -85,12 +85,12 @@ namespace Nimble {
     }
 
     /// Addition operator
-    QuaternionT operator+(const QuaternionT & v)
+    QuaternionT operator+(const QuaternionT & v) const
     {
       return QuaternionT(x+v.x, y+v.y, z+v.z, w+v.w);
     }
     /// Subtraction operator
-    QuaternionT operator-(const QuaternionT & v)
+    QuaternionT operator-(const QuaternionT & v) const
     {
       return QuaternionT(x-v.x, y-v.y, z-v.z, w-v.w);
     }
@@ -143,14 +143,14 @@ namespace Nimble {
     }
 
     /// Extracts the rotation part of a 4x4 matrix, and calculates the quaternion values from that
-    void operator=(const Matrix4T<T> & m)
+    QuaternionT & operator=(const Matrix4T<T> & m)
     {
-      *this = m.rotation();
+      return (*this = m.rotation());
     }
 
     /// Calculates quaternion values from a 3x3 rotation matrix
     /** @param m The matrix to be copied. */
-    void operator=(const Matrix3T<T> & m)
+    QuaternionT & operator=(const Matrix3T<T> & m)
     {
       Vector3T<T> axis;
       T angle;
@@ -164,6 +164,7 @@ namespace Nimble {
       y = axis.y * si;
       z = axis.z * si;
 
+      return *this;
     }
 
     /// The squared length of this quaternion
@@ -261,7 +262,7 @@ namespace Nimble {
     }
 
     /// Multiplies two quaterions.
-    inline QuaternionT operator*(const QuaternionT & b)
+    inline QuaternionT operator*(const QuaternionT & b) const
     {
       return QuaternionT( y*b.z-z*b.y+w*b.x+x*b.w,
             z*b.x-x*b.z+w*b.y+y*b.w,
@@ -270,7 +271,7 @@ namespace Nimble {
     }
 
     /// Converts this quaternion to angle/axis format
-    void getAngleAxis(float & angle, Vector3T<T> & axis)
+    void getAngleAxis(float & angle, Vector3T<T> & axis) const
     {
       T len = x*x + y*y + z*z;
       if(len > T(0.0)) {
