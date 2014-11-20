@@ -1558,7 +1558,6 @@ namespace Luminous
     const Nimble::Recti viewport = area()->viewport();
 
     assert(m_data->m_currentFrameBuffer);
-    const FrameBuffer & sourceFrameBuffer = *m_data->m_currentFrameBuffer;
 
     // Blit from current frame buffer to filter's auxiliary frame buffer
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
