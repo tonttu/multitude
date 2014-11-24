@@ -85,28 +85,28 @@ namespace Radiant
 
   void MimeManager::insertSharedExtension(const QString & extension, const Radiant::MimeType& type)
   {
-    if (s_sharedExtensions.find(extension) != s_sharedExtensions.end()) {
+    if (s_sharedExtensions.find(extension.toLower()) != s_sharedExtensions.end()) {
       Radiant::info("Overriding shared extension->mime mapping for: %s -> %s", extension.toUtf8().data(), type.typeString().toUtf8().data());
     }
-    s_sharedExtensions.insert(std::make_pair(extension, type));
+    s_sharedExtensions.insert(std::make_pair(extension.toLower(), type));
   }
 
   /// add or replace a shared mapping from file extension to mime type
   void MimeManager::insertExtension(const QString & extension, const Radiant::MimeType& type)
   {
-    if (m_extensions.find(extension) != m_extensions.end()) {
-      Radiant::info("Overriding extension->mime mapping for: %s -> %s", extension.toUtf8().data(), type.typeString().toUtf8().data());
+    if (m_extensions.find(extension.toLower()) != m_extensions.end()) {
+      Radiant::info("Overriding extension->mime mapping for: %s -> %s", extension.toLower().toUtf8().data(), type.typeString().toUtf8().data());
     }
-    m_extensions.insert(std::make_pair(extension, type));
+    m_extensions.insert(std::make_pair(extension.toLower(), type));
   }
 
   const MimeType * MimeManager::mimeTypeByExtension(const QString & ext) const
   {
-    ExtensionMap::const_iterator it = m_extensions.find(ext);
+    ExtensionMap::const_iterator it = m_extensions.find(ext.toLower());
     if (it != m_extensions.end())
       return &it->second;
 
-    it = s_sharedExtensions.find(ext);
+    it = s_sharedExtensions.find(ext.toLower());
     if (it != s_sharedExtensions.end())
       return &it->second;
 
