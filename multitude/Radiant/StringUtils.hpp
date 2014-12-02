@@ -15,6 +15,7 @@
 
 #include <sstream>
 #include <QString>
+#include <typeinfo>
 #include <type_traits>
 #include <typeinfo>
 
