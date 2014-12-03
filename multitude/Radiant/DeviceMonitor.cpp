@@ -1,5 +1,7 @@
 #include "DeviceMonitor.hpp"
 
+#ifdef RADIANT_LINUX
+
 #include <Radiant/Platform.hpp>
 #include <Nimble/Math.hpp>
 #include <QRegExp>
@@ -180,3 +182,5 @@ bool UdevDeviceMonitor::haveDevice(const QString &subsystem,
     return output;
   }
 }
+
+#endif

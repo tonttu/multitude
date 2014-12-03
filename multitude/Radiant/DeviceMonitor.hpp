@@ -2,6 +2,9 @@
 #define KTC_DEVICEMONITOR_HPP
 
 #include "Export.hpp"
+#include "Platform.hpp"
+
+#ifdef RADIANT_LINUX
 
 #include <QMap>
 #include <QString>
@@ -38,4 +41,7 @@ namespace Radiant
   RADIANT_API std::shared_ptr<DeviceMonitor> newUdevMonitor();
 }
 
+#endif
+
 #endif // KTC_DEVICEMONITOR_HPP
+
