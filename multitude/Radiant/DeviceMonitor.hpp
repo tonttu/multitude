@@ -2,12 +2,12 @@
 #define KTC_DEVICEMONITOR_HPP
 
 #include "Export.hpp"
-#include "RefPtr.hpp"
 
 #include <QMap>
 #include <QString>
 
 #include <vector>
+#include <memory>
 
 namespace Radiant
 {
