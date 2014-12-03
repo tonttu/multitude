@@ -77,6 +77,7 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
+HEADERS += DeviceMonitor.hpp
 
 SOURCES += Mime.cpp
 SOURCES += DropEvent.cpp
@@ -139,6 +140,7 @@ ios {
   OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
 
 }
+SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
@@ -150,9 +152,9 @@ macx:LIBS += -framework,CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
-  LIBS += $$LIB_RT -ldl
-  #PKGCONFIG += libdc1394-2
-  #!mobile*:DEFINES += CAMERA_DRIVER_1394
+  LIBS += -lpthread $$LIB_RT -ldl
+  PKGCONFIG += libdc1394-2 libudev
+  DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network gui
 }
