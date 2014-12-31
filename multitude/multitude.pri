@@ -69,7 +69,7 @@ LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
-enable-js:LIB_V8 = -lv8 -lnode
+enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
 
 #
 # Platform specific: GNU Linux
@@ -86,6 +86,11 @@ linux-*{
   exists(/opt/multitouch-libav1/include/libavcodec/avcodec.h) {
     MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav1/lib -lavcodec-multitouch1 -lavutil-multitouch1 -lavformat-multitouch1 -lavdevice-multitouch1 -lavfilter-multitouch1 -lswscale-multitouch1
     INCLUDEPATH += /opt/multitouch-libav1/include
+  }
+
+  enable-js {
+    QMAKE_LIBDIR += /opt/multitouch-nodejs-1/lib
+    INCLUDEPATH += /opt/multitouch-nodejs-1/include
   }
 
   contains(DOCUMENTER,yes) {
