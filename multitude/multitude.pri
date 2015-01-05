@@ -216,7 +216,7 @@ win32 {
     # These libs have an extra extension for debug builds
     CONFIG(debug,debug|release) {
       LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
-      enable-js:LIB_V8 = -lv8_d -lnode_d
+      enable-js:LIB_V8 = -lv8-multitouch1_d -lnode-multitouch1_d
     }
 }
 
