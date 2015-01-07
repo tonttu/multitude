@@ -98,12 +98,19 @@ linux-*{
     DEFINES += MULTI_DOCUMENTER=1
   }
 
-  defineTest(checkCompiler) {
+  defineTest(gccVersionCheck) {
     COMPILER_OUTPUT=$$system($$1 -dumpversion 2>/dev/null)
     COMPILER_V1 = $$section(COMPILER_OUTPUT, ".", 0, 0)
     COMPILER_V2 = $$section(COMPILER_OUTPUT, ".", 1, 1)
-    greaterThan(COMPILER_V1, 4): return(true)
-    greaterThan(COMPILER_V1, 3): greaterThan(COMPILER_V2, 5): return(true)
+    greaterThan(COMPILER_V1, $$2): return(true)
+    equals(COMPILER_V1, $$2) {
+      greaterThan(COMPILER_V2, $$3): return(true)
+      equals(COMPILER_V2, $$3): return(true)
+    }
+    return(false)
+  }
+  defineTest(checkCompiler) {
+    gccVersionCheck($$1, 4, 6): return(true)
     return(false)
   }
   !checkCompiler($$QMAKE_CXX) {
