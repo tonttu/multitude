@@ -26,6 +26,17 @@
 
 namespace Valuable
 {
+  template <typename T>
+  struct IsVector { static constexpr bool value = false; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector2T<E>> { static constexpr bool value = true; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector3T<E>> { static constexpr bool value = true; };
+
+  template <typename E>
+  struct IsVector<Nimble::Vector4T<E>> { static constexpr bool value = true; };
 
   /** A template class for vector values.
 
@@ -33,7 +44,8 @@ namespace Valuable
       objects.
    */
   template<class VectorType>
-  class AttributeT<VectorType, Attribute::ATTR_VECTOR> : public AttributeBaseT<VectorType>
+  class AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>
+      : public AttributeBaseT<VectorType>
   {
     /// GetVector<Nimble::Vector2i>::FloatVector == Nimble::Vector2f
     template <typename T> struct GetVector;
@@ -96,7 +108,12 @@ namespace Valuable
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }
 
-      virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
+      virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE
+      {
+        if(ok) *ok = true;
+
+        return Radiant::StringUtils::toString(value(layer));
+      }
 
       /// Returns the ith element
       inline const ElementType & get(int i) const { return value()[i]; }
@@ -138,14 +155,7 @@ namespace Valuable
   typedef AttributeT<Nimble::Vector4f> AttributeVector4f;
 
   template <class VectorType>
-  QString AttributeT<VectorType, Attribute::ATTR_VECTOR>::asString(bool * const ok, Attribute::Layer layer) const {
-    if(ok) *ok = true;
-
-    return Radiant::StringUtils::toString(value(layer));
-  }
-
-  template <class VectorType>
-  bool AttributeT<VectorType, Attribute::ATTR_VECTOR>::set(const StyleValue & value, Attribute::Layer layer)
+  bool AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>::set(const StyleValue & value, Attribute::Layer layer)
   {
     if (value.size() != N || !value.isUniform() || !value.isNumber())
       return false;
@@ -159,7 +169,7 @@ namespace Valuable
   }
 
   template <class VectorType>
-  void AttributeT<VectorType, Attribute::ATTR_VECTOR>::eventProcess(const QByteArray & id,
+  void AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>::eventProcess(const QByteArray & id,
     Radiant::BinaryData & data)
   {
     /// @todo this isn't how eventProcess should be used

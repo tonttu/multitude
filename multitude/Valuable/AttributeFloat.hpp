@@ -24,7 +24,8 @@ namespace Valuable
 
       @see AttributeFloat. */
   template <typename T>
-  class AttributeT<T, Attribute::ATTR_FLOAT> : public AttributeNumericT<T>
+  class AttributeT<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
+      : public AttributeNumericT<T>
   {
     typedef AttributeNumericT<T> Base;
 

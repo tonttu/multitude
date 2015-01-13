@@ -19,10 +19,16 @@
 
 namespace Valuable
 {
+  template <typename T>
+  struct IsRect { static constexpr bool value = false; };
+
+  template <typename E>
+  struct IsRect<Nimble::RectT<E>> { static constexpr bool value = true; };
 
   /// A valuable object holding a Nimble::Rect object
   template <class T>
-  class AttributeT<T, Attribute::ATTR_RECT> : public AttributeBaseT<T>
+  class AttributeT<T, typename std::enable_if<IsRect<T>::value>::type>
+      : public AttributeBaseT<T>
   {
     typedef AttributeBaseT<T> Base;
   public:
@@ -33,7 +39,12 @@ namespace Valuable
     AttributeT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false)
       : Base(host, name, r, transit) {}
 
-    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
+    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE
+    {
+      if(ok) *ok = true;
+
+      return Radiant::StringUtils::toString(this->value(layer));
+    }
 
     /// Converts the object to rectangle
     Nimble::RectT<T> asRect() const { return this->value(); }
@@ -47,13 +58,6 @@ namespace Valuable
   typedef AttributeT<Nimble::Rectd> AttributeRectd;
   /// AttributeRectT of ints
   typedef AttributeT<Nimble::Recti> AttributeRecti;
-
-  template <class T>
-  QString AttributeT<T, Attribute::ATTR_RECT>::asString(bool * const ok, Attribute::Layer layer) const {
-    if(ok) *ok = true;
-
-    return Radiant::StringUtils::toString(this->value(layer));
-  }
 }
 
 #endif

@@ -22,13 +22,11 @@ namespace Valuable
 {
 
   /// Template class for integer values.
-  /** The actual value objects are created by using AttributeIntT<int>
-      etc.
-
-      @see AttributeInt*/
-
+  /** The actual value objects are created by using AttributeT<int>
+      etc. */
   template<class T>
-  class AttributeT<T, Attribute::ATTR_INT> : public AttributeNumericT<T>
+  class AttributeT<T, typename std::enable_if<std::is_integral<T>::value>::type>
+      : public AttributeNumericT<T>
   {
     typedef AttributeNumericT<T> Base;
   public:

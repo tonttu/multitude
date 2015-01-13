@@ -20,10 +20,22 @@
 
 namespace Valuable
 {
+  template <typename T>
+  struct IsMatrix { static constexpr bool value = false; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix2T<E>> { static constexpr bool value = true; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix3T<E>> { static constexpr bool value = true; };
+
+  template <typename E>
+  struct IsMatrix<Nimble::Matrix4T<E>> { static constexpr bool value = true; };
 
   /// A matrix value object
   template <class MatrixType>
-  class AttributeT<MatrixType, Attribute::ATTR_MATRIX> : public AttributeBaseT<MatrixType>
+  class AttributeT<MatrixType, typename std::enable_if<IsMatrix<MatrixType>::value>::type>
+      : public AttributeBaseT<MatrixType>
   {
     typedef AttributeBaseT<MatrixType> Base;
   public:
@@ -45,7 +57,12 @@ namespace Valuable
     { return this->value().data(); }
 
     // virtual void eventProcess(const QByteArray & id, Radiant::BinaryData & data);
-    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE;
+    virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE
+    {
+      if(ok) *ok = true;
+
+      return Radiant::StringUtils::toString(this->value(layer));
+    }
 
     // We don't really know how the matrix is being used, so we can't have
     // good interpolation code for it
@@ -89,13 +106,6 @@ namespace Valuable
     }
   }
   */
-
-  template <class MatrixType>
-  QString AttributeT<MatrixType, Attribute::ATTR_MATRIX>::asString(bool * const ok, Attribute::Layer layer) const {
-    if(ok) *ok = true;
-
-    return Radiant::StringUtils::toString(this->value(layer));
-  }
 
   /// A float Matrix2 value object
   typedef AttributeT<Nimble::Matrix2f> AttributeMatrix2f;

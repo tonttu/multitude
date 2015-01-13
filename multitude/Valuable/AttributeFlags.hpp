@@ -216,7 +216,8 @@ namespace Valuable {
    * @endcode
    */
   template <typename Flags>
-  class AttributeT<Flags, Attribute::ATTR_FLAGS> : public Attribute
+  class AttributeT<Flags, typename std::enable_if<std::is_base_of<Radiant::Flags, Flags>::value>::type>
+      : public Attribute
   {
   public:
     typedef typename Flags::Enum T;
