@@ -54,6 +54,20 @@ namespace Nimble
     /// @return true if the point is visible: otherwise false
     bool isVisible(const Nimble::Vector2 & p) const;
 
+    /// Get the bounding box encompassing all the rectangles in the clipstack.
+    /// @return bounding box of all rectangles
+    Nimble::Rect boundingBox() const;
+
+    /// Get the depth of the clip stack. Returns the number of rectangles in the stack.
+    /// @return depth of the stack
+    size_t stackDepth() const;
+
+    /// Get a rectangle from the stack. The index ranges from zero (bottom of
+    /// the stack) to stackDepth() - 1 (top of the stack).
+    /// @param index index of the rectangle in the stack
+    /// @return stack requested rectangle
+    Nimble::Rectangle stackRectangle(size_t index) const;
+
   private:
     class D;
     D * m_d;

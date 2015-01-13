@@ -614,6 +614,11 @@ namespace Luminous
     setStencilMode(Luminous::StencilMode::Default());
     setCullMode(Luminous::CullMode::Default());
 
+    std::vector<int> buffers;
+    buffers.push_back(GL_FRONT_LEFT);
+    buffers.push_back(GL_FRONT_RIGHT);
+    setDrawBuffers(buffers);
+
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
 
@@ -657,6 +662,11 @@ namespace Luminous
   void RenderDriverGL::disableClipDistance(const QList<int> & planes)
   {
     m_d->newRenderQueueSegment(new CommandClipDistance(planes, false));
+  }
+
+  void RenderDriverGL::setDrawBuffers(const std::vector<int> & buffers)
+  {
+    m_d->newRenderQueueSegment(new CommandDrawBuffers(buffers));
   }
 
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)

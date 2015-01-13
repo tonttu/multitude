@@ -118,7 +118,7 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = 
+      bool recreate =
         (m_target != GL_TEXTURE_1D) ||
         (m_size[0] != texture.width()) ||
         (m_internalFormat != texture.internalFormat()) ||
@@ -127,6 +127,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), 1, 1);
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       }
     }
@@ -168,7 +169,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
+      int alignment = 8;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
@@ -180,6 +181,9 @@ namespace Luminous
       int uploaded = texture.dataSize();
       /// @todo Use upload limiter
       glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(m_target);
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
@@ -205,8 +209,7 @@ namespace Luminous
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
-      bool recreate = 
-          (m_target != GL_TEXTURE_2D && m_target != GL_TEXTURE_2D_MULTISAMPLE) ||
+      bool recreate =
           (m_size[0] != texture.width() || m_size[1] != texture.height()) ||
           (m_internalFormat != texture.internalFormat()) ||
           (m_samples != texture.samples());
@@ -214,6 +217,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), texture.height(), 1);
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       } else {
         m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
@@ -248,6 +252,10 @@ namespace Luminous
           glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
             texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
         }
+        /// @todo is it more efficient to call glGenerateMipmap here to pre-allocate the mipmap levels?
+        /// We should use glTexStorage2D, but it's OpenGL 4.
+        // if (texture.mipmapsEnabled())
+        //   glGenerateMipmap(GL_TEXTURE_2D);
         GLERROR("TextureGL::upload # glTexImage2D");
       }
     }
@@ -278,8 +286,8 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
-      while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
+      int alignment = 8;
+      while ((texture.lineSizePixels() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
@@ -302,28 +310,30 @@ namespace Luminous
         m_dirtyRegion2D = QRegion();
       } else {
         for(const QRect & rect : m_dirtyRegion2D.rects()) {
-          const int bytesPerScanline = rect.width() * texture.dataFormat().bytesPerPixel();
-          // Number of scanlines to upload
-          const size_t scanLines = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerScanline, 1, rect.height());
+          const int bytesPerRectScanline = rect.width() * texture.dataFormat().bytesPerPixel();
 
-          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.width()) *
-            texture.dataFormat().bytesPerPixel();
+          const int scanlinesToUpload = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerRectScanline, 1, rect.height());
+
+          auto data = static_cast<const char *>(texture.data()) + (rect.left() + rect.top() * texture.lineSizePixels()) *
+                      texture.dataFormat().bytesPerPixel();
 
           // Upload data
-          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanLines,
+          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanlinesToUpload,
             texture.dataFormat().layout(), texture.dataFormat().type(), data);
           GLERROR("TextureGL::upload # glTexSubImage2D");
-          uploaded += bytesPerScanline * scanLines;
-          bytesFree -= bytesPerScanline * scanLines;
+          uploaded += bytesPerRectScanline * scanlinesToUpload;
+          bytesFree -= bytesPerRectScanline * scanlinesToUpload;
 
-          if (int(scanLines) != rect.height()) {
-            m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanLines);
+          if (int(scanlinesToUpload) != rect.height()) {
+            m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanlinesToUpload);
             break;
           } else {
             m_dirtyRegion2D -= rect;
           }
         }
       }
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(GL_TEXTURE_2D);
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
@@ -340,7 +350,7 @@ namespace Luminous
   {
     bool bound = false;
 
-    const bool paramsDirty = updateParams(texture);
+    bool paramsDirty = updateParams(texture);
     const bool dirty = m_generation != texture.generation();
     if (dirty) {
       m_generation = texture.generation();
@@ -356,6 +366,7 @@ namespace Luminous
       if(recreate) {
         m_target = 0;
         m_size.make(texture.width(), texture.height(), texture.depth());
+        m_internalFormat = texture.internalFormat();
         m_samples = texture.samples();
       }
     }
@@ -381,6 +392,7 @@ namespace Luminous
           texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
       }
       GLERROR("TextureGL::upload # glTexImage3D");
+      paramsDirty = true;
     }
 
     if(!bound && forceBind) {
@@ -409,7 +421,7 @@ namespace Luminous
         bind(textureUnit);
 
       // Set proper alignment
-      int alignment = 1;
+      int alignment = 8;
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
@@ -421,6 +433,9 @@ namespace Luminous
       int uploaded = texture.dataSize();
       glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+
+      if (texture.mipmapsEnabled())
+        glGenerateMipmap(m_target);
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);

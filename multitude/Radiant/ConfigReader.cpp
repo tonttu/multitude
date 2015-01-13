@@ -12,6 +12,7 @@
 
 #include <Radiant/Mutex.hpp>
 #include <Radiant/FileUtils.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <math.h>
 #include <stdlib.h>
@@ -203,11 +204,9 @@ namespace Radiant {
     int i=0;
 
     while(str < ba.data() + ba.size() && i < n) {
-      const char * endStr = str;
-
       char * end = 0;
       double tmp = strtod(str, &end);
-      endStr = end;
+      const char * endStr = end;
       
       if(endStr <= str)
 	return i;
@@ -343,24 +342,25 @@ namespace Radiant {
 
 #endif
 
-  bool readConfig(Config * c, const char * buf, int size)
+  bool readConfig(Config * c, const char * buf, int size, const QString & sourceName)
   {
     if(!size)
-      return false;
+      return true;
 
-    enum {
+    enum State {
       SCAN_CHUNK_NAME,
       READ_CHUNK_NAME,
       SCAN_CHUNK_BEGIN,
       SCAN_VARIANT_NAME,
       READ_VARIANT_NAME,
       SCAN_VARIANT_BEGIN,
+      READ_VARIANT_BEGIN,
       READ_VARIANT,
       SCAN_COMMENT
     };
 
-    int state = SCAN_CHUNK_NAME;
-    int stackState = 0;
+    State state = SCAN_CHUNK_NAME;
+    State stackState = SCAN_CHUNK_NAME;
 
     typedef std::pair<QString, Chunk> StackItem;
     std::stack<StackItem> stack;
@@ -375,19 +375,30 @@ namespace Radiant {
     bool longVariant = false;
 
     int i;
+    int line = 1;
     for(i=0; i < size; i++) {
       char c1 = buf[i];
+      if (c1 == '\n')
+        ++line;
       char c2 = i + 1 < size ? buf[i + 1] : '\n';
 
-      if(state == SCAN_CHUNK_NAME) {
-        if(isspace(c1))
-          ;
-        else if(c1 == '/' && c2 == '*') {
+      // Allow comments everywhere except in quoted strings (long variants)
+      if (state != SCAN_COMMENT && (state != READ_VARIANT || !longVariant)) {
+        if (c1 == '/' && c2 == '*') {
+          stackState = state;
           state = SCAN_COMMENT;
-          stackState = SCAN_CHUNK_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_CHUNK_NAME");
+          ++i;
+          continue;
         }
-        else {
+      }
+
+      if(state == SCAN_CHUNK_NAME) {
+        if(c1 == '{' || c1 == '}') {
+          Radiant::error("%s:%d: error: Expected chunk name, got '%c'",
+                         sourceName.toUtf8().data(), line, c1);
+          return false;
+        }
+        if(!isspace(c1)) {
           state = READ_CHUNK_NAME;
           DEBUG_PRINT(buf, i, "READ_CHUNK_NAME");
           chunkName += c1;
@@ -404,7 +415,13 @@ namespace Radiant {
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
 
           stack.push(std::make_pair(chunkName, chunk));
+          chunkName.clear();
           chunk.clear();
+        }
+        else if(c1 == '}') {
+          Radiant::error("%s:%d: error: Expected chunk name, got '}'",
+                         sourceName.toUtf8().data(), line);
+          return false;
         }
         else
           chunkName += c1;
@@ -412,29 +429,28 @@ namespace Radiant {
       else if(state == SCAN_CHUNK_BEGIN) {
         if(isspace(c1))
           ;
-        else if(c1 == '/' && c2 == '*') {
-          state = SCAN_COMMENT;
-          stackState = SCAN_CHUNK_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_COMMENT");
-        }
         else if(c1 == '{') {
           state = SCAN_VARIANT_NAME;
 
           stack.push(std::make_pair(chunkName, chunk));
           chunkName.clear();
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
+        } else {
+          Radiant::error("%s:%d: error: Expected chunk begin ('{')",
+                         sourceName.toUtf8().data(), line);
+          return false;
         }
       }
       else if(state == SCAN_VARIANT_NAME) {
 
         if(isspace(c1))
           ;
-        else if(c1 == '/' && c2 == '*') {
-          state = SCAN_COMMENT;
-          stackState = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_COMMENT");
-        }
         else if(c1 == '}') {
+          if (stack.size() <= 1) {
+            Radiant::error("%s:%d: error: Unexpected '}'",
+                           sourceName.toUtf8().data(), line);
+            return false;
+          }
           StackItem si = stack.top();
           stack.pop();
 
@@ -447,6 +463,11 @@ namespace Radiant {
           state = SCAN_VARIANT_NAME;
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
         }
+        else if(c1 == '{') {
+          Radiant::error("%s:%d: error: Expected variant name, got '{'",
+                         sourceName.toUtf8().data(), line);
+          return false;
+        }
         else {
           variantName.clear();
           variantName += c1;
@@ -455,24 +476,28 @@ namespace Radiant {
         }
       }
       else if(state == READ_VARIANT_NAME) {
-        if(isspace(c1) || (c1 == '=') || (c1 == '{')) {
+        if(isspace(c1)) {
           state = SCAN_VARIANT_BEGIN;
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_BEGIN");
+        } else if ((c1 == '=') || (c1 == '{')) {
+          state = SCAN_VARIANT_BEGIN;
+          DEBUG_PRINT(buf, i, "SCAN_VARIANT_BEGIN");
+          --i;
+        }
+        else if(c1 == '}') {
+          Radiant::error("%s:%d: error: Expected variant name, got '}'",
+                         sourceName.toUtf8().data(), line);
+          return false;
         }
         else
           variantName += c1;
       }
       else if(state == SCAN_VARIANT_BEGIN) {
-        if(c1 == '\n' || c1 == '\r') {
-
-          stack.push(std::make_pair(variantName, chunk));
-          chunk.clear();
-
-          state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME (after line)");
-        }
-        else if(isspace(c1) || (c1 == '='))
+        if(isspace(c1))
           ;
+        else if(c1 == '=') {
+          state = READ_VARIANT_BEGIN;
+        }
         else if(c1 == '{') {
           // expected to get a value for current variant
           // but a new block started instead
@@ -482,12 +507,13 @@ namespace Radiant {
           state = SCAN_VARIANT_NAME;
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME");
         }
-        else if(c1 == '/' && c2 == '*') {
-          state = SCAN_COMMENT;
-          stackState = SCAN_VARIANT_BEGIN;
-          DEBUG_PRINT(buf, i, "SCAN_COMMENT");
-        }
         else if(c1 == '}') {
+          if (stack.size() <= 1) {
+            Radiant::error("%s:%d: error: Unexpected '}'",
+                           sourceName.toUtf8().data(), line);
+            return false;
+          }
+
           StackItem si = stack.top();
 
           Chunk tmp = chunk;
@@ -502,6 +528,18 @@ namespace Radiant {
           DEBUG_PRINT(buf, i, "SCAN_VARIANT_BEGIN");
         }
         else {
+          Radiant::error("%s:%d: error: Expected new chunk or '=', got '%c'",
+                         sourceName.toUtf8().data(), line, c1);
+          return false;
+        }
+      }
+      else if(state == READ_VARIANT_BEGIN) {
+        if(c1 == '{' || c1 == '}') {
+          Radiant::error("%s:%d: error: Expected variant value, got '%c'",
+                         sourceName.toUtf8().data(), line, c1);
+          return false;
+        }
+        if(!isspace(c1)) {
           variantVal.clear();
           state = READ_VARIANT;
 
@@ -517,18 +555,34 @@ namespace Radiant {
         }
       }
       else if(state == READ_VARIANT) {
-        if(isspace(c1) && !longVariant) {
-          chunk.set(variantName, variantVal);
-          state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (short)");
+        if (longVariant) {
+          if(c1 == '"') {
+            chunk.set(variantName, variantVal);
+            state = SCAN_VARIANT_NAME;
+            DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (long)");
+          }
+          else if (c1 == '\r' || c1 == '\n') {
+            Radiant::error("%s:%d: error: Missing '\"' at the EOL",
+                           sourceName.toUtf8().data(), line-1);
+            return false;
+          }
+          else
+            variantVal += c1;
+        } else {
+          if(isspace(c1) || c1 == '}') {
+            chunk.set(variantName, variantVal);
+            state = SCAN_VARIANT_NAME;
+            if (c1 == '}')
+              --i;
+            DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (short)");
+          } else if (c1 == '{') {
+            Radiant::error("%s:%d: error: Expected variant value, got '}'",
+                           sourceName.toUtf8().data(), line);
+            return false;
+          }
+          else
+            variantVal += c1;
         }
-        else if(c1 == '"' && longVariant) {
-          chunk.set(variantName, variantVal);
-          state = SCAN_VARIANT_NAME;
-          DEBUG_PRINT(buf, i, "SCAN_VARIANT_NAME after READ_VARIANT (long)");
-        }
-        else
-          variantVal += c1;
       }
       else if(state == SCAN_COMMENT) {
         if(c1 == '*' && c2 == '/') {
@@ -539,13 +593,24 @@ namespace Radiant {
       }
     }
 
+    if (state == SCAN_COMMENT) {
+      Radiant::error("%s:%d: error: Unterminated comment", sourceName.toUtf8().data(), line);
+      return false;
+    }
+    if ((state != SCAN_CHUNK_NAME && state != SCAN_VARIANT_BEGIN && state != SCAN_VARIANT_NAME) ||
+        stack.size() != 1) {
+      Radiant::error("%s:%d: error: Unexpected end of file", sourceName.toUtf8().data(), line);
+      return false;
+    }
+
+
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
     for (auto it = ch.chunks()->begin(); it != ch.chunks()->end(); ++it) {
       c->set(it->first, it->second);
     }
 
-    return c->size() > 0;
+    return true;
   }
 
   bool readConfig(Config *c, const char *filename)
@@ -568,11 +633,9 @@ namespace Radiant {
     std::vector<char> buf;
     buf.resize(size);    
     size_t n = fread(&buf[0], 1, size, in);
-    // only way to suppress warn_unused_result warnings with gcc?
-    (void)n;
     fclose(in);
 
-    return n <= 0 ? false : readConfig(c, &buf[0], size);
+    return n <= 0 ? true : readConfig(c, &buf[0], size, filename);
   }
 
   bool writeConfig(Config *config, const char *filename)

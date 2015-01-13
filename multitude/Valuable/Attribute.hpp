@@ -22,6 +22,7 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <Radiant/ArrayMap.hpp>
 #include <Radiant/BinaryData.hpp>
 #include <Radiant/MemCheck.hpp>
 #include <Radiant/Flags.hpp>
@@ -388,7 +389,7 @@ namespace Valuable
     /// @returns true if shorthand was successfully handled
     /// @sa http://www.w3.org/TR/CSS21/about.html#shorthand
     virtual bool handleShorthand(const Valuable::StyleValue & value,
-                                 QMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
+                                 Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded);
 
 
     /// Check if the given layer defines a value
@@ -602,9 +603,8 @@ namespace Valuable
     {
       if (!m_valueSet[USER])
         return;
-      const T current = value(USER);
+      setValue(value(USER), DEFAULT);
       clearValue(USER);
-      setValue(current, DEFAULT);
     }
 
     virtual QString asString(bool * const ok, Layer layer) const = 0;
@@ -681,6 +681,18 @@ namespace Valuable
 
   template <typename T, int type = Attribute::AttributeType<T>::type>
   class AttributeT;
+
+#ifdef CORNERSTONE_JS
+
+  /// @cond
+
+  /// @todo This should be removed and all v8 related things should be implemented
+  ///       the same way as Scripting::eventAddListener is implemented.
+  VALUABLE_API extern v8::Persistent<v8::Context> s_defaultV8Context;
+
+  /// @endcond
+
+#endif
 }
 
 #include "TransitionImpl.hpp"

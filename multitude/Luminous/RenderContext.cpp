@@ -14,8 +14,6 @@
 
 #include "RenderCommand.hpp"
 
-#include <Nimble/ClipStack.hpp>
-
 // Luminous v2
 #include "Luminous/VertexArray.hpp"
 #include "Luminous/VertexDescription.hpp"
@@ -80,7 +78,7 @@ namespace Luminous
       m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
 
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT);
+      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
 
       m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
       m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
@@ -94,6 +92,13 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
+
+      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.vs", Shader::Vertex);
+      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.fs", Shader::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_trilinearTexShader.setVertexDescription(desc);
 
       m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", Shader::Vertex);
       m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", Shader::Fragment);
@@ -231,6 +236,7 @@ namespace Luminous
 
     Program m_basicShader;
     Program m_texShader;
+    Program m_trilinearTexShader;
     Program m_fontShader;
 
     Luminous::RenderDriver & m_driver;
@@ -310,10 +316,10 @@ namespace Luminous
     delete m_data;
   }
 
-  void RenderContext::setArea(const Luminous::MultiHead::Area * area)
+  void RenderContext::setWindowArea(const MultiHead::Window *window, const Luminous::MultiHead::Area * area)
   {
+    m_data->m_window = window;
     m_data->m_area = area;
-    m_data->m_window = area->window();
   }
 
   const Luminous::MultiHead::Window * RenderContext::window() const
@@ -401,6 +407,17 @@ namespace Luminous
     m_data->m_clipStacks.top().pop();
   }
 
+  const Nimble::ClipStack & RenderContext::clipStack() const
+  {
+    assert(!m_data->m_clipStacks.empty());
+    return m_data->m_clipStacks.top();
+  }
+
+  bool RenderContext::isClipStackEmpty() const
+  {
+    return m_data->m_clipStacks.empty();
+  }
+
   bool RenderContext::isVisible(const Nimble::Rectangle & area)
   {
     if(m_data->m_clipStacks.empty())
@@ -445,7 +462,7 @@ namespace Luminous
       const float tolerance = 0.5f;
       const float actualRadius = scale * (radius + 0.5f * style.strokeWidth());
 
-      linesegments = Nimble::Math::PI / acos(1.f - (tolerance / actualRadius));
+      linesegments = std::max<int>(16, Nimble::Math::PI / acos(1.f - (tolerance / actualRadius)));
     }
 
     // Filler function: Generates vertices in a circle
@@ -790,7 +807,6 @@ namespace Luminous
   /// Drawing utility commands
   //////////////////////////////////////////////////////////////////////////
 
-  //
   void RenderContext::drawRect(const Nimble::Vector2f & min, const Nimble::Vector2f & max, const Style & style)
   {
     drawRect(Nimble::Rect(min, max), style);
@@ -801,71 +817,9 @@ namespace Luminous
     drawRect(Nimble::Rect(min, size), style);
   }
 
-  void RenderContext::drawRect(const Nimble::Rectf & rect, const Style & style)
-  {
-    drawRect(rect, Nimble::Rect(0, 0, 1, 1), style);
-  }
-
-  void RenderContext::drawRect(const Nimble::Rectf & rect, const Nimble::Rectf & uvs, const Style & style)
-  {
-    if (style.fillColor().w > 0.f) {
-      if(!style.fill().hasTextures()) {
-        const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
-        auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
-        b.vertex[0].location = rect.low();
-        b.vertex[1].location = rect.highLow();
-        b.vertex[2].location = rect.lowHigh();
-        b.vertex[3].location = rect.high();
-      }
-      else {
-        const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
-        auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
-
-        b.vertex[0].location = rect.low();
-        b.vertex[0].texCoord = uvs.low();
-
-        b.vertex[1].location = rect.highLow();
-        b.vertex[1].texCoord = uvs.highLow();
-
-        b.vertex[2].location = rect.lowHigh();
-        b.vertex[2].texCoord = uvs.lowHigh();
-
-        b.vertex[3].location = rect.high();
-        b.vertex[3].texCoord = uvs.high();
-      }
-    }
-
-    // Draw the outline
-    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
-
-      Luminous::Style s = style;
-      s.stroke().clear();
-      s.setFillColor(style.strokeColor());
-      if(style.strokeProgram())
-        s.setFillProgram(*style.strokeProgram());
-      else
-        s.setDefaultFillProgram();
-
-      Nimble::Rect outer = rect;
-      Nimble::Rect inner = rect;
-      outer.grow(0.5f*style.strokeWidth());
-      inner.shrink(0.5f*style.strokeWidth());
-
-      drawRectWithHole(outer, inner, s);
-      /*
-      const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, 5, program, style.strokeColor(), style.strokeWidth(), style);
-      b.vertex[0].location.make(rect.low(), b.depth);
-      b.vertex[1].location.make(rect.highLow(), b.depth);
-      b.vertex[2].location.make(rect.high(), b.depth);
-      b.vertex[3].location.make(rect.lowHigh(), b.depth);
-      b.vertex[4].location.make(rect.low(), b.depth);
-      */
-    }
-  }
-
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
+    assert(vertices);
     if (style.fillColor().w > 0.f) {
       if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
@@ -876,6 +830,7 @@ namespace Luminous
         b.vertex[3].location = vertices[3];
       }
       else {
+        assert(uvs);
         const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
         auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
@@ -921,7 +876,11 @@ namespace Luminous
     }
   }
 
-  //
+  void RenderContext::javascriptDrawRect(const Nimble::Rectf &rect, const Style &style)
+  {
+    drawRect(rect, style);
+  }
+
   void RenderContext::drawRectWithHole(const Nimble::Rectf & area,
                                        const Nimble::Rectf & hole,
                                        const Luminous::Style & style)
@@ -1333,6 +1292,11 @@ namespace Luminous
     return m_data->m_texShader;
   }
 
+  const Program & RenderContext::trilinearTexShader() const
+  {
+    return m_data->m_trilinearTexShader;
+  }
+
   float RenderContext::approximateScaling() const
   {
     const float sx = Nimble::Vector2f(transform()[0][0], transform()[0][1]).lengthSqr();
@@ -1497,9 +1461,8 @@ namespace Luminous
 
     // Add color correction filter if any of the areas have a profile defined
     for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
-      const MultiHead::Area & area = m_data->m_window->area(i);
 
-      if(area.isSoftwareColorCorrection()) {
+      if(m_data->m_window->isAreaSoftwareColorCorrected(i)) {
         Radiant::info("Enabling software color correction for area %lu", i);
 
         // Check if filter already exists
@@ -1536,7 +1499,7 @@ namespace Luminous
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
       Luminous::FrameBufferGuard g(*this, first->frameBuffer());
-      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH_STENCIL);
     }
     first->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
@@ -1573,7 +1536,7 @@ namespace Luminous
         m_data->m_driver.setScissor(area.viewport());
 
         // Sets the current area to be rendered
-        setArea(&area);
+        setWindowArea(m_data->m_window, &area);
 
         ppf->doFilter(*this);
       }
@@ -1595,20 +1558,20 @@ namespace Luminous
     const Nimble::Recti viewport = area()->viewport();
 
     assert(m_data->m_currentFrameBuffer);
-    const FrameBuffer & sourceFrameBuffer = *m_data->m_currentFrameBuffer;
 
     // Blit from current frame buffer to filter's auxiliary frame buffer
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
       Luminous::FrameBufferGuard bufferGuard(*this, filterCtx->frameBuffer());
-      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH);
+      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH_STENCIL);
     }
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
     // Push the original frame buffer
-    Luminous::FrameBufferGuard bufferGuard(*this, sourceFrameBuffer);
-    Luminous::ScissorGuard scissorGuard(*this, viewport);
-    filterCtx->doFilter(*this);
+    {
+      Luminous::ScissorGuard scissorGuard(*this, viewport);
+      filterCtx->doFilter(*this);
+    }
   }
 
   bool RenderContext::initialize()
@@ -1698,6 +1661,19 @@ namespace Luminous
   void RenderContext::setCullMode(const CullMode& mode)
   {
     m_data->m_driverGL->setCullMode(mode);
+  }
+
+  void RenderContext::setDrawBuffers(const std::vector<int> & buffers)
+  {
+    m_data->m_driverGL->setDrawBuffers(buffers);
+  }
+
+  void RenderContext::setDefaultDrawBuffers()
+  {
+    std::vector<int> buffers;
+    buffers.push_back(GL_FRONT_LEFT);
+    buffers.push_back(GL_FRONT_RIGHT);
+    setDrawBuffers(buffers);
   }
 
   void RenderContext::setFrontFace(FaceWinding winding)

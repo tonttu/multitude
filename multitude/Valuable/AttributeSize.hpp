@@ -13,6 +13,7 @@
 
 #include "AttributeFloat.hpp"
 #include "AttributeInt.hpp"
+#include "StyleValue.hpp"
 
 #include <Nimble/Size.hpp>
 
@@ -83,6 +84,14 @@ namespace Valuable {
     ElementType height() const
     {
       return *m_values[1];
+    }
+
+    /// Returns true if width or height is defined on the given layer
+    /// @param layer Layer to inspect
+    /// @return False if neither width nor height is defined on given layer
+    virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
+    {
+      return m_values[0]->isValueDefinedOnLayer(layer) || m_values[1]->isValueDefinedOnLayer(layer);
     }
 
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
@@ -158,6 +167,22 @@ namespace Valuable {
 
       endChangeTransaction();
 
+      return true;
+    }
+
+    bool handleShorthand(const Valuable::StyleValue & value,
+                         Radiant::ArrayMap<Valuable::Attribute *, Valuable::StyleValue> & expanded) OVERRIDE
+    {
+
+      if (value.size() == 1 && value.isNumber()) {
+        expanded[m_values[0]] = value;
+        expanded[m_values[1]] = value;
+      } else if (value.size() == 2 && value.isUniform()) {
+        expanded[m_values[0]] = value[0];
+        expanded[m_values[1]] = value[1];
+      } else {
+        return false;
+      }
       return true;
     }
 

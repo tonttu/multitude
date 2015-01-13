@@ -234,19 +234,18 @@ namespace Valuable
     }
 
     bool handleShorthand(const StyleValue & value,
-                         QMap<Attribute *, StyleValue> & expanded) OVERRIDE
+                         Radiant::ArrayMap<Attribute *, StyleValue> & expanded) OVERRIDE
     {
       if (value.size() > 0 && value.size() < 5) {
-        for (int i = 0; i < 4; ++i) {
-          if(i < value.size())
-            expanded[m_values[i]] = value[i];
-          else if(i == 3) // missing left is right
-            expanded[m_values[i]] = expanded[m_values[1]];
-          else if(i == 2) // missing bottom is top
-            expanded[m_values[i]] = expanded[m_values[0]];
-          else if(i == 1) // missing right is top
-            expanded[m_values[i]] = expanded[m_values[0]];
-        }
+        // 'top'
+        expanded[m_values[0]] = value[0];
+        // value missing from 'right' is replaced with value given to 'top'
+        expanded[m_values[1]] = value[1 % value.size()];
+        // value missing from 'bottom' is replaced with value given to 'top'
+        expanded[m_values[2]] = value[2 % value.size()];
+        // value missing from 'left' is replaced with value given to 'right',
+        // or if that is not available, from 'top'
+        expanded[m_values[3]] = value[value.size() / 2 * 3 / 2];
         return true;
       }
       return false;

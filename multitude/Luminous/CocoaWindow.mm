@@ -1,4 +1,4 @@
-#if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION)
+#if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION) || defined(RADIANT_OSX_YOSEMITE)
 
 #include "Luminous.hpp"
 #import "CocoaWindow.hpp"
@@ -348,14 +348,7 @@ return self;
     return;
   }
 
-
-  Luminous::WindowEventHook::MouseButtonMask button =
-      Luminous::WindowEventHook::NoButton;
-
   int buttonNumber = [theEvent buttonNumber];
-
-  if(buttonNumber == 1)
-    button = Luminous::WindowEventHook::RightButton;
 
   NSPoint location;
   location = [theEvent locationInWindow];
@@ -518,7 +511,7 @@ return self;
     NSPasteboard *pboard;
     NSDragOperation sourceDragMask;
 
-    sourceDragMask = [sender draggingSourceOperationMask];
+    //sourceDragMask = [sender draggingSourceOperationMask];
     pboard = [sender draggingPasteboard];
     Luminous::WindowEventHook * hook = m_window->eventHook();
 
@@ -556,10 +549,6 @@ return self;
 @interface CocoaNSWindow : NSWindow
 {
 }
-
--(BOOL) canBecomeKeyWindow;
--(BOOL) acceptsFirstResponder;
-  - (void) deminiaturize;
 
 @end
 

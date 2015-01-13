@@ -85,6 +85,11 @@ namespace VideoDisplay
     float gain() const;
     void setGain(float gain);
 
+    void setEnabled(bool enabled);
+    bool isEnabled() const;
+
+    VIDEODISPLAY_API static uint64_t bufferUnderrun();
+
   private:
     class D;
     D * m_d;

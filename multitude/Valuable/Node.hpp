@@ -90,6 +90,10 @@ namespace Valuable
 
     /// Adds a new Attribute to the list of attribute objects.
     /// Copies the name of the attribute from the given object.
+    /// After successful adding of attribute to node, the node handle memory
+    /// management of attribute.
+    /// @param attribute Attribute to be added
+    /// @return True if attribute was successfully added, false otherwise
     bool addAttribute(Attribute * const attribute);
     /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
     MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
@@ -201,9 +205,9 @@ namespace Valuable
 #endif
 
     /// Saves this object (and its children) to an XML file
-    bool saveToFileXML(const QString & filename, unsigned int opts = SerializationOptions::DEFAULTS);
+    bool saveToFileXML(const QString & filename, unsigned int opts = SerializationOptions::DEFAULTS) const;
     /// Saves this object (and its children) to binary data buffer
-    bool saveToMemoryXML(QByteArray & buffer, unsigned int opts = SerializationOptions::DEFAULTS);
+    bool saveToMemoryXML(QByteArray & buffer, unsigned int opts = SerializationOptions::DEFAULTS) const;
 
     /// Reads this object (and its children) from an XML file
     bool loadFromFileXML(const QString & filename);
@@ -225,13 +229,13 @@ namespace Valuable
     void debugDump();
 
     /// Container for attributes, key is the attribute name
-    typedef std::map<QByteArray, Attribute *> container;
+    typedef Radiant::ArrayMap<QByteArray, Attribute *> container;
     /// Iterator for the container
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
     /// @returns attribute container
-    const container & attributes() { return m_attributes; }
+    const container & attributes() const { return m_attributes; }
 
     /** Add an event listener to this object.
         This function is part of the event passing framework. After calling this,
@@ -590,6 +594,7 @@ namespace Valuable
     QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
   };
 
+  typedef Valuable::AttributeIntT<Node::Uuid> AttributeUuid;
 }
 
 #endif

@@ -209,6 +209,19 @@ namespace Luminous
     QList<int> m_planes;
     bool m_enable;
   };
+
+  //////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  
+  class CommandDrawBuffers : public PipelineCommand
+  {
+  public:
+    CommandDrawBuffers(const std::vector<int> & buffers);
+
+    virtual void execute() OVERRIDE;
+  private:
+    std::vector<int> m_buffers;
+  };
 }
 
 /// @endcond

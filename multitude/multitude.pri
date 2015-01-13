@@ -69,7 +69,7 @@ LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
-enable-js:LIB_V8 = -lv8 -lnode
+enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
 
 #
 # Platform specific: GNU Linux
@@ -83,9 +83,14 @@ linux-*{
 
   QMAKE_LIBDIR += $$PWD/Linux/lib
 
-  exists(/opt/multitouch-libav1/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav1/lib -lavcodec-multitouch1 -lavutil-multitouch1 -lavformat-multitouch1 -lavdevice-multitouch1 -lavfilter-multitouch1 -lswscale-multitouch1
-    INCLUDEPATH += /opt/multitouch-libav1/include
+  exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
+    MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
+    INCLUDEPATH += /opt/multitouch-libav2/include
+  }
+
+  enable-js {
+    QMAKE_LIBDIR += /opt/multitouch-nodejs-1/lib
+    INCLUDEPATH += /opt/multitouch-nodejs-1/include
   }
 
   contains(DOCUMENTER,yes) {
@@ -93,12 +98,19 @@ linux-*{
     DEFINES += MULTI_DOCUMENTER=1
   }
 
-  defineTest(checkCompiler) {
+  defineTest(gccVersionCheck) {
     COMPILER_OUTPUT=$$system($$1 -dumpversion 2>/dev/null)
     COMPILER_V1 = $$section(COMPILER_OUTPUT, ".", 0, 0)
     COMPILER_V2 = $$section(COMPILER_OUTPUT, ".", 1, 1)
-    greaterThan(COMPILER_V1, 4): return(true)
-    greaterThan(COMPILER_V1, 3): greaterThan(COMPILER_V2, 5): return(true)
+    greaterThan(COMPILER_V1, $$2): return(true)
+    equals(COMPILER_V1, $$2) {
+      greaterThan(COMPILER_V2, $$3): return(true)
+      equals(COMPILER_V2, $$3): return(true)
+    }
+    return(false)
+  }
+  defineTest(checkCompiler) {
+    gccVersionCheck($$1, 4, 6): return(true)
     return(false)
   }
   !checkCompiler($$QMAKE_CXX) {
@@ -143,6 +155,7 @@ macx {
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
+  system([ `uname -r | cut -d . -f1` -eq 14 ] ):DEFINES+=RADIANT_OSX_YOSEMITE
 }
 
 #
@@ -183,22 +196,34 @@ win32 {
     # Use multiprocessor compilation
     QMAKE_CXXFLAGS += -MP
 
-    exists("C:/Cornerstone-deps/libav/include") {
-      INCLUDEPATH += "C:/Cornerstone-deps/libav/include"
-      LIBS += -L"C:/Cornerstone-deps/libav/bin"
+    # For official builds by MultiTouch Ltd.
+    CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+
+    exists($$CORNERSTONE_DEPS_PATH) {
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
+      LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
       enable-js {
-        INCLUDEPATH += "C:/Cornerstone-deps/node/include"
-        LIBS += -L"C:/Cornerstone-deps/node/bin"
-        QMAKE_LIBDIR += "C:/Cornerstone-deps/node/lib"
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/node/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin
+        QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/node/lib
       }
     } else {
-      error(Requires the Cornerstone dependency package to compile)
+      # Builds from distributed source code
+      CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_VERSION_STR}
+
+      exists($$CORNERSTONE_DEPS_PATH) {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/bin
+        QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/lib
+      } else {
+        error(No dependency package found. Build requires the Cornerstone SDK package ($$CORNERSTONE_DEPS_PATH) to proceed.)
+      }
     }
 
     # These libs have an extra extension for debug builds
     CONFIG(debug,debug|release) {
       LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
-      enable-js:LIB_V8 = -lv8_d -lnode_d
+      enable-js:LIB_V8 = -lv8-multitouch1_d -lnode-multitouch1_d
     }
 }
 

@@ -31,7 +31,8 @@ namespace Luminous
 
     RenderResource::Id s_resourceId = 1;      // Next available resource ID
     std::vector<Luminous::RenderDriver*> s_drivers; // Currently used drivers
-    Radiant::Mutex s_contextArraysMutex;
+    Radiant::Mutex s_contextArraysMutex(true);
+    bool s_contextArraysChanged = false;
     Radiant::Timer s_timer;
     int s_frameTime = 0;
     std::set<ContextArray*> s_contextArrays;
@@ -49,10 +50,19 @@ namespace Luminous
 
   void RenderManager::setDrivers(std::vector<Luminous::RenderDriver*> drivers)
   {
-    s_drivers = drivers;
     Radiant::Guard g(s_contextArraysMutex);
-    for(auto it = s_contextArrays.begin(), end = s_contextArrays.end(); it != end; ++it)
-      (*it)->resize(s_drivers.size());
+    s_drivers = drivers;
+    // Resizing context arrays might have a side-effect of adding or removing
+    // other context arrays. We will detect this change, not use our invalidated
+    // iterators, and just try again.
+    do {
+      s_contextArraysChanged = false;
+      for (auto it = s_contextArrays.begin(), end = s_contextArrays.end(); it != end; ++it) {
+        (*it)->resize(s_drivers.size());
+        if (s_contextArraysChanged)
+          break;
+      }
+    } while (s_contextArraysChanged);
   }
 
   RenderResource::Id RenderManager::createResource(RenderResource * resource)
@@ -89,12 +99,14 @@ namespace Luminous
   void RenderManager::addContextArray(ContextArray * contextArray)
   {
     Radiant::Guard g(s_contextArraysMutex);
+    s_contextArraysChanged = true;
     s_contextArrays.insert(contextArray);
   }
 
   void RenderManager::removeContextArray(ContextArray * contextArray)
   {
     Radiant::Guard g(s_contextArraysMutex);
+    s_contextArraysChanged = true;
     s_contextArrays.erase(contextArray);
   }
 

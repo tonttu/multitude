@@ -27,6 +27,7 @@ namespace
 
 namespace VideoDisplay
 {
+  uint64_t s_bufferUnderrun = 0;
   const int s_decodedBufferCount = 200;
 
   void DecodedAudioBuffer::fill(Timestamp timestamp, int channels, int samples,
@@ -80,6 +81,7 @@ namespace VideoDisplay
       , m_usedSeekGeneration(0)
       , m_samplesInGeneration(0)
       , m_gain(1.0f)
+      , m_enabled(true)
       /*, samplesProcessed(0)*/
     {}
 
@@ -109,6 +111,7 @@ namespace VideoDisplay
     int m_samplesInGeneration;
 
     float m_gain;
+    bool m_enabled;
     /*long samplesProcessed;*/
 
     DecodedAudioBuffer * getReadyBuffer();
@@ -164,6 +167,11 @@ namespace VideoDisplay
 
   void AudioTransfer::process(float **, float ** out, int n, const Resonant::CallbackTime & time)
   {
+    if (!m_d->m_enabled) {
+      zero(out, m_d->m_channels, n, 0);
+      return;
+    }
+
     /**
      * We need to implement toPts -function, that converts absolute
      * timestamp (Radiant::TimeStamp) to video pts (presentation timestamp).
@@ -183,6 +191,7 @@ namespace VideoDisplay
       DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
       if(!decodedBuffer) {
         zero(out, m_d->m_channels, remaining, processed);
+        s_bufferUnderrun += remaining;
         break;
       } else {
         const int offset = decodedBuffer->offset();
@@ -299,5 +308,20 @@ namespace VideoDisplay
   void AudioTransfer::setGain(float gain)
   {
     m_d->m_gain = gain;
+  }
+
+  void AudioTransfer::setEnabled(bool enabled)
+  {
+    m_d->m_enabled = enabled;
+  }
+
+  bool AudioTransfer::isEnabled() const
+  {
+    return m_d->m_enabled;
+  }
+
+  uint64_t AudioTransfer::bufferUnderrun()
+  {
+    return s_bufferUnderrun;
   }
 }

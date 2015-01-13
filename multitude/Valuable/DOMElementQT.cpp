@@ -203,6 +203,14 @@ namespace Valuable
       }
     
     QDomElement & qde = m_wrapped->x;
+
+    for(QDomNode child = qde.firstChild(); !child.isNull(); child = child.nextSibling()) {
+      if(child.isText()) {
+        qde.removeChild(child);
+        break;
+      }
+    }
+
     qde.appendChild(qde.ownerDocument().createTextNode(s));
   }
 

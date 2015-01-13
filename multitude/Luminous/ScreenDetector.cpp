@@ -19,7 +19,6 @@
 #endif
 
 #if defined (RADIANT_LINUX)
-#include <QX11Info>
 #include <X11/Xlib.h>
 #endif
 
@@ -73,9 +72,6 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     // Query for the information
     QueryDisplayConfig(QDC_ALL_PATHS, &num_of_paths, displayPaths, &num_of_modes, displayModes, NULL);
 
-    bool source=false;
-    bool target = false;
-
     for (int i = 0; i < num_of_paths; i++) {
        if(displayPaths[i].flags & DISPLAYCONFIG_PATH_ACTIVE)
        {
@@ -101,7 +97,7 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     m_results.clear();
 
 #ifdef RADIANT_LINUX
-    int screens = XScreenCount(QX11Info::display());
+    const int screens = XScreenCount(X11Display());
     for(int screen = 0; screen < screens; ++screen) {
       if(ScreenDetectorNV::detect(screen, m_results)) continue;
       if(ScreenDetectorAMD::detect(screen, m_results)) continue;
@@ -129,6 +125,27 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     }
 
     return monitor_name;
+  }
+#endif
+
+
+#ifdef RADIANT_LINUX
+  X11Display::X11Display()
+    : m_display(XOpenDisplay(nullptr))
+  {}
+
+  X11Display::X11Display(const QByteArray & displayName)
+    : m_display(XOpenDisplay(displayName.data()))
+  {}
+
+  X11Display::~X11Display()
+  {
+    XCloseDisplay(m_display);
+  }
+
+  X11Display::operator Display * ()
+  {
+    return m_display;
   }
 #endif
 }

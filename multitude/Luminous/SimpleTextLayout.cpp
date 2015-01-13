@@ -127,7 +127,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   SimpleTextLayout::D::D()
-    : m_layoutThread(nullptr)
+    : m_generateMutex(true),
+      m_layoutThread(nullptr)
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
@@ -146,6 +147,9 @@ namespace Luminous
 
   void SimpleTextLayout::D::layout(const Nimble::SizeF & size)
   {
+    if(!isLuminousInitialized())
+      Radiant::error("SimpleTextLayout::D::layout # Luminous has not been initialized yet");
+
     const float lineWidth = size.width();
 
     bool forceHeight = false;
@@ -290,6 +294,19 @@ namespace Luminous
     m_d->m_lineHeight = that.m_d->m_lineHeight;
   }
 
+  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that)
+    : TextLayout(std::move(that)),
+      m_d(std::move(that.m_d))
+  {
+  }
+
+  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that)
+  {
+    TextLayout::operator=(std::move(that));
+    m_d = std::move(that.m_d);
+    return *this;
+  }
+
   SimpleTextLayout::SimpleTextLayout(const QString & text, const Nimble::SizeF & maximumSize,
                                      const QFont & font, const QTextOption & textOption)
     : TextLayout(maximumSize)
@@ -302,7 +319,6 @@ namespace Luminous
 
   SimpleTextLayout::~SimpleTextLayout()
   {
-    delete m_d;
   }
 
   void SimpleTextLayout::setText(const QString & text)
@@ -375,6 +391,12 @@ namespace Luminous
     return m_d->m_layout;
   }
 
+  void SimpleTextLayout::clearCache()
+  {
+    Radiant::Guard g(s_layoutCacheMutex);
+    s_layoutCache.clear();
+  }
+
   const SimpleTextLayout & SimpleTextLayout::cachedLayout(const QString & text,
                                                           const Nimble::SizeF & size,
                                                           const QFont & font,
@@ -391,13 +413,7 @@ namespace Luminous
 #endif
 
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & tptr = s_layoutCache[key];
-
-      bool reset = tptr && !tptr->correctAtlas();
-      if(reset) {
-        s_layoutCache.clear();
-      }
-      std::unique_ptr<SimpleTextLayout> & ptr = reset?s_layoutCache[key]:tptr;
+      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
 
       if (!ptr) {
         ptr.reset(new SimpleTextLayout(text, size, font, option));

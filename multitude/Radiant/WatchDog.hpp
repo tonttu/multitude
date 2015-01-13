@@ -64,6 +64,17 @@ namespace Radiant {
     /// @return true if paused; otherwise false
     bool paused() const { return m_paused; }
 
+    /// Is the watchdog disabled by the user
+    /// @return true if watchdog is enabled
+    /// @sa setEnabled
+    static bool isEnabled();
+
+    /// Enable or disable the watchdog. This function only sets the flag if the
+    /// watchdog should be used. It is up to the user the check the flag.
+    /// @param enabled should the watchdog be enabled?
+    /// @sa isEnabled
+    static void setEnabled(bool enabled);
+
   private:
 
     virtual void childLoop();
@@ -81,8 +92,8 @@ namespace Radiant {
 
     Radiant::Mutex m_mutex;
     volatile bool m_continue;
-    float m_intervalSeconds;
-    bool m_paused;
+    volatile float m_intervalSeconds;
+    volatile bool m_paused;
   };
 
 }

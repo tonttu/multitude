@@ -14,7 +14,9 @@
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
+#include <QFile>
 #include <QStringList>
+#include <QTextStream>
 
 namespace Radiant {
 
@@ -55,6 +57,32 @@ namespace Radiant {
     }
 
     return (int) m_rows.size();
+  }
+
+  bool CSVDocument::save(const QString &filename, const char *delimiter, bool useQuotations)
+  {
+    QFile file(filename);
+    if(!file.open(QIODevice::WriteOnly))
+      return false;
+
+    QTextStream stream( & file);
+
+    for(const Row & row : m_rows) {
+
+      for(size_t i = 0; i < row.size(); i++) {
+        if(useQuotations)
+          stream << "\"";
+        stream << row[i];
+        if(useQuotations)
+          stream << "\"";
+        if((i + 1) < row.size())
+          stream << delimiter;
+      }
+
+      stream << "\n";
+    }
+
+    return true;
   }
 
 
@@ -100,6 +128,19 @@ namespace Radiant {
     }
 
     return 0; // Should be unreachable
+  }
+
+  CSVDocument::Row *CSVDocument::appendRow()
+  {
+    m_rows.push_back(Row());
+    auto it = m_rows.end();
+    it--;
+    return &*it;
+  }
+
+  void CSVDocument::clear()
+  {
+    m_rows.clear();
   }
 
 }

@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #include "ModuleSamplePlayer.hpp"
@@ -33,7 +33,8 @@ namespace Resonant {
   ModuleSamplePlayer::NoteInfoInternal::NoteInfoInternal()
     : m_status(NOTE_PLAYING)
     , m_noteId(-1)
-
+    , m_sampleLengthSeconds(0.0f)
+    , m_playHeadPosition(0.0f)
   {
   }
 
@@ -60,6 +61,22 @@ namespace Resonant {
     return -1;
   }
 
+  float ModuleSamplePlayer::NoteInfo::sampleLengthSeconds() const
+  {
+    if(m_info)
+      return m_info->m_sampleLengthSeconds;
+
+    return 0.0f;
+  }
+
+  float ModuleSamplePlayer::NoteInfo::playHeadSeconds() const
+  {
+    if(m_info)
+      return m_info->m_playHeadPosition;
+
+    return 0.0f;
+  }
+
   void ModuleSamplePlayer::NoteInfo::init(int id)
   {
     if(!m_info)
@@ -67,6 +84,90 @@ namespace Resonant {
 
     m_info->m_noteId = id;
     m_info->m_status = NOTE_PLAYING;
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
+
+  QString ModuleSamplePlayer::NoteParameters::fileName() const
+  {
+    return m_fileName;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setFileName(const QString &fileName)
+  {
+    m_fileName = fileName;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::samplePlayhead() const
+  {
+    return m_samplePlayhead;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setSamplePlayhead(float samplePlayhead)
+  {
+    m_samplePlayhead = samplePlayhead;
+  }
+
+  Radiant::TimeStamp ModuleSamplePlayer::NoteParameters::playbackTime() const
+  {
+    return m_playbackTime;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setPlaybackTime(const Radiant::TimeStamp &playbackTime)
+  {
+    m_playbackTime = playbackTime;
+  }
+
+  bool ModuleSamplePlayer::NoteParameters::loop() const
+  {
+    return m_loop;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setLoop(bool loop)
+  {
+    m_loop = loop;
+  }
+
+  int ModuleSamplePlayer::NoteParameters::sampleChannel() const
+  {
+    return m_sampleChannel;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setSampleChannel(int sampleChannel)
+  {
+    m_sampleChannel = sampleChannel;
+  }
+
+  int ModuleSamplePlayer::NoteParameters::targetChannel() const
+  {
+    return m_targetChannel;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setTargetChannel(int targetChanggel)
+  {
+    m_targetChannel = targetChanggel;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::relativePitch() const
+  {
+    return m_relativePitch;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setRelativePitch(float relativePitch)
+  {
+    m_relativePitch = relativePitch;
+  }
+
+  float ModuleSamplePlayer::NoteParameters::gain() const
+  {
+    return m_gain;
+  }
+
+  void ModuleSamplePlayer::NoteParameters::setGain(float gain)
+  {
+    m_gain = gain;
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -172,23 +273,28 @@ namespace Resonant {
     if((int) avail > n)
       avail = n;
 
+    // Radiant::info("avail = %u", avail);
+
     if(m_targetChannel >= host->channels()) {
       Radiant::error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
-            "%ld >= %ld", m_sample->name().toUtf8().data(),
-            m_targetChannel, host->channels());
+                     "%ld >= %ld", m_sample->name().toUtf8().data(),
+                     m_targetChannel, host->channels());
       m_state = INACTIVE;
       return false;
     }
 
     float * b1 = out[m_targetChannel];
     Nimble::Rampd gain = m_gain;
-    float pitch = m_relPitch;
+    Nimble::Rampd pitch = m_relPitch;
 
     bool more;
 
     int chans = m_sample->channels();
 
-    if(pitch == 1.0f) {
+    if(avail == 0) {
+      more = false;
+    }
+    else if(pitch == 1.0f && !pitch.left()) {
       const float * src = m_sample->buf(m_position) + m_sampleChannel;
 
       for(unsigned i = 0; i < avail; i++) {
@@ -198,6 +304,7 @@ namespace Resonant {
       }
 
       m_position += avail;
+      m_dpos = m_position;
 
       more = (int) avail == n;
     }
@@ -212,21 +319,39 @@ namespace Resonant {
         int base = (int) dpos;
         double w2 = dpos - (double) base;
         *b1++ += gain *
-                 float((src[base * chans] * (1.0 - w2) + src[(base+1) * chans] * w2));
+            float((src[base * chans] * (1.0 - w2) + src[(base+1) * chans] * w2));
         dpos += pitch;
         gain.update();
+        pitch.update();
       }
 
       m_dpos = dpos;
+      m_position = dpos;
 
-      m_gain = gain;
+      m_relPitch = pitch;
       more = dpos < dmax;
     }
 
+    m_gain = gain;
+
     if(m_finishCounter > 0 && (m_finishCounter - n) <= 0) {
-      more = 0;
-      m_loop = false;
+
+      if(m_autoRestartAfterStop) {
+        m_finishCounter = -1;
+        m_autoRestartAfterStop = false;
+        m_position = m_startPosition;
+        m_dpos = m_position;
+        m_gain = 0.0f;
+        m_gain.setTarget(m_startGain, m_startFadeInDurationSamples);
+        // Radiant::info("ModuleSamplePlayer::SampleVoice::synthesize # Restart");
+      }
+      else {
+
+        more = 0;
+        m_loop = false;
+      }
     }
+
     m_finishCounter -= n;
 
     if(!more) {
@@ -243,11 +368,19 @@ namespace Resonant {
       }
     }
 
+    if(m_info) {
+      m_info->m_playHeadPosition = m_dpos / 44100.0;
+      /*
+      Radiant::info("Playhead at %d %f %lf %d", (int) m_position, m_info->m_playHeadPosition, m_dpos,
+                    (int) m_sample ? m_sample->frames() : 0u);
+                    */
+    }
+
     return more != 0;
   }
 
   void ModuleSamplePlayer::SampleVoice::init
-      (ModuleSamplePlayer * host, std::shared_ptr<Sample> sample, Radiant::BinaryData &data)
+  (ModuleSamplePlayer * host, std::shared_ptr<Sample> sample, Radiant::BinaryData &data)
   {
     m_sample = sample;
     m_position = 0;
@@ -292,15 +425,20 @@ namespace Resonant {
         m_startTime = data.readTimeStamp( & ok);
       else if(strcmp(name, "note-id") == 0)
         m_noteId = data.readInt32(& ok);
+      else if(strcmp(name, "playhead-seconds") == 0) {
+        float seconds = data.readFloat32( & ok);
+        m_position = seconds * 44100.0;
+        m_dpos = m_position;
+      }
       else {
         Radiant::error("ModuleSamplePlayer::SampleVoice::init # Invalid parameter \"%s\"",
-              name);
+                       name);
         break;
       }
 
       if(!ok) {
         Radiant::error("ModuleSamplePlayer::SampleVoice::init # Error parsing value for %s",
-              name);
+                       name);
       }
       else {
         debugResonant("ModuleSamplePlayer::SampleVoice::init # got %s", name);
@@ -326,13 +464,109 @@ namespace Resonant {
       }
     }
 
-    m_dpos = 0.0;
-
     m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
+    if(m_info) {
+      m_info->m_playHeadPosition = m_dpos;
+      if(sample)
+        m_info->m_sampleLengthSeconds = sample->frames() / 44100.0f;
+    }
+
+    m_startGain = m_gain;
+
     debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
-          "rp = %.3f, ss = %ld, ts = %ld", this, m_gain.value(), m_relPitch,
-          m_sampleChannel, m_targetChannel);
+                  "rp = %.3f, ss = %ld, ts = %ld", this, m_gain.value(), m_relPitch.value(),
+                  m_sampleChannel, m_targetChannel);
+  }
+
+  void ModuleSamplePlayer::SampleVoice::processMessage(ModuleSamplePlayer * /*host*/, const QByteArray &parameter,
+                                                       Radiant::BinaryData &data)
+  {
+    // Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # %s", parameter.data());
+
+    if(parameter == "control") {
+
+      const int buflen = 64;
+      char name[buflen + 1] = { '\0' };
+
+      if(!data.readString(name, buflen)) {
+        Radiant::error("ModuleSamplePlayer::SampleVoice::processMessage # Invalid beginning");
+
+        return;
+      }
+
+      float gain = -1.0f;
+      float interpolationTimeSeconds = -1.0f;
+      float relPitch = -1.0f;
+      float playheadSeconds = -1.0f;
+
+      int loop = -1;
+
+      bool ok = true;
+
+      while(name[0] != '\0' && strcmp(name, "end") != 0 && ok) {
+
+        if(strcmp(name, "gain") == 0) {
+          gain = data.readFloat32( & ok);
+        }
+        else if(strcmp(name, "relative-pitch") == 0)
+          relPitch = data.readFloat32( & ok);
+        else if(strcmp(name, "interpolation-time") == 0)
+          interpolationTimeSeconds = data.readFloat32( & ok);
+        else if(strcmp(name, "loop") == 0)
+          loop = (data.readInt32( & ok) != 0);
+        else if(strcmp(name, "playhead-seconds") == 0)
+          playheadSeconds = data.readFloat32( & ok);
+        else {
+          ok = false;
+        }
+
+        if(!ok)
+          Radiant::error("ModuleSamplePlayer::SampleVoice::processMessage # Control # Invalid parameter \"%s\"",
+                         name);
+        else
+          ok = data.readString(name, buflen);
+      }
+
+      /*
+      Radiant::info("ModuleSamplePlayer::SampleVoice::processMessage # Control %s %f %f %f %f %d",
+                    ok ? "OK" : "FAIL", gain, relPitch, interpolationTimeSeconds, playheadSeconds,
+                    (int) loop);
+      */
+      if(!ok)
+        return;
+
+      if(interpolationTimeSeconds < 0.0f)
+        interpolationTimeSeconds = 0.01f;
+
+      /// @todo Do not hard-code the sample-rate
+      float sampleRate = 44100.0f;
+
+      int interpolationSamples = interpolationTimeSeconds * sampleRate;
+
+      if(gain >= 0.0f) {
+        m_gain.setTarget(gain, interpolationSamples);
+        m_startGain = gain;
+      }
+      if(relPitch >= 0.0f) {
+        m_relPitch.setTarget(relPitch, interpolationSamples);
+      }
+      if(loop >= 0) {
+        m_loop = loop != 0;
+      }
+      if(playheadSeconds >= 0.0f) {
+
+        // Half of the time goes to fade-out, the other half to fade-in
+        interpolationSamples /= 2;
+
+        m_startPosition = playheadSeconds * sampleRate;
+        m_autoRestartAfterStop = true;
+        m_startFadeInDurationSamples = interpolationSamples;
+
+        m_gain.setTarget(0, interpolationSamples);
+        m_finishCounter = interpolationSamples;
+      }
+    }
   }
 
   void ModuleSamplePlayer::SampleVoice::setSample(std::shared_ptr<Sample> s)
@@ -340,10 +574,13 @@ namespace Resonant {
     if(m_state != WAITING_FOR_SAMPLE) {
 
       Radiant::error("ModuleSamplePlayer::SampleVoice::setSample # Wrong state %p %d",
-            this, (int) m_state);
+                     this, (int) m_state);
     }
     m_sample = s;
     m_state = PLAYING;
+
+    if(m_info)
+      m_info->m_sampleLengthSeconds = s->frames() / 44100.0f;
   }
 
   void ModuleSamplePlayer::SampleVoice::stop(float fadeTime, float sampleRate)
@@ -356,7 +593,7 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
 
   ModuleSamplePlayer::LoadItem::LoadItem()
-      : m_free(true)
+    : m_free(true)
   {
     memset(m_waiting, 0, sizeof(m_waiting));
   }
@@ -365,7 +602,7 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
 
   ModuleSamplePlayer::BGLoader::BGLoader(ModuleSamplePlayer * host)
-      : m_host(host)
+    : m_host(host)
   {
     m_continue = true;
     run();
@@ -384,7 +621,7 @@ namespace Resonant {
                                                  SampleVoice * waiting)
   {
     debugResonant("ModuleSamplePlayer::BGLoader::addLoadable # %s %p",
-          filename, waiting);
+                  filename, waiting);
 
     for(int i = 0; i < BINS; i++) {
       if(m_loads[i].m_name == std::string(filename)) {
@@ -423,12 +660,12 @@ namespace Resonant {
 
           if(!s->load(it.m_name.c_str(), it.m_name.c_str())) {
             Radiant::error("ModuleSamplePlayer::BGLoader::childLoop # Could not load "
-                  "\"%s\"", it.m_name.c_str());
+                           "\"%s\"", it.m_name.c_str());
             good = false;
           }
           else if(!m_host->addSample(s)) {
             Radiant::error("ModuleSamplePlayer::BGLoader::childLoop # Could not add "
-                  "\"%s\"", it.m_name.c_str());
+                           "\"%s\"", it.m_name.c_str());
             good = false;
           }
 
@@ -442,7 +679,7 @@ namespace Resonant {
           }
           else {
             debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Loaded "
-                  "\"%s\"", it.m_name.c_str());
+                          "\"%s\"", it.m_name.c_str());
 
             for(int j = 0; j < LoadItem::WAITING_COUNT; j++) {
               SampleVoice * voice = it.m_waiting[j];
@@ -450,7 +687,7 @@ namespace Resonant {
                 break;
 
               debugResonant("ModuleSamplePlayer::BGLoader::childLoop # Delivering "
-                    "\"%s\" to %p", it.m_name.c_str(), voice);
+                            "\"%s\" to %p", it.m_name.c_str(), voice);
 
               voice->setSample(s);
             }
@@ -469,10 +706,10 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
 
   ModuleSamplePlayer::ModuleSamplePlayer()
-      : m_channels(1)
-      , m_active(0)
-      , m_masterGain(1.0f)
-      , m_userNoteIdCounter(1)
+    : m_channels(1)
+    , m_active(0)
+    , m_masterGain(1.0f)
+    , m_userNoteIdCounter(1)
   {
     m_voices.resize(256);
     m_voiceptrs.resize(m_voices.size());
@@ -541,17 +778,33 @@ namespace Resonant {
       }
 
       voice.init(this, sampleind >= 0 ?
-                 m_samples[sampleind] : std::shared_ptr<Sample>(), data);
+                   m_samples[sampleind] : std::shared_ptr<Sample>(), data);
       m_active++;
 
       debugResonant("ModuleSamplePlayer::eventProcess # Started sample %s (%d/%ld)",
-            buf, voiceind, m_active);
+                    buf, voiceind, m_active);
       // assert(voiceind < (int) m_active);
 
     }
     else if(id == "stop-sample") {
 
       stopSampleInternal(data);
+
+    }
+    else if(id.startsWith("voice/")) {
+
+      int slashLocation = id.indexOf('/', 6);
+
+      if(slashLocation < 0) {
+        Radiant::error("ModuleSamplePlayer::eventProcess # Bad voice command %s", id.data());
+        return;
+      }
+
+      QByteArray voiceIdStr(id.data() + 6, slashLocation - 6);
+
+      int voiceId = voiceIdStr.toInt();
+      if(voiceId)
+        controlSample(voiceId, id.data() + slashLocation + 1, data);
 
     }
     else if(id == "channels") {
@@ -626,7 +879,7 @@ namespace Resonant {
   }
 
   void ModuleSamplePlayer::createAmbientBackground
-      (const char * directory, float gain, int fillchannels, float delay)
+  (const char * directory, float gain, int fillchannels, float delay)
   {
     Radiant::Directory dir(directory, Radiant::Directory::FILES);
 
@@ -652,7 +905,7 @@ namespace Resonant {
 
         char command[128];
 
-		/// @todo These should probably be documented somewhere
+        /// @todo These should probably be documented somewhere
 #ifdef WIN32
         sprintf(command, "madplay.exe %s -o wave:%s", file.toUtf8().data(), wavname.c_str());
 #else
@@ -673,7 +926,7 @@ namespace Resonant {
 
       if(!sndf) {
         debugResonant("ModuleSamplePlayer::createAmbientBackground # failed to load '%s'",
-                       file.toUtf8().data());
+                      file.toUtf8().data());
         continue;
       }
 
@@ -682,7 +935,7 @@ namespace Resonant {
 
       // Start everything in 7 seconds
       Radiant::TimeStamp startTime = Radiant::TimeStamp::currentTime() +
-                                     Radiant::TimeStamp::createSeconds(delay);
+          Radiant::TimeStamp::createSeconds(delay);
 
       for(int c = 0; c < fillchannels; c++) {
         playSample(file.toUtf8().data(), gain, 1.0f, (c+i) % channels(), c % info.channels, true, startTime);
@@ -694,20 +947,35 @@ namespace Resonant {
 
 
   ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSample(const char * filename,
-                                      float gain,
-                                      float relpitch,
-                                      int targetChannel,
-                                      int samplechannel,
-                                      bool loop,
-                                      Radiant::TimeStamp time)
+                                                              float gain,
+                                                              float relpitch,
+                                                              int targetChannel,
+                                                              int samplechannel,
+                                                              bool loop,
+                                                              Radiant::TimeStamp time)
   {
+    NoteParameters parameters(QString::fromUtf8(filename));
+
+    parameters.setGain(gain);
+    parameters.setRelativePitch(relpitch);
+    parameters.setTargetChannel(targetChannel);
+    parameters.setSampleChannel(samplechannel);
+    parameters.setLoop(loop);
+    parameters.setPlaybackTime(time);
+
+    return playSample(parameters);
+  }
+
+  ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSample(const ModuleSamplePlayer::NoteParameters &parameters)
+  {
+    QByteArray fileName8(parameters.fileName().toLocal8Bit());
 
     SF_INFO info;
-    SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, &info);
+    SNDFILE * sndf = AudioFileHandler::open(fileName8.data(), SFM_READ, &info);
 
     if(!sndf) {
       Radiant::error("ModuleSamplePlayer::playSample # failed to load '%s'",
-                     filename);
+                     fileName8.data());
       return NoteInfo();
     }
 
@@ -725,32 +993,35 @@ namespace Resonant {
     Radiant::BinaryData control;
     control.writeString(id() + "/playsample");
 
-    control.writeString(filename);
+    control.writeString(parameters.fileName());
 
     control.writeString("gain");
-    control.writeFloat32(gain);
+    control.writeFloat32(parameters.gain());
 
     // Relative pitch
     control.writeString("relpitch");
-    control.writeFloat32(relpitch * info.samplerate / 44100.0f);
+    control.writeFloat32(parameters.relativePitch() * info.samplerate / 44100.0f);
 
     // Infinite looping;
     control.writeString("loop");
-    control.writeInt32(loop);
+    control.writeInt32(parameters.loop());
 
     // Select a channel from the sample
     control.writeString("samplechannel");
-    control.writeInt32(samplechannel);
+    control.writeInt32(parameters.sampleChannel());
 
     // Select the target channel for the sample
     control.writeString("targetchannel");
-    control.writeInt32(targetChannel);
+    control.writeInt32(parameters.targetChannel());
 
     control.writeString("time");
-    control.writeTimeStamp(time);
+    control.writeTimeStamp(parameters.playbackTime());
 
     control.writeString("note-id");
     control.writeInt64(noteId);
+
+    control.writeString("playhead-seconds");
+    control.writeFloat32(parameters.samplePlayhead());
 
     // Finish parameters
     control.writeString("end");
@@ -762,8 +1033,8 @@ namespace Resonant {
   }
 
   ModuleSamplePlayer::NoteInfo ModuleSamplePlayer::playSampleAtLocation(const char *filename, float gain, float relpitch,
-                                               Nimble::Vector2 location, int sampleChannel,
-                                               bool loop, Radiant::TimeStamp time)
+                                                                        Nimble::Vector2 location, int sampleChannel,
+                                                                        bool loop, Radiant::TimeStamp time)
   {
     SF_INFO info;
     SNDFILE * sndf = AudioFileHandler::open(filename, SFM_READ, & info);
@@ -845,6 +1116,84 @@ namespace Resonant {
     DSPNetwork::instance()->send(control);
   }
 
+  void ModuleSamplePlayer::setSampleGain(const ModuleSamplePlayer::NoteInfo & info, float gain, float interpolationTimeSeconds)
+  {
+    Radiant::BinaryData control;
+    char buf[64];
+    sprintf(buf, "%d", info.noteId());
+    control.writeString(id() + "/voice/" + QByteArray(buf) + "/control");
+
+    control.writeString("gain");
+    // Radiant::info("ModuleSamplePlayer::setSampleGain # Writing gain at %d", control.pos());
+    control.writeFloat32(gain);
+
+    control.writeString("interpolation-time");
+    control.writeFloat32(interpolationTimeSeconds);
+
+    // Finish parameters
+    control.writeString("end");
+
+    // Send the control message to the sample player.
+    DSPNetwork::instance()->send(control);
+  }
+
+  void ModuleSamplePlayer::setSampleRelativePitch(const ModuleSamplePlayer::NoteInfo &info, float relativePitch, float interpolationTimeSeconds)
+  {
+    Radiant::BinaryData control;
+    char buf[64];
+    sprintf(buf, "%d", info.noteId());
+    control.writeString(id() + "/voice/" + QByteArray(buf) + "/control");
+
+    control.writeString("relative-pitch");
+    control.writeFloat32(relativePitch);
+
+    control.writeString("interpolation-time");
+    control.writeFloat32(interpolationTimeSeconds);
+
+    // Finish parameters
+    control.writeString("end");
+
+    // Send the control message to the sample player.
+    DSPNetwork::instance()->send(control);
+  }
+
+  void ModuleSamplePlayer::setSamplePlayHead(const ModuleSamplePlayer::NoteInfo &info, float playHeadTimeSeconds, float interpolationTimeSeconds)
+  {
+    Radiant::BinaryData control;
+    char buf[64];
+    sprintf(buf, "%d", info.noteId());
+    control.writeString(id() + "/voice/" + QByteArray(buf) + "/control");
+
+    control.writeString("playhead-seconds");
+    control.writeFloat32(playHeadTimeSeconds);
+
+    control.writeString("interpolation-time");
+    control.writeFloat32(interpolationTimeSeconds);
+
+    // Finish parameters
+    control.writeString("end");
+
+    // Send the control message to the sample player.
+    DSPNetwork::instance()->send(control);
+  }
+
+  void ModuleSamplePlayer::setSampleLooping(const ModuleSamplePlayer::NoteInfo &info, bool looping)
+  {
+    Radiant::BinaryData control;
+    char buf[64];
+    sprintf(buf, "%d", info.noteId());
+    control.writeString(id() + "/voice/" + QByteArray(buf) + "/control");
+
+    control.writeString("loop");
+    control.writeInt32(looping);
+
+    // Finish parameters
+    control.writeString("end");
+
+    // Send the control message to the sample player.
+    DSPNetwork::instance()->send(control);
+  }
+
   int ModuleSamplePlayer::locationToChannel(Nimble::Vector2 location)
   {
     DSPNetwork::Item * item = DSPNetwork::instance()->findItem("panner");
@@ -906,7 +1255,7 @@ namespace Resonant {
     char name[buflen + 1] = { '\0' };
 
     if(!data.readString(name, buflen)) {
-      Radiant::error("ModuleSamplePlayer::SampleVoice::init # Invalid beginning");
+      Radiant::error("ModuleSamplePlayer::SampleVoice::stopSampleInternal # Invalid beginning");
 
       return;
     }
@@ -914,8 +1263,6 @@ namespace Resonant {
     bool ok = true;
 
     while(name[0] != '\0' && strcmp(name, "end") != 0 && ok) {
-
-      bool ok = true;
 
       if(strcmp(name, "note-id") == 0)
         noteId = data.readInt32( & ok);
@@ -933,6 +1280,17 @@ namespace Resonant {
     }
   }
 
+  void ModuleSamplePlayer::controlSample(int voiceId, const QByteArray &parameter, Radiant::BinaryData &data)
+  {
+    SampleVoice * voice = findVoiceForNoteId(voiceId);
+    if(voice) {
+      voice->processMessage(this, parameter, data);
+    }
+    else {
+      Radiant::error("ModuleSamplePlayer::controlSample # No voice %d", voiceId);
+    }
+  }
+
   bool ModuleSamplePlayer::addSample(std::shared_ptr<Sample> s)
   {
     for(unsigned i = 0; i < m_samples.size(); i++) {
@@ -941,7 +1299,7 @@ namespace Resonant {
         return true;
       }
       debugResonant("ModuleSamplePlayer::addSample # m_samples[%u] = %p",
-            i, m_samples[i].get());
+                    i, m_samples[i].get());
     }
 
     return false;
@@ -980,5 +1338,5 @@ namespace Resonant {
     return 0;
   }
 
-}
+  }
 

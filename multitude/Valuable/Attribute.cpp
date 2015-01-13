@@ -24,6 +24,9 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
+#ifdef CORNERSTONE_JS
+  v8::Persistent<v8::Context> s_defaultV8Context;
+#endif
 
   bool Serializable::deserializeXML(const DOMElement &element)
   {
@@ -47,6 +50,10 @@ namespace Valuable
       m_transit(transit),
       m_listenersId(0)
   {
+
+    if(host == this)
+      Radiant::fatal("Attribute::Attribute # host = this! # check your code");
+
     if(host) {
       host->addAttribute(name, this);
 #ifdef MULTI_DOCUMENTER
@@ -108,7 +115,7 @@ namespace Valuable
   void Attribute::eventProcess(const QByteArray &, Radiant::BinaryData & )
   {
     Radiant::error("Attribute::eventProcess # Unimplemented for %s",
-                   typeid(*this).name());
+                   Radiant::StringUtils::type(*this).data());
   }
 
   void Attribute::eventProcessString(const char * id, const QString & str)
@@ -229,9 +236,13 @@ namespace Valuable
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
+          /// @todo all of these v8 listeners should be implemented non-intrusive way,
+          ///       like with normal event listeners
+          v8::Locker lock;
+          v8::Context::Scope scope(s_defaultV8Context);
+          v8::HandleScope handle_scope;
           /// @todo what is the correct receiver ("this" in the callback)?
-          /// @todo is this legal without v8::HandleScope handle_scope;
-          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
 #endif
         } else l.func();
       }
@@ -248,8 +259,11 @@ namespace Valuable
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
+          v8::Locker lock;
+          v8::Context::Scope scope(s_defaultV8Context);
+          v8::HandleScope handle_scope;
           /// @todo what is the correct receiver ("this" in the callback)?
-          l.scriptFunc->Call(v8::Context::GetCurrent()->Global(), 0, 0);
+          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
 #endif
         } else l.func();
       }
@@ -335,7 +349,7 @@ namespace Valuable
   }
 
   bool Attribute::handleShorthand(const StyleValue &,
-                                  QMap<Attribute *, StyleValue> &)
+                                  Radiant::ArrayMap<Attribute *, StyleValue> &)
   {
     return false;
   }

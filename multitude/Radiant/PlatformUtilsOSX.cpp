@@ -38,7 +38,6 @@ namespace Radiant
   namespace PlatformUtils
   {
 
-#ifndef RADIANT_IOS
     QString getExecutablePath()
     {
       CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
@@ -47,10 +46,10 @@ namespace Radiant
       buf[0] = '\0';
 
       CFURLGetFileSystemRepresentation(url, true, (UInt8*) buf, 512);
+      CFRelease(url);
 
       return buf;
     }
-#endif
 
     /// Returns the current process identifier
     int getProcessId()
@@ -114,6 +113,15 @@ namespace Radiant
       system(cmd.toUtf8().data());
 
       return file.readAll().trimmed();
+    }
+
+    void setEnv(const QString & name, const QString & value)
+    {
+      if (setenv(name.toUtf8().data(), value.toUtf8().data(), 1) != 0) {
+        int e = errno;
+        Radiant::error("PlatformUtils::setEnv # Failed to set environment variable %s: %s",
+                       name.toUtf8().data(), strerror(e));
+      }
     }
 
   }

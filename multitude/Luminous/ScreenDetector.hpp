@@ -21,16 +21,29 @@
 #include <QList>
 #include <Radiant/Trace.hpp>
 
+#include <Valuable/XMLArchive.hpp>
+
 #ifdef RADIANT_WINDOWS
 #  include <windows.h>
 #endif //RADIANT_WINDOW
 
+#ifdef RADIANT_LINUX
+#  include <QX11Info>
+#endif
 namespace Luminous
 {
   class ScreenInfo
   {
   public:
-    ScreenInfo() : m_logicalScreen(0),m_numid(-1) {}
+    enum Rotation
+    {
+      ROTATE_0   = 0,
+      ROTATE_90  = 90000,
+      ROTATE_180 = 180000,
+      ROTATE_270 = 270000
+    };
+
+    ScreenInfo() : m_logicalScreen(0), m_numid(-1), m_rotation(ROTATE_0) {}
 
     /// For example "GPU-0.DFP-3"
     QString id() const { return m_gpu + "." + m_connection; }
@@ -41,7 +54,7 @@ namespace Luminous
 
     /// For example "GPU-0" or "GPU-0,GPU-1"
     const QString & gpu() const { return m_gpu; }
-    void setGpu(const QString & gpu) { m_gpu = gpu; }
+    inline void setGpu(const QString & gpu);
 
     /// Display adapter name, for example "GeForce 9800 GT"
     const QString & gpuName() const { return m_gpuName; }
@@ -49,7 +62,7 @@ namespace Luminous
 
     /// For example "DFP-0"
     const QString & connection() const { return m_connection; }
-    void setConnection(const QString & connection) { m_connection = connection; }
+    inline void setConnection(const QString & connection);
 
     /// With X11 this is the X screen number
     int logicalScreen() const { return m_logicalScreen; }
@@ -58,6 +71,16 @@ namespace Luminous
     /// Size and location relative to this logical screen
     const Nimble::Recti & geometry() const { return m_geometry; }
     void setGeometry(const Nimble::Recti & geometry) { m_geometry = geometry; }
+
+    /// Screen resolution. With full hd displays, this will return 1920x1080 regardless of the rotation
+    Nimble::Size resolution() const
+    {
+      auto s = geometry().size();
+      if (m_rotation == ROTATE_90 || m_rotation == ROTATE_270)
+        s.transpose();
+      return s;
+    }
+
     /// Unique Number that identifies the screen
     void setNumId(int nid) {
       m_numid = nid;
@@ -76,6 +99,19 @@ namespace Luminous
         return name().contains("MultiTouchVM1");
     }
 
+    Rotation rotation() const { return m_rotation; }
+    void setRotation(Rotation r) { m_rotation = r; }
+
+    float rotationRadians() const { return m_rotation / 1000.0f / 180.0f * Nimble::Math::PI; }
+
+    bool operator==(const ScreenInfo & s) const
+    {
+      return m_name == s.m_name && m_gpu == s.m_gpu && m_gpuName == s.m_gpuName &&
+          m_connection == s.m_connection && m_logicalScreen == s.m_logicalScreen &&
+          m_logicalScreen == s.m_logicalScreen && m_geometry == s.m_geometry &&
+          m_numid == s.m_numid && m_rotation == s.m_rotation;
+    }
+
   private:
     QString m_name;
     QString m_gpu;
@@ -84,6 +120,7 @@ namespace Luminous
     int m_logicalScreen;
     Nimble::Recti m_geometry;
     int m_numid;
+    Rotation m_rotation;
   };
 
   class LUMINOUS_API ScreenDetector
@@ -102,6 +139,33 @@ namespace Luminous
   private:
     QList<ScreenInfo> m_results;
   };
+
+  void ScreenInfo::setGpu(const QString & gpu)
+  {
+    m_gpu = Valuable::XMLArchive::cleanElementName(gpu);
+  }
+
+  void ScreenInfo::setConnection(const QString & connection)
+  {
+    m_connection = Valuable::XMLArchive::cleanElementName(connection);
+  }
+
+#ifdef RADIANT_LINUX
+  class LUMINOUS_API X11Display
+  {
+  public:
+    X11Display();
+    X11Display(const QByteArray & displayName);
+
+    ~X11Display();
+
+    operator Display * ();
+
+  private:
+    Display * m_display;
+  };
+#endif
+
 }
 
 /// @endcond

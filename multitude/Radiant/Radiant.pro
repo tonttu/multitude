@@ -1,6 +1,8 @@
 
 include(../multitude.pri)
 
+HEADERS += ArrayMap.hpp
+HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
 HEADERS += DropEvent.hpp
@@ -148,8 +150,6 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += $$LIB_RT -ldl
-  PKGCONFIG += libdc1394-2
-  !mobile*:DEFINES += CAMERA_DRIVER_1394
   CONFIG += qt
   QT = core network gui
 }

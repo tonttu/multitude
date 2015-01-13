@@ -47,6 +47,15 @@ namespace Valuable
     {
       return Radiant::TimeStamp(Nimble::Math::Roundf(a.value() * (1.0f - m) + b.value() * m));
     }
+
+    virtual void eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data) OVERRIDE
+    {
+      bool ok = true;
+      auto ts = data.readTimeStamp(&ok);
+      if (ok)
+        *this = ts;
+    }
+
   };
   typedef AttributeT<Radiant::TimeStamp> AttributeTimeStamp;
 }

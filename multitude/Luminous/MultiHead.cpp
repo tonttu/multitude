@@ -27,9 +27,8 @@
 namespace Luminous
 {
 
-  MultiHead::Area::Area(Window * window)
+  MultiHead::Area::Area()
       : Node(0, "Area"),
-      m_window(window),
       m_keyStone(this, "keystone"),
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
@@ -55,7 +54,6 @@ namespace Luminous
 
     if(copyToGraphics) {
       setGraphicsGeometry(x, y, w, h);
-      updateBBox();
     }
   }
 
@@ -136,14 +134,6 @@ namespace Luminous
       updateBBox();
 
     return ok;
-  }
-
-  bool MultiHead::Area::isSoftwareColorCorrection() const
-  {
-    const bool isSW = m_rgbCube.isDefined() || !m_colorCorrection.isIdentity();
-    const bool isHW = window()->m_screen->hwColorCorrection().ok();
-
-    return !isHW && isSW;
   }
 
   GLKeyStone & MultiHead::Area::keyStone()
@@ -249,11 +239,6 @@ namespace Luminous
     updateBBox();
   }
 
-  const MultiHead::Window * MultiHead::Area::window() const
-  {
-    return m_window;
-  }
-
   bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
   {
     Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", element.name().toUtf8().data());
@@ -354,18 +339,28 @@ namespace Luminous
     }
   }
 
-  void MultiHead::Window::addArea(Area * a)
+  void MultiHead::Window::addArea(std::unique_ptr<Area> a)
   {
-    if (!a)
+    if(!a)
       return;
-    m_areas.push_back(std::shared_ptr<Area>(a));
-    addAttribute(a);
+
+    addAttribute(a.get());
 
     if (m_screen) {
       a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
       Radiant::BinaryData bd;
       m_screen->eventProcess("graphics-bounds-changed", bd);
     }
+    m_areas.push_back(std::move(a));
+  }
+
+  void MultiHead::Window::removeArea(size_t i)
+  {
+    if(m_areas.size() <= i) return;
+
+    removeAttribute(m_areas[i].get());
+    m_areas.erase(m_areas.begin() + i);
+
   }
 
   Nimble::Vector2f MultiHead::Window::windowToGraphics(Nimble::Vector2f loc, bool & convOk) const
@@ -395,6 +390,27 @@ namespace Luminous
     return QPointF(nloc.x, nloc.y);
   }
 
+  void MultiHead::Window::deleteAreas()
+  {
+    m_areas.clear();
+    eventSend("graphics-bounds-changed");
+  }
+
+  bool MultiHead::Window::isAreaSoftwareColorCorrected(int areaIndex) const
+  {
+    const bool isSW = m_areas[areaIndex]->rgbCube().isDefined() || !m_areas[areaIndex]->colorCorrection().isIdentity();
+    const bool isHW = m_screen->hwColorCorrection().ok();
+
+    return !isHW && isSW;
+  }
+
+  Nimble::Recti MultiHead::Window::getRect() const {
+    return Nimble::Recti(location().x,
+                         location().y,
+                         location().x + width(),
+                         location().y + height());
+  }
+
   bool MultiHead::Window::readElement(const Valuable::ArchiveElement & ce)
   {
     /// @todo Remove this function and use the correct serialization API
@@ -410,11 +426,11 @@ namespace Luminous
     const QString & type = ce.get("type");
 
     if(type == QString("area")) {
-      Area * area = new Area(this);
+      auto area = std::unique_ptr<Area>(new Area());
       // Add as child & recurse
-      addAttribute(name, area);
+      addAttribute(name, area.get());
       ok &= area->deserialize(ce);
-      m_areas.push_back(std::shared_ptr<Area>(area));
+      m_areas.push_back(std::move(area));
       if (m_screen) {
         Radiant::BinaryData bd;
         m_screen->eventProcess("graphics-bounds-changed", bd);
@@ -435,9 +451,10 @@ namespace Luminous
       m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
+      m_vsync(this, "vsync", false),
+      m_glFinish(this, "gl-finish", true),
       m_edited(false)
   {
-    m_dpms.addListener(std::bind(&MultiHead::dpmsChanged, this));
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
   }
@@ -567,11 +584,19 @@ namespace Luminous
     m_dpi = dpi;
   }
 
+  void MultiHead::setGlFinish(bool v)
+  {
+    m_glFinish = v;
+  }
+
+  bool MultiHead::useGlFinish() const
+  {
+    return m_glFinish;
+  }
+
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
     m_hwColorCorrection.syncWith(0);
-    for(std::vector<std::shared_ptr<Window> >::iterator it = m_windows.begin(); it != m_windows.end(); ++it)
-      removeAttribute(it->get());
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -582,10 +607,10 @@ namespace Luminous
     return ok;
   }
 
-  void MultiHead::addWindow(Window * w)
+  void MultiHead::addWindow(std::unique_ptr<Window> w)
   {
-    addAttribute(w);
-    m_windows.push_back(std::shared_ptr<Window>(w));
+    addAttribute(w.get());
+
     if(m_hwColorCorrectionEnabled) {
       /// @todo this is a wrong assumption that area 0 would contain a color
       /// correction profile. Do this correctly..
@@ -593,7 +618,16 @@ namespace Luminous
     } else {
       m_hwColorCorrection.syncWith(0);
     }
+
+    m_windows.push_back(std::move(w));
     eventSend("graphics-bounds-changed");
+  }
+
+  void MultiHead::deleteWindows()
+  {
+    /// @todo this should remove listeners that refer to Areas within the windows
+    m_hwColorCorrection.syncWith(0);
+    m_windows.clear();
   }
 
   void MultiHead::eventProcess(const QByteArray & messageId, Radiant::BinaryData & data)
@@ -603,12 +637,141 @@ namespace Luminous
     } else Node::eventProcess(messageId, data);
   }
 
+  void MultiHead::createFullHDConfig()
+  {
+    // Add a default layout of 1920x1080
+    auto win = std::unique_ptr<Window>(new Window());
+    win->setGeometry(0,0,1920,1080);
+    auto area = std::unique_ptr<Area>(new Area());
+    area->setGeometry(0,0,1920,1080);
+    win->addArea(std::move(area));
+
+    addWindow(std::move(win));
+  }
+
+  void MultiHead::mergeConfiguration(const MultiHead &source)
+  {
+    QSet<QByteArray> oldWindows, newWindows;
+
+    // Collect old windows
+    for(size_t i = 0; i < windowCount(); ++i)
+      oldWindows.insert(window(i).name());
+
+    // Collect new windows
+    for(size_t i = 0; i < source.windowCount(); ++i)
+      newWindows.insert(source.window(i).name());
+
+    // Find windows in both configurations to copy
+    auto windowsToCopy = oldWindows;
+    windowsToCopy.intersect(newWindows);
+
+    // Find windows to remove
+    auto windowsToRemove = oldWindows;
+    windowsToRemove.subtract(windowsToCopy);
+
+    // Find windows to add
+    auto windowsToAdd = newWindows;
+    windowsToAdd.subtract(windowsToCopy);
+
+    // Remove windows not present in the source configuration
+    auto pend = std::remove_if(m_windows.begin(), m_windows.end(), [windowsToRemove](const std::unique_ptr<Window> & p)
+    {
+      return windowsToRemove.contains(p->name());
+    });
+
+    m_windows.erase(pend, m_windows.end());
+
+    // Create new windows to add
+    for(auto & name : windowsToAdd) {
+
+      auto w = std::unique_ptr<Window>(new Window(this));
+      w->setName(name);
+
+      addWindow(std::move(w));
+
+      // Add new windows to be copied later
+      windowsToCopy.insert(name);
+    }
+
+    // Copy values
+    for(auto & name : windowsToCopy) {
+
+      auto src = static_cast<Node*>(source.attribute(name));
+      auto dst = static_cast<Node*>(attribute(name));
+
+      Node::copyValues(*src, *dst);
+    }
+
+    // To copy the values in MultiHead object itself, we can't use copyValues()
+    // because it would re-create the windows and areas as well. We need to
+    // copy these values manually.
+    for(auto it : source.attributes()) {
+
+      Valuable::XMLArchive archive(Valuable::SerializationOptions::LAYER_USER);
+
+      auto attributeName = it.first;
+      auto element = it.second->serialize(archive);
+
+      // If the attribute was serialized (e.g. was set on LAYER_USER)
+      if(!element.isNull()) {
+
+        // Check if the same attribute is available in dest (might not be when
+        // window or areas are different)
+        auto dstAttribute = attribute(attributeName);
+
+        if(dstAttribute)
+          dstAttribute->deserialize(element);
+      }
+    }
+    removeDuplicateAreas();
+  }
+
+  void MultiHead::adjustGraphicsToOrigin()
+  {
+    Nimble::Rect bb = graphicsBounds();
+    Nimble::Vector2f diff = bb.low();
+    for(size_t j = 0; j < windowCount(); ++j) {
+      for(size_t i = 0; i < window(j).areaCount(); ++i) {
+        Area& a = window(j).area(i);
+        a.setGraphicsLocation(a.graphicsLocation(false) - diff);
+      }
+    }
+  }
+
+  void MultiHead::removeDuplicateAreas()
+  {
+    for(size_t j = 0; j < windowCount(); ++j) {
+      Window& win = window(j);
+
+      size_t areas = win.areaCount();
+      for(size_t i = 0; i < areas; ++i) {
+        Area & a = win.area(i);
+        Nimble::Recti areaA(a.location(), a.size());
+
+        for(size_t k = 0; k < areas;) {
+          Area & b = win.area(k);
+          Nimble::Recti areaB(b.location(), b.size());
+
+          if(k != i && areaA.contains(areaB) && areaA.area() > areaB.area()) {
+            win.removeArea(k);
+            if(i > k) --i;
+            --areas;
+          }
+          else
+            ++k;
+        }
+      }
+
+    }
+
+  }
+
   bool MultiHead::readElement(const Valuable::ArchiveElement & ce)
   {
     const QString & type = ce.get("type");
 
     if(type == "window") {
-      Window * win = new Window(this);
+      auto win = std::unique_ptr<Window>(new Window(this));
 
       bool ok = win->deserialize(ce);
       if(!ok) {
@@ -616,7 +779,7 @@ namespace Luminous
         return false;
       }
 
-      addWindow(win);
+      addWindow(std::move(win));
     } else {
       Radiant::warning("MultiHead::readElement # Ignoring unknown element %s", ce.name().toUtf8().data());
     }
@@ -624,15 +787,4 @@ namespace Luminous
     return true;
   }
 
-  void MultiHead::dpmsChanged()
-  {
-#ifdef RADIANT_LINUX
-    /// runSystem shouldn't be run with temporary cstr, so we use system() instead
-    /// @todo shouldn't this be done in MultiHead, actually?
-    int err = system(QString("xset dpms %1 %2 %3").arg(m_dpms[0]).arg(m_dpms[1]).arg(m_dpms[2]).toUtf8().data());
-    if(err)
-      Radiant::warning("MultiHead::dpmsChanged # Failed to execute xset dpms %d %d %d (return value %d)",
-                       m_dpms[0], m_dpms[1], m_dpms[2], err);
-#endif
-  }
 }

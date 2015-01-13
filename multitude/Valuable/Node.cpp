@@ -62,15 +62,15 @@ namespace
 
   // recursive because ~Node() might be called from processQueue()
   Radiant::Mutex s_queueMutex(true);
-  std::list<QueueItem*> s_queue;
+  std::list<std::unique_ptr<QueueItem> > s_queue;
   QSet<void *> s_queueOnce;
 
   Radiant::Mutex s_processingQueueMutex;
   bool s_processingQueue = false;
-  std::list<QueueItem*> s_queueTmp;
+  std::list<std::unique_ptr<QueueItem> > s_queueTmp;
   QSet<void *> s_queueOnceTmp;
 
-  void queueEvent(QueueItem * item, void * once)
+  void queueEvent(std::unique_ptr<QueueItem> item, void * once)
   {
     s_processingQueueMutex.lock();
     {
@@ -82,7 +82,7 @@ namespace
           }
           s_queueOnceTmp << once;
         }
-        s_queueTmp.push_back(item);
+        s_queueTmp.push_back(std::move(item));
         s_processingQueueMutex.unlock();
         return;
       }
@@ -95,26 +95,26 @@ namespace
       if (s_queueOnce.contains(once)) return;
       s_queueOnce << once;
     }
-    s_queue.push_back(item);
+    s_queue.push_back(std::move(item));
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
                   const QByteArray & to, const Radiant::BinaryData & data,
                   void * once)
   {
-    queueEvent(new QueueItem(sender, target, to, data), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, to, data)), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncVoid func,
                   void * once)
   {
-    queueEvent(new QueueItem(sender, func), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func)), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
-    queueEvent(new QueueItem(sender, func, data), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func, data)), once);
   }
 }
 
@@ -180,14 +180,14 @@ namespace Valuable
     {
       Radiant::Guard g(s_queueMutex);
       for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
-        QueueItem* item = *it;
+        auto & item = *it;
         if(item->target == this)
           item->target = 0;
         if(item->sender == this)
           item->sender = 0;
       }
       for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
-        QueueItem* item = *it;
+        auto & item = *it;
         if(item->target == this)
           item->target = 0;
         if(item->sender == this)
@@ -209,12 +209,15 @@ namespace Valuable
     , m_eventSources(std::move(node.m_eventSources))
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_attributeListening(std::move(node.m_attributeListening))
-    , m_id(std::move(node.m_id))
+    , m_id(nullptr, "id", node.m_id)
     , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
   {
+    node.m_id.m_host = nullptr;
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
   }
 
   Node & Node::operator=(Node && node)
@@ -226,11 +229,18 @@ namespace Valuable
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_attributeListening = std::move(node.m_attributeListening);
-    m_id = std::move(node.m_id);
     m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
+
+    node.m_id.m_host = nullptr;
+    m_id = node.m_id.value();
+    m_id.setAsDefaults();
+    m_id.m_host = nullptr;
+    m_id.setName("id");
+    m_id.m_host = this;
+    m_attributes[m_id.name()] = &m_id;
     return *this;
   }
 
@@ -252,7 +262,13 @@ namespace Valuable
       const QByteArray part1 = name.left(slashIndex);
       const QByteArray part2 = name.mid(slashIndex + 1);
 
-      const Attribute * attr = attribute(part1);
+      Attribute * attr;
+      if(part1 == "..") {
+        attr = host();
+      } else {
+        attr = attribute(part1);
+      }
+
       if(attr) {
         return attr->attribute(part2);
       }
@@ -402,7 +418,7 @@ namespace Valuable
   }
 #endif
 
-  bool Node::saveToFileXML(const QString & filename, unsigned int opts)
+  bool Node::saveToFileXML(const QString & filename, unsigned int opts) const
   {
     bool ok = Serializer::serializeXML(filename, this, opts);
     if (!ok) {
@@ -411,7 +427,7 @@ namespace Valuable
     return ok;
   }
 
-  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts)
+  bool Node::saveToMemoryXML(QByteArray & buffer, unsigned int opts) const
   {
     XMLArchive archive(opts);
     archive.setRoot(serialize(archive));
@@ -751,7 +767,7 @@ namespace Valuable
     // Can not use range-based loop here because it doesn't iterate all
     // elements when the QList gets modified inside the loop.
     for(auto i = s_queue.begin(); i != s_queue.end(); ++i) {
-      auto item = *i;
+      auto & item = *i;
       if(item->target) {
         std::swap(item->target->m_sender, item->sender);
         item->target->eventProcess(item->to, item->data);
@@ -771,9 +787,6 @@ namespace Valuable
       // Make a temporary copy to prevent weird callback recursion bugs
       auto tempQueue = std::move(s_queue);
       s_queue.clear();
-
-      for(QueueItem* item : tempQueue)
-        delete item;
     }
 
     // Since we are locking two mutexes at the same time also in queueEvent,
@@ -787,7 +800,7 @@ namespace Valuable
     Radiant::Guard g2(s_processingQueueMutex);
     s_queueMutex.lock();
 
-    s_queue = s_queueTmp;
+    s_queue = std::move(s_queueTmp);
     s_queueOnce = s_queueOnceTmp;
     s_queueTmp.clear();
     s_queueOnceTmp.clear();
@@ -799,8 +812,14 @@ namespace Valuable
   {
     XMLArchive archive;
     ArchiveElement e = Valuable::Serializer::serialize(archive, from);
-    if(!e.isNull())
-      return to.deserialize(e);
+    Uuid toId = to.id();
+
+    if(!e.isNull()) {
+      bool ok = to.deserialize(e);
+      to.m_id = toId;
+      return ok;
+    }
+
     return false;
   }
 

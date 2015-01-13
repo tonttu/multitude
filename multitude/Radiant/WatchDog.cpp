@@ -28,6 +28,10 @@
 #include <sys/types.h>
 #endif
 
+namespace {
+  static bool s_watchdogEnabled = true;
+}
+
 namespace Radiant {
 
   WatchDog::WatchDog()
@@ -78,6 +82,8 @@ namespace Radiant {
         Radiant::Sleep::sleepMs(100);
 
       bool ok = true;
+
+      if(isEnabled())
       {
         Radiant::Guard g(m_mutex);
         for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
@@ -155,6 +161,16 @@ namespace Radiant {
     m_continue = false;
     while(isRunning())
       waitEnd(100);
+  }
+
+  bool WatchDog::isEnabled()
+  {
+    return s_watchdogEnabled;
+  }
+
+  void WatchDog::setEnabled(bool enabled)
+  {
+    s_watchdogEnabled = enabled;
   }
 
   DEFINE_SINGLETON(WatchDog);

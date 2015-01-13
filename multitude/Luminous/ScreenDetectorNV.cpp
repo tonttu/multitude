@@ -9,12 +9,12 @@
  */
 
 #include "ScreenDetectorNV.hpp"
+#include "XRandR.hpp"
 
 #include <Radiant/Platform.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QStringList>
-#include <QX11Info>
 #include <QRect>
 #include <QDesktopWidget>
 
@@ -194,6 +194,8 @@ namespace
         Radiant::error("XNVCTRLQueryBinaryData(display, screen,0, NV_CTRL_BINARY_DATA_GPUS_USED_BY_XSCREEN, &bdata, &len)) failed\n");
     }
 
+    Luminous::XRandR xrandr;
+    std::vector<Luminous::ScreenInfo> xrandrScreens = xrandr.screens(display, screen);
 
     //for all enabled display ports in screen
     for(int port = 0; port < 24; ++port)
@@ -264,16 +266,21 @@ namespace
         NV_CTRL_STRING_DISPLAY_DEVICE_NAME, &name))
       {
         Radiant::debug("monitor name attached to screen %d display/port 0X%x = %s\n",screen, d, name);
-        display_port_device_name = QString(name);
-        if(name)
-        {
+        if (name) {
+          display_port_device_name = QString(name);
           free(name);
           name = 0;
         }
       }
-      Radiant::debug("geometry for screen %d display 0x%x %d %d %d %d", screen, d, rect.low().x, rect.low().y,rect.width(), rect.height());
+
+      for (const Luminous::ScreenInfo & screenInfo: xrandrScreens)
+        if (screenInfo.geometry() == rect)
+          info.setRotation(screenInfo.rotation());
+
+      Radiant::debug("geometry for screen %d display 0x%x %d %d %d %d, rot %d",
+                    screen, d, rect.low().x, rect.low().y,rect.width(), rect.height(), info.rotation()/1000);
       info.setGeometry(rect);
-      info.setGpu(gpu_ids.join(","));
+      info.setGpu(gpu_ids.join(":"));
       info.setGpuName(gpu_names.join(","));
       info.setConnection(connectionName(port));
       if(logical_screen != -1)
@@ -289,7 +296,7 @@ namespace
 
   bool detectLinux(int screen, QList<Luminous::ScreenInfo> & results)
   {
-    Display * display = QX11Info::display();
+    Luminous::X11Display display;
     int event_base, error_base;
     if(XNVCTRLQueryExtension(display, &event_base, &error_base) == False)
       return false;
@@ -382,7 +389,7 @@ namespace
       for (NvU32 i = 0; i < displayGpuCount; ++i) {
         for (NvU32 j = 0; j < gpuCount; ++j) {
           if (displayGpu[i] == gpu[j]) {
-            if (!gpuInfo.isEmpty()) gpuInfo += ",";
+            if (!gpuInfo.isEmpty()) gpuInfo += ":";
             gpuInfo += QString("GPU-%1").arg(j);
             break;
           }
@@ -428,15 +435,21 @@ namespace
       for (int i = 0; i < 32; ++i)
         if (outputId & (1<<i)) { outputNumber = i; break; }
 
-        info.setConnection(QString("DFP-%1").arg(outputNumber));
+      info.setConnection(QString("DFP-%1").arg(outputNumber));
 
-        // Geometry
-        Nimble::Recti rect;
-        rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
-        rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
-        info.setGeometry(rect);
-        info.setNumId(results.size()+1);
-        results.push_back(info);
+      // Geometry
+      Nimble::Recti rect;
+      rect.setLow( Nimble::Vector2i(devMode.dmPosition.x, devMode.dmPosition.y) );
+      rect.setHigh( Nimble::Vector2i(devMode.dmPosition.x + devMode.dmPelsWidth, devMode.dmPosition.y + devMode.dmPelsHeight) );
+      info.setGeometry(rect);
+      info.setNumId(results.size()+1);
+      if (devMode.dmDisplayOrientation == DMDO_90)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_90);
+      else if (devMode.dmDisplayOrientation == DMDO_180)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_180);
+      else if (devMode.dmDisplayOrientation == DMDO_270)
+        info.setRotation(Luminous::ScreenInfo::ROTATE_270);
+      results.push_back(info);
     }
 
     /// @todo Unloading may fail if resources are locked. Do more error checking

@@ -61,8 +61,8 @@ namespace Luminous
     /// @return color buffer texture
     const Luminous::Texture & texture() const;
 
-    /// Depth buffer used for rendering the scene.
-    const Luminous::RenderBuffer & depthBuffer() const;
+    /// Combined depth and stencil buffer used for rendering the scene.
+    const Luminous::RenderBuffer & depthStencilBuffer() const;
 
   private:
     class D;

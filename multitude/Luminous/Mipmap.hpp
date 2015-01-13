@@ -41,16 +41,15 @@ namespace Luminous
     LUMINOUS_API Texture * texture(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
                                    int priorityChange = 0);
 
-#if 0
-    LUMINOUS_API Image * image(unsigned int level = 0) const;
+    LUMINOUS_API Image * image(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
+                               int priorityChange = 0);
 
 #ifndef LUMINOUS_OPENGLES
     /** Gets the compressed image on given level.
         @param level the mipmap level
-        @return shared pointer to the mipmap */
-    LUMINOUS_API CompressedImage * compressedImage(unsigned int level = 0);
-#endif // LUMINOUS_OPENGLES
-
+        @return pointer to the mipmap */
+    LUMINOUS_API CompressedImage * compressedImage(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
+                                                   int priorityChange = 0);
 #endif
 
     /// Calculate the ideal mipmap level
@@ -114,6 +113,9 @@ namespace Luminous
     /// @return cache filename
     LUMINOUS_API static QString cacheFileName(const QString & src, int level = -1,
                                               const QString & suffix = "png");
+
+    /// Returns path to dir that contains all cached mipmaps
+    LUMINOUS_API static QString imageCachePath();
 
   private:
     Mipmap(const QString & filenameAbs);

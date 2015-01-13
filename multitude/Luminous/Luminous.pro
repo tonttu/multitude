@@ -85,6 +85,9 @@ HEADERS += Window.hpp
 HEADERS += ImageCodecDDS.hpp
 HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
+HEADERS += XRandR.hpp
+HEADERS += Xinerama.hpp
+
 SOURCES += ImageCodecDDS.cpp \
     DummyOpenGL.cpp \
     GPUAssociation.cpp
@@ -194,10 +197,10 @@ macx {
 
 # Platform specific: GNU Linux
 linux-* {
-  LIBS += -lXNVCtrl -lXrandr -lXext -lX11
+  LIBS += -lXNVCtrl -lXrandr -lXext -lX11 -lXinerama
 
-  HEADERS += XRandR.hpp
   SOURCES += XRandR.cpp
+  SOURCES += Xinerama.cpp
 }
 
 include(../library.pri)

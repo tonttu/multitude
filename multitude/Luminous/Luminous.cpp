@@ -35,13 +35,17 @@ namespace Luminous
 {
   bool isSampleShadingSupported()
   {
-#ifdef RADIANT_OSX_MOUNTAIN_LION
+#ifdef RADIANT_OSX_YOSEMITE
+    return true;
+#elif RADIANT_OSX_MOUNTAIN_LION
     return false;
 #else
     static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
     return s_supported;
 #endif
   }
+
+  static bool s_luminousInitialized = false;
 
   bool initLuminous(bool initOpenGL)
   {
@@ -100,10 +104,19 @@ namespace Luminous
         }
 
       } // MULTI_ONCE
+      if(s_ok)
+        s_luminousInitialized = true;
       return s_ok;
     }
 
+    s_luminousInitialized = true;
+
     return true;
+  }
+
+  bool isLuminousInitialized()
+  {
+    return s_luminousInitialized;
   }
 
   void initDefaultImageCodecs()
