@@ -8,40 +8,9 @@
  * 
  */
 
-
-/// Begin private/public -hack
-/// See comment in RichTextLayout::generateInternal for the reason this exists
-
-// On Windows we have our own patched Qt, since private functions aren't exported
-#ifndef _WIN32
-
-// First include everything QTextLayout includes, to minimize the impact we have
-#include <QtCore/qstring.h>
-#include <QtCore/qnamespace.h>
-#include <QtCore/qrect.h>
-#include <QtCore/qvector.h>
-#include <QtGui/qcolor.h>
-#include <QtCore/qobject.h>
-#include <QtGui/qevent.h>
-#include <QtGui/qtextformat.h>
-#include <QtGui/qglyphrun.h>
-#include <QtGui/qtextcursor.h>
-
-#ifdef QTEXTLAYOUT_H
-#error "QTextLayout was included too early"
-#endif
-
-#define private public
-#include <QTextLayout>
-#undef private
-
-#endif // _WIN32
-
-/// End private/public -hack
-
-
 #include "RichTextLayout.hpp"
 
+#include <QTextLayout>
 #include <QTextDocument>
 #include <QTextCursor>
 #include <QTextBlock>
@@ -203,15 +172,7 @@ namespace Luminous
 
         for (int i = 0; i < lineCount; ++i) {
           const QTextLine line = textLayout->lineAt(i);
-
-          /// There is an indexing bug in Qt 4.8 in QTextFragment::glyphRuns
-          /// that results corrupted glyphs when having multiple lines. In Qt 5
-          /// it's fixed by introducing a different API. One function implementing
-          /// similar thing already exists in 4.8, but it's private for unknown
-          /// reason. This function is now exposed with stupid but absolutely
-          /// necessary '#define private public' -trick. There is no other way
-          /// of fixing this without modifying Qt itself.
-          QList<QGlyphRun> glyphs = line.glyphs(pos, frag.length());
+          QList<QGlyphRun> glyphs = line.glyphRuns(pos, frag.length());
 
           for (const QGlyphRun & glyphRun: glyphs)
             missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun, &format);
