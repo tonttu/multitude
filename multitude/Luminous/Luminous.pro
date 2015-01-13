@@ -201,6 +201,8 @@ linux-* {
 
   SOURCES += XRandR.cpp
   SOURCES += Xinerama.cpp
+
+  QT += x11extras
 }
 
 include(../library.pri)

@@ -384,7 +384,7 @@ namespace Radiant
       if(wptr.m_counter) {
         int count;
         do {
-          count = wptr.m_counter->useCount;
+          count = wptr.m_counter->useCount.load();
           if(count == 0)
             return;
         } while (!wptr.m_counter->useCount.testAndSetOrdered(count, count + 1));

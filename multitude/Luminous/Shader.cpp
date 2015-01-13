@@ -48,7 +48,7 @@ namespace
 
     QFile shaderFile(filename);
     if(!shaderFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      Radiant::warning("Shader: Unable to open shader file %s", filename.toAscii().data());
+      Radiant::warning("Shader: Unable to open shader file %s", filename.toUtf8().data());
       return ptr;
     }
     ptr = loadFromText(shaderFile.readAll());

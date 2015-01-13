@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <cstdlib>
+#include <atomic>
 
 namespace Radiant {
 
@@ -173,10 +174,10 @@ namespace Radiant {
  */
 
 #define MULTI_ONCE                                                \
-  static QAtomicInt s_multi_once = 0;                             \
+  static std::atomic<bool> s_multi_once{false};                   \
   if (!s_multi_once)                                              \
     for (Radiant::Guard multi_once_guard_(Radiant::s_onceMutex);  \
-         !s_multi_once; s_multi_once = 1)
+         !s_multi_once; s_multi_once = true)
 
 
 #endif

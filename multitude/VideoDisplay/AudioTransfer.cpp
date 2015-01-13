@@ -120,7 +120,7 @@ namespace VideoDisplay
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
   {
-    while((m_playMode == AVDecoder::PLAY || m_seeking) && m_readyBuffers > 0) {
+    while((m_playMode == AVDecoder::PLAY || m_seeking) && m_readyBuffers.load() > 0) {
       DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
       if(buffer->timestamp().seekGeneration() < m_seekGeneration) {
         m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
@@ -256,7 +256,7 @@ namespace VideoDisplay
   float AudioTransfer::bufferStateSeconds() const
   {
     /// @todo shouldn't be hard-coded
-    return m_d->m_samplesInBuffers / 44100.0f;
+    return m_d->m_samplesInBuffers.load() / 44100.0f;
   }
 
   void AudioTransfer::shutdown()
@@ -266,10 +266,10 @@ namespace VideoDisplay
 
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
-    if(m_d->m_readyBuffers >= int(m_d->m_decodedBuffers.size()))
+    if(m_d->m_readyBuffers.load() >= int(m_d->m_decodedBuffers.size()))
       return nullptr;
 
-    if(m_d->m_samplesInBuffers > samples)
+    if(m_d->m_samplesInBuffers.load() > samples)
       return nullptr;
 
     int b = m_d->m_buffersWriter++;

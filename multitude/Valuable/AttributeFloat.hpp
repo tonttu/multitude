@@ -115,7 +115,7 @@ namespace Valuable
 
       virtual void setAsDefaults() OVERRIDE
       {
-        if (!this->m_valueSet[Attribute::USER])
+        if (!this->isValueDefinedOnLayer(Attribute::USER))
           return;
         m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
         this->setValue(this->value(Attribute::USER), Attribute::DEFAULT);

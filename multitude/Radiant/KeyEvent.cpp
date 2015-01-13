@@ -103,7 +103,7 @@ namespace Radiant
     : m_d(new D())
   {
     m_d->type = event.type();
-    m_d->location = Nimble::Vector2f(event.posF().x(), event.posF().y());
+    m_d->location = Nimble::Vector2f(event.pos().x(), event.pos().y());
     m_d->button = event.button();
     m_d->buttons = event.buttons();
     m_d->modifiers = event.modifiers();

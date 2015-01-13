@@ -1,4 +1,3 @@
-
 include(../multitude.pri)
 
 HEADERS += ArrayMap.hpp

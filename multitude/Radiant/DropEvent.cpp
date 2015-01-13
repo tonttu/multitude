@@ -13,6 +13,7 @@
 #include "Mutex.hpp"
 
 #include <QUrl>
+#include <QMimeData>
 
 #include <set>
 

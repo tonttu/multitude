@@ -73,7 +73,7 @@ namespace Luminous
   {
     VertexAttribute attr;
     createAttribute<AttrType>(attr);
-    attr.name = attrName.toAscii();
+    attr.name = attrName.toUtf8();
     attr.offset = offset;
     m_attributes.push_back(attr);
   }

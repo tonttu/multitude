@@ -109,7 +109,7 @@ namespace
   template <typename T, size_t N>
   T * LockFreeQueue<T, N>::takeFree()
   {
-    if(m_readyItems >= m_size)
+    if(itemCount() >= m_size)
       return 0;
 
     int index = m_writer++;
@@ -126,21 +126,21 @@ namespace
   template <typename T, size_t N>
   int LockFreeQueue<T, N>::itemCount() const
   {
-    return m_readyItems;
+    return m_readyItems.load();
   }
 
   template <typename T, size_t N>
   T * LockFreeQueue<T, N>::readyItem(int index)
   {
-    if(index >= m_readyItems) return nullptr;
+    if(index >= itemCount()) return nullptr;
     return & m_data[(m_reader + index) % N];
   }
 
   template <typename T, size_t N>
   T * LockFreeQueue<T, N>::lastReadyItem()
   {
-    if(m_readyItems < 1) return nullptr;
-    return & m_data[(m_reader + m_readyItems - 1) % N];
+    if(itemCount() < 1) return nullptr;
+    return & m_data[(m_reader + itemCount() - 1) % N];
   }
 
   template <typename T, size_t N>

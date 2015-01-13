@@ -1,3 +1,7 @@
+lessThan(QT_MAJOR_VERSION, 5) {
+  error("Cornerstone SDK requires Qt 5")
+}
+
 # Use this to setup global build options & variables.
 # This file is to be included by all project files of qmake.
 CONFIG += qt

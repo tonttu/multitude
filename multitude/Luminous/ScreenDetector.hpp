@@ -28,8 +28,9 @@
 #endif //RADIANT_WINDOW
 
 #ifdef RADIANT_LINUX
-#  include <QX11Info>
+typedef struct _XDisplay Display;
 #endif
+
 namespace Luminous
 {
   class ScreenInfo

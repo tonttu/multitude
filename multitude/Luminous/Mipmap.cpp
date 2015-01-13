@@ -307,7 +307,7 @@ namespace Luminous
   {
     MipmapLevel & imageTex = mipmap.m_d->m_levels[level];
 
-    int lastUsed = imageTex.lastUsed;
+    int lastUsed = imageTex.lastUsed.load();
     if (lastUsed == LoadError) {
       return false;
     }
@@ -585,7 +585,7 @@ namespace Luminous
           // do not expire the last mipmap level (smallest image)
           for(int level = 0, s = levels.size() - 1; level < s; ++level) {
             MipmapLevel & imageTex = levels[level];
-            int lastUsed = imageTex.lastUsed;
+            int lastUsed = imageTex.lastUsed.load();
             if (lastUsed <= Loading)
               continue;
             if(now > lastUsed + expire) {
@@ -705,7 +705,7 @@ namespace Luminous
       } else {
         MipmapLevel & imageTex = m_levels[level];
 
-        int old = imageTex.lastUsed;
+        int old = imageTex.lastUsed.load();
 
         while(true) {
           int now = time;
@@ -758,7 +758,7 @@ namespace Luminous
               *returnedLevel = level;
             return &imageTex;
           } else {
-            old = imageTex.lastUsed;
+            old = imageTex.lastUsed.load();
           }
         }
       }
@@ -877,7 +877,7 @@ namespace Luminous
     int time = frameTime();
     for(int level = 0; level <= m_d->m_maxLevel; ) {
       MipmapLevel & imageTex = m_d->m_levels[level];
-      int old = imageTex.lastUsed;
+      int old = imageTex.lastUsed.load();
       if(old == New || old == Loading || old == LoadError) {
         ++level;
         continue;
