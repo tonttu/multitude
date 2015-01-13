@@ -9,8 +9,7 @@
  */
 #include "ResourceLocator.hpp"
 #include "Platform.hpp"
-
-#include <QAbstractFileEngineHandler>
+#include <QtCore/private/qabstractfileengine_p.h>
 #include <QStringList>
 #include <QVector>
 
