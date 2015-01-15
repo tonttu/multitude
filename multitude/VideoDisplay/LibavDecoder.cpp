@@ -1703,7 +1703,7 @@ namespace VideoDisplay
         return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
     }
 
-    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded) {
+    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded && m_d->m_audioTransfer->isEnabled()) {
       Timestamp t = m_d->m_audioTransfer->toPts(ts);
       if(t.seekGeneration() < m_d->m_seekGeneration)
         return Timestamp();
@@ -1866,6 +1866,9 @@ namespace VideoDisplay
   void LibavDecoder::close()
   {
     m_d->m_running = false;
+    // Kill audio so that it stops at the same time as the video
+    if (m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setGain(0.0f);
   }
 
   Nimble::Size LibavDecoder::videoSize() const
@@ -2038,7 +2041,8 @@ namespace VideoDisplay
       }
 
       av.frame->opaque = nullptr;
-      bool gotFrames = false;
+      bool gotVideoFrame = false;
+      bool gotAudioFrame = false;
       double audioDpts = std::numeric_limits<double>::quiet_NaN();
 
       if(av.videoCodec && (
@@ -2050,8 +2054,8 @@ namespace VideoDisplay
           av.packet.size = 0;
           av.packet.stream_index = av.videoStreamIndex;
         }
-        gotFrames = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
-        if (gotFrames && m_d->m_audioTransfer)
+        gotVideoFrame = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
+        if (gotVideoFrame && m_d->m_audioTransfer)
           m_d->m_audioTransfer->setEnabled(true);
       }
 
@@ -2065,8 +2069,10 @@ namespace VideoDisplay
           av.packet.size = 0;
           av.packet.stream_index = av.audioStreamIndex;
         }
-        gotFrames |= m_d->decodeAudioPacket(audioDpts, nextAudioDpts);
+        gotAudioFrame = m_d->decodeAudioPacket(audioDpts, nextAudioDpts);
       }
+
+      const bool gotFrames = gotVideoFrame || gotAudioFrame;
 
       // Flush is done if there are no more frames
       if(eof == EofState::Flush && !gotFrames)
@@ -2119,8 +2125,13 @@ namespace VideoDisplay
 
     state() = STATE_FINISHED;
     s_src = nullptr;
-    if (m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setGain(0.f);
+    if (m_d->m_audioTransfer) {
+      // Tell audio transfer that there are no more samples coming, so that it
+      // knows that it can disable itself when it runs out of the decoded
+      // buffer. We can also then know that we shouldn't synchronize remaining
+      // video frames to audio anymore after that.
+      m_d->m_audioTransfer->setDecodingFinished(true);
+    }
   }
 
   void libavInit()
