@@ -1173,6 +1173,7 @@ namespace VideoDisplay
 
   bool LibavDecoder::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
+    const double maxPtsReorderDiff = 0.1;
     const double prevDpts = dpts;
     dpts = std::numeric_limits<double>::quiet_NaN();
 
@@ -1282,13 +1283,16 @@ namespace VideoDisplay
 
             VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
             if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
-                lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+                lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
               // There was a problem with the stream, previous frame had larger timestamp than this
               // frame, that should be newer. This must be broken stream or concatenated MPEG file
               // or something similar. We treat this like it was a seek request
+              // On some files there are some individual frames out-of-order, we try to minimize
+              // this by allowing maximum difference of maxPtsReorderDiff
               /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
               increaseSeekGeneration();
               frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+              setTimestampToPts = false;
             }
             m_decodedVideoFrames.put();
           }
@@ -1339,9 +1343,10 @@ namespace VideoDisplay
 
       VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
-          lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+          lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
         increaseSeekGeneration();
         frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+        setTimestampToPts = false;
       }
       m_decodedVideoFrames.put();
     }
