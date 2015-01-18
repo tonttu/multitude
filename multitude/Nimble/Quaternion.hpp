@@ -60,6 +60,12 @@ namespace Nimble {
       *this = m;
     }
 
+	void identity()
+    {
+      *this = QuaternionT<T>::IDENTITY;
+    }
+
+    static const QuaternionT<T> IDENTITY;
     /// Normalizes the quaternion to length 1
     /// @return Reference to self
     QuaternionT & normalize()
@@ -297,7 +303,8 @@ namespace Nimble {
       return QuaternionT(axis*std::sin(angle), std::cos(angle));
     }
   };
-
+  template<typename T> const QuaternionT<T> QuaternionT<T>::IDENTITY(0,0,0,1);
+    
   /// Serialization operator for Quaternions
   template <typename T>
   inline std::ostream& operator<<(std::ostream& s, const QuaternionT<T> & v)
