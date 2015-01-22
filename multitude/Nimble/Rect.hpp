@@ -219,6 +219,10 @@ namespace Nimble {
     */
     inline RectT fitContent(float aspectRatio) const;
 
+    /// Computes the corner vertices
+    /// Order of the vertices is: low(), highLow(), high(), lowHigh()
+    std::array<Nimble::Vector2T<T>, 4> computeCorners() const;
+
     /// Check if two rectangles are identical
     /// @param o rect to compare
     /// @return true if the rects are equal; otherwise false
@@ -504,6 +508,12 @@ namespace Nimble {
     Nimble::Vector2T<T> c = (low() + high()) * T(0.5);
 
     return RectT(c - area, c + area);
+  }
+
+  template<class T>
+  std::array<Nimble::Vector2T<T>, 4> RectT<T>::computeCorners() const
+  {
+    return {{ low(), highLow(), high(), lowHigh() }};
   }
 
   /// Rectangle of floats
