@@ -248,6 +248,11 @@ namespace Radiant {
     trace(s, "%s", msg);
   }
 
+  bool isVerbose(const char * module)
+  {
+    return g_enableVerboseOutput || (module && g_verboseModules.count(module) > 0);
+  }
+
   void trace(const char * module, Severity s, const char * msg, ...)
   {
     if (s > DEBUG || (g_enableVerboseOutput || (module && g_verboseModules.count(module) > 0))) {
