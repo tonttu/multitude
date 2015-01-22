@@ -23,7 +23,7 @@
 namespace Nimble {
 
   /// An axis-aligned rectangle.
-  /** The ractangle is stored as a pair of 2D vectors. The vectors
+  /** The rectangle is stored as a pair of 2D vectors. The vectors
       represent the corner points of the rectangle. The "low" vector
       contains the lower X/Y values while the "high" vector contains
       the higher X/Y values.
