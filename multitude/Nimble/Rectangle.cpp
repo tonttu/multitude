@@ -125,8 +125,8 @@ namespace Nimble
     Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
     Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
 
-    return { m_origin - extAxis0 - extAxis1,  m_origin + extAxis0 - extAxis1,
-          m_origin + extAxis0 + extAxis1, m_origin - extAxis0 + extAxis1 };
+    return {{ m_origin - extAxis0 - extAxis1,  m_origin + extAxis0 - extAxis1,
+          m_origin + extAxis0 + extAxis1, m_origin - extAxis0 + extAxis1 }};
   }
 
   void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const
