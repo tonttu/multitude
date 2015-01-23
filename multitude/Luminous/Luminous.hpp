@@ -136,6 +136,9 @@ namespace Luminous
   class BlendMode;
   class DepthMode;
   class StencilMode;
+
+  class RenderContext;
+  class Style;
 }
 
 #endif
