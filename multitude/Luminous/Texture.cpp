@@ -80,13 +80,13 @@ namespace Luminous
     delete m_d;
   }
 
-  Texture::Texture(Texture & tex)
+  Texture::Texture(const Texture & tex)
     : RenderResource(tex)
     , m_d(new Texture::D(*tex.m_d))
   {
   }
 
-  Texture & Texture::operator=(Texture & tex)
+  Texture & Texture::operator=(const Texture & tex)
   {
     if(this != &tex)
     {
