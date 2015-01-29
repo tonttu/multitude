@@ -238,6 +238,10 @@ namespace Luminous
     /// @return texture matching the image
     Luminous::Texture & texture() const;
 
+    /// Check if the image has a texture associated with it
+    /// @return true if the texture has been created
+    bool hasTexture() const;
+
   protected:
 
     /// Width of the image in pixels
