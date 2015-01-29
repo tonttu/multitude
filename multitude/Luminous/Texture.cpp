@@ -64,9 +64,6 @@ namespace Luminous
     bool m_mipmapsEnabled;
     // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
     int m_paramsGeneration;
-
-  public:
-    void rehash();
   };
 
   Texture::Texture()
