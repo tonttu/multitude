@@ -65,6 +65,19 @@ namespace Luminous
       TextStatic
     };
 
+    /// How are UV coordinates generated for objects
+    enum TextureMappingMode
+    {
+      /// Flat mapping looks like the texture was projected to the object
+      /// bounding box, basically clipping the texture to the shape of the
+      /// rendered object.
+      TEXTURE_MAPPING_FLAT,
+      /// UV coordinates follow the ellipse tangent and normal. U-coordinate
+      /// rotates with the object from 0 to 1 in clockwise direction.
+      /// V-coordinate is 0 on the internal edge or center and 1 at the outer
+      /// edge.
+      TEXTURE_MAPPING_TANGENT
+    };
 
     /** Proxy object for building rendering command.
 
@@ -286,13 +299,15 @@ namespace Luminous
     /// @param linesegments Number of steps (precision)
     /// @param fromRadians Start angle in radians
     /// @param toRadians End angle in radians
+    /// @param textureCoordMode How are the texture coordinates generated
     void drawDonut(const Nimble::Vector2f & center,
                    Nimble::Vector2 axis,
                    float otherAxisLength,
                    float width,
                    const Luminous::Style & style,
                    unsigned int linesegments = 0,
-                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI,
+                   TextureMappingMode textureMappingMode = TEXTURE_MAPPING_FLAT);
 
     /// Push the given opacity to render context. The resulting opacity will be
     /// the current opacity multiplied by the given value.

@@ -533,7 +533,8 @@ namespace Luminous
                                 float width,
                                 const Luminous::Style & style,
                                 unsigned int linesegments,
-                                float fromRadians, float toRadians)
+                                float fromRadians, float toRadians,
+                                TextureMappingMode textureMappingMode)
   {
     if(linesegments == 0) {
       /// @todo automagically determine divisions?
@@ -608,8 +609,13 @@ namespace Luminous
       if(isTextured) {
         textured.vertex[2*i].location = in;
         textured.vertex[2*i+1].location = out;
-        textured.vertex[2*i].texCoord = iSpan * (in-low);
-        textured.vertex[2*i+1].texCoord = iSpan * (out-low);
+        if(textureMappingMode == TEXTURE_MAPPING_TANGENT) {
+          textured.vertex[2*i].texCoord.make(angle/Nimble::Math::TWO_PI, 0.f);
+          textured.vertex[2*i+1].texCoord.make(angle/Nimble::Math::TWO_PI, 1.f);
+        } else {
+          textured.vertex[2*i].texCoord = iSpan * (in-low);
+          textured.vertex[2*i+1].texCoord = iSpan * (out-low);
+        }
       }
       else if(isFilled) {
         fill.vertex[2*i].location = in;
