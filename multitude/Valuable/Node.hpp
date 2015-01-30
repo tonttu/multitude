@@ -425,6 +425,7 @@ namespace Valuable
     /// @returns listener id that can be used to remove the listener with Attribute::removeListener
     long addListener(const QByteArray & attribute, v8::Persistent<v8::Function> func,
                      int role = Attribute::CHANGE_ROLE);
+    using Attribute::addListener;
 #endif
     /// Triggers any pending AFTER_UPDATE-events.
     /// This is called automatically from MultiWidgets::Application every frame.
