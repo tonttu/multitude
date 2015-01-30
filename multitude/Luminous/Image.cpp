@@ -893,22 +893,31 @@ namespace Luminous
 
   Texture & Image::texture() const
   {
-    if(!m_texture) {
-      Radiant::Guard g(m_textureMutex);
-      if (!m_texture) {
-        std::unique_ptr<Texture> tex(new Texture());
-        tex->setData(width(), height(), pixelFormat(), m_data);
-        std::swap(m_texture, tex);
-      }
-    }
+    return getTexture();
+  }
 
-    return *m_texture.get();
+  const Texture & Image::constTexture() const
+  {
+    return getTexture();
   }
 
   bool Image::hasTexture() const
   {
-    Radiant::Guard g(m_textureMutex);
+    // Doesn't need to lock the mutex, it makes no real difference
     return (m_texture != nullptr);
+  }
+
+  Texture &Image::getTexture() const
+  {
+    if(!m_texture) {
+      Radiant::Guard g(m_textureMutex);
+      if (!m_texture) {
+        m_texture.reset(new Texture());
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
+      }
+    }
+
+    return *m_texture.get();
   }
 
   /////////////////////////////////////////////////////////////////////////////

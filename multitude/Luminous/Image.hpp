@@ -238,8 +238,13 @@ namespace Luminous
     /// @return texture matching the image
     Luminous::Texture & texture() const;
 
-    /// Check if the image has a texture associated with it
+    /// @copydoc texture()
+    const Luminous::Texture & constTexture() const;
+
+    /// Check if the image associated texture has been initialized. The texture
+    /// is initialized lazily when calling texture() method.
     /// @return true if the texture has been created
+    /// @sa texture
     bool hasTexture() const;
 
   protected:
@@ -258,6 +263,11 @@ namespace Luminous
     size_t m_generation;
 
   private:
+
+    /// Get a texture associated with this image and create it if it does not
+    /// exists already.
+    Texture & getTexture() const;
+
     mutable std::unique_ptr<Texture> m_texture;
     mutable Radiant::Mutex m_textureMutex;
   };
