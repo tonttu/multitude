@@ -44,6 +44,10 @@ namespace Luminous
     LUMINOUS_API Image * image(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
                                int priorityChange = 0);
 
+    /// Gets the best available texture with asked size, shorthand function
+    /// for level and other texture-function.
+    LUMINOUS_API Texture * texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize);
+
 #ifndef LUMINOUS_OPENGLES
     /** Gets the compressed image on given level.
         @param level the mipmap level

@@ -797,6 +797,12 @@ namespace Luminous
     return level ? level->image.get() : nullptr;
   }
 
+  Texture * Mipmap::texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize)
+  {
+    int idealLevel = level(transform, pixelSize);
+    return texture(idealLevel);
+  }
+
   CompressedImage * Mipmap::compressedImage(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
   {
     MipmapLevel * level = m_d->find(requestedLevel, returnedLevel, priorityChange);
