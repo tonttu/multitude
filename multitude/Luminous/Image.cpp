@@ -86,6 +86,11 @@ namespace Luminous
   {}
 
   Image::Image(const Image& img)
+    : m_width(0)
+    , m_height(0)
+    , m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN)
+    , m_data(nullptr)
+    , m_generation(0)
   {
     *this = img;
   }
