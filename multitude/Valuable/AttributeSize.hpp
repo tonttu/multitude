@@ -21,13 +21,22 @@
 
 #include <array>
 
-namespace Valuable {
+namespace Valuable
+{
+  template <typename T>
+  struct IsSizeT { static constexpr bool value = false; };
 
-  /// This class defines an attribute that stores a Nimble::Size(F) object.
-  template<typename ElementType, class SizeClass, class ElementAttribute>
-  class AttributeSizeT : public Valuable::Attribute
+  template <typename E>
+  struct IsSizeT<Nimble::SizeT<E>> { static constexpr bool value = true; };
+
+  /// This class defines an attribute that stores a Nimble::SizeT object.
+  template <typename T>
+  class AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>
+      : public Valuable::Attribute
   {
   public:
+    typedef decltype(T().width()) ElementType;
+
     /// Constructor
     /// @param host host node
     /// @param name name of the size attribute
@@ -35,24 +44,22 @@ namespace Valuable {
     /// @param heightName name for attribute alias to height of the size
     /// @param size initial value
     /// @param transit (ignored)
-    AttributeSizeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const SizeClass & size = SizeClass(), bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const T & size = T(), bool transit = false)
       : Attribute(host, name, transit)
       , m_inChangeTransaction(false)
       , m_emitChangedAfterTransaction(false)
     {
-      m_values[0] = new ElementAttribute(host, widthName, size.width(), transit);
-      m_values[1] = new ElementAttribute(host, heightName, size.height(), transit);
+      m_values[0] = new AttributeT<ElementType>(host, widthName, size.width(), transit);
+      m_values[1] = new AttributeT<ElementType>(host, heightName, size.height(), transit);
 
-#ifndef CLANG_XML
       for(int i = 0; i < 2; ++i) {
-        m_values[i]->addListener(std::bind(&AttributeSizeT::valuesChanged, this));
+        m_values[i]->addListener([this] { valuesChanged(); });
         m_values[i]->setOwnerShorthand(this);
       }
-#endif
       setSerializable(false);
     }
 
-    ~AttributeSizeT()
+    ~AttributeT()
     {
       for(int i = 0; i < 2; ++i)
         delete m_values[i];
@@ -224,10 +231,10 @@ namespace Valuable {
       endChangeTransaction();
     }
 
-    const SizeClass operator * () const { return value(); }
-    operator const SizeClass () const { return value(); }
+    const T operator * () const { return value(); }
+    operator const T () const { return value(); }
 
-    AttributeSizeT & operator=(const AttributeSizeT & size)
+    AttributeT & operator=(const AttributeT & size)
     {
       beginChangeTransaction();
 
@@ -239,7 +246,7 @@ namespace Valuable {
       return *this;
     }
 
-    AttributeSizeT & operator=(Nimble::Vector2T<ElementType> vec)
+    AttributeT & operator=(Nimble::Vector2T<ElementType> vec)
     {
       beginChangeTransaction();
 
@@ -251,7 +258,7 @@ namespace Valuable {
       return *this;
     }
 
-    AttributeSizeT & operator=(const SizeClass & size)
+    AttributeT & operator=(const T & size)
     {
       beginChangeTransaction();
 
@@ -263,9 +270,9 @@ namespace Valuable {
       return *this;
     }
 
-    SizeClass value() const
+    T value() const
     {
-      return SizeClass(*m_values[0], *m_values[1]);
+      return T(*m_values[0], *m_values[1]);
     }
 
   private:
@@ -295,14 +302,14 @@ namespace Valuable {
       }
     }
 
-    std::array<ElementAttribute*, 2> m_values;
+    std::array<AttributeT<ElementType>*, 2> m_values;
 
     bool m_inChangeTransaction;
     bool m_emitChangedAfterTransaction;
   };
 
-  typedef AttributeSizeT<float, Nimble::SizeF, AttributeFloat> AttributeSizeF;
-  typedef AttributeSizeT<int, Nimble::Size, AttributeInt> AttributeSize;
+  typedef AttributeT<Nimble::SizeF> AttributeSizeF;
+  typedef AttributeT<Nimble::Size> AttributeSize;
 
 } // namespace Valuable
 
