@@ -26,10 +26,11 @@ namespace Valuable
   /// This class provides an attribute that stores a two-dimensional frame. The
   /// frame width can be individually defined for top, right, bottom, and left
   /// edges of the frame. This class is used by the CSS engine.
-  class AttributeFrame : public Attribute
+  template <>
+  class AttributeT<Nimble::Frame4f> : public Attribute
   {
   public:
-    AttributeFrame(Node * host, const QByteArray & name,
+    AttributeT(Node * host, const QByteArray & name,
                    const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
       : Attribute(host, name, transit)
       , m_inChangeTransaction(false)
@@ -42,14 +43,14 @@ namespace Valuable
 
 #ifndef CLANG_XML
       for (int i = 0; i < 4; ++i) {
-        m_values[i]->addListener(std::bind(&AttributeFrame::valuesChanged, this));
+        m_values[i]->addListener(std::bind(&AttributeT::valuesChanged, this));
         m_values[i]->setOwnerShorthand(this);
       }
 #endif
       setSerializable(false);
     }
 
-    ~AttributeFrame()
+    ~AttributeT()
     {
       for(int i = 0; i < 4; ++i)
         delete m_values[i];
@@ -193,7 +194,7 @@ namespace Valuable
       endChangeTransaction();
     }
 
-    AttributeFrame & operator=(const AttributeFrame & frame)
+    AttributeT & operator=(const AttributeT & frame)
     {
       beginChangeTransaction();
 
@@ -205,7 +206,7 @@ namespace Valuable
       return *this;
     }
 
-    AttributeFrame & operator=(const Nimble::Frame4f & frame)
+    AttributeT & operator=(const Nimble::Frame4f & frame)
     {
       beginChangeTransaction();
 
@@ -283,6 +284,7 @@ namespace Valuable
     bool m_inChangeTransaction;
     bool m_emitChangedAfterTransaction;
   };
+  typedef AttributeT<Nimble::Frame4f> AttributeFrame;
 }
 
 #endif // VALUABLE_ATTRIBUTE_FRAME_HPP
