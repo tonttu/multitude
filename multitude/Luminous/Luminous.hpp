@@ -110,6 +110,7 @@ namespace Luminous
   class RenderDriver;
   class ContextArray;
   struct RenderCommand;
+  class RenderContext;
   // Resources
   class Buffer;
   class BufferGL;

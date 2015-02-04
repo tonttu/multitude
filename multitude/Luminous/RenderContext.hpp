@@ -464,6 +464,21 @@ namespace Luminous
     /// last reset. This can be useful for checking that object culling works as intended.
     void addRenderCounter();
 
+    /// Increases the unfinished render counter by one.
+    /// @see unfinishedRenderCounter
+    void addUnfinishedRenderCounter();
+
+    /// The unfinished render counter is used to track how many objects didn't
+    /// finish their rendering because of some resource wasn't ready.
+    /// For example ImageWidget increases this counter if the best mipmap level
+    /// wasn't yet generated and VideoWidget does the same if required video
+    /// frame wasn't decoded yet. Unfixable permanent errors do not increase
+    /// this counter.
+    /// This is useful for example when rendering a scene to FBO and checking
+    /// if everything was rendered there properly already this frame, or should
+    /// the rendering be tried again on next frame.
+    long unfinishedRenderCounter() const;
+
     /// Returns the size of the window of this RenderContext object.
     /// @return If the window is null, then Nimble::Size(10,10) is returned.
     Nimble::Size contextSize() const;
