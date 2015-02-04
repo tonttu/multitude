@@ -260,7 +260,10 @@ namespace Valuable
       m_d->m_userAddedDirectories.insert(absoluteFilePath);
 
     // Increase reference count for the path
-    m_d->m_directoryRefCounts[absolutePath]++;
+    if(m_d->m_directoryRefCounts.contains(absolutePath))
+      m_d->m_directoryRefCounts[absolutePath]++;
+    else
+      m_d->m_directoryRefCounts[absolutePath] = 1;
   }
 
   void FileWatcher::addPaths(const QStringList &paths)
@@ -306,8 +309,10 @@ namespace Valuable
 
       // Remove the path if ref count is zero. If the argument is a directory,
       // this will remove it
-      if(refs == 0)
+      if(refs == 0) {
         m_d->m_watcher.removePath(absolutePath);
+        m_d->m_directoryRefCounts.erase(m_d->m_directoryRefCounts.find(absolutePath));
+      }
     }
 
     if(!fi.isDir()) {
