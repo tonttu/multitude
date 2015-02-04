@@ -69,6 +69,8 @@ namespace Radiant
 #define INTRUSIVE_PTR_DEBUG_MOVE
 #endif
 
+inline uint qHash(uintptr_t, uint seed) noexcept;
+
 namespace Radiant
 {
   /// This is also declared in &lt;cstddef&gt; in std-namespace, but if you /
@@ -531,6 +533,13 @@ namespace Radiant
     /// @return true if the intrusive pointer is nullptr; otherwise false
     bool operator! () const { return m_ptr == nullptr; }
 
+    /// @cond
+
+    // Do not use unless you know exactly what you are doing
+    T * unsafeRaw() const { return m_ptr; }
+
+    /// @endcond
+
     // These operators must be inside the class so that they can access m_ptr
     // Using &* -hack will crash the application with null pointers, and
     // adding friends is uglier.
@@ -698,6 +707,12 @@ namespace Radiant
   /// @tparam T Type of the object pointed by lhs
   /// @tparam Y Type of the object pointed by rhs
   template <typename T, typename Y> inline bool operator!= (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs != lhs; }
+
+  template <typename T>
+  inline uint qHash(const IntrusivePtr<T> & iptr) noexcept
+  {
+    return ::qHash(reinterpret_cast<uintptr_t>(iptr.unsafeRaw()), 0);
+  }
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP
