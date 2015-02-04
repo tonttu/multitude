@@ -49,6 +49,7 @@ namespace Luminous
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_recursionDepth(0)
         , m_renderCount(0)
+        , m_unfinishedRenderCount(0)
         , m_frameCount(0)
         , m_area(0)
         , m_window(win)
@@ -171,6 +172,7 @@ namespace Luminous
     std::stack<Nimble::ClipStack> m_clipStacks;
  
     unsigned long m_renderCount;
+    unsigned long m_unfinishedRenderCount;
     unsigned long m_frameCount;
 
     const Luminous::MultiHead::Area * m_area;
@@ -628,6 +630,16 @@ namespace Luminous
   void RenderContext::addRenderCounter()
   {
     m_data->m_renderCount++;
+  }
+
+  void RenderContext::addUnfinishedRenderCounter()
+  {
+    ++m_data->m_unfinishedRenderCount;
+  }
+
+  long RenderContext::unfinishedRenderCounter() const
+  {
+    return m_data->m_unfinishedRenderCount;
   }
 
   Nimble::Vector4 proj(const Nimble::Matrix4 & m4, const Nimble::Matrix3 & m3,
