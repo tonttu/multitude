@@ -10,6 +10,8 @@
 
 #include "AttributeString.hpp"
 
+#include "StyleValue.hpp"
+
 namespace Valuable
 {
   AttributeString::AttributeT() {}
@@ -45,6 +47,18 @@ namespace Valuable
   bool AttributeString::set(const QString & v, Layer layer, ValueUnit)
   {
     setValue(v, layer);
+    return true;
+  }
+
+  bool AttributeString::set(const StyleValue & value, Layer layer)
+  {
+    if (value.size() == 0) {
+      setValue(QString(), layer);
+      return true;
+    } else if (value.size() > 1 || !value[0].canConvert(StyleValue::TYPE_STRING)) {
+      return false;
+    }
+    setValue(value.asString(), layer);
     return true;
   }
 

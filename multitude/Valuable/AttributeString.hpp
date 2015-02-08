@@ -64,6 +64,8 @@ namespace Valuable
 
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 
+    virtual bool set(const StyleValue & value, Layer layer = USER) OVERRIDE;
+
     /// Makes the string empty
     void clear();
 
