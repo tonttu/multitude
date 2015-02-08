@@ -281,3 +281,9 @@ disable-deprecation-warnings {
 }
 
 *g++*:QMAKE_LFLAGS += -Wl,--exclude-libs,ALL
+
+!enable-drm {
+  *clang* | *g++* {
+    QMAKE_CXXFLAGS_RELEASE += -g
+  }
+}
