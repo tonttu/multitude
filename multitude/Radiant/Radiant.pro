@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += ArrayMap.hpp
+HEADERS += ObjectPool.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -77,6 +78,7 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 
 SOURCES += Mime.cpp
+SOURCES += ObjectPool.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
