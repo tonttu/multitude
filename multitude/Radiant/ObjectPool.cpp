@@ -36,4 +36,11 @@ namespace Radiant
     });
   }
 
+  void ObjectPool::setAllPoolSizes(std::size_t size)
+  {
+    for (auto p: s_pools) {
+      p->setPoolSize(size);
+    }
+  }
+
 } // namespace Radiant
