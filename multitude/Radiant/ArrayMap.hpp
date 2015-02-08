@@ -120,6 +120,14 @@ namespace Radiant
     iterator find(const Key & key);
     const_iterator find(const Key & key) const;
 
+    /// @cond
+
+    // Other
+    const container & vector() const { return m_data; }
+    container & vector() { return m_data; }
+
+    /// @endcond
+
   private:
     container m_data;
   };

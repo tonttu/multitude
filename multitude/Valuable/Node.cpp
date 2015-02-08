@@ -244,6 +244,34 @@ namespace Valuable
     return *this;
   }
 
+  void Node::merge(Node && node)
+  {
+    auto & src = node.m_attributes.vector();
+    auto & target = m_attributes.vector();
+    target.reserve(target.size() + src.size() - 1);
+    for (auto & p: src) {
+      if (p.second != &node.m_id) {
+        p.second->m_host = this;
+        target.push_back(std::move(p));
+      }
+    }
+    node.m_attributes.clear();
+    node.m_id.m_host = nullptr;
+
+    for (auto & l: node.m_elisteners) {
+      m_elisteners.emplace_back(std::move(l));
+    }
+    node.m_elisteners.clear();
+
+    for (auto & p: node.m_eventSources)
+      m_eventSources[p.first] += p.second;
+
+    m_attributeListening |= std::move(node.m_attributeListening);
+    m_listenersId += node.m_listenersId;
+    m_eventSendNames |= std::move(node.m_eventSendNames);
+    m_eventListenNames |= std::move(node.m_eventListenNames);
+  }
+
   Attribute * Node::getValue(const QByteArray & name) const
   {
     return Node::attribute(name);

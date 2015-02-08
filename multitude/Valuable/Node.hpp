@@ -80,6 +80,13 @@ namespace Valuable
     Node(Node * host, const QByteArray &name = "", bool transit = false);
     virtual ~Node();
 
+    /// @cond
+
+    /// @todo document
+    void merge(Node && node);
+
+    /// @endcond
+
     /// Moves a node, including all its attributes, events etc
     /// @param node node to move
     Node(Node && node);
