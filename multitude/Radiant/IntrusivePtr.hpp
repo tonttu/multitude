@@ -274,6 +274,9 @@ namespace Radiant
       m_counter = nullptr;
     }
 
+    /// @returns the counter object, can be null
+    const IntrusivePtrCounter * counter() const { return m_counter; }
+
   private:
     inline void deref()
     {
