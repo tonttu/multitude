@@ -140,7 +140,7 @@ ios {
   OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
 
 }
-SOURCES += DeviceMonitor.cpp
+linux*:SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
