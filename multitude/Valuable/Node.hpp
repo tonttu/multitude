@@ -605,6 +605,7 @@ namespace Valuable
     QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
   };
 
+  typedef Valuable::AttributeIntT<Node::Uuid> AttributeUuid;
 }
 
 #endif

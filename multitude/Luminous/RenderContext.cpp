@@ -1554,7 +1554,6 @@ namespace Luminous
     const Nimble::Recti viewport = area()->viewport();
 
     assert(m_data->m_currentFrameBuffer);
-//    const FrameBuffer & sourceFrameBuffer = *m_data->m_currentFrameBuffer;
 
     // Blit from current frame buffer to filter's auxiliary frame buffer
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
@@ -1658,6 +1657,19 @@ namespace Luminous
   void RenderContext::setCullMode(const CullMode& mode)
   {
     m_data->m_driverGL->setCullMode(mode);
+  }
+
+  void RenderContext::setDrawBuffers(const std::vector<int> & buffers)
+  {
+    m_data->m_driverGL->setDrawBuffers(buffers);
+  }
+
+  void RenderContext::setDefaultDrawBuffers()
+  {
+    std::vector<int> buffers;
+    buffers.push_back(GL_FRONT_LEFT);
+    buffers.push_back(GL_FRONT_RIGHT);
+    setDrawBuffers(buffers);
   }
 
   void RenderContext::setFrontFace(FaceWinding winding)

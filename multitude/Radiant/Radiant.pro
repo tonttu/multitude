@@ -153,8 +153,7 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
-  PKGCONFIG += libdc1394-2 libudev
-  DEFINES += CAMERA_DRIVER_1394
+  PKGCONFIG += libudev
   CONFIG += qt
   QT = core network gui
 }

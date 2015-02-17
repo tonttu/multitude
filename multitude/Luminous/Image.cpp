@@ -89,19 +89,14 @@ namespace Luminous
   {}
 
   Image::Image(const Image& img)
-      : m_width(0),
-      m_height(0),
-      m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0),
-      m_generation(0),
-      m_hasPreMultipliedAlpha(img.m_hasPreMultipliedAlpha)
-      // m_dataReady(false),
-      // m_ready(false)
+    : m_width(0)
+    , m_height(0)
+    , m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN)
+    , m_data(nullptr)
+    , m_generation(0)
+    , m_hasPreMultipliedAlpha(img.m_hasPreMultipliedAlpha)
   {
-    allocate(img.m_width, img.m_height, img.m_pixelFormat);
-
-    unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
-    memcpy(m_data, img.m_data, bytes);
+    *this = img;
   }
 
   Image::Image(Image && img)
@@ -593,7 +588,12 @@ namespace Luminous
   }
 
   Image& Image::operator = (const Image& img)
-                           {
+  {
+    // Required to avoid deadlock later in the function
+    if(this == &img)
+      return *this;
+
+    // Copy image data
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
     unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
@@ -603,8 +603,23 @@ namespace Luminous
 
     changed();
 
-    if(m_texture)
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
+    // Copy associated texture (if any)
+    if(img.m_texture) {
+      Radiant::Guard g(img.m_textureMutex);
+
+      if(img.m_texture) {
+        // Copy the texture parameters...
+        auto & tex = texture();
+        tex = *img.m_texture;
+
+        // ...but make sure the data points to the new image
+        tex.setData(width(), height(), pixelFormat(), m_data);
+
+      }
+    } else {
+      Radiant::Guard g(m_textureMutex);
+      m_texture.reset();
+    }
 
     return *this;
   }
@@ -937,12 +952,27 @@ namespace Luminous
 
   Texture & Image::texture() const
   {
+    return getTexture();
+  }
+
+  const Texture & Image::constTexture() const
+  {
+    return getTexture();
+  }
+
+  bool Image::hasTexture() const
+  {
+    // Doesn't need to lock the mutex, it makes no real difference
+    return (m_texture != nullptr);
+  }
+
+  Texture &Image::getTexture() const
+  {
     if(!m_texture) {
       Radiant::Guard g(m_textureMutex);
       if (!m_texture) {
-        std::unique_ptr<Texture> tex(new Texture());
-        tex->setData(width(), height(), pixelFormat(), m_data);
-        std::swap(m_texture, tex);
+        m_texture.reset(new Texture());
+        m_texture->setData(width(), height(), pixelFormat(), m_data);
       }
     }
 

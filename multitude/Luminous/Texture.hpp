@@ -65,10 +65,10 @@ namespace Luminous
 
     /// Construct a copy
     /// @param tex texture to copy
-    LUMINOUS_API Texture(Texture & tex);
+    LUMINOUS_API Texture(const Texture & tex);
     /// Copy a texture
     /// @param tex texture to copy
-    LUMINOUS_API Texture & operator=(Texture & tex);
+    LUMINOUS_API Texture & operator=(const Texture & tex);
 
     /// Construct texture by moving
     /// @param tex texture to move

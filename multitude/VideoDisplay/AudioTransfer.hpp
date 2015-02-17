@@ -88,6 +88,9 @@ namespace VideoDisplay
     void setEnabled(bool enabled);
     bool isEnabled() const;
 
+    void setDecodingFinished(bool finished);
+    bool isDecodingFinished() const;
+
     VIDEODISPLAY_API static uint64_t bufferUnderrun();
 
   private:

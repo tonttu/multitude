@@ -502,6 +502,16 @@ namespace Luminous
     /// @param mode Cull mode to use
     void setCullMode(const CullMode & mode);
 
+    /// Set the active draw buffers
+    /// @param buffers List of buffers to use
+    /// The buffers may be one or more of the following:
+    /// GL_NONE, GL_FRONT_LEFT, GL_FRONT_RIGHT, GL_BACK_LEFT, GL_BACK_RIGHT, GL_COLOR_ATTACHMENTn
+    /// where n is a numerical value starting at 0
+    void setDrawBuffers(const std::vector<int> & buffers);
+
+    /// Reset the active draw buffers to the default
+    void setDefaultDrawBuffers();
+
     /// Specify front-facing polygons
     /// @param winding Winding of the front-facing polygons
     void setFrontFace(enum FaceWinding winding);
