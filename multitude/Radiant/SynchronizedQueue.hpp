@@ -114,8 +114,14 @@ namespace Radiant
     /// @return Reference to self
     SynchronizedQueue<T> & operator = (const SynchronizedQueue & c)
     {
-      Radiant::Guard g1(m_mutex);
-      Radiant::Guard g2(c.m_mutex);
+      if(this == &c)
+        return *this;
+
+      auto firstMutex = std::min(&m_mutex, &c.m_mutex);
+      auto secondMutex = std::max(&m_mutex, &c.m_mutex);
+
+      Radiant::Guard g1(*firstMutex);
+      Radiant::Guard g2(*secondMutex);
 
       m_data = c.m_data;
 
