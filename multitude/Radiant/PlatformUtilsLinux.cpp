@@ -168,6 +168,15 @@ namespace Radiant
       }
     }
 
+    void terminateProcessByName(const QString& processName)
+    {
+      const auto cmd = QString("killall %1").arg(processName);
+
+      int err = system(cmd.toUtf8().data());
+      if(err != 0)
+        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
+    }
+
     void setEnv(const QString & name, const QString & value)
     {
       if (setenv(name.toUtf8().data(), value.toUtf8().data(), 1) != 0) {

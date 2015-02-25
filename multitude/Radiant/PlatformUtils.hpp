@@ -80,6 +80,10 @@ namespace Radiant
     /// @return true on success
     RADIANT_API bool shutdown();
 
+    /// Terminate all processes matching the given name
+    /// @param processName name of the process to terminate
+    RADIANT_API void terminateProcessByName(const QString& processName);
+
 #ifdef RADIANT_WINDOWS
     /// Get path to folder used for application data that is not user specific (i.e. ProgramData)
     RADIANT_API QString windowsProgramDataPath();

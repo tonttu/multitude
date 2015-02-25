@@ -238,6 +238,14 @@ namespace Radiant
       return systemShutdown(false);
     }
 
+    void terminateProcessByName(const QString& processName)
+    {
+      const auto cmd = QString("tskill %1").arg(processName);
+      int err = system(cmd.toUtf8().data());
+      if(err != 0)
+        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
+    }
+
     QString windowsProgramDataPath()
     {
       PWSTR path;
