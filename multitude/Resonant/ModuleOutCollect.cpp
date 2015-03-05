@@ -9,6 +9,7 @@
  */
 
 #include "ModuleOutCollect.hpp"
+
 #include "Resonant.hpp"
 
 #include "DSPNetwork.hpp"
@@ -28,6 +29,7 @@ namespace Resonant {
 
   ModuleOutCollect::ModuleOutCollect(DSPNetwork * host)
     : m_subwooferChannel(-1)
+    , m_compressOutput(true) // By default compress the output, we do not want clipping to happen
     , m_host(host)
   {
     /* A hack to get the subwoofer channel information in without message passing etc. */
@@ -171,14 +173,25 @@ namespace Resonant {
 
     }
 
-    /*
-    static Nimble::RandomUniform __r;
+    if(m_compressOutput) {
 
-    uint nn = chans * n;
-    for(uint i = 0; i < nn; i++)
-      m_interleaved[i] = __r.rand11();
-    */
+      if(m_limiters.size() != chans) {
+        m_limiters.resize(chans);
+        for(size_t chan = 0; chan < chans; chan++) {
+          m_limiters[chan].prepare(0.0f, 40);
+        }
+      }
+
+      for(size_t chan = 0; chan < chans; chan++) {
+        float * dest = & m_interleaved[chan];
+
+        ChannelLimiter & limiter = m_limiters[chan];
+
+        for(float * sentinel = dest + n * chans; dest < sentinel; dest += chans) {
+          *dest = limiter.putGet(*dest, 1.0f, 30, 20000);
+        }
+      }
+    }
   }
-
 
 }
