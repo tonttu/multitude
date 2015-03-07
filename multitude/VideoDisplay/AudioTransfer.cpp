@@ -82,6 +82,7 @@ namespace VideoDisplay
       , m_samplesInGeneration(0)
       , m_gain(1.0f)
       , m_enabled(true)
+      , m_decodingFinished(false)
       /*, samplesProcessed(0)*/
     {}
 
@@ -112,6 +113,7 @@ namespace VideoDisplay
 
     float m_gain;
     bool m_enabled;
+    bool m_decodingFinished;
     /*long samplesProcessed;*/
 
     DecodedAudioBuffer * getReadyBuffer();
@@ -191,7 +193,11 @@ namespace VideoDisplay
       DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
       if(!decodedBuffer) {
         zero(out, m_d->m_channels, remaining, processed);
-        s_bufferUnderrun += remaining;
+        if (m_d->m_decodingFinished) {
+          setEnabled(false);
+        } else {
+          s_bufferUnderrun += remaining;
+        }
         break;
       } else {
         const int offset = decodedBuffer->offset();
@@ -318,6 +324,16 @@ namespace VideoDisplay
   bool AudioTransfer::isEnabled() const
   {
     return m_d->m_enabled;
+  }
+
+  void AudioTransfer::setDecodingFinished(bool finished)
+  {
+    m_d->m_decodingFinished = finished;
+  }
+
+  bool AudioTransfer::isDecodingFinished() const
+  {
+    return m_d->m_decodingFinished;
   }
 
   uint64_t AudioTransfer::bufferUnderrun()

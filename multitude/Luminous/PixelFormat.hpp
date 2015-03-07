@@ -16,6 +16,8 @@
 
 #include <QString>
 
+#include <ostream>
+
 namespace Luminous
 {
     /// @todo This class should be refactored. Many of the formats are
@@ -180,6 +182,12 @@ namespace Luminous
     ChannelType m_type;
     Compression m_compression;
   };
+
+  inline std::ostream& operator<<(std::ostream& os, const Luminous::PixelFormat& pf)
+  {
+    os << pf.toString().toUtf8().data();
+    return os;
+  }
 
 }
 
