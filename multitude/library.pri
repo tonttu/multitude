@@ -7,7 +7,7 @@ unix:CONFIG += plugin
 PROJECT_FILE = $$_PRO_FILE_
 
 # Make sure we don't override this if it has been set already
-isEmpty(DESTDIR):DESTDIR = $$PWD/lib
+isEmpty(DESTDIR):DESTDIR = $$shadowed($$PWD)/lib
 
 isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS
 isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES
@@ -42,7 +42,7 @@ INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
-  DLLDESTDIR = $$PWD/bin
+  DLLDESTDIR = $$shadowed($$PWD)/bin
 
   # Optimized debug libraries
   CONFIG(debug,debug|release) {

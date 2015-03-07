@@ -254,7 +254,7 @@ unix {
 
 MULTI_VIDEO_LIBS = $$LIB_RESONANT $$LIB_VIDEODISPLAY
 
-QMAKE_LIBDIR += $$PWD/lib
+QMAKE_LIBDIR += $$shadowed($$PWD)/lib
 
 # Disable asserts in release mode
 CONFIG(release, debug|release) {
