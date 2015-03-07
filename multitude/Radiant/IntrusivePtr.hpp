@@ -612,6 +612,9 @@ namespace Radiant
     template <typename Y>
     inline bool operator< (const Y * rhs) const { return m_ptr < rhs; }
 
+    /// @returns the counter object, can be null
+    const IntrusivePtrCounter * counter() const { return m_counter; }
+
   private:
     inline void deref()
     {
@@ -712,10 +715,37 @@ namespace Radiant
   template <typename T, typename Y> inline bool operator!= (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs != lhs; }
 
   template <typename T>
-  inline uint qHash(const IntrusivePtr<T> & iptr) noexcept
+  inline uint qHash(const IntrusivePtr<T> & k) noexcept
   {
-    return ::qHash(reinterpret_cast<uintptr_t>(iptr.unsafeRaw()), 0);
+    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()), 0);
   }
+
+  template <typename T>
+  inline uint qHash(const IntrusiveWeakPtr<T> & k) noexcept
+  {
+    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()), 0);
+  }
+}
+
+namespace std
+{
+  template <typename T>
+  struct hash<Radiant::IntrusivePtr<T>>
+  {
+    std::size_t operator()(const Radiant::IntrusivePtr<T> & k) const
+    {
+      return hash<uintptr_t>()(reinterpret_cast<uintptr_t>(k.counter()));
+    }
+  };
+
+  template <typename T>
+  struct hash<Radiant::IntrusiveWeakPtr<T>>
+  {
+    std::size_t operator()(const Radiant::IntrusiveWeakPtr<T> & k) const
+    {
+      return hash<uintptr_t>()(reinterpret_cast<uintptr_t>(k.counter()));
+    }
+  };
 }
 
 #endif // RADIANT_INTRUSIVEPTR_HPP
