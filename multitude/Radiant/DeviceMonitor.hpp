@@ -26,7 +26,7 @@ namespace Radiant
   typedef std::shared_ptr<Device> DevicePtr;
   typedef std::vector<DevicePtr> Devices;
 
-  class DeviceMonitor {
+  class RADIANT_API DeviceMonitor {
   public:
     virtual Devices findDevices(const QString &subsystem,
                                 const QMap<QString, QString>& params) = 0;
