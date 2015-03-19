@@ -1016,7 +1016,8 @@ namespace Valuable
       if(s_fatalOnEventMismatch)
         Radiant::fatal("Node::validateEvent # event '%s' does not exist for this class", from.data());
       else
-        Radiant::warning("Node::validateEvent # event '%s' does not exist for this class", from.data());
+        Radiant::warning("Node::validateEvent # event '%s' does not exist for this class (%s)",
+                         from.data(), typeid(*this).name());
 
     }
 
