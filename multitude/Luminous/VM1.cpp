@@ -190,7 +190,13 @@ namespace Luminous
       }
     }
 
-    if (!open()) {
+    bool opened = false;
+    {
+      Radiant::Guard vm1Guard(s_vm1Mutex);
+      opened = open();
+    }
+
+    if (!opened) {
       ++m_errors;
       if (m_errors > 5) {
         Radiant::error("VM1 # Failed to open VM1");
@@ -366,6 +372,8 @@ namespace Luminous
 
   QString VM1::info()
   {
+    Radiant::Guard g(s_vm1Mutex);
+
     /// @todo there should be a timeout parameter
     if (!m_d->open()) {
       if (detected()) {
@@ -376,7 +384,6 @@ namespace Luminous
         return QString();
       }
     }
-    Radiant::Guard g(s_vm1Mutex);
 
     char buffer[256];
     Radiant::Sleep::sleepMs(1);
@@ -510,5 +517,10 @@ namespace Luminous
     if(!outputs.isEmpty())
       map["outputs"] = QStringList(outputs.toList()).join("\n");
     return map;
+  }
+
+  Radiant::Mutex & VM1::vm1Mutex()
+  {
+    return s_vm1Mutex;
   }
 }

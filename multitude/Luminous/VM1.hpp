@@ -31,6 +31,15 @@ namespace Luminous
 
     static QMap<QString, QString> parseInfo(const QString & info);
 
+    /// HACK - fix this when merging into taction-2.0!
+    ///
+    /// We need a single entry point for VM1 so we can ensure exclusive access
+    /// (for example when writing a new edid). This is already impelmented in
+    /// taction-2.0 and the edid writing code would ideally go there. But we also
+    /// need this in the taction brach. So expose this internal mutex to enable
+    /// exclusive access to VM1.
+    static Radiant::Mutex & vm1Mutex();
+
   private:
     class D;
     std::shared_ptr<D> m_d;
