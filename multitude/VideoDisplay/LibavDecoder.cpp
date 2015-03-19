@@ -1191,7 +1191,9 @@ namespace VideoDisplay
 
     int64_t pts = guessCorrectPts(m_av.frame);
 
-    dpts = m_av.videoTsToSecs * pts;
+    /// Some mpeg2 streams don't give valid pts value for the last frame,
+    /// guess the value from the previous frame.
+    dpts = pts == AV_NOPTS_VALUE ? nextDpts : m_av.videoTsToSecs * pts;
 
     VideoFrameLibav * frame = 0;
     bool setTimestampToPts = false;
