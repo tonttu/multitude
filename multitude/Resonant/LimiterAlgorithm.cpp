@@ -2,6 +2,7 @@
 
 #include <Radiant/Trace.hpp>
 
+#include <Nimble/Math.hpp>
 #include <cmath>
 
 namespace Resonant {
@@ -19,7 +20,7 @@ namespace Resonant {
 
     if(insample < 1e-10) insample = 1e-10;
 
-    float insampleLog = std::fmax(std::log(insample), thresholdLog);
+    float insampleLog = std::max<float>(std::log(insample), thresholdLog);
 
     m_logBuffer.put(insampleLog);
 
@@ -91,7 +92,7 @@ namespace Resonant {
 
     float outLog = std::log(std::abs(rval));
 
-    if(outLog > (thresholdLog+.001) || !finite(rval)){
+    if(outLog > (thresholdLog+.001) || !Nimble::Math::isFinite(rval)){
       float gainDiff = thresholdLog - outLog;
 
       Radiant::info("END vals %f %f %f %f < %f %f %f # %d %d %d", m_gain,
