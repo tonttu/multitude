@@ -188,7 +188,7 @@ namespace Resonant {
         ChannelLimiter & limiter = m_limiters[chan];
 
         for(float * sentinel = dest + n * chans; dest < sentinel; dest += chans) {
-          *dest = limiter.putGet(*dest, 1.0f, 30, 20000);
+          *dest = limiter.putGet(*dest, 0.f, 30, 20000);
         }
       }
     }

@@ -105,7 +105,7 @@ namespace Resonant {
     }
 
     float putGet(float insample,
-                 float thresholdAbs,
+                 float thresholdLog,
                  unsigned attackTime,
                  unsigned releaseTime);
 
