@@ -914,5 +914,4 @@ namespace Luminous
 
   // Initialization requires s_multiSingletonInstance to be initialized
   DEFINE_SINGLETON2(VM1, , p->run();)
-
 }
