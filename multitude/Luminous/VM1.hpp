@@ -15,11 +15,16 @@
 
 #include "Export.hpp"
 
+#include <functional>
 #include <Valuable/Node.hpp>
+#include <Radiant/SerialPort.hpp>
 
 namespace Luminous
 {
   class ColorCorrection;
+
+  /// Has exclusive access to VM1. Can block.
+  typedef std::function<void(Radiant::SerialPort & vm1)> VM1Task;
 
   // This class is internal to MultiTouch Ltd. Do not use this class. It will
   // be removed in future revisions.
@@ -109,21 +114,17 @@ namespace Luminous
 
     void write(const QByteArray & data);
 
+    /// Run a VM1 task with exclusive access to VM1 for the duration. Can block.
+    /// Is asynchronous. This call returns immediately but the actual lambda can be
+    /// scheduled much later.
+    void scheduleTask(const VM1Task & task);
+
     void reconnect();
 
     void run();
 
     static bool enabled();
     static void setEnabled(bool enabled);
-
-    /// HACK - fix this when merging into taction-2.0!
-    ///
-    /// We need a single entry point for VM1 so we can ensure exclusive access
-    /// (for example when writing a new edid). This is already impelmented in
-    /// taction-2.0 and the edid writing code would ideally go there. But we also
-    /// need this in the taction brach. So expose this internal mutex to enable
-    /// exclusive access to VM1.
-    static Radiant::Mutex & vm1Mutex();
 
   private:
     VM1();
