@@ -23,6 +23,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#define strtoll _strtoi64
+#endif
+
 namespace Radiant {
 
   /// @todo What is this? Shouldn't this be done somewhere else. Debug-prints coming from SDK
