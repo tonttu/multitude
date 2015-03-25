@@ -375,7 +375,7 @@ namespace Radiant
     return m_d->doRead(buffer, maxRead, readOk);
   }
 
-  bool SerialPort::read(QByteArray &output, double timeoutSeconds)
+  bool SerialPort::read(QByteArray &output, double timeoutSeconds, int maxBytes)
   {
     if(!isOpen()) {
       error("SerialPort::read # device not open");
@@ -393,14 +393,20 @@ namespace Radiant
       return false;
     }
 
-    int maxRead = 1024;
+    static const int bufSize = 1024;
     int bytes = -1;
+    int startSize = output.size();
     do {
       int oldSize = output.size();
-      output.resize(output.size() + maxRead);
+      output.resize(output.size() + bufSize);
       char *buffer = output.data() + oldSize;
       bool ok;
-      bytes = m_d->doRead(buffer, maxRead, &ok);
+      int maxThisRead = bufSize;
+      if(maxBytes > 0) {
+        int soFar = output.size() - startSize;
+        maxThisRead = std::min(maxBytes - soFar, bufSize);
+      }
+      bytes = m_d->doRead(buffer, maxThisRead, &ok);
       if(ok) {
         output.resize(oldSize + bytes);
       } else {
