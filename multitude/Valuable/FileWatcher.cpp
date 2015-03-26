@@ -306,8 +306,11 @@ namespace Valuable
 
       // Remove the path if ref count is zero. If the argument is a directory,
       // this will remove it
-      if(refs == 0)
+      if(refs == 0) {
         m_d->m_watcher.removePath(absolutePath);
+        int removeCount = m_d->m_directoryRefCounts.remove(absolutePath);
+        assert(removeCount == 1);
+      }
     }
 
     if(!fi.isDir()) {

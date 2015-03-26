@@ -15,11 +15,16 @@
 
 #include "Export.hpp"
 
+#include <functional>
 #include <Valuable/Node.hpp>
+#include <Radiant/SerialPort.hpp>
 
 namespace Luminous
 {
   class ColorCorrection;
+
+  /// Has exclusive access to VM1. Can block.
+  typedef std::function<void(Radiant::SerialPort & vm1)> VM1Task;
 
   // This class is internal to MultiTouch Ltd. Do not use this class. It will
   // be removed in future revisions.
@@ -108,6 +113,11 @@ namespace Luminous
     static Info parseInfo(const QByteArray & info);*/
 
     void write(const QByteArray & data);
+
+    /// Run a VM1 task with exclusive access to VM1 for the duration. Can block.
+    /// Is asynchronous. This call returns immediately but the actual lambda can be
+    /// scheduled much later.
+    void scheduleTask(const VM1Task & task);
 
     void reconnect();
 

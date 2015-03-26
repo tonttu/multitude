@@ -29,6 +29,7 @@
 
 #include <QDir>
 #include <QSettings>
+#include <deque>
 
 #ifdef RADIANT_UNIX
 #include <string.h>
@@ -55,7 +56,7 @@ namespace
                                     {"detected", Luminous::VM1::STATUS_DETECTED},
                                     {"active", Luminous::VM1::STATUS_ACTIVE},
                                     {0, 0}};
-}
+}  // unnamed namespace
 
 namespace Luminous
 {
@@ -75,6 +76,7 @@ namespace Luminous
     void closePort();
 
     void writeColorCorrection();
+    void runTasks();
 
     void queueWrite(const QByteArray & data);
 
@@ -121,6 +123,9 @@ namespace Luminous
 
     Radiant::Mutex m_colorCorrectionMutex;
     QByteArray m_colorCorrection;
+
+    std::deque<VM1Task> m_tasks;
+    Radiant::Mutex m_taskMutex;
 
     QString m_device;
     QStringList m_deviceCandidates;
@@ -400,6 +405,7 @@ namespace Luminous
       }
 
       writeColorCorrection();
+      runTasks();
 
       QByteArray buffer;
       bool ok = m_port.read(buffer, 20.0);
@@ -516,6 +522,24 @@ namespace Luminous
           m_colorCorrection = data;
       } else if (m_useColorCorrectionDelay) {
         this->sleep(0.1);
+      }
+    }
+  }
+
+  void VM1::D::runTasks()
+  {
+    while(m_port.isOpen()) {
+      VM1Task task;
+      {
+        Radiant::Guard guard(m_taskMutex);
+        if(m_tasks.empty()) {
+          return;
+        }
+        task = m_tasks.front();
+        m_tasks.pop_front();
+      }
+      if(task) {
+        task(m_port);
       }
     }
   }
@@ -897,6 +921,12 @@ namespace Luminous
     m_d->queueWrite(data);
   }
 
+  void VM1::scheduleTask(const VM1Task & task)
+  {
+    Radiant::Guard guard(m_d->m_taskMutex);
+    m_d->m_tasks.push_back(task);
+  }
+
   void VM1::reconnect()
   {
     m_d->m_requestReconnect = true;
@@ -914,5 +944,4 @@ namespace Luminous
 
   // Initialization requires s_multiSingletonInstance to be initialized
   DEFINE_SINGLETON2(VM1, , p->run();)
-
 }

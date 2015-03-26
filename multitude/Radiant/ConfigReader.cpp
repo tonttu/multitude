@@ -630,7 +630,7 @@ namespace Radiant {
     return readConfig(c, buf.data(), buf.size(), filename);
   }
 
-  bool writeConfig(Config *config, const char *filename)
+  bool writeConfig(const Config *config, const char *filename)
   {
     cleardocs();
 

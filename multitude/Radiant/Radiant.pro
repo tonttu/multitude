@@ -129,7 +129,18 @@ SOURCES += LockFilePosix.cpp
 SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
-SOURCES += DeviceMonitor.cpp
+SOURCES += CallStackW32.cpp
+SOURCES += VideoCameraCMU.cpp
+SOURCES += VideoCamera1394.cpp
+SOURCES += VideoCameraPTGrey.cpp
+SOURCES += IntrusivePtr.cpp
+
+# ios:OTHER_FILES += PlatformUtilsIOS.mm
+ios {
+  OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
+
+}
+linux*:SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
@@ -141,7 +152,7 @@ macx:LIBS += -framework,CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
-  LIBS += $$LIB_RT -ldl
+  LIBS += -lpthread $$LIB_RT -ldl
   PKGCONFIG += libudev
   CONFIG += qt
   QT = core network gui

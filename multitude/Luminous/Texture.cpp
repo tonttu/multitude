@@ -64,9 +64,6 @@ namespace Luminous
     bool m_mipmapsEnabled;
     // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
     int m_paramsGeneration;
-
-  public:
-    void rehash();
   };
 
   Texture::Texture()
@@ -80,13 +77,13 @@ namespace Luminous
     delete m_d;
   }
 
-  Texture::Texture(Texture & tex)
+  Texture::Texture(const Texture & tex)
     : RenderResource(tex)
     , m_d(new Texture::D(*tex.m_d))
   {
   }
 
-  Texture & Texture::operator=(Texture & tex)
+  Texture & Texture::operator=(const Texture & tex)
   {
     if(this != &tex)
     {

@@ -1,5 +1,7 @@
 #include "DeviceMonitor.hpp"
 
+#ifdef RADIANT_LINUX
+
 #include <Radiant/Platform.hpp>
 #include <Nimble/Math.hpp>
 #include <QRegExp>
@@ -51,7 +53,7 @@ namespace Radiant
   {
   public:
     UdevDeviceMonitor();
-    Devices findDevices(const QString &subsystem, const QString &vendorId, const QString &modelId) OVERRIDE;
+    Devices findDevices(const QString &subsystem, const QMap<QString, QString> &params) OVERRIDE;
 
     ~UdevDeviceMonitor();
   private:
@@ -65,7 +67,7 @@ namespace Radiant
     assert(m_udev);
   }
 
-  Devices UdevDeviceMonitor::findDevices(const QString &subsystem, const QString &vendorId, const QString &modelId)
+  Devices UdevDeviceMonitor::findDevices(const QString &subsystem, const QMap<QString, QString> &params)
   {
     struct udev_enumerate * enumerate = udev_enumerate_new(m_udev);
     assert(enumerate);
@@ -86,8 +88,12 @@ namespace Radiant
       if(dev) {
         std::shared_ptr<Device> device = std::make_shared<UdevDevice>(dev);
 
-        bool ok = device->getProperty("ID_VENDOR_ID") == vendorId &&
-                  device->getProperty("ID_MODEL_ID") == modelId;
+        QMap<QString, QString>::const_iterator it = params.constBegin();
+        bool ok = true;
+        while(it != params.constEnd()) {
+          ok &= device->getProperty(it.key()) == it.value();
+          ++it;
+        }
 
         if(ok) {
           output.push_back(device);
@@ -176,3 +182,5 @@ bool UdevDeviceMonitor::haveDevice(const QString &subsystem,
     return output;
   }
 }
+
+#endif

@@ -23,7 +23,7 @@
 namespace Nimble {
 
   /// An axis-aligned rectangle.
-  /** The ractangle is stored as a pair of 2D vectors. The vectors
+  /** The rectangle is stored as a pair of 2D vectors. The vectors
       represent the corner points of the rectangle. The "low" vector
       contains the lower X/Y values while the "high" vector contains
       the higher X/Y values.
@@ -218,6 +218,10 @@ namespace Nimble {
         with the given aspect ratio. The content is centered both horizontally, and vertically.
     */
     inline RectT fitContent(float aspectRatio) const;
+
+    /// Computes the corner vertices
+    /// Order of the vertices is: low(), highLow(), high(), lowHigh()
+    std::array<Nimble::Vector2T<T>, 4> computeCorners() const;
 
     /// Check if two rectangles are identical
     /// @param o rect to compare
@@ -504,6 +508,17 @@ namespace Nimble {
     Nimble::Vector2T<T> c = (low() + high()) * T(0.5);
 
     return RectT(c - area, c + area);
+  }
+
+  template<class T>
+  std::array<Nimble::Vector2T<T>, 4> RectT<T>::computeCorners() const
+  {
+#if 0 /// @todo enable for new enough compilers (GCC >= 4.7, maybe Visual Studio >= 2013)
+    return {{ low(), highLow(), high(), lowHigh() }};
+#else
+    std::array<Nimble::Vector2T<T>, 4> arr = {{ low(), highLow(), high(), lowHigh() }};
+    return arr;
+#endif
   }
 
   /// Rectangle of floats

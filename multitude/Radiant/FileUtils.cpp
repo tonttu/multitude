@@ -58,37 +58,6 @@ namespace {
   std::function<void (Radiant::FileWriter::FileWriterMode mode)> s_callback = nullptr;
 
 #ifdef RADIANT_LINUX
-  /// @todo these functions are copied from TactionModule.cpp, these should be
-  ///       in some utility library
-  int run(QString cmd, QStringList argv = QStringList(),
-          QByteArray * stdout = 0, QByteArray * stderr = 0)
-  {
-    QProcess p;
-    p.start(cmd, argv, QProcess::ReadOnly);
-    p.waitForStarted();
-    p.waitForFinished(-1);
-    if(stdout) *stdout = p.readAllStandardOutput();
-    if(stderr) {
-      *stderr = p.readAllStandardError();
-    } else {
-      QByteArray err = p.readAllStandardError();
-      if(!err.isEmpty())
-        Radiant::error("%s: %s", cmd.toUtf8().data(), err.data());
-    }
-    return p.exitCode();
-  }
-
-  /// @todo almost all of these runAsRoot-things should be replaced with
-  ///       external scripts on Linux, maybe (ba)sh or perl
-  int runAsRoot(QString cmd, QStringList argv = QStringList(),
-                QByteArray * stdout = 0, QByteArray * stderr = 0)
-  {
-    if(geteuid() == 0) {
-      return run(cmd, argv, stdout, stderr);
-    } else {
-      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, stdout, stderr);
-    }
-  }
 
   bool do_flock(QFile & file, int flags = LOCK_EX) {
     while(flock(file.handle(), flags) == -1) {
@@ -142,7 +111,7 @@ namespace {
 
     if(try_flock(s_usersLockfile)) {
       Radiant::info("Remounting root filesystem to read-write -mode (reason: %s)", name.toUtf8().data());
-      runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
+      Radiant::FileUtils::runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
 
       if(!do_flock(s_usersLockfile, LOCK_UN)) {
         Radiant::error("Failed to release the users lock: %s", strerror(errno));
@@ -188,8 +157,8 @@ namespace {
     if(try_flock(s_usersLockfile)) {
       Radiant::info("Remounting root filesystem to read-only -mode");
       /// @todo should this happen asynchronously?
-      run("sync");
-      runAsRoot("mount", QStringList() << "-o" << "remount,ro" << "/");
+      Radiant::FileUtils::run("sync");
+      Radiant::FileUtils::runAsRoot("mount", QStringList() << "-o" << "remount,ro" << "/");
 
       if(!do_flock(s_usersLockfile, LOCK_UN)) {
         Radiant::error("Failed to release the users lock: %s", strerror(errno));

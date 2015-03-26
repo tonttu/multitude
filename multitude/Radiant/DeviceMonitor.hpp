@@ -2,11 +2,16 @@
 #define KTC_DEVICEMONITOR_HPP
 
 #include "Export.hpp"
+#include "Platform.hpp"
 
+#ifdef RADIANT_LINUX
+
+#include <QMap>
 #include <QString>
 
 #include <memory>
 #include <vector>
+#include <memory>
 
 namespace Radiant
 {
@@ -25,10 +30,10 @@ namespace Radiant
   typedef std::shared_ptr<Device> DevicePtr;
   typedef std::vector<DevicePtr> Devices;
 
-  class DeviceMonitor {
+  class RADIANT_API DeviceMonitor {
   public:
     virtual Devices findDevices(const QString &subsystem,
-                                const QString& vendorId, const QString& modelId) = 0;
+                                const QMap<QString, QString>& params) = 0;
     virtual ~DeviceMonitor() { }
 
     static QString decode(const QString & value);
@@ -37,4 +42,7 @@ namespace Radiant
   RADIANT_API std::shared_ptr<DeviceMonitor> newUdevMonitor();
 }
 
+#endif
+
 #endif // KTC_DEVICEMONITOR_HPP
+

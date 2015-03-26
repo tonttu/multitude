@@ -208,7 +208,7 @@ namespace Radiant
 
   int SerialPort::doWrite(const void * buf, int bytes)
   {
-    int r = ::write(m_fd, buf, bytes);
+    int r = TEMP_FAILURE_RETRY(::write(m_fd, buf, bytes));
     if(r > 0 && m_traceName != nullptr) {
       printBuffer((const char*)buf, r, "<", m_traceName);
     }
@@ -235,7 +235,7 @@ namespace Radiant
     if (ret > 0 && (fds[0].revents & POLLIN) == POLLIN) {
       int r = 0;
       do {
-        r = ::read(pipe, buffer, sizeof(buffer));
+        r = TEMP_FAILURE_RETRY(::read(pipe, buffer, sizeof(buffer)));
       } while(r > 0);
       return WaitStatus::Interrupt;
     }
@@ -322,14 +322,14 @@ namespace Radiant
 
   int SerialPort::doRead(void * buf, int bytes)
   {
-    int r = ::read(m_fd, buf, bytes);
+    int r = TEMP_FAILURE_RETRY(::read(m_fd, buf, bytes));
     if(r > 0 && m_traceName != nullptr) {
       printBuffer((const char*)buf, r, ">", m_traceName);
     }
     return r;
   }
 
-  bool SerialPort::read(QByteArray &output, double timeoutSeconds)
+  bool SerialPort::read(QByteArray &output, double timeoutSeconds, int maxBytes)
   {
     if(timeoutSeconds <= 0) {
       timeoutSeconds = -1;
@@ -343,10 +343,14 @@ namespace Radiant
     case WaitStatus::Ok:
       break;
     }
-    char buffer[256];
-    while(true) {
+    static const int bufSize = 256;
+    char buffer[bufSize];
+    int startSize = output.size();
+    while(maxBytes <= 0 || output.size() - startSize < maxBytes) {
       errno = 0;
-      int r = doRead(buffer, 256);
+      int soFar = output.size() - startSize;
+      int maxThisRead = maxBytes <= 0 ? bufSize : std::min(bufSize, maxBytes - soFar);
+      int r = doRead(buffer, maxThisRead);
       if (r > 0) {
         output.append(buffer, r);
       } else if (r == 0 || (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))) {
@@ -392,7 +396,7 @@ namespace Radiant
   void SerialPort::interrupt(int fd)
   {
     if(fd >= 0) {
-      int r = ::write(fd, "!", 1);
+      int r = TEMP_FAILURE_RETRY(::write(fd, "!", 1));
       if(r < 0) {
         Radiant::error("Error writing to interrupt pipe: %s", strerror(errno));
       }

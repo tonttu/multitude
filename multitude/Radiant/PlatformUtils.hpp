@@ -80,13 +80,29 @@ namespace Radiant
     /// @return true on success
     RADIANT_API bool shutdown();
 
+    /// Terminate all processes matching the given name
+    /// @param processName name of the process to terminate
+    RADIANT_API void terminateProcessByName(const QString& processName);
+
 #ifdef RADIANT_WINDOWS
     /// Get path to folder used for application data that is not user specific (i.e. ProgramData)
     RADIANT_API QString windowsProgramDataPath();
+
+    /// @param iteration If the iteration is not given, it will not rotate the logs.
+    /// @returns The absolute file path of the log file
+    RADIANT_API QString newWindowsServiceLogFile(const QString & serviceName,
+                                                 const QString & logName,
+                                                 int iteration = -1);
+
+    /// Searches for the latest log file for the given service and log name.
+    /// You need to call this after the service is running, else you will not get
+    /// reliable results.
+    /// @returns The absolute file path of the log file. Null string if nothing was
+    /// found.
+    RADIANT_API QString findWindowsServiceLogFile(const QString & serviceName,
+                                                  const QString & logName);
 #endif
-
   }
-
 }
 
 #endif

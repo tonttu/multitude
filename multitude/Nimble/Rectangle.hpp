@@ -75,9 +75,13 @@ namespace Nimble {
       /// Return the size of the rectangle
       Nimble::SizeF size() const;
 
+      /// Computes the corner vertices of the rectangle
+      std::array<Nimble::Vector2f, 4> computeCorners() const;
+
       /// Computes the corner vertices of the rectangle and writes them to the given array
       /// @param corners vector of points where the four corners are appended
-      void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const;
+      MULTI_ATTR_DEPRECATED("computerCorners(corners) is deprecated. Use computeCorners() instead.",
+      void computeCorners(std::array<Nimble::Vector2f, 4> & corners) const);
 
       /// Returns a rectangle that contains the two given rectangles. The
       /// result is not guaranteed to be the smallest rectangle containing the

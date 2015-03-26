@@ -1039,7 +1039,7 @@ namespace Luminous
     MULTI_ONCE {
       QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
             Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
-      if(!QDir().mkpath(basePath)) {
+      if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
         basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
         QDir().mkpath(basePath);
       }

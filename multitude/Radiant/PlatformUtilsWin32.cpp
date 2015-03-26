@@ -18,6 +18,7 @@
 
 #include <QSettings>
 #include <QProcess>
+#include <QDir>
 
 #include <assert.h>
 
@@ -237,6 +238,14 @@ namespace Radiant
       return systemShutdown(false);
     }
 
+    void terminateProcessByName(const QString& processName)
+    {
+      const auto cmd = QString("tskill %1").arg(processName);
+      int err = system(cmd.toUtf8().data());
+      if(err != 0)
+        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
+    }
+
     QString windowsProgramDataPath()
     {
       PWSTR path;
@@ -253,8 +262,54 @@ namespace Radiant
       return programData;
     }
 
-  }
+    static QString wantLogDir()
+    {
+      return QString("%1\\MultiTouch\\Logs").arg(Radiant::PlatformUtils::windowsProgramDataPath());
+    }
 
-}
+    static QString newWindowsLogDir()
+    {
+      QString logPath = wantLogDir();
+      // If creating the log folder fails for whatever reason, log to TEMP instead
+      bool logPathOk = QDir().mkpath(logPath);
+      if(!logPathOk)
+        logPath = QDir::tempPath();
+      return logPath;
+    }
+
+    QString newWindowsServiceLogFile(const QString & serviceName, const QString & logName, int iteration)
+    {
+      QString dir = newWindowsLogDir();
+      bool rotate = iteration >= 0;
+      if(rotate) {
+        return QString("%1\\%2-%3-%4.log").arg(dir, serviceName, logName).arg(iteration % 10);
+      } else {
+        return QString("%1\\%2-%3.log").arg(dir, serviceName, logName);
+      }
+    }
+
+    QString findWindowsServiceLogFile(const QString & serviceName, const QString & logName)
+    {
+      std::vector<QDir> dirs;
+      dirs.push_back(QDir(wantLogDir()));
+      dirs.push_back(QDir::temp());
+
+      for(QDir & dir : dirs) {
+        if(!dir.exists()) {
+          continue;
+        }
+        dir.setNameFilters(QStringList() << QString("%1-%2*.log").arg(serviceName, logName));
+        dir.setSorting(QDir::Time | QDir::Reversed);
+        dir.setFilter(QDir::Files | QDir::Readable);
+        QFileInfoList entries = dir.entryInfoList();
+        if(!entries.empty()) {
+          QFileInfo & log = entries.front();
+          return log.absoluteFilePath();
+        }
+      }
+      return QString();
+    }
+  }  // namespace PlatformUtils
+}  // namespace Radiant
 
 #endif

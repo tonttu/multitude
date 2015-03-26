@@ -1173,6 +1173,7 @@ namespace VideoDisplay
 
   bool LibavDecoder::D::decodeVideoPacket(double & dpts, double & nextDpts)
   {
+    const double maxPtsReorderDiff = 0.1;
     const double prevDpts = dpts;
     dpts = std::numeric_limits<double>::quiet_NaN();
 
@@ -1282,13 +1283,16 @@ namespace VideoDisplay
 
             VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
             if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
-                lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+                lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
               // There was a problem with the stream, previous frame had larger timestamp than this
               // frame, that should be newer. This must be broken stream or concatenated MPEG file
               // or something similar. We treat this like it was a seek request
+              // On some files there are some individual frames out-of-order, we try to minimize
+              // this by allowing maximum difference of maxPtsReorderDiff
               /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
               increaseSeekGeneration();
               frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+              setTimestampToPts = false;
             }
             m_decodedVideoFrames.put();
           }
@@ -1339,9 +1343,10 @@ namespace VideoDisplay
 
       VideoFrameLibav * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
-          lastReadyFrame->timestamp().pts() > frame->timestamp().pts()) {
+          lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
         increaseSeekGeneration();
         frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+        setTimestampToPts = false;
       }
       m_decodedVideoFrames.put();
     }
@@ -1688,7 +1693,7 @@ namespace VideoDisplay
         return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
     }
 
-    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded) {
+    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded && m_d->m_audioTransfer->isEnabled()) {
       Timestamp t = m_d->m_audioTransfer->toPts(ts);
       if(t.seekGeneration() < m_d->m_seekGeneration)
         return Timestamp();
@@ -1851,6 +1856,9 @@ namespace VideoDisplay
   void LibavDecoder::close()
   {
     m_d->m_running = false;
+    // Kill audio so that it stops at the same time as the video
+    if (m_d->m_audioTransfer)
+      m_d->m_audioTransfer->setGain(0.0f);
   }
 
   Nimble::Size LibavDecoder::videoSize() const
@@ -2001,7 +2009,8 @@ namespace VideoDisplay
       }
 
       av.frame->opaque = nullptr;
-      bool gotFrames = false;
+      bool gotVideoFrame = false;
+      bool gotAudioFrame = false;
       double audioDpts = std::numeric_limits<double>::quiet_NaN();
 
       if(av.videoCodec && (
@@ -2013,8 +2022,8 @@ namespace VideoDisplay
           av.packet.size = 0;
           av.packet.stream_index = av.videoStreamIndex;
         }
-        gotFrames = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
-        if (gotFrames && m_d->m_audioTransfer)
+        gotVideoFrame = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
+        if (gotVideoFrame && m_d->m_audioTransfer)
           m_d->m_audioTransfer->setEnabled(true);
       }
 
@@ -2028,8 +2037,10 @@ namespace VideoDisplay
           av.packet.size = 0;
           av.packet.stream_index = av.audioStreamIndex;
         }
-        gotFrames |= m_d->decodeAudioPacket(audioDpts, nextAudioDpts);
+        gotAudioFrame = m_d->decodeAudioPacket(audioDpts, nextAudioDpts);
       }
+
+      const bool gotFrames = gotVideoFrame || gotAudioFrame;
 
       // Flush is done if there are no more frames
       if(eof == EofState::Flush && !gotFrames)
@@ -2082,8 +2093,13 @@ namespace VideoDisplay
 
     state() = STATE_FINISHED;
     s_src = nullptr;
-    if (m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setGain(0.f);
+    if (m_d->m_audioTransfer) {
+      // Tell audio transfer that there are no more samples coming, so that it
+      // knows that it can disable itself when it runs out of the decoded
+      // buffer. We can also then know that we shouldn't synchronize remaining
+      // video frames to audio anymore after that.
+      m_d->m_audioTransfer->setDecodingFinished(true);
+    }
   }
 
   void libavInit()

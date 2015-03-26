@@ -108,7 +108,7 @@ namespace Radiant
     /// after the call.
     /// @returns false in case of an error, true otherwise. Timeouts or
     /// calling interrupt() are not errors.
-    bool read(QByteArray &output, double timeoutSeconds = -1);
+    bool read(QByteArray &output, double timeoutSeconds = -1, int maxBytes = -1);
 
     /// Interrupts a blocking read before the timeout expires. On POSIX
     /// it might block while writing to a pipe (should be very short).
