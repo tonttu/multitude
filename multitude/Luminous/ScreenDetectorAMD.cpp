@@ -64,7 +64,7 @@ bool operator<(const ADLDisplayID & a,
 
 struct rectcmp
 {
-  bool operator()(const Nimble::Recti & a, const Nimble::Recti & b)
+  bool operator()(const Nimble::Recti & a, const Nimble::Recti & b) const
   {
     return a.low() == b.low() ? a.high() < b.high() : a.low() < b.low();
   }
