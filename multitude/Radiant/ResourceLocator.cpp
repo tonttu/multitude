@@ -101,8 +101,14 @@ namespace Radiant
     {
       // Always check if the path exists before searching anything
       // Can't use Qt I/O here either (QFileInfo)
-      if(rawPathExists(path))
+      if(rawPathExists(path)) {
+#ifdef RADIANT_UNIX
+        // For executables, we may need to set the "./" explicitly
+        return QStringList() << QString("./") + path;
+#else
         return QStringList() << path;
+#endif
+      }
 
       QStringList result;
 
