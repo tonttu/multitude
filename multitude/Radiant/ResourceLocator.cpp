@@ -104,6 +104,8 @@ namespace Radiant
       if(rawPathExists(path)) {
 #ifdef RADIANT_UNIX
         // For executables, we may need to set the "./" explicitly
+        if(path.startsWith("/"))
+          return QStringList() << path;
         return QStringList() << QString("./") + path;
 #else
         return QStringList() << path;
