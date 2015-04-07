@@ -258,7 +258,7 @@ namespace Resonant {
     // and is always 0, but on some other platforms it seems to be just a small
     // number (~0.001..0.005), too small and random to be the audio latency or
     // anything like that.
-    if(streams > 1 || time.outputBufferDacTime < 1.0) {
+    if(time.outputBufferDacTime < 1.0) {
       latency = 0.030;
       /// @todo shouldn't hardcode 44100
       if(m_syncinfo.baseTime == Radiant::TimeStamp(0) /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
