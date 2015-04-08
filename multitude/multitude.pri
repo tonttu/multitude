@@ -37,6 +37,7 @@ enable-taction:DEFINES += MULTITACTION_FIRMWARE
 # deft can be disabled with -config disable-deft
 disable-deft:CONFIG -= enable-deft enable-deft-cuda
 disable-deft-cuda:CONFIG -= enable-deft-cuda
+disable-deft-opencl:CONFIG -= enable-deft-opencl
 
 # JS is enabled by default
 !disable-js:CONFIG += enable-js
