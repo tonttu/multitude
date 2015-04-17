@@ -29,6 +29,9 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 !disable-js:CONFIG += enable-js
 enable-js:DEFINES += CORNERSTONE_JS=1
 
+# CEF is enabled by default
+!disable-cef:CONFIG += enable-cef
+
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
 INCLUDEPATH += $$PWD
