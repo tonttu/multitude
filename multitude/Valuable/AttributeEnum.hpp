@@ -30,6 +30,7 @@ namespace Valuable
     const QMap<QString, int> & enumValues() const { return m_enumValues; }
 
   protected:
+    /// @todo int might be too small
     QMap<QString, int> m_enumValues;
     bool m_allowIntegers;
   };
@@ -149,10 +150,10 @@ namespace Valuable
 
       T v = value(layer);
       for (auto it = m_enumValues.begin(); it != m_enumValues.end(); ++it) {
-        if (*it == v)
+        if (*it == (int)v)
           return it.key();
       }
-      return QString::number(v);
+      return QString::number((int)v);
     }
   };
 
