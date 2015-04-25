@@ -170,7 +170,7 @@ return self;
 
   QChar qc(key);
   QString qstr(qc);
-  key = qc.toUpper().toAscii();
+  key = qc.toUpper().unicode();
 
   if ([theEvent modifierFlags] & NSNumericPadKeyMask) { // arrow keys have this mask
     // https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html
@@ -229,7 +229,7 @@ return self;
 
   QChar qc(key);
   QString qstr(qc);
-  key = qc.toUpper().toAscii();
+  key = qc.toUpper().unicode();
 
   if ([theEvent modifierFlags] & NSNumericPadKeyMask) { // arrow keys have this mask
     // https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html

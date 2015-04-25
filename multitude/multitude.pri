@@ -160,6 +160,9 @@ macx {
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
   system([ `uname -r | cut -d . -f1` -eq 14 ] ):DEFINES+=RADIANT_OSX_YOSEMITE
+
+  # By default pkg-config support is disabled on OSX, re-enable it here
+  QT_CONFIG -= no-pkg-config
 }
 
 #

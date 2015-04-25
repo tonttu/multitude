@@ -15,6 +15,7 @@
 #include "SafeBool.hpp"
 
 #include <cassert>
+#include <functional>
 
 #include <QAtomicInt>
 
@@ -69,7 +70,7 @@ namespace Radiant
 #define INTRUSIVE_PTR_DEBUG_MOVE
 #endif
 
-inline uint qHash(uintptr_t, uint seed) noexcept;
+constexpr inline uint qHash(uintptr_t, uint seed) noexcept;
 
 namespace Radiant
 {
