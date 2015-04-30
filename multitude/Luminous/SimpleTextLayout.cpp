@@ -237,8 +237,6 @@ namespace Luminous
     }
 
     m_layout.endLayout();
-    if (m_layout.text().isEmpty())
-      m_boundingBox = QRectF();
 
     m_layoutThread = QThread::currentThread();
 
