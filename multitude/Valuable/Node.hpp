@@ -298,6 +298,9 @@ namespace Valuable
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
+    long eventAddListener(const QByteArray & eventId, Node * dstNode, ListenerFuncVoid func, ListenerType listenerType = DIRECT);
+    long eventAddListenerBd(const QByteArray & eventId, Node * dstNode, ListenerFuncBd func, ListenerType listenerType = DIRECT);
+
     /** Add an event listener to this object.
         This function is part of the event passing framework. After calling this,
         @a func will be called whenever this object has events with @a eventId.

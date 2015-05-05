@@ -592,6 +592,42 @@ namespace Valuable
     return vp.m_listenerId;
   }
 
+  long Node::eventAddListener(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncVoid func, Node::ListenerType listenerType)
+  {
+    const QByteArray from = validateEvent(eventId);
+
+    ValuePass vp(++m_listenersId);
+    vp.m_func = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+    vp.m_listener = dstNode;
+    vp.m_frame = m_frame;
+
+    if(dstNode)
+      dstNode->eventAddSource(this);
+
+    m_elisteners.push_back(vp);
+    return vp.m_listenerId;
+  }
+
+  long Node::eventAddListenerBd(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncBd func, Node::ListenerType listenerType)
+  {
+    const QByteArray from = validateEvent(eventId);
+
+    ValuePass vp(++m_listenersId);
+    vp.m_func2 = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+    vp.m_listener = dstNode;
+    vp.m_frame = m_frame;
+
+    if(dstNode)
+      dstNode->eventAddSource(this);
+
+    m_elisteners.push_back(vp);
+    return vp.m_listenerId;
+  }
+
   long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
@@ -853,19 +889,7 @@ namespace Valuable
 
         bdsend.rewind();
 
-        if(vp.m_listener) {
-          if(vp.m_type == AFTER_UPDATE_ONCE) {
-            queueEvent(this, vp.m_listener, vp.m_to, bdsend, &vp);
-          } else if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_listener, vp.m_to, bdsend, 0);
-          } else {
-            // m_sender is valid only at the beginning of eventProcess call
-            Node * sender = this;
-            std::swap(vp.m_listener->m_sender, sender);
-            vp.m_listener->eventProcess(vp.m_to, bdsend);
-            vp.m_listener->m_sender = sender;
-          }
-        } else if(vp.m_func) {
+        if(vp.m_func) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
             queueEvent(this, vp.m_func, &vp);
           } else if(vp.m_type == AFTER_UPDATE) {
@@ -880,6 +904,18 @@ namespace Valuable
             queueEvent(this, vp.m_func2, bdsend, 0);
           } else {
             vp.m_func2(bdsend);
+          }
+        } else if(vp.m_listener) {
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_to, bdsend, 0);
+          } else {
+            // m_sender is valid only at the beginning of eventProcess call
+            Node * sender = this;
+            std::swap(vp.m_listener->m_sender, sender);
+            vp.m_listener->eventProcess(vp.m_to, bdsend);
+            vp.m_listener->m_sender = sender;
           }
         }
       }
