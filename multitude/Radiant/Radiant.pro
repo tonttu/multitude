@@ -2,7 +2,8 @@
 include(../multitude.pri)
 
 HEADERS += ArrayMap.hpp \
-    SerialPortHelpers.hpp
+    SerialPortHelpers.hpp \
+    SynchronizedMultiQueue.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -79,7 +80,8 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    SynchronizedMultiQueue.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
