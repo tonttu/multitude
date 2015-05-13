@@ -101,10 +101,13 @@ namespace Valuable
     template <typename T> struct FactoryInfo {
       typedef T * (*Func)(const ArchiveElement &);
       typedef Radiant::IntrusivePtr<T> (*Func2)(const ArchiveElement &);
+      typedef std::shared_ptr<T> (*Func3)(const ArchiveElement &);
       template <Func> struct Test {};
       template <Func2> struct Test2 {};
+      template <Func3> struct Test3 {};
       template <class C> static char test(Test<&C::create>*);
       template <class C> static char test(Test2<&C::create>*);
+      template <class C> static char test(Test3<&C::create>*);
       template <class C> static long test(...);
       static const bool have_create = sizeof(test<T>(0)) == sizeof(char);
     };
@@ -283,6 +286,22 @@ namespace Valuable
       }
     };
 
+    template <typename T, bool have_create = FactoryInfo<typename T::element_type>::have_create> struct SmartPtrCreate
+    {
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
+      {
+        return T(Serializer::deserialize<typename T::element_type*>(element));
+      }
+    };
+
+    template <typename T> struct SmartPtrCreate<T, true>
+    {
+      inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
+      {
+        return T::element_type::create(element);
+      }
+    };
+
     template <typename T>
     struct Impl<T, Type::smart_ptr>
     {
@@ -294,7 +313,7 @@ namespace Valuable
 
       inline static typename std::remove_cv<T>::type deserialize(const ArchiveElement & element)
       {
-        return T(Serializer::deserialize<typename T::element_type*>(element));
+        return SmartPtrCreate<T>::deserialize(element);
       }
     };
 
