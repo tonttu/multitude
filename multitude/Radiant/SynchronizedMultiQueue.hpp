@@ -65,6 +65,11 @@ namespace Radiant
       }
     }
 
+    size_t producerCount() const
+    {
+      return m_queues.size();
+    }
+
     ///
     /// @brief nextFillItem
     /// @param id
