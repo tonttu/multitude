@@ -348,7 +348,7 @@ namespace Resonant {
       else {
 
         more = 0;
-        m_loop = false;
+        // m_loop = false;
       }
     }
 
@@ -587,6 +587,16 @@ namespace Resonant {
   {
     m_gain.setTarget(0, fadeTime * sampleRate);
     m_finishCounter = fadeTime * sampleRate;
+  }
+
+  void ModuleSamplePlayer::SampleVoice::scanDataToEnd(Radiant::BinaryData &data)
+  {
+    QByteArray buf;
+    while(data.pos() < data.total()) {
+      data.readString(buf);
+      if(buf == "end")
+        return;
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1118,6 +1128,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleGain(const ModuleSamplePlayer::NoteInfo & info, float gain, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1139,6 +1151,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleRelativePitch(const ModuleSamplePlayer::NoteInfo &info, float relativePitch, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1159,6 +1173,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSamplePlayHead(const ModuleSamplePlayer::NoteInfo &info, float playHeadTimeSeconds, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1179,6 +1195,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleLooping(const ModuleSamplePlayer::NoteInfo &info, bool looping)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1287,7 +1305,8 @@ namespace Resonant {
       voice->processMessage(this, parameter, data);
     }
     else {
-      Radiant::error("ModuleSamplePlayer::controlSample # No voice %d", voiceId);
+      SampleVoice::scanDataToEnd(data);
+      // Radiant::error("ModuleSamplePlayer::controlSample # No voice %d", voiceId);
     }
   }
 

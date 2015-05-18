@@ -399,6 +399,8 @@ namespace Resonant {
 
       int noteId() const { return m_noteId; }
 
+      static void scanDataToEnd(Radiant::BinaryData &data);
+
       NoteInfoInternalPtr info() { return m_info; }
     private:
       enum State {
