@@ -53,8 +53,8 @@ namespace Radiant
     {
       m_nonEmpty = 0;
 
-      m_writers = std::vector<std::atomic<int>>(producerCount);
-      m_readers = std::vector<std::atomic<int>>(producerCount);
+      m_writers = std::vector<std::atomic<int64_t>>(producerCount);
+      m_readers = std::vector<std::atomic<int64_t>>(producerCount);
 
       m_queues.resize(producerCount);
       m_queueNotFull = std::vector<Radiant::Condition>(producerCount);
@@ -68,6 +68,11 @@ namespace Radiant
     size_t producerCount() const
     {
       return m_queues.size();
+    }
+
+    int64_t approxItemsQueued(int id) const
+    {
+      return m_writers[id] - m_readers[id];
     }
 
     ///
@@ -168,9 +173,9 @@ namespace Radiant
     typedef std::vector<T> Queue;
     std::vector<Queue> m_queues;
     // m_writers[i] = next item to be written to queue i
-    std::vector<std::atomic<int>> m_writers;
+    std::vector<std::atomic<int64_t>> m_writers;
     // m_readers[i] = last read item from queue i
-    std::vector<std::atomic<int>> m_readers;
+    std::vector<std::atomic<int64_t>> m_readers;
 
     size_t m_queueSize;
 
