@@ -209,6 +209,12 @@ namespace Radiant
 
     static void executeInBGThread(std::function<void (Task &)> func);
 
+    /// Executes the given function exactly once in BGThread
+    static void singleShot(std::function<void ()> func) { singleShot(0, func); }
+    /// Executes the given function exactly once in BGThread after given delay
+    /// @param delayS delay in seconds
+    static void singleShot(double delayS, std::function<void ()> func);
+
   private:
       std::function<void (Task &)> m_func;
   };

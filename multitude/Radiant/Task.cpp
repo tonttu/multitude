@@ -122,4 +122,16 @@ namespace Radiant
   {
     BGThread::instance()->addTask(std::make_shared<FunctionTask>(func));
   }
+
+  void FunctionTask::singleShot(double delay, std::function<void ()> func)
+  {
+    auto task = std::make_shared<FunctionTask>([func] (Radiant::Task & task) {
+      func();
+      task.setFinished();
+    });
+    if (delay != 0.0) {
+      task->scheduleFromNowSecs(delay);
+    }
+    BGThread::instance()->addTask(std::move(task));
+  }
 }
