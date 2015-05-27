@@ -34,7 +34,7 @@
 #include <cstddef>
 
 #define INTRUSIVE_PTR_DEBUG_ACQUIRE \
-  IntrusivePtrDebug::add(m_counter, this, typeid(*m_ptr))
+  if(m_counter) IntrusivePtrDebug::add(m_counter, this, typeid(*m_ptr))
 
 #define INTRUSIVE_PTR_DEBUG_RELEASE \
   IntrusivePtrDebug::remove(m_counter, this)
