@@ -3,6 +3,35 @@
 
 namespace Luminous
 {
+  bool MipmapRenderer::checkMipmaps(RenderContext & r, const Nimble::Rectf & rect, Mipmap & mipmap)
+  {
+    float blend;
+    const unsigned int level = mipmap.level(r.transform(), rect.size(), &blend);
+    unsigned int level0 = (unsigned int)-1;
+    auto tex0 = mipmap.texture(level, &level0);
+
+    if (!tex0 || level != level0)
+      return false;
+
+    assert(tex0->data() != nullptr);
+
+    if (blend > 0.0001f) {
+      unsigned int level1;
+      auto tex1 = mipmap.texture(level+1, &level1);
+
+      if(tex1 && level1 == level+1) {
+        // Trilinear filtering ok
+        return true;
+      }
+
+      // Trilinear filtering failed
+      return false;
+    }
+
+    // Normal bilinear filtering ok
+    return true;
+  }
+
   void MipmapRenderer::render(RenderContext & r, Style & style,
                               const Nimble::Rectf & rect, Mipmap & mipmap)
   {

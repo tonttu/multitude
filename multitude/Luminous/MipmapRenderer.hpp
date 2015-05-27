@@ -9,6 +9,8 @@ namespace Luminous
 {
   namespace MipmapRenderer
   {
+    LUMINOUS_API bool checkMipmaps(RenderContext & r, const Nimble::Rectf & rect,
+                                   Mipmap & mipmap);
     LUMINOUS_API void render(RenderContext & r, Style & style,
                              const Nimble::Rectf & rect, Mipmap & mipmap);
   }
