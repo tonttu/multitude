@@ -75,10 +75,7 @@ namespace Luminous
   private:
     // Empty overrides for thread-safety
     virtual void paintEvent(QPaintEvent *) OVERRIDE {}
-#ifdef RADIANT_OSX
-    // Empty overrides for OSX libkage problems
-    virtual void paintEvent() OVERRIDE {}
-#endif
+
     virtual void resizeEvent ( QResizeEvent * e ) OVERRIDE
     {
       if(m_window.eventHook()) {
