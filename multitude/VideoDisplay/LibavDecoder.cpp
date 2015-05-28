@@ -1776,6 +1776,9 @@ namespace VideoDisplay
         if(ret) return ret;
         return frame;
       }
+      if(frame->timestamp().pts() == ts.pts()) {
+        return frame;
+      }
       ret = frame;
     }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
