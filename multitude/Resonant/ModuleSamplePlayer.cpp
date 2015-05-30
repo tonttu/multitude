@@ -721,7 +721,7 @@ namespace Resonant {
     , m_masterGain(1.0f)
     , m_userNoteIdCounter(1)
   {
-    m_voices.resize(256);
+    m_voices.resize(512);
     m_voiceptrs.resize(m_voices.size());
     if(!m_voiceptrs.empty())
       memset( & m_voiceptrs[0], 0, m_voiceptrs.size() * sizeof(SampleVoice *));
