@@ -176,9 +176,19 @@ namespace Resonant {
     if(it) {
       it->m_done = true;
       m_doneCount++;
-    }
-    else
+    } else {
+      for(auto it = m_newItems.begin(); it != m_newItems.end();) {
+        Item& item = *it;
+        if(m.id() == item.module()->id()) {
+          //uncompile(item);
+          item.deleteModule();
+          it = m_newItems.erase(it);
+        } else {
+           ++it;
+        }
+      }
       Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
+    }
   }
 
   void DSPNetwork::send(Radiant::BinaryData & control)
