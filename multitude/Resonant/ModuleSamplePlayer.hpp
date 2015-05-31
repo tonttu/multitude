@@ -379,7 +379,8 @@ namespace Resonant {
           m_dpos(0), m_noteId(0), m_finishCounter(-1),
           m_sampleChannel(0), m_targetChannel(0),
           m_sample(s), m_position(0), m_startPosition(0), m_startFadeInDurationSamples(0), m_startGain(1.0f),
-          m_autoRestartAfterStop(false)
+          m_autoRestartAfterStop(false),
+          m_stopped(false)
       {}
 
       bool synthesize(float ** out, int n, ModuleSamplePlayer *);
@@ -431,6 +432,8 @@ namespace Resonant {
 
       Radiant::TimeStamp m_startTime;
       NoteInfoInternalPtr m_info;
+
+      bool m_stopped;
     };
 
     /* Loads samples from the disk, as necessary. */

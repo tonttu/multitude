@@ -355,7 +355,7 @@ namespace Resonant {
     m_finishCounter -= n;
 
     if(!more) {
-      if(m_loop) {
+      if(m_loop && !m_stopped) {
         // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
         m_position = 0;
         m_dpos = 0.0f;
@@ -587,6 +587,7 @@ namespace Resonant {
   {
     m_gain.setTarget(0, fadeTime * sampleRate);
     m_finishCounter = fadeTime * sampleRate;
+    m_stopped = true;
   }
 
   void ModuleSamplePlayer::SampleVoice::scanDataToEnd(Radiant::BinaryData &data)
@@ -721,7 +722,7 @@ namespace Resonant {
     , m_masterGain(1.0f)
     , m_userNoteIdCounter(1)
   {
-    m_voices.resize(512);
+    m_voices.resize(256);
     m_voiceptrs.resize(m_voices.size());
     if(!m_voiceptrs.empty())
       memset( & m_voiceptrs[0], 0, m_voiceptrs.size() * sizeof(SampleVoice *));
