@@ -243,7 +243,7 @@ namespace Luminous
     if (dev.isEmpty())
       return false;
 
-    if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 30000)) {
+    if (!m_port.open(dev.toUtf8().data(), false, false, 115200, 8, 1, 1000000)) {
       vm1Opened(false);
       return false;
     } else {
@@ -397,8 +397,9 @@ namespace Luminous
 
     QByteArray res;
     int prev = 0;
-    for (int i = 0; i < 100; ++i) {
-      /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
+    Radiant::Timer timer;
+    while(timer.time() < 5) {
+      errno = 0;
       int r = m_d->m_port.read(buffer, 256);
 #ifdef RADIANT_WINDOWS
       if (r == 0) {
@@ -423,7 +424,8 @@ namespace Luminous
         if (res.size() > 0 && prev == 0)
           break;
         prev = 0;
-        Radiant::Sleep::sleepMs(4);
+        /// @todo Add timeout reading to SerialPort! This is just very temporary stupid hack
+        Radiant::Sleep::sleepMs(100);
       }
     }
     return res;
