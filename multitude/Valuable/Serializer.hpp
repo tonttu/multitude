@@ -368,9 +368,19 @@ namespace Valuable
     {
       inline static ArchiveElement serialize(Archive & archive, const T & pair)
       {
+        auto firstElement = Serializer::serialize(archive, pair.first);
+        auto secondElement = Serializer::serialize(archive, pair.second);
+
+        // If either element of the pair is a null element (e.g.
+        // isSerializable() is false), do not serialize anything
+        if(firstElement.isNull() || secondElement.isNull())
+          return ArchiveElement();
+
+        // Both elements are valid, serialize the pair
         ArchiveElement elem = archive.createElement("pair");
-        elem.add(Serializer::serialize(archive, pair.first));
-        elem.add(Serializer::serialize(archive, pair.second));
+        elem.add(firstElement);
+        elem.add(secondElement);
+
         return elem;
       }
 
@@ -384,7 +394,7 @@ namespace Valuable
         ArchiveElement b = *(++it);
 
         if (!it || ++it) {
-          Radiant::error("pair size is not 2");
+          Radiant::error("Serializer:deserialize # failed to deserialize a pair. Could not deserialize two elements.");
           return T();
         }
 
