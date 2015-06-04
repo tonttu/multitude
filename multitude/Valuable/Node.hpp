@@ -438,6 +438,14 @@ namespace Valuable
     /// Destroys the event queue. Should not called manually.
     static void flushQueue();
 
+    /// Disables all AFTER_UPDATE event processing, no new events will be
+    /// accepted and the current queue will be cleared.
+    static void disableQueue();
+
+    /// Enables queue after calling disableQueue. Does nothing if the queue
+    /// is already enabled.
+    static void reEnableQueue();
+
     /// Copies attribute values from one node to another
     /// @param from source node
     /// @param to target node
