@@ -115,8 +115,11 @@ namespace Valuable
       ArchiveElement elem = archive.createElement(elementName);
       for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {
 
-        if(isElementSerializableForwarder(*it))
-          elem.add(Serializer::serialize(archive, *it));
+        if(isElementSerializableForwarder(*it)) {
+          auto e = Serializer::serialize(archive, *it);
+          if (!e.isNull())
+            elem.add(e);
+        }
       }
       return elem;
     }
