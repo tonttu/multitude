@@ -72,13 +72,17 @@ namespace Luminous {
   bool ImageCodecSVG::ping(ImageInfo & info, QFile & file)
   {
 
-    QSvgRenderer * r = updateSVG(file);
+    std::unique_ptr<QSvgRenderer> r(updateSVG(file));
+
+    if (!r || !r->isValid()) {
+      return false;
+    }
+
     // always this
     info.pf = PixelFormat::rgbaUByte();
 
     info.width = r->defaultSize().width();
     info.height = r->defaultSize().height();
-    delete r;
     return true;
   }
 
