@@ -559,45 +559,54 @@ namespace Resonant {
     if(!m_newMutex.tryLock())
       return;
 
-    Radiant::ReleaseGuard g( m_newMutex);
+    std::vector<Module *> deletedModules;
 
-    if(!m_doneCount)
-      return;
+    {
+      Radiant::ReleaseGuard g( m_newMutex);
 
-    char buf[128];
+      if(!m_doneCount)
+        return;
 
-    for(iterator it = m_items.begin(); it != m_items.end(); ) {
+      char buf[128];
 
-      Item & item = (*it);
+      for(iterator it = m_items.begin(); it != m_items.end(); ) {
 
-      if(item.m_done) {
+        Item & item = (*it);
 
-        for(unsigned i = 0; i < item.m_outs.size() && m_panner; i++) {
+        if(item.m_done) {
 
-          m_controlData.rewind();
-          snprintf(buf, sizeof(buf), "%s-%d", item.m_module->id().data(), i);
-          m_controlData.writeString(buf);
-          m_controlData.rewind();
+          for(unsigned i = 0; i < item.m_outs.size() && m_panner; i++) {
 
-          m_panner->eventProcess("removesource", m_controlData);
+            m_controlData.rewind();
+            snprintf(buf, sizeof(buf), "%s-%d", item.m_module->id().data(), i);
+            m_controlData.writeString(buf);
+            m_controlData.rewind();
 
-          Item * oi = findItem(m_panner->id());
-          oi->eraseInputs(item.m_module->id());
+            m_panner->eventProcess("removesource", m_controlData);
+
+            Item * oi = findItem(m_panner->id());
+            oi->eraseInputs(item.m_module->id());
+          }
+
+          uncompile(item);
+
+          debugResonant("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
+            item.m_module, countBufferBytes());
+
+          item.m_module->stop();
+
+          deletedModules.push_back(item.m_module);
+          item.m_module = nullptr;
+
+          it = m_items.erase(it);
         }
-
-        uncompile(item);
-
-        debugResonant("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
-             item.m_module, countBufferBytes());
-
-        item.m_module->stop();
-        item.deleteModule();
-
-        it = m_items.erase(it);
+        else
+          ++it;
       }
-      else
-        ++it;
     }
+
+    for (auto module : deletedModules)
+      delete module;
 
     m_doneCount = 0;
   }
