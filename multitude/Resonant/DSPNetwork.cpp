@@ -430,7 +430,15 @@ namespace Resonant {
 
   void DSPNetwork::checkNewItems()
   {
-    if(!m_newItems.empty()) {
+    if(!m_newMutex.tryLock())
+      return;
+
+    Radiant::ReleaseGuard g( m_newMutex);
+
+    if(m_newItems.empty()) {
+      return;
+    }
+    else {
       debugResonant("DSPNetwork::checkNewItems # Now %d items, adding %d, buffer memory %ld byes",
            (int) m_items.size(), (int) m_newItems.size(),
            countBufferBytes());
@@ -441,11 +449,6 @@ namespace Resonant {
     while(m_newItems.size()) {
 
       debugResonant("DSPNetwork::checkNewItems # Next ");
-
-      if(!m_newMutex.tryLock())
-        return;
-
-      Radiant::ReleaseGuard g( m_newMutex);
 
       Item item = m_newItems.front();
       checkValidId(item);
