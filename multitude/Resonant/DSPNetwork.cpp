@@ -606,12 +606,11 @@ namespace Resonant {
         else
           ++it;
       }
+      m_doneCount = 0;
     }
 
     for (auto module : deletedModules)
       delete module;
-
-    m_doneCount = 0;
   }
 
   void DSPNetwork::deliverControl(const QByteArray & moduleid,
