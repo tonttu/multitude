@@ -27,6 +27,8 @@
 #include <QSettings>
 #include <QDateTime>
 
+#include <atomic>
+
 namespace
 {
   typedef std::map<QPair<QByteArray, bool>, std::weak_ptr<Luminous::Mipmap>> MipmapStore;
@@ -251,6 +253,8 @@ namespace Luminous
     float m_expireSeconds;
 
     Valuable::LoadingState m_state;
+
+    std::atomic<bool> m_isObsolete{false};
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -778,7 +782,9 @@ namespace Luminous
 
   Mipmap::Mipmap(const QString & filenameAbs)
     : m_d(new D(*this, filenameAbs))
-  {}
+  {
+    eventAddOut("reloaded");
+  }
 
   Mipmap::~Mipmap()
   {
@@ -981,6 +987,11 @@ namespace Luminous
     return m_d->m_state;
   }
 
+  bool Mipmap::isObsolete() const
+  {
+    return m_d->m_isObsolete;
+  }
+
   void Mipmap::setMipmapReady(const ImageInfo & imginfo)
   {
     m_d->m_compressedMipmapInfo = imginfo;
@@ -1020,6 +1031,43 @@ namespace Luminous
     }
 
     return mipmap;
+  }
+
+  bool Mipmap::reload(const QString & filename)
+  {
+    if (filename.isEmpty())
+      return false;
+
+    const QByteArray path = QFileInfo(filename).absoluteFilePath().toUtf8();
+    if (path.isEmpty())
+      return false;
+
+    const QPair<QByteArray, bool> keys[] = {qMakePair(path, true),
+                                            qMakePair(path, false)};
+
+    std::vector<std::weak_ptr<Mipmap>> mipmaps;
+    mipmaps.reserve(2);
+
+    {
+      Radiant::Guard g(s_mipmapStoreMutex);
+      for (auto & key: keys) {
+        auto it = s_mipmapStore.find(key);
+        if (it != s_mipmapStore.end()) {
+          mipmaps.emplace_back(std::move(it->second));
+          s_mipmapStore.erase(it);
+        }
+      }
+    }
+
+    bool found = false;
+    for (auto & weak: mipmaps) {
+      if (auto mipmap = weak.lock()) {
+        found = true;
+        mipmap->setObsolete();
+      }
+    }
+
+    return found;
   }
 
   QString Mipmap::cacheFileName(const QString & src, int level, const QString & suffix)
@@ -1068,5 +1116,12 @@ namespace Luminous
     m_d->m_state = Valuable::STATE_LOADING;
     m_d->m_ping = std::make_shared<PingTask>(shared_from_this(), compressedMipmaps);
     Radiant::BGThread::instance()->addTask(m_d->m_ping);
+  }
+
+  void Mipmap::setObsolete()
+  {
+    m_d->m_isObsolete = true;
+    Radiant::info("Mipmap reloaded %s", m_d->m_filenameAbs.toUtf8().data());
+    eventSend("reloaded");
   }
 }
