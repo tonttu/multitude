@@ -302,7 +302,7 @@ DSPNetwork::instance().send(control);
     void checkValidId(Item &);
     float * findOutput(const QByteArray & id, int channel);
     long countBufferBytes();
-    void duDumpInfo(FILE *f);
+    void doDumpInfo(FILE *f);
 
     container m_items;
 

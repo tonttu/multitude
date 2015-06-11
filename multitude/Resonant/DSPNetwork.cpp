@@ -867,7 +867,7 @@ namespace Resonant {
     return bytes;
   }
 
-  void DSPNetwork::duDumpInfo(FILE *f)
+  void DSPNetwork::doDumpInfo(FILE *f)
   {
     if(!f)
       f = stdout;
