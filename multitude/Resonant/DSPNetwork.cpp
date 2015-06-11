@@ -39,11 +39,7 @@ namespace Resonant {
 
   void DSPNetwork::Item::deleteModule()
   {
-    if(m_module) {
-
-    }
-    delete m_module;
-    m_module = 0;
+    m_module.reset();
   }
 
   void DSPNetwork::Item::eraseInput(const Connection & c)
@@ -116,7 +112,7 @@ namespace Resonant {
     m_doneCount(0),
     m_syncinfo()
   {
-    m_collect = new ModuleOutCollect(this);
+    m_collect = std::make_shared<ModuleOutCollect>(this);
     m_collect->setId("outcollect");
 
     Item tmp;
@@ -170,7 +166,7 @@ namespace Resonant {
 
   void DSPNetwork::markDone(Module & m)
   {
-    std::list<Module *> modulesToDelete;
+    std::list<ModulePtr> modulesToDelete;
 
     {
       Radiant::Guard g( m_newMutex);
@@ -194,9 +190,7 @@ namespace Resonant {
       }
     }
 
-    for(Module * m : modulesToDelete) {
-      delete m;
-    }
+    // Deleting modulesToDelete automatically deletes items in modulesToDelete
   }
 
   void DSPNetwork::send(Radiant::BinaryData & control)
@@ -209,10 +203,10 @@ namespace Resonant {
 
   ModuleSamplePlayer * DSPNetwork::samplePlayer()
   {
-    Module * m = findModule("sampleplayer");
+    ModulePtr m = findModule("sampleplayer");
 
     if(m)
-      return dynamic_cast<ModuleSamplePlayer *>(m);
+      return dynamic_cast<ModuleSamplePlayer *>(&* m);
 
     Resonant::DSPNetwork::Item item;
     Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer();
@@ -505,7 +499,7 @@ namespace Resonant {
           continue;
         }
 
-        ModulePanner * panner = dynamic_cast<ModulePanner *>(itptr->m_module);
+        std::shared_ptr<ModulePanner> panner = std::dynamic_pointer_cast<ModulePanner>(itptr->m_module);
 
         if(panner) {
           m_panner = panner;
@@ -570,7 +564,7 @@ namespace Resonant {
     if(!m_newMutex.tryLock())
       return;
 
-    std::vector<Module *> deletedModules;
+    std::vector<ModulePtr> modulesToDelete;
 
     {
       Radiant::ReleaseGuard g( m_newMutex);
@@ -602,11 +596,11 @@ namespace Resonant {
           uncompile(item);
 
           debugResonant("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
-            item.m_module, countBufferBytes());
+                        item.m_module.get(), countBufferBytes());
 
           item.m_module->stop();
 
-          deletedModules.push_back(item.m_module);
+          modulesToDelete.push_back(item.m_module);
           item.m_module = nullptr;
 
           it = m_items.erase(it);
@@ -617,8 +611,7 @@ namespace Resonant {
       m_doneCount = 0;
     }
 
-    for (auto module : deletedModules)
-      delete module;
+    // Deleting modulesToDelete automatically deletes items in modulesToDelete
   }
 
   void DSPNetwork::deliverControl(const QByteArray & moduleid,
@@ -629,9 +622,9 @@ namespace Resonant {
           data.total());
 
     for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
-      Module * m = (*it).m_module;
-      if(m->id() == moduleid) {
-        m->eventProcess(commandid, data);
+      Module & m = *(*it).m_module;
+      if(m.id() == moduleid) {
+        m.eventProcess(commandid, data);
         return;
       }
     }
@@ -641,7 +634,7 @@ namespace Resonant {
 
   bool DSPNetwork::uncompile(Item & item)
   {
-    Module * m = item.m_module;
+    ModulePtr m = item.m_module;
 
     if(m == m_collect)
       return true;
@@ -742,9 +735,9 @@ namespace Resonant {
 
     item.m_compiled = true;
 
-    Module * m = item.m_module;
+    ModulePtr m = item.m_module;
 
-    debugResonant("DSPNetwork::compile # compiled %p %s", m, typeid(*m).name());
+    debugResonant("DSPNetwork::compile # compiled %p %s", m.get(), typeid(*m).name());
 
     return true;
   }
@@ -816,25 +809,25 @@ namespace Resonant {
     char buf[32];
     int index = 0;
 
-    Module * m = it.m_module;
+    ModulePtr m = it.m_module;
 
     if(m->id().isEmpty()) {
-      sprintf(buf, "%p", m);
+      sprintf(buf, "%p", m.get());
       m->setId(buf);
       index++;
     }
 
     while(findItem(m->id())) {
       if(!index)
-        sprintf(buf, "%p", m);
+        sprintf(buf, "%p", m.get());
       else
-        sprintf(buf, "%p-%.4d", m, index);
+        sprintf(buf, "%p-%.4d", m.get(), index);
       m->setId(buf);
       index++;
     }
   }
 
-  Module * DSPNetwork::findModule(const QByteArray & id)
+  ModulePtr DSPNetwork::findModule(const QByteArray & id)
   {
     Radiant::Guard g(m_newMutex);
     Item * item = findItem(id);
@@ -886,7 +879,7 @@ namespace Resonant {
       Item & item = *it;
 
       fprintf(f, "  DSP ITEM [%d] %s %s %p\n",
-              index, item.m_module->id().data(), typeid(*item.m_module).name(), item.m_module);
+              index, item.m_module->id().data(), typeid(*item.m_module).name(), item.m_module.get());
 
       for(size_t i = 0; i < item.m_ins.size(); i++) {
         fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item.m_ins[i]);

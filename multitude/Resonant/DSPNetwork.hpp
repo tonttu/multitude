@@ -152,9 +152,10 @@ namespace Resonant {
       Item();
       ~Item();
       /// Sets the DSP #Resonant::Module that this Item contains.
-      void setModule(Module *m) { m_module = m; }
+      void setModule(Module *m) { m_module = ModulePtr(m); }
+      void setModule(ModulePtr m) { m_module = m; }
       /// Returns a pointer to the DSP module
-      Module * module() { return m_module; }
+      ModulePtr & module() { return m_module; }
 
       /// Sets the default target channel of the module
       void setTargetChannel(int channel)
@@ -195,7 +196,7 @@ namespace Resonant {
       int findInOutput(float * ptr) const;
       void removeInputsFrom(const QByteArray & id);
 
-      Module * m_module;
+      ModulePtr m_module;
 
       std::vector<Connection> m_inputs;
 
@@ -265,7 +266,7 @@ DSPNetwork::instance().send(control);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
-    Module * findModule(const QByteArray & id);
+    ModulePtr findModule(const QByteArray & id);
 
     /// @cond
     void dumpInfo(FILE *f);
@@ -310,8 +311,8 @@ DSPNetwork::instance().send(control);
     std::vector<Buf> m_buffers;
 
     /// @todo remove these special hacks
-    ModuleOutCollect *m_collect;
-    ModulePanner   *m_panner;
+    std::shared_ptr<ModuleOutCollect> m_collect;
+    std::shared_ptr<ModulePanner>     m_panner;
 
     Radiant::BinaryData m_controlData;
     Radiant::BinaryData m_incoming;

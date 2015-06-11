@@ -1221,7 +1221,8 @@ namespace Resonant {
       return 0;
     }
 
-    Resonant::ModulePanner * pan = dynamic_cast<Resonant::ModulePanner *>(item->module());
+    std::shared_ptr<Resonant::ModulePanner> pan =
+        std::dynamic_pointer_cast<Resonant::ModulePanner>(item->module());
 
     if(!pan) {
       Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to cast a panner");
