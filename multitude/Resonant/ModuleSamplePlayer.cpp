@@ -1215,7 +1215,7 @@ namespace Resonant {
 
   int ModuleSamplePlayer::locationToChannel(Nimble::Vector2 location)
   {
-    DSPNetwork::Item * item = DSPNetwork::instance()->findItem("panner");
+    DSPNetwork::ItemPtr item = DSPNetwork::instance()->findItem("panner");
     if(!item) {
       Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to find a panner");
       return 0;

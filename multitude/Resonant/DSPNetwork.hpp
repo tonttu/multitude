@@ -163,8 +163,8 @@ namespace Resonant {
         m_targetChannel = channel;
       }
 
-      /// Deletes the module.
-      void deleteModule();
+      /// Resets the module pointer. May also delete the module.
+      void resetModule();
 
       /// Sets if the item should use panner
       void setUsePanner(bool usePanner)
@@ -211,8 +211,10 @@ namespace Resonant {
       int  m_targetChannel;
     };
 
+    typedef std::shared_ptr<Item> ItemPtr;
+
     /// @cond
-    typedef std::list<Item> container;
+    typedef std::list<ItemPtr> container;
     typedef container::iterator iterator;
     /// @endcond
 
@@ -262,7 +264,7 @@ DSPNetwork::instance().send(control);
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
-    Item * findItem(const QByteArray & id);
+    ItemPtr findItem(const QByteArray & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
@@ -322,7 +324,8 @@ DSPNetwork::instance().send(control);
     QString m_devName;
     // bool        m_continue;
     long        m_frames;
-    int         m_doneCount;
+
+    int         m_doneCount; // Protected by m_newMutex
 
     struct
     {
@@ -331,6 +334,7 @@ DSPNetwork::instance().send(control);
     } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
+    Radiant::Mutex m_itemMutex;
 
     Radiant::Mutex m_startupMutex;
   };
