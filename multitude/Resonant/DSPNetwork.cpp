@@ -175,9 +175,11 @@ namespace Resonant {
         it->m_done = true;
         m_doneCount++;
       } else {
+        bool found = false;
         for(auto it = m_newItems.begin(); it != m_newItems.end();) {
           ItemPtr item = *it;
           if(m.id() == item->module()->id()) {
+            found = true;
             modulesToDelete.push_back(item->module());
             item->m_module = nullptr;
             it = m_newItems.erase(it);
@@ -185,7 +187,9 @@ namespace Resonant {
             ++it;
           }
         }
-        Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
+        if (!found) {
+          Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
+        }
       }
     }
 
