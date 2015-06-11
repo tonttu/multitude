@@ -220,8 +220,9 @@ namespace Resonant {
 
       s.outParams.channelCount = channels;
       s.outParams.sampleFormat = paFloat32;
+      // Use 30ms minimum latency
       s.outParams.suggestedLatency =
-        Pa_GetDeviceInfo( s.outParams.device )->defaultLowOutputLatency;
+          std::max(0.03, Pa_GetDeviceInfo( s.outParams.device )->defaultLowOutputLatency);
       s.outParams.hostApiSpecificStreamInfo = 0;
 
       s.inParams = s.outParams;
