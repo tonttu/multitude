@@ -295,6 +295,17 @@ namespace VideoDisplay
       m_av.videoSize = Nimble::Size();
     }
 
+    ~D()
+    {
+      AudioTransferPtr tmp(m_audioTransfer);
+      if(tmp) {
+        if(!tmp->isShutdown())
+          Radiant::fatal("LibavDecover::D::~D # Audio transfer is still active!");
+      }
+      /*m_audioTransfer.reset();
+      tmp.reset();*/
+    }
+
     LibavDecoder * m_host;
     int m_seekGeneration;
 
@@ -928,12 +939,12 @@ namespace VideoDisplay
     av_free(m_av.frame);
 
     AudioTransferPtr audioTransfer(m_audioTransfer);
+    m_audioTransfer.reset();
     if(audioTransfer) {
       audioTransfer->shutdown();
       Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
     }
     
-    m_audioTransfer.reset();
   }
 
   bool LibavDecoder::D::seekToBeginning()
@@ -1860,8 +1871,7 @@ namespace VideoDisplay
     if(isRunning())
       waitEnd();
 
-    // The following would be unsafe, since we might be coming from a m_audioTransferX.reset() function call
-    // m_d->m_audioTransferX.reset();
+    m_d->m_audioTransfer.reset();
   }
 
   void LibavDecoder::load(const Options & options)

@@ -73,6 +73,7 @@ namespace VideoDisplay
     float bufferStateSeconds() const;
 
     void shutdown();
+    bool isShutdown() const;
 
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);

@@ -270,6 +270,11 @@ namespace VideoDisplay
     m_d->m_avff = nullptr;
   }
 
+  bool AudioTransfer::isShutdown() const
+  {
+    return m_d->m_avff == nullptr;
+  }
+
   DecodedAudioBuffer * AudioTransfer::takeFreeBuffer(int samples)
   {
     if(m_d->m_readyBuffers >= int(m_d->m_decodedBuffers.size()))
