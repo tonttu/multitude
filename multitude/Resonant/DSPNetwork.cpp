@@ -170,24 +170,32 @@ namespace Resonant {
 
   void DSPNetwork::markDone(Module & m)
   {
-    Radiant::Guard g( m_newMutex);
-    Item * it = findItem(m.id());
+    std::list<Module *> modulesToDelete;
 
-    if(it) {
-      it->m_done = true;
-      m_doneCount++;
-    } else {
-      for(auto it = m_newItems.begin(); it != m_newItems.end();) {
-        Item& item = *it;
-        if(m.id() == item.module()->id()) {
-          //uncompile(item);
-          item.deleteModule();
-          it = m_newItems.erase(it);
-        } else {
-           ++it;
+    {
+      Radiant::Guard g( m_newMutex);
+      Item * it = findItem(m.id());
+
+      if(it) {
+        it->m_done = true;
+        m_doneCount++;
+      } else {
+        for(auto it = m_newItems.begin(); it != m_newItems.end();) {
+          Item& item = *it;
+          if(m.id() == item.module()->id()) {
+            modulesToDelete.push_back(item.module());
+            item.m_module = nullptr;
+            it = m_newItems.erase(it);
+          } else {
+            ++it;
+          }
         }
+        Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
       }
-      Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
+    }
+
+    for(Module * m : modulesToDelete) {
+      delete m;
     }
   }
 
