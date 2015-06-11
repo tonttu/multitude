@@ -97,6 +97,8 @@ namespace VideoDisplay
     class D;
     D * m_d;
   };
+
+  typedef std::shared_ptr<AudioTransfer> AudioTransferPtr;
 }
 
 /// @endcond
