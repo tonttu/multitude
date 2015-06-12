@@ -924,6 +924,11 @@ namespace VideoDisplay
     m_av.duration = 0;
     m_av.videoSize = Nimble::Size();
 
+    if (m_videoFilter.graph)
+      avfilter_graph_free(&m_videoFilter.graph);
+    if (m_audioFilter.graph)
+      avfilter_graph_free(&m_audioFilter.graph);
+
     // Close the codecs
     if(m_av.audioCodecContext || m_av.videoCodecContext) {
       if(m_av.audioCodecContext)
