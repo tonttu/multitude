@@ -490,7 +490,7 @@ namespace Radiant
     /// @return intrusive pointer to another type
     /// @tparam Y Type of the object pointed by pointer returned
     template <typename Y>
-    IntrusivePtr<Y> static_pointer_cast()
+    IntrusivePtr<Y> static_pointer_cast() const
     {
       return IntrusivePtr<Y>(static_cast<Y*>(m_ptr), m_counter);
     }
