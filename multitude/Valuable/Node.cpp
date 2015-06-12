@@ -27,19 +27,21 @@ namespace
 {
   struct QueueItem
   {
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncBd func_,
+    QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
+              Valuable::Node::ListenerFuncBd func_,
               const Radiant::BinaryData & data_)
       : sender(sender_)
       , func2(func_)
-      , target()
+      , target(target_)
       , data(data_)
     {}
 
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncVoid func_)
+    QueueItem(Valuable::Node * sender_,  Valuable::Node * target_,
+              Valuable::Node::ListenerFuncVoid func_)
       : sender(sender_)
       , func(func_)
       , func2()
-      , target()
+      , target(target_)
     {}
 
     QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
@@ -105,16 +107,17 @@ namespace
     queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, to, data)), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncVoid func,
-                  void * once)
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  Valuable::Node::ListenerFuncVoid func, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func)), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncBd func,
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func, data)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func, data)), once);
   }
 }
 
@@ -867,7 +870,7 @@ namespace Valuable
 
   void Node::invokeAfterUpdate(Node::ListenerFuncVoid function)
   {
-    queueEvent(nullptr, function, nullptr);
+    queueEvent(nullptr, nullptr, function, nullptr);
   }
 
   void Node::eventSend(const QByteArray & id, Radiant::BinaryData & bd)
@@ -897,17 +900,17 @@ namespace Valuable
 
         if(vp.m_func) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
-            queueEvent(this, vp.m_func, &vp);
+            queueEvent(this, vp.m_listener, vp.m_func, &vp);
           } else if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_func, 0);
+            queueEvent(this, vp.m_listener, vp.m_func, 0);
           } else {
             vp.m_func();
           }
         } else if(vp.m_func2) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
-            queueEvent(this, vp.m_func2, bdsend, &vp);
+            queueEvent(this, vp.m_listener, vp.m_func2, bdsend, &vp);
           } else if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_func2, bdsend, 0);
+            queueEvent(this, vp.m_listener, vp.m_func2, bdsend, 0);
           } else {
             vp.m_func2(bdsend);
           }
