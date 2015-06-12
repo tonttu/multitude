@@ -181,15 +181,21 @@ namespace Valuable
       Radiant::Guard g(s_queueMutex);
       for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
         auto & item = *it;
-        if(item->target == this)
-          item->target = 0;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
         if(item->sender == this)
           item->sender = 0;
       }
       for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
         auto & item = *it;
-        if(item->target == this)
-          item->target = 0;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
         if(item->sender == this)
           item->sender = 0;
       }
