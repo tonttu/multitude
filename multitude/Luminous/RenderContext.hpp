@@ -716,6 +716,7 @@ namespace Luminous
 /// @cond
 
     const Program & fontShader() const;
+    const Program & splineShader() const;
 
 /// @endcond
 
