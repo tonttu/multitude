@@ -813,14 +813,14 @@ namespace Valuable
     // elements when the QList gets modified inside the loop.
     for(auto i = s_queue.begin(); i != s_queue.end(); ++i) {
       auto & item = *i;
-      if(item->target) {
-        std::swap(item->target->m_sender, item->sender);
-        item->target->eventProcess(item->to, item->data);
-        std::swap(item->target->m_sender, item->sender);
-      } else if(item->func) {
+      if(item->func) {
         item->func();
       } else if(item->func2) {
         item->func2(item->data);
+      } else if(item->target) {
+        std::swap(item->target->m_sender, item->sender);
+        item->target->eventProcess(item->to, item->data);
+        std::swap(item->target->m_sender, item->sender);
       }
       // can't call "delete item" here, because that eventProcess call could
       // call some destructors that iterate s_queue
