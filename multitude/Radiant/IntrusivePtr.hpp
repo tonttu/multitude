@@ -69,7 +69,7 @@ namespace Radiant
 #define INTRUSIVE_PTR_DEBUG_MOVE
 #endif
 
-inline uint qHash(uintptr_t, uint seed) noexcept;
+inline uint qHash(uintptr_t);
 
 namespace Radiant
 {
@@ -721,15 +721,15 @@ namespace Radiant
   template <typename T, typename Y> inline bool operator!= (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return rhs != lhs; }
 
   template <typename T>
-  inline uint qHash(const IntrusivePtr<T> & k) noexcept
+  inline uint qHash(const IntrusivePtr<T> & k)
   {
-    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()), 0);
+    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()));
   }
 
   template <typename T>
-  inline uint qHash(const IntrusiveWeakPtr<T> & k) noexcept
+  inline uint qHash(const IntrusiveWeakPtr<T> & k)
   {
-    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()), 0);
+    return ::qHash(reinterpret_cast<uintptr_t>(k.counter()));
   }
 }
 
