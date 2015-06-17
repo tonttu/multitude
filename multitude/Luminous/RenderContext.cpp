@@ -1277,6 +1277,12 @@ namespace Luminous
     return m_data->m_driverGL->handle(texture);
   }
 
+  TextureGL * RenderContext::findHandle(const Texture & texture)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->findHandle(texture);
+  }
+
   BufferGL & RenderContext::handle(const Buffer & buffer)
   {
     assert(m_data->m_driverGL);

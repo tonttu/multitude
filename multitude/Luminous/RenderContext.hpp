@@ -593,6 +593,9 @@ namespace Luminous
     /// @return Handle to OpenGL resources of given texture
     TextureGL & handle(const Texture & texture);
 
+    /// @see RenderDriverGL::findHandle
+    TextureGL * findHandle(const Texture & texture);
+
     /// Returns the GL resources handle corresponding to given frame buffer.
     /// @param target CPU side object representing the frame buffer
     /// @return Handle to OpenGL resources of given frame buffer

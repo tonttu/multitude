@@ -66,6 +66,11 @@ namespace Luminous
     LUMINOUS_API RenderBufferGL & handle(const RenderBuffer & buffer);
     LUMINOUS_API FrameBufferGL & handle(const FrameBuffer & target);
 
+    /// @todo All handle()-functions should return pointers and have optional
+    ///       flags argument specifying if we want to create missing handles
+    ///       and synchronize (upload) data.
+    LUMINOUS_API TextureGL * findHandle(const Texture & texture);
+
     LUMINOUS_API void pushFrameBuffer(const FrameBuffer & target);
     LUMINOUS_API void popFrameBuffer();
 
