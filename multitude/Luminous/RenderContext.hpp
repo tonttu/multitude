@@ -318,6 +318,7 @@ namespace Luminous
     /// Get the current opacity
     /// @return the current opacity
     float opacity() const;
+    void setOpacity(float opacity);
 
     /// Pushes new frame buffer to the stack.
     /// @param target frame buffer for rendering commands.
