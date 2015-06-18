@@ -464,6 +464,8 @@ namespace Luminous
     /// last reset. This can be useful for checking that object culling works as intended.
     void addRenderCounter();
 
+    unsigned long renderCounter() const;
+
     /// Increases the unfinished render counter by one.
     /// @see unfinishedRenderCounter
     void addUnfinishedRenderCounter();
@@ -477,7 +479,7 @@ namespace Luminous
     /// This is useful for example when rendering a scene to FBO and checking
     /// if everything was rendered there properly already this frame, or should
     /// the rendering be tried again on next frame.
-    long unfinishedRenderCounter() const;
+    unsigned long unfinishedRenderCounter() const;
 
     /// Returns the size of the window of this RenderContext object.
     /// @return If the window is null, then Nimble::Size(10,10) is returned.

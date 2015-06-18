@@ -656,12 +656,17 @@ namespace Luminous
     m_data->m_renderCount++;
   }
 
+  unsigned long RenderContext::renderCounter() const
+  {
+    return m_data->m_renderCount;
+  }
+
   void RenderContext::addUnfinishedRenderCounter()
   {
     ++m_data->m_unfinishedRenderCount;
   }
 
-  long RenderContext::unfinishedRenderCounter() const
+  unsigned long RenderContext::unfinishedRenderCounter() const
   {
     return m_data->m_unfinishedRenderCount;
   }
