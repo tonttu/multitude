@@ -104,7 +104,7 @@ namespace Valuable
       : AttributeNumericT<T>(host, name, v, transit),
         AttributeEnum()
     {
-      for (const EnumNames * it = names; it->name; ++it) {
+      for (const EnumNames * it = names; it && it->name; ++it) {
         m_enumValues[QString(it->name).toLower()] = it->value;
       }
     }
