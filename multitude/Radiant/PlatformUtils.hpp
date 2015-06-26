@@ -64,6 +64,16 @@ namespace Radiant
     /// @param name name of the environment variable
     /// @param value value of the environment variable
     RADIANT_API void setEnv(const QString & name, const QString & value);
+
+    /// Creates a hard link at from, pointing to to
+    /// @param from path where the new link will be created
+    /// @param to existing file, target of the new link
+    RADIANT_API bool createHardLink(const QString & from, const QString & to);
+
+    /// Returns the number of hard links to the file.
+    /// @param file file path
+    /// @returns the number of hard links or -1 on error
+    RADIANT_API int numberOfHardLinks(const QString & file);
   }
 
 }
