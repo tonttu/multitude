@@ -276,7 +276,7 @@ DSPNetwork::instance().send(control);
 
     bool hasPanner() const { return m_panner != nullptr; }
     /// Returns the panner module or NULL
-    ModulePanner * panner() { return m_panner; }
+    std::shared_ptr<ModulePanner> panner() { return m_panner; }
 
     std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
