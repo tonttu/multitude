@@ -18,6 +18,7 @@
 #include "Trace.hpp"
 
 #include <dlfcn.h>
+#include <sys/stat.h>
 
 #include <mach/task.h>
 #include <mach/mach_traps.h>
@@ -122,6 +123,29 @@ namespace Radiant
         Radiant::error("PlatformUtils::setEnv # Failed to set environment variable %s: %s",
                        name.toUtf8().data(), strerror(e));
       }
+    }
+
+    bool createHardLink(const QString & from, const QString & to)
+    {
+      const char * fromPtr = from.toUtf8().data();
+      const char * toPtr = to.toUtf8().data();
+      int res = link(fromPtr, toPtr);
+      if(res < 0) {
+        Radiant::error("PlatformUtils::createHardLink # Failed to create hard link from '%s' to '%s': %s",
+                       fromPtr, toPtr, strerror(errno));
+      }
+      return res == 0;
+    }
+
+    int numberOfHardLinks(const QString & file)
+    {
+      struct stat result;
+      if(stat(file.toUtf8().data(), &result) < 0) {
+        Radiant::error("PlatformUtils::numberOfHardLinks # Failed to stat file '%s': %s",
+                       file.toUtf8().data(), strerror(errno));
+        return -1;
+      }
+      return result.st_nlink;
     }
 
   }
