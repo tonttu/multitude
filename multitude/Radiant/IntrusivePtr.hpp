@@ -15,6 +15,7 @@
 #include "SafeBool.hpp"
 
 #include <cassert>
+#include <functional>
 
 #include <QAtomicInt>
 
