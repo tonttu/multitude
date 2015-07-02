@@ -10,7 +10,7 @@
 #include "ResourceLocator.hpp"
 #include "Platform.hpp"
 
-#include <QAbstractFileEngineHandler>
+#include <QFSFileEngine>
 #include <QStringList>
 #include <QVector>
 
@@ -97,6 +97,16 @@ namespace {
 
 namespace Radiant
 {
+  class ResourceLocatorFileEngine : public QFSFileEngine
+  {
+  public:
+    ResourceLocatorFileEngine(const QString & file) : QFSFileEngine(file) {}
+    // We are wrapping file that has absolute path, but from a user point
+    // of view this is always relative, since the path user gave was relative.
+    // Without this for example QFileInfo("style.css").isAbsolute() would
+    // return true if there was style.css somewhere in the search path.
+    virtual bool isRelativePath() const OVERRIDE { return true; }
+  };
 
   class ResourceLocator::D : public QAbstractFileEngineHandler
   {
@@ -115,11 +125,11 @@ namespace Radiant
       QStringList matches = locate(fileName, ResourceLocator::ALL_ENTRIES);
 
       // If there was no match, return 0 meaning we can't handle this file;
-      // otherwise return the default handler for the new filename
+      // otherwise return our wrapped handler for the new filename
       if(matches.isEmpty())
         return 0;
       else
-        return QAbstractFileEngine::create(matches.front());
+        return new ResourceLocatorFileEngine(matches.front());
     }
 
     QStringList locate(const QString & path, ResourceLocator::Filter filter) const
