@@ -196,7 +196,9 @@ namespace
     if(level > AV_LOG_WARNING) {
       Radiant::info("%s", msg.toUtf8().data());
     } else if(level > AV_LOG_ERROR) {
-      Radiant::warning("%s", msg.toUtf8().data());
+      if (!msg.contains("max_analyze_duration reached")) {
+        Radiant::warning("%s", msg.toUtf8().data());
+      }
     } else {
       Radiant::error("%s", msg.toUtf8().data());
     }
