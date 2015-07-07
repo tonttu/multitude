@@ -317,6 +317,10 @@ namespace Radiant
   void BGThread::shutdown()
   {
     m_isShuttingDown = true;
+
+    container taskQueue;
+    std::set<TaskPtr> reserved;
+
     {
       Radiant::Guard g(m_mutexWait);
 
@@ -331,9 +335,14 @@ namespace Radiant
       for (auto & task: m_runningTasks)
         task->setCanceled();
 
-      m_taskQueue.clear();
-      m_reserved.clear();
+      std::swap(taskQueue, m_taskQueue);
+      std::swap(reserved, m_reserved);
     }
+
+    /// Do not lock m_mutexWait while clearing these, since ~Task() might
+    /// trigger something that calls BGThread::removeTask.
+    taskQueue.clear();
+    reserved.clear();
 
     /// @todo spin-lock is not very elegant, but we need to wait until all
     /// running tasks have been cleared.
