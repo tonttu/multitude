@@ -1680,14 +1680,14 @@ namespace VideoDisplay
   LibavDecoder::~LibavDecoder()
   {
     close();
+    if(isRunning())
+      waitEnd();
     while(true) {
       AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
       if(!ref) break;
       avfilter_unref_buffer(*ref);
       m_d->m_consumedBufferRefs.next();
     }
-    if(isRunning())
-      waitEnd();
     m_d->close();
     delete m_d;
   }
