@@ -238,6 +238,10 @@ namespace Radiant
     while(running()) {
       Radiant::TimeStamp wait = Radiant::TimeStamp(std::numeric_limits<Radiant::TimeStamp::type>::max());
 
+      // We need to delete this task after m_mutexWait has been released,
+      // otherwise there is a risk of getting a deadlock.
+      std::shared_ptr<Task> reservedTask;
+
       Radiant::Guard guard(m_mutexWait);
 
       container::iterator nextTask = m_taskQueue.end();
@@ -264,13 +268,13 @@ namespace Radiant
         m_idleWait.wait(m_mutexWait);
         --m_idle;
       } else {
-        std::shared_ptr<Task> task = nextTask->second;
-        m_reserved.insert(task);
+        reservedTask = nextTask->second;
+        m_reserved.insert(reservedTask);
         double waitTime = wait.secondsD() * 1000.0;
         unsigned int waitTimei = waitTime > std::numeric_limits<unsigned int>::max()
             ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTime);
         m_wait.wait(m_mutexWait, waitTimei);
-        m_reserved.erase(task);
+        m_reserved.erase(reservedTask);
       }
     }
     return std::shared_ptr<Task>();
