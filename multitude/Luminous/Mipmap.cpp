@@ -537,10 +537,16 @@ namespace Luminous
       if(!compressedMipmapTs.isValid()) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
         auto weak = m_mipmap;
-        mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) {
+        mipmap.m_mipmapGenerator->setListener([=] (bool ok, const ImageInfo & imginfo) {
           auto ptr = weak.lock();
-          if (ptr)
-            ptr->setMipmapReady(imginfo);
+          if (ptr) {
+            if (ok) {
+              ptr->setMipmapReady(imginfo);
+            } else {
+              ptr->m_d->m_mipmapGenerator.reset();
+              ptr->m_d->m_state = Valuable::STATE_ERROR;
+            }
+          }
         });
       }
     }

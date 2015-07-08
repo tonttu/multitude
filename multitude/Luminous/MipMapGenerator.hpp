@@ -54,7 +54,7 @@ namespace Luminous {
 
     /// Set a listener to this task. Listener is called when the mipmaps are ready.
     /// @param func the listener
-    LUMINOUS_API void setListener(std::function<void (const ImageInfo &)> func);
+    LUMINOUS_API void setListener(std::function<void (bool ok, const ImageInfo &)> func);
 
     /// Chooses automatically the best pixel format for source image
     /// @param img The image whose ideal mipmap format we are deducing.
@@ -73,7 +73,7 @@ namespace Luminous {
     std::vector<unsigned char> m_outBuffer;
     unsigned char * m_out;
 
-    std::function<void (const ImageInfo &)> m_listener;
+    std::function<void (bool ok, const ImageInfo &)> m_listener;
 
     int m_flags;
   };
