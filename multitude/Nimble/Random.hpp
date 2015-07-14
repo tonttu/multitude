@@ -194,7 +194,7 @@ namespace Nimble {
       return std::uniform_int_distribution<uint32_t>(0,1)(m_rand);
     }
 
-    /// Returns a reference to an instance
+    /// Returns a reference to an instance. This function is not thread-safe.
     static RandomUniform & instance() { return m_instance; }
 
   private:

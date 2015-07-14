@@ -114,6 +114,9 @@ namespace Luminous
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
 
+    LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
+    LUMINOUS_API virtual unsigned int gpuId() const = 0;
+
   private:
     // Not exported, should only be used by the render manager
     friend class RenderManager;

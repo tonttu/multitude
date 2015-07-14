@@ -25,6 +25,7 @@
 #include "Luminous/BlendMode.hpp"
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
+#include "Luminous/GPUAssociation.hpp"
 #include "RenderQueues.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -63,6 +64,7 @@ namespace Luminous
       , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
+      , m_gpuId(static_cast<unsigned int>(-1))
     {
       m_state.program = nullptr;
       m_state.textures[0] = nullptr;
@@ -116,6 +118,9 @@ namespace Luminous
     Radiant::Timer m_frameTimer;  // Time since begin of frame
     uint64_t m_frame;             // Current frame number
     double m_fps;                 // Frames per second
+
+    // GPU id (AMD_gpu_association)
+    unsigned int m_gpuId;
 
   public:
 
@@ -902,10 +907,9 @@ namespace Luminous
       // memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
 
-    } else if(GLEW_ATI_meminfo) {
+    } else if(GPUAssociation::isSupported()) {
 
-      /// @todo this makes no sense, it is not the total dedicated memory
-      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      result[0] = GPUAssociation::gpuRam(gpuId()) * 1024;
     }
 
     return result[0];
@@ -976,6 +980,17 @@ namespace Luminous
   {
     m_d->m_stateGL.setUpdateFrequency(Nimble::Math::Round(fps));
   }
+
+  void RenderDriverGL::setGPUId(unsigned int gpuId)
+  {
+    m_d->m_gpuId = gpuId;
+  }
+
+  unsigned int RenderDriverGL::gpuId() const
+  {
+    return m_d->m_gpuId;
+  }
+
 }
 
 #undef GLERROR
