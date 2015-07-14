@@ -49,18 +49,6 @@
 #include <QStringList>
 #include <QVector>
 
-// GL_NVX_gpu_memory_info (NVIDIA)
-#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
-#define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
-#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
-#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
-#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
-
-// GL_ATI_meminfo
-#define VBO_FREE_MEMORY_ATI                     0x87FB
-#define TEXTURE_FREE_MEMORY_ATI                 0x87FC
-#define RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
-
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
@@ -883,13 +871,13 @@ namespace Luminous
   {
     GLint result[4] = {0};
 
-    if(glewIsSupported("GL_NVX_gpu_memory_info")) {
+    if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, current available dedicated video memory (in kb),
       // currently unused GPU memory
-      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
 
-    } else if(glewIsSupported("GL_ATI_meminfo")) {
+    } else if(GLEW_ATI_meminfo) {
 
       // The query returns a 4-tuple integer where the values are in Kbyte and
       // have the following meanings:
@@ -897,7 +885,7 @@ namespace Luminous
       // param[1] - largest available free block in the pool
       // param[2] - total auxiliary memory free
       // param[3] - largest auxiliary free block
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, result);
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
 
     }
 
@@ -908,16 +896,16 @@ namespace Luminous
   {
     GLint result[4] = {0};
 
-    if(glewIsSupported("GL_NVX_gpu_memory_info")) {
+    if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, dedicated video memory, total size (in kb) of the GPU
       // memory
-      glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
 
-    } else if(glewIsSupported("GL_ATI_meminfo")) {
+    } else if(GLEW_ATI_meminfo) {
 
       /// @todo this makes no sense, it is not the total dedicated memory
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, result);
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
     }
 
     return result[0];
