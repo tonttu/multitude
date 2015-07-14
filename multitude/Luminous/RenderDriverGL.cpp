@@ -881,47 +881,46 @@ namespace Luminous
 
   unsigned long RenderDriverGL::availableGPUMemory() const
   {
-    static bool nv_supported = false, ati_supported = false, checked = false;
-    GLint res[4] = {0};
-    if(!checked) {
-      checked = true;
-      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
-      nv_supported = (glGetError() == GL_NO_ERROR);
-      if(nv_supported)
-        return res[0];
+    GLint result[4] = {0};
 
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
-      ati_supported = (glGetError() == GL_NO_ERROR);
-    } else if (nv_supported) {
-      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
-    } else if (ati_supported) {
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+    if(glewIsSupported("GL_NVX_gpu_memory_info")) {
+
+      // Returns GLint, current available dedicated video memory (in kb),
+      // currently unused GPU memory
+      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+
+    } else if(glewIsSupported("GL_ATI_meminfo")) {
+
+      // The query returns a 4-tuple integer where the values are in Kbyte and
+      // have the following meanings:
+      // param[0] - total memory free in the pool
+      // param[1] - largest available free block in the pool
+      // param[2] - total auxiliary memory free
+      // param[3] - largest auxiliary free block
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, result);
+
     }
 
-    return res[0];
+    return static_cast<unsigned long>(result[0]);
   }
 
   unsigned long RenderDriverGL::maxGPUMemory() const
   {
-    GLint res[4] = {0};
-    /// Try NVidia
-    glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, res);
-    if(glGetError() == GL_NO_ERROR)
-      return res[0];
+    GLint result[4] = {0};
 
-    /// Try ATI
-    glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
-    if(glGetError() == GL_NO_ERROR) {
-      /*
-      param[0] - total memory free in the pool
-      param[1] - largest available free block in the pool
-      param[2] - total auxiliary memory free
-      param[3] - largest auxiliary free block
-      */
-      return res[0];
+    if(glewIsSupported("GL_NVX_gpu_memory_info")) {
+
+      // Returns GLint, dedicated video memory, total size (in kb) of the GPU
+      // memory
+      glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+
+    } else if(glewIsSupported("GL_ATI_meminfo")) {
+
+      /// @todo this makes no sense, it is not the total dedicated memory
+      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, result);
     }
 
-    return 0;
+    return result[0];
   }
 
   int64_t RenderDriverGL::uploadLimit() const
