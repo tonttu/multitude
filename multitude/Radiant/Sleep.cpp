@@ -13,6 +13,11 @@
 #include "Mutex.hpp"
 #include "Timer.hpp"
 
+#if defined(RADIANT_WINDOWS)
+  #include <Windows.h>
+#else
+  #include <unistd.h>
+#endif
 
 #include <time.h>
 
