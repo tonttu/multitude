@@ -568,8 +568,8 @@ namespace Radiant {
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
 
-        template class GridT<float, GridNoMemT<double>>;
-        template class GridT<float, GridMemT<double>>;
+        template class GridT<double, GridNoMemT<double>>;
+        template class GridT<double, GridMemT<double>>;
 
         template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
         template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
