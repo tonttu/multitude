@@ -30,6 +30,7 @@
 #include <QSet>
 #include <QString>
 #include <QThread>
+#include <QFileInfo>
 
 #include <array>
 #include <cassert>
@@ -600,6 +601,20 @@ namespace VideoDisplay
         }
       }
     }
+
+#ifdef RADIANT_LINUX
+    /// Detect video4linux2 devices automatically
+    if (m_options.format().isEmpty()) {
+      QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
+      if (v4l2m.exactMatch(src)) {
+        m_options.setFormat("video4linux2");
+      } else {
+        QFileInfo fi(src);
+        if (fi.isSymLink() && v4l2m.exactMatch(fi.symLinkTarget()))
+          m_options.setFormat("video4linux2");
+      }
+    }
+#endif
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
@@ -1933,6 +1948,13 @@ namespace VideoDisplay
 
     m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
+
+    int lastError = 0;
+    int consecutiveErrorCount = 0;
+    /// With v4l2 streams on some devices (like Inogeni DVI capture cards) lots
+    /// of errors in the beginning is normal
+    int maxConsecutiveErrors = 50;
+
     while(m_d->m_running) {
       m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames());
 
@@ -1967,17 +1989,32 @@ namespace VideoDisplay
           continue;
         } else
         if(err != AVERROR_EOF) {
-          avError(QString("%1 Read error").arg(errorMsg.data()), err);
-          state() = STATE_ERROR;
-          s_src = nullptr;
-          return;
+          if (err == lastError) {
+            if (++consecutiveErrorCount > maxConsecutiveErrors) {
+              state() = STATE_ERROR;
+              s_src = nullptr;
+              return;
+            }
+          } else {
+            avError(QString("%1 Read error").arg(errorMsg.data()), err);
+            lastError = err;
+          }
+          ++consecutiveErrorCount;
+          Radiant::Sleep::sleepMs(1);
+          continue;
         }
+
+        lastError = 0;
+        consecutiveErrorCount = 0;
 
         if(av.needFlushAtEof) {
           eof = EofState::Flush;
         } else {
           eof = EofState::Eof;
         }
+      } else {
+        lastError = 0;
+        consecutiveErrorCount = 0;
       }
 
       // We really are at the end of the stream and we have flushed all the packages
