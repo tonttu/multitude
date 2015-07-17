@@ -514,41 +514,57 @@ namespace Radiant {
     }
   }
 
+  /// A read-only grid of bytes without memory management
+  typedef GridT<const uint8_t, GridNoMemT<const uint8_t>> PtrGridConst8u;
   /// A grid of bytes without memory management
   typedef GridT<uint8_t, GridNoMemT<uint8_t> > PtrGrid8u;
   /// A grid of bytes with memory management
   typedef GridT<uint8_t, GridMemT<uint8_t> >   MemGrid8u;
 
+  /// A read-only grid of 16-bit values without memory management
+  typedef GridT<const uint16_t, GridNoMemT<const uint16_t>> PtrGridConst16u;
   /// A grid of 16-bit values without memory management
   typedef GridT<uint16_t, GridNoMemT<uint16_t> > PtrGrid16u;
   /// A grid of 16-bit values with memory management
   typedef GridT<uint16_t, GridMemT<uint16_t> >   MemGrid16u;
 
+  /// A read-only grid of 32-bit values without memory management
+  typedef GridT<const uint32_t, GridNoMemT<const uint32_t>> PtrGridConst32u;
   /// A grid of 32-bit values without memory management
   typedef GridT<uint32_t, GridNoMemT<uint32_t> > PtrGrid32u;
   /// A grid of 32-bit values with memory management
   typedef GridT<uint32_t, GridMemT<uint32_t> >   MemGrid32u;
 
+  /// A read-only grid of floats without memory management
+  typedef GridT<const float, GridNoMemT<const float>> PtrGridConst32f;
   /// A grid of floats without memory management
   typedef GridT<float, GridNoMemT<float> > PtrGrid32f;
   /// A grid of floats with memory management
   typedef GridT<float, GridMemT<float> >   MemGrid32f;
 
+  /// A read-only grid of doubles without memory management
+  typedef GridT<const double, GridNoMemT<const double>> PtrGridConst64f;
   /// A grid of doubles without memory management
   typedef GridT<double, GridNoMemT<double> > PtrGrid64f;
   /// A grid of doubles with memory management
   typedef GridT<double, GridMemT<double> >   MemGrid64f;
 
+  /// A read-only grid of Vector2s without memory management
+  typedef GridT<const Nimble::Vector2, GridNoMemT<const Nimble::Vector2>> PtrGridConstVector2;
   /// A grid of Vector2s without memory management
   typedef GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2> > PtrGridVector2;
   /// A grid of Vector2s with memory management
   typedef GridT<Nimble::Vector2, GridMemT<Nimble::Vector2> >   MemGridVector2;
 
+  /// A read-only grid of Vector3s without memory management
+  typedef GridT<const Nimble::Vector3, GridNoMemT<const Nimble::Vector3>> PtrGridConstVector3;
   /// A grid of Vector3s without memory management
   typedef GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3> > PtrGridVector3;
   /// A grid of Vector3s with memory management
   typedef GridT<Nimble::Vector3, GridMemT<Nimble::Vector3> >   MemGridVector3;
 
+  /// A read-only grid of Vector4s without memory management
+  typedef GridT<const Nimble::Vector4, GridNoMemT<const Nimble::Vector4>> PtrGridConstVector4;
   /// A grid of Vector4s without memory management
   typedef GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4> > PtrGridVector4;
   /// A grid of Vector4s with memory management
@@ -556,27 +572,35 @@ namespace Radiant {
 
 #ifdef WIN32
     #ifdef RADIANT_EXPORT
+        template class GridT<const uint8_t, GridNoMemT<const uint8_t>>;
         template class GridT<uint8_t, GridNoMemT<uint8_t>>;
         template class GridT<uint8_t, GridMemT<uint8_t>>;
 
+        template class GridT<const uint16_t, GridNoMemT<const uint16_t>>;
         template class GridT<uint16_t, GridNoMemT<uint16_t>>;
         template class GridT<uint16_t, GridMemT<uint16_t>>;
 
+        template class GridT<const uint32_t, GridNoMemT<const uint32_t>>;
         template class GridT<uint32_t, GridNoMemT<uint32_t>>;
         template class GridT<uint32_t, GridMemT<uint32_t>>;
 
+        template class GridT<const float, GridNoMemT<const float>>;
         template class GridT<float, GridNoMemT<float>>;
         template class GridT<float, GridMemT<float>>;
 
+        template class GridT<const double, GridNoMemT<const double>>;
         template class GridT<double, GridNoMemT<double>>;
         template class GridT<double, GridMemT<double>>;
 
+        template class GridT<const Nimble::Vector2, GridNoMemT<const Nimble::Vector2>>;
         template class GridT<Nimble::Vector2, GridNoMemT<Nimble::Vector2>>;
         template class GridT<Nimble::Vector2, GridMemT<Nimble::Vector2>>;
 
+        template class GridT<const Nimble::Vector3, GridNoMemT<const Nimble::Vector3>>;
         template class GridT<Nimble::Vector3, GridNoMemT<Nimble::Vector3>>;
         template class GridT<Nimble::Vector3, GridMemT<Nimble::Vector3>>;
 
+        template class GridT<const Nimble::Vector4, GridNoMemT<const Nimble::Vector4>>;
         template class GridT<Nimble::Vector4, GridNoMemT<Nimble::Vector4>>;
         template class GridT<Nimble::Vector4, GridMemT<Nimble::Vector4>>;
     #endif
