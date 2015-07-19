@@ -257,13 +257,13 @@ DSPNetwork::instance().send(control);
 
     /// Returns the default sample player object.
     /// If the object does not exis yet, it is created on the fly.
-    /// This is not thread-safe
     /// @return Default sampley player object
-    ModuleSamplePlayer * samplePlayer();
+    std::shared_ptr<ModuleSamplePlayer> samplePlayer();
 
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
+    // ItemPtr findItem(const QByteArray & id);
     ItemPtr findItem(const QByteArray & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
@@ -276,7 +276,7 @@ DSPNetwork::instance().send(control);
 
     bool hasPanner() const { return m_panner != nullptr; }
 
-    std::size_t itemCount() const { return m_items.size(); }
+    std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
   private:
     /// Creates an empty DSPNetwork object.
@@ -306,6 +306,9 @@ DSPNetwork::instance().send(control);
     long countBufferBytes();
     void doDumpInfo(FILE *f);
 
+    /// m_itemMutex must be locked in order to call this function
+    ItemPtr findItemUnsafe(const QByteArray & id);
+
     container m_items;
 
     container m_newItems;
@@ -334,7 +337,7 @@ DSPNetwork::instance().send(control);
     } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
-    Radiant::Mutex m_itemMutex;
+    mutable Radiant::Mutex m_itemMutex;
 
     Radiant::Mutex m_startupMutex;
   };

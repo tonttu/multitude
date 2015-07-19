@@ -169,7 +169,7 @@ namespace Resonant {
     {
       Radiant::Guard g1( m_newMutex);
       Radiant::Guard g2( m_itemMutex);
-      ItemPtr it = findItem(m.id());
+      ItemPtr it = findItemUnsafe(m.id());
 
       if(it) {
         it->m_done = true;
@@ -204,15 +204,15 @@ namespace Resonant {
     m_incoming.append(control);
   }
 
-  ModuleSamplePlayer * DSPNetwork::samplePlayer()
+  std::shared_ptr<ModuleSamplePlayer> DSPNetwork::samplePlayer()
   {
     ModulePtr m = findModule("sampleplayer");
 
     if(m)
-      return dynamic_cast<ModuleSamplePlayer *>(&* m);
+      return std::dynamic_pointer_cast<ModuleSamplePlayer>(m);
 
     Resonant::DSPNetwork::Item item;
-    Resonant::ModuleSamplePlayer * player = new Resonant::ModuleSamplePlayer();
+    auto player = std::make_shared<Resonant::ModuleSamplePlayer>();
     item.setModule(player);
     player->setId("sampleplayer");
     item.setUsePanner(false);
@@ -484,7 +484,7 @@ namespace Resonant {
         if(m_panner && itptr->usePanner()) {
           //info("Adding %d inputs to the panner", mchans);
 
-          ItemPtr oi = findItem(m_panner->id());
+          ItemPtr oi = findItemUnsafe(m_panner->id());
           for(int i = 0; i < mchans; i++) {
 
             Connection conn;
@@ -511,7 +511,7 @@ namespace Resonant {
         }
 
 
-        ItemPtr oi = findItem(m_collect->id());
+        ItemPtr oi = findItemUnsafe(m_collect->id());
 
         if(!oi)
           Radiant::fatal("DSPNetwork::checkNewItems # No collector \"%s\"",
@@ -594,7 +594,7 @@ namespace Resonant {
 
             m_panner->eventProcess("removesource", m_controlData);
 
-            ItemPtr oi = findItem(m_panner->id());
+            ItemPtr oi = findItemUnsafe(m_panner->id());
             oi->eraseInputs(item.m_module->id());
           }
 
@@ -648,7 +648,7 @@ namespace Resonant {
     // int outchans = 2; // hardware output channels
 
     if(mchans) {
-      ItemPtr oi = findItem(m_collect->id());
+      ItemPtr oi = findItemUnsafe(m_collect->id());
       assert(oi);
 
       m_controlData.rewind();
@@ -800,6 +800,12 @@ namespace Resonant {
 
   DSPNetwork::ItemPtr DSPNetwork::findItem(const QByteArray & id)
   {
+    Radiant::Guard g(m_itemMutex);
+    return findItemUnsafe(id);
+  }
+
+  DSPNetwork::ItemPtr DSPNetwork::findItemUnsafe(const QByteArray & id)
+  {
     for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
       ItemPtr item = (*it);
       if(item->m_module->id() == id) {
@@ -822,7 +828,7 @@ namespace Resonant {
       index++;
     }
 
-    while(findItem(m->id())) {
+    while(findItemUnsafe(m->id())) {
       if(!index)
         sprintf(buf, "%p", m.get());
       else
@@ -850,7 +856,7 @@ namespace Resonant {
 
   float * DSPNetwork::findOutput(const QByteArray & id, int channel)
   {
-    ItemPtr item = findItem(id);
+    ItemPtr item = findItemUnsafe(id);
 
     if(!item)
       return 0;
