@@ -196,7 +196,7 @@ namespace
     if(level > AV_LOG_WARNING) {
       Radiant::info("%s", msg.toUtf8().data());
     } else if(level > AV_LOG_ERROR) {
-      if (!msg.contains("max_analyze_duration reached")) {
+      if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
         Radiant::warning("%s", msg.toUtf8().data());
       }
     } else {
