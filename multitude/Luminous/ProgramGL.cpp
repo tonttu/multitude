@@ -185,11 +185,11 @@ namespace Luminous
 
     /// @todo we should have ShaderGL sharing through driver, for now they aren't shared
     m_shaders.clear();
+    m_shaders.resize(program.shaderCount());
 
     for(std::size_t i = 0; i < program.shaderCount(); ++i) {
       Shader & shader = program.shader(i);
-      m_shaders.push_back(std::move(ShaderGL()));
-      ShaderGL & shadergl = m_shaders.back();
+      ShaderGL & shadergl = m_shaders[i];
       shadergl.compile(shader);
 
       // Attach to the program
