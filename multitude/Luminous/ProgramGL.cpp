@@ -126,6 +126,7 @@ namespace Luminous
     , m_attributes(std::move(program.m_attributes))
     , m_uniforms(std::move(program.m_uniforms))
     , m_uniformBlocks(std::move(program.m_uniformBlocks))
+    , m_vertexDescription(std::move(program.m_vertexDescription))
     , m_sampleShading(std::move(program.m_sampleShading))
     , m_linked(program.m_linked)
   {
@@ -138,6 +139,7 @@ namespace Luminous
     std::swap(m_attributes, program.m_attributes);
     std::swap(m_uniforms, program.m_uniforms);
     std::swap(m_uniformBlocks, program.m_uniformBlocks);
+    std::swap(m_vertexDescription, program.m_vertexDescription);
     std::swap(m_sampleShading, program.m_sampleShading);
     std::swap(m_linked, program.m_linked);
     return *this;
