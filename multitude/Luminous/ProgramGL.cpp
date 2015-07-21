@@ -12,6 +12,8 @@
 
 #include "Luminous/Program.hpp"
 
+#include <Radiant/Mutex.hpp>
+
 #include <QByteArray>
 #include <QStringList>
 #include <cassert>
@@ -176,10 +178,17 @@ namespace Luminous
     bind();
   }
 
+  static Radiant::Mutex s_linkAndCompileLock;
   void ProgramGL::link(const Program & program)
   {
     if(m_linked)
       return;
+
+    /// AMD FirePro driver 14.301.1010 randomly crashes on
+    /// glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled) if compiling
+    /// shaders from multiple contexts/threads at the same time. Try to work
+    /// around this issue by having a lock here.
+    Radiant::Guard g(s_linkAndCompileLock);
 
     /// @todo better error handling
 
