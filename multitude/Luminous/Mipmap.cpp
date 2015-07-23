@@ -622,7 +622,8 @@ namespace Luminous
   void MipmapReleaseTask::check(float wait)
   {
     auto task = s_releaseTask.lock();
-    if (task && (task->scheduled() - Radiant::TimeStamp::currentTime()).secondsD() > wait) {
+    /// @todo thread safety, task might be running/rescheduling concurrently
+    if (task && (task->secondsUntilScheduled() > wait)) {
       task->scheduleFromNowSecs(wait);
       Radiant::BGThread::instance()->reschedule(task);
     }
