@@ -298,6 +298,9 @@ namespace Valuable
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
 
+    long eventAddListener(const QByteArray & eventId, Node * dstNode, ListenerFuncVoid func, ListenerType listenerType = DIRECT);
+    long eventAddListenerBd(const QByteArray & eventId, Node * dstNode, ListenerFuncBd func, ListenerType listenerType = DIRECT);
+
     /** Add an event listener to this object.
         This function is part of the event passing framework. After calling this,
         @a func will be called whenever this object has events with @a eventId.
@@ -446,7 +449,6 @@ namespace Valuable
     /// The application can also be stopped by calling Radiant::fatal (haltApplication = true).
     static void setFatalOnEventMismatch(bool haltApplication);
 
-  protected:
 
     /// Sends an event and bd to all listeners on this eventId
     void eventSend(const QByteArray & eventId, Radiant::BinaryData & bd);
@@ -522,6 +524,8 @@ namespace Valuable
       bd.write(p5);
       eventSend(eventId, bd);
     }
+
+  protected:
 
     /// Get the sender of the event, only valid in DIRECT events
     /// @returns the sender of the event, can be read in eventProcess()

@@ -51,11 +51,8 @@ namespace Luminous
     GLuint m_handle;
 
   private:
-    // With new enough compiler (GCC 4.7) using just private copy
-    // ctor/assignment don't work as expected, you need to use = delete,
-    // but then again, that doesn't work in msvc2010.
-    /*ShaderGL(const ShaderGL &) = delete;
-    ShaderGL & operator=(const ShaderGL &) = delete;*/
+    ShaderGL(const ShaderGL &);
+    ShaderGL & operator=(const ShaderGL &);
   };
 
   /// This class represents the Program object in GPU memory

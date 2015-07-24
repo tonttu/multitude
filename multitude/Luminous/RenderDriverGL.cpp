@@ -331,7 +331,6 @@ namespace Luminous
                                                          const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     m_state.program = &m_driver.handle(shader);
-    m_state.program->link(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 

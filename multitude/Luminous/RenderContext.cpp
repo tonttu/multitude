@@ -109,6 +109,15 @@ namespace Luminous
       m_fontShader.setVertexDescription(desc);
       m_fontShader.setSampleShading(1.0f);
 
+      m_splineShader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
+      m_splineShader.loadShader("Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2f>("vertex_range");
+      desc.addAttribute<Nimble::Vector4f>("vertex_color");
+      m_splineShader.setVertexDescription(desc);
+      m_splineShader.setTranslucency(true);
+
       // Fetch GPU upload limits from the window configuration
       uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
       uint64_t margin = *(win->attribute<int64_t>("gpu-upload-margin"));
@@ -238,6 +247,7 @@ namespace Luminous
     Program m_texShader;
     Program m_trilinearTexShader;
     Program m_fontShader;
+    Program m_splineShader;
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
@@ -1310,6 +1320,11 @@ namespace Luminous
   const Program & RenderContext::fontShader() const
   {
     return m_data->m_fontShader;
+  }
+
+  const Program & RenderContext::splineShader() const
+  {
+    return m_data->m_splineShader;
   }
 
   int RenderContext::uniformBufferOffsetAlignment() const

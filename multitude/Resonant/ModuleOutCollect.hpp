@@ -11,13 +11,12 @@
 #ifndef RESONANT_MODULE_OUT_COLLECT_HPP
 #define RESONANT_MODULE_OUT_COLLECT_HPP
 
-#include <QString>
-#include <string.h>
-
+#include "LimiterAlgorithm.hpp"
 #include "Module.hpp"
 
+#include <QString>
+
 #include <vector>
-#include <string>
 #include <string.h>
 
 namespace Resonant {
@@ -58,9 +57,11 @@ namespace Resonant {
   private:
 
     size_t m_channels;
-    int m_subwooferChannel;
+    int  m_subwooferChannel;
+    bool m_compressOutput;
     DSPNetwork * m_host;
     std::vector<float> m_interleaved;
+    std::vector<ChannelLimiter> m_limiters;
 
     typedef std::vector<Move> container;
     typedef container::iterator iterator;

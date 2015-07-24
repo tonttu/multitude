@@ -73,6 +73,7 @@ namespace VideoDisplay
     float bufferStateSeconds() const;
 
     void shutdown();
+    bool isShutdown() const;
 
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);
@@ -97,6 +98,8 @@ namespace VideoDisplay
     class D;
     D * m_d;
   };
+
+  typedef std::shared_ptr<AudioTransfer> AudioTransferPtr;
 }
 
 /// @endcond

@@ -49,6 +49,7 @@ namespace Luminous {
        m_mipmapFormat.compression() == PixelFormat::COMPRESSION_NONE) {
       Radiant::error("MipMapGenerator::doTask # non-DXT -formats aren't supported");
       setFinished();
+      if(m_listener) m_listener(false, ImageInfo());
       return;
     }
 
@@ -56,6 +57,7 @@ namespace Luminous {
     if(!img.read(m_src.toUtf8().data())) {
       Radiant::error("MipMapGenerator::doTask # Failed to open %s", m_src.toUtf8().data());
       setFinished();
+      if(m_listener) m_listener(false, ImageInfo());
       return;
     }
 
@@ -108,12 +110,12 @@ namespace Luminous {
       info.width = img.height();
       info.mipmaps = mipmaps;
       info.pf = m_mipmapFormat;
-      m_listener(info);
+      m_listener(true, info);
     }
     setFinished();
   }
 
-  void MipMapGenerator::setListener(std::function<void (const ImageInfo &)> func)
+  void MipMapGenerator::setListener(std::function<void (bool, const ImageInfo &)> func)
   {
     m_listener = func;
   }
