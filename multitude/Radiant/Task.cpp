@@ -92,6 +92,11 @@ namespace Radiant
   Task::~Task()
   {}
 
+  double Task::secondsUntilScheduled() const { return -m_scheduled.time(); }
+
+  void Task::scheduleFromNowSecs(double seconds)
+  { m_scheduled.start(seconds); }
+
   void Task::initialize()
   {}
 
