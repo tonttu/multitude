@@ -875,6 +875,7 @@ namespace Luminous
   {
     GLint result[4] = {0};
 
+#ifndef RADIANT_OSX
     if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, current available dedicated video memory (in kb),
@@ -892,6 +893,9 @@ namespace Luminous
       glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
 
     }
+#else
+# warning "RenderDriverGL::availableGPUMemory() not implemented on this platform"
+#endif
 
     return static_cast<unsigned long>(result[0]);
   }
@@ -900,6 +904,7 @@ namespace Luminous
   {
     GLint result[4] = {0};
 
+#ifndef RADIANT_OSX
     if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, dedicated video memory, total size (in kb) of the GPU
@@ -910,6 +915,9 @@ namespace Luminous
 
       result[0] = GPUAssociation::gpuRam(gpuId()) * 1024;
     }
+#else
+# warning "RenderDriverGL::maxGPUMemory() not implemented on this platform"
+#endif
 
     return result[0];
   }
