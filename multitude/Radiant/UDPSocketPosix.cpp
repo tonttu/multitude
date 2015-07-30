@@ -215,7 +215,7 @@ namespace Radiant
         pfd.events = POLLOUT;
         SocketWrapper::poll(&pfd, 1, 5000);
       } else {
-        error("UDPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
+        //error("UDPSocket::write # Failed to write: %s", SocketWrapper::strerror(SocketWrapper::err()));
         return pos;
       }
     }

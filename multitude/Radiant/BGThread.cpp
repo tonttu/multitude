@@ -237,6 +237,10 @@ namespace Radiant
     while(running()) {
       double wait = std::numeric_limits<double>::max();
 
+      // We need to delete this task after m_mutexWait has been released,
+      // otherwise there is a risk of getting a deadlock.
+      std::shared_ptr<Task> reservedTask;
+
       Radiant::Guard guard(m_mutexWait);
 
       container::iterator nextTask = m_taskQueue.end();
@@ -263,14 +267,14 @@ namespace Radiant
         m_idleWait.wait(m_mutexWait);
         --m_idle;
       } else {
-        std::shared_ptr<Task> task = nextTask->second;
-        m_reserved.insert(task);
+        reservedTask = nextTask->second;
+        m_reserved.insert(reservedTask);
         double waitTimeMs = wait * 1000.0;
         unsigned int waitTimei =
             waitTimeMs > std::numeric_limits<unsigned int>::max()
             ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTimeMs);
         m_wait.wait(m_mutexWait, waitTimei);
-        m_reserved.erase(task);
+        m_reserved.erase(reservedTask);
       }
     }
     return std::shared_ptr<Task>();
@@ -317,6 +321,10 @@ namespace Radiant
   void BGThread::shutdown()
   {
     m_isShuttingDown = true;
+
+    container taskQueue;
+    std::set<TaskPtr> reserved;
+
     {
       Radiant::Guard g(m_mutexWait);
 
@@ -331,9 +339,14 @@ namespace Radiant
       for (auto & task: m_runningTasks)
         task->setCanceled();
 
-      m_taskQueue.clear();
-      m_reserved.clear();
+      std::swap(taskQueue, m_taskQueue);
+      std::swap(reserved, m_reserved);
     }
+
+    /// Do not lock m_mutexWait while clearing these, since ~Task() might
+    /// trigger something that calls BGThread::removeTask.
+    taskQueue.clear();
+    reserved.clear();
 
     /// @todo spin-lock is not very elegant, but we need to wait until all
     /// running tasks have been cleared.

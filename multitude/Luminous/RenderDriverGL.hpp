@@ -106,6 +106,12 @@ namespace Luminous
 
     LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
 
+    /// Set the GPU id for the driver
+    LUMINOUS_API void setGPUId(unsigned int gpuId) OVERRIDE;
+
+    /// Get the GPU id for the driver
+    LUMINOUS_API unsigned int gpuId() const OVERRIDE;
+
   private:
 
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;

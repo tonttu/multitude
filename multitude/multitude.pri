@@ -292,6 +292,8 @@ contains(MEMCHECK,yes) {
   linux:LIBS += -rdynamic
 }
 
+enable-cef:include(../WebBrowserCef/cef.pri)
+
 disable-deprecation-warnings {
   *clang* | *g++* {
     QMAKE_CXXFLAGS += -Wno-deprecated-declarations

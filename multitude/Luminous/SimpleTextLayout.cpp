@@ -176,7 +176,7 @@ namespace Luminous
                          m_lineHeight.stringify().toUtf8().data());
       } else {
         Radiant::error("Unsupported unit for line-height: %s",
-                       m_letterSpacing.stringify().toUtf8().data());
+                       m_lineHeight.stringify().toUtf8().data());
       }
     }
 

@@ -25,6 +25,7 @@
 #include "Luminous/BlendMode.hpp"
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
+#include "Luminous/GPUAssociation.hpp"
 #include "RenderQueues.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -49,18 +50,6 @@
 #include <QStringList>
 #include <QVector>
 
-// GL_NVX_gpu_memory_info (NVIDIA)
-#define GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
-#define GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
-#define GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
-#define GPU_MEMORY_INFO_EVICTION_COUNT_NVX            0x904A
-#define GPU_MEMORY_INFO_EVICTED_MEMORY_NVX            0x904B
-
-// GL_ATI_meminfo
-#define VBO_FREE_MEMORY_ATI                     0x87FB
-#define TEXTURE_FREE_MEMORY_ATI                 0x87FC
-#define RENDERBUFFER_FREE_MEMORY_ATI            0x87FD
-
 namespace Luminous
 {
   //////////////////////////////////////////////////////////////////////////
@@ -75,6 +64,7 @@ namespace Luminous
       , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
+      , m_gpuId(static_cast<unsigned int>(-1))
     {
       m_state.program = nullptr;
       m_state.textures[0] = nullptr;
@@ -128,6 +118,9 @@ namespace Luminous
     Radiant::Timer m_frameTimer;  // Time since begin of frame
     uint64_t m_frame;             // Current frame number
     double m_fps;                 // Frames per second
+
+    // GPU id (AMD_gpu_association)
+    unsigned int m_gpuId;
 
   public:
 
@@ -338,7 +331,6 @@ namespace Luminous
                                                          const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     m_state.program = &m_driver.handle(shader);
-    m_state.program->link(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
@@ -881,47 +873,53 @@ namespace Luminous
 
   unsigned long RenderDriverGL::availableGPUMemory() const
   {
-    static bool nv_supported = false, ati_supported = false, checked = false;
-    GLint res[4] = {0};
-    if(!checked) {
-      checked = true;
-      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
-      nv_supported = (glGetError() == GL_NO_ERROR);
-      if(nv_supported)
-        return res[0];
+    GLint result[4] = {0};
 
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
-      ati_supported = (glGetError() == GL_NO_ERROR);
-    } else if (nv_supported) {
-      glGetIntegerv(GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, res);
-    } else if (ati_supported) {
-      glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
+#ifndef RADIANT_OSX
+    if(GLEW_NVX_gpu_memory_info) {
+
+      // Returns GLint, current available dedicated video memory (in kb),
+      // currently unused GPU memory
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+
+    } else if(GLEW_ATI_meminfo) {
+
+      // The query returns a 4-tuple integer where the values are in Kbyte and
+      // have the following meanings:
+      // param[0] - total memory free in the pool
+      // param[1] - largest available free block in the pool
+      // param[2] - total auxiliary memory free
+      // param[3] - largest auxiliary free block
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+
     }
+#else
+# warning "RenderDriverGL::availableGPUMemory() not implemented on this platform"
+#endif
 
-    return res[0];
+    return static_cast<unsigned long>(result[0]);
   }
 
   unsigned long RenderDriverGL::maxGPUMemory() const
   {
-    GLint res[4] = {0};
-    /// Try NVidia
-    glGetIntegerv(GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, res);
-    if(glGetError() == GL_NO_ERROR)
-      return res[0];
+    GLint result[4] = {0};
 
-    /// Try ATI
-    glGetIntegerv(TEXTURE_FREE_MEMORY_ATI, res);
-    if(glGetError() == GL_NO_ERROR) {
-      /*
-      param[0] - total memory free in the pool
-      param[1] - largest available free block in the pool
-      param[2] - total auxiliary memory free
-      param[3] - largest auxiliary free block
-      */
-      return res[0];
+#ifndef RADIANT_OSX
+    if(GLEW_NVX_gpu_memory_info) {
+
+      // Returns GLint, dedicated video memory, total size (in kb) of the GPU
+      // memory
+      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+
+    } else if(GPUAssociation::isSupported()) {
+
+      result[0] = GPUAssociation::gpuRam(gpuId()) * 1024;
     }
+#else
+# warning "RenderDriverGL::maxGPUMemory() not implemented on this platform"
+#endif
 
-    return 0;
+    return result[0];
   }
 
   int64_t RenderDriverGL::uploadLimit() const
@@ -989,6 +987,17 @@ namespace Luminous
   {
     m_d->m_stateGL.setUpdateFrequency(Nimble::Math::Round(fps));
   }
+
+  void RenderDriverGL::setGPUId(unsigned int gpuId)
+  {
+    m_d->m_gpuId = gpuId;
+  }
+
+  unsigned int RenderDriverGL::gpuId() const
+  {
+    return m_d->m_gpuId;
+  }
+
 }
 
 #undef GLERROR

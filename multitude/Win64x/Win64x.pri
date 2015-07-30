@@ -99,6 +99,24 @@ win64_clangxml.path = /bin
 win64_clangxml.files = $$CORNERSTONE_DEPS_PATH/clangxml/ClangXML.exe
 
 !enable-taction {
+  win64_curl_dlls1.path = /bin
+  win64_curl_dlls1.files = $$CORNERSTONE_DEPS_PATH/curl/dlls/*
+
+  win64_curl_dlls2.path = /src/multitude/Win64x/bin64
+  win64_curl_dlls2.files = $${win64_curl_dlls1.files}
+
+  win64_curl_libs1.path = /lib
+  win64_curl_libs1.files = $$CORNERSTONE_DEPS_PATH/curl/lib/*
+
+  win64_curl_libs2.path = /src/multitude/Win64x/lib64
+  win64_curl_libs2.files = $${win64_curl_libs1.files}
+
+  win64_curl_headers1.path = /include
+  win64_curl_headers1.files = $$CORNERSTONE_DEPS_PATH/curl/include/*
+
+  win64_curl_headers2.path = /src/multitude/Win64x/include
+  win64_curl_headers2.files = $${win64_curl_headers1.files}
+
   INSTALLS += win64_node_dlls1
   INSTALLS += win64_node_dlls2
   INSTALLS += win64_node_libs1
@@ -117,6 +135,12 @@ INSTALLS += win64_sdk_dlls
 INSTALLS += win64_sdk_headers1
 INSTALLS += win64_sdk_headers2
 INSTALLS += win64_sdk_project
+INSTALLS += win64_curl_dlls1
+INSTALLS += win64_curl_dlls2
+INSTALLS += win64_curl_libs1
+INSTALLS += win64_curl_libs2
+INSTALLS += win64_curl_headers1
+INSTALLS += win64_curl_headers2
 
 # Install Qt
 enable-taction {
