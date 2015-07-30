@@ -26,7 +26,7 @@ namespace Luminous
   {
   }
 
-  ShaderGL::~ShaderGL()
+  ShaderGL::~ShaderGL() noexcept
   {
     if(m_handle) {
       glDeleteShader(m_handle);
@@ -34,13 +34,13 @@ namespace Luminous
     }
   }
 
-  ShaderGL::ShaderGL(ShaderGL && shader)
+  ShaderGL::ShaderGL(ShaderGL && shader) noexcept
     : m_handle(shader.m_handle)
   {
     shader.m_handle = 0;
   }
 
-  ShaderGL & ShaderGL::operator=(ShaderGL && shader)
+  ShaderGL & ShaderGL::operator=(ShaderGL && shader) noexcept
   {
     std::swap(m_handle, shader.m_handle);
     return *this;
