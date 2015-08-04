@@ -27,9 +27,8 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
 # Always include Deft
 CONFIG += enable-deft
-# On taction tracker build, enable opencl & cuda backends but disable js by default
+# On taction tracker build, enable cuda backend but disable js by default
 # JS can still be enabled with enable-js
-enable-taction:CONFIG += enable-deft-opencl
 enable-taction:CONFIG += enable-deft-cuda
 enable-taction:CONFIG += disable-js
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
