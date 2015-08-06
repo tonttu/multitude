@@ -642,8 +642,6 @@ Matrix3T<T> Matrix3T<T>::makeRotation(T radians, const Vector3T<T> & axis)
   Vector3T<T> vn(axis);
   vn.normalize();
 
-  Matrix3T<T> m;
-
   T aa[9];
   aa[0] = t * vn.x * vn.x + c;
   aa[1] = t * vn.x * vn.y - s * vn.z;
