@@ -148,7 +148,7 @@ namespace Nimble {
     /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecInCircle(float radius = 1.0f)
     {
-      return randVecInCircle(radius)*rand01();
+      return randVecOnCircle(radius)*rand01();
     }
 
     /// Random 3d vector on a sphere
@@ -167,7 +167,7 @@ namespace Nimble {
     /// @param radius The radius of the sphere
     inline Nimble::Vector3f randVecInSphere(float radius = 1.0f)
     {
-      return randVecInSphere(radius)*rand01();
+      return randVecOnSphere(radius)*rand01();
     }
 
     /// Random boolean
