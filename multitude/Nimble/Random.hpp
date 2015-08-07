@@ -94,7 +94,7 @@ namespace Nimble {
     /// Random numbers between min and max
     inline float randMinMax(float min, float max)
     {
-      std::uniform_real_distribution<float> dst(-min, max);
+      std::uniform_real_distribution<float> dst(min, max);
       return dst(m_rand);
     }
 
