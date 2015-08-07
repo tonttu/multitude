@@ -91,6 +91,13 @@ namespace Nimble {
       return dst(m_rand);
     }
 
+    /// Random number from range [a, b) if a < b, else [b, a)
+    inline float randRange(float a, float b)
+    {
+      if(b < a) std::swap(a, b);
+      return randMinMax(a, b);
+    }
+
     /// Random numbers between min and max
     inline float randMinMax(float min, float max)
     {
