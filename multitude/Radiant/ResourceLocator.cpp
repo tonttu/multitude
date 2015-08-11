@@ -17,11 +17,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <Radiant/Trace.hpp>
+
 #if defined(RADIANT_WINDOWS)
 # define stat     _stat
-# define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
-# define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
-# define S_IWRITE _S_IWRITE
+# define S_ISDIR(mode)   (((mode) & S_IFMT) == S_IFDIR)
+# define S_ISREG(mode)   (((mode) & S_IFMT) == S_IFREG)
+# define S_ISWRITE(mode) (((mode) & _S_IWRITE) == _S_IWRITE)
 #endif
 
 namespace {
@@ -43,7 +45,7 @@ namespace {
     if(stat(path.toUtf8().data(), &buf) != 0)
       return false;
 
-    return ((buf.st_mode & S_IWRITE) == S_IWRITE);
+    return S_ISWRITE(buf.st_mode);
   }
 
   bool rawPathIsDirectory(const QString & path)
@@ -66,6 +68,27 @@ namespace {
       return false;
 
     return S_ISREG(buf.st_mode);
+  }
+
+  bool rawPathExistsAndMatches(const QString & path,
+                               Radiant::ResourceLocator::Filter filter)
+  {
+    struct stat buf;
+    memset(&buf, 0, sizeof(struct stat));
+
+    if(stat(path.toUtf8().data(), &buf) != 0)
+      return false;
+
+    if((filter & Radiant::ResourceLocator::FILES) && !S_ISREG(buf.st_mode))
+      return false;
+
+    if((filter & Radiant::ResourceLocator::DIRS) && !S_ISDIR(buf.st_mode))
+      return false;
+
+    if((filter & Radiant::ResourceLocator::WRITEABLE) && !S_ISWRITE(buf.st_mode))
+      return false;
+
+    return true;
   }
 
 }
@@ -101,7 +124,7 @@ namespace Radiant
     {
       // Always check if the path exists before searching anything
       // Can't use Qt I/O here either (QFileInfo)
-      if(rawPathExists(path)) {
+      if(rawPathExistsAndMatches(path, filter)) {
 #ifdef RADIANT_UNIX
         // For executables, we may need to set the "./" explicitly
         if(path.startsWith("/"))
@@ -117,21 +140,8 @@ namespace Radiant
       foreach(const QString & searchPath, m_searchPaths) {
         const QString candidate = searchPath + "/" + path;
 
-        // The file/directory should exist
-        if(!rawPathExists(candidate))
-          continue;
-
-        // Apply filters
-        if(filter & FILES && !rawPathIsFile(candidate))
-          continue;
-
-        if(filter & DIRS && !rawPathIsDirectory(candidate))
-          continue;
-
-        if(filter & WRITEABLE && !rawPathIsWriteable(candidate))
-          continue;
-
-        result.append(candidate);
+        if(rawPathExistsAndMatches(candidate, filter))
+          result.append(candidate);
       }
 
       return result;
