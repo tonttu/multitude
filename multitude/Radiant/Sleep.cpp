@@ -37,21 +37,37 @@ namespace Radiant {
       sleepUs(msecs * 1000);
   }
 
+  namespace
+  {
+
+    void nativeSleep(uint32_t usecs)
+    {
+#ifdef WIN32
+      ::Sleep(usecs / 1000);
+#else
+      timespec req = {0, 1000*usecs}, rem = {0, 0};
+      while(req.tv_nsec) {
+        if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
+          std::swap(req, rem);
+        } else {
+          break;
+        }
+      }
+#endif
+    }
+
+  }
+
   void Sleep::sleepUs(uint32_t usecs)
   {
-#ifdef WIN32
-    // For smaller than 10ms we use a busy-loop to avoid problems with timer resolution
-    if (usecs < 10 * 1000) {
+    if(usecs < 10*1000) {
       Radiant::Timer t;
-      while (t.time() < (double)usecs * 0.000001)
-        ::Sleep(0);
-    } else
-    {
-      ::Sleep(usecs / 1000);
+      while (t.time() < (double)usecs * 0.000001) {
+        nativeSleep(0);
+      }
+    } else {
+      nativeSleep(usecs);
     }
-#else
-    usleep(usecs);
-#endif
   }
 
   /** Sleep in synchronous mode. The argument value is added to current time value.*/
