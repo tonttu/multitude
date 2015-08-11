@@ -24,6 +24,8 @@
 # define S_ISDIR(mode)   (((mode) & S_IFMT) == S_IFDIR)
 # define S_ISREG(mode)   (((mode) & S_IFMT) == S_IFREG)
 # define S_ISWRITE(mode) (((mode) & _S_IWRITE) == _S_IWRITE)
+#else
+# define S_ISWRITE(mode) (((mode) & S_IWRITE) == S_IWRITE)
 #endif
 
 namespace {
