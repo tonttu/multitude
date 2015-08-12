@@ -13,7 +13,7 @@
 #include "Mutex.hpp"
 #include "Timer.hpp"
 
-
+#include <errno.h>
 #include <time.h>
 
 namespace Radiant {
