@@ -871,18 +871,28 @@ namespace Luminous
     }
   }
 
-  unsigned long RenderDriverGL::availableGPUMemory() const
+  unsigned long RenderDriverGL::availableGPUMemory(bool *okp) const
   {
     GLint result[4] = {0};
 
+    bool ok = false;
+
 #ifndef RADIANT_OSX
-    if(GLEW_NVX_gpu_memory_info) {
+    /// @todo if GPU Association would support querying available memory we
+    ///       should use that
+    if(false && GPUAssociation::isSupported()) {
+
+    } else if(GLEW_NVX_gpu_memory_info) {
+
+      ok = true;
 
       // Returns GLint, current available dedicated video memory (in kb),
       // currently unused GPU memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
 
     } else if(GLEW_ATI_meminfo) {
+
+      ok = true;
 
       // The query returns a 4-tuple integer where the values are in Kbyte and
       // have the following meanings:
@@ -891,11 +901,12 @@ namespace Luminous
       // param[2] - total auxiliary memory free
       // param[3] - largest auxiliary free block
       glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
-
     }
 #else
 # warning "RenderDriverGL::availableGPUMemory() not implemented on this platform"
 #endif
+
+    if(okp) *okp = ok;
 
     return static_cast<unsigned long>(result[0]);
   }
