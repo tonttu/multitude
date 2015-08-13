@@ -162,7 +162,8 @@ namespace Nimble {
     /// @param radius The radius of the sphere
     inline Nimble::Vector3f randVecOnSphere(float radius = 1.0f)
     {
-      float fi = rand0X(Nimble::Math::PI);
+      // see http://mathworld.wolfram.com/SpherePointPicking.html
+      float fi = acos(rand0X(2.f) - 1);
       float theta = rand0X(Nimble::Math::TWO_PI);
 
       float sinfi = sin(fi);
