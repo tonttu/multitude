@@ -285,25 +285,29 @@ namespace Resonant {
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
       }
-    } else {
+    } else if(streams <= 1 || streamnum == 0) {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
-      if (time.currentTime == 0)
+      if (time.currentTime == 0) {
         latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
-      else
+        /// In principle outputBufferDacTime and timestamps are incompatible as PaTimes
+        /// have undefined starting point. For example in Windows the origin seems to
+        /// be the startup time of the PC. However in Linux they seem to be compatible.
+        assert(std::abs(latency) < 120.f);
+      } else {
         latency = time.outputBufferDacTime - time.currentTime;
+      }
+
       if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
          outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
-            Radiant::TimeStamp::createSeconds(latency - time.outputBufferDacTime);
+        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
+            Radiant::TimeStamp::createSeconds(latency);
         m_syncinfo.framesProcessed = 0;
       }
-      outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::
-          createSeconds(time.outputBufferDacTime);
+
+      outputTime = m_syncinfo.baseTime +
+          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
     }
     m_syncinfo.framesProcessed += framesPerBuffer;
-
-    // Radiant::info("Latency: %.2lf ms, Diff from currentTime: %.2lf ms",
-    //               latency*1000.0, (Radiant::TimeStamp(Radiant::TimeStamp::currentTime()).secondsD()-outputTime.secondsD()+latency)*1000.0);
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
