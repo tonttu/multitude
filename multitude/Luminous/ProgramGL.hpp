@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <QByteArray>
 
@@ -100,7 +101,7 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const { return m_vertexDescription; }
 
   private:
-    std::vector<ShaderGL> m_shaders;
+    std::vector<std::unique_ptr<ShaderGL> > m_shaders;
     std::map<QByteArray, int> m_attributes;
     std::map<QByteArray, int> m_uniforms;
     std::map<QByteArray, int> m_uniformBlocks;
