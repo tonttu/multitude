@@ -175,7 +175,8 @@ namespace Nimble {
     /// @param radius The radius of the sphere
     inline Nimble::Vector3f randVecInSphere(float radius = 1.0f)
     {
-      return randVecOnSphere(radius)*rand01();
+      float r = rand01();
+      return randVecOnSphere(radius)*pow(r, 1.f/3.f);
     }
 
     /// Random boolean
