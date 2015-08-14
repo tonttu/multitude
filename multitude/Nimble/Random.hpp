@@ -176,7 +176,7 @@ namespace Nimble {
     inline Nimble::Vector3f randVecInSphere(float radius = 1.0f)
     {
       float r = rand01();
-      return randVecOnSphere(radius)*pow(r, 1.f/3.f);
+      return randVecOnSphere(radius)*powf(r, 1.f/3.f);
     }
 
     /// Random boolean
