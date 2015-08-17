@@ -73,8 +73,8 @@ namespace Nimble {
     inline uint64_t rand0X64(uint64_t x)
     {
       assert(x != 0);
-      std::uniform_int_distribution<uint64_t> dst(0, x-1);
-      return dst(m_rand);
+      double s = rand0X(1.0);
+      return s*x;
     }
 
     /// Random numbers between -1 and 1
