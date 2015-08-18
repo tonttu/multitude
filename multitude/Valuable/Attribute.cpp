@@ -28,16 +28,29 @@ namespace Valuable
   v8::Persistent<v8::Context> s_defaultV8Context;
 #endif
 
+  Serializable::Serializable()
+    : m_serializable(true)
+  {}
+
   bool Serializable::deserializeXML(const DOMElement &element)
   {
     ArchiveElement ae = XMLArchiveElement::create(element);
     return deserialize(ae);
   }
 
+  void Serializable::setSerializable(bool v)
+  {
+    m_serializable = v;
+  }
+
+  bool Serializable::isSerializable() const
+  {
+    return m_serializable;
+  }
+
   Attribute::Attribute()
   : m_host(0),
     m_ownerShorthand(nullptr),
-    m_serializable(true),
     m_transit(false),
     m_listenersId(0)
   {}
@@ -45,7 +58,6 @@ namespace Valuable
   Attribute::Attribute(Node * host, const QByteArray & name, bool transit)
     : m_host(0),
       m_ownerShorthand(nullptr),
-      m_serializable(true),
       m_name(name),
       m_transit(transit),
       m_listenersId(0)
@@ -69,7 +81,6 @@ namespace Valuable
   Attribute::Attribute(const Attribute & o)
     : m_host(0)
     , m_ownerShorthand(nullptr)
-    , m_serializable(true)
     , m_listenersId(0)
   {
     *this = o;
@@ -351,16 +362,6 @@ namespace Valuable
   bool Attribute::isValueDefinedOnLayer(Attribute::Layer) const
   {
     return false;
-  }
-
-  void Attribute::setSerializable(bool v)
-  {
-    m_serializable = v;
-  }
-
-  bool Attribute::isSerializable() const
-  {
-    return m_serializable;
   }
 
   void Attribute::setOwnerShorthand(Attribute * owner)
