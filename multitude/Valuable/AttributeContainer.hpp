@@ -66,7 +66,7 @@ namespace
   template<typename T>
   bool isElementSerializableForwarder(const T* element)
   {
-    return isElementSerializable(*element);
+    return isElementSerializableForwarder(*element);
   }
 
   // Utility function to pass pointer/reference parameters correctly (non-pointer)
@@ -75,6 +75,15 @@ namespace
   {
     return isElementSerializable(element);
   }
+
+  // Utility function to check both elements of the pair
+  template<typename T, typename U>
+  bool isElementSerializableForwarder(const std::pair<T,U>& pair)
+  {
+    return isElementSerializableForwarder(pair.first) &&
+        isElementSerializableForwarder(pair.second);
+  }
+
 
 }
 
