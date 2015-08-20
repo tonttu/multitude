@@ -804,6 +804,7 @@ void CocoaWindow::showCursor(bool visible)
 int CocoaWindow::width() const
 {
   Radiant::error("CocoaWindow::width# unimplemented");
+  return 0;
 }
 
 void CocoaWindow::setWidth(int w)
@@ -815,6 +816,7 @@ void CocoaWindow::setWidth(int w)
 int CocoaWindow::height() const
 {
   Radiant::error("CocoaWindow::height# unimplemented");
+  return 0;
 }
 
 void CocoaWindow::setHeight(int h)
@@ -826,6 +828,7 @@ void CocoaWindow::setHeight(int h)
 Nimble::Vector2i CocoaWindow::position() const
 {
   Radiant::error("CocoaWindow::position# unimplemented");
+  return Nimble::Vector2i(0,0);
 }
 
 void CocoaWindow::setPosition(Nimble::Vector2i pos)
