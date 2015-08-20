@@ -1451,7 +1451,6 @@ namespace Luminous
     assert(m_data->m_renderCalls.size() == 1);
     m_data->m_renderCalls.top() = 0;
 
-    assert(m_data->m_frameBufferStack.empty());
 
     // Pop opacity
     assert(m_data->m_opacityStack.size() == 1);
@@ -1460,6 +1459,7 @@ namespace Luminous
     // Pop the default target
     m_data->m_driverGL->popFrameBuffer();
     m_data->m_frameBufferStack.pop();
+    assert(m_data->m_frameBufferStack.empty());
 
     assert(stackSize() == 1);
 
