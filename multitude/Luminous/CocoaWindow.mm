@@ -801,6 +801,39 @@ void CocoaWindow::showCursor(bool visible)
     m_d->m_cursorVisibility = visible;
 }
 
+int CocoaWindow::width() const
+{
+  Radiant::error("CocoaWindow::width# unimplemented");
+}
+
+void CocoaWindow::setWidth(int w)
+{
+  (void) w;
+  Radiant::error("CocoaWindow::setWidth# unimplemented");
+}
+
+int CocoaWindow::height() const
+{
+  Radiant::error("CocoaWindow::height# unimplemented");
+}
+
+void CocoaWindow::setHeight(int h)
+{
+  (void) h;
+  Radiant::error("CocoaWindow::setHeight# unimplemented");
+}
+
+Nimble::Vector2i CocoaWindow::position() const
+{
+  Radiant::error("CocoaWindow::position# unimplemented");
+}
+
+void CocoaWindow::setPosition(Nimble::Vector2i pos)
+{
+  (void) pos;
+  Radiant::error("CocoaWindow::setPosition# unimplemented");
+}
+
 }
 
 #endif

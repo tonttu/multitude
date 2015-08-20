@@ -495,6 +495,38 @@ namespace Luminous
     m_d->m_glWidget->doneCurrent();
   }
 
+  int QtWindow::width() const
+  {
+    return m_d->m_mainWindow->width();
+  }
+
+  int QtWindow::height() const
+  {
+    return m_d->m_mainWindow->height();
+  }
+
+  void QtWindow::setWidth(int w)
+  {
+    m_d->m_mainWindow->resize(w, height());
+  }
+
+  void QtWindow::setHeight(int h)
+  {
+    m_d->m_mainWindow->resize(width(), h);
+  }
+
+  Nimble::Vector2i QtWindow::position() const
+  {
+    auto p = m_d->m_mainWindow->pos();
+    return Nimble::Vector2i(p.x(), p.y());
+  }
+
+  void QtWindow::setPosition(Nimble::Vector2i pos)
+  {
+    QPoint loc(pos.x, pos.y);
+    m_d->m_mainWindow->move(loc);
+  }
+
   bool QtWindow::setIcon(const QString &filename)
   {
     QIcon icon(filename);
