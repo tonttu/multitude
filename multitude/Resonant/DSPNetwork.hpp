@@ -232,13 +232,13 @@ namespace Resonant {
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
         for the signal processing thread. */
-    void addModule(Item &);
+    void addModule(ItemPtr item);
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
-    void markDone(Item &);
+    void markDone(ItemPtr );
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
-    void markDone(Module &);
+    void markDone(ModulePtr module);
 
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string
@@ -296,12 +296,12 @@ DSPNetwork::instance().send(control);
     void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 
-    bool uncompile(Item &);
-    bool compile(Item &);
-    bool compile(Item &, int);
+    bool uncompile(ItemPtr item);
+    bool compile(ItemPtr item);
+    bool compile(ItemPtr item, int location);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
-    void checkValidId(Item &);
+    void checkValidId(ItemPtr item);
     float * findOutput(const QByteArray & id, int channel);
     long countBufferBytes();
     void doDumpInfo(FILE *f);

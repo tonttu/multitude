@@ -99,7 +99,7 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) = 0;
 
-    LUMINOUS_API virtual unsigned long availableGPUMemory() const = 0;
+    LUMINOUS_API virtual unsigned long availableGPUMemory(bool* ok=nullptr) const = 0;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const = 0;
     LUMINOUS_API virtual int64_t uploadLimit() const = 0;
     LUMINOUS_API virtual int64_t uploadMargin() const = 0;

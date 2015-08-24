@@ -147,57 +147,52 @@ namespace Resonant {
   }
 
 
-  void DSPNetwork::addModule(Item & i)
+  void DSPNetwork::addModule(ItemPtr item)
   {
     debugResonant("DSPNetwork::addModule # %p", this);
 
     Radiant::Guard g( m_newMutex);
 
-    m_newItems.push_back(std::make_shared<Item>(i));
+    m_newItems.push_back(item);
   }
 
-  void DSPNetwork::markDone(Item & i)
+  void DSPNetwork::markDone(ItemPtr i)
   {
-    assert(i.module());
-    markDone(*i.module());
+    /// Calling overloaded markDone here, will search itself from items...
+    assert(i->module());
+    markDone(i->module());
   }
 
-  void DSPNetwork::markDone(Module & m)
+  void DSPNetwork::markDone(ModulePtr module)
   {
-    std::list<ModulePtr> modulesToDelete;
+    // The order of the guards matters. DSPNetwork::doCycle() locks the
+    // mutexes in this order. Since this function is in the public API it can
+    // be called any time and if the mutexes are locked in different order a
+    // deadlock may occur.
+    Radiant::Guard g2( m_itemMutex);
+    Radiant::Guard g1( m_newMutex);
+    ItemPtr it = findItemUnsafe(module->id());
 
-    {
-      // The order of the guards matters. DSPNetwork::doCycle() locks the
-      // mutexes in this order. Since this function is in the public API it can
-      // be called any time and if the mutexes are locked in different order a
-      // deadlock may occur.
-      Radiant::Guard g2( m_itemMutex);
-      Radiant::Guard g1( m_newMutex);
-      ItemPtr it = findItemUnsafe(m.id());
-
-      if(it) {
-        it->m_done = true;
-        m_doneCount++;
-      } else {
-        bool found = false;
-        for(auto it = m_newItems.begin(); it != m_newItems.end();) {
-          ItemPtr item = *it;
-          if(m.id() == item->module()->id()) {
-            found = true;
-            modulesToDelete.push_back(item->module());
-            item->m_module = nullptr;
-            it = m_newItems.erase(it);
-          } else {
-            ++it;
-          }
-        }
-        if (!found) {
-          Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", m.id().data());
+    if(it) {
+      it->m_done = true;
+      m_doneCount++;
+    } else {
+      bool found = false;
+      for(auto it = m_newItems.begin(); it != m_newItems.end();) {
+        ItemPtr item = *it;
+        if(module == item->module()) {
+          found = true;
+          item->m_module = nullptr;
+          it = m_newItems.erase(it);
+        } else {
+          ++it;
         }
       }
-    }
 
-    // Deleting modulesToDelete automatically deletes items in modulesToDelete
+      if (!found) {
+        Radiant::error("DSPNetwork::markDone # Failed for \"%s\"", module->id().data());
+      }
+    }
   }
 
   void DSPNetwork::send(Radiant::BinaryData & control)
@@ -215,11 +210,11 @@ namespace Resonant {
     if(m)
       return std::dynamic_pointer_cast<ModuleSamplePlayer>(m);
 
-    Resonant::DSPNetwork::Item item;
+    auto item = std::make_shared<Resonant::DSPNetwork::Item>();
     auto player = std::make_shared<Resonant::ModuleSamplePlayer>();
-    item.setModule(player);
+    item->setModule(player);
     player->setId("sampleplayer");
-    item.setUsePanner(false);
+    item->setUsePanner(false);
 
     Radiant::BinaryData control;
     control.writeInt32(static_cast<int32_t> (outChannels()));
@@ -290,25 +285,29 @@ namespace Resonant {
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
       }
-    } else {
+    } else if(streams <= 1 || streamnum == 0) {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
-      if (time.currentTime == 0)
+      if (time.currentTime == 0) {
         latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
-      else
+        /// In principle outputBufferDacTime and timestamps are incompatible as PaTimes
+        /// have undefined starting point. For example in Windows the origin seems to
+        /// be the startup time of the PC. However in Linux they seem to be compatible.
+        assert(std::abs(latency) < 120.f);
+      } else {
         latency = time.outputBufferDacTime - time.currentTime;
+      }
+
       if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
          outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
-            Radiant::TimeStamp::createSeconds(latency - time.outputBufferDacTime);
+        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
+            Radiant::TimeStamp::createSeconds(latency);
         m_syncinfo.framesProcessed = 0;
       }
-      outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::
-          createSeconds(time.outputBufferDacTime);
+
+      outputTime = m_syncinfo.baseTime +
+          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
     }
     m_syncinfo.framesProcessed += framesPerBuffer;
-
-    // Radiant::info("Latency: %.2lf ms, Diff from currentTime: %.2lf ms",
-    //               latency*1000.0, (Radiant::TimeStamp(Radiant::TimeStamp::currentTime()).secondsD()-outputTime.secondsD()+latency)*1000.0);
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
@@ -462,30 +461,28 @@ namespace Resonant {
       debugResonant("DSPNetwork::checkNewItems # Next ");
 
       ItemPtr item = m_newItems.front();
-      checkValidId(*item);
+      checkValidId(item);
       m_newItems.pop_front();
       m_items.push_front(item);
       const char * type = typeid(* item->m_module).name();
 
-      Item * itptr = &* (*m_items.begin());
-
-      if(!compile(*itptr, 0)) {
+      if(!compile(item, 0)) {
         Radiant::error("DSPNetwork::checkNewItems # Could not add module %s", type);
         m_items.pop_front();
       }
       else {
         debugResonant("DSPNetwork::checkNewItems # Added a new module %s", type);
 
-        if(itptr->m_module == m_collect)
+        if(item->m_module == m_collect)
           continue;
 
-        const QByteArray & id = itptr->m_module->id();
+        const QByteArray & id = item->m_module->id();
 
-        int mchans = (int) itptr->m_outs.size();
-        int tchan  = itptr->m_targetChannel;
+        int mchans = (int) item->m_outs.size();
+        int tchan  = item->m_targetChannel;
         size_t outchans = m_collect->channels(); // hardware output channels
 
-        if(m_panner && itptr->usePanner()) {
+        if(m_panner && item->usePanner()) {
           //info("Adding %d inputs to the panner", mchans);
 
           ItemPtr oi = findItemUnsafe(m_panner->id());
@@ -503,12 +500,12 @@ namespace Resonant {
 
             m_panner->eventProcess("addsource", m_controlData);
           }
-          compile( * oi);
+          compile(oi);
 
           continue;
         }
 
-        std::shared_ptr<ModulePanner> panner = std::dynamic_pointer_cast<ModulePanner>(itptr->m_module);
+        std::shared_ptr<ModulePanner> panner = std::dynamic_pointer_cast<ModulePanner>(item->m_module);
 
         if(panner) {
           m_panner = panner;
@@ -536,7 +533,7 @@ namespace Resonant {
             m_controlData.rewind();
             m_collect->eventProcess("newmapping", m_controlData);
           }
-          compile( * oi);
+          compile(oi);
           debugResonant("DSPNetwork::checkNewItems # Compiled out collector");
         }
         else if(mchans) {
@@ -560,7 +557,7 @@ namespace Resonant {
             m_controlData.rewind();
             m_collect->eventProcess("newmapping", m_controlData);
           }
-          compile( * oi);
+          compile(oi);
           debugResonant("DSPNetwork::checkNewItems # Compiled out collector");
         }
       }
@@ -585,32 +582,32 @@ namespace Resonant {
 
       for(iterator it = m_items.begin(); it != m_items.end(); ) {
 
-        Item & item = * (*it);
+        ItemPtr item = (*it);
 
-        if(item.m_done) {
+        if(item->m_done) {
 
-          for(unsigned i = 0; i < item.m_outs.size() && m_panner; i++) {
+          for(unsigned i = 0; i < item->m_outs.size() && m_panner; i++) {
 
             m_controlData.rewind();
-            snprintf(buf, sizeof(buf), "%s-%d", item.m_module->id().data(), i);
+            snprintf(buf, sizeof(buf), "%s-%d", item->m_module->id().data(), i);
             m_controlData.writeString(buf);
             m_controlData.rewind();
 
             m_panner->eventProcess("removesource", m_controlData);
 
             ItemPtr oi = findItemUnsafe(m_panner->id());
-            oi->eraseInputs(item.m_module->id());
+            oi->eraseInputs(item->m_module->id());
           }
 
           uncompile(item);
 
           debugResonant("DSPNetwork::checkDoneItems # Stopped %p (%ld bufferbytes)",
-                        item.m_module.get(), countBufferBytes());
+                        item->m_module.get(), countBufferBytes());
 
-          item.m_module->stop();
+          item->m_module->stop();
 
-          modulesToDelete.push_back(item.m_module);
-          item.m_module = nullptr;
+          modulesToDelete.push_back(item->m_module);
+          item->m_module = nullptr;
 
           it = m_items.erase(it);
         }
@@ -631,9 +628,9 @@ namespace Resonant {
           data.total());
 
     for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
-      Module & m = *(*it)->m_module;
-      if(m.id() == moduleid) {
-        m.eventProcess(commandid, data);
+      ModulePtr m = (*it)->module();
+      if(m->id() == moduleid) {
+        m->eventProcess(commandid, data);
         return;
       }
     }
@@ -641,14 +638,14 @@ namespace Resonant {
   }
 
 
-  bool DSPNetwork::uncompile(Item & item)
+  bool DSPNetwork::uncompile(ItemPtr item)
   {
-    ModulePtr m = item.m_module;
+    ModulePtr m = item->m_module;
 
     if(m == m_collect)
       return true;
 
-    int mchans = (int) item.m_outs.size();
+    int mchans = (int) item->m_outs.size();
     // int outchans = 2; // hardware output channels
 
     if(mchans) {
@@ -662,19 +659,19 @@ namespace Resonant {
 
       oi->removeInputsFrom(m->id());
 
-      compile( * oi);
+      compile(oi);
       debugResonant("DSPNetwork::uncompile # uncompiled \"%s\"", m->id().data());
     }
 
     return true;
   }
 
-  bool DSPNetwork::compile(Item & item)
+  bool DSPNetwork::compile(ItemPtr item)
   {
     int i = 0;
 
     for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
-      if((*it).get() == & item)
+      if((*it) ==  item)
         return compile(item, i);
       i++;
     }
@@ -684,20 +681,18 @@ namespace Resonant {
     return false;
   }
 
-  bool DSPNetwork::compile(Item & item, int location)
+  bool DSPNetwork::compile(ItemPtr item, int location)
   {
     int i = 0;
-    int ins = (int) item.m_inputs.size();
+    int ins = (int) item->m_inputs.size();
     int outs = ins;
 
     std::list<NewConnection>::iterator conit;
 
-    std::list<Item *> affected;
-
-    for(conit = item.m_connections.begin(); conit != item.m_connections.end(); ++conit) {
+    for(conit = item->m_connections.begin(); conit != item->m_connections.end(); ++conit) {
       NewConnection & nc = *conit;
-      if(nc.m_targetId == item.m_module->id()) {
-        item.m_inputs.push_back(Connection(nc.m_sourceId,
+      if(nc.m_targetId == item->m_module->id()) {
+        item->m_inputs.push_back(Connection(nc.m_sourceId,
                        nc.m_sourceChannel));
         debugResonant("Item[%d].m_inputs[%d] = [%s,%d]", location, i,
             nc.m_sourceId.data(), nc.m_sourceChannel);
@@ -705,46 +700,46 @@ namespace Resonant {
       i++;
     }
 
-    item.m_module->prepare(ins, outs);
+    item->m_module->prepare(ins, outs);
 
-    if(ins != (int) item.m_inputs.size()) {
+    if(ins != (int) item->m_inputs.size()) {
       Radiant::fatal("DSPNetwork::compile # input size mismatch %d != %d",
-        ins, (int) item.m_inputs.size());
+        ins, (int) item->m_inputs.size());
     }
 
-    item.m_ins.resize(ins);
+    item->m_ins.resize(ins);
 
-    if(!item.m_ins.empty())
-      memset( & item.m_ins[0], 0, item.m_ins.size() * sizeof(float *));
+    if(!item->m_ins.empty())
+      memset( & item->m_ins[0], 0, item->m_ins.size() * sizeof(float *));
 
-    if(item.m_outs.size() > (unsigned) outs) {
-      item.m_outs.resize(outs);
+    if(item->m_outs.size() > (unsigned) outs) {
+      item->m_outs.resize(outs);
     }
     else {
-      while(item.m_outs.size() < (unsigned) outs) {
-        item.m_outs.push_back(0);
+      while(item->m_outs.size() < (unsigned) outs) {
+        item->m_outs.push_back(0);
       }
     }
 
     for(i = 0; i < ins; i++) {
-      Connection & conn = item.m_inputs[i];
+      Connection & conn = item->m_inputs[i];
       float * ptr = findOutput(conn.m_moduleId, conn.m_channel);
-      item.m_ins[i] = ptr;
+      item->m_ins[i] = ptr;
       debugResonant("Item[%d].m_ins[%d] = %p from %s:%d", location, i, ptr,
             conn.m_moduleId.data(), conn.m_channel);
     }
 
     for(i = 0; i < outs; i++) {
-      if(item.m_outs[i] == 0) {
+      if(item->m_outs[i] == 0) {
         Buf & b = findFreeBuf(location);
-        item.m_outs[i] = b.m_data;
+        item->m_outs[i] = b.m_data;
         debugResonant("Item[%d].m_outs[%d] = %p", location, i, b.m_data);
       }
     }
 
-    item.m_compiled = true;
+    item->m_compiled = true;
 
-    ModulePtr m = item.m_module;
+    ModulePtr m = item->m_module;
 
     debugResonant("DSPNetwork::compile # compiled %p %s", m.get(), typeid(*m).name());
 
@@ -774,10 +769,7 @@ namespace Resonant {
   bool DSPNetwork::bufIsFree(int channel, int location)
   {
     iterator it = m_items.begin();
-    int i;
-
-    for(i = 0; i <= location; i++)
-      ++it;
+    std::advance(it, location);
 
     float * ptr = m_buffers[channel].m_data;
 
@@ -791,11 +783,11 @@ namespace Resonant {
       if(other == m_items.end())
         other = m_items.begin();
 
-      Item & item = * (*other);
+      ItemPtr item = *other;
 
-      if(item.findInInput(ptr) >= 0)
+      if(item->findInInput(ptr) >= 0)
         return false;
-      else if(item.findInOutput(ptr) >= 0)
+      else if(item->findInOutput(ptr) >= 0)
         return false;
     }
 
@@ -819,12 +811,12 @@ namespace Resonant {
     return ItemPtr();
   }
 
-  void DSPNetwork::checkValidId(Item & it)
+  void DSPNetwork::checkValidId(ItemPtr item)
   {
     char buf[32];
     int index = 0;
 
-    ModulePtr m = it.m_module;
+    ModulePtr m = item->m_module;
 
     if(m->id().isEmpty()) {
       sprintf(buf, "%p", m.get());
@@ -891,16 +883,16 @@ namespace Resonant {
 
     int index = 0;
     for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
-      Item & item = **it;
+      ItemPtr item = *it;
 
       fprintf(f, "  DSP ITEM [%d] %s %s %p\n",
-              index, item.m_module->id().data(), typeid(*item.m_module).name(), item.m_module.get());
+              index, item->m_module->id().data(), typeid(*item->m_module).name(), item->m_module.get());
 
-      for(size_t i = 0; i < item.m_ins.size(); i++) {
-        fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item.m_ins[i]);
+      for(size_t i = 0; i < item->m_ins.size(); i++) {
+        fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item->m_ins[i]);
       }
-      for(size_t i = 0; i < item.m_outs.size(); i++) {
-        fprintf(f, "    OUTPUT PTR [%d] %p\n", (int) i, item.m_outs[i]);
+      for(size_t i = 0; i < item->m_outs.size(); i++) {
+        fprintf(f, "    OUTPUT PTR [%d] %p\n", (int) i, item->m_outs[i]);
       }
 
       index++;

@@ -43,6 +43,15 @@ namespace Luminous
     virtual void maximize() OVERRIDE;
     virtual void restore() OVERRIDE;
 
+    virtual int width() const OVERRIDE;
+    virtual void setWidth(int w) OVERRIDE;
+
+    virtual int height() const OVERRIDE;
+    virtual void setHeight(int h) OVERRIDE;
+
+    virtual Nimble::Vector2i position() const OVERRIDE;
+    virtual void setPosition(Nimble::Vector2i pos) OVERRIDE;
+
     /// @todo set icon for real
     virtual bool setIcon(const QString&) OVERRIDE { return false; }
 

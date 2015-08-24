@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_VALUE_CONTAINER_HPP
@@ -45,6 +45,46 @@ namespace
         *inserter = t;
     }
   };
+
+  // Container elements that are not inherited from Serializable are always serializable
+  template<typename T>
+  typename std::enable_if<!std::is_base_of<Valuable::Serializable, T>::value, bool>::type
+  isElementSerializable(const T& )
+  {
+    return true;
+  }
+
+  // Container elements that are inherited from Serializable have a flag we can check
+  template<typename T>
+  typename std::enable_if<std::is_base_of<Valuable::Serializable, T>::value, bool>::type
+  isElementSerializable(const T& element)
+  {
+    return element.isSerializable();
+  }
+
+  // Utility function to pass pointer/reference parameters correctly (non-pointer)
+  template<typename T>
+  typename std::enable_if<!std::is_pointer<T>::value, bool>::type isElementSerializableForwarder(const T& element)
+  {
+    return isElementSerializable(element);
+  }
+
+  // Utility function to pass pointer/reference parameters correctly (pointer)
+  template<typename T>
+  bool isElementSerializableForwarder(const T* element)
+  {
+    return isElementSerializableForwarder(*element);
+  }
+
+  // Utility function to check both elements of the pair
+  template<typename T, typename U>
+  bool isElementSerializableForwarder(const std::pair<T,U>& pair)
+  {
+    return isElementSerializableForwarder(pair.first) &&
+        isElementSerializableForwarder(pair.second);
+  }
+
+
 }
 
 namespace Valuable
@@ -74,7 +114,9 @@ namespace Valuable
 
       ArchiveElement elem = archive.createElement(elementName);
       for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {
-        elem.add(Serializer::serialize(archive, *it));
+
+        if(isElementSerializableForwarder(*it))
+          elem.add(Serializer::serialize(archive, *it));
       }
       return elem;
     }

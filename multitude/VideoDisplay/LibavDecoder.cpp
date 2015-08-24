@@ -912,9 +912,9 @@ namespace VideoDisplay
       int value = counter.fetchAndAddRelease(1);
       audioTransfer->setId(QString("VideoDisplay.AudioTransfer.%1").arg(value).toUtf8());
 
-      auto item = Resonant::DSPNetwork::Item();
-      item.setModule(audioTransfer);
-      item.setTargetChannel(0);
+      auto item = std::make_shared<Resonant::DSPNetwork::Item>();
+      item->setModule(audioTransfer);
+      item->setTargetChannel(0);
 
       Resonant::DSPNetwork::instance()->addModule(item);
     }
@@ -964,7 +964,7 @@ namespace VideoDisplay
     m_audioTransfer.reset();
     if(audioTransfer) {
       audioTransfer->shutdown();
-      Resonant::DSPNetwork::instance()->markDone(*audioTransfer);
+      Resonant::DSPNetwork::instance()->markDone(audioTransfer);
     }
     
   }
