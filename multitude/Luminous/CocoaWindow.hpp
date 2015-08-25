@@ -34,8 +34,6 @@ namespace Luminous
     CocoaWindow(const MultiHead::Window & window);
     ~CocoaWindow();
 
-    static void setQuitCallback(std::function<void()> callback);
-
     virtual void poll() OVERRIDE;
     virtual void swapBuffers() OVERRIDE;
     virtual void makeCurrent() OVERRIDE;

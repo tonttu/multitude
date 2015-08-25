@@ -218,7 +218,6 @@ return self;
 
 -(void) keyUp:(NSEvent *)theEvent
 {
-
   Luminous::WindowEventHook * hook = m_window->eventHook();
   if(!hook) {
     Radiant::error("Cannot obtain WindowEventHook");
@@ -708,42 +707,22 @@ return self;
 
 @end
 
-  static std::function<void ()> s_quitCallback = nullptr;
-
-  @interface MyDelegate : NSObject
-                        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
-  // - (void) applicationWillFinishLaunching: (NSNotification *)not;
-  @end
-
-  @implementation MyDelegate
-  - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
-  {
-    Radiant::info("Terminating");
-    if(s_quitCallback) {
-      s_quitCallback();
-      return NSTerminateLater;
-    }
-    return NSTerminateNow;
-  }
-  @end
-
 
 namespace Luminous
 {
+
 
 class CocoaWindow::D {
 public:
   D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window), m_cursorVisibility(true) {
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
-    [NSApp setDelegate: [MyDelegate new]];
     controller = [[Controller alloc] initialize:m_window:hint ];
     m_frameless = hint.frameless();
   }
 
   ~D()
   {
-
     [controller release];
   }
 
@@ -762,11 +741,6 @@ CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
 CocoaWindow::~CocoaWindow()
 {
   delete m_d;
-}
-
-void CocoaWindow::setQuitCallback(std::function<void ()> callback)
-{
-  s_quitCallback = callback;
 }
 
 void CocoaWindow::poll()
