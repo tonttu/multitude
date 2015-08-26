@@ -6,9 +6,12 @@ namespace Valuable
   ListenerHolder::ListenerHolder() {  }
 
   ListenerHolder::ListenerHolder(ListenerHolder && other) noexcept
-    : m_deleteListeners(std::move(other.m_deleteListeners)),
-      m_attributeListeners(std::move(other.m_attributeListeners)),
-      m_eventListeners(std::move(other.m_eventListeners)) { }
+  {
+    Radiant::Guard guard(other.m_mutex);
+    swap(m_deleteListeners, other.m_deleteListeners);
+    swap(m_attributeListeners, other.m_attributeListeners);
+    swap(m_eventListeners, other.m_eventListeners);
+  }
 
   ListenerHolder & ListenerHolder::operator=(ListenerHolder && other) noexcept
   {
@@ -16,6 +19,16 @@ namespace Valuable
     if(&other == this) {
       return *this;
     }
+    Radiant::Mutex * low = nullptr, * high = nullptr;
+    if(&other < this) {
+      low = &other.m_mutex;
+      high = &this->m_mutex;
+    } else {
+      low = &this->m_mutex;
+      high = &other.m_mutex;
+    }
+    Radiant::Guard guardLow(*low);
+    Radiant::Guard guardHigh(*high);
     swap(m_deleteListeners, other.m_deleteListeners);
     swap(m_attributeListeners, other.m_attributeListeners);
     swap(m_eventListeners, other.m_eventListeners);
@@ -24,6 +37,7 @@ namespace Valuable
 
   ListenerHolder::~ListenerHolder()
   {
+    Radiant::Guard guard(m_mutex);
     for(const auto & pair : m_deleteListeners) {
       Attribute * attr = pair.first;
       long id = pair.second;
@@ -45,6 +59,7 @@ namespace Valuable
   {
     assert(attr);
     long id = attr->addListener(func, role);
+    Radiant::Guard guard(m_mutex);
     m_attributeListeners.insert(std::make_pair(attr, id));
     setupRemoveListener(attr);
     return id;
@@ -54,6 +69,7 @@ namespace Valuable
   {
     assert(node);
     long id = node->eventAddListener(name, func, listenerType);
+    Radiant::Guard guard(m_mutex);
     m_eventListeners.insert(std::make_pair(node, id));
     setupRemoveListener(node);
     return id;
@@ -63,9 +79,32 @@ namespace Valuable
   {
     assert(node);
     long id = node->eventAddListenerBd(name, func, listenerType);
+    Radiant::Guard guard(m_mutex);
     m_eventListeners.insert(std::make_pair(node, id));
     setupRemoveListener(node);
     return id;
+  }
+
+  void ListenerHolder::removeListeners(Attribute * attr)
+  {
+    assert(attr);
+    Radiant::Guard guard(m_mutex);
+    auto itDel = m_deleteListeners.find(attr);
+    if(itDel != m_deleteListeners.end()) {
+      attr->removeListener(itDel->second);
+      m_deleteListeners.erase(itDel);
+    }
+    auto attrRange = m_attributeListeners.equal_range(attr);
+    for(auto it = attrRange.first; it != attrRange.second; ++it) {
+      attr->removeListener(it->second);
+    }
+    m_attributeListeners.erase(attr);
+    Node * node = static_cast<Node*>(attr);
+    auto eventRange = m_eventListeners.equal_range(node);
+    for(auto it = eventRange.first; it != eventRange.second; ++it) {
+      node->eventRemoveListener(it->second);
+    }
+    m_eventListeners.erase(node);
   }
 
   void ListenerHolder::setupRemoveListener(Attribute * attr)
@@ -80,6 +119,7 @@ namespace Valuable
 
   void ListenerHolder::attributeGotDeleted(Attribute * attr)
   {
+    Radiant::Guard guard(m_mutex);
     m_deleteListeners.erase(attr);
     m_attributeListeners.erase(attr);
     // Safe to downcast. If the attr is not a node, it will not be found in m_eventListeners and nothing
