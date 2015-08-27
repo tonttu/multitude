@@ -13,29 +13,11 @@
 #include "Mutex.hpp"
 #include "Timer.hpp"
 
+#include <chrono>
 #include <errno.h>
 #include <time.h>
 
 namespace Radiant {
-
-  void Sleep::sleepS(uint32_t secs)
-  {
-    // Apparently this weird construct is necessary because signal handlers and such will interrupt sleeps
-    for(uint32_t i = 0; i < secs; i++) {
-      sleepMs(500);
-      sleepMs(500);
-    }
-  }
-
-  void Sleep::sleepMs(uint32_t msecs)
-  {
-    while(msecs > 1000) {
-      sleepS(1);
-      msecs -= 1000;
-    }
-    if(msecs)
-      sleepUs(msecs * 1000);
-  }
 
   namespace
   {
@@ -57,6 +39,37 @@ namespace Radiant {
     }
 
   }
+
+  void Sleep::sleepS(uint32_t secs)
+  {
+    // This weird construct is necessary because signal handlers and such will interrupt sleeps
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed(0);
+
+    while(elapsed.count() < (secs - 0.2f)) {
+      /* Sleep in 150ms increments*/
+      nativeSleep(150 * 1000);
+
+      auto end = std::chrono::high_resolution_clock::now();
+      elapsed = end - start;
+    }
+
+    if(elapsed.count() < secs) {
+      nativeSleep((secs - elapsed.count()) * 1000000);
+    }
+  }
+
+  void Sleep::sleepMs(uint32_t msecs)
+  {
+    while(msecs > 1000) {
+      sleepS(1);
+      msecs -= 1000;
+    }
+    if(msecs)
+      sleepUs(msecs * 1000);
+  }
+
 
   void Sleep::sleepUs(uint32_t usecs)
   {
