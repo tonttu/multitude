@@ -707,6 +707,25 @@ return self;
 
 @end
 
+  static std::function<void ()> s_quitCallback = nullptr;
+
+  @interface MyDelegate : NSObject
+                        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+  // - (void) applicationWillFinishLaunching: (NSNotification *)not;
+  @end
+
+  @implementation MyDelegate
+  - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+  {
+    Radiant::info("Terminating");
+    if(s_quitCallback) {
+      s_quitCallback();
+      return NSTerminateLater;
+    }
+    return NSTerminateNow;
+  }
+  @end
+
 
 namespace Luminous
 {
@@ -717,6 +736,7 @@ public:
   D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window), m_cursorVisibility(true) {
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
+    [NSApp setDelegate: [MyDelegate new]];
     controller = [[Controller alloc] initialize:m_window:hint ];
     m_frameless = hint.frameless();
   }
@@ -741,6 +761,11 @@ CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
 CocoaWindow::~CocoaWindow()
 {
   delete m_d;
+}
+
+void CocoaWindow::setQuitCallback(std::function<void ()> callback)
+{
+  s_quitCallback = callback;
 }
 
 void CocoaWindow::poll()
