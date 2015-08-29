@@ -818,12 +818,17 @@ void CocoaWindow::showCursor(bool visible)
   if(m_d->m_cursorVisibility == visible || !m_d->m_frameless)
     return;
 
-  if(visible)
-        [NSCursor unhide];
-    else
-        [NSCursor hide];
-    Radiant::debug("CocoaWindow::showCursor # %d", (int) visible);
-    m_d->m_cursorVisibility = visible;
+  if(visible) {
+    [NSCursor unhide];
+    [NSCursor setHiddenUntilMouseMoves:NO];
+  }
+  else {
+    [NSCursor hide];
+    [NSCursor setHiddenUntilMouseMoves:YES];
+  }
+
+  Radiant::debug("CocoaWindow::showCursor # %d", (int) visible);
+  m_d->m_cursorVisibility = visible;
 }
 
 int CocoaWindow::width() const
