@@ -372,22 +372,27 @@ namespace Resonant {
   {
     const int cycle = framesPerBuffer;
 
-    Radiant::Guard g(m_itemMutex);
+    std::vector<ModulePtr> modulesToDelete;
 
-    checkNewItems();
-    checkNewControl();
+    {
+      Radiant::Guard g(m_itemMutex);
 
-    for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
-      ItemPtr & item = (*it);
-      /*
-         Module * m = item.m_module;
-         trace("DSPNetwork::doCycle # Processing %p %s", m, typeid(*m).name());
-         */
-      item->process(cycle, time);
+      checkNewItems();
+      checkNewControl();
+
+      for(iterator it = m_items.begin(); it != m_items.end(); ++it) {
+        ItemPtr & item = (*it);
+        /*
+           Module * m = item.m_module;
+           trace("DSPNetwork::doCycle # Processing %p %s", m, typeid(*m).name());
+           */
+        item->process(cycle, time);
+      }
+
+      checkDoneItems(modulesToDelete);
     }
 
-    checkDoneItems();
-
+    // Deleting modulesToDelete automatically deletes items in modulesToDelete
   }
 
   void DSPNetwork::checkNewControl()
@@ -565,12 +570,10 @@ namespace Resonant {
 
   }
 
-  void DSPNetwork::checkDoneItems()
+  void DSPNetwork::checkDoneItems(std::vector<ModulePtr> & modulesToDelete)
   {
     if(!m_newMutex.tryLock())
       return;
-
-    std::vector<ModulePtr> modulesToDelete;
 
     {
       Radiant::ReleaseGuard g( m_newMutex);
@@ -616,8 +619,6 @@ namespace Resonant {
       }
       m_doneCount = 0;
     }
-
-    // Deleting modulesToDelete automatically deletes items in modulesToDelete
   }
 
   void DSPNetwork::deliverControl(const QByteArray & moduleid,

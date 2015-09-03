@@ -294,7 +294,7 @@ DSPNetwork::instance().send(control);
 
     void checkNewControl();
     void checkNewItems();
-    void checkDoneItems();
+    void checkDoneItems(std::vector<ModulePtr> & modulesToDelete);
     void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 
