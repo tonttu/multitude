@@ -40,10 +40,10 @@ namespace Valuable
              Node::ListenerType listenerType = Node::ListenerType::DIRECT);
 
     /// Adds a BinaryData node event listener
-    long add(Node * node,
-             const QByteArray & name,
-             const Node::ListenerFuncBd & func,
-             Node::ListenerType listenerType = Node::ListenerType::DIRECT);
+    long addBd(Node * node,
+               const QByteArray & name,
+               const Node::ListenerFuncBd & func,
+               Node::ListenerType listenerType = Node::ListenerType::DIRECT);
 
     void removeListeners(Attribute * attr);
 

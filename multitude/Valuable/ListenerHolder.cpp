@@ -75,7 +75,7 @@ namespace Valuable
     return id;
   }
 
-  long ListenerHolder::add(Node * node, const QByteArray & name, const Node::ListenerFuncBd & func, Node::ListenerType listenerType)
+  long ListenerHolder::addBd(Node * node, const QByteArray & name, const Node::ListenerFuncBd & func, Node::ListenerType listenerType)
   {
     assert(node);
     long id = node->eventAddListenerBd(name, func, listenerType);
