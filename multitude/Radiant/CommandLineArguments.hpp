@@ -7,6 +7,8 @@
 
 #include <QStringList>
 
+#include <vector>
+
 namespace Radiant
 {
   /// Helper class for building argc and argv dynamically. Used with libraries
