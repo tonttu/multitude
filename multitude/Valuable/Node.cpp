@@ -889,20 +889,6 @@ namespace Valuable
     return r;
   }
 
-  void Node::flushQueue()
-  {
-    Radiant::Guard g2(s_processingQueueMutex);
-    Radiant::Guard g(s_queueMutex);
-
-    s_queueTmp.clear();
-    s_queueOnceTmp.clear();
-    {
-      // Make a temporary copy to prevent weird callback recursion bugs
-      auto tempQueue = std::move(s_queue);
-      s_queue.clear();
-    }
-  }
-
   void Node::disableQueue()
   {
     ::disableQueue();

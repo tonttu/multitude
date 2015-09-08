@@ -435,9 +435,6 @@ namespace Valuable
     /// @returns number of processes items
     static int processQueue();
 
-    /// Destroys the event queue. Should not called manually.
-    static void flushQueue();
-
     /// Disables all AFTER_UPDATE event processing, no new events will be
     /// accepted and the current queue will be cleared.
     static void disableQueue();
