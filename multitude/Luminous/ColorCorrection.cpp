@@ -363,6 +363,9 @@ namespace Luminous
 
   int ColorCorrection::addControlPoint(float x, float y, int channel, bool modifiers)
   {
+    assert(x >= 0.f && x <= 1.f);
+    assert(y >= 0.f && y <= 1.f);
+
     if (modifiers)
       y = invertModifiers(x, y, m_d->m_contrast[channel], m_d->m_gamma[channel], m_d->m_brightness[channel]);
     int index = m_d->m_splines[channel]->insert(x, y);
@@ -486,7 +489,7 @@ namespace Luminous
     checkChanged();
   }
 
-  // Change every value if given channel by v
+  // Change every value of given channel by v
   void ColorCorrection::changeUniform(int channel, float v)
   {
     m_d->m_splines[channel]->changeUniform(v);
