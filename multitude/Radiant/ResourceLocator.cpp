@@ -100,12 +100,50 @@ namespace Radiant
   class ResourceLocatorFileEngine : public QFSFileEngine
   {
   public:
-    ResourceLocatorFileEngine(const QString & file) : QFSFileEngine(file) {}
+    ResourceLocatorFileEngine(const QString & src, const QString & target) : QFSFileEngine(target), m_src(src) {}
     // We are wrapping file that has absolute path, but from a user point
     // of view this is always relative, since the path user gave was relative.
     // Without this for example QFileInfo("style.css").isAbsolute() would
     // return true if there was style.css somewhere in the search path.
-    virtual bool isRelativePath() const OVERRIDE { return true; }
+    virtual bool isRelativePath() const OVERRIDE {
+      return true;
+    }
+
+    QString fileName(FileName file) const OVERRIDE
+    {
+      if (file == DefaultName) {
+        return m_src;
+      }
+
+      if (file == PathName) {
+        const int slash = m_src.lastIndexOf(QLatin1Char('/'));
+        if (slash < 0)
+          return ".";
+        else if (slash == 0)
+          return "/";
+        else
+          return m_src.mid(0, slash);
+      }
+
+      if (file == AbsoluteName) {
+        return QFSFileEngine::fileName(DefaultName);
+      }
+
+      if (file == AbsolutePathName) {
+        const QString abs = QFSFileEngine::fileName(DefaultName);
+        // Borrowed from QFSFileEngine::fileName
+        const int slash = abs.lastIndexOf(QLatin1Char('/'));
+        if (slash < 0)
+          return abs;
+        else if (abs.at(0) != QLatin1Char('/') && slash == 2)
+          return abs.left(3);      // include the slash
+        else
+          return abs.left(slash > 0 ? slash : 1);
+      }
+
+      return QFSFileEngine::fileName(file);
+    }
+    QString m_src;
   };
 
   class ResourceLocator::D : public QAbstractFileEngineHandler
@@ -129,7 +167,7 @@ namespace Radiant
       if(matches.isEmpty())
         return 0;
       else
-        return new ResourceLocatorFileEngine(matches.front());
+        return new ResourceLocatorFileEngine(fileName, matches.front());
     }
 
     QStringList locate(const QString & path, ResourceLocator::Filter filter) const
