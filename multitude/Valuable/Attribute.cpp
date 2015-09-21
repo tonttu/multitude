@@ -418,11 +418,11 @@ namespace Valuable
     return false;
   }
 
-  bool Attribute::copyValueFromLayer(Layer from, Layer to)
+  void Attribute::copyValueFromLayer(Layer from, Layer to)
   {
-    (void) from, to;
+    (void) from;
+    (void) to;
     Radiant::error("Attribute::copyValueFromLayer(Layer from, Layer to) # %s: conversion not available",
                    m_name.data());
-    return false;
   }
 }
