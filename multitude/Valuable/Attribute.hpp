@@ -276,6 +276,8 @@ namespace Valuable
     /// @return type of the attribute
     virtual QByteArray type() const { return QByteArray(); }
 
+    virtual bool copyValueFromLayer(Layer from, Layer to);
+
     /// The object is serialized using its name as a tag name.
     /// @param archive Serialization archive that is used to create new elements.
     /// @return Serialized object as an ArchiveElement
@@ -562,6 +564,12 @@ namespace Valuable
     virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
       return m_valueSet[layer];
+    }
+
+    virtual bool copyValueFromLayer(Layer from, Layer to) OVERRIDE
+    {
+      const T & val = value(from);
+      setValue(val, to);
     }
 
   protected:
