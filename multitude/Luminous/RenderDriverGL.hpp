@@ -100,7 +100,7 @@ namespace Luminous
     LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
     LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) OVERRIDE;
 
-    LUMINOUS_API int uniformBufferOffsetAlignment() const;
+    LUMINOUS_API int uniformBufferOffsetAlignment() const OVERRIDE;
 
     LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
 
