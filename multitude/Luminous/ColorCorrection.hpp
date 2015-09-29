@@ -78,7 +78,6 @@ namespace Luminous
 
   private:
     void changed();
-    void checkChanged();
 
   private:
     class D;
