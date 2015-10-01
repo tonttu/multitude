@@ -44,9 +44,9 @@ namespace Resonant {
     ModuleOutCollect(DSPNetwork *);
     virtual ~ModuleOutCollect();
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &);
+    virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
 
     /// Access the collected frames, which have been interleaved
     const float * interleaved() const { return & m_interleaved[0]; }

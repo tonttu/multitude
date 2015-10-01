@@ -67,7 +67,7 @@ namespace Luminous {
       Area();
       virtual ~Area();
       /// Deserializes this area from an archive element
-      bool deserialize(const Valuable::ArchiveElement & element);
+      virtual bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
 
       /// Sets the geometry (size & offset) of the area
       /// @param x x offset
