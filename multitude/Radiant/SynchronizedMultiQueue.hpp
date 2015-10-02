@@ -65,9 +65,21 @@ namespace Radiant
       }
     }
 
+    /// Clear the queues. Not thread safe.
+    void clear()
+    {
+      reset(producerCount(), queueSize());
+    }
+
     size_t producerCount() const
     {
       return m_queues.size();
+    }
+
+    /// @return capacity of individual queue
+    size_t queueSize() const
+    {
+      return m_queueSize;
     }
 
     int64_t approxItemsQueued(int id) const
