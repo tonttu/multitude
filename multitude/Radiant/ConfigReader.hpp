@@ -381,7 +381,7 @@ namespace Radiant {
   /// @param c Configuration object to write
   /// @param filename Name of the file to write
   /// @return True if the operation was succesful, false otherwise.
-  bool RADIANT_API writeConfig(Config *c, const char *filename);
+  bool RADIANT_API writeConfig(const Config *c, const char *filename);
 
   /**
    * Output operator for Radiant::Variant

@@ -13,17 +13,50 @@
 #include "Mutex.hpp"
 #include "Timer.hpp"
 
-
+#include <chrono>
+#include <errno.h>
 #include <time.h>
 
 namespace Radiant {
 
+  namespace
+  {
+
+    void nativeSleep(uint32_t usecs)
+    {
+#ifdef WIN32
+      ::Sleep(usecs / 1000);
+#else
+      timespec req = {0, 1000*usecs}, rem = {0, 0};
+      while(req.tv_nsec) {
+        if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
+          std::swap(req, rem);
+        } else {
+          break;
+        }
+      }
+#endif
+    }
+
+  }
+
   void Sleep::sleepS(uint32_t secs)
   {
-    // Apparently this weird construct is necessary because signal handlers and such will interrupt sleeps
-    for(uint32_t i = 0; i < secs; i++) {
-      sleepMs(500);
-      sleepMs(500);
+    // This weird construct is necessary because signal handlers and such will interrupt sleeps
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> elapsed(0);
+
+    while(elapsed.count() < (secs - 0.2f)) {
+      /* Sleep in 150ms increments*/
+      nativeSleep(150 * 1000);
+
+      auto end = std::chrono::high_resolution_clock::now();
+      elapsed = end - start;
+    }
+
+    if(elapsed.count() < secs) {
+      nativeSleep((secs - elapsed.count()) * 1000000);
     }
   }
 
@@ -37,21 +70,17 @@ namespace Radiant {
       sleepUs(msecs * 1000);
   }
 
+
   void Sleep::sleepUs(uint32_t usecs)
   {
-#ifdef WIN32
-    // For smaller than 10ms we use a busy-loop to avoid problems with timer resolution
-    if (usecs < 10 * 1000) {
+    if(usecs < 10*1000) {
       Radiant::Timer t;
-      while (t.time() < (double)usecs * 0.000001)
-        ::Sleep(0);
-    } else
-    {
-      ::Sleep(usecs / 1000);
+      while (t.time() < (double)usecs * 0.000001) {
+        nativeSleep(0);
+      }
+    } else {
+      nativeSleep(usecs);
     }
-#else
-    usleep(usecs);
-#endif
   }
 
   /** Sleep in synchronous mode. The argument value is added to current time value.*/

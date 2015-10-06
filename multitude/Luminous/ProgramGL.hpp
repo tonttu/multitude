@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <QByteArray>
 
@@ -51,11 +52,8 @@ namespace Luminous
     GLuint m_handle;
 
   private:
-    // With new enough compiler (GCC 4.7) using just private copy
-    // ctor/assignment don't work as expected, you need to use = delete,
-    // but then again, that doesn't work in msvc2010.
-    /*ShaderGL(const ShaderGL &) = delete;
-    ShaderGL & operator=(const ShaderGL &) = delete;*/
+    ShaderGL(const ShaderGL &);
+    ShaderGL & operator=(const ShaderGL &);
   };
 
   /// This class represents the Program object in GPU memory
@@ -103,7 +101,7 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const { return m_vertexDescription; }
 
   private:
-    std::vector<ShaderGL> m_shaders;
+    std::vector<std::unique_ptr<ShaderGL> > m_shaders;
     std::map<QByteArray, int> m_attributes;
     std::map<QByteArray, int> m_uniforms;
     std::map<QByteArray, int> m_uniformBlocks;

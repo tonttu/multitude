@@ -15,6 +15,8 @@ namespace Valuable
   AttributeAlias::AttributeAlias(Node * host, const QByteArray & name, Attribute * attribute)
     : Attribute(host, name, false)
     , m_attribute(nullptr)
+    , m_eventDelete(0)
+    , m_eventChange(0)
   {
     setAttribute(attribute);
     setSerializable(false);
@@ -107,6 +109,11 @@ namespace Valuable
     return m_attribute->set(v, layer);
   }
 
+  QByteArray AttributeAlias::type() const
+  {
+    return m_attribute ? m_attribute->type() : QByteArray();
+  }
+
   ArchiveElement AttributeAlias::serialize(Archive & archive) const
   {
     if(!m_attribute)
@@ -132,13 +139,22 @@ namespace Valuable
       return;
 
     if(m_attribute) {
-      m_attribute->removeListener(m_event);
-      m_event = 0;
+      m_attribute->removeListener(m_eventDelete);
+      m_attribute->removeListener(m_eventChange);
+      m_eventDelete = 0;
+      m_eventChange = 0;
     }
 
     m_attribute = attribute;
-    if(m_attribute)
-      m_event = m_attribute->addListener([=] { setAttribute(nullptr); }, DELETE_ROLE);
+    if(m_attribute) {
+      m_eventDelete = m_attribute->addListener([=] { setAttribute(nullptr); }, DELETE_ROLE);
+      m_eventChange = m_attribute->addListener([=] { emitChange(); }, CHANGE_ROLE);
+    }
+
+    // This serves a double purpose. First, since the target attribute has changed, the value is probably
+    // different and it would be nice to notify listeners. Second, it indirectly allows listeners to detect
+    // when the attribute target has changed or has become non-null.
+    emitChange();
   }
 
   bool AttributeAlias::isChanged() const
@@ -161,10 +177,21 @@ namespace Valuable
     return false;
   }
 
+  bool AttributeAlias::isValueDefinedOnLayer(Attribute::Layer layer) const
+  {
+    return m_attribute ? m_attribute->isValueDefinedOnLayer(layer) : false;
+  }
+
   Attribute * AttributeAlias::attribute(const QByteArray & name) const
   {
     if(!m_attribute)
       return nullptr;
     return m_attribute->attribute(name);
+  }
+
+  void AttributeAlias::setAsDefaults()
+  {
+    if (m_attribute)
+      m_attribute->setAsDefaults();
   }
 }

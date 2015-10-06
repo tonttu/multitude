@@ -92,6 +92,8 @@ namespace Resonant {
     QByteArray m_id;
   };
 
+  typedef std::shared_ptr<Module> ModulePtr;
+
 }
 
 #endif

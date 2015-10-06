@@ -29,10 +29,15 @@ namespace Luminous
   class GPUAssociation
   {
   public:
+    /// Is GPU association supported?
     static LUMINOUS_API bool isSupported();
 
+    /// Get number of GPUs on the system
     static LUMINOUS_API unsigned int numGPUs();
+    /// Get GPU id for the given OpenGL context
     static LUMINOUS_API unsigned int gpuId(OpenGLContextHandle *handle);
+    /// Get amount of RAM available on the given GPU in MB
+    static LUMINOUS_API unsigned int gpuRam(unsigned int gpuId);
   };
 }
 

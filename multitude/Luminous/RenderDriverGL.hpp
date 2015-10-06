@@ -93,7 +93,7 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
 
-    LUMINOUS_API virtual unsigned long availableGPUMemory() const OVERRIDE;
+    LUMINOUS_API virtual unsigned long availableGPUMemory(bool *ok=nullptr) const OVERRIDE;
     LUMINOUS_API virtual unsigned long maxGPUMemory() const OVERRIDE;
 
     LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
@@ -106,6 +106,12 @@ namespace Luminous
     LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
 
     LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
+
+    /// Set the GPU id for the driver
+    LUMINOUS_API void setGPUId(unsigned int gpuId) OVERRIDE;
+
+    /// Get the GPU id for the driver
+    LUMINOUS_API unsigned int gpuId() const OVERRIDE;
 
   private:
 

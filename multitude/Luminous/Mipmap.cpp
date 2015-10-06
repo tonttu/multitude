@@ -537,10 +537,16 @@ namespace Luminous
       if(!compressedMipmapTs.isValid()) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
         auto weak = m_mipmap;
-        mipmap.m_mipmapGenerator->setListener([=] (const ImageInfo & imginfo) {
+        mipmap.m_mipmapGenerator->setListener([=] (bool ok, const ImageInfo & imginfo) {
           auto ptr = weak.lock();
-          if (ptr)
-            ptr->setMipmapReady(imginfo);
+          if (ptr) {
+            if (ok) {
+              ptr->setMipmapReady(imginfo);
+            } else {
+              ptr->m_d->m_mipmapGenerator.reset();
+              ptr->m_d->m_state = Valuable::STATE_ERROR;
+            }
+          }
         });
       }
     }
@@ -986,7 +992,8 @@ namespace Luminous
       return nullptr;
 
     QFileInfo fi(filename);
-    QPair<QByteArray, bool> key = qMakePair(fi.absoluteFilePath().toUtf8(), compressedMipmaps);
+    QString id(fi.absoluteFilePath() + fi.lastModified().toString());
+    QPair<QByteArray, bool> key = qMakePair(id.toUtf8(), compressedMipmaps);
 
     if(key.first.isEmpty()) {
       Radiant::warning("Mipmap::acquire # file '%s' not found", filename.toUtf8().data());

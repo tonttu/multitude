@@ -152,9 +152,10 @@ namespace Resonant {
       Item();
       ~Item();
       /// Sets the DSP #Resonant::Module that this Item contains.
-      void setModule(Module *m) { m_module = m; }
+      void setModule(Module *m) { m_module = ModulePtr(m); }
+      void setModule(ModulePtr m) { m_module = m; }
       /// Returns a pointer to the DSP module
-      Module * module() { return m_module; }
+      ModulePtr & module() { return m_module; }
 
       /// Sets the default target channel of the module
       void setTargetChannel(int channel)
@@ -162,8 +163,8 @@ namespace Resonant {
         m_targetChannel = channel;
       }
 
-      /// Deletes the module.
-      void deleteModule();
+      /// Resets the module pointer. May also delete the module.
+      void resetModule();
 
       /// Sets if the item should use panner
       void setUsePanner(bool usePanner)
@@ -195,7 +196,7 @@ namespace Resonant {
       int findInOutput(float * ptr) const;
       void removeInputsFrom(const QByteArray & id);
 
-      Module * m_module;
+      ModulePtr m_module;
 
       std::vector<Connection> m_inputs;
 
@@ -210,8 +211,10 @@ namespace Resonant {
       int  m_targetChannel;
     };
 
+    typedef std::shared_ptr<Item> ItemPtr;
+
     /// @cond
-    typedef std::list<Item> container;
+    typedef std::list<ItemPtr> container;
     typedef container::iterator iterator;
     /// @endcond
 
@@ -229,13 +232,13 @@ namespace Resonant {
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
         for the signal processing thread. */
-    void addModule(Item &);
+    void addModule(ItemPtr item);
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
-    void markDone(Item &);
+    void markDone(ItemPtr );
     /** Marks a given DSP module as finished. Once this function has been called the
         DSP thread will remove the module from the graph, and delete it. */
-    void markDone(Module &);
+    void markDone(ModulePtr module);
 
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string
@@ -254,18 +257,18 @@ DSPNetwork::instance().send(control);
 
     /// Returns the default sample player object.
     /// If the object does not exis yet, it is created on the fly.
-    /// This is not thread-safe
     /// @return Default sampley player object
-    ModuleSamplePlayer * samplePlayer();
+    std::shared_ptr<ModuleSamplePlayer> samplePlayer();
 
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
-    Item * findItem(const QByteArray & id);
+    // ItemPtr findItem(const QByteArray & id);
+    ItemPtr findItem(const QByteArray & id);
     /// Finds a module with name id inside one of the items in DSPNetwork
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the module or NULL
-    Module * findModule(const QByteArray & id);
+    ModulePtr findModule(const QByteArray & id);
 
     /// @cond
     void dumpInfo(FILE *f);
@@ -273,7 +276,7 @@ DSPNetwork::instance().send(control);
 
     bool hasPanner() const { return m_panner != nullptr; }
 
-    std::size_t itemCount() const { return m_items.size(); }
+    std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
   private:
     /// Creates an empty DSPNetwork object.
@@ -293,15 +296,18 @@ DSPNetwork::instance().send(control);
     void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 
-    bool uncompile(Item &);
-    bool compile(Item &);
-    bool compile(Item &, int);
+    bool uncompile(ItemPtr item);
+    bool compile(ItemPtr item);
+    bool compile(ItemPtr item, int location);
     Buf & findFreeBuf(int);
     bool bufIsFree(int, int);
-    void checkValidId(Item &);
+    void checkValidId(ItemPtr item);
     float * findOutput(const QByteArray & id, int channel);
     long countBufferBytes();
-    void duDumpInfo(FILE *f);
+    void doDumpInfo(FILE *f);
+
+    /// m_itemMutex must be locked in order to call this function
+    ItemPtr findItemUnsafe(const QByteArray & id);
 
     container m_items;
 
@@ -310,8 +316,8 @@ DSPNetwork::instance().send(control);
     std::vector<Buf> m_buffers;
 
     /// @todo remove these special hacks
-    ModuleOutCollect *m_collect;
-    ModulePanner   *m_panner;
+    std::shared_ptr<ModuleOutCollect> m_collect;
+    std::shared_ptr<ModulePanner>     m_panner;
 
     Radiant::BinaryData m_controlData;
     Radiant::BinaryData m_incoming;
@@ -321,7 +327,8 @@ DSPNetwork::instance().send(control);
     QString m_devName;
     // bool        m_continue;
     long        m_frames;
-    int         m_doneCount;
+
+    int         m_doneCount; // Protected by m_newMutex
 
     struct
     {
@@ -330,6 +337,7 @@ DSPNetwork::instance().send(control);
     } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
+    mutable Radiant::Mutex m_itemMutex;
 
     Radiant::Mutex m_startupMutex;
   };

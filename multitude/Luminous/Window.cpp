@@ -18,9 +18,6 @@ namespace Luminous
   Window::Window() : 
     m_finished(false),
     m_fullscreen(false),
-    m_width(0),
-    m_height(0),
-    m_pos(0, 0),
     m_eventHook(0)
   {
   }
@@ -37,16 +34,6 @@ namespace Luminous
   void Window::setFullscreen(bool fullscreen)
   {
     m_fullscreen = fullscreen;
-  }
-
-  int Window::width() const
-  {
-    return m_width;
-  }
-
-  int Window::height() const
-  {
-    return m_height;
   }
 
   void Window::setEventHook(WindowEventHook *hook)

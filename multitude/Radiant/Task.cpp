@@ -69,8 +69,10 @@ namespace Radiant
     if (m_state == DONE || isCanceled())
       return;
 
-    if (m_host)
-      m_host->removeTask(shared_from_this(), false, true);
+    // Must make a copy, since m_host might get cleared if the task completes
+    auto host = m_host;
+    if (host)
+      host->removeTask(shared_from_this(), false, true);
 
     if (m_state == WAITING) {
       initialize();
