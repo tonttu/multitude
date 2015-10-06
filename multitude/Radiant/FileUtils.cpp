@@ -178,7 +178,7 @@ namespace {
 
   void fileWriterInit()
   {
-    s_fileWriterEnabled = Radiant::FileWriter::isRootFileSystemReadOnly();
+    s_fileWriterEnabled = Radiant::FileWriter::wantRootFileSystemReadOnly();
     if(s_fileWriterEnabled)
       Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
   }
@@ -220,7 +220,7 @@ namespace Radiant
     }
   }
 
-  bool FileWriter::isRootFileSystemReadOnly()
+  bool FileWriter::wantRootFileSystemReadOnly()
   {
 #ifdef RADIANT_LINUX
     /// We are looking at /etc/fstab instead of /proc/mounts, because we want

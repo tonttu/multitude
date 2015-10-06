@@ -42,7 +42,7 @@ namespace Radiant
 
     static void setCallback(std::function<void (FileWriterMode mode)> callback);
 
-    static bool isRootFileSystemReadOnly();
+    static bool wantRootFileSystemReadOnly();
   };
 
   /// Guard class that minimizes the number of mounts done by FileWriter.
