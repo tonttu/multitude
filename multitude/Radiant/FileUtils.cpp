@@ -231,7 +231,7 @@ namespace Radiant
       // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
       // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
       QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
-      if(re.indexIn(QString::fromUtf8(file.readAll()))) {
+      if(re.indexIn(QString::fromUtf8(file.readAll())) >= 0) {
         QStringList mountOptions = re.cap(1).split(",");
         return mountOptions.contains("ro");
       }
