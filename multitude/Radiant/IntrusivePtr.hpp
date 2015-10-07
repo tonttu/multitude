@@ -70,7 +70,7 @@ namespace Radiant
 #define INTRUSIVE_PTR_DEBUG_MOVE
 #endif
 
-constexpr inline uint qHash(uintptr_t, uint seed) noexcept;
+inline uint qHash(uintptr_t, uint seed) Q_DECL_NOTHROW;
 
 namespace Radiant
 {
