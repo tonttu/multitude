@@ -85,14 +85,14 @@ namespace Valuable
 
     /// Sets the numeric value
     inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
-                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
       this->setValue(v, layer);
       return true;
     }
     /// @copydoc set
     inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
-                            Attribute::ValueUnit = Attribute::VU_UNKNOWN)
+                            Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
       this->setValue(Nimble::Math::Round(v), layer);
       return true;

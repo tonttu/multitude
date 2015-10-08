@@ -71,6 +71,9 @@ namespace Radiant {
   /// @copydoc trace
   RADIANT_API void traceMsg(Severity s, const char * msg);
 
+  /// @returns true if verbose mode is on globally or at least for the given module
+  RADIANT_API bool isVerbose(const char * module);
+
   /// @copydoc trace
   /// @param module outputting module from which this message originates
   RADIANT_API void trace

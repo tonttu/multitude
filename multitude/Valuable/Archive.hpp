@@ -58,6 +58,8 @@ namespace Valuable
     /// @param flag Flag to test
     /// @return True if given flag is enabled in the options.
     inline bool checkFlags(Options flag) { return (m_options & unsigned(flag)) == unsigned(flag); }
+    /// Set the options for serialization
+    inline void setOptions(Options flags) { m_options = flags; }
   protected:
     /// Actual bitmask of flags
     unsigned int m_options;

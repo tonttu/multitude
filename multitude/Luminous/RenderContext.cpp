@@ -328,6 +328,11 @@ namespace Luminous
     delete m_data;
   }
 
+  RenderDriver &RenderContext::renderDriver()
+  {
+    return m_data->m_driver;
+  }
+
   void RenderContext::setWindowArea(const MultiHead::Window *window, const Luminous::MultiHead::Area * area)
   {
     m_data->m_window = window;
@@ -381,16 +386,20 @@ namespace Luminous
     return m_data->m_recursionLimit;
   }
 
-  void RenderContext::setRecursionDepth(size_t rd)
+  void RenderContext::pushClipMaskDepth()
   {
-    m_data->m_recursionDepth = rd;
+    ++m_data->m_recursionDepth;
   }
 
-  size_t RenderContext::recursionDepth() const
+  size_t RenderContext::currentClipMaskDepth() const
   {
     return m_data->m_recursionDepth;
   }
 
+  void RenderContext::popClipMaskDepth()
+  {
+    --m_data->m_recursionDepth;
+  }
 
   /// Save the current clipping stack and start with a empty one
   void RenderContext::pushClipStack()
@@ -526,7 +535,8 @@ namespace Luminous
                                 float width,
                                 const Luminous::Style & style,
                                 unsigned int linesegments,
-                                float fromRadians, float toRadians)
+                                float fromRadians, float toRadians,
+                                TextureMappingMode textureMappingMode)
   {
     if(linesegments == 0) {
       /// @todo automagically determine divisions?
@@ -601,8 +611,13 @@ namespace Luminous
       if(isTextured) {
         textured.vertex[2*i].location = in;
         textured.vertex[2*i+1].location = out;
-        textured.vertex[2*i].texCoord = iSpan * (in-low);
-        textured.vertex[2*i+1].texCoord = iSpan * (out-low);
+        if(textureMappingMode == TEXTURE_MAPPING_TANGENT) {
+          textured.vertex[2*i].texCoord.make(angle/Nimble::Math::TWO_PI, 0.f);
+          textured.vertex[2*i+1].texCoord.make(angle/Nimble::Math::TWO_PI, 1.f);
+        } else {
+          textured.vertex[2*i].texCoord = iSpan * (in-low);
+          textured.vertex[2*i+1].texCoord = iSpan * (out-low);
+        }
       }
       else if(isFilled) {
         fill.vertex[2*i].location = in;
@@ -641,12 +656,17 @@ namespace Luminous
     m_data->m_renderCount++;
   }
 
+  unsigned long RenderContext::renderCounter() const
+  {
+    return m_data->m_renderCount;
+  }
+
   void RenderContext::addUnfinishedRenderCounter()
   {
     ++m_data->m_unfinishedRenderCount;
   }
 
-  long RenderContext::unfinishedRenderCounter() const
+  unsigned long RenderContext::unfinishedRenderCounter() const
   {
     return m_data->m_unfinishedRenderCount;
   }
@@ -1262,6 +1282,12 @@ namespace Luminous
     return m_data->m_driverGL->handle(texture);
   }
 
+  TextureGL * RenderContext::findHandle(const Texture & texture)
+  {
+    assert(m_data->m_driverGL);
+    return m_data->m_driverGL->findHandle(texture);
+  }
+
   BufferGL & RenderContext::handle(const Buffer & buffer)
   {
     assert(m_data->m_driverGL);
@@ -1638,6 +1664,12 @@ namespace Luminous
   {
     assert(!m_data->m_opacityStack.empty());
     return m_data->m_opacityStack.top();
+  }
+
+  void RenderContext::setOpacity(float opacity)
+  {
+    assert(!m_data->m_opacityStack.empty());
+    m_data->m_opacityStack.top() = opacity;
   }
 
   void RenderContext::setDefaultState()

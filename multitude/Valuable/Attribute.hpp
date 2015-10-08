@@ -387,10 +387,11 @@ namespace Valuable
 
     virtual void setTransitionAnim(float durationSeconds, float delaySeconds);
 
-  protected:
-
     /// Invokes the change valueChanged function of all listeners
     virtual void emitChange();
+
+  protected:
+
     /// Invokes the change valueDeleted function of all listeners
     virtual void emitDelete();
 
@@ -549,7 +550,7 @@ namespace Valuable
       clearValue(USER);
     }
 
-    virtual QString asString(bool * const ok, Layer layer) const = 0;
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE = 0;
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {

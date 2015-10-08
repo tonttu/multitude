@@ -40,6 +40,7 @@ HEADERS += AttributeVector.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
 HEADERS += v8.hpp
+HEADERS += ListenerHolder.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
@@ -61,6 +62,7 @@ SOURCES += Attribute.cpp
 SOURCES += AttributeString.cpp
 SOURCES += XMLArchive.cpp
 SOURCES += State.cpp
+SOURCES += ListenerHolder.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 

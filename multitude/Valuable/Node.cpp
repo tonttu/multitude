@@ -69,12 +69,43 @@ namespace
 
   Radiant::Mutex s_processingQueueMutex;
   bool s_processingQueue = false;
+  bool s_processingQueueDisabled = false;
   std::list<std::unique_ptr<QueueItem> > s_queueTmp;
   QSet<void *> s_queueOnceTmp;
+
+  void enableQueue()
+  {
+    Radiant::Guard g(s_processingQueueMutex);
+    s_processingQueueDisabled = false;
+  }
+
+  void disableQueue()
+  {
+    std::list<std::unique_ptr<QueueItem> > queue;
+    std::list<std::unique_ptr<QueueItem> > queueTmp;
+
+    {
+      Radiant::Guard g(s_processingQueueMutex);
+      Radiant::Guard g2(s_queueMutex);
+
+      s_processingQueueDisabled = true;
+
+      s_queueOnce.clear();
+      s_queueOnceTmp.clear();
+      std::swap(queue, s_queue);
+      std::swap(queueTmp, s_queueTmp);
+    }
+  }
 
   void queueEvent(std::unique_ptr<QueueItem> item, void * once)
   {
     s_processingQueueMutex.lock();
+
+    if (s_processingQueueDisabled) {
+      s_processingQueueMutex.unlock();
+      return;
+    }
+
     {
       if (s_processingQueue) {
         if (once) {
@@ -787,6 +818,11 @@ namespace Valuable
     return m_id;
   }
 
+  void Node::setId(Node::Uuid newId)
+  {
+    m_id = newId;
+  }
+
   void Node::eventAddOut(const QByteArray & id)
   {
     if (m_eventSendNames.contains(id)) {
@@ -881,18 +917,14 @@ namespace Valuable
     return r;
   }
 
-  void Node::flushQueue()
+  void Node::disableQueue()
   {
-    Radiant::Guard g2(s_processingQueueMutex);
-    Radiant::Guard g(s_queueMutex);
+    ::disableQueue();
+  }
 
-    s_queueTmp.clear();
-    s_queueOnceTmp.clear();
-    {
-      // Make a temporary copy to prevent weird callback recursion bugs
-      auto tempQueue = std::move(s_queue);
-      s_queue.clear();
-    }
+  void Node::reEnableQueue()
+  {
+    enableQueue();
   }
 
   bool Node::copyValues(const Node & from, Node & to)
@@ -1039,7 +1071,8 @@ namespace Valuable
       if(s_fatalOnEventMismatch)
         Radiant::fatal("Node::validateEvent # event '%s' does not exist for this class", from.data());
       else
-        Radiant::warning("Node::validateEvent # event '%s' does not exist for this class", from.data());
+        Radiant::warning("Node::validateEvent # event '%s' does not exist for this class (%s)",
+                         from.data(), Radiant::StringUtils::type(*this).data());
 
     }
 

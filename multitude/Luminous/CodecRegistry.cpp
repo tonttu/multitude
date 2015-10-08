@@ -60,6 +60,8 @@ namespace Luminous
         if(candidate->canRead(*file)) 
           return candidate;
       }
+
+      return nullptr;
     }
 
     return codec;

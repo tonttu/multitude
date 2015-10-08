@@ -295,8 +295,8 @@ namespace Luminous
       m_fullscreen(this, "fullscreen", false),
       m_resizeable(this, "resizeable", false),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
-      m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4<<30)),
-      m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<10)),
+      m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4) << 36),
+      m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1)
   {
@@ -453,7 +453,8 @@ namespace Luminous
       m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_vsync(this, "vsync", false),
       m_glFinish(this, "gl-finish", true),
-      m_edited(false)
+      m_edited(false),
+      m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
     eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
@@ -523,6 +524,14 @@ namespace Luminous
     }
 
     return r;
+  }
+
+  Rect MultiHead::layerSize() const
+  {
+    if (m_layerSize->length()) {
+      return Nimble::Rect(0, 0, m_layerSize.x(), m_layerSize.y());
+    }
+    else return graphicsBounds();
   }
 
   int MultiHead::width()

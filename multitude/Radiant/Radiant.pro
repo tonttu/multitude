@@ -2,6 +2,7 @@ include(../multitude.pri)
 
 HEADERS += ArrayMap.hpp
 HEADERS += ObjectPool.hpp
+HEADERS += CommandLineArguments.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -79,6 +80,7 @@ HEADERS += WinTypes.h
 
 SOURCES += Mime.cpp
 SOURCES += ObjectPool.cpp
+SOURCES += CommandLineArguments.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
@@ -143,7 +145,7 @@ ios {
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
 
-linux-*: LIBS += -lX11 -lXtst
+linux-*: LIBS += -lX11
 
 macx:LIBS += -framework,CoreFoundation
 

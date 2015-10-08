@@ -5,11 +5,12 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 #include "ResourceLocator.hpp"
 #include "Platform.hpp"
 #include <QtCore/private/qabstractfileengine_p.h>
+#include <QtCore/private/qfsfileengine_p.h>
 #include <QStringList>
 #include <QVector>
 
@@ -96,6 +97,54 @@ namespace {
 
 namespace Radiant
 {
+  class ResourceLocatorFileEngine : public QFSFileEngine
+  {
+  public:
+    ResourceLocatorFileEngine(const QString & src, const QString & target) : QFSFileEngine(target), m_src(src) {}
+    // We are wrapping file that has absolute path, but from a user point
+    // of view this is always relative, since the path user gave was relative.
+    // Without this for example QFileInfo("style.css").isAbsolute() would
+    // return true if there was style.css somewhere in the search path.
+    virtual bool isRelativePath() const OVERRIDE {
+      return true;
+    }
+
+    QString fileName(FileName file) const OVERRIDE
+    {
+      if (file == DefaultName) {
+        return m_src;
+      }
+
+      if (file == PathName) {
+        const int slash = m_src.lastIndexOf(QLatin1Char('/'));
+        if (slash < 0)
+          return ".";
+        else if (slash == 0)
+          return "/";
+        else
+          return m_src.mid(0, slash);
+      }
+
+      if (file == AbsoluteName) {
+        return QFSFileEngine::fileName(DefaultName);
+      }
+
+      if (file == AbsolutePathName) {
+        const QString abs = QFSFileEngine::fileName(DefaultName);
+        // Borrowed from QFSFileEngine::fileName
+        const int slash = abs.lastIndexOf(QLatin1Char('/'));
+        if (slash < 0)
+          return abs;
+        else if (abs.at(0) != QLatin1Char('/') && slash == 2)
+          return abs.left(3);      // include the slash
+        else
+          return abs.left(slash > 0 ? slash : 1);
+      }
+
+      return QFSFileEngine::fileName(file);
+    }
+    QString m_src;
+  };
 
   class ResourceLocator::D : public QAbstractFileEngineHandler
   {
@@ -114,11 +163,11 @@ namespace Radiant
       QStringList matches = locate(fileName, ResourceLocator::ALL_ENTRIES);
 
       // If there was no match, return 0 meaning we can't handle this file;
-      // otherwise return the default handler for the new filename
+      // otherwise return our wrapped handler for the new filename
       if(matches.isEmpty())
         return 0;
       else
-        return QAbstractFileEngine::create(matches.front());
+        return new ResourceLocatorFileEngine(fileName, matches.front());
     }
 
     QStringList locate(const QString & path, ResourceLocator::Filter filter) const

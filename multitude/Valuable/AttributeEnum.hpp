@@ -30,6 +30,7 @@ namespace Valuable
     const QMap<QString, int> & enumValues() const { return m_enumValues; }
 
   protected:
+    /// @todo int might be too small
     QMap<QString, int> m_enumValues;
     bool m_allowIntegers;
   };
@@ -104,7 +105,7 @@ namespace Valuable
       : Base(host, name, v, transit),
         AttributeEnum()
     {
-      for (const EnumNames * it = names; it->name; ++it) {
+      for (const EnumNames * it = names; it && it->name; ++it) {
         m_enumValues[QString(it->name).toLower()] = it->value;
       }
     }
@@ -150,10 +151,10 @@ namespace Valuable
 
       T v = value(layer);
       for (auto it = m_enumValues.begin(); it != m_enumValues.end(); ++it) {
-        if (*it == v)
+        if (*it == (int)v)
           return it.key();
       }
-      return QString::number(v);
+      return QString::number((int)v);
     }
 
     static inline T interpolate(T a, T b, float m)

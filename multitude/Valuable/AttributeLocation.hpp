@@ -136,6 +136,15 @@ namespace Valuable
       Base::clearValue(layer);
     }
 
+    virtual void setAsDefaults() OVERRIDE
+    {
+      if (!isValueDefinedOnLayer(Attribute::USER))
+        return;
+      m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
+      setValue(value(Attribute::USER), Attribute::DEFAULT);
+      clearValue(Attribute::USER);
+    }
+
   private:
     Nimble::Vector2f m_factors[Attribute::LAYER_COUNT];
     Nimble::Vector2f m_src;

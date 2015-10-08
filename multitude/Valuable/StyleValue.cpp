@@ -215,6 +215,12 @@ namespace Valuable
   {
     if (m_type == TYPE_COLOR)
       return *m_data.m_color;
+    if (m_type == TYPE_KEYWORD) {
+      Radiant::Color color;
+      if (color.set(*m_data.m_keyword)) {
+        return color;
+      }
+    }
     Radiant::error("StyleValue::Component::asColor # cannot convert %s to color", typeName());
     return Radiant::Color();
   }

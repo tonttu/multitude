@@ -15,6 +15,7 @@
 
 #include <sstream>
 #include <QString>
+#include <typeinfo>
 #include <type_traits>
 #include <typeinfo>
 
@@ -35,10 +36,18 @@ namespace Radiant
     /// @returns Value as a string
     /// @tparam T Type of the value to convert
     template<class T>
-    inline QString toString(const T & x)
+    inline typename std::enable_if<!std::is_enum<T>::value, QString>::type toString(const T & x)
     {
       std::ostringstream os;
       os << x;
+      return QString::fromUtf8(os.str().c_str());
+    }
+
+    template <typename T>
+    inline typename std::enable_if<std::is_enum<T>::value, QString>::type toString(const T & x)
+    {
+      std::ostringstream os;
+      os << long(x);
       return QString::fromUtf8(os.str().c_str());
     }
 

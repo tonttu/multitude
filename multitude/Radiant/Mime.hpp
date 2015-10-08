@@ -34,6 +34,9 @@ namespace Radiant
     /// @sa topLevel
     MimeType(const QString & toplevel, const QString & subtype);
 
+    MimeType(const MimeType & t);
+    MimeType & operator=(const MimeType & t);
+
     /// Get the top-level
     /// @return toplevel of the mime type, eg. text from text/plain
     const QString & topLevel() const
@@ -57,8 +60,8 @@ namespace Radiant
 
   private:
     // text/plain =>
-    const QString m_toplevel; // text
-    const QString m_subtype; // plain
+    QString m_toplevel; // text
+    QString m_subtype; // plain
   };
 
   /// This class keeps track of matching file extensions to mime types.

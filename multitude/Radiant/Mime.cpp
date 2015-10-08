@@ -33,6 +33,18 @@ namespace Radiant
     m_toplevel(toplevel), m_subtype(subtype)
   {}
 
+  MimeType::MimeType(const MimeType & t)
+    : m_toplevel(t.m_toplevel)
+    , m_subtype(t.m_subtype)
+  {}
+
+  MimeType & MimeType::operator=(const MimeType & t)
+  {
+    m_toplevel = t.m_toplevel;
+    m_subtype = t.m_subtype;
+    return *this;
+  }
+
   void MimeManager::initialize()
   {
     MULTI_ONCE {

@@ -23,6 +23,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#define strtoll _strtoi64
+#endif
+
 namespace Radiant {
 
   /// @todo What is this? Shouldn't this be done somewhere else. Debug-prints coming from SDK
@@ -314,6 +318,8 @@ namespace Radiant {
           *ok = false;
       }
       else {
+        // m_current = end - m_buf;
+        m_current += (unsigned) stringSpace(m_buf + m_current);
         return d;
       }
     }
@@ -347,6 +353,21 @@ namespace Radiant {
       return Nimble::Math::Round(getRef<float>());
     else if(marker == DOUBLE_MARKER)
       return Nimble::Math::Round(getRef<double>());
+    else if (marker == STRING_MARKER) {
+      const char * source = & m_buf[m_current];
+      char * end = (char *) source;
+      long long d = strtoll(m_buf + m_current, & end, 10);
+      if(end == (char *) source) {
+        Radiant::error("BinaryData::readInt64 # in strtoll");
+        if(ok)
+          *ok = false;
+      }
+      else {
+        // m_current = end - m_buf;
+        m_current += (unsigned) stringSpace(m_buf + m_current);
+        return d;
+      }
+    }
     else if(ok) {
       badmarker("BinaryData::readInt64", int32_t(marker));
       *ok = false;
@@ -913,8 +934,8 @@ namespace Radiant {
 
   void BinaryData::unavailable(const char * func) const
   {
-    if(!__verbose)
-      return;
+    /*if(!__verbose)
+      return;*/
     Radiant::error("%s # Not enough data available (at %u/%u)",
                    func, m_current, m_total);
   }

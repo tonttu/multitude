@@ -387,6 +387,15 @@ namespace Radiant {
       *ok = good;
     return tmp;
   }
+
+  template <> inline QByteArray BinaryData::read(bool * ok)
+  {
+    QByteArray tmp;
+    bool good = readString(tmp);
+    if(ok)
+      *ok = good;
+    return tmp;
+  }
 }
 
 #endif

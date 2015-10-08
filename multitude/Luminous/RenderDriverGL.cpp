@@ -593,6 +593,16 @@ namespace Luminous
     return it->second;
   }
 
+  TextureGL * RenderDriverGL::findHandle(const Texture & texture)
+  {
+    auto it = m_d->m_textures.find(texture.resourceId());
+    if(it == m_d->m_textures.end()) {
+      return nullptr;
+    } else {
+      return &it->second;
+    }
+  }
+
   void RenderDriverGL::setDefaultState()
   {
 #ifndef RADIANT_OSX_MOUNTAIN_LION

@@ -226,19 +226,17 @@ namespace Luminous
         break;
 
       line.setLineWidth(lineWidth);
-      y += leading;
       line.setPosition(QPointF(0, y));
       if (forceHeight)
         y += height;
       else
         y += line.height() * heightFactor;
+      y += leading;
 
       m_boundingBox |= line.naturalTextRect();
     }
 
     m_layout.endLayout();
-    if (m_layout.text().isEmpty())
-      m_boundingBox = QRectF();
 
     m_layoutThread = QThread::currentThread();
 

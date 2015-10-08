@@ -67,7 +67,7 @@ namespace Luminous {
       Area();
       virtual ~Area();
       /// Deserializes this area from an archive element
-      bool deserialize(const Valuable::ArchiveElement & element);
+      virtual bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
 
       /// Sets the geometry (size & offset) of the area
       /// @param x x offset
@@ -389,6 +389,9 @@ namespace Luminous {
     /// Returns the total graphics size
     Rect graphicsBounds() const;
 
+    /// Returns the default layer size
+    Rect layerSize() const;
+
     /// Moves graphics locations of areas so that their bounding
     /// box is located in origin.
     void adjustGraphicsToOrigin();
@@ -498,6 +501,7 @@ namespace Luminous {
     HardwareColorCorrection m_hwColorCorrection;
     Valuable::AttributeBool m_vsync;
     Valuable::AttributeBool m_glFinish;
+    Valuable::AttributeVector2i m_layerSize;
 
     bool m_edited;
   };

@@ -44,6 +44,10 @@ namespace Luminous
     LUMINOUS_API Image * image(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
                                int priorityChange = 0);
 
+    /// Gets the best available texture with asked size, shorthand function
+    /// for level and other texture-function.
+    LUMINOUS_API Texture * texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize);
+
 #ifndef LUMINOUS_OPENGLES
     /** Gets the compressed image on given level.
         @param level the mipmap level
@@ -100,11 +104,25 @@ namespace Luminous
     LUMINOUS_API Valuable::LoadingState & state();
     LUMINOUS_API const Valuable::LoadingState & state() const;
 
+    /// Obsolete mipmap means that the file was changed on disk and reload()
+    /// was called. This mipmap shouldn't be used anymore, instead new one
+    /// should be generated with acquire().
+    LUMINOUS_API bool isObsolete() const;
+
     /// Gets a shared pointer to an image file CPU-side mipmap.
     /// @param filename The name of the image file
     /// @param compressedMipmaps control whether compressed mipmaps should be used
     LUMINOUS_API static std::shared_ptr<Mipmap> acquire(const QString & filename,
                                                         bool compressedMipmaps);
+
+    /// Sets Mipmap instance that has loaded this file obsolete. Call this if
+    /// the file changes and mipmap needs to be reloaded. This won't affect
+    /// existing Mipmap instances, since currently it's not thread-safe to
+    /// reload existing mipmap, but it makes the mipmap to send "reloaded"
+    /// event which tells users to acquire a new Mipmap object.
+    /// @param filename File that was changed on disk
+    /// @returns true if Mipmap was found and obsoleted
+    LUMINOUS_API static bool reload(const QString & filename);
 
     /// Returns cache filename for given source file name.
     /// @param src The original image filename
@@ -122,6 +140,7 @@ namespace Luminous
 
     void setMipmapReady(const ImageInfo & imginfo);
     void startLoading(bool compressedMipmaps);
+    void setObsolete();
 
   private:
     friend class PingTask;

@@ -117,4 +117,31 @@ namespace Radiant
   {
     m_func(*this);
   }
+
+  void FunctionTask::executeInBGThread(std::function<void (Task &)> func)
+  {
+    BGThread::instance()->addTask(std::make_shared<FunctionTask>(func));
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  SingleShotTask::SingleShotTask(std::function<void ()> func)
+    : m_func(func)
+  {}
+
+  void SingleShotTask::doTask()
+  {
+    m_func();
+    setFinished();
+  }
+
+  void SingleShotTask::run(double delay, std::function<void ()> func)
+  {
+    auto task = std::make_shared<SingleShotTask>(func);
+    if (delay != 0.0) {
+      task->scheduleFromNowSecs(delay);
+    }
+    BGThread::instance()->addTask(std::move(task));
+  }
 }

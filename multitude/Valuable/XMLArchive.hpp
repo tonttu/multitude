@@ -49,16 +49,16 @@ namespace Valuable
     /// @param element DOMElement to wrap
     XMLArchiveElement(DOMElement element);
 
-    void add(ArchiveElementImpl & element);
-    ArchiveIterator children() const;
+    virtual void add(ArchiveElementImpl & element) OVERRIDE;
+    virtual ArchiveIterator children() const OVERRIDE;
 
-    void add(const QString & name, const QString & value);
-    QString get(const QString & name) const;
+    virtual void add(const QString & name, const QString & value) OVERRIDE;
+    virtual QString get(const QString & name) const OVERRIDE;
 
-    void set(const QString & s);
-    QString get() const;
+    virtual void set(const QString & s) OVERRIDE;
+    virtual QString get() const OVERRIDE;
 
-    QString name() const;
+    virtual QString name() const OVERRIDE;
     virtual void setName(const QString & name) OVERRIDE;
 
     /// Returns a pointer to the wrapped DOMElement

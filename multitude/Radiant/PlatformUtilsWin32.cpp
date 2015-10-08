@@ -174,6 +174,18 @@ namespace Radiant
                        name.toUtf8().data(), err);
       }
     }
+
+    bool createHardLink(const QString & from, const QString & to)
+    {
+      Radiant::error("Hard links not implemented on windows yet");
+      return false;
+    }
+
+    int numberOfHardLinks(const QString & file)
+    {
+      Radiant::error("numberOfHardLinks not implemented on windows yet");
+      return -1;
+    }
   }
 
 }

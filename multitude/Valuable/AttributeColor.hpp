@@ -53,7 +53,7 @@ namespace Valuable
     {}
 
     bool set(const Nimble::Vector4f & color, Layer layer = USER,
-             QList<ValueUnit> = QList<ValueUnit>())
+             QList<ValueUnit> = QList<ValueUnit>()) OVERRIDE
     {
       this->setValue(color, layer);
       return true;

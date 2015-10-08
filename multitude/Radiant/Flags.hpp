@@ -40,7 +40,7 @@ namespace Radiant
     FlagsT() : m_value(0) {}
     /// Construct flags
     /// @param t initial values
-    FlagsT(T t) : m_value(t) {}
+    FlagsT(T t) : m_value(Int(t)) {}
     /// Construct a copy
     /// @param f flags to copy
     FlagsT(const FlagsT & f) : m_value(f.m_value) {}

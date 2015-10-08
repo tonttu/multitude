@@ -260,6 +260,12 @@ DSPNetwork::instance().send(control);
     /// @return Default sampley player object
     std::shared_ptr<ModuleSamplePlayer> samplePlayer();
 
+    /// @cond
+
+    ModuleSamplePlayer * javascriptSamplePlayer();
+
+    /// @endcond
+
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL
@@ -275,6 +281,8 @@ DSPNetwork::instance().send(control);
     /// @endcond
 
     bool hasPanner() const { return m_panner != nullptr; }
+    /// Returns the panner module or NULL
+    std::shared_ptr<ModulePanner> panner() { return m_panner; }
 
     std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
@@ -292,7 +300,7 @@ DSPNetwork::instance().send(control);
 
     void checkNewControl();
     void checkNewItems();
-    void checkDoneItems();
+    void checkDoneItems(std::vector<ModulePtr> & modulesToDelete);
     void deliverControl(const QByteArray & moduleid, const QByteArray & commandid,
                         Radiant::BinaryData &);
 

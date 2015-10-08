@@ -65,6 +65,19 @@ namespace Luminous
       TextStatic
     };
 
+    /// How are UV coordinates generated for objects
+    enum TextureMappingMode
+    {
+      /// Flat mapping looks like the texture was projected to the object
+      /// bounding box, basically clipping the texture to the shape of the
+      /// rendered object.
+      TEXTURE_MAPPING_FLAT,
+      /// UV coordinates follow the ellipse tangent and normal. U-coordinate
+      /// rotates with the object from 0 to 1 in clockwise direction.
+      /// V-coordinate is 0 on the internal edge or center and 1 at the outer
+      /// edge.
+      TEXTURE_MAPPING_TANGENT
+    };
 
     /** Proxy object for building rendering command.
 
@@ -146,6 +159,8 @@ namespace Luminous
     /// However note, that CPU equivalents of GL classes are still valid.
     virtual ~RenderContext();
 
+    Luminous::RenderDriver &renderDriver();
+
     /// Sets the associated area for this context at the moment
     /// @param area area to associate
     void setWindowArea(const Luminous::MultiHead::Window * window, const Luminous::MultiHead::Area * area);
@@ -205,12 +220,14 @@ namespace Luminous
     /// @return Recursion limit
     size_t recursionLimit() const;
 
-    /// Sets the current recursion depth.
-    /// @param rd Recursion depth
-    void setRecursionDepth(size_t rd);
-    /// Returns current recursion depth
-    /// @return Current recursion depth
-    size_t recursionDepth() const;
+    /// Increment the current clip mask recursion depth
+    void pushClipMaskDepth();
+    /// Get current clip mask recursion depth
+    /// @return Current clip mask recursion depth
+    size_t currentClipMaskDepth() const;
+
+    /// Decrement the current clip mask recursion depth
+    void popClipMaskDepth();
 
     /// Save the current clipping stack and start with a empty one
     void pushClipStack();
@@ -282,13 +299,15 @@ namespace Luminous
     /// @param linesegments Number of steps (precision)
     /// @param fromRadians Start angle in radians
     /// @param toRadians End angle in radians
+    /// @param textureCoordMode How are the texture coordinates generated
     void drawDonut(const Nimble::Vector2f & center,
                    Nimble::Vector2 axis,
                    float otherAxisLength,
                    float width,
                    const Luminous::Style & style,
                    unsigned int linesegments = 0,
-                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI);
+                   float fromRadians=0, float toRadians=Nimble::Math::TWO_PI,
+                   TextureMappingMode textureMappingMode = TEXTURE_MAPPING_FLAT);
 
     /// Push the given opacity to render context. The resulting opacity will be
     /// the current opacity multiplied by the given value.
@@ -299,6 +318,7 @@ namespace Luminous
     /// Get the current opacity
     /// @return the current opacity
     float opacity() const;
+    void setOpacity(float opacity);
 
     /// Pushes new frame buffer to the stack.
     /// @param target frame buffer for rendering commands.
@@ -445,6 +465,8 @@ namespace Luminous
     /// last reset. This can be useful for checking that object culling works as intended.
     void addRenderCounter();
 
+    unsigned long renderCounter() const;
+
     /// Increases the unfinished render counter by one.
     /// @see unfinishedRenderCounter
     void addUnfinishedRenderCounter();
@@ -458,7 +480,7 @@ namespace Luminous
     /// This is useful for example when rendering a scene to FBO and checking
     /// if everything was rendered there properly already this frame, or should
     /// the rendering be tried again on next frame.
-    long unfinishedRenderCounter() const;
+    unsigned long unfinishedRenderCounter() const;
 
     /// Returns the size of the window of this RenderContext object.
     /// @return If the window is null, then Nimble::Size(10,10) is returned.
@@ -573,6 +595,9 @@ namespace Luminous
     /// @param texture CPU side object representing the texture
     /// @return Handle to OpenGL resources of given texture
     TextureGL & handle(const Texture & texture);
+
+    /// @see RenderDriverGL::findHandle
+    TextureGL * findHandle(const Texture & texture);
 
     /// Returns the GL resources handle corresponding to given frame buffer.
     /// @param target CPU side object representing the frame buffer
@@ -1000,10 +1025,12 @@ namespace Luminous
     RenderContext * m_rc;
   };
 
-  /// This class provides a simple guard for setting the active clipping area. It will
-  /// automatically pop the area in its destructor so the user doesn't need to
-  /// remember to do it manually. It is equivalent to calling
-  /// "RenderContext::pushClipRect(const Nimble::Rectangle &)" and "RenderContext::popClipRect"
+  /// This class provides a simple guard for setting the active clipping area
+  /// for widgets. It will automatically pop the area in its destructor so the
+  /// user doesn't need to remember to do it manually. It is equivalent to
+  /// calling "RenderContext::pushClipRect(const Nimble::Rectangle &)" and
+  /// "RenderContext::popClipRect" This clipping only affects clipping
+  /// individual widgets.
   class ClipGuard : public Patterns::NotCopyable
   {
   public:

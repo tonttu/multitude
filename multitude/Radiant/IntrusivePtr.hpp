@@ -483,6 +483,12 @@ namespace Radiant
       m_counter = nullptr;
     }
 
+    /// Shortcut for creating weak pointer from this
+    IntrusiveWeakPtr<T> weak() const
+    {
+      return IntrusiveWeakPtr<T>(*this);
+    }
+
     /// Assign a raw pointer to the intrusive pointer
     /// @param ptr raw pointer to assign
     /// @return reference to this
