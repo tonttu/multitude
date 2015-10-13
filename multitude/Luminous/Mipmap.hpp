@@ -44,6 +44,8 @@ namespace Luminous
     LUMINOUS_API Image * image(unsigned int level = 0, unsigned int * returnedLevel = nullptr,
                                int priorityChange = 0);
 
+    LUMINOUS_API bool isLevelAvailable(unsigned int level) const;
+
 #ifndef LUMINOUS_OPENGLES
     /** Gets the compressed image on given level.
         @param level the mipmap level
@@ -85,6 +87,14 @@ namespace Luminous
     /// Sets the loading priority for this set of mipmaps
     /// @param priority new priority
     LUMINOUS_API void setLoadingPriority(Radiant::Priority priority);
+
+    /// Expiration time of the mipmap levels after not being used
+    /// in tenths of a second.
+    LUMINOUS_API int expirationTimeDeciSeconds() const;
+
+    /// Set the expiration time of the mipmap levels
+    /// @param deciseconds expiration time in tenths of a second
+    LUMINOUS_API void setExpirationTimeDeciSeconds(int deciseconds);
 
     /// Returns the size of the mipmap level
     LUMINOUS_API Nimble::Size mipmapSize(unsigned int level);

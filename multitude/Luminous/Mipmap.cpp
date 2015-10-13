@@ -27,6 +27,8 @@
 #include <QSettings>
 #include <QDateTime>
 
+#include <atomic>
+
 namespace
 {
   typedef std::map<QPair<QByteArray, bool>, std::weak_ptr<Luminous::Mipmap>> MipmapStore;
@@ -225,6 +227,8 @@ namespace Luminous
     MipmapLevel * find(unsigned int level, unsigned int * returnedLevel,
                        int priorityChange);
 
+    bool isLevelAvailable(unsigned int level) const;
+
   public:
     Mipmap & m_mipmap;
 
@@ -248,7 +252,7 @@ namespace Luminous
 
     std::vector<MipmapLevel> m_levels;
 
-    float m_expireSeconds;
+    std::atomic<int> m_expireDeciSeconds;
 
     Valuable::LoadingState m_state;
   };
@@ -328,7 +332,8 @@ namespace Luminous
       if (m_level == level) {
         imageTex.lastUsed = now;
       } else {
-        imageTex.lastUsed = Nimble::Math::Clamp<int>(now - 10.0f * mipmap.m_d->m_expireSeconds + 0.3f, StateCount, now);
+        /// FIXME: why +0.3f and 0.31f?
+        imageTex.lastUsed = Nimble::Math::Clamp<int>(now - mipmap.m_d->m_expireDeciSeconds + 0.3f, StateCount, now);
         MipmapReleaseTask::check(0.31f);
       }
       if (level == mipmap.m_d->m_maxLevel) {
@@ -586,15 +591,18 @@ namespace Luminous
       Luminous::MipmapPtr ptr = it->second.lock();
       if(ptr) {
         if(ptr->isHeaderReady()) {
-          const int expire = ptr->m_d->m_expireSeconds * 10;
+          const int expire = ptr->m_d->m_expireDeciSeconds;
           std::vector<MipmapLevel> & levels = ptr->m_d->m_levels;
           // do not expire the last mipmap level (smallest image)
           for(int level = 0, s = levels.size() - 1; level < s; ++level) {
             MipmapLevel & imageTex = levels[level];
             int lastUsed = imageTex.lastUsed;
+            //Radiant::info("level %d lastused %d <= %d", level, int(lastUsed), int(Loading));
             if (lastUsed <= Loading)
               continue;
-            if(now > lastUsed + expire) {
+
+            //Radiant::info("%d > %d + %d = %d", now, lastUsed, expire, lastUsed + expire);
+            if(now >= lastUsed + expire) {
               if(imageTex.locked.testAndSetOrdered(0, 1)) {
                 if(imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
                   imageTex.texture.reset();
@@ -645,7 +653,7 @@ namespace Luminous
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
     , m_mipmapFormat("png")
-    , m_expireSeconds(3.0f)
+    , m_expireDeciSeconds(30)
     , m_state(Valuable::STATE_NEW)
   {
     MULTI_ONCE {
@@ -773,6 +781,24 @@ namespace Luminous
     return nullptr;
   }
 
+  bool Mipmap::D::isLevelAvailable(unsigned int level) const
+  {
+    if (!m_mipmap.isValid())
+      return false;
+
+    if(!m_mipmap.isReady())
+      return false;
+
+    if(level > m_maxLevel)
+      return false;
+
+    const MipmapLevel & imageTex = m_levels[level];
+    if(imageTex.lastUsed <= Loading)
+      return false;
+
+    return true;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -795,6 +821,11 @@ namespace Luminous
   {
     MipmapLevel * level = m_d->find(requestedLevel, returnedLevel, priorityChange);
     return level ? level->image.get() : nullptr;
+  }
+
+  bool Mipmap::isLevelAvailable(unsigned int level) const
+  {
+    return m_d->isLevelAvailable(level);
   }
 
   CompressedImage * Mipmap::compressedImage(unsigned int requestedLevel, unsigned int * returnedLevel, int priorityChange)
@@ -927,6 +958,19 @@ namespace Luminous
   void Mipmap::setLoadingPriority(Radiant::Priority priority)
   {
     m_d->m_loadingPriority = priority;
+  }
+
+  int Mipmap::expirationTimeDeciSeconds() const
+  {
+    return m_d->m_expireDeciSeconds;
+  }
+
+  void Mipmap::setExpirationTimeDeciSeconds(int deciseconds)
+  {
+    int old = m_d->m_expireDeciSeconds;
+    m_d->m_expireDeciSeconds = deciseconds;
+    if(deciseconds < old)
+      MipmapReleaseTask::check(0.0f);
   }
 
   Nimble::Size Mipmap::mipmapSize(unsigned int level)
