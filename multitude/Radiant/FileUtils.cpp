@@ -32,6 +32,8 @@
 #include <QDateTime>
 #include <QProcess>
 #include <QThread>
+#include <QEventLoop>
+#include <QTimer>
 
 #ifdef RADIANT_LINUX
 #include <errno.h>
@@ -501,16 +503,19 @@ namespace Radiant
 #ifdef RADIANT_LINUX
   int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
-    Radiant::Timer timer;
+    QEventLoop loop;
     QProcess p;
+
+    QTimer::singleShot(300*1000, &loop, SLOT(quit()));
+    QObject::connect(&p, SIGNAL(finished(int, QProcess::ExitStatus)),
+            &loop, SLOT(quit()));
+
+    QObject::connect(&p, SIGNAL(error(QProcess::ProcessError)),
+            &loop, SLOT(quit()));
+
     p.start(cmd, argv, QProcess::ReadOnly);
-    do {
-      // Apparently there is a bug in Qt 4.* that waitForFinished might miss
-      // finished() signal if it was emitted before we call this function,
-      // and therefore it might block forever. We work around that by polling.
-      if (p.waitForFinished(500) || p.state() == QProcess::NotRunning)
-        break;
-    } while (timer.time() < 300);
+    loop.exec();
+
     if(out) *out = p.readAllStandardOutput();
     if(err) {
       *err = p.readAllStandardError();
