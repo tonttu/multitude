@@ -522,6 +522,7 @@ namespace Luminous
           m_colorCorrection = data;
       } else if (m_useColorCorrectionDelay) {
         this->sleep(0.1);
+        queueWrite(*m_colorCorrectionEnabled ? "g" : "c");
       }
     }
   }
