@@ -12,6 +12,7 @@
 
 namespace Radiant
 {
+  /// Carries information about output redirection. Can redirect to files or ByteArrays.
   class OutputRedirect
   {
   public:
@@ -84,6 +85,9 @@ namespace Radiant
     QString stdinRedirect;
     QProcessEnvironment environment;
 
+    /// stdout and stderr redirect can point to the same buffer or file.
+    /// This is sometimes useful when interleaving of errors with regular output is required
+    /// in order to see the proper sequence of events.
     ProcessIO(const OutputRedirect &stdoutRedirect = OutputRedirect(),
               const OutputRedirect &stderrRedirect = OutputRedirect(),
               QString stdinRedirectFile = QString(),
@@ -142,6 +146,26 @@ namespace Radiant
     ProcessOutputHandler onError;
   };
 
+  /// ProcessRunner interface. Will run a process synchronously. Will block until the process
+  /// exits or the timeout is reached and will return a result indicating the status and
+  /// exit code. Does not run the binary in a shell.
+  ///
+  /// You need to obtain an implementation to use it. newProcessRunner() returns the standard
+  /// implementation.
+  ///
+  /// Example usage with redirecting stdout and stderr to the same QByteArray and timeout of
+  /// 10 seconds:
+  ///
+  /// 	@code{.cpp}
+  /// 	auto runner = newProcessRunner();
+  /// 	QByteArray output;
+  ///		OutputRedirect redirect(&output);
+  /// 	ProcessIO io(redirect, redirect);  // both stdout and stderr to the same buffer
+  /// 	QStringList args = QStringList() << "-ne" << "arg1" << "arg2\n";
+  /// 	Result result = runner->run("echo", args, 10, io);
+  ///		if(result.ok()) { be_happy(); }
+  /// 	@endcode
+  ///
   class RADIANT_API ProcessRunner
   {
   public:
@@ -163,6 +187,24 @@ namespace Radiant
       QString toString();
     };
 
+    /// Runs the given binary in a subprocess. Blocks until the process exits or the timeout
+    /// is reached. When the timeout is reached, the process is killed. On posix, using the
+    /// standard implementation, it is sent a SIGTERM signal and then the runner blocks until
+    /// the process exits.
+    ///
+    /// Does not run the binary in a shell, so it will not do output redirection with '>',
+    /// parameter glob expansion, piping and so on.
+    ///
+    /// Some simple io redirection is supported via the 'io' parameter.
+    ///
+    /// @param path path to binary
+    /// @param arguments command line arguments for the binary. Does not split on spaces and does
+    /// not do glob expansion or output redirection.
+    /// @param timeoutSeconds timeout until the process is killed
+    /// @param io configuration for input and output redirection as well as environment variables
+    /// passed to the subprocess
+    /// @param notifications optional callbacks that are fired when certain events occur. Can
+    /// be used to get output from the subprocess as soon as it happens instead of when it ends.
     virtual Result run(const QString &path,
                        const QStringList &arguments,
                        double timeoutSeconds,
@@ -171,7 +213,7 @@ namespace Radiant
     virtual ~ProcessRunner() { }
   };
 
-  /// Default implementation. Not thread safe.
+  /// Returns the standard process runner implementation. Will never return null
   RADIANT_API std::unique_ptr<ProcessRunner> newProcessRunner();
 
   /// Normally the ProcessOutputHandler is called with every new chunk of output, which
