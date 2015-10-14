@@ -447,9 +447,9 @@ namespace Radiant
           bool execFailed = pollPipes(pipes, execErrorPipe[0], pid);
           if(execFailed) {
             flushPipesAndSignalEnd(pipes);
-            Radiant::error("ProcessRunner # exec failed: %s. Trying to run %s",
-                           execError.data(),
-                           path.toUtf8().data());
+            Radiant::error("ProcessRunner # Got an error from the child process while trying to run '%s': %s",
+                           path.toUtf8().data(),
+                           execError.data());
             return { ProcessRunner::Status::FailedToStart, -1 };
           }
         } else {
@@ -492,7 +492,8 @@ namespace Radiant
       // Need this else we're running cleanup from the original process and we don't want to
       // do that since it might block or do any other random things.
       execlp("false", "false", static_cast<char*>(nullptr));
-      Radiant::error("Failed to exec false. Aborting");
+      QByteArray msg = QString("Failed to exec 'false'. Aborting").toUtf8();
+      ::write(execErrPipe, msg.data(), msg.size());
       ::abort();
     }
 
@@ -528,8 +529,6 @@ namespace Radiant
         int res = dupLoop(outPipe[1], STDOUT_FILENO);
         if(res == -1) {
           const char * err = strerror(errno);
-          Radiant::error("ProcessRunner # Failed stdout dup2. Trying to set to %d. Error: %s",
-                         outPipe[1], err);
           reportExecFailureAndExit(execErrorPipe[1], QString("stdout dup failure: %1").arg(err));
         }
       }
@@ -538,8 +537,6 @@ namespace Radiant
         int res = dupLoop(errPipe[1], STDERR_FILENO);
         if(res == -1) {
           const char * err = strerror(errno);
-          Radiant::error("ProcessRunner # Failed stdout dup2. Trying to set to %d. Error: %s",
-                         errPipe[1], err);
           reportExecFailureAndExit(execErrorPipe[1], QString("stderr dup failure: %1").arg(err));
         }
       }
@@ -548,21 +545,18 @@ namespace Radiant
         int fd = openLoop(inputRedirect.toUtf8().data(), O_RDONLY);
         if(fd == -1) {
           const char * err = strerror(errno);
-          Radiant::error("ProcessRunner # Failed to open %s for stdin redirection. Error: %s",
-                         inputRedirect.toUtf8().data(), err);
-          reportExecFailureAndExit(execErrorPipe[1], QString("failed to open file %1: %2").arg(inputRedirect, err));
+          QString msg = QString("failed to open '%1' for stdin redirection: %2").arg(inputRedirect, err);
+          reportExecFailureAndExit(execErrorPipe[1], msg);
         }
         int res = dupLoop(fd, STDIN_FILENO);
         if(res == -1) {
           const char * err = strerror(errno);
-          Radiant::error("ProcessRunner # Failed dup stdin. Error %s", err);
           reportExecFailureAndExit(execErrorPipe[1], QString("stdin dup failure: %1").arg(err));
         }
       }
       execvpe(path.toUtf8().data(), argv, env);
       const char * err = strerror(errno);
-      Radiant::error("ProcessRunner # Exec failed: %s", err);
-      reportExecFailureAndExit(execErrorPipe[1], err);
+      reportExecFailureAndExit(execErrorPipe[1], QString("exec failed: %1").arg(err));
     }
   }  // unnamed namespace
 
