@@ -17,6 +17,7 @@
 #include "Radiant.hpp"
 #include "Trace.hpp"
 #include "Timer.hpp"
+#include "ProcessRunner.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -30,10 +31,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
-#include <QProcess>
 #include <QThread>
-#include <QEventLoop>
-#include <QTimer>
 
 #ifdef RADIANT_LINUX
 #include <errno.h>
@@ -503,28 +501,22 @@ namespace Radiant
 #ifdef RADIANT_LINUX
   int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
-    QEventLoop loop;
-    QProcess p;
+    QByteArray outStdout, outStderr;
+    ProcessIO io = ProcessIO(OutputRedirect(&outStdout), OutputRedirect(&outStderr));
 
-    QTimer::singleShot(300*1000, &loop, SLOT(quit()));
-    QObject::connect(&p, SIGNAL(finished(int, QProcess::ExitStatus)),
-            &loop, SLOT(quit()));
+    auto runner = newProcessRunner();
+    assert(runner);
 
-    QObject::connect(&p, SIGNAL(error(QProcess::ProcessError)),
-            &loop, SLOT(quit()));
+    ProcessRunner::Result result = runner->run(cmd, argv, 300.0, io);
 
-    p.start(cmd, argv, QProcess::ReadOnly);
-    loop.exec();
+    if(out) *out = outStdout;
+    if(err) *err = outStderr;
 
-    if(out) *out = p.readAllStandardOutput();
-    if(err) {
-      *err = p.readAllStandardError();
-    } else {
-      QByteArray e = p.readAllStandardError();
-      if(!e.isEmpty() && !quiet)
-        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
+    if(!outStderr.isEmpty() && !quiet) {
+      Radiant::error("%s: %s", cmd.toUtf8().data(), outStderr.data());
     }
-    return p.exitCode();
+
+    return result.exitCode;
   }
 
   int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
