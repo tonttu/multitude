@@ -566,13 +566,6 @@ namespace Luminous
     return (int) (bottom - top);
   }
 
-  /*
-  void MultiHead::setDpms(const Nimble::Vector3i & dpms)
-  {
-    m_dpms = dpms;
-  }
-  */
-
   float MultiHead::dpi() const
   {
     return m_dpi;
