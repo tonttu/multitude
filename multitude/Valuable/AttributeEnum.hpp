@@ -157,6 +157,11 @@ namespace Valuable
     }
   };
 
+  template <typename T>
+  inline bool operator==(const AttributeEnumT<T> & a, T e)
+  {
+    return *a == e;
+  }
 }
 
 #endif // VALUEENUM_HPP
