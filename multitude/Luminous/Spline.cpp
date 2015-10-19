@@ -583,6 +583,24 @@ namespace Luminous {
     return out;
   }
 
+  Spline Spline::clone() const
+  {
+    Spline copy;
+    copy.m_d->m_index = m_d->m_index;
+    copy.m_d->m_vertices = m_d->m_vertices;
+    copy.m_d->m_paths = m_d->m_paths;
+    copy.m_d->m_path = nullptr;
+
+    copy.m_d->m_redoLocation = m_d->m_redoLocation;
+    copy.m_d->m_endTime = m_d->m_endTime;
+    copy.m_d->m_mingap = m_d->m_mingap;
+    copy.m_d->m_maxgap = m_d->m_maxgap;
+    copy.m_d->m_bounds = m_d->m_bounds;
+    copy.m_d->m_generation = m_d->m_generation;
+
+    return copy;
+  }
+
   QDataStream & operator>>(QDataStream & in, Spline & spline)
   {
     spline.clear();

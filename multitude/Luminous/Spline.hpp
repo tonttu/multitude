@@ -59,6 +59,8 @@ namespace Luminous {
 
     bool isEmpty() const;
 
+    Spline clone() const;
+
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
     friend LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);
