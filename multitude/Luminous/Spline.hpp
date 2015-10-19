@@ -61,6 +61,9 @@ namespace Luminous {
 
     Spline clone() const;
 
+    QString serialize() const;
+    void deserialize(const QString& str);
+
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
     friend LUMINOUS_API QDataStream & operator>>(QDataStream & in, Spline & spline);

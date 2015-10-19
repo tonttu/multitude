@@ -601,6 +601,60 @@ namespace Luminous {
     return copy;
   }
 
+  QString Spline::serialize() const
+  {
+    QString str = QString("%1\n").arg(m_d->m_paths.size());
+    for(int i = 0; i < m_d->m_paths.size(); ++i) {
+      const std::vector<Point>& points = m_d->m_paths[i].points;
+
+      QString path = QString("%1\n").arg(points.size());
+      for(const Point& p : points) {
+        path.append(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9\n").arg(
+                      QString::number(p.m_location.x), QString::number(p.m_location.y),
+                      QString::number(p.m_range.x), QString::number(p.m_range.y),
+                      QString::number(p.m_color.red()), QString::number(p.m_color.green()),
+                      QString::number(p.m_color.blue()), QString::number(p.m_color.alpha()),
+                      QString::number(p.m_width)));
+      }
+      str.append(path);
+    }
+    return str;
+  }
+
+  void Spline::deserialize(const QString &str)
+  {
+    clear();
+
+    QStringList lines = str.split("\n");
+    assert(lines.size() >= 1);
+    int line = 0;
+
+    int paths = lines[line++].toInt();
+    for(int i = 0; i < paths; ++i) {
+
+      int points = lines[line++].toInt();
+      assert(points <= lines.size() - line);
+
+      for(int j = 0; j < points; ++j) {
+        QStringList numbers = lines[line++].split(" ");
+
+        if(numbers.size() != 9)
+          continue;
+
+        Point p;
+        p.m_location = Nimble::Vector2f(numbers[0].toFloat(), numbers[1].toFloat());
+        p.m_range = Nimble::Vector2f(numbers[2].toFloat(), numbers[3].toFloat());
+        p.m_color = Radiant::Color(numbers[4].toFloat(), numbers[5].toFloat(),
+            numbers[6].toFloat(), numbers[7].toFloat());
+        p.m_width = numbers[8].toFloat();
+
+        m_d->addPoint(p);
+      }
+      m_d->endPath();
+    }
+    recalculate();
+  }
+
   QDataStream & operator>>(QDataStream & in, Spline & spline)
   {
     spline.clear();
