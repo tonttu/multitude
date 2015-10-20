@@ -507,6 +507,11 @@ namespace Luminous
 
   void VM1::D::writeColorCorrection()
   {
+    // VM1 seems to enable color correction automatically when it is written,
+    // so refuse writing it until the correction is enabled
+    if(!*m_colorCorrectionEnabled)
+      return;
+
     QByteArray data;
     {
       Radiant::Guard g(m_colorCorrectionMutex);
@@ -521,7 +526,7 @@ namespace Luminous
         if (m_colorCorrection.isEmpty())
           m_colorCorrection = data;
       } else if (m_useColorCorrectionDelay) {
-        this->sleep(0.1);
+        this->sleep(0.1); /// Do not remove this. Can mess VM1 pretty well
         queueWrite(*m_colorCorrectionEnabled ? "g" : "c");
       }
     }
