@@ -115,7 +115,7 @@ namespace Valuable
     /// Gets an Attribute with the given name
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
-    virtual Attribute * attribute(const QByteArray & name) const;
+    virtual Attribute * attribute(const QByteArray & name) const OVERRIDE;
 
     /// @copydoc attribute
     /// @return Null if no object can be found or the type is wrong
@@ -127,7 +127,7 @@ namespace Valuable
 
     /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
     MULTI_ATTR_DEPRECATED("Node::getValue is deprecated. Use Node::attribute instead.",
-                          virtual Attribute * getValue(const QByteArray & name) const);
+                          virtual Attribute * getValue(const QByteArray & name) const OVERRIDE);
 
     /// Removes an Attribute from the list of attribute objects.
     void removeAttribute(Attribute * const attribute);
@@ -216,9 +216,9 @@ namespace Valuable
     bool loadFromMemoryXML(const QByteArray & buffer);
 
     /// Serializes this object (and its children) to a DOM node
-    virtual ArchiveElement serialize(Archive &doc) const;
+    virtual ArchiveElement serialize(Archive &doc) const OVERRIDE;
     /// De-serializes this object (and its children) from a DOM node
-    virtual bool deserialize(const ArchiveElement & element);
+    virtual bool deserialize(const ArchiveElement & element) OVERRIDE;
 
     /// Handles a serialization element that lacks automatic handlers.
     /// @param element The element to be deserialized
@@ -384,7 +384,7 @@ namespace Valuable
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
 
     /// @cond
-    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
+    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data) OVERRIDE;
 
     /// @endcond
 

@@ -57,11 +57,11 @@ namespace Resonant {
     ModulePanner(Mode mode=RADIAL);
     virtual ~ModulePanner();
 
-    virtual bool deserialize(const Valuable::ArchiveElement & element);
+    virtual bool deserialize(const Valuable::ArchiveElement & element) OVERRIDE;
 
-    virtual bool prepare(int & channelsIn, int & channelsOut);
+    virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
-    virtual void process(float ** in, float ** out, int n, const CallbackTime &);
+    virtual void process(float ** in, float ** out, int n, const CallbackTime &) OVERRIDE;
 
     /** Creates a loudspeaker/headphone setup for full-HD displays.
 

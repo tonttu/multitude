@@ -171,7 +171,7 @@ namespace Resonant {
                int channels,
                int samplerate,
                int sfFormat,
-               // Either ASF_FLOAT32 or ASF_INT32
+               // Either Radiant::ASF_FLOAT32 or Radiant::ASF_INT32
                Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
 
     /// Tells the handler, that a given file handle can be deleted

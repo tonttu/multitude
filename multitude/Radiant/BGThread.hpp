@@ -96,6 +96,7 @@ namespace Radiant
     typedef std::pair<Priority, TaskPtr > contained;
 
     /// Returns the number of tasks in the BGThread.
+    /// This includes queued tasks and currently running tasks.
     /// @return Number of tasks.
     unsigned taskCount();
 

@@ -141,7 +141,7 @@ namespace Radiant
   unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
-    return (unsigned) m_taskQueue.size();
+    return (unsigned) m_taskQueue.size() + m_runningTasksCount;
   }
 
   unsigned int BGThread::runningTasks() const

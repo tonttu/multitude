@@ -537,7 +537,7 @@ namespace Valuable
       clearValue(USER);
     }
 
-    virtual QString asString(bool * const ok, Layer layer) const = 0;
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE = 0;
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {

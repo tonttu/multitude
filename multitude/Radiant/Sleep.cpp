@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+/*Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
  * and others.
  *
  * This file is licensed under GNU Lesser General Public License (LGPL),
@@ -17,6 +17,7 @@
   #include <Windows.h>
 #else
   #include <unistd.h>
+  #include <sched.h>
 #endif
 
 #include <chrono>
@@ -27,66 +28,55 @@ namespace Radiant {
 
   namespace
   {
-
-    void nativeSleep(uint32_t usecs)
+    void nativeSleep(uint64_t usecs)
     {
-#ifdef WIN32
-      ::Sleep(usecs / 1000);
+#ifdef RADIANT_WINDOWS
+      /// @todo this is just copied from old code, use multimedia timers to achieve <10ms resolution?
+      if(usecs < 10*1000) {
+        Radiant::Timer t;
+        while (t.time() < (double)usecs * 0.000001) {
+          nativeSleep(0);
+      } else {
+        uint32_t ms = usecs / 1000;
+        usecs = usecs % 1000;
+        ::Sleep(ms);
+      }
 #else
-      timespec req = {0, 1000*usecs}, rem = {0, 0};
-      while(req.tv_nsec) {
-        if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
-          std::swap(req, rem);
-        } else {
-          break;
+      if(usecs == 0) {
+        sched_yield();
+      } else {
+        timespec req;
+
+        req.tv_sec = static_cast<std::time_t>(usecs / 1000000);
+        req.tv_nsec = static_cast<long>(1000*(usecs % 1000000));
+        timespec rem = {0, 0};
+
+        while(req.tv_sec || req.tv_nsec) {
+          if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
+            std::swap(req, rem);
+          } else {
+            break;
+          }
         }
       }
 #endif
     }
-
   }
 
   void Sleep::sleepS(uint32_t secs)
   {
-    // This weird construct is necessary because signal handlers and such will interrupt sleeps
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> elapsed(0);
-
-    while(elapsed.count() < (secs - 0.2f)) {
-      /* Sleep in 150ms increments*/
-      nativeSleep(150 * 1000);
-
-      auto end = std::chrono::high_resolution_clock::now();
-      elapsed = end - start;
-    }
-
-    if(elapsed.count() < secs) {
-      nativeSleep((secs - elapsed.count()) * 1000000);
-    }
+    nativeSleep(1e6*secs);
   }
 
   void Sleep::sleepMs(uint32_t msecs)
   {
-    while(msecs > 1000) {
-      sleepS(1);
-      msecs -= 1000;
-    }
-    if(msecs)
-      sleepUs(msecs * 1000);
+    nativeSleep(1e3*msecs);
   }
 
 
-  void Sleep::sleepUs(uint32_t usecs)
+  void Sleep::sleepUs(uint64_t usecs)
   {
-    if(usecs < 10*1000) {
-      Radiant::Timer t;
-      while (t.time() < (double)usecs * 0.000001) {
-        nativeSleep(0);
-      }
-    } else {
-      nativeSleep(usecs);
-    }
+    nativeSleep(usecs);
   }
 
   void Sleep::sleepSome(double seconds)
