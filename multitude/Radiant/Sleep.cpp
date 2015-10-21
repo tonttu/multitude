@@ -102,14 +102,13 @@ namespace Radiant {
 
   void Sleep::sleepS(uint32_t secs)
   {
-    nativeSleep(1e6*secs);
+    nativeSleep(1000*1000*(uint64_t)secs);
   }
 
   void Sleep::sleepMs(uint32_t msecs)
   {
-    nativeSleep(1e3*msecs);
+    nativeSleep(1000*(uint64_t)msecs);
   }
-
 
   void Sleep::sleepUs(uint64_t usecs)
   {
@@ -121,7 +120,7 @@ namespace Radiant {
 #ifdef WIN32
     ::Sleep(seconds * 1000);
 #else
-    usleep(seconds * 1000000);
+    usleep(seconds * 1000*1000);
 #endif
   }
 
