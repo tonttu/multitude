@@ -13,6 +13,8 @@
 #include "ScreenDetector.hpp"
 #include <Radiant/Platform.hpp>
 
+#include "ScreenDetectorQt.hpp"
+
 #ifndef RADIANT_OSX
 # include "ScreenDetectorAMD.hpp"
 # include "ScreenDetectorNV.hpp"
@@ -106,6 +108,9 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     ScreenDetectorNV::detect(0, m_results);
     ScreenDetectorAMD::detect(0, m_results);
 #endif
+    if (m_results.empty()) {
+      ScreenDetectorQt::detect(m_results);
+    }
   }
 
 
