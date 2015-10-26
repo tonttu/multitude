@@ -42,6 +42,7 @@ namespace Luminous {
 
     void erase(const Nimble::Rectangle & eraser, float time = 0.0f);
     void erasePermanent(const Nimble::Rectangle & eraser);
+    void eraseWithTransparency(const Nimble::Rectangle & eraser);
 
     void render(Luminous::RenderContext & r, float time = 0.0f) const;
 

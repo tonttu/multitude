@@ -107,7 +107,15 @@ namespace Luminous {
 
     void addPoint(const Point & p);
     void endPath();
-    void erase(const Nimble::Rectangle &eraser, float time, bool permanent);
+
+    /// Should return true if the point is completely erased, false if the point is only
+    /// partially removed (f.ex. clamp time range)
+    typedef std::function<bool(Point &p)> EraserFunc;
+    /// Return true if the point is completely erased
+    typedef std::function<bool(const Point &p)> IsErasedFunc;
+
+    void erase(const Nimble::Rectangle &eraser, const EraserFunc& eraseFunc,
+               const IsErasedFunc& isErased);
 
     Point interpolate(const Path & path, float index) const;
 
@@ -165,7 +173,8 @@ namespace Luminous {
     m_path = nullptr;
   }
 
-  void Spline::D::erase(const Nimble::Rectangle & eraser, float time, bool permanent)
+  void Spline::D::erase(const Nimble::Rectangle & eraser, const EraserFunc& eraseFunc,
+                        const IsErasedFunc& isErased)
   {
     if(!eraser.intersects(m_bounds))
       return;
@@ -177,32 +186,29 @@ namespace Luminous {
 
       std::vector<Point> & points = m_paths[i].points;
 
-      if(permanent) {
-        int validPoints = 0;
-        for(std::size_t j = 0; j < points.size(); ++j) {
-          Point & p = points[j];
-          if(p.m_range.y > 0.0f) {
-            if(eraser.isInside(p.m_location)) {
-              p.m_range.y = 0;
-              changed = true;
-            } else ++validPoints;
-          }
-        }
-        if(validPoints < 2) {
-          std::swap(m_paths[i], m_paths.back());
-          m_paths.resize(m_paths.size()-1);
-          --i;
-        }
-      } else {
-        for(std::size_t j = 0; j < points.size(); ++j) {
-          Point & p = points[j];
-          if(p.m_range.x <= time && p.m_range.y > time && eraser.isInside(p.m_location)) {
-            p.m_range.y = time;
-            changed = true;
-          }
+      int validPoints = 0;
+      for(std::size_t j = 0; j < points.size(); ++j) {
+        Point & p = points[j];
+
+        if(isErased(p))
+          continue;
+
+        if(eraser.isInside(p.m_location)) {
+          changed = true;
+          if(!eraseFunc(p))
+            ++validPoints;
+        } else {
+          ++validPoints;
         }
       }
+
+      if(validPoints < 2) {
+        std::swap(m_paths[i], m_paths.back());
+        m_paths.resize(m_paths.size()-1);
+        --i;
+      }
     }
+
     /// @todo could just change m_vertices directly? or make some kind of light-version of recalculate?
     if(changed)
       recalculate();
@@ -501,15 +507,48 @@ namespace Luminous {
       m_d->clear();
   }
 
+  void Spline::eraseWithTransparency(const Nimble::Rectangle &eraser)
+  {
+    auto isErased = [](const Point& p) {
+      return p.m_color.alpha() == 0.f;
+    };
+
+    auto eraseFunc = [](Point& p){
+      p.m_color.setAlpha(0.f);
+      return true;
+    };
+
+    m_d->erase(eraser, eraseFunc, isErased);
+  }
+
   void Spline::erase(const Nimble::Rectangle & eraser, float time)
   {
-    if(m_d)
-      m_d->erase(eraser, time, false);
+    auto isErased = [](const Point& p) {
+      (void) p;
+      return false;
+    };
+
+    auto eraseFunc = [time](Point& p){
+      if(p.m_range.x <= time && p.m_range.y > time)
+        p.m_range.y = time;
+      return p.m_range.x >= p.m_range.y;
+    };
+
+    m_d->erase(eraser, eraseFunc, isErased);
   }
 
   void Spline::erasePermanent(const Nimble::Rectangle &eraser)
   {
-    m_d->erase(eraser, 0.0f, true);
+    auto isErased = [](const Point& p) {
+      return p.m_range.y <= 0.f;
+    };
+
+    auto eraseFunc = [](Point &p) {
+      p.m_range.y = 0.f;
+      return true;
+    };
+
+    m_d->erase(eraser, eraseFunc, isErased);
   }
 
   void Spline::render(Luminous::RenderContext & r, float time) const
