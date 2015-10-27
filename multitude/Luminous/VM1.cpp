@@ -174,6 +174,7 @@ namespace Luminous
     QRegExp m_reBoot;
     QRegExp m_reInit;
     QRegExp m_reFrameRate;
+    QRegExp m_reFailToLock;
   };
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -242,6 +243,7 @@ namespace Luminous
       m_reBoot("(Warm|Cold) boot"),
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
       m_reFrameRate("Set ([0-9.]+) Hz frame rate"),
+      m_reFailToLock("Failed to lock to DVI input"),
       m_requestReconnect(false)
   {
     // These are required so that Mushy serialization works
@@ -715,6 +717,10 @@ namespace Luminous
         Radiant::info("VM1: %s", lineRaw.data());
       } else if (m_reFrameRate.exactMatch(line)) {
         m_frameRate = m_reFrameRate.cap(1).toFloat();
+      } else if(m_reFailToLock.exactMatch(line)) {
+        /// We don't know what this means, but did not seem to matter so
+        /// print only warning
+        Radiant::warning("VM1: %s", lineRaw.data());
       } else {
         auto lst = *m_unknownLines;
         lst << line;
