@@ -216,6 +216,10 @@ namespace Radiant
         int res = readLoop(pipes.pollfds[i].fd, *pipes.output[i]);
         if(res > 0) {
           pipes.handlers[i].haveNewData();
+        } else if(res < 0) {
+          assert(false);
+          Radiant::error("ProcessRunner # failed to flush redirect pipes: %s",
+                         strerror(errno));
         }
       }
     }
@@ -260,6 +264,10 @@ namespace Radiant
           if(revents != 0) {
             int res = readLoop(fd, *pipes.output[i]);
             assert(res != -1);  // TODO - something better than crashing
+            if(res == -1) {
+              Radiant::error("ProcessRunner # Failed to read from redirect pipe: %s",
+                             strerror(errno));
+            }
             pipes.handlers[i].haveNewData();
           }
         }
@@ -404,6 +412,10 @@ namespace Radiant
         int flags = ::fcntl(makeNonBlocking[i], F_GETFL);
         int res = ::fcntl(makeNonBlocking[i], F_SETFL, flags | O_NONBLOCK);
         assert(res == 0);
+        if(res != 0) {
+          Radiant::error("ProcessRunner # Failed to make redirection pipes non-blocking: %s",
+                         strerror(errno));
+        }
       }
 
       // Prepare data structures for polling the pipes.
