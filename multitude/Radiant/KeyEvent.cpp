@@ -15,34 +15,30 @@
 
 namespace Radiant
 {
-  class KeyEvent::D : public QKeyEvent
+  class KeyEvent::D
   {
   public:
-    D(const QKeyEvent & qKeyEvent)
-      : QKeyEvent(qKeyEvent)
+    D(QKeyEvent * qKeyEvent)
+      : m_event(qKeyEvent)
     {}
 
-    D(QEvent::Type type, int key, Qt::KeyboardModifiers modifiers, const QString& text = QString(),
-              bool autorep = false, ushort count = 1)
-      : QKeyEvent(type, key, modifiers, text, autorep, count)
-    {}
-
-    void setAutoRepeat(bool isAutoRepeat) { autor = isAutoRepeat; }
+    std::unique_ptr<QKeyEvent> m_event;
   };
 
-  KeyEvent::KeyEvent(const QKeyEvent & qKeyEvent)
-    : m_d(new D(qKeyEvent))
+  KeyEvent::KeyEvent(const QKeyEvent & e)
+    : m_d(new D(QKeyEvent::createExtendedKeyEvent(e.type(), e.key(), e.modifiers(), e.nativeScanCode(),
+                                                  e.nativeVirtualKey(), e.nativeModifiers(), e.text(),
+                                                  e.isAutoRepeat(), e.count())))
   {
   }
 
   KeyEvent::KeyEvent(int key, QEvent::Type type, Qt::KeyboardModifiers modifiers, const QString & text, bool autorep)
-    : m_d(new D(type, key, modifiers, text, autorep))
+    : m_d(new D(new QKeyEvent(type, key, modifiers, text, autorep)))
   {
   }
 
   KeyEvent::~KeyEvent()
   {
-    delete m_d;
   }
 
   KeyEvent KeyEvent::createKeyPress(int key, bool isautorepeat)
@@ -57,32 +53,32 @@ namespace Radiant
 
   int KeyEvent::key() const
   {
-    return m_d->key();
+    return m_d->m_event->key();
   }
 
   Qt::KeyboardModifiers KeyEvent::modifiers() const
   {
-    return m_d->modifiers();
+    return m_d->m_event->modifiers();
   }
 
   bool KeyEvent::isAutoRepeat() const
   {
-    return m_d->isAutoRepeat();
-  }
-
-  void KeyEvent::setAutoRepeat(bool isAutoRepeat)
-  {
-    m_d->setAutoRepeat(isAutoRepeat);
+    return m_d->m_event->isAutoRepeat();
   }
 
   QEvent::Type KeyEvent::type() const
   {
-    return m_d->type();
+    return m_d->m_event->type();
   }
 
   QString KeyEvent::text() const
   {
-    return m_d->text();
+    return m_d->m_event->text();
+  }
+
+  const QKeyEvent & KeyEvent::qKeyEvent() const
+  {
+    return *m_d->m_event;
   }
 
   //////////////////////////////////////////////////
@@ -146,7 +142,6 @@ namespace Radiant
 
   MouseEvent::~MouseEvent()
   {
-    delete m_d;
   }
 
   Nimble::Vector2f MouseEvent::location() const
