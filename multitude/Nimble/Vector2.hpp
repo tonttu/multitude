@@ -12,6 +12,7 @@
 #define NIMBLE_VECTOR2T_HPP
 
 #include "Export.hpp"
+#include "Nimble.hpp"
 #include "Math.hpp"
 
 #include <limits>
@@ -89,7 +90,7 @@ namespace Nimble {
     inline bool	isZero		(void) const					      { return (x == (T) 0 && y == (T) 0); }
 
     /// Returns the length of the vector
-    auto length() const -> decltype(T() * 1.f)          { return std::sqrt(lengthSqr()); }
+    typename Decltype<T, float>::mul length() const                 { return std::sqrt(lengthSqr()); }
     /// Returns the squared length of the vector
     inline T      	lengthSqr	(void) const				      { return x*x+y*y; }
     /// Negates the vector
@@ -229,10 +230,9 @@ namespace Nimble {
   /// @param v vector to multiply
   /// @param s scalar to multiply with
   /// @return scaled vector
-  template<class T, class S>
-  auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(T()*S())>
+  template<class T, class S, typename = typename std::enable_if<std::is_arithmetic<S>::value>::type>
+  Vector2T<typename Decltype<T, S>::mul> operator* (const Nimble::Vector2T<T> & v, S s)
   {
-    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return Nimble::Vector2T<decltype(T()*S())>(v.x * s, v.y * s);
   }
 
@@ -240,10 +240,9 @@ namespace Nimble {
   /// @param v vector to multiply
   /// @param s scalar to multiply with
   /// @return scaled vector
-  template<class T, class S>
-  auto operator* (S s, const Nimble::Vector2T<T> & v) -> Nimble::Vector2T<decltype(T()*S())>
+  template<class T, class S, typename = typename std::enable_if<std::is_arithmetic<S>::value>::type>
+  Vector2T<typename Decltype<S, T>::mul> operator* (S s, const Nimble::Vector2T<T> & v)
   {
-    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return v * s;
   }
 

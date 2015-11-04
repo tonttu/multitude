@@ -88,9 +88,9 @@ namespace Nimble {
     /// Checks if all components are zero
     inline bool		isZero	    (void) const		       { return (x == 0.0f && y == 0.0f && z == 0.0f && w == 0.0f); }
     /// Returns the length of the vector
-    inline auto	length	    (void) const -> decltype(T() * 1.0f) { return std::sqrt(lengthSqr()); }
+    inline typename Decltype<T, float>::mul length() const { return std::sqrt(lengthSqr()); }
    /// Returns the squared length of the vector
-    inline auto	lengthSqr   (void) const -> decltype(T() * 1.0f) { return x*x+y*y+z*z+w*w; }
+    inline typename Decltype<T, float>::mul lengthSqr() const { return x*x+y*y+z*z+w*w; }
     /// Normalizes the vector to the given length
     /// @param len length to normalize to
     /// @return reference to this
@@ -194,10 +194,9 @@ namespace Nimble {
   /// @param v vector to multiply
   /// @param s scalar to multiply with
   /// @return scaled vector
-  template<class T, class S>
-  auto operator* (const Nimble::Vector4T<T> & v, S s) -> Nimble::Vector4T<decltype(T()*S())>
+  template<class T, class S, typename = typename std::enable_if<std::is_arithmetic<S>::value>::type>
+  Vector4T<typename Decltype<T, S>::mul> operator* (const Nimble::Vector4T<T> & v, S s)
   {
-    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return Nimble::Vector4T<decltype(T()*S())>(v.x * s, v.y * s, v.z * s, v.w * s);
   }
 
@@ -205,10 +204,9 @@ namespace Nimble {
   /// @param v vector to multiply
   /// @param s scalar to multiply with
   /// @return scaled vector
-  template<class T, class S>
-  auto operator* (S s, const Nimble::Vector4T<T> & v) -> Nimble::Vector4T<decltype(T()*S())>
+  template<class T, class S, typename = typename std::enable_if<std::is_arithmetic<S>::value>::type>
+  Vector4T<typename Decltype<S, T>::mul> operator* (S s, const Nimble::Vector4T<T> & v)
   {
-    static_assert(std::is_arithmetic<S>::value, "vector multiplication operator is only defined to arithmetic types");
     return v * s;
   }
 

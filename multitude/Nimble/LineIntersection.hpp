@@ -32,8 +32,8 @@ namespace Nimble
   /// @param delta reference to Nimble::Vector2f to receive delta.
   /// @return Slope value.
   template <typename T>
-  auto lineSlope(const Nimble::Vector2T<T> & lineStart, const Nimble::Vector2T<T> & lineEnd,
-                 int & slopeType, Nimble::Vector2T<T> & delta) -> decltype(T() * 1.0f)
+  typename Decltype<T, float>::mul lineSlope(const Nimble::Vector2T<T> & lineStart, const Nimble::Vector2T<T> & lineEnd,
+                                             int & slopeType, Nimble::Vector2T<T> & delta)
   {
     delta = lineEnd - lineStart;
 
