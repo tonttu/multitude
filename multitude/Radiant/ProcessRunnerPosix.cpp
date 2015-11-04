@@ -11,6 +11,7 @@
 #include <cassert>
 #include <poll.h>
 #include <memory>
+#include <map>
 
 namespace Radiant
 {
@@ -164,32 +165,55 @@ namespace Radiant
       int m_lastSize;
     };
 
-    struct Pipes
+    struct PipeData
     {
+      QByteArray & output;
+      PipeHandler handler;
+
+      PipeData(QByteArray & buffer, const ProcessOutputHandler & handler)
+        : output(buffer), handler(handler, buffer) { }
+    };
+
+    class Pipes
+    {
+    public:
       std::vector<pollfd> pollfds;
-      std::vector<QByteArray*> output;
-      std::vector<PipeHandler> handlers;
+      typedef std::map<int, PipeData>::iterator iterator;
 
       void add(int fd,
                QByteArray *buffer,
                const ProcessOutputHandler &handler)
       {
         assert(buffer != nullptr);
-        output.push_back(buffer);
         pollfds.push_back({ fd, POLLIN, 0 });
-        handlers.push_back(PipeHandler(handler, *buffer));
+        if(pipeData.find(fd) != pipeData.end()) {
+          assert(false);
+          Radiant::error("ProcessRunner # have two pipes with the same file descriptor");
+        }
+        pipeData.insert(std::make_pair(fd, PipeData(*buffer, handler)));
       }
 
-      void remove(int i)
+      PipeData & data(int fd)
+      {
+        auto it = pipeData.find(fd);
+        assert(it != pipeData.end());
+        return it->second;
+      }
+
+      void stopPolling(int i)
       {
         assert(i >= 0 && i < static_cast<int>(pollfds.size()));
         pollfds.erase(pollfds.begin() + i);
-        output.erase(output.begin() + i);
-        handlers[i].signalEnd();
-        handlers.erase(handlers.begin() + i);
       }
 
-      size_t size() const { return pollfds.size(); }
+      iterator begin() { return pipeData.begin(); }
+      iterator end() { return pipeData.end(); }
+
+      size_t countAllPipes() const { return pipeData.size(); }
+      size_t countPollPipes() const { return pollfds.size(); }
+
+    private:
+      std::map<int, PipeData> pipeData;
     };
 
     class ProcessRunnerPosix : public ProcessRunner
@@ -212,10 +236,16 @@ namespace Radiant
 
     void flushPipes(Pipes & pipes)
     {
-      for(size_t i = 0; i < pipes.pollfds.size(); ++i) {
-        int res = readLoop(pipes.pollfds[i].fd, *pipes.output[i]);
+      for(auto & pair : pipes) {
+        int fd = pair.first;
+        PipeData & data = pair.second;
+        int res = readLoop(fd, data.output);
         if(res > 0) {
-          pipes.handlers[i].haveNewData();
+          data.handler.haveNewData();
+        } else if(res < 0) {
+          assert(false);
+          Radiant::error("ProcessRunner # failed to flush redirect pipes: %s",
+                         strerror(errno));
         }
       }
     }
@@ -223,16 +253,16 @@ namespace Radiant
     void flushPipesAndSignalEnd(Pipes & pipes)
     {
       flushPipes(pipes);
-      for(size_t i = 0; i < pipes.pollfds.size(); ++i) {
+      for(auto & pair : pipes) {
         // call one last time with 0 new bytes to signal end of output
-        pipes.handlers[i].signalEnd();
+        pair.second.handler.signalEnd();
       }
     }
 
     // returns true if exec failed
     bool pollPipes(Pipes & pipes, int execErrorPipeFd, pid_t pid)
     {
-      int pollRes = poll(pipes.pollfds.data(), pipes.size(), 250);
+      int pollRes = TEMP_FAILURE_RETRY(poll(pipes.pollfds.data(), pipes.countPollPipes(), 10));
       if(pollRes == -1 && errno != EINTR) {
         Radiant::error("ProcessRunner # Failed to poll for output: %s",
                        strerror(errno));
@@ -240,32 +270,42 @@ namespace Radiant
       }
       if(pollRes > 0) {
         // read available data
-        for(size_t i = 0; i < pipes.size(); ++i) {
+        for(size_t i = 0; i < pipes.countPollPipes(); ++i) {
           int revents = pipes.pollfds[i].revents;
           int fd = pipes.pollfds[i].fd;
+
+          auto readPipeData = [&] {
+            QByteArray & output = pipes.data(fd).output;
+            int res = readLoop(fd, output);
+            assert(res != -1);  // TODO - something better than crashing
+            if(res == -1) {
+              Radiant::error("ProcessRunner # Failed to read from redirect pipe: %s",
+                             strerror(errno));
+            }
+            pipes.data(fd).handler.haveNewData();
+          };
 
           // handle pipe errors
           if(revents & POLLERR || revents & POLLNVAL || revents & POLLHUP) {
             if(revents & POLLHUP) {
-              // Radiant::trace("ProcessRunner", Radiant::INFO, "ProcessRunner # POLLHUP");
+              // Remote end hang up. Flush the pipe.
+              readPipeData();
             } else {
               Radiant::error("ProcessRunner # Failed to poll pipe. Revents is %d", revents);
             }
-            pipes.remove(i);
+            pipes.stopPolling(i);
             --i;
             continue;
           }
 
           // read from the pipe and call output handler
           if(revents != 0) {
-            int res = readLoop(fd, *pipes.output[i]);
-            assert(res != -1);  // TODO - something better than crashing
-            pipes.handlers[i].haveNewData();
+            readPipeData();
           }
         }
 
         // handle exec error pipe separately
-        for(size_t i = 0; i < pipes.size(); ++i) {
+        for(size_t i = 0; i < pipes.countPollPipes(); ++i) {
           int revents = pipes.pollfds[i].revents;
           int fd = pipes.pollfds[i].fd;
           if(revents != 0 && fd == execErrorPipeFd) {
@@ -284,7 +324,7 @@ namespace Radiant
             do {
               flushPipes(pipes);
               res = ::waitpid(pid, &status, WNOHANG);
-              Radiant::Sleep::sleepMs(50);
+              Radiant::Sleep::sleepMs(1);
             } while(res == 0 || (res == -1 && errno == EINTR));
             // TODO - handle res errors somehow?
             assert(res == pid);
@@ -404,6 +444,10 @@ namespace Radiant
         int flags = ::fcntl(makeNonBlocking[i], F_GETFL);
         int res = ::fcntl(makeNonBlocking[i], F_SETFL, flags | O_NONBLOCK);
         assert(res == 0);
+        if(res != 0) {
+          Radiant::error("ProcessRunner # Failed to make redirection pipes non-blocking: %s",
+                         strerror(errno));
+        }
       }
 
       // Prepare data structures for polling the pipes.
@@ -434,16 +478,17 @@ namespace Radiant
           // done, read all data from pipes and return
           flushPipesAndSignalEnd(pipes);
           return computeExitStatus(status);
-        }
-        if(res == -1) {
+        } else if(res == -1) {
           Radiant::error("ProcessRunner # waitpid failed: %s", strerror(errno));
+        } else if(res != 0) {
+          Radiant::error("ProcessRunner # got unexpected waitpid result: %d", res);
         }
         assert(res != -1);
 
         // poll output pipes. Even if we're not doing output redirection there
         // is still the execStartPipe. However, if we get a POLLHUP we will remove
         // the item from the set of fds, so might need to sleep instead of poll
-        if(pipes.size() > 0) {
+        if(pipes.countPollPipes() > 0) {
           bool execFailed = pollPipes(pipes, execErrorPipe[0], pid);
           if(execFailed) {
             flushPipesAndSignalEnd(pipes);
@@ -454,7 +499,7 @@ namespace Radiant
           }
         } else {
           // still need to sleep else we would be using too much CPU time
-          Radiant::Sleep::sleepMs(250);
+          Radiant::Sleep::sleepMs(1);
         }
 
         // check for timeout
