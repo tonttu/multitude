@@ -591,9 +591,9 @@ namespace Luminous
     setStencilMode(Luminous::StencilMode::Default());
     setCullMode(Luminous::CullMode::Default());
 
+    // By default render to back buffer
     std::vector<int> buffers;
-    buffers.push_back(GL_FRONT_LEFT);
-    buffers.push_back(GL_FRONT_RIGHT);
+    buffers.push_back(GL_BACK_LEFT);
     setDrawBuffers(buffers);
 
     // Enable scissor test
