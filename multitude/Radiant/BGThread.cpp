@@ -38,12 +38,15 @@ namespace Radiant
 
   void BGThread::addTask(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return;
+
     if(threads() == 0 || m_isShuttingDown) {
       task->setCanceled();
       return;
     }
 
-    assert(task);
     if(task->m_host == this) return;
     task->m_host = this;
 
@@ -54,6 +57,9 @@ namespace Radiant
 
   bool BGThread::removeTask(std::shared_ptr<Task> task, bool cancel, bool wait)
   {
+    assert(task);
+    if(!task)
+      return false;
     if(task->m_host != this)
       return false;
 
@@ -94,6 +100,9 @@ namespace Radiant
 
   void BGThread::reschedule(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return;
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       m_wait.wakeAll();
@@ -104,6 +113,9 @@ namespace Radiant
 
   void BGThread::reschedule(std::shared_ptr<Task> task, Priority p)
   {
+    assert(task);
+    if(!task)
+      return;
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       task->m_priority = p;
@@ -123,6 +135,10 @@ namespace Radiant
 
   void BGThread::setPriority(std::shared_ptr<Task> task, Priority p)
   {
+    assert(task);
+    if(!task)
+      return;
+
     Radiant::Guard g(m_mutexWait);
 
     container::iterator it = findTask(task);
@@ -282,6 +298,10 @@ namespace Radiant
 
   BGThread::container::iterator BGThread::findTask(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return m_taskQueue.end();
+
     // Try optimized search first, assume that the priority hasn't changed
     std::pair<container::iterator, container::iterator> range = m_taskQueue.equal_range(task->priority());
     container::iterator it;
