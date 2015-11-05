@@ -145,7 +145,7 @@ namespace
     QRect rect(glyph->m_node->m_location.x, glyph->m_node->m_location.y,
                glyph->m_node->m_size.width(), glyph->m_node->m_size.height());
 
-    Valuable::Node::invokeAfterUpdate([=] {
+    Valuable::Node::invokeAfterUpdate([tex, rect] {
       Luminous::Texture * tex = Luminous::RenderManager::getResource<Luminous::Texture>(texId);
       if (tex)
         tex->addDirtyRect(rect);
