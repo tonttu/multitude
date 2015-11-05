@@ -83,9 +83,12 @@ namespace Luminous
 
   void TextureGL::bind(int textureUnit)
   {
-    if (m_state.setTextureUnit(textureUnit))
+    if (m_state.setTextureUnit(textureUnit)) {
       glActiveTexture(GL_TEXTURE0 + textureUnit);
+      GLERROR("TextureGL::bind # glActiveTexture");
+    }
     glBindTexture(m_target, m_handle);
+    GLERROR("TextureGL::bind # glBindTexture");
 
     touch();
   }

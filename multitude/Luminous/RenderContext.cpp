@@ -1780,11 +1780,13 @@ namespace Luminous
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }
 
   CustomOpenGL::~CustomOpenGL()
   {
+    GLERROR("CustomOpenGL::~CustomOpenGL");
     m_r.setDefaultState();
   }
 

@@ -24,12 +24,15 @@ namespace Luminous
     , m_generation(0)
   {
     glGenVertexArrays(1, &m_handle);
+    GLERROR("VertexArrayGL::VertexArrayGL # glGenVertexArrays");
   }
 
   VertexArrayGL::~VertexArrayGL()
   {
-    if(m_handle)
+    if(m_handle) {
       glDeleteVertexArrays(1, &m_handle);
+      GLERROR("VertexArrayGL::~VertexArrayGL # glDeleteVertexArrays");
+    }
   }
 
   VertexArrayGL::VertexArrayGL(VertexArrayGL && t)
@@ -57,8 +60,10 @@ namespace Luminous
 
   void VertexArrayGL::unbind()
   {
-    if (m_state.setVertexArray(0))
+    if (m_state.setVertexArray(0)) {
       glBindVertexArray(0);
+      GLERROR("VertexArrayGL::unbind # glBindVertexArray");
+    }
   }
 
   void VertexArrayGL::upload(const VertexArray & vertexArray, ProgramGL * program)

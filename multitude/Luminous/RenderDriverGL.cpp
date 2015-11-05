@@ -244,6 +244,7 @@ namespace Luminous
       state.vertexArray->bind();
     } else if (m_stateGL.setVertexArray(0)) {
       glBindVertexArray(0);
+      GLERROR("RenderDriverGL::setState # glBindVertexArray");
     }
   }
 
@@ -282,6 +283,7 @@ namespace Luminous
     for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
       if(uit->first < 0) break;
       glUniform1i(uit->first, uit->second);
+      GLERROR("RenderDriverGL::render # glUniform1i");
     }
 
     // Apply style-uniforms
@@ -581,8 +583,10 @@ namespace Luminous
   void RenderDriverGL::setDefaultState()
   {
 #ifndef RADIANT_OSX_MOUNTAIN_LION
-    if (isSampleShadingSupported())
+    if (isSampleShadingSupported()) {
       glEnable(GL_SAMPLE_SHADING);
+      GLERROR("RenderDriverGL::setDefaultState # glEnable");
+    }
 #endif
 
     // Default modes
@@ -598,6 +602,7 @@ namespace Luminous
 
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
+    GLERROR("RenderDriverGL::setDefaultState # glEnable");
 
     // Invalidate the current cached OpenGL state so it gets reset on the next
     // draw command
@@ -654,6 +659,7 @@ namespace Luminous
   void RenderDriverGL::setScissor(const Nimble::Recti & rect)
   {
     glEnable(GL_SCISSOR_TEST);
+    GLERROR("RenderDriverGL::setScissor # glEnable");
     m_d->newRenderQueueSegment(new CommandScissorGL(rect));
   }
 
@@ -698,7 +704,9 @@ namespace Luminous
     for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
       const BufferMapping & b = it->second;
       glBindBuffer(b.target, it->first);
+      GLERROR("RenderDriverGL::flush # glBindBuffer");
       glUnmapBuffer(b.target);
+      GLERROR("RenderDriverGL::flush # glUnmapBuffer");
     }
     m_d->m_stateGL.bufferMaps().clear();
 
@@ -765,6 +773,7 @@ namespace Luminous
     // VAO should be bound only when rendering something or modifying the VAO state
     if (m_d->m_stateGL.setVertexArray(0)) {
       glBindVertexArray(0);
+      GLERROR("RenderDriverGL::flush # glBindVertexArray");
     }
   }
 
@@ -899,6 +908,7 @@ namespace Luminous
       // Returns GLint, current available dedicated video memory (in kb),
       // currently unused GPU memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      GLERROR("RenderDriverGL::availableGPUMemory # glGetIntegerv");
 
     } else if(GLEW_ATI_meminfo) {
 
@@ -911,6 +921,7 @@ namespace Luminous
       // param[2] - total auxiliary memory free
       // param[3] - largest auxiliary free block
       glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      GLERROR("RenderDriverGL::availableGPUMemory # glGetIntegerv");
     }
 #else
 # warning "RenderDriverGL::availableGPUMemory() not implemented on this platform"
@@ -931,6 +942,7 @@ namespace Luminous
       // Returns GLint, dedicated video memory, total size (in kb) of the GPU
       // memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      GLERROR("RenderDriverGL::maxGPUMemory # glGetIntegerv");
 
     } else if(GPUAssociation::isSupported()) {
 
