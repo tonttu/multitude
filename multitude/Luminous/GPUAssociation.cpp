@@ -70,13 +70,12 @@ namespace Luminous
 
   unsigned int GPUAssociation::numGPUs()
   {
-    GLuint ids[16] = {0};
     unsigned int count = 0;
-	
+
 #if defined(RADIANT_WINDOWS)
-    count = wglGetGPUIDsAMD(16, ids);
+    count = wglGetGPUIDsAMD(0, nullptr);
 #elif defined(RADIANT_LINUX)
-    count = glXGetGPUIDsAMD(16, ids);
+    count = glXGetGPUIDsAMD(0, nullptr);
 #endif
 
     return count;
@@ -99,9 +98,9 @@ namespace Luminous
   {
     GLuint totalMemoryInMB = 0;
 #if defined(RADIANT_WINDOWS)
-    wglGetGPUInfoAMD(gpuId, WGL_GPU_RAM_AMD, GL_UNSIGNED_INT, sizeof(GLuint), &totalMemoryInMB);
+    wglGetGPUInfoAMD(gpuId, WGL_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
 #elif defined(RADIANT_LINUX)
-    glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, sizeof(GLuint), &totalMemoryInMB);
+    glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
 #endif
 
     return totalMemoryInMB;
