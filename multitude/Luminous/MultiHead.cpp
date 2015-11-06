@@ -448,7 +448,7 @@ namespace Luminous
       : Node(0, "MultiHead", false),
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
-      m_vsync(this, "vsync", false),
+      m_vsync(this, "vsync", true),
       m_glFinish(this, "gl-finish", false),
       m_edited(false)
   {
