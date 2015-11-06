@@ -282,9 +282,6 @@ namespace Radiant {
     /// @return seconds passed since this time-stamp
     double sinceSecondsD() const { return since().secondsD(); }
 
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use Radiant::TimeStamp::currentTime() instead.
-    MULTI_ATTR_DEPRECATED("TimeStamp::getTime() is deprecated. Use TimeStamp::currentTime()", static TimeStamp getTime());
-
     /// Returns the current time value, by looking at the wall clock
     /// @return current time
     static TimeStamp currentTime();

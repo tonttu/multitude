@@ -242,10 +242,6 @@ namespace Valuable
     /// Utility function for sending a Vector4 message to the object
     void eventProcessVector4(const char * id, Nimble::Vector4);
 
-    /// @deprecated use eventProcess instead
-    MULTI_ATTR_DEPRECATED("processMessage was renamed to eventProcess",
-                          virtual void processMessage(const QByteArray & id, Radiant::BinaryData & data) FINAL);
-
     /// Converts the value object in a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a float, the default implementation returns 0.0f
@@ -361,8 +357,6 @@ namespace Valuable
     /// @param name Attribute name to search for
     /// @return Null if no object can be found
     virtual Attribute * attribute(const QByteArray & name) const;
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
-    virtual Attribute * getValue(const QByteArray & name) const;
 
     /// Sets the current USER attribute value as the default value
     /// and clears the USER value.

@@ -284,11 +284,6 @@ namespace Valuable
     return *this;
   }
 
-  Attribute * Node::getValue(const QByteArray & name) const
-  {
-    return Node::attribute(name);
-  }
-
   Attribute * Node::attribute(const QByteArray & name) const
   {
     size_t slashIndex = name.indexOf('/');
@@ -317,25 +312,13 @@ namespace Valuable
     return nullptr;
   }
 
-  bool Node::addValue(Attribute * const value)
-  {
-    return Node::addAttribute(value);
-  }
-
   bool Node::addAttribute(Attribute * const attribute)
   {
     return Node::addAttribute(attribute->name(), attribute);
   }
 
-  bool Node::addValue(const QByteArray & cname, Attribute * const value)
-  {
-    return Node::addAttribute(cname, value);
-  }
-
   bool Node::addAttribute(const QByteArray & cname, Attribute * const attribute)
   {
-    //    Radiant::trace("Node::addValue # adding %s", cname.c_str());
-
     // Check attributes
     if(m_attributes.find(cname) != m_attributes.end()) {
       Radiant::error(
@@ -363,11 +346,6 @@ namespace Valuable
     attributeAdded(attribute);
 
     return true;
-  }
-
-  void Node::removeValue(Attribute * const value)
-  {
-    Node::removeAttribute(value);
   }
 
   void Node::removeAttribute(Attribute * const attribute)
