@@ -944,6 +944,13 @@ namespace Luminous
       glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
       GLERROR("RenderDriverGL::maxGPUMemory # glGetIntegerv");
 
+    } else if(GLEW_ATI_meminfo) {
+
+      /// @todo see #8923, calling glXGetGPUInfoAMD will make the application
+      /// crash on shutdown, this will be fixed in Cornerstone 2.2 / Qt 5 once
+      /// we are creating the context in the render thread.
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      GLERROR("RenderDriverGL::maxGPUMemory # glGetIntegerv");
     } else if(GPUAssociation::isSupported()) {
 
       result[0] = GPUAssociation::gpuRam(gpuId()) * 1024;
