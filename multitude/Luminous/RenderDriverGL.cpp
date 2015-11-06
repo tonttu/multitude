@@ -565,7 +565,9 @@ namespace Luminous
     }
 
     /// @todo avoid bind somehow?
-    it->second.upload(texture, 0, false);
+    if (texture.isValid()) {
+      it->second.upload(texture, 0, false);
+    }
 
     return it->second;
   }
