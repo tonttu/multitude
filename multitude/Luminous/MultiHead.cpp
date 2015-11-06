@@ -10,7 +10,6 @@
 
 #include "MultiHead.hpp"
 
-#include "GLResources.hpp"
 #include "RenderContext.hpp"
 #include "PixelFormat.hpp"
 #include "DummyOpenGL.hpp"

@@ -13,7 +13,6 @@
 #define LUMINOUS_MULTIHEAD_HPP
 
 #include "Export.hpp"
-#include "Collectable.hpp"
 #include "GLKeyStone.hpp"
 #include "HardwareColorCorrection.hpp"
 #include "ColorCorrection.hpp"
@@ -58,9 +57,9 @@ namespace Luminous {
     /// Multiple areas can share the same OpenGL context, as one window can
     /// have may areas inside it.
     /// @todo rename to ViewPort?
-    class LUMINOUS_API Area : public Valuable::Node, public Collectable
+    class LUMINOUS_API Area : public Valuable::Node
     {
-      MEMCHECKED_USING(Collectable);
+      MEMCHECKED
     public:
 
       /// Constructs a new area for the given window
@@ -190,7 +189,6 @@ namespace Luminous {
       Valuable::AttributeInt        m_method;
       Rect m_graphicsBounds;
 
-      Collectable m_colorCorrectionTextureKey;
       ColorCorrection m_colorCorrection;
       RGBCube m_rgbCube;
     };

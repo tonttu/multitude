@@ -1078,7 +1078,7 @@ namespace Luminous
       }*/
       const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
 
-      Vector2i blockid(pos.x / 4, pos.y / 4);
+      Nimble::Vector2i blockid(pos.x / 4, pos.y / 4);
 
       int blocksize = 16;
       int blocks_on_x_direction = (width() + 3) / 4;
@@ -1093,7 +1093,7 @@ namespace Luminous
       // refer to http://en.wikipedia.org/wiki/S3_Texture_Compression
       const unsigned char* d = reinterpret_cast<const unsigned char*>(data());
 
-      Vector2i blockid(pos.x / 4, pos.y / 4);
+      Nimble::Vector2i blockid(pos.x / 4, pos.y / 4);
 
       int blocksize = 16;
       int blocks_on_x_direction = (width() + 3) / 4;

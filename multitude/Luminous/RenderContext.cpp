@@ -1201,23 +1201,6 @@ namespace Luminous
     return m_data->contextSize();
   }
 
-  static RADIANT_TLS(RenderContext *) t_threadContext;
-
-  void RenderContext::setThreadContext(RenderContext * rsc)
-  {
-    t_threadContext = rsc;
-  }
-
-  RenderContext * RenderContext::getThreadContext()
-  {
-    if(!t_threadContext) {
-      Radiant::debug("No OpenGL resources for current thread");
-      return nullptr;
-    }
-
-    return t_threadContext;
-  }
-
   void RenderContext::flush()
   {
     int bufferIndex = m_data->m_bufferIndex;
