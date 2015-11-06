@@ -449,7 +449,7 @@ namespace Luminous
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_vsync(this, "vsync", false),
-      m_glFinish(this, "gl-finish", true),
+      m_glFinish(this, "gl-finish", false),
       m_edited(false)
   {
     eventAddIn("graphics-bounds-changed");
