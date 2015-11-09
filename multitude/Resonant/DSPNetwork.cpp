@@ -26,6 +26,9 @@
 
 namespace Resonant {
 
+  static unsigned int s_underflowWarningsTimer = 0;
+  static unsigned int s_underflowWarnings = 0;
+
   DSPNetwork::Item::Item()
     : m_module(0),
       m_compiled(false),
@@ -257,16 +260,21 @@ namespace Resonant {
 
     const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
 
+    if (streamnum == 0 && s_underflowWarnings) {
+      s_underflowWarningsTimer += framesPerBuffer;
+    }
+
     if(flags & paOutputUnderflow) {
-      static int s_underflowWarnings = 0;
-      if(++s_underflowWarnings == 20) {
-        Radiant::warning("DSPNetwork::callback # Too many output underflow warnings, ignoring them in future");
-      } else if(s_underflowWarnings < 20) {
-        Radiant::warning("DSPNetwork::callback # output underflow");
-      }
+      ++s_underflowWarnings;
     }
     if(flags & paOutputOverflow) {
       Radiant::warning("DSPNetwork::callback # output overflow");
+    }
+
+    if (streamnum == 0 && s_underflowWarnings > 0 && s_underflowWarningsTimer >= (44100*10)) {
+      Radiant::warning("DSPNetwork # %d output underflow errors in the last 10 seconds", s_underflowWarnings);
+      s_underflowWarnings = 0;
+      s_underflowWarningsTimer = 0;
     }
 
     // We either have multiple streams or have a broken implementation
