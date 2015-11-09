@@ -12,6 +12,18 @@ namespace Resonant {
                                unsigned attackTime,
                                unsigned releaseTime)
   {
+    // Often we have ~32 channels open but we are only playing audio to
+    // couple of them. We are burning 10% CPU time to run audio compressor
+    // for buffers full of zeros. This fixes that problem with almost no
+    // overhead.
+    if (insample == 0.f) {
+      if (++m_zeroSamples > m_maxDelay) {
+        return insample;
+      }
+    } else {
+      m_zeroSamples = 0;
+    }
+
     // Store pure data to delay buffer:
     m_buffer.put(insample);
 
@@ -90,6 +102,7 @@ namespace Resonant {
     float gainLinear = expf(m_gain);
     float rval = delayedSample * gainLinear;
 
+#ifdef RADIANT_DEBUG
     float outLog = std::log(std::abs(rval));
 
     if(outLog > (thresholdLog+.001) || !Nimble::Math::isFinite(rval)){
@@ -101,7 +114,7 @@ namespace Resonant {
                     m_untilPeak, attackTime, design);
       Radiant::fatal("MJ_ChannelLimiter::putGet");
     }
-
+#endif
     return rval;
   }
 
