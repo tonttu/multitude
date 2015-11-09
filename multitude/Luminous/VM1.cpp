@@ -937,8 +937,17 @@ namespace Luminous
 
   void VM1::scheduleTask(const VM1Task & task)
   {
-    Radiant::Guard guard(m_d->m_taskMutex);
-    m_d->m_tasks.push_back(task);
+    {
+      Radiant::Guard guard(m_d->m_taskMutex);
+      m_d->m_tasks.push_back(task);
+    }
+
+    // Blocking while reading can delay tasks for no reason. You should not
+    // wait for a read timeout before a task starts running. After the task
+    // is done, reading will be resumed.
+    if(m_d->m_connected) {
+      m_d->m_port.interruptRead();
+    }
   }
 
   void VM1::reconnect()
