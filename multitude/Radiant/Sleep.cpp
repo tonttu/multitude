@@ -36,6 +36,7 @@ namespace Radiant {
         Radiant::Timer t;
         while (t.time() < (double)usecs * 0.000001) {
           nativeSleep(0);
+        }
       } else {
         uint32_t ms = usecs / 1000;
         usecs = usecs % 1000;
