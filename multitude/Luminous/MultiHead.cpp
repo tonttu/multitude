@@ -286,6 +286,14 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  namespace
+  {
+#ifdef MULTITACTION_FIRMWARE
+    const int s_default_fsaa_samples = 0;
+#else
+    const int s_default_fsaa_samples = 4;
+#endif
+  }
   MultiHead::Window::Window(MultiHead * screen)
     : Node(0, "Window"),
       m_screen(screen),
@@ -294,7 +302,7 @@ namespace Luminous
       m_frameless(this, "frameless", true),
       m_fullscreen(this, "fullscreen", false),
       m_resizeable(this, "resizeable", false),
-      m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
+      m_fsaaSamplesPerPixel(this, "fsaa-samples", s_default_fsaa_samples),
       m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4<<30)),
       m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<10)),
       m_directRendering(this, "direct-rendering", true),
