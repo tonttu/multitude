@@ -192,6 +192,7 @@ namespace Luminous
         auto bytesRead = file.read(reinterpret_cast<char *>(&chunkHeader), 1);
         if (bytesRead != 1) {
           Radiant::error("ImageCodecTGA::read # failed to read compressed chunk header");
+          delete[] pixel;
           return false;
         }
 
@@ -214,6 +215,7 @@ namespace Luminous
           auto bytesRead = file.read(reinterpret_cast<char *>(pixel), bytesPerPixel);
           if(bytesRead != bytesPerPixel) {
             Radiant::error("ImageCodecTGA::read # failed to read pixel data");
+            delete[] pixel;
             return false;
           }
 
