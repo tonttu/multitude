@@ -687,11 +687,13 @@ return self;
   if(!m_hint->fullscreen())
     [glWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
   else {
-    [glWindow setLevel:CGShieldingWindowLevel()]; //go on top of everything if fullscreen
     [glWindow makeFirstResponder:glView];
   }
 
-
+  if(m_hint->fullscreen() || m_hint->frameless()) {
+    // go on top of everything
+    [glWindow setLevel:CGShieldingWindowLevel()];
+  }
 }
 
 - (void) dealloc
