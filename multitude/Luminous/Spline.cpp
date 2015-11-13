@@ -115,7 +115,7 @@ namespace Luminous {
     typedef std::function<bool(const Point &p)> IsErasedFunc;
 
     void erase(const Nimble::Rectangle &eraser, const EraserFunc& eraseFunc,
-               const IsErasedFunc& isErased);
+               const IsErasedFunc& isErased, std::set<std::pair<size_t, size_t>>* erasedPoints);
 
     Point interpolate(const Path & path, float index) const;
 
@@ -174,7 +174,7 @@ namespace Luminous {
   }
 
   void Spline::D::erase(const Nimble::Rectangle & eraser, const EraserFunc& eraseFunc,
-                        const IsErasedFunc& isErased)
+                        const IsErasedFunc& isErased, std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
     if(!eraser.intersects(m_bounds))
       return;
@@ -195,8 +195,11 @@ namespace Luminous {
 
         if(eraser.isInside(p.m_location)) {
           changed = true;
-          if(!eraseFunc(p))
+          if(!eraseFunc(p)) {
             ++validPoints;
+          } else if(erasedPoints) {
+            erasedPoints->insert(std::make_pair(i,j));
+          }
         } else {
           ++validPoints;
         }
@@ -507,7 +510,8 @@ namespace Luminous {
       m_d->clear();
   }
 
-  void Spline::eraseWithTransparency(const Nimble::Rectangle &eraser)
+  void Spline::eraseWithTransparency(const Nimble::Rectangle &eraser,
+                                     std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
     auto isErased = [](const Point& p) {
       return p.m_color.alpha() == 0.f;
@@ -518,10 +522,11 @@ namespace Luminous {
       return true;
     };
 
-    m_d->erase(eraser, eraseFunc, isErased);
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
   }
 
-  void Spline::erase(const Nimble::Rectangle & eraser, float time)
+  void Spline::erase(const Nimble::Rectangle & eraser, float time,
+                     std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
     auto isErased = [](const Point& p) {
       (void) p;
@@ -534,10 +539,11 @@ namespace Luminous {
       return p.m_range.x >= p.m_range.y;
     };
 
-    m_d->erase(eraser, eraseFunc, isErased);
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
   }
 
-  void Spline::erasePermanent(const Nimble::Rectangle &eraser)
+  void Spline::erasePermanent(const Nimble::Rectangle &eraser,
+                              std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
     auto isErased = [](const Point& p) {
       return p.m_range.y <= 0.f;
@@ -548,7 +554,7 @@ namespace Luminous {
       return true;
     };
 
-    m_d->erase(eraser, eraseFunc, isErased);
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
   }
 
   void Spline::render(Luminous::RenderContext & r, float time) const
@@ -580,6 +586,39 @@ namespace Luminous {
   float Spline::endTime() const
   {
     return m_d->m_endTime;
+  }
+
+  void Spline::makeTransparent(const std::set<std::pair<size_t, size_t>>& points)
+  {
+    for(auto p : points) {
+      size_t i = p.first;
+      size_t j = p.second;
+      if(i < m_d->m_paths.size()) {
+        D::Path& p = m_d->m_paths[i];
+
+        if(j < p.points.size())
+          p.points[j].m_color.setAlpha(0.f);
+      }
+    }
+
+    recalculate();
+  }
+
+  void Spline::makeOpaque(const std::set<std::pair<size_t, size_t>>& points)
+  {
+    for(auto p : points) {
+      size_t i = p.first;
+      size_t j = p.second;
+      if(i < m_d->m_paths.size()) {
+        D::Path& path = m_d->m_paths[i];
+
+        if(j < path.points.size()) {
+          path.points[j].m_color.setAlpha(1.f);
+        }
+      }
+    }
+
+    recalculate();
   }
 
   int Spline::undoRedo(int points)
