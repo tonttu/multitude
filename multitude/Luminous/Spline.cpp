@@ -82,6 +82,7 @@ namespace Luminous {
       , m_mingap(2.0f)
       , m_maxgap(3.0f)
       , m_generation(0)
+      , m_removePathsWhenErase(true)
     {
       /// @todo should share these among instances of the spline   
       m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
@@ -145,6 +146,8 @@ namespace Luminous {
     
     std::size_t m_generation;
 
+    bool m_removePathsWhenErase;
+
     Luminous::VertexDescription m_descr;
     Luminous::Program m_shader;
   };
@@ -205,7 +208,7 @@ namespace Luminous {
         }
       }
 
-      if(validPoints < 2) {
+      if(validPoints < 2 && m_removePathsWhenErase) {
         std::swap(m_paths[i], m_paths.back());
         m_paths.resize(m_paths.size()-1);
         --i;
@@ -522,6 +525,7 @@ namespace Luminous {
       return true;
     };
 
+    m_d->m_removePathsWhenErase = false;
     m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
   }
 
