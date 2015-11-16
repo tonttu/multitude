@@ -687,17 +687,21 @@ namespace Luminous {
   QString Spline::serialize() const
   {
     QString str = QString("%1\n").arg(m_d->m_paths.size());
-    for(int i = 0; i < m_d->m_paths.size(); ++i) {
+    for(size_t i = 0; i < m_d->m_paths.size(); ++i) {
       const std::vector<Point>& points = m_d->m_paths[i].points;
 
-      QString path = QString("%1\n").arg(points.size());
+      QByteArray path = QByteArray::number(int(points.size()));
+      path.append("\n");
       for(const Point& p : points) {
-        path.append(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9\n").arg(
-                      QString::number(p.m_location.x), QString::number(p.m_location.y),
-                      QString::number(p.m_range.x), QString::number(p.m_range.y),
-                      QString::number(p.m_color.red()), QString::number(p.m_color.green()),
-                      QString::number(p.m_color.blue()), QString::number(p.m_color.alpha()),
-                      QString::number(p.m_width)));
+        path.append(QByteArray::number(p.m_location.x));    path.append(' ');
+        path.append(QByteArray::number(p.m_location.y));    path.append(' ');
+        path.append(QByteArray::number(p.m_range.x));       path.append(' ');
+        path.append(QByteArray::number(p.m_range.y));       path.append(' ');
+        path.append(QByteArray::number(p.m_color.red()));   path.append(' ');
+        path.append(QByteArray::number(p.m_color.green())); path.append(' ');
+        path.append(QByteArray::number(p.m_color.blue()));  path.append(' ');
+        path.append(QByteArray::number(p.m_color.alpha())); path.append(' ');
+        path.append(QByteArray::number(p.m_width));         path.append("\n");
       }
       str.append(path);
     }
@@ -716,11 +720,12 @@ namespace Luminous {
     for(int i = 0; i < paths; ++i) {
 
       int points = lines[line++].toInt();
-      assert(points <= lines.size() - line);
+      points = std::min(points, lines.size() - line);
 
       for(int j = 0; j < points; ++j) {
         QStringList numbers = lines[line++].split(" ");
 
+        // See the rest of the scope for an explanation for magical 9
         if(numbers.size() != 9)
           continue;
 
