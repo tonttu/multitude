@@ -527,6 +527,7 @@ namespace Luminous {
 
     m_d->m_removePathsWhenErase = false;
     m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
+    m_d->m_removePathsWhenErase = true;
   }
 
   void Spline::erase(const Nimble::Rectangle & eraser, float time,
