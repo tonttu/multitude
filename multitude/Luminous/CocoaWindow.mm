@@ -210,10 +210,15 @@ return self;
     */
   }
 
-  // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c", (int) key, (int) Qt::Key_Up, (char) key);
-  if(key == 0xffef)
+  if (key == 0xd)
+    key = Qt::Key_Enter;
+  if (key == 0x7f)
+    key = Qt::Key_Backspace;
+
+  // Radiant::info("CocoaWindow::keyDown (ObjC) # %x %x %c %s", (int) key, (int) Qt::Key_Enter, (char) key, qstr.toUtf8().data());
+  if(key == 0xffef || key == 0xffffffef)
     return; // Unhandled conversion
-  hook->handleKeyboardEvent(Radiant::KeyEvent::createKeyPress(key, repeat));
+  hook->handleKeyboardEvent(Radiant::KeyEvent(key, QEvent::KeyPress, Qt::NoModifier, qstr, repeat));
 }
 
 -(void) keyUp:(NSEvent *)theEvent
