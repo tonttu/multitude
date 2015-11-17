@@ -187,7 +187,8 @@ win32 {
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \
-        psapi.lib
+        psapi.lib \
+        Winmm.lib
     CONFIG += qt
     QT = core network opengl gui
 

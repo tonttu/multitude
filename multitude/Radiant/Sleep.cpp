@@ -12,9 +12,11 @@
 
 #include "Mutex.hpp"
 #include "Timer.hpp"
+#include "Trace.hpp"
 
 #if defined(RADIANT_WINDOWS)
   #include <Windows.h>
+  #include <Mmsystem.h>
 #else
   #include <unistd.h>
   #include <sched.h>
@@ -28,19 +30,56 @@ namespace Radiant {
 
   namespace
   {
+#ifdef RADIANT_WINDOWS
+    struct EventHandle
+    {
+      EventHandle() : handle(CreateEvent(nullptr, false, false, nullptr)) {}
+      ~EventHandle() { CloseHandle(handle); }
+      HANDLE handle;
+    };
+
+    static TIMECAPS caps()
+    {
+      TIMECAPS tc = {1, 1000000};
+      if (timeGetDevCaps(&tc, sizeof(tc)) != TIMERR_NOERROR) {
+        Radiant::error("nativeSleep # timeGetDevCaps failed");
+      }
+      return tc;
+    }
+
+    static const TIMECAPS tc = caps();
+    static __declspec(thread) EventHandle t_event;
+#endif
+
     void nativeSleep(uint64_t usecs)
     {
 #ifdef RADIANT_WINDOWS
-      /// @todo this is just copied from old code, use multimedia timers to achieve <10ms resolution?
-      if(usecs < 10*1000) {
-        Radiant::Timer t;
-        while (t.time() < (double)usecs * 0.000001) {
-          nativeSleep(0);
+      // sleep(0) == yield
+      if (usecs == 0) {
+        ::Sleep(0);
+        return;
+      }
+
+      Radiant::Timer t;
+      for (;;) {
+        uint64_t elapsed = t.time() * 1000000;
+        if (elapsed >= usecs) {
+          break;
         }
-      } else {
-        uint32_t ms = usecs / 1000;
-        usecs = usecs % 1000;
-        ::Sleep(ms);
+
+        uint64_t sleepUs = std::min<uint64_t>(tc.wPeriodMax * 1000, usecs - elapsed);
+        // We can't get under 1 ms accuracy using multimedia timers, use sleep(0)
+        // in a loop instead. This might get ~1us accuracy if there is no cpu load
+        // on the computer, but on the other hand, ::Sleep(0) can take significantly
+        // longer than 1 ms as well. There is no good solution for this.
+        if (sleepUs < tc.wPeriodMin * 1000) {
+          ::Sleep(0);
+        } else {
+          auto id = timeSetEvent(sleepUs / 1000, 0, (LPTIMECALLBACK)t_event.handle, 0,
+                                 TIME_ONESHOT | TIME_CALLBACK_EVENT_SET);
+          WaitForSingleObject(t_event.handle, INFINITE);
+          timeKillEvent(id);
+        }
       }
 #else
       if(usecs == 0) {
