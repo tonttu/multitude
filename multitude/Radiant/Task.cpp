@@ -54,7 +54,6 @@ namespace Radiant
     : m_state(WAITING),
       m_canceled(false),
       m_priority(p),
-      m_scheduled(0),
       m_host(0)
   {}
 
@@ -69,8 +68,10 @@ namespace Radiant
     if (m_state == DONE || isCanceled())
       return;
 
-    if (m_host)
-      m_host->removeTask(shared_from_this(), false, true);
+    // Must make a copy, since m_host might get cleared if the task completes
+    auto host = m_host;
+    if (host)
+      host->removeTask(shared_from_this(), false, true);
 
     if (m_state == WAITING) {
       initialize();
@@ -92,6 +93,11 @@ namespace Radiant
 
   Task::~Task()
   {}
+
+  double Task::secondsUntilScheduled() const { return -m_scheduled.time(); }
+
+  void Task::scheduleFromNowSecs(double seconds)
+  { m_scheduled.start(seconds); }
 
   void Task::initialize()
   {}

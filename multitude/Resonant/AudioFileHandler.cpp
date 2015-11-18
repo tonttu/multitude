@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <cassert>
+#include <unistd.h>
 
 namespace Resonant {
   
@@ -33,14 +34,16 @@ namespace Resonant {
     SNDFILE * sndf = nullptr;
     if(!files.empty())
       sndf = sf_open(files.front().toLocal8Bit().data(), openMode, info);
+    else
+      sndf = sf_open(filename.toLocal8Bit().data(), openMode, info);
     return sndf;
   }
 
   AudioFileHandler::Handle::Handle
-  (AudioFileHandler * host, 
-   const char * filename, 
-   Radiant::IoMode mode, 
-   long startFrame, 
+  (AudioFileHandler * host,
+   const char * filename,
+   Radiant::IoMode mode,
+   long startFrame,
    Radiant::AudioSampleFormat userFormat)
     : m_host(host),
       m_fileName(filename),

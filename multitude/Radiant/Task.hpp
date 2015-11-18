@@ -15,7 +15,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <Radiant/MemCheck.hpp>
-#include <Radiant/TimeStamp.hpp>
+#include <Radiant/Timer.hpp>
 
 #include <functional>
 
@@ -110,24 +110,13 @@ namespace Radiant
     /// @return True if the task has been canceled, false otherwise
     bool isCanceled() const { return m_canceled; }
 
-    /// Return a timestamp for the next execution of the task
-    /// @return Time when the task is next executed
-    Radiant::TimeStamp scheduled() const { return m_scheduled; }
-
-    /// Schedule the next execution time for this task
-    /// @param ts Time when the task is next executed
-    void schedule(Radiant::TimeStamp ts) { m_scheduled = ts; }
-
-    /// Schedule the next execution time for this task
-    /// @param wait How long to wait before the execution of the task
-    void scheduleFromNow(Radiant::TimeStamp wait)
-    { m_scheduled = Radiant::TimeStamp::currentTime() + wait; }
+    /// Returns time until next execution of task
+    /// @return seconds when the task is next executed. Might be negative.
+    double secondsUntilScheduled() const;
 
     /// @copybrief scheduleFromNow
     /// @param seconds number of seconds before next execution
-    void scheduleFromNowSecs(double seconds)
-    { m_scheduled = Radiant::TimeStamp::currentTime() +
-    Radiant::TimeStamp::createSeconds(seconds); }
+    void scheduleFromNowSecs(double seconds);
 
     /// Marks the task as finished, so it will be removed.
     void setFinished() { setState(DONE); }
@@ -170,7 +159,7 @@ namespace Radiant
     Priority m_priority;
 
     /// When is the task scheduled to run
-    Radiant::TimeStamp m_scheduled;
+    Radiant::Timer m_scheduled;
 
     /// The background thread where this task is executed
     BGThread * m_host;

@@ -73,7 +73,7 @@ namespace Radiant {
     int open(const char * host, int port);
     /// Closes the socket
     /// @return True if there was socket to close, false otherwise
-    virtual bool close();
+    virtual bool close() OVERRIDE;
 
     /// Returns true of the socket is open.
     /// @return True if there is an open socket
@@ -101,7 +101,7 @@ namespace Radiant {
         @see read(void*,int,Flags)
         @return the number of bytes actually read
         */
-    virtual int read(void * buffer, int bytes, bool waitfordata = true)
+    virtual int read(void * buffer, int bytes, bool waitfordata = true) OVERRIDE
     {
       return read(buffer, bytes, waitfordata ? WAIT_ALL : NONBLOCK);
     }
@@ -110,16 +110,16 @@ namespace Radiant {
     /// @param buffer Data to write
     /// @param bytes How many bytes is requested to be written
     /// @return How many bytes were actually written
-    int write(const void * buffer, int bytes);
+    virtual int write(const void * buffer, int bytes) OVERRIDE;
 
     /// Returns true if the socket has been closed
     /// @return True if socket has been closed
-    virtual bool isHungUp() const;
+    virtual bool isHungUp() const OVERRIDE;
 
     /// Return 'true' if readable data is pending.
     /// @param waitMicroSeconds How long this call will block at most
     /// @return True If the socket is pending input
-    virtual bool isPendingInput(unsigned int waitMicroSeconds = 0);
+    virtual bool isPendingInput(unsigned int waitMicroSeconds = 0) OVERRIDE;
 
     /// @cond
     int fd() const;

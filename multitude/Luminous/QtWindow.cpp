@@ -222,17 +222,20 @@ namespace Luminous
       if(e->type() == QEvent::WindowStateChange) {
         QWindowStateChangeEvent * windowChange = dynamic_cast<QWindowStateChangeEvent *>(e);
         if(!isMinimized() && (windowChange->oldState() & Qt::WindowMinimized)) {
-          m_window.eventHook()->handleWindowRestoreEvent();
+          if(m_window.eventHook())
+            m_window.eventHook()->handleWindowRestoreEvent();
           // Radiant::info("restored");
         }
 
         else if(isMinimized() && !(windowChange->oldState() & Qt::WindowMinimized)) {
-          m_window.eventHook()->handleWindowIconifyEvent();
+          if(m_window.eventHook())
+            m_window.eventHook()->handleWindowIconifyEvent();
           // Radiant::info("iconified");
         }
       }
       else if(e->type() == QEvent::Close) {
-        m_window.eventHook()->handleWindowCloseEvent();
+        if(m_window.eventHook())
+          m_window.eventHook()->handleWindowCloseEvent();
       }
 
       return QWidget::event(e);
@@ -333,7 +336,7 @@ namespace Luminous
     if(!windowTitle.isEmpty())
       m_d->m_mainWindow->setWindowTitle(windowTitle);
 
-    if(window.screen()->iconify())
+    if(window.screen() && window.screen()->iconify())
        m_d->m_mainWindow->setWindowState(Qt::WindowMinimized);
 
     m_d->m_mainWindow->move(window.location().x, window.location().y);
@@ -482,7 +485,11 @@ namespace Luminous
 
   void QtWindow::restore()
   {
-    m_d->m_mainWindow->showNormal();
+    if(m_d->m_glWidget->m_windowDef.fullscreen()) {
+      m_d->m_mainWindow->showFullScreen();
+    } else {
+      m_d->m_mainWindow->showNormal();
+    }
   }
 
   void QtWindow::showCursor(bool visible)
@@ -493,6 +500,38 @@ namespace Luminous
   void QtWindow::doneCurrent()
   {
     m_d->m_glWidget->doneCurrent();
+  }
+
+  int QtWindow::width() const
+  {
+    return m_d->m_mainWindow->width();
+  }
+
+  int QtWindow::height() const
+  {
+    return m_d->m_mainWindow->height();
+  }
+
+  void QtWindow::setWidth(int w)
+  {
+    m_d->m_mainWindow->resize(w, height());
+  }
+
+  void QtWindow::setHeight(int h)
+  {
+    m_d->m_mainWindow->resize(width(), h);
+  }
+
+  Nimble::Vector2i QtWindow::position() const
+  {
+    auto p = m_d->m_mainWindow->pos();
+    return Nimble::Vector2i(p.x(), p.y());
+  }
+
+  void QtWindow::setPosition(Nimble::Vector2i pos)
+  {
+    QPoint loc(pos.x, pos.y);
+    m_d->m_mainWindow->move(loc);
   }
 
   bool QtWindow::setIcon(const QString &filename)

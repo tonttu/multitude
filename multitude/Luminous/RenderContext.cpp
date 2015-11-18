@@ -62,7 +62,6 @@ namespace Luminous
         , m_useOffScreenFrameBuffer(false)
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
         , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
-        , m_currentFrameBuffer(0)
         , m_postProcessFilters(0)
     {
       // Reset render call count
@@ -108,6 +107,15 @@ namespace Luminous
       desc.addAttribute<float>("vertex_invsize");
       m_fontShader.setVertexDescription(desc);
       m_fontShader.setSampleShading(1.0f);
+
+      m_splineShader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
+      m_splineShader.loadShader("Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2f>("vertex_range");
+      desc.addAttribute<Nimble::Vector4f>("vertex_color");
+      m_splineShader.setVertexDescription(desc);
+      m_splineShader.setTranslucency(true);
 
       // Fetch GPU upload limits from the window configuration
       uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
@@ -238,6 +246,7 @@ namespace Luminous
     Program m_texShader;
     Program m_trilinearTexShader;
     Program m_fontShader;
+    Program m_splineShader;
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
@@ -288,13 +297,14 @@ namespace Luminous
     FrameBuffer m_finalFrameBuffer;
     // Used when rendering non-directly/with postprocessing
     FrameBuffer m_offScreenFrameBuffer;
-    const FrameBuffer * m_currentFrameBuffer;
 
     // owned by Application
     const Luminous::PostProcessFilters * m_postProcessFilters;
     PostProcessChain m_postProcessChain;
 
-    std::stack<float> m_opacityStack;
+    std::stack<float, std::vector<float> > m_opacityStack;
+
+    std::stack<const Luminous::FrameBuffer*, std::vector<const Luminous::FrameBuffer*> > m_frameBufferStack;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -355,9 +365,8 @@ namespace Luminous
 
   const FrameBuffer & RenderContext::currentFrameBuffer() const
   {
-    assert(m_data->m_currentFrameBuffer);
-
-    return *m_data->m_currentFrameBuffer;
+    assert(!m_data->m_frameBufferStack.empty());
+    return *m_data->m_frameBufferStack.top();
   }
 
   void RenderContext::setRecursionLimit(size_t limit)
@@ -1308,6 +1317,11 @@ namespace Luminous
     return m_data->m_fontShader;
   }
 
+  const Program & RenderContext::splineShader() const
+  {
+    return m_data->m_splineShader;
+  }
+
   int RenderContext::uniformBufferOffsetAlignment() const
   {
     return m_data->m_uniformBufferOffsetAlignment;
@@ -1317,7 +1331,7 @@ namespace Luminous
   {
     m_data->m_driverGL->pushFrameBuffer(target);
 
-    m_data->m_currentFrameBuffer = &target;
+    m_data->m_frameBufferStack.push(&target);
 
     // Push new projection matrix
     pushViewTransform(Nimble::Matrix4::ortho3D(0.f, target.size().width(), 0.f, target.size().height(), -1.f, 1.f));
@@ -1352,6 +1366,9 @@ namespace Luminous
     popTransform();
     popViewTransform();
 
+    assert(!m_data->m_frameBufferStack.empty());
+    m_data->m_frameBufferStack.pop();
+
     m_data->m_renderCalls.pop();
     m_data->m_driverGL->popFrameBuffer();
   }
@@ -1370,10 +1387,12 @@ namespace Luminous
 
     m_data->m_driver.preFrame();
 
+    assert(m_data->m_frameBufferStack.empty());
+
     // Push frame buffer attached to back buffer. Don't use the RenderContext API
     // to avoid the guard.
     m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
-    m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+    m_data->m_frameBufferStack.push(&m_data->m_finalFrameBuffer);
 
     // Check if we need an auxiliary frame buffer (save this so we can pop when we are done)
     m_data->m_useOffScreenFrameBuffer = !m_data->m_window->directRendering() ||
@@ -1382,10 +1401,12 @@ namespace Luminous
     // Push auxiliary frame buffer if needed
     if(m_data->m_useOffScreenFrameBuffer) {
       m_data->m_driverGL->pushFrameBuffer(m_data->m_offScreenFrameBuffer);
-      m_data->m_currentFrameBuffer = &m_data->m_offScreenFrameBuffer;
+      m_data->m_frameBufferStack.push(&m_data->m_offScreenFrameBuffer);
     }
 
-    assert(m_data->m_currentFrameBuffer->targetType() != FrameBuffer::INVALID);
+
+    assert(!m_data->m_frameBufferStack.empty());
+    assert(m_data->m_frameBufferStack.top()->targetType() != FrameBuffer::INVALID);
 
     // Push default opacity
     assert(m_data->m_opacityStack.empty());
@@ -1398,7 +1419,7 @@ namespace Luminous
       // Push window frame buffer
       m_data->m_finalFrameBuffer.setTargetBind(FrameBuffer::BIND_DRAW);
       m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
-      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+      m_data->m_frameBufferStack.push(&m_data->m_finalFrameBuffer);
 
       // Blit individual areas (from currently bound FBO)
       for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
@@ -1407,12 +1428,13 @@ namespace Luminous
       }
 
       m_data->m_driverGL->popFrameBuffer();
+      m_data->m_frameBufferStack.pop();
     }
 
     // Pop our auxiliary frame buffer if we have used it
     if(m_data->m_useOffScreenFrameBuffer) {
       m_data->m_driverGL->popFrameBuffer();
-      m_data->m_currentFrameBuffer = &m_data->m_finalFrameBuffer;
+      m_data->m_frameBufferStack.pop();
     }
 
     //Actual drawing
@@ -1425,12 +1447,15 @@ namespace Luminous
     assert(m_data->m_renderCalls.size() == 1);
     m_data->m_renderCalls.top() = 0;
 
+
     // Pop opacity
     assert(m_data->m_opacityStack.size() == 1);
     m_data->m_opacityStack.pop();
 
     // Pop the default target
     m_data->m_driverGL->popFrameBuffer();
+    m_data->m_frameBufferStack.pop();
+    assert(m_data->m_frameBufferStack.empty());
 
     assert(stackSize() == 1);
 
@@ -1553,7 +1578,7 @@ namespace Luminous
 
     const Nimble::Recti viewport = area()->viewport();
 
-    assert(m_data->m_currentFrameBuffer);
+    assert(!m_data->m_frameBufferStack.empty());
 
     // Blit from current frame buffer to filter's auxiliary frame buffer
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);

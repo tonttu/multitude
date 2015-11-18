@@ -27,19 +27,21 @@ namespace
 {
   struct QueueItem
   {
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncBd func_,
+    QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
+              Valuable::Node::ListenerFuncBd func_,
               const Radiant::BinaryData & data_)
       : sender(sender_)
       , func2(func_)
-      , target()
+      , target(target_)
       , data(data_)
     {}
 
-    QueueItem(Valuable::Node * sender_, Valuable::Node::ListenerFuncVoid func_)
+    QueueItem(Valuable::Node * sender_,  Valuable::Node * target_,
+              Valuable::Node::ListenerFuncVoid func_)
       : sender(sender_)
       , func(func_)
       , func2()
-      , target()
+      , target(target_)
     {}
 
     QueueItem(Valuable::Node * sender_, Valuable::Node * target_,
@@ -105,16 +107,17 @@ namespace
     queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, to, data)), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncVoid func,
-                  void * once)
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  Valuable::Node::ListenerFuncVoid func, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func)), once);
   }
 
-  void queueEvent(Valuable::Node * sender, Valuable::Node::ListenerFuncBd func,
+  void queueEvent(Valuable::Node * sender, Valuable::Node * target,
+                  Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, func, data)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func, data)), once);
   }
 }
 
@@ -188,15 +191,21 @@ namespace Valuable
       Radiant::Guard g(s_queueMutex);
       for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
         auto & item = *it;
-        if(item->target == this)
-          item->target = 0;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
         if(item->sender == this)
           item->sender = 0;
       }
       for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
         auto & item = *it;
-        if(item->target == this)
-          item->target = 0;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
         if(item->sender == this)
           item->sender = 0;
       }
@@ -599,6 +608,42 @@ namespace Valuable
     return vp.m_listenerId;
   }
 
+  long Node::eventAddListener(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncVoid func, Node::ListenerType listenerType)
+  {
+    const QByteArray from = validateEvent(eventId);
+
+    ValuePass vp(++m_listenersId);
+    vp.m_func = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+    vp.m_listener = dstNode;
+    vp.m_frame = m_frame;
+
+    if(dstNode)
+      dstNode->eventAddSource(this);
+
+    m_elisteners.push_back(vp);
+    return vp.m_listenerId;
+  }
+
+  long Node::eventAddListenerBd(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncBd func, Node::ListenerType listenerType)
+  {
+    const QByteArray from = validateEvent(eventId);
+
+    ValuePass vp(++m_listenersId);
+    vp.m_func2 = func;
+    vp.m_from = from;
+    vp.m_type = listenerType;
+    vp.m_listener = dstNode;
+    vp.m_frame = m_frame;
+
+    if(dstNode)
+      dstNode->eventAddSource(this);
+
+    m_elisteners.push_back(vp);
+    return vp.m_listenerId;
+  }
+
   long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
@@ -794,14 +839,14 @@ namespace Valuable
     // elements when the QList gets modified inside the loop.
     for(auto i = s_queue.begin(); i != s_queue.end(); ++i) {
       auto & item = *i;
-      if(item->target) {
-        std::swap(item->target->m_sender, item->sender);
-        item->target->eventProcess(item->to, item->data);
-        std::swap(item->target->m_sender, item->sender);
-      } else if(item->func) {
+      if(item->func) {
         item->func();
       } else if(item->func2) {
         item->func2(item->data);
+      } else if(item->target) {
+        std::swap(item->target->m_sender, item->sender);
+        item->target->eventProcess(item->to, item->data);
+        std::swap(item->target->m_sender, item->sender);
       }
       // can't call "delete item" here, because that eventProcess call could
       // call some destructors that iterate s_queue
@@ -834,15 +879,19 @@ namespace Valuable
     return r;
   }
 
-  void Node::clearQueue()
+  void Node::flushQueue()
   {
-    Radiant::Guard g(s_processingQueueMutex);
-    Radiant::Guard g2(s_queueMutex);
+    Radiant::Guard g2(s_processingQueueMutex);
+    Radiant::Guard g(s_queueMutex);
 
-    s_queue.clear();
-    s_queueOnce.clear();
     s_queueTmp.clear();
+    s_queueOnce.clear();
     s_queueOnceTmp.clear();
+    {
+      // Make a temporary copy to prevent weird callback recursion bugs
+      auto tempQueue = std::move(s_queue);
+      s_queue.clear();
+    }
   }
 
   bool Node::copyValues(const Node & from, Node & to)
@@ -862,7 +911,7 @@ namespace Valuable
 
   void Node::invokeAfterUpdate(Node::ListenerFuncVoid function)
   {
-    queueEvent(nullptr, function, nullptr);
+    queueEvent(nullptr, nullptr, function, nullptr);
   }
 
   void Node::eventSend(const QByteArray & id, Radiant::BinaryData & bd)
@@ -890,7 +939,23 @@ namespace Valuable
 
         bdsend.rewind();
 
-        if(vp.m_listener) {
+        if(vp.m_func) {
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_listener, vp.m_func, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_func, 0);
+          } else {
+            vp.m_func();
+          }
+        } else if(vp.m_func2) {
+          if(vp.m_type == AFTER_UPDATE_ONCE) {
+            queueEvent(this, vp.m_listener, vp.m_func2, bdsend, &vp);
+          } else if(vp.m_type == AFTER_UPDATE) {
+            queueEvent(this, vp.m_listener, vp.m_func2, bdsend, 0);
+          } else {
+            vp.m_func2(bdsend);
+          }
+        } else if(vp.m_listener) {
           if(vp.m_type == AFTER_UPDATE_ONCE) {
             queueEvent(this, vp.m_listener, vp.m_to, bdsend, &vp);
           } else if(vp.m_type == AFTER_UPDATE) {
@@ -901,22 +966,6 @@ namespace Valuable
             std::swap(vp.m_listener->m_sender, sender);
             vp.m_listener->eventProcess(vp.m_to, bdsend);
             vp.m_listener->m_sender = sender;
-          }
-        } else if(vp.m_func) {
-          if(vp.m_type == AFTER_UPDATE_ONCE) {
-            queueEvent(this, vp.m_func, &vp);
-          } else if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_func, 0);
-          } else {
-            vp.m_func();
-          }
-        } else if(vp.m_func2) {
-          if(vp.m_type == AFTER_UPDATE_ONCE) {
-            queueEvent(this, vp.m_func2, bdsend, &vp);
-          } else if(vp.m_type == AFTER_UPDATE) {
-            queueEvent(this, vp.m_func2, bdsend, 0);
-          } else {
-            vp.m_func2(bdsend);
           }
         }
       }

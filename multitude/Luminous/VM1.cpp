@@ -174,6 +174,8 @@ namespace Luminous
     QRegExp m_reBoot;
     QRegExp m_reInit;
     QRegExp m_reFrameRate;
+    QRegExp m_reFailToLock;
+    QRegExp m_reClockLost;
   };
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -242,6 +244,8 @@ namespace Luminous
       m_reBoot("(Warm|Cold) boot"),
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
       m_reFrameRate("Set ([0-9.]+) Hz frame rate"),
+      m_reFailToLock("Failed to lock to DVI input"),
+      m_reClockLost("clock lost"),
       m_requestReconnect(false)
   {
     // These are required so that Mushy serialization works
@@ -507,6 +511,11 @@ namespace Luminous
 
   void VM1::D::writeColorCorrection()
   {
+    // VM1 seems to enable color correction automatically when it is written,
+    // so refuse writing it until the correction is enabled
+    if(!*m_colorCorrectionEnabled)
+      return;
+
     QByteArray data;
     {
       Radiant::Guard g(m_colorCorrectionMutex);
@@ -521,7 +530,8 @@ namespace Luminous
         if (m_colorCorrection.isEmpty())
           m_colorCorrection = data;
       } else if (m_useColorCorrectionDelay) {
-        this->sleep(0.1);
+        this->sleep(0.1); /// Do not remove this. Can mess VM1 pretty well
+        queueWrite(*m_colorCorrectionEnabled ? "g" : "c");
       }
     }
   }
@@ -709,6 +719,10 @@ namespace Luminous
         Radiant::info("VM1: %s", lineRaw.data());
       } else if (m_reFrameRate.exactMatch(line)) {
         m_frameRate = m_reFrameRate.cap(1).toFloat();
+      } else if(m_reFailToLock.exactMatch(line) || m_reClockLost.indexIn(line) >= 0) {
+        /// We don't know what this means, but did not seem to matter so
+        /// print only warning
+        Radiant::warning("VM1: %s", lineRaw.data());
       } else {
         auto lst = *m_unknownLines;
         lst << line;
@@ -923,8 +937,17 @@ namespace Luminous
 
   void VM1::scheduleTask(const VM1Task & task)
   {
-    Radiant::Guard guard(m_d->m_taskMutex);
-    m_d->m_tasks.push_back(task);
+    {
+      Radiant::Guard guard(m_d->m_taskMutex);
+      m_d->m_tasks.push_back(task);
+    }
+
+    // Blocking while reading can delay tasks for no reason. You should not
+    // wait for a read timeout before a task starts running. After the task
+    // is done, reading will be resumed.
+    if(m_d->m_connected) {
+      m_d->m_port.interruptRead();
+    }
   }
 
   void VM1::reconnect()

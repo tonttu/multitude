@@ -348,14 +348,14 @@ namespace Resonant {
       else {
 
         more = 0;
-        m_loop = false;
+        // m_loop = false;
       }
     }
 
     m_finishCounter -= n;
 
     if(!more) {
-      if(m_loop) {
+      if(m_loop && !m_stopped) {
         // debugResonant("ModuleSamplePlayer::SampleVoice::synthesize # rewind");
         m_position = 0;
         m_dpos = 0.0f;
@@ -587,6 +587,17 @@ namespace Resonant {
   {
     m_gain.setTarget(0, fadeTime * sampleRate);
     m_finishCounter = fadeTime * sampleRate;
+    m_stopped = true;
+  }
+
+  void ModuleSamplePlayer::SampleVoice::scanDataToEnd(Radiant::BinaryData &data)
+  {
+    QByteArray buf;
+    while(data.pos() < data.total()) {
+      data.readString(buf);
+      if(buf == "end")
+        return;
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1118,6 +1129,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleGain(const ModuleSamplePlayer::NoteInfo & info, float gain, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1139,6 +1152,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleRelativePitch(const ModuleSamplePlayer::NoteInfo &info, float relativePitch, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1159,6 +1174,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSamplePlayHead(const ModuleSamplePlayer::NoteInfo &info, float playHeadTimeSeconds, float interpolationTimeSeconds)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1179,6 +1196,8 @@ namespace Resonant {
 
   void ModuleSamplePlayer::setSampleLooping(const ModuleSamplePlayer::NoteInfo &info, bool looping)
   {
+    if(!info.isPlaying()) return;
+
     Radiant::BinaryData control;
     char buf[64];
     sprintf(buf, "%d", info.noteId());
@@ -1196,13 +1215,14 @@ namespace Resonant {
 
   int ModuleSamplePlayer::locationToChannel(Nimble::Vector2 location)
   {
-    DSPNetwork::Item * item = DSPNetwork::instance()->findItem("panner");
+    DSPNetwork::ItemPtr item = DSPNetwork::instance()->findItem("panner");
     if(!item) {
       Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to find a panner");
       return 0;
     }
 
-    Resonant::ModulePanner * pan = dynamic_cast<Resonant::ModulePanner *>(item->module());
+    std::shared_ptr<Resonant::ModulePanner> pan =
+        std::dynamic_pointer_cast<Resonant::ModulePanner>(item->module());
 
     if(!pan) {
       Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to cast a panner");
@@ -1287,7 +1307,8 @@ namespace Resonant {
       voice->processMessage(this, parameter, data);
     }
     else {
-      Radiant::error("ModuleSamplePlayer::controlSample # No voice %d", voiceId);
+      SampleVoice::scanDataToEnd(data);
+      // Radiant::error("ModuleSamplePlayer::controlSample # No voice %d", voiceId);
     }
   }
 

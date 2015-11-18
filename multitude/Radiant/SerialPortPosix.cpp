@@ -223,7 +223,7 @@ namespace Radiant
     fds[0].events = POLLIN;
     fds[1].fd = fd();
     fds[1].events = events;
-    int ret = poll(fds, 2, std::max<int>(1, timeoutSecs*1000));
+    int ret = TEMP_FAILURE_RETRY(poll(fds, 2, std::max<int>(1, timeoutSecs*1000)));
     if (ret == -1) {
       return WaitStatus::Error;
     } else if (ret == 0) {

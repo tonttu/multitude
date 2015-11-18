@@ -73,6 +73,7 @@ namespace Valuable
   {
     MEMCHECKED
   public:
+    Serializable();
     virtual ~Serializable() {}
 
     /// Serializes (writes) this object to an element.
@@ -91,6 +92,14 @@ namespace Valuable
     /// @param element XML element that is deserialized
     /** @return Returns true if the read process worked correctly, and false otherwise. */
     virtual bool deserializeXML(const DOMElement & element);
+
+    /// @param v should this attribute be serialized with its host
+    void setSerializable(bool v);
+    /// @returns true if this attribute should be serialized with its host
+    bool isSerializable() const;
+
+  private:
+    bool m_serializable;
   };
 
 
@@ -267,6 +276,8 @@ namespace Valuable
     /// @return type of the attribute
     virtual QByteArray type() const { return QByteArray(); }
 
+    virtual void copyValueFromLayer(Layer from, Layer to);
+
     /// The object is serialized using its name as a tag name.
     /// @param archive Serialization archive that is used to create new elements.
     /// @return Serialized object as an ArchiveElement
@@ -331,11 +342,6 @@ namespace Valuable
     /// @return true if the given value defines a layer; otherwise false
     virtual bool isValueDefinedOnLayer(Layer layer) const;
 
-    /// @param v should this attribute be serialized with its host
-    void setSerializable(bool v);
-    /// @returns true if this attribute should be serialized with its host
-    bool isSerializable() const;
-
     void setOwnerShorthand(Attribute * owner);
     Attribute * ownerShorthand() const;
 
@@ -388,7 +394,6 @@ namespace Valuable
     // The object that holds this object
     Node * m_host;
     Attribute * m_ownerShorthand;
-    bool m_serializable;
     QByteArray m_name;
     bool m_transit;
 
@@ -532,7 +537,7 @@ namespace Valuable
       clearValue(USER);
     }
 
-    virtual QString asString(bool * const ok, Layer layer) const = 0;
+    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE = 0;
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
@@ -559,6 +564,12 @@ namespace Valuable
     virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
       return m_valueSet[layer];
+    }
+
+    virtual void copyValueFromLayer(Layer from, Layer to) OVERRIDE
+    {
+      const T & val = value(from);
+      setValue(val, to);
     }
 
   protected:

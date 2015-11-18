@@ -38,7 +38,6 @@ namespace Luminous
     /// Move constructor
     /// @param prog Program to move
     LUMINOUS_API Program(Program && prog);
-    /// @todo
     /// @param prog
     /// @return Reference to this
     LUMINOUS_API Program & operator=(Program && prog);
@@ -111,7 +110,7 @@ namespace Luminous
     /// @endcond
 
     /// Does the program render translucent geometry. Is important for reordering of
-    /// rendering commands.
+    /// rendering commands. Default is false.
     /// @return Is there possibility for translucent rendering
     LUMINOUS_API bool translucent() const;
     /// Sets translucency flag.

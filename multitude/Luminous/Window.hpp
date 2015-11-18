@@ -60,17 +60,17 @@ namespace Luminous
 
     /// Returns the width of the window
     /// @return width of the window in pixels
-    int width() const;
+    virtual int width() const = 0;
     /// Returns the height of the window
     /// @return height of the window in pixels
-    int height() const;
+    virtual int height() const = 0;
 
     /// Set the width of the window
     /// @param w window width in pixels
-    void setWidth(int w) { m_width = w; }
+    virtual void setWidth(int w) = 0;
     /// Set the height of the window
     /// @param h window height in pixels
-    void setHeight(int h) { m_height = h; }
+    virtual void setHeight(int h) = 0;
 
     /// Set the event handler for window events. The event handler must remain
     /// valid for the lifetime of the window.
@@ -96,10 +96,10 @@ namespace Luminous
 
     /// Get the window position
     /// @return window position
-    Nimble::Vector2i position() const { return m_pos; }
+    virtual Nimble::Vector2i position() const = 0;
     /// Set the window position
     /// @param pos window position
-    void setPosition(Nimble::Vector2i pos) { m_pos = pos; }
+    virtual void setPosition(Nimble::Vector2i pos) = 0;
 
     /// Control mouse cursor visibility
     /// @param visible true to show cursor; false to hide it
@@ -108,9 +108,6 @@ namespace Luminous
   private:
     bool m_finished;
     bool m_fullscreen;
-    int m_width;
-    int m_height;
-    Nimble::Vector2i m_pos;
 
     WindowEventHook * m_eventHook;
   };

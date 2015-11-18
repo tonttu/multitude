@@ -38,12 +38,15 @@ namespace Radiant
 
   void BGThread::addTask(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return;
+
     if(threads() == 0 || m_isShuttingDown) {
       task->setCanceled();
       return;
     }
 
-    assert(task);
     if(task->m_host == this) return;
     task->m_host = this;
 
@@ -54,6 +57,9 @@ namespace Radiant
 
   bool BGThread::removeTask(std::shared_ptr<Task> task, bool cancel, bool wait)
   {
+    assert(task);
+    if(!task)
+      return false;
     if(task->m_host != this)
       return false;
 
@@ -94,6 +100,9 @@ namespace Radiant
 
   void BGThread::reschedule(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return;
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       m_wait.wakeAll();
@@ -104,6 +113,9 @@ namespace Radiant
 
   void BGThread::reschedule(std::shared_ptr<Task> task, Priority p)
   {
+    assert(task);
+    if(!task)
+      return;
     Radiant::Guard g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       task->m_priority = p;
@@ -123,6 +135,10 @@ namespace Radiant
 
   void BGThread::setPriority(std::shared_ptr<Task> task, Priority p)
   {
+    assert(task);
+    if(!task)
+      return;
+
     Radiant::Guard g(m_mutexWait);
 
     container::iterator it = findTask(task);
@@ -141,7 +157,7 @@ namespace Radiant
   unsigned BGThread::taskCount()
   {
     Radiant::Guard guard(m_mutexWait);
-    return (unsigned) m_taskQueue.size();
+    return (unsigned) m_taskQueue.size() + m_runningTasksCount;
   }
 
   unsigned int BGThread::runningTasks() const
@@ -153,13 +169,12 @@ namespace Radiant
   {
     Radiant::Guard guard(m_mutexWait);
 
-    const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
     unsigned int counter = 0;
 
     for(container::const_iterator it = m_taskQueue.begin(), end = m_taskQueue.end();
         it != end; ++it) {
-      Radiant::TimeStamp tmp = it->second->scheduled() - now;
-      if(tmp <= Radiant::TimeStamp(0)) ++counter;
+      if(it->second->secondsUntilScheduled() <= 0.0)
+        ++counter;
     }
 
     return counter;
@@ -178,7 +193,7 @@ namespace Radiant
       fprintf(f, "TASK %s %p\n", Radiant::StringUtils::demangle(typeid(*t).name()).data(), t.get());
       Radiant::FileUtils::indent(f, indent + 1);
       fprintf(f, "PRIORITY = %d UNTIL = %.3f\n", (int) t->priority(),
-              (float) -t->scheduled().sinceSecondsD());
+              (float) t->secondsUntilScheduled());
     }
   }
 
@@ -236,19 +251,23 @@ namespace Radiant
   std::shared_ptr<Task> BGThread::pickNextTask()
   {
     while(running()) {
-      Radiant::TimeStamp wait = Radiant::TimeStamp(std::numeric_limits<Radiant::TimeStamp::type>::max());
+      double wait = std::numeric_limits<double>::max();
+
+      // We need to delete this task after m_mutexWait has been released,
+      // otherwise there is a risk of getting a deadlock.
+      std::shared_ptr<Task> reservedTask;
 
       Radiant::Guard guard(m_mutexWait);
 
       container::iterator nextTask = m_taskQueue.end();
-      const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
 
       for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
         std::shared_ptr<Task> task = it->second;
-        Radiant::TimeStamp next = task->scheduled() - now;
+
+        double next = task->secondsUntilScheduled();
 
         // Should the task be run now?
-        if(next <= Radiant::TimeStamp(0)) {
+        if(next <= 0) {
           m_taskQueue.erase(it);
           m_runningTasks.insert(task);
           m_runningTasksCount = m_runningTasks.size();
@@ -264,13 +283,14 @@ namespace Radiant
         m_idleWait.wait(m_mutexWait);
         --m_idle;
       } else {
-        std::shared_ptr<Task> task = nextTask->second;
-        m_reserved.insert(task);
-        double waitTime = wait.secondsD() * 1000.0;
-        unsigned int waitTimei = waitTime > std::numeric_limits<unsigned int>::max()
-            ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTime);
+        reservedTask = nextTask->second;
+        m_reserved.insert(reservedTask);
+        double waitTimeMs = wait * 1000.0;
+        unsigned int waitTimei =
+            waitTimeMs > std::numeric_limits<unsigned int>::max()
+            ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTimeMs);
         m_wait.wait(m_mutexWait, waitTimei);
-        m_reserved.erase(task);
+        m_reserved.erase(reservedTask);
       }
     }
     return std::shared_ptr<Task>();
@@ -278,6 +298,10 @@ namespace Radiant
 
   BGThread::container::iterator BGThread::findTask(std::shared_ptr<Task> task)
   {
+    assert(task);
+    if(!task)
+      return m_taskQueue.end();
+
     // Try optimized search first, assume that the priority hasn't changed
     std::pair<container::iterator, container::iterator> range = m_taskQueue.equal_range(task->priority());
     container::iterator it;
@@ -317,6 +341,10 @@ namespace Radiant
   void BGThread::shutdown()
   {
     m_isShuttingDown = true;
+
+    container taskQueue;
+    std::set<TaskPtr> reserved;
+
     {
       Radiant::Guard g(m_mutexWait);
 
@@ -331,9 +359,14 @@ namespace Radiant
       for (auto & task: m_runningTasks)
         task->setCanceled();
 
-      m_taskQueue.clear();
-      m_reserved.clear();
+      std::swap(taskQueue, m_taskQueue);
+      std::swap(reserved, m_reserved);
     }
+
+    /// Do not lock m_mutexWait while clearing these, since ~Task() might
+    /// trigger something that calls BGThread::removeTask.
+    taskQueue.clear();
+    reserved.clear();
 
     /// @todo spin-lock is not very elegant, but we need to wait until all
     /// running tasks have been cleared.

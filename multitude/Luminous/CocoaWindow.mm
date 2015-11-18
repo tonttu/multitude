@@ -707,6 +707,25 @@ return self;
 
 @end
 
+  static std::function<void ()> s_quitCallback = nullptr;
+
+  @interface MyDelegate : NSObject
+                        - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+  // - (void) applicationWillFinishLaunching: (NSNotification *)not;
+  @end
+
+  @implementation MyDelegate
+  - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+  {
+    Radiant::info("Terminating");
+    if(s_quitCallback) {
+      s_quitCallback();
+      return NSTerminateLater;
+    }
+    return NSTerminateNow;
+  }
+  @end
+
 
 namespace Luminous
 {
@@ -717,6 +736,7 @@ public:
   D(CocoaWindow * window, const MultiHead::Window & hint) : m_window(window), m_cursorVisibility(true) {
 
     [NSApp activateIgnoringOtherApps:YES]; // get keyboard focus
+    [NSApp setDelegate: [MyDelegate new]];
     controller = [[Controller alloc] initialize:m_window:hint ];
     m_frameless = hint.frameless();
   }
@@ -741,6 +761,11 @@ CocoaWindow::CocoaWindow(const MultiHead::Window & hint)
 CocoaWindow::~CocoaWindow()
 {
   delete m_d;
+}
+
+void CocoaWindow::setQuitCallback(std::function<void ()> callback)
+{
+  s_quitCallback = callback;
 }
 
 void CocoaWindow::poll()
@@ -793,12 +818,53 @@ void CocoaWindow::showCursor(bool visible)
   if(m_d->m_cursorVisibility == visible || !m_d->m_frameless)
     return;
 
-  if(visible)
-        [NSCursor unhide];
-    else
-        [NSCursor hide];
-    Radiant::debug("CocoaWindow::showCursor # %d", (int) visible);
-    m_d->m_cursorVisibility = visible;
+  if(visible) {
+    [NSCursor unhide];
+    [NSCursor setHiddenUntilMouseMoves:NO];
+  }
+  else {
+    [NSCursor hide];
+    [NSCursor setHiddenUntilMouseMoves:YES];
+  }
+
+  Radiant::debug("CocoaWindow::showCursor # %d", (int) visible);
+  m_d->m_cursorVisibility = visible;
+}
+
+int CocoaWindow::width() const
+{
+  Radiant::error("CocoaWindow::width# unimplemented");
+  return 0;
+}
+
+void CocoaWindow::setWidth(int w)
+{
+  (void) w;
+  Radiant::error("CocoaWindow::setWidth# unimplemented");
+}
+
+int CocoaWindow::height() const
+{
+  Radiant::error("CocoaWindow::height# unimplemented");
+  return 0;
+}
+
+void CocoaWindow::setHeight(int h)
+{
+  (void) h;
+  Radiant::error("CocoaWindow::setHeight# unimplemented");
+}
+
+Nimble::Vector2i CocoaWindow::position() const
+{
+  Radiant::error("CocoaWindow::position# unimplemented");
+  return Nimble::Vector2i(0,0);
+}
+
+void CocoaWindow::setPosition(Nimble::Vector2i pos)
+{
+  (void) pos;
+  Radiant::error("CocoaWindow::setPosition# unimplemented");
 }
 
 }

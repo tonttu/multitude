@@ -141,7 +141,8 @@ namespace Resonant {
     AudioFileHandler();
     ~AudioFileHandler();
 
-    /// Returns the first AudioFileHandler instance
+    /// Returns the first AudioFileHandler instance. This function is not
+    /// thread-safe.
     static AudioFileHandler * instance() { return m_instance; }
 
     /// Starts the reading process for a given file
@@ -170,7 +171,7 @@ namespace Resonant {
                int channels,
                int samplerate,
                int sfFormat,
-               // Either ASF_FLOAT32 or ASF_INT32
+               // Either Radiant::ASF_FLOAT32 or Radiant::ASF_INT32
                Radiant::AudioSampleFormat userFormat = Radiant::ASF_FLOAT32);
 
     /// Tells the handler, that a given file handle can be deleted

@@ -30,6 +30,7 @@
 #include <QSet>
 #include <QString>
 #include <QThread>
+#include <QFileInfo>
 
 #include <array>
 #include <cassert>
@@ -196,7 +197,9 @@ namespace
     if(level > AV_LOG_WARNING) {
       Radiant::info("%s", msg.toUtf8().data());
     } else if(level > AV_LOG_ERROR) {
-      Radiant::warning("%s", msg.toUtf8().data());
+      if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
+        Radiant::warning("%s", msg.toUtf8().data());
+      }
     } else {
       Radiant::error("%s", msg.toUtf8().data());
     }
@@ -283,7 +286,6 @@ namespace VideoDisplay
       , m_radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN())
       , m_loopOffset(0)
       , m_audioGain(1)
-      , m_audioTransfer(nullptr)
       , m_audioTrackHasEnded(false)
       , m_maxAudioDelay(0.3)
       , m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN())
@@ -294,6 +296,17 @@ namespace VideoDisplay
       m_av.videoStreamIndex = -1;
       m_av.audioStreamIndex = -1;
       m_av.videoSize = Nimble::Size();
+    }
+
+    ~D()
+    {
+      AudioTransferPtr tmp(m_audioTransfer);
+      if(tmp) {
+        if(!tmp->isShutdown())
+          Radiant::fatal("LibavDecover::D::~D # Audio transfer is still active!");
+      }
+      /*m_audioTransfer.reset();
+      tmp.reset();*/
     }
 
     LibavDecoder * m_host;
@@ -330,7 +343,7 @@ namespace VideoDisplay
     double m_loopOffset;
 
     float m_audioGain;
-    AudioTransfer * m_audioTransfer;
+    AudioTransferPtr m_audioTransfer;
 
     /// In some videos, the audio track might be shorter than the video track
     /// We have some heuristic to determine when the audio track has actually ended,
@@ -600,6 +613,20 @@ namespace VideoDisplay
         }
       }
     }
+
+#ifdef RADIANT_LINUX
+    /// Detect video4linux2 devices automatically
+    if (m_options.format().isEmpty()) {
+      QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
+      if (v4l2m.exactMatch(src)) {
+        m_options.setFormat("video4linux2");
+      } else {
+        QFileInfo fi(src);
+        if (fi.isSymLink() && v4l2m.exactMatch(fi.symLinkTarget()))
+          m_options.setFormat("video4linux2");
+      }
+    }
+#endif
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
@@ -874,18 +901,20 @@ namespace VideoDisplay
 
     if(m_av.audioCodec) {
       int channelLayout = av_get_channel_layout(m_options.channelLayout());
-      m_audioTransfer = new AudioTransfer(m_host, av_get_channel_layout_nb_channels(channelLayout));
-      m_audioTransfer->setGain(m_audioGain);
-      m_audioTransfer->setSeekGeneration(m_seekGeneration);
-      m_audioTransfer->setPlayMode(m_options.playMode());
+      AudioTransferPtr audioTransfer = std::make_shared<AudioTransfer>(m_host, av_get_channel_layout_nb_channels(channelLayout));
+
+      m_audioTransfer = audioTransfer;
+      audioTransfer->setGain(m_audioGain);
+      audioTransfer->setSeekGeneration(m_seekGeneration);
+      audioTransfer->setPlayMode(m_options.playMode());
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
-      m_audioTransfer->setId(QString("VideoDisplay.AudioTransfer.%1").arg(value).toUtf8());
+      audioTransfer->setId(QString("VideoDisplay.AudioTransfer.%1").arg(value).toUtf8());
 
-      auto item = Resonant::DSPNetwork::Item();
-      item.setModule(m_audioTransfer);
-      item.setTargetChannel(0);
+      auto item = std::make_shared<Resonant::DSPNetwork::Item>();
+      item->setModule(audioTransfer);
+      item->setTargetChannel(0);
 
       Resonant::DSPNetwork::instance()->addModule(item);
     }
@@ -912,6 +941,11 @@ namespace VideoDisplay
     m_av.duration = 0;
     m_av.videoSize = Nimble::Size();
 
+    if (m_videoFilter.graph)
+      avfilter_graph_free(&m_videoFilter.graph);
+    if (m_audioFilter.graph)
+      avfilter_graph_free(&m_audioFilter.graph);
+
     // Close the codecs
     if(m_av.audioCodecContext || m_av.videoCodecContext) {
       if(m_av.audioCodecContext)
@@ -926,12 +960,13 @@ namespace VideoDisplay
 
     av_free(m_av.frame);
 
-    if(m_audioTransfer) {
-      m_audioTransfer->shutdown();
-      Resonant::DSPNetwork::instance()->markDone(*m_audioTransfer);
+    AudioTransferPtr audioTransfer(m_audioTransfer);
+    m_audioTransfer.reset();
+    if(audioTransfer) {
+      audioTransfer->shutdown();
+      Resonant::DSPNetwork::instance()->markDone(audioTransfer);
     }
     
-    m_audioTransfer = nullptr;
   }
 
   bool LibavDecoder::D::seekToBeginning()
@@ -975,8 +1010,9 @@ namespace VideoDisplay
   void LibavDecoder::D::increaseSeekGeneration()
   {
     ++m_seekGeneration;
-    if(m_audioTransfer)
-      m_audioTransfer->setSeekGeneration(m_seekGeneration);
+    AudioTransferPtr audioTransfer(m_audioTransfer);
+    if(audioTransfer)
+      audioTransfer->setSeekGeneration(m_seekGeneration);
     m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
     if(m_options.playMode() == PAUSE)
       m_pauseTimestamp = Radiant::TimeStamp::currentTime();
@@ -1078,6 +1114,8 @@ namespace VideoDisplay
 
   VideoFrameLibav * LibavDecoder::D::getFreeFrame(bool & setTimestampToPts, double & dpts)
   {
+    AudioTransferPtr audioTransfer(m_audioTransfer);
+
     while(m_running) {
       VideoFrameLibav * frame = m_decodedVideoFrames.takeFree();
       if(frame) return frame;
@@ -1093,7 +1131,7 @@ namespace VideoDisplay
       // we need to resize the video buffer, otherwise we could starve.
       // Growing the video buffer is safe, as long as the buffer size
       // doesn't grow over the hard-limit (setSize checks that)
-      if(m_audioTransfer && m_audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f) {
+      if(audioTransfer && audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f) {
         if(m_decodedVideoFrames.setSize(m_decodedVideoFrames.size() + 1)) {
           m_options.setVideoBufferFrames(m_decodedVideoFrames.size());
           continue;
@@ -1191,7 +1229,9 @@ namespace VideoDisplay
 
     int64_t pts = guessCorrectPts(m_av.frame);
 
-    dpts = m_av.videoTsToSecs * pts;
+    /// Some mpeg2 streams don't give valid pts value for the last frame,
+    /// guess the value from the previous frame.
+    dpts = pts == AV_NOPTS_VALUE ? nextDpts : m_av.videoTsToSecs * pts;
 
     VideoFrameLibav * frame = 0;
     bool setTimestampToPts = false;
@@ -1371,6 +1411,7 @@ namespace VideoDisplay
     AVPacket packet = m_av.packet;
     bool gotFrames = false;
     bool flush = packet.size == 0;
+    AudioTransferPtr audioTransfer(m_audioTransfer);
 
     while(m_running && (packet.size > 0 || flush)) {
       int gotFrame = 0;
@@ -1416,14 +1457,14 @@ namespace VideoDisplay
 
               if(output) {
                 while(true) {
-                  decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
+                  decodedAudioBuffer = audioTransfer->takeFreeBuffer(
                         m_av.decodedAudioBufferSamples - output->audio->nb_samples);
                   if(decodedAudioBuffer) break;
                   if(!m_running) return gotFrames;
                   Radiant::Sleep::sleepMs(10);
                   // Make sure that we don't get stuck with a file that doesn't
                   // have video frames in the beginning
-                  m_audioTransfer->setEnabled(true);
+                  audioTransfer->setEnabled(true);
                 }
 
                 /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
@@ -1437,14 +1478,14 @@ namespace VideoDisplay
                 decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_seekGeneration),
                                                av_get_channel_layout_nb_channels(output->audio->channel_layout),
                                                output->audio->nb_samples, (const float **)(output->data));
-                m_audioTransfer->putReadyBuffer(output->audio->nb_samples);
+                audioTransfer->putReadyBuffer(output->audio->nb_samples);
                 avfilter_unref_buffer(output);
               }
             }
           }
         } else {
           while(true) {
-            decodedAudioBuffer = m_audioTransfer->takeFreeBuffer(
+            decodedAudioBuffer = audioTransfer->takeFreeBuffer(
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!m_running) return gotFrames;
@@ -1454,7 +1495,7 @@ namespace VideoDisplay
           decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_seekGeneration),
                                    m_av.audioCodecContext->channels, m_av.frame->nb_samples,
                                    reinterpret_cast<const int16_t *>(m_av.frame->data[0]));
-          m_audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
+          audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
         }
       } else {
         flush = false;
@@ -1654,14 +1695,14 @@ namespace VideoDisplay
   LibavDecoder::~LibavDecoder()
   {
     close();
+    if(isRunning())
+      waitEnd();
     while(true) {
       AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
       if(!ref) break;
       avfilter_unref_buffer(*ref);
       m_d->m_consumedBufferRefs.next();
     }
-    if(isRunning())
-      waitEnd();
     m_d->close();
     delete m_d;
   }
@@ -1677,8 +1718,10 @@ namespace VideoDisplay
       return;
 
     m_d->m_options.setPlayMode(mode);
-    if(m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setPlayMode(mode);
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if(audioTransfer)
+      audioTransfer->setPlayMode(mode);
     if(mode == PAUSE)
       m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     if(mode == PLAY)
@@ -1687,14 +1730,16 @@ namespace VideoDisplay
 
   Timestamp LibavDecoder::getTimestampAt(const Radiant::TimeStamp & ts) const
   {
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
     if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
       VideoFrameLibav * frame = m_d->m_decodedVideoFrames.lastReadyItem();
       if(frame)
         return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
     }
 
-    if(m_d->m_audioTransfer && !m_d->m_audioTrackHasEnded && m_d->m_audioTransfer->isEnabled()) {
-      Timestamp t = m_d->m_audioTransfer->toPts(ts);
+    if(audioTransfer && !m_d->m_audioTrackHasEnded && audioTransfer->isEnabled()) {
+      Timestamp t = audioTransfer->toPts(ts);
       if(t.seekGeneration() < m_d->m_seekGeneration)
         return Timestamp();
       return t;
@@ -1774,8 +1819,10 @@ namespace VideoDisplay
       m_d->m_decodedVideoFrames.next();
     }
 
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
     if(eof) {
-      *eof = finished() && (!m_d->m_audioTransfer || m_d->m_audioTransfer->bufferStateSeconds() <= 0.0f)
+      *eof = finished() && (!audioTransfer|| audioTransfer->bufferStateSeconds() <= 0.0f)
           && m_d->m_decodedVideoFrames.itemCount() <= 1;
     }
 
@@ -1813,14 +1860,16 @@ namespace VideoDisplay
 
   void LibavDecoder::panAudioTo(Nimble::Vector2f location) const
   {
-    if (m_d->m_audioTransfer) {
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if (audioTransfer) {
       char buf[128];
 
       Radiant::BinaryData control;
 
       control.writeString("panner/setsourcelocation");
 
-      snprintf(buf, sizeof(buf), "%s-%d", m_d->m_audioTransfer->id().data(), (int) 0);
+      snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
 
       control.writeString(buf);
       control.writeVector2Float32(location); // sound source location
@@ -1832,8 +1881,10 @@ namespace VideoDisplay
   void LibavDecoder::setAudioGain(float gain)
   {
     m_d->m_audioGain = gain;
-    if (m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setGain(gain);
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if (audioTransfer)
+      audioTransfer->setGain(gain);
   }
 
   void LibavDecoder::audioTransferDeleted()
@@ -1842,7 +1893,7 @@ namespace VideoDisplay
     if(isRunning())
       waitEnd();
 
-    m_d->m_audioTransfer = nullptr;
+    m_d->m_audioTransfer.reset();
   }
 
   void LibavDecoder::load(const Options & options)
@@ -1856,9 +1907,10 @@ namespace VideoDisplay
   void LibavDecoder::close()
   {
     m_d->m_running = false;
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
     // Kill audio so that it stops at the same time as the video
-    if (m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setGain(0.0f);
+    if (audioTransfer)
+      audioTransfer->setGain(0.0f);
   }
 
   Nimble::Size LibavDecoder::videoSize() const
@@ -1893,9 +1945,11 @@ namespace VideoDisplay
 
   void LibavDecoder::setRealTimeSeeking(bool value)
   {
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
     m_d->m_realTimeSeeking = value;
-    if(m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setSeeking(value);
+    if(audioTransfer)
+      audioTransfer->setSeeking(value);
   }
 
   void LibavDecoder::runDecoder()
@@ -1926,11 +1980,20 @@ namespace VideoDisplay
 
     auto & av = m_d->m_av;
 
-    if (av.videoCodec && m_d->m_audioTransfer)
-      m_d->m_audioTransfer->setEnabled(false);
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if (av.videoCodec && audioTransfer)
+      audioTransfer->setEnabled(false);
 
     m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
     bool waitingFrame = false;
+
+    int lastError = 0;
+    int consecutiveErrorCount = 0;
+    /// With v4l2 streams on some devices (like Inogeni DVI capture cards) lots
+    /// of errors in the beginning is normal
+    int maxConsecutiveErrors = 50;
+
     while(m_d->m_running) {
       m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames());
 
@@ -1965,17 +2028,32 @@ namespace VideoDisplay
           continue;
         } else
         if(err != AVERROR_EOF) {
-          avError(QString("%1 Read error").arg(errorMsg.data()), err);
-          state() = STATE_ERROR;
-          s_src = nullptr;
-          return;
+          if (err == lastError) {
+            if (++consecutiveErrorCount > maxConsecutiveErrors) {
+              state() = STATE_ERROR;
+              s_src = nullptr;
+              return;
+            }
+          } else {
+            avError(QString("%1 Read error").arg(errorMsg.data()), err);
+            lastError = err;
+          }
+          ++consecutiveErrorCount;
+          Radiant::Sleep::sleepMs(1);
+          continue;
         }
+
+        lastError = 0;
+        consecutiveErrorCount = 0;
 
         if(av.needFlushAtEof) {
           eof = EofState::Flush;
         } else {
           eof = EofState::Eof;
         }
+      } else {
+        lastError = 0;
+        consecutiveErrorCount = 0;
       }
 
       // We really are at the end of the stream and we have flushed all the packages
@@ -2023,8 +2101,8 @@ namespace VideoDisplay
           av.packet.stream_index = av.videoStreamIndex;
         }
         gotVideoFrame = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
-        if (gotVideoFrame && m_d->m_audioTransfer)
-          m_d->m_audioTransfer->setEnabled(true);
+        if (gotVideoFrame && audioTransfer)
+          audioTransfer->setEnabled(true);
       }
 
       av.frame->opaque = nullptr;
@@ -2063,7 +2141,7 @@ namespace VideoDisplay
       if (gotFrames)
         state() = STATE_READY;
 
-      if (m_d->m_audioTransfer) {
+      if (audioTransfer) {
         if (!Nimble::Math::isNAN(audioDpts))
           m_d->m_lastDecodedAudioPts = audioDpts;
         if (!Nimble::Math::isNAN(videoDpts))
@@ -2080,7 +2158,7 @@ namespace VideoDisplay
           m_d->m_audioTrackHasEnded = ended;
           if (ended) {
             // Radiant::info("%s Audio/Video decoding delay: %lf, assuming that the audio track has ended", errorMsg.data(), delay);
-            m_d->m_radiantTimestampToPts = m_d->m_audioTransfer->toPts(Radiant::TimeStamp(0)).pts();
+            m_d->m_radiantTimestampToPts = audioTransfer->toPts(Radiant::TimeStamp(0)).pts();
           } else {
             // Radiant::info("%s Got audio packet, restoring audio sync. Delay: %lf", errorMsg.data(), delay);
             // This is a file specific feature, there seems to be no other way
@@ -2093,12 +2171,13 @@ namespace VideoDisplay
 
     state() = STATE_FINISHED;
     s_src = nullptr;
-    if (m_d->m_audioTransfer) {
+
+    if (audioTransfer) {
       // Tell audio transfer that there are no more samples coming, so that it
       // knows that it can disable itself when it runs out of the decoded
       // buffer. We can also then know that we shouldn't synchronize remaining
       // video frames to audio anymore after that.
-      m_d->m_audioTransfer->setDecodingFinished(true);
+      audioTransfer->setDecodingFinished(true);
     }
   }
 

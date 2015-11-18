@@ -150,6 +150,11 @@ namespace Valuable
       m_eventDelete = m_attribute->addListener([=] { setAttribute(nullptr); }, DELETE_ROLE);
       m_eventChange = m_attribute->addListener([=] { emitChange(); }, CHANGE_ROLE);
     }
+
+    // This serves a double purpose. First, since the target attribute has changed, the value is probably
+    // different and it would be nice to notify listeners. Second, it indirectly allows listeners to detect
+    // when the attribute target has changed or has become non-null.
+    emitChange();
   }
 
   bool AttributeAlias::isChanged() const

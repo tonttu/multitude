@@ -62,16 +62,7 @@ namespace Luminous
 #if defined(RADIANT_WINDOWS)
     ok = WGLEW_AMD_gpu_association;
 #elif defined(RADIANT_LINUX)
-    ok = GLX_AMD_gpu_association;
-    //check that extension actually exists
-    if (ok) {
-      typedef GLuint (GLAPIENTRY * PFNGLXGETGPUIDSAMDPROC) (GLuint maxCount, GLuint* ids);
-      PFNGLXGETGPUIDSAMDPROC glXGetGPUIDsAMD = nullptr;
-      glXGetGPUIDsAMD = (PFNGLXGETGPUIDSAMDPROC)glXGetProcAddressARB((const GLubyte*)"glXGetGPUIDsAMD");
-      if (!glXGetGPUIDsAMD) {
-        ok = false;
-      }
-    }
+    ok = GLXEW_AMD_gpu_association;
 #endif
 
     return ok;
@@ -85,14 +76,6 @@ namespace Luminous
 #if defined(RADIANT_WINDOWS)
     count = wglGetGPUIDsAMD(16, ids);
 #elif defined(RADIANT_LINUX)
-
-    typedef GLuint (GLAPIENTRY * PFNGLXGETGPUIDSAMDPROC) (GLuint maxCount, GLuint* ids);
-
-    PFNGLXGETGPUIDSAMDPROC glXGetGPUIDsAMD = nullptr;
-
-    glXGetGPUIDsAMD = (PFNGLXGETGPUIDSAMDPROC)glXGetProcAddressARB((const GLubyte*)"glXGetGPUIDsAMD");
-    assert(glXGetGPUIDsAMD);
-
     count = glXGetGPUIDsAMD(16, ids);
 #endif
 
@@ -101,22 +84,27 @@ namespace Luminous
 
   unsigned int GPUAssociation::gpuId(OpenGLContextHandle* handle)
   {
-    unsigned id = 0;
+    unsigned int id = 0;
 
 #if defined(RADIANT_WINDOWS)
     id = wglGetContextGPUIDAMD(handle->m_d->ctx);
 #elif defined(RADIANT_LINUX)
-
-    typedef GLuint (GLAPIENTRY * PFNGLXGETCONTEXTGPUIDAMDPROC) (GLXContext ctx);
-
-    PFNGLXGETCONTEXTGPUIDAMDPROC glXGetContextGPUIDAMD = nullptr;
-
-    glXGetContextGPUIDAMD = (PFNGLXGETCONTEXTGPUIDAMDPROC)glXGetProcAddressARB((const GLubyte*)"glXGetContextGPUIDAMD");
-    assert(glXGetContextGPUIDAMD);
-
     id = glXGetContextGPUIDAMD(handle->m_d->ctx);
 #endif
 
     return id;
   }
+
+  unsigned int GPUAssociation::gpuRam(unsigned int gpuId)
+  {
+    GLuint totalMemoryInMB = 0;
+#if defined(RADIANT_WINDOWS)
+    wglGetGPUInfoAMD(gpuId, WGL_GPU_RAM_AMD, GL_UNSIGNED_INT, sizeof(GLuint), &totalMemoryInMB);
+#elif defined(RADIANT_LINUX)
+    glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, sizeof(GLuint), &totalMemoryInMB);
+#endif
+
+    return totalMemoryInMB;
+  }
+
 }

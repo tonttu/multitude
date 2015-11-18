@@ -25,7 +25,8 @@
 
 namespace Luminous
 {
-  // Color correction curves for red, green and blue channels
+  // Color correction curves for red, green and blue channels. Each color curve is a
+  // function which domain and range is [0,1]
   class LUMINOUS_API ColorCorrection : public Valuable::Node
   {
   public:
@@ -77,7 +78,6 @@ namespace Luminous
 
   private:
     void changed();
-    void checkChanged();
 
   private:
     class D;

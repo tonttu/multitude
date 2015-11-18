@@ -27,9 +27,8 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
 # Always include Deft
 CONFIG += enable-deft
-# On taction tracker build, enable opencl & cuda backends but disable js by default
+# On taction tracker build, enable cuda backend but disable js by default
 # JS can still be enabled with enable-js
-enable-taction:CONFIG += enable-deft-opencl
 enable-taction:CONFIG += enable-deft-cuda
 enable-taction:CONFIG += disable-js
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
@@ -37,6 +36,7 @@ enable-taction:DEFINES += MULTITACTION_FIRMWARE
 # deft can be disabled with -config disable-deft
 disable-deft:CONFIG -= enable-deft enable-deft-cuda
 disable-deft-cuda:CONFIG -= enable-deft-cuda
+disable-deft-opencl:CONFIG -= enable-deft-opencl
 
 # JS is enabled by default
 !disable-js:CONFIG += enable-js
@@ -290,6 +290,8 @@ contains(MEMCHECK,yes) {
   DEFINES += MULTI_MEMCHECK=1
   linux:LIBS += -rdynamic
 }
+
+enable-cef:include(../WebBrowserCef/cef.pri)
 
 disable-deprecation-warnings {
   *clang* | *g++* {

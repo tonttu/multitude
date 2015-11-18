@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <QByteArray>
 
@@ -29,15 +30,16 @@ namespace Luminous
   public:
     /// Constructor
     LUMINOUS_API ShaderGL();
-    /// Destructor
-    LUMINOUS_API ~ShaderGL();
+    /// Destructor.
+    /// Noexcept specifier is needed because it's not default in GCC 4.7.2
+    LUMINOUS_API ~ShaderGL() noexcept;
 
     /// Move constructor
     /// @param shader shader to move
-    LUMINOUS_API ShaderGL(ShaderGL && shader);
+    LUMINOUS_API ShaderGL(ShaderGL && shader) noexcept;
     /// Move assignment operator
     /// @param shader shader to move
-    LUMINOUS_API ShaderGL & operator=(ShaderGL && shader);
+    LUMINOUS_API ShaderGL & operator=(ShaderGL && shader) noexcept;
 
     /// Get the raw OpenGL handle for the shader
     /// @return object handle
@@ -51,11 +53,8 @@ namespace Luminous
     GLuint m_handle;
 
   private:
-    // With new enough compiler (GCC 4.7) using just private copy
-    // ctor/assignment don't work as expected, you need to use = delete,
-    // but then again, that doesn't work in msvc2010.
-    /*ShaderGL(const ShaderGL &) = delete;
-    ShaderGL & operator=(const ShaderGL &) = delete;*/
+    ShaderGL(const ShaderGL &);
+    ShaderGL & operator=(const ShaderGL &);
   };
 
   /// This class represents the Program object in GPU memory
@@ -103,7 +102,7 @@ namespace Luminous
     LUMINOUS_API const VertexDescription & vertexDescription() const { return m_vertexDescription; }
 
   private:
-    std::vector<ShaderGL> m_shaders;
+    std::vector<std::unique_ptr<ShaderGL> > m_shaders;
     std::map<QByteArray, int> m_attributes;
     std::map<QByteArray, int> m_uniforms;
     std::map<QByteArray, int> m_uniformBlocks;

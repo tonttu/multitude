@@ -17,6 +17,7 @@
 #include "Radiant.hpp"
 #include "Trace.hpp"
 #include "Timer.hpp"
+#include "ProcessRunner.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -30,7 +31,6 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
-#include <QProcess>
 #include <QThread>
 
 #ifdef RADIANT_LINUX
@@ -178,7 +178,7 @@ namespace {
 
   void fileWriterInit()
   {
-    s_fileWriterEnabled = Radiant::FileWriter::isRootFileSystemReadOnly();
+    s_fileWriterEnabled = Radiant::FileWriter::wantRootFileSystemReadOnly();
     if(s_fileWriterEnabled)
       Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
   }
@@ -220,7 +220,7 @@ namespace Radiant
     }
   }
 
-  bool FileWriter::isRootFileSystemReadOnly()
+  bool FileWriter::wantRootFileSystemReadOnly()
   {
 #ifdef RADIANT_LINUX
     /// We are looking at /etc/fstab instead of /proc/mounts, because we want
@@ -231,7 +231,7 @@ namespace Radiant
       // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
       // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
       QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
-      if(re.indexIn(QString::fromUtf8(file.readAll()))) {
+      if(re.indexIn(QString::fromUtf8(file.readAll())) >= 0) {
         QStringList mountOptions = re.cap(1).split(",");
         return mountOptions.contains("ro");
       }
@@ -501,25 +501,22 @@ namespace Radiant
 #ifdef RADIANT_LINUX
   int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
-    Radiant::Timer timer;
-    QProcess p;
-    p.start(cmd, argv, QProcess::ReadOnly);
-    do {
-      // Apparently there is a bug in Qt 4.* that waitForFinished might miss
-      // finished() signal if it was emitted before we call this function,
-      // and therefore it might block forever. We work around that by polling.
-      if (p.waitForFinished(500) || p.state() == QProcess::NotRunning)
-        break;
-    } while (timer.time() < 300);
-    if(out) *out = p.readAllStandardOutput();
-    if(err) {
-      *err = p.readAllStandardError();
-    } else {
-      QByteArray e = p.readAllStandardError();
-      if(!e.isEmpty() && !quiet)
-        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
+    QByteArray outStdout, outStderr;
+    ProcessIO io = ProcessIO(OutputRedirect(&outStdout), OutputRedirect(&outStderr));
+
+    auto runner = newProcessRunner();
+    assert(runner);
+
+    ProcessRunner::Result result = runner->run(cmd, argv, 300.0, io);
+
+    if(out) *out = outStdout;
+    if(err) *err = outStderr;
+
+    if(!outStderr.isEmpty() && !quiet) {
+      Radiant::error("%s: %s", cmd.toUtf8().data(), outStderr.data());
     }
-    return p.exitCode();
+
+    return result.exitCode;
   }
 
   int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)

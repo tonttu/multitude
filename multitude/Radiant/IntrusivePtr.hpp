@@ -34,7 +34,7 @@
 #include <cstddef>
 
 #define INTRUSIVE_PTR_DEBUG_ACQUIRE \
-  IntrusivePtrDebug::add(m_counter, this, typeid(*m_ptr))
+  if(m_counter) IntrusivePtrDebug::add(m_counter, this, typeid(*m_ptr))
 
 #define INTRUSIVE_PTR_DEBUG_RELEASE \
   IntrusivePtrDebug::remove(m_counter, this)
@@ -490,7 +490,7 @@ namespace Radiant
     /// @return intrusive pointer to another type
     /// @tparam Y Type of the object pointed by pointer returned
     template <typename Y>
-    IntrusivePtr<Y> static_pointer_cast()
+    IntrusivePtr<Y> static_pointer_cast() const
     {
       return IntrusivePtr<Y>(static_cast<Y*>(m_ptr), m_counter);
     }
@@ -604,6 +604,7 @@ namespace Radiant
     inline void deref()
     {
       if(m_counter) {
+        assert(m_counter->useCount > 0);
         INTRUSIVE_PTR_DEBUG_RELEASE;
         if(!m_counter->useCount.deref()) {
           intrusivePtrRelease(m_ptr);

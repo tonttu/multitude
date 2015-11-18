@@ -2,7 +2,9 @@
 include(../multitude.pri)
 
 HEADERS += ArrayMap.hpp \
-    SerialPortHelpers.hpp
+    SerialPortHelpers.hpp \
+    SynchronizedMultiQueue.hpp \
+    ProcessRunner.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -79,7 +81,9 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    SynchronizedMultiQueue.cpp \
+    ProcessRunner.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
@@ -134,6 +138,9 @@ SOURCES += VideoCameraCMU.cpp
 SOURCES += VideoCamera1394.cpp
 SOURCES += VideoCameraPTGrey.cpp
 SOURCES += IntrusivePtr.cpp
+
+linux*:SOURCES += ProcessRunnerPosix.cpp
+win32:SOURCES += ProcessRunnerWin32.cpp
 
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
