@@ -182,11 +182,6 @@ namespace Valuable
     eventProcess(id, bd);
   }
 
-  void Attribute::processMessage(const QByteArray & id, Radiant::BinaryData & data)
-  {
-    eventProcess(id, data);
-  }
-
   float Attribute::asFloat(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
@@ -219,11 +214,6 @@ namespace Valuable
     elem.set(asString(nullptr, layer));
 
     return elem;
-  }
-
-  Attribute * Attribute::getValue(const QByteArray & name) const
-  {
-    return attribute(name);
   }
 
   Attribute * Attribute::attribute(const QByteArray & ) const

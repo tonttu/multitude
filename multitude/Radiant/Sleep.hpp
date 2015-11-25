@@ -30,17 +30,16 @@ namespace Radiant {
     /// @param secs Number of seconds to sleep
     static void sleepS(uint32_t secs);
 
-    /// Sleep for n milliseconds. You cannot sleep more than one second
-    /// with this function.
+    /// Sleep for n milliseconds.
     /// @param msecs Number of milliseconds to sleep
     static void sleepMs(uint32_t msecs);
 
-    /// Sleep for n microseconds. You cannot sleep more than one
-    /// second with this function. The resolution of this function is
+    /// Sleep for n microseconds.
+    /// The resolution of this function is
     /// unlikely to be better than one millisecond on any platform,
     /// even if the underlying APIs might imply this.
     /// @param usecs Number of microseconds to sleep
-    static void sleepUs(uint32_t usecs);
+    static void sleepUs(uint64_t usecs);
   };
 
   /////////////////////////////////////////////////////////////////////////////

@@ -244,11 +244,6 @@ namespace Radiant {
     return TimeStamp(tmp);
   }
 
-  TimeStamp TimeStamp::getTime()
-  {
-    return currentTime();
-  }
-
   QString TimeStamp::asString() const {
 	  time_t t = (m_val >> 24);
 

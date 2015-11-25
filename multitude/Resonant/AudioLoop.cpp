@@ -23,6 +23,10 @@
 
 #include <string>
 
+#ifdef RADIANT_LINUX
+#include <alsa/error.h>
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +36,22 @@
 
 namespace {
   QString s_xmlFilename;
+
+  static void alsaError(const char *file, int line, const char *function, int, const char *fmt, ...)
+  {
+    char buffer[256];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    // Ignore underrun warnings, since we are going to report those through portaudio
+    if (strstr(buffer, "underrun occurred")) {
+      return;
+    }
+
+    Radiant::warning("ALSA %s:%d [%s] %s", file, line, function, buffer);
+  }
 }
 
 namespace Resonant {
@@ -41,6 +61,11 @@ namespace Resonant {
     : m_isRunning(false),
     m_initialized(false)
   {
+#ifdef RADIANT_LINUX
+    MULTI_ONCE {
+      snd_lib_error_set_handler(alsaError);
+    }
+#endif
     m_d = new AudioLoopInternal();
 
     // Initializes PortAudio / increases the usage counter.

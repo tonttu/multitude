@@ -26,6 +26,12 @@
 
 namespace Resonant {
 
+  static Radiant::TimeStamp s_previousUnderflowWarning;
+  static long s_framesOnLastWarning = 0;
+  static unsigned int s_sampleRateWarnings = 0;
+  static unsigned int s_underflowWarningsTimer = 0;
+  static unsigned int s_underflowWarnings = 0;
+
   DSPNetwork::Item::Item()
     : m_module(0),
       m_compiled(false),
@@ -257,16 +263,35 @@ namespace Resonant {
 
     const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
 
+    if (streamnum == 0 && s_underflowWarnings) {
+      s_underflowWarningsTimer += framesPerBuffer;
+    }
+
     if(flags & paOutputUnderflow) {
-      static int s_underflowWarnings = 0;
-      if(++s_underflowWarnings == 20) {
-        Radiant::warning("DSPNetwork::callback # Too many output underflow warnings, ignoring them in future");
-      } else if(s_underflowWarnings < 20) {
-        Radiant::warning("DSPNetwork::callback # output underflow");
-      }
+      ++s_underflowWarnings;
     }
     if(flags & paOutputOverflow) {
       Radiant::warning("DSPNetwork::callback # output overflow");
+    }
+
+    if (streamnum == 0 && s_underflowWarnings > 0 && s_underflowWarningsTimer >= (44100*10)) {
+      if (s_previousUnderflowWarning.value() != 0) {
+        double secs = s_previousUnderflowWarning.sinceSecondsD();
+        int sampleRate = (m_frames - s_framesOnLastWarning) / secs;
+        if (sampleRate > 50000) {
+          if (++s_sampleRateWarnings > 1) {
+            Radiant::warning("DSPNetwork # Unexpected sample rate, current sample rate is %d, expected about 44100",
+                             sampleRate);
+          }
+        } else {
+          s_sampleRateWarnings = 0;
+        }
+      }
+      s_previousUnderflowWarning = Radiant::TimeStamp::currentTime();
+      Radiant::warning("DSPNetwork # %d output underflow errors in the last 10 seconds", s_underflowWarnings);
+      s_underflowWarnings = 0;
+      s_underflowWarningsTimer = 0;
+      s_framesOnLastWarning = m_frames;
     }
 
     // We either have multiple streams or have a broken implementation

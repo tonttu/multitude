@@ -73,12 +73,15 @@ namespace Luminous
     , m_samples(0)
   {
     glGenTextures(1, &m_handle);
+    GLERROR("TextureGL::TextureGL # glGenTextures");
   }
 
   TextureGL::~TextureGL()
   {
-    if(m_handle)
+    if(m_handle) {
       glDeleteTextures(1, &m_handle);
+      GLERROR("TextureGL::~TextureGL # glDeleteTextures");
+    }
   }
 
   TextureGL::TextureGL(TextureGL && t)
@@ -181,9 +184,12 @@ namespace Luminous
       int uploaded = texture.dataSize();
       /// @todo Use upload limiter
       glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+      GLERROR("TextureGL::upload1D # glTexSubImage1D");
 
-      if (texture.mipmapsEnabled())
+      if (texture.mipmapsEnabled()) {
         glGenerateMipmap(m_target);
+        GLERROR("TextureGL::upload1D # glGenerateMipmap");
+      }
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
@@ -332,8 +338,10 @@ namespace Luminous
           }
         }
       }
-      if (texture.mipmapsEnabled())
+      if (texture.mipmapsEnabled()) {
         glGenerateMipmap(GL_TEXTURE_2D);
+        GLERROR("TextureGL::upload2D # glGenerateMipmap");
+      }
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);
@@ -433,9 +441,12 @@ namespace Luminous
       int uploaded = texture.dataSize();
       glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
         texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+      GLERROR("TextureGL::upload3D # glTexSubImage3D");
 
-      if (texture.mipmapsEnabled())
+      if (texture.mipmapsEnabled()) {
         glGenerateMipmap(m_target);
+        GLERROR("TextureGL::upload3D # glGenerateMipmap");
+      }
 
       // Update upload-limiter
       m_state.consumeUploadBytes(uploaded);

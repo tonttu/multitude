@@ -129,9 +129,16 @@ namespace Valuable
       }
     };
 
+    // This is used for the same reason as Nimble::Decltype
+    template <typename T>
+    struct CreateType
+    {
+      typedef decltype(&T::create) type;
+    };
+
     template <typename T> struct Creator<T, true>
     {
-      inline static auto func() -> decltype(&T::create) { return &T::create; }
+      inline static typename CreateType<T>::type func() { return &T::create; }
     };
 
     /// @endcond
@@ -317,6 +324,13 @@ namespace Valuable
       }
     };
 
+    // This is used for the same reason as Nimble::Decltype
+    template <typename T>
+    struct DeserializerType
+    {
+      typedef decltype(T::create(ArchiveElement())) type;
+    };
+
     template <typename T>
     struct Impl<Radiant::IntrusivePtr<T>, Type::smart_ptr>
     {
@@ -326,7 +340,7 @@ namespace Valuable
         return t->serialize(archive);
       }
 
-      inline static auto deserialize (const ArchiveElement & element) -> decltype(T::create(element))
+      inline static typename DeserializerType<T>::type deserialize (const ArchiveElement & element)
       {
         return T::create(element);
       }

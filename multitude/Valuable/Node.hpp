@@ -102,15 +102,9 @@ namespace Valuable
     /// @param attribute Attribute to be added
     /// @return True if attribute was successfully added, false otherwise
     bool addAttribute(Attribute * const attribute);
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
-    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
-                          bool addValue(Attribute * const value));
 
     /// Adds a new Attribute to the list of attribute objects.
     bool addAttribute(const QByteArray &name, Attribute * const attribute);
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use addAttribute instead.
-    MULTI_ATTR_DEPRECATED("Node::addValue is deprecated. Use Node::addAttribute instead.",
-                          bool addValue(const QByteArray &name, Attribute * const value));
 
     /// @copydoc addAttribute
     template<typename Widget>
@@ -132,15 +126,8 @@ namespace Valuable
       return dynamic_cast<AttributeT<T> *>(attribute(name));
     }
 
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use attribute instead.
-    MULTI_ATTR_DEPRECATED("Node::getValue is deprecated. Use Node::attribute instead.",
-                          virtual Attribute * getValue(const QByteArray & name) const OVERRIDE);
-
     /// Removes an Attribute from the list of attribute objects.
     void removeAttribute(Attribute * const attribute);
-    /// @deprecated This function will be removed in Cornerstone 2.1. Use removeAttribute instead.
-    MULTI_ATTR_DEPRECATED("Node::removeValue is deprecated. Use Node::removeAttribute instead.",
-                          void removeValue(Attribute * const value));
 
     /// Clears all Attribute values of the given layer
     /// @param layer layer to clear

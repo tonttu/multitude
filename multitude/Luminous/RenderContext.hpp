@@ -15,14 +15,13 @@
 #include <Luminous/RenderDriver.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/Style.hpp>
-#include <Luminous/GLResource.hpp>
-#include <Luminous/GLResources.hpp>
 #include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexArray.hpp>
 #include <Luminous/Buffer.hpp>
 #include <Luminous/RenderCommand.hpp>
 #include <Luminous/PostProcessFilter.hpp>
+#include <Luminous/MultiHead.hpp>
 
 #include "FrameBufferGL.hpp"
 #include "BufferGL.hpp"
@@ -51,7 +50,7 @@ namespace Luminous
 
   /// RenderContext contains the current rendering state.
   /// Each RenderContext is tied to single RenderThread.
-  class LUMINOUS_API RenderContext : public Transformer, public GLResources
+  class LUMINOUS_API RenderContext : public Transformer
   {
   public:
 
@@ -558,24 +557,6 @@ namespace Luminous
     /// Disable clipplanes from being used in shaders
     /// @param planes a list of planes that will be disabled
     void disableClipPlanes(const QList<int> & planes);
-
-/// @cond
-
-    /// @todo REMOVE US
-    /// Sets given render context for the current thread
-    /// @param rsc Context to set
-    static void setThreadContext(RenderContext * rsc);
-    /// Get the render context of the current thread
-    static RenderContext * getThreadContext();
-    /// Returns the resources of this context
-    /// @todo make deprecated
-    Luminous::RenderContext * resources() { return this; }
-
-    void bindTexture(GLenum target, GLenum /*unit*/, GLuint name) {glBindTexture(target, name);}
-    void bindBuffer(GLenum target, GLuint name) { glBindBuffer(target, name);}
-    void bindProgram(GLSLProgramObject *) {}
-
-/// @endcond
 
     /// Reset the OpenGL state to default. The usage of this function by manually
     /// is not recommended

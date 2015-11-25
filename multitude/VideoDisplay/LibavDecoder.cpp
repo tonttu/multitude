@@ -679,13 +679,10 @@ namespace VideoDisplay
         m_av.videoCodecContext = m_av.formatContext->streams[m_av.videoStreamIndex]->codec;
         assert(m_av.videoCodecContext);
         m_av.videoCodecContext->opaque = this;
+        // Using multi-threaded decoding here would improve decoding speed
+        // on one 4k video on a slow pc, but will slow down everything else
+        // by spawning too many threads.
         m_av.videoCodecContext->thread_count = 1;
-        /// @todo On slower computers having at least 4 threads is requirement for 4k videos.
-        ///       It is unknown if this adds too much overhead if there are ~100 low quality videos.
-        if (m_av.videoCodec && (m_av.videoCodec->capabilities & CODEC_CAP_SLICE_THREADS)) {
-          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS)
-            ? 0 : 4;
-        }
       }
     }
 
