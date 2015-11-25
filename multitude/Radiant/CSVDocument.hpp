@@ -44,12 +44,14 @@ namespace Radiant {
     CSVDocument();
     ~CSVDocument();
 
+    int loadFromString(const QString & csv, const char * delimiter = ",", bool removeQuotations = true);
+
     /** Load a file, and return the number of lines read. The file is assumed to be in the
         UTF-8 format.
         @param filename filename to read
         @param delimiter column delimiter
         @return number of rows read */
-    int load(const char * filename, const char * delimiter = ",");
+    int load(const char * filename, const char * delimiter = ",", bool removeQuotations=true);
     /** Finds a row in the document. For each row in the document,
         this function checks if the text in the cell at that column
         matches the argument key.

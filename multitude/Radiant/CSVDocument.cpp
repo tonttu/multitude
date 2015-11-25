@@ -31,20 +31,18 @@ namespace Radiant {
   {
   }
 
-  int CSVDocument::load(const char * filename, const char * delimiter)
+  int CSVDocument::loadFromString(const QString &csv, const char *delimiter, bool removeQuotations)
   {
     m_rows.clear();
 
-    QString contents = Radiant::FileUtils::loadTextFile(filename);
-
-    if(contents.isEmpty()) {
-      error("CSVParser::load # Empty file %s", filename);
+    if(csv.isEmpty()) {
+      error("CSVParser::loadFromString # Empty contents");
       return -1;
     }
 
     QString delim2 = QString::fromUtf8(delimiter);
 
-    foreach(QString line, contents.split("\n")) {
+    foreach(QString line, csv.split("\n")) {
       Row r;
       foreach(QString str, line.split(delim2))
         r.push_back(str.trimmed());
@@ -54,6 +52,11 @@ namespace Radiant {
     return (int) m_rows.size();
   }
 
+  int CSVDocument::load(const char *filename, const char * delimiter, bool removeQuotations)
+  {
+    QString contents = Radiant::FileUtils::loadTextFile(filename);
+    return loadFromString(contents, delimiter, removeQuotations);
+  }
 
   CSVDocument::Row * CSVDocument::findRow(const QString & key, unsigned col)
   {
