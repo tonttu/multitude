@@ -41,6 +41,8 @@ namespace Radiant {
     /// Destructor
     ~CSVDocument();
 
+    int loadFromString(const QString & csv, const char * delimiter = ",", bool removeQuotations = true);
+
     /** Load a file, and return the number of lines read. The file is assumed to be in the
         UTF-8 format.
         @param filename filename to read
