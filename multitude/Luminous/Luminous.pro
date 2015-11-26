@@ -15,7 +15,8 @@ HEADERS += ProgramGL.hpp \
     PostProcessFilter.hpp \
     GPUAssociation.hpp \
     MaskGuard.hpp \
-    MipmapRenderer.hpp
+    MipmapRenderer.hpp \
+    ScreenDetectorQt.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -33,20 +34,13 @@ HEADERS += TextLayout.hpp
 
 HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
-HEADERS += Collectable.hpp
 HEADERS += ColorCorrection.hpp
 HEADERS += RGBCube.hpp
 HEADERS += ContextArray.hpp
-HEADERS += ContextVariable.hpp
 HEADERS += DistanceFieldGenerator.hpp
 HEADERS += DummyOpenGL.hpp
 HEADERS += Export.hpp
-HEADERS += GarbageCollector.hpp
 HEADERS += GLKeyStone.hpp
-HEADERS += GLResource.hpp
-HEADERS += GLResources.hpp
-HEADERS += GLSLProgramObject.hpp
-HEADERS += GLSLShaderObject.hpp
 HEADERS += Buffer.hpp
 HEADERS += HardwareColorCorrection.hpp
 HEADERS += ImageCodec.hpp
@@ -67,13 +61,11 @@ HEADERS += RenderResource.hpp
 HEADERS += FrameBuffer.hpp
 HEADERS += ScreenDetector.hpp
 HEADERS += Shader.hpp
-HEADERS += ShaderDeprecated.hpp
 HEADERS += ShaderUniform.hpp
 HEADERS += Program.hpp
 HEADERS += Spline.hpp
 HEADERS += Style.hpp
 HEADERS += Texture.hpp
-HEADERS += TextureDeprecated.hpp
 HEADERS += TextureAtlas.hpp
 HEADERS += Transformer.hpp
 HEADERS += UniformDescription.hpp
@@ -94,7 +86,8 @@ SOURCES += ImageCodecDDS.cpp \
     DummyOpenGL.cpp \
     GPUAssociation.cpp \
     MaskGuard.cpp \
-    MipmapRenderer.cpp
+    MipmapRenderer.cpp \
+    ScreenDetectorQt.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
 SOURCES += SpriteRenderer.cpp
@@ -127,12 +120,7 @@ SOURCES += CodecRegistry.cpp
 SOURCES += ColorCorrection.cpp
 SOURCES += RGBCube.cpp
 SOURCES += DistanceFieldGenerator.cpp
-SOURCES += GarbageCollector.cpp
 SOURCES += GLKeyStone.cpp
-SOURCES += GLResource.cpp
-SOURCES += GLResources.cpp
-SOURCES += GLSLProgramObject.cpp
-SOURCES += GLSLShaderObject.cpp
 SOURCES += Buffer.cpp
 SOURCES += HardwareColorCorrection.cpp
 SOURCES += Image.cpp
@@ -151,11 +139,9 @@ SOURCES += RenderResource.cpp
 SOURCES += FrameBuffer.cpp
 SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
-SOURCES += ShaderDeprecated.cpp
 SOURCES += Program.cpp
 SOURCES += Spline.cpp
 SOURCES += Texture.cpp
-SOURCES += TextureDeprecated.cpp
 SOURCES += TextureAtlas.cpp
 SOURCES += Transformer.cpp
 SOURCES += UniformDescription.cpp

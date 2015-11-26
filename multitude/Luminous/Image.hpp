@@ -11,13 +11,18 @@
 #ifndef LUMINOUS_IMAGE_HPP
 #define LUMINOUS_IMAGE_HPP
 
-#include <Luminous/ContextVariable.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/PixelFormat.hpp>
+
+#include <Radiant/Mutex.hpp>
+
+#include <Nimble/Size.hpp>
+#include <Nimble/Vector4.hpp>
 
 #include <QFile>
 
 #include <cstdio>
+#include <memory>
 #include <vector>
 
 namespace Luminous

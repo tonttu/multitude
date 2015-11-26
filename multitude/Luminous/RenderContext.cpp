@@ -1201,23 +1201,6 @@ namespace Luminous
     return m_data->contextSize();
   }
 
-  static RADIANT_TLS(RenderContext *) t_threadContext;
-
-  void RenderContext::setThreadContext(RenderContext * rsc)
-  {
-    t_threadContext = rsc;
-  }
-
-  RenderContext * RenderContext::getThreadContext()
-  {
-    if(!t_threadContext) {
-      Radiant::debug("No OpenGL resources for current thread");
-      return nullptr;
-    }
-
-    return t_threadContext;
-  }
-
   void RenderContext::flush()
   {
     int bufferIndex = m_data->m_bufferIndex;
@@ -1740,8 +1723,7 @@ namespace Luminous
   void RenderContext::setDefaultDrawBuffers()
   {
     std::vector<int> buffers;
-    buffers.push_back(GL_FRONT_LEFT);
-    buffers.push_back(GL_FRONT_RIGHT);
+    buffers.push_back(GL_BACK_LEFT);
     setDrawBuffers(buffers);
   }
 
@@ -1781,11 +1763,13 @@ namespace Luminous
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }
 
   CustomOpenGL::~CustomOpenGL()
   {
+    GLERROR("CustomOpenGL::~CustomOpenGL");
     m_r.setDefaultState();
   }
 

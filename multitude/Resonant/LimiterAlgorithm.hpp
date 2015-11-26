@@ -102,6 +102,7 @@ namespace Resonant {
       m_gain = 0.0;
       m_step  = 0.0;
       m_untilPeak = 0;
+      m_maxDelay = maxDelay;
     }
 
     float putGet(float insample,
@@ -118,6 +119,8 @@ namespace Resonant {
     float                           m_gain;
     float                           m_step;
     unsigned                        m_untilPeak;
+    unsigned                        m_maxDelay = 0;
+    unsigned                        m_zeroSamples = 0;
   };
 
   }

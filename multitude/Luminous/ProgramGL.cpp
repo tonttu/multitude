@@ -12,6 +12,8 @@
 
 #include "Luminous/Program.hpp"
 
+#include <Radiant/Mutex.hpp>
+
 #include <QByteArray>
 #include <QStringList>
 #include <cassert>
@@ -94,14 +96,17 @@ namespace Luminous
     GLERROR("ShaderGL::compile # glCompileShader");
     GLint compiled = GL_FALSE;
     glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled);
+    GLERROR("ShaderGL::compile # glGetShaderiv");
     if (compiled != GL_TRUE) {
       Radiant::error("Failed to compile shader %s", shader.filename().toUtf8().data());
 
       // Dump info log
       GLsizei len;
       glGetShaderiv(m_handle, GL_INFO_LOG_LENGTH, &len);
+      GLERROR("ShaderGL::compile # glGetShaderiv");
       std::vector<GLchar> log(len);
       glGetShaderInfoLog(m_handle, len, &len, log.data());
+      GLERROR("ShaderGL::compile # glGetShaderInfoLog");
       Radiant::error("%s", log.data());
       return false;
     }
@@ -118,6 +123,7 @@ namespace Luminous
     , m_linked(false)
   {
     m_handle = glCreateProgram();
+    GLERROR("ProgramGL::ProgramGL # glCreateProgram");
   }
 
   ProgramGL::ProgramGL(ProgramGL && program)
@@ -176,10 +182,17 @@ namespace Luminous
     bind();
   }
 
+  static Radiant::Mutex s_linkAndCompileLock;
   void ProgramGL::link(const Program & program)
   {
     if(m_linked)
       return;
+
+    /// AMD FirePro driver 14.301.1010 randomly crashes on
+    /// glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled) if compiling
+    /// shaders from multiple contexts/threads at the same time. Try to work
+    /// around this issue by having a lock here.
+    Radiant::Guard g(s_linkAndCompileLock);
 
     /// @todo better error handling
 
@@ -202,13 +215,16 @@ namespace Luminous
     // Check for linking errors
     GLint status;
     glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
+    GLERROR("ProgramGL::link # glGetProgramiv");
 
     if(status == GL_FALSE) {
       Radiant::error("Failed to link shader program (shaders %s)", program.shaderFilenames().join(", ").toUtf8().data());
       GLsizei len;
       glGetProgramiv(m_handle, GL_INFO_LOG_LENGTH, &len);
+      GLERROR("ProgramGL::link # glGetProgramiv");
       std::vector<GLchar> log(len);
       glGetProgramInfoLog(m_handle, len, &len, log.data());
+      GLERROR("ProgramGL::link # glGetProgramInfoLog");
       Radiant::error("%s", log.data());
     } else {
       // Clear the location caches
@@ -227,23 +243,29 @@ namespace Luminous
       // Query all names of the vertex attributes
       /// @todo store size/type data in ShaderVariable
       glGetProgramiv(m_handle, GL_ACTIVE_ATTRIBUTES, &count);
+      GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
         glGetActiveAttrib(m_handle, i, sizeof(name), &length, &size, &type, name);
+        GLERROR("ProgramGL::link # glGetActiveAttrib");
         m_attributes[name] = glGetAttribLocation(m_handle, name);
       }
 
       // Query all names of the uniform
       /// @todo store size/type data in ShaderVariable
       glGetProgramiv(m_handle, GL_ACTIVE_UNIFORMS, &count);
+      GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
         glGetActiveUniform(m_handle, i, sizeof(name), &length, &size, &type, name);
+        GLERROR("ProgramGL::link # glGetActiveUniform");
         m_uniforms[name] = glGetUniformLocation(m_handle, name);
       }
 
       // Query all names of the uniform blocks
       glGetProgramiv(m_handle, GL_ACTIVE_UNIFORM_BLOCKS, &count);
+      GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
         glGetActiveUniformBlockName(m_handle, i, sizeof(name), &length, name);
+        GLERROR("ProgramGL::link # glGetActiveUniformBlockName");
         m_uniformBlocks[name] = glGetUniformBlockIndex(m_handle, name);
         /// @todo get more info with glGetActiveUniformBlock
       }

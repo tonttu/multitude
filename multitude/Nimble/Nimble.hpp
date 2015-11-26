@@ -30,6 +30,32 @@ namespace Nimble {
   template <typename T> class Matrix2T;
   template <typename T> class Matrix3T;
   template <typename T> class Matrix4T;
+
+  /// @cond
+
+  // This is used as work-around for gcc/gdb bug 61321
+  // Ideally we would like to write this:
+  //
+  // auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<decltype(T()*S())>;
+  // or
+  // auto foo() -> decltype(T() * 1.0f);
+  //
+  // but gcc demangler crashes when trying to parse the type. Work-around is
+  // to use this instead:
+  //
+  // auto operator* (const Nimble::Vector2T<T> & v, S s) -> Nimble::Vector2T<typename Decltype<S, T>::mul>;
+  // or
+  // Decltype<T, float>::mul foo();
+  //
+  // see also https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61321
+  template <typename A, typename B>
+  struct Decltype
+  {
+    typedef decltype(A()*B()) mul;
+    typedef decltype(A()/B()) div;
+  };
+
+  /// @endcond
 }
 
 #endif

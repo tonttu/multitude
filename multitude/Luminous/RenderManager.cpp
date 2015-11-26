@@ -34,6 +34,7 @@ namespace Luminous
     Radiant::Mutex s_contextArraysMutex(true);
     bool s_contextArraysChanged = false;
     Radiant::Timer s_timer;
+    // unit is 0.1 seconds
     int s_frameTime = 0;
     std::set<ContextArray*> s_contextArrays;
   }

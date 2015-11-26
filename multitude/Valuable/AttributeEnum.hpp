@@ -163,6 +163,12 @@ namespace Valuable
     }
   };
 
+  /// @todo is this really needed? if so, also implement with flipped parameters
+  template <typename T>
+  inline bool operator==(const AttributeT<T, typename std::enable_if<std::is_enum<T>::value>::type> & a, T e)
+  {
+    return *a == e;
+  }
 }
 
 #endif // VALUEENUM_HPP

@@ -19,6 +19,8 @@
 #include <QWheelEvent>
 #include <QString>
 
+#include <memory>
+
 class QKeyEvent;
 class QMouseEvent;
 
@@ -47,6 +49,9 @@ namespace Radiant
     /// Destructor
     virtual ~KeyEvent();
 
+    KeyEvent(KeyEvent &&) = default;
+    KeyEvent & operator=(KeyEvent &&) = default;
+
     /// Key code of the event (from Qt::Key)
     /// @return key code
     int key() const;
@@ -59,10 +64,6 @@ namespace Radiant
     /// @return true if this is a repeating event
     bool isAutoRepeat() const;
 
-    /// Sets the repeating flag of the event
-    /// @param isAutoRepeat true if the event is a repeating event
-    void setAutoRepeat(bool isAutoRepeat);
-
     /// Returns the type of the keyboard event
     /// @return type of the event
     QEvent::Type type() const;
@@ -70,6 +71,9 @@ namespace Radiant
     /// Returns the unicode text representation of the key event
     /// @return Unicode represenation of the key event
     QString text() const;
+
+    /// Returns this event as QKeyEvent
+    const QKeyEvent & qKeyEvent() const;
 
     /// Creates a key press KeyEvent object with the specified key code
     /// @param key key code of the event
@@ -84,7 +88,7 @@ namespace Radiant
 
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 
   /// This class describes a mouse event. Mouse events are produced when the
@@ -107,6 +111,9 @@ namespace Radiant
     /// @param modifiers state of keyboard modifiers
     MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
                 Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
+
+    MouseEvent(MouseEvent &&) = default;
+    MouseEvent & operator=(MouseEvent &&) = default;
 
     /// Construct a copy of a MouseEvent
     /// @param e event to copy
@@ -157,7 +164,7 @@ namespace Radiant
     Qt::KeyboardModifiers modifiers() const;
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 }
 

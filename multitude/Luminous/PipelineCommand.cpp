@@ -133,14 +133,17 @@ namespace Luminous
     // Color buffers
     GLboolean color = (m_colorBuffer ? GL_TRUE : GL_FALSE);
     glColorMask( color, color, color, color);
+    GLERROR("CommandChangeRenderBuffersGL::execute # glColorMask");
 
     // Depth buffer
     GLboolean depth = (m_depthBuffer ? GL_TRUE : GL_FALSE);
     glDepthMask(depth);
+    GLERROR("CommandChangeRenderBuffersGL::execute # glDepthMask");
 
     // Stencil buffer
     GLuint stencil = (m_stencilBuffer ? 0xff : 0x00);
     glStencilMask(stencil);
+    GLERROR("CommandChangeRenderBuffersGL::execute # glStencilMask");
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -208,12 +211,16 @@ namespace Luminous
 
   void CommandCullMode::execute()
   {
-    if(m_mode.enabled())
+    if(m_mode.enabled()) {
       glEnable(GL_CULL_FACE);
-    else
+      GLERROR("CommandCullMode::execute # glEnable");
+    } else {
       glDisable(GL_CULL_FACE);
+      GLERROR("CommandCullMode::execute # glDisable");
+    }
 
     glCullFace(m_mode.face());
+    GLERROR("CommandCullMode::execute # glCullFace");
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -226,6 +233,7 @@ namespace Luminous
   void CommandFrontFace::execute()
   {
     glFrontFace(m_winding);
+    GLERROR("CommandFrontFace::execute # glFrontFace");
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -240,12 +248,16 @@ namespace Luminous
   void CommandClipDistance::execute()
   {
     if (m_enable) {
-      for (int i = 0; i < m_planes.size(); ++i)
+      for (int i = 0; i < m_planes.size(); ++i) {
         glEnable(GL_CLIP_DISTANCE0 + m_planes.at(i));
+        GLERROR("CommandClipDistance::execute # glEnable");
+      }
     }
     else {
-      for (int i = 0; i < m_planes.size(); ++i)
+      for (int i = 0; i < m_planes.size(); ++i) {
         glDisable(GL_CLIP_DISTANCE0 + m_planes.at(i));
+        GLERROR("CommandClipDistance::execute # glDisable");
+      }
     }
   }
 
@@ -260,5 +272,6 @@ namespace Luminous
   void CommandDrawBuffers::execute()
   {
     glDrawBuffers( m_buffers.size(), reinterpret_cast<GLenum *>(m_buffers.data()));
+    GLERROR("CommandDrawBuffers::execute # glDrawBuffers");
   }
 }

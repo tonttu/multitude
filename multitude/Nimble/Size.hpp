@@ -146,7 +146,7 @@ namespace Nimble {
   /// @param scalar value to scale with
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<decltype(T()*U())> operator*(const SizeT<T> & size, U scalar)
+  inline SizeT<typename Decltype<T, U>::mul> operator*(const SizeT<T> & size, U scalar)
   {
     return SizeT<decltype(T()*U())>(size.width() * scalar, size.height() * scalar);
   }
@@ -156,9 +156,9 @@ namespace Nimble {
   /// @param size size to scale
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<decltype(U()*T())> operator*(U scalar, const SizeT<T> & size)
+  inline SizeT<typename Decltype<U, T>::mul> operator*(U scalar, const SizeT<T> & size)
   {
-    return SizeT<decltype(T()*U())>(scalar * size.width(), scalar * size.height());
+    return SizeT<decltype(U()*T())>(scalar * size.width(), scalar * size.height());
   }
 
   /// Divide the size component-wise by the given scalar
@@ -166,7 +166,7 @@ namespace Nimble {
   /// @return scaled size
   /// @param scalar value to divide with
   template <typename T, typename U>
-  inline SizeT<decltype(T()/U())> operator/(const SizeT<T> & size, U scalar)
+  inline SizeT<typename Decltype<T, U>::div> operator/(const SizeT<T> & size, U scalar)
   {
     return SizeT<decltype(T()/U())>(size.width() / scalar, size.height() / scalar);
   }
@@ -176,7 +176,7 @@ namespace Nimble {
   /// @param scalar value to divide with
   /// @return scaled size
   template <typename T, typename U>
-  inline SizeT<decltype(U()/T())> operator/(U scalar, const SizeT<T> & size)
+  inline SizeT<typename Decltype<U, T>::div> operator/(U scalar, const SizeT<T> & size)
   {
     return SizeT<decltype(U()/T())>(scalar / size.width(), scalar / size.height());
   }

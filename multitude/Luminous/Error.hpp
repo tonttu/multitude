@@ -8,8 +8,8 @@
  * 
  */
 
-#ifndef ERROR_HPP
-#define ERROR_HPP
+#ifndef LUMINOUS_ERROR_HPP
+#define LUMINOUS_ERROR_HPP
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/Export.hpp>

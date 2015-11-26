@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
+/*Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
  * and others.
  *
  * This file is licensed under GNU Lesser General Public License (LGPL),
@@ -12,6 +12,15 @@
 
 #include "Mutex.hpp"
 #include "Timer.hpp"
+#include "Trace.hpp"
+
+#if defined(RADIANT_WINDOWS)
+  #include <Windows.h>
+  #include <Mmsystem.h>
+#else
+  #include <unistd.h>
+  #include <sched.h>
+#endif
 
 #include <chrono>
 #include <errno.h>
@@ -21,66 +30,93 @@ namespace Radiant {
 
   namespace
   {
-
-    void nativeSleep(uint32_t usecs)
+#ifdef RADIANT_WINDOWS
+    struct EventHandle
     {
-#ifdef WIN32
-      ::Sleep(usecs / 1000);
-#else
-      timespec req = {0, 1000*usecs}, rem = {0, 0};
-      while(req.tv_nsec) {
-        if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
-          std::swap(req, rem);
-        } else {
+      EventHandle() : handle(CreateEvent(nullptr, false, false, nullptr)) {}
+      ~EventHandle() { CloseHandle(handle); }
+      HANDLE handle;
+    };
+
+    static TIMECAPS caps()
+    {
+      TIMECAPS tc = {1, 1000000};
+      if (timeGetDevCaps(&tc, sizeof(tc)) != TIMERR_NOERROR) {
+        Radiant::error("nativeSleep # timeGetDevCaps failed");
+      }
+      return tc;
+    }
+
+    static const TIMECAPS tc = caps();
+    static __declspec(thread) EventHandle t_event;
+#endif
+
+    void nativeSleep(uint64_t usecs)
+    {
+#ifdef RADIANT_WINDOWS
+      // sleep(0) == yield
+      if (usecs == 0) {
+        ::Sleep(0);
+        return;
+      }
+
+      Radiant::Timer t;
+      for (;;) {
+        uint64_t elapsed = t.time() * 1000000;
+        if (elapsed >= usecs) {
           break;
+        }
+
+        uint64_t sleepUs = std::min<uint64_t>(tc.wPeriodMax * 1000, usecs - elapsed);
+        // We can't get under 1 ms accuracy using multimedia timers, use sleep(0)
+        // in a loop instead. This might get ~1us accuracy if there is no cpu load
+        // on the computer, but on the other hand, ::Sleep(0) can take significantly
+        // longer than 1 ms as well. There is no good solution for this.
+        if (sleepUs < tc.wPeriodMin * 1000) {
+          ::Sleep(0);
+        } else {
+          auto id = timeSetEvent(sleepUs / 1000, 0, (LPTIMECALLBACK)t_event.handle, 0,
+                                 TIME_ONESHOT | TIME_CALLBACK_EVENT_SET);
+          WaitForSingleObject(t_event.handle, INFINITE);
+          timeKillEvent(id);
+        }
+      }
+#else
+      if(usecs == 0) {
+        sched_yield();
+      } else {
+        timespec req;
+
+        req.tv_sec = static_cast<std::time_t>(usecs / 1000000);
+        req.tv_nsec = static_cast<long>(1000*(usecs % 1000000));
+        timespec rem = {0, 0};
+
+        while(req.tv_sec || req.tv_nsec) {
+          if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
+            std::swap(req, rem);
+          } else {
+            break;
+          }
         }
       }
 #endif
     }
-
   }
 
   void Sleep::sleepS(uint32_t secs)
   {
-    // This weird construct is necessary because signal handlers and such will interrupt sleeps
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> elapsed(0);
-
-    while(elapsed.count() < (secs - 0.2f)) {
-      /* Sleep in 150ms increments*/
-      nativeSleep(150 * 1000);
-
-      auto end = std::chrono::high_resolution_clock::now();
-      elapsed = end - start;
-    }
-
-    if(elapsed.count() < secs) {
-      nativeSleep((secs - elapsed.count()) * 1000000);
-    }
+    nativeSleep(1e6*secs);
   }
 
   void Sleep::sleepMs(uint32_t msecs)
   {
-    while(msecs > 1000) {
-      sleepS(1);
-      msecs -= 1000;
-    }
-    if(msecs)
-      sleepUs(msecs * 1000);
+    nativeSleep(1e3*msecs);
   }
 
 
-  void Sleep::sleepUs(uint32_t usecs)
+  void Sleep::sleepUs(uint64_t usecs)
   {
-    if(usecs < 10*1000) {
-      Radiant::Timer t;
-      while (t.time() < (double)usecs * 0.000001) {
-        nativeSleep(0);
-      }
-    } else {
-      nativeSleep(usecs);
-    }
+    nativeSleep(usecs);
   }
 
   /** Sleep in synchronous mode. The argument value is added to current time value.*/

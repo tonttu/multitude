@@ -22,6 +22,68 @@
 
 namespace Luminous
 {
+  static bool checkFormat(QImage::Format formatIn, QSize sizeIn,
+                          PixelFormat & formatOut, Nimble::Size & sizeOut)
+  {
+    switch (formatIn) {
+    case QImage::Format_Mono:
+    case QImage::Format_MonoLSB:
+    case QImage::Format_RGB32:
+    case QImage::Format_RGB16:
+    case QImage::Format_RGB666:
+    case QImage::Format_RGB555:
+    case QImage::Format_RGB888:
+    case QImage::Format_RGB444:
+      formatOut = PixelFormat::rgbUByte();
+      break;
+    /// @todo Indexed8 might have a alpha channel, we don't know without actually opening the image.
+    ///       Should we open it?
+    case QImage::Format_Indexed8:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+    case QImage::Format_ARGB8565_Premultiplied:
+    case QImage::Format_ARGB6666_Premultiplied:
+    case QImage::Format_ARGB8555_Premultiplied:
+    case QImage::Format_ARGB4444_Premultiplied:
+      formatOut = PixelFormat::rgbaUByte();
+      break;
+    default:
+      return false;
+    }
+    sizeOut.make(sizeIn.width(), sizeIn.height());
+    return sizeOut.isValid();
+  }
+
+  static bool load(QImage & img, QFile & file)
+  {
+    QImageReader r(&file);
+    const bool findBiggestImage = r.format() == "ico";
+
+    if (findBiggestImage) {
+      Nimble::Size bestSize;
+      int bestIndex = -1;
+
+      for (int i = 0; i < r.imageCount(); ++i, r.jumpToNextImage()) {
+        Nimble::Size size;
+        PixelFormat pf;
+        bool ok = checkFormat(r.imageFormat(), r.size(), pf, size);
+        if (!ok) {
+          auto img = r.read();
+          ok = checkFormat(img.format(), img.size(), pf, size);
+        }
+        if (ok && (!bestSize.isValid() || (size.width()*size.height() > bestSize.width()*bestSize.height()))) {
+          bestSize = size;
+          bestIndex = i;
+        }
+      }
+
+      if (bestIndex >= 0) {
+        r.jumpToImage(bestIndex);
+      }
+    }
+    return r.read(&img);
+  }
+
   ImageCodecQT::ImageCodecQT(const char * suffix)
     : m_suffix(suffix)
   {}
@@ -54,47 +116,55 @@ namespace Luminous
       return false;
     }
 
-    QImage::Format fmt = r.imageFormat();
+    const bool findBiggestImage = r.format() == "ico";
 
-    QSize s = r.size();
+    bool ok = false;
+    if (findBiggestImage) {
+      Nimble::Size bestSize;
+      PixelFormat bestPf;
 
-    switch (fmt) {
-    case QImage::Format_Mono:
-    case QImage::Format_MonoLSB:
-    case QImage::Format_RGB32:
-    case QImage::Format_RGB16:
-    case QImage::Format_RGB666:
-    case QImage::Format_RGB555:
-    case QImage::Format_RGB888:
-    case QImage::Format_RGB444:
-      info.pf = PixelFormat::rgbUByte();
-      break;
-    /// @todo Indexed8 might have a alpha channel, we don't know without actually opening the image.
-    ///       Should we open it?
-    case QImage::Format_Indexed8:
-    case QImage::Format_ARGB32:
-    case QImage::Format_ARGB32_Premultiplied:
-    case QImage::Format_ARGB8565_Premultiplied:
-    case QImage::Format_ARGB6666_Premultiplied:
-    case QImage::Format_ARGB8555_Premultiplied:
-    case QImage::Format_ARGB4444_Premultiplied:
-      info.pf = PixelFormat::rgbaUByte();
-      break;
-    default:
-      Radiant::error("ImageCodecQT::ping # image has unsupported pixel format (%d: %dx%d)", fmt, s.width(), s.height());
-      return false;
+      for (int i = 0; i < r.imageCount(); ++i, r.jumpToNextImage()) {
+        Nimble::Size size;
+        PixelFormat pf;
+        ok = checkFormat(r.imageFormat(), r.size(), pf, size);
+        if (!ok) {
+          auto img = r.read();
+          ok = checkFormat(img.format(), img.size(), pf, size);
+        }
+        if (ok && (!bestSize.isValid() || (size.width()*size.height() > bestSize.width()*bestSize.height()))) {
+          bestSize = size;
+          bestPf = pf;
+        }
+      }
+
+      if (bestSize.isValid()) {
+        ok = true;
+        info.pf = bestPf;
+        info.width = bestSize.width();
+        info.height = bestSize.height();
+      } else {
+        ok = false;
+      }
+    } else {
+      Nimble::Size size;
+      PixelFormat pf;
+      ok = checkFormat(r.imageFormat(), r.size(), pf, size);
+      if (ok) {
+        info.pf = pf;
+        info.width = size.width();
+        info.height = size.height();
+      } else {
+        Radiant::error("ImageCodecQT::ping # image has unsupported pixel format (%d: %dx%d)",
+                       r.imageFormat(), r.size().width(), r.size().height());
+      }
     }
-
-    info.width = s.width();
-    info.height = s.height();
-
-    return true;
+    return ok;
   }
 
   bool ImageCodecQT::read(Image & image, QFile & file)
   {
     QImage qi;
-    if (!qi.load(&file, nullptr))
+    if (!load(qi, file))
       return false;
 
     QImage::Format fmt = qi.format();

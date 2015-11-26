@@ -11,6 +11,8 @@
 #include "TextLayout.hpp"
 
 #include <Luminous/FontCache.hpp>
+#include <Luminous/RenderResource.hpp>
+#include <Luminous/Texture.hpp>
 
 #include <QGlyphRun>
 #include <QTextCharFormat>
