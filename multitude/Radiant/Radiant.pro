@@ -3,6 +3,9 @@ include(../multitude.pri)
 HEADERS += ArrayMap.hpp
 HEADERS += ObjectPool.hpp
 HEADERS += CommandLineArguments.hpp
+HEADERS += SerialPortHelpers.hpp \
+    SynchronizedMultiQueue.hpp \
+    ProcessRunner.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
@@ -77,10 +80,13 @@ HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
+HEADERS += DeviceMonitor.hpp
 
 SOURCES += Mime.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
+SOURCES += SynchronizedMultiQueue.cpp \
+    ProcessRunner.cpp
 SOURCES += DropEvent.cpp
 SOURCES += TabletEvent.cpp
 SOURCES += BGThread.cpp
@@ -136,11 +142,15 @@ SOURCES += VideoCamera1394.cpp
 SOURCES += VideoCameraPTGrey.cpp
 SOURCES += IntrusivePtr.cpp
 
+linux*:SOURCES += ProcessRunnerPosix.cpp
+win32:SOURCES += ProcessRunnerWin32.cpp
+
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
   OBJECTIVE_SOURCES += PlatformUtilsIOS.mm
 
 }
+linux*:SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
@@ -152,7 +162,8 @@ macx:LIBS += -framework,CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
-  LIBS += $$LIB_RT -ldl
+  LIBS += -lpthread $$LIB_RT -ldl
+  PKGCONFIG += libudev
   CONFIG += qt
   QT = core network gui
 }
@@ -189,12 +200,14 @@ win32 {
         ShLwApi.lib \
         shell32.lib \
         psapi.lib \
+        Advapi32.lib \
+        Ole32.lib \
         Winmm.lib
     CONFIG += qt
     QT = core network opengl gui
 
     PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
-    !exists($$PTGREY_PATH/include):warning("PTGrey driver not installed, not building CameraDriverPTGrey")
+    !exists($$PTGREY_PATH/include):message("PTGrey driver not installed, not building CameraDriverPTGrey")
     exists($$PTGREY_PATH/include) {
         DEFINES += CAMERA_DRIVER_PGR
         message(Using PTGrey camera drivers)

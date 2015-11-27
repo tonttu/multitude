@@ -65,6 +65,11 @@ namespace Radiant
       /// Destructor
       RADIANT_API ~Color();
 
+      /// Convert the color from post-multiplied to pre-multiplied alpha mode
+      /// (multiplies red, green and blue components with alpha)
+      /// @returns color with pre-multiplied alpha
+      inline Color toPreMultipliedAlpha() const { return Color(x*w, y*w, z*w, w); }
+
       /// Make RGBA color from floats. Valid range for parameters is [0, 1]
       /// @param red Value of red
       /// @param green Value of green

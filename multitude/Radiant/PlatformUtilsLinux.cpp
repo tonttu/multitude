@@ -27,8 +27,34 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <QStringList>
+#include <QProcess>
 #include <QCoreApplication>
 #include <QTemporaryFile>
+
+namespace
+{
+
+  // Utility similar to system()
+  int run(QString cmd, QStringList argv = QStringList(),
+          QByteArray * out = 0, QByteArray * err = 0)
+  {
+    QProcess p;
+    p.start(cmd, argv, QProcess::ReadOnly);
+    p.waitForStarted();
+    p.waitForFinished(-1);
+    if(out) *out = p.readAllStandardOutput();
+    if(err) {
+      *err = p.readAllStandardError();
+    } else {
+      QByteArray e = p.readAllStandardError();
+      if(!e.isEmpty())
+        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
+    }
+    return p.exitCode();
+  }
+
+}
 
 namespace Radiant
 {
@@ -70,12 +96,7 @@ namespace Radiant
     {
       (void) isapplication;
 
-      assert(strlen(module) < 128);
-      char buf[312];
-
-      sprintf(buf, "%s/.%s", getUserHomePath().toUtf8().data(), module);
-
-      return buf;
+      return QString("%1/.%2").arg(getUserHomePath(), module);
     }
 
     void * openPlugin(const char * path)
@@ -125,6 +146,37 @@ namespace Radiant
         Radiant::error("PlatformUtils::getLibraryPath # Failed to get library path for %s", libraryName.toUtf8().data());
 
       return file.readAll().trimmed();
+    }
+    
+    void openFirewallPortTCP(int port, const QString & name)
+    {
+    }
+
+    bool reboot()
+    {
+      if(geteuid() == 0) {
+        return run("reboot") == 0;
+      } else {
+        return run("sudo", (QStringList() << "-n" << "--" << "reboot")) == 0;
+      }
+    }
+
+    bool shutdown()
+    {
+      if(geteuid() == 0) {
+        return run("shutdown", (QStringList() << "-h" << "-P" << "now")) == 0;
+      } else {
+        return run("sudo", (QStringList() << "-n" << "--" << "shutdown" << "-h" << "-P" << "now")) == 0;
+      }
+    }
+
+    void terminateProcessByName(const QString& processName)
+    {
+      const auto cmd = QString("killall %1").arg(processName);
+
+      int err = system(cmd.toUtf8().data());
+      if(err != 0)
+        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
     }
 
     void setEnv(const QString & name, const QString & value)

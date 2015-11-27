@@ -15,7 +15,7 @@ namespace Luminous
   BlendMode::BlendMode()
     : m_color(0,0,0,0)
     , m_equation(ADD)
-    , m_srcFunction(SOURCE_ALPHA)
+    , m_srcFunction(ONE)
     , m_dstFunction(ONE_MINUS_SOURCE_ALPHA)
   {
   }

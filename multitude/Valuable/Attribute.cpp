@@ -120,7 +120,7 @@ namespace Valuable
     if(m_host)
       return m_host->path() + "/" + m_name;
 
-    return "/" + m_name;
+    return m_name;
   }
 
   void Attribute::eventProcess(const QByteArray &, Radiant::BinaryData & )
@@ -129,17 +129,12 @@ namespace Valuable
                    Radiant::StringUtils::type(*this).data());
   }
 
-  void Attribute::eventProcessString(const char * id, const QString & str)
+  void Attribute::eventProcessString(const QByteArray & id, const QString & str)
   {
     Radiant::BinaryData bd;
     bd.writeString(str);
     bd.rewind();
     eventProcess(id, bd);
-  }
-
-  void Attribute::eventProcessString(const char *id, const char *str)
-  {
-    eventProcessString(id, QString(str));
   }
 
   void Attribute::eventProcessFloat(const char * id, float v)
@@ -185,22 +180,22 @@ namespace Valuable
   float Attribute::asFloat(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error("Attribute::asFloat # %s : conversion not available", m_name.data());
+    else Radiant::error("Attribute::asFloat # %s : conversion not available", m_name.data());
     return 0.0f;
   }
 
   int Attribute::asInt(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error("Attribute::asInt # %s : conversion not available", m_name.data());
+    else Radiant::error("Attribute::asInt # %s : conversion not available", m_name.data());
     return 0;
   }
 
   QString Attribute::asString(bool * const ok, Layer) const
   {
     if(ok) *ok = false;
-    Radiant::error("Attribute::asString # %s : conversion not available", m_name.data());
-    return "";
+    else Radiant::error("Attribute::asString # %s : conversion not available", m_name.data());
+    return QString();
   }
 
   ArchiveElement Attribute::serialize(Archive & archive) const
@@ -342,7 +337,7 @@ namespace Valuable
 
   bool Attribute::isChanged() const
   {
-    return true;
+    return false;
   }
 
   void Attribute::clearValue(Layer)
@@ -417,5 +412,13 @@ namespace Valuable
     Radiant::error("Attribute::set(StyleValue) # %s: conversion not available",
                    m_name.data());
     return false;
+  }
+
+  void Attribute::copyValueFromLayer(Layer from, Layer to)
+  {
+    (void) from;
+    (void) to;
+    Radiant::error("Attribute::copyValueFromLayer(Layer from, Layer to) # %s: conversion not available",
+                   m_name.data());
   }
 }

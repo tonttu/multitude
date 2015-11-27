@@ -16,6 +16,10 @@
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
+#include <QSettings>
+#include <QProcess>
+#include <QDir>
+
 #include <assert.h>
 
 #include <shlobj.h>
@@ -27,9 +31,40 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <stdlib.h>
+#include <Windows.h>
 
+#include <stdlib.h>
 #include <vector>
+
+namespace {
+
+  bool systemShutdown(bool rebootAfterShutdown)
+  {
+    HANDLE token;
+    if (!OpenProcessToken(GetCurrentProcess(),
+                          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
+      throw QString("OpenProcessToken: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    TOKEN_PRIVILEGES tkp;
+    tkp.PrivilegeCount = 1;
+    tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    if (!LookupPrivilegeValue(0, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid))
+      throw QString("LookupPrivilegeValue: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    if (!AdjustTokenPrivileges(token, FALSE, &tkp, 0, 0, 0))
+      throw QString("AdjustTokenPrivileges: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+
+    const DWORD reason = SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED;
+    const DWORD timeout = 30;
+    if (InitiateSystemShutdownExA(NULL, NULL,
+                                  timeout, TRUE, rebootAfterShutdown, reason) != 0) {
+      return true;
+    } else {
+      throw QString("InitiateSystemShutdownExA: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+    }
+  }
+
+}
 
 namespace Radiant
 {
@@ -186,8 +221,107 @@ namespace Radiant
       Radiant::error("numberOfHardLinks not implemented on windows yet");
       return -1;
     }
-  }
 
-}
+    void openFirewallPortTCP(int port, const QString & name)
+    {
+      QByteArray argv0(512, '\0');
+      GetModuleFileNameA(0, argv0.data(), argv0.size());
+      QString nameRule = QString("name=%1").arg(name);
+      QString progRule = QString("program=%1").arg(argv0.data());
+      QString portRule = QString("localport=%1").arg(port);
+
+      QProcess::execute("netsh", QStringList() << "advfirewall" << "firewall" <<
+                        "delete" << "rule" << nameRule << "dir=in" << "profile=any" <<
+                        progRule << "protocol=tcp");
+
+      QProcess::execute("netsh", QStringList() << "advfirewall" << "firewall" <<
+                        "add" << "rule" << nameRule << "dir=in" << "action=allow" <<
+                        progRule << "profile=any" << portRule << "protocol=tcp" <<
+                        "interfacetype=lan");
+    }
+
+    bool reboot()
+    {
+      return systemShutdown(true);
+    }
+
+    bool shutdown()
+    {
+      return systemShutdown(false);
+    }
+
+    void terminateProcessByName(const QString& processName)
+    {
+      const auto cmd = QString("tskill %1").arg(processName);
+      int err = system(cmd.toUtf8().data());
+      if(err != 0)
+        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
+    }
+
+    QString windowsProgramDataPath()
+    {
+      PWSTR path;
+      HRESULT res = SHGetKnownFolderPath(FOLDERID_ProgramData, KF_FLAG_CREATE, nullptr, &path);
+      if(res != S_OK) {
+        CoTaskMemFree(path);
+        Radiant::error("Failed to get ProgramData path. ShGetKnownFolderPath failed with error code %d", res);
+
+        return QString();
+      }
+
+      QString programData = QString::fromWCharArray(path);
+      CoTaskMemFree(path);
+      return programData;
+    }
+
+    static QString wantLogDir()
+    {
+      return QString("%1\\MultiTouch\\Logs").arg(Radiant::PlatformUtils::windowsProgramDataPath());
+    }
+
+    static QString newWindowsLogDir()
+    {
+      QString logPath = wantLogDir();
+      // If creating the log folder fails for whatever reason, log to TEMP instead
+      bool logPathOk = QDir().mkpath(logPath);
+      if(!logPathOk)
+        logPath = QDir::tempPath();
+      return logPath;
+    }
+
+    QString newWindowsServiceLogFile(const QString & serviceName, const QString & logName, int iteration)
+    {
+      QString dir = newWindowsLogDir();
+      bool rotate = iteration >= 0;
+      if(rotate) {
+        return QString("%1\\%2-%3-%4.log").arg(dir, serviceName, logName).arg(iteration % 10);
+      } else {
+        return QString("%1\\%2-%3.log").arg(dir, serviceName, logName);
+      }
+    }
+
+    QString findWindowsServiceLogFile(const QString & serviceName, const QString & logName)
+    {
+      std::vector<QDir> dirs;
+      dirs.push_back(QDir(wantLogDir()));
+      dirs.push_back(QDir::temp());
+
+      for(QDir & dir : dirs) {
+        if(!dir.exists()) {
+          continue;
+        }
+        dir.setNameFilters(QStringList() << QString("%1-%2*.log").arg(serviceName, logName));
+        dir.setSorting(QDir::Time | QDir::Reversed);
+        dir.setFilter(QDir::Files | QDir::Readable);
+        QFileInfoList entries = dir.entryInfoList();
+        if(!entries.empty()) {
+          QFileInfo & log = entries.front();
+          return log.absoluteFilePath();
+        }
+      }
+      return QString();
+    }
+  }  // namespace PlatformUtils
+}  // namespace Radiant
 
 #endif

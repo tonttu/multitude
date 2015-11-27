@@ -14,7 +14,7 @@ namespace Nimble {
 
   LensCorrection::LensCorrection()
     : m_center(320, 240),
-      m_radiusInv(1.0f / std::sqrt(320 * 320 + 240 * 240)),
+      m_radiusInv(1.0f / std::sqrt(320 * 320 + 240 * 240.0f)),
       m_params(0, 0, 0, 1)
   {
     setParams(0.0f, 0.1f, 0.0f);

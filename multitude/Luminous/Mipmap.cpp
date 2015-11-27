@@ -356,7 +356,7 @@ namespace Luminous
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
-      if (!imageTex.image->read(m_filename)) {
+      if (!imageTex.image->read(m_filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [original image]", m_filename.toUtf8().data());
         return false;
       } else {
@@ -375,7 +375,7 @@ namespace Luminous
         imageTex.image.reset(new Image());
 
       Nimble::Size expectedSize = mipmap.mipmapSize(level);
-      if (!imageTex.image->read(filename)) {
+      if (!imageTex.image->read(filename, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [mipmap level %d/%d of image %s, expected size: (%d, %d)]",
                        filename.toUtf8().data(), level, mipmap.m_d->m_maxLevel,
                        m_filename.toUtf8().data(), expectedSize.width(), expectedSize.height());
@@ -637,7 +637,8 @@ namespace Luminous
   void MipmapReleaseTask::check(float wait)
   {
     auto task = s_releaseTask.lock();
-    if (task && (task->scheduled() - Radiant::TimeStamp::currentTime()).secondsD() > wait) {
+    /// @todo thread safety, task might be running/rescheduling concurrently
+    if (task && (task->secondsUntilScheduled() > wait)) {
       task->scheduleFromNowSecs(wait);
       Radiant::BGThread::instance()->reschedule(task);
     }
@@ -1141,7 +1142,7 @@ namespace Luminous
     MULTI_ONCE {
       QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
             Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
-      if(!QDir().mkpath(basePath)) {
+      if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
         basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
         QDir().mkpath(basePath);
       }

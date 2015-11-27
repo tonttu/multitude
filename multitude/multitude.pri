@@ -29,8 +29,22 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
   *clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 }
 
+# Always include Deft
+CONFIG += enable-deft
+# On taction tracker build, enable cuda backend but disable js by default
+# JS can still be enabled with enable-js
+enable-taction:CONFIG += enable-deft-cuda
+enable-taction:CONFIG += disable-js
+enable-taction:DEFINES += MULTITACTION_FIRMWARE
+
+# deft can be disabled with -config disable-deft
+disable-deft:CONFIG -= enable-deft enable-deft-cuda
+disable-deft-cuda:CONFIG -= enable-deft-cuda
+disable-deft-opencl:CONFIG -= enable-deft-opencl
+
 # JS is enabled by default
 !disable-js:CONFIG += enable-js
+enable-js:CONFIG -= disable-js
 enable-js:DEFINES += CORNERSTONE_JS=1
 
 # CEF is enabled by default
@@ -131,6 +145,9 @@ linux-*{
     else:checkCompiler(gcc-4.8): QMAKE_CC=gcc-4.8
   }
   !checkCompiler($$QMAKE_LINK): QMAKE_LINK=$$QMAKE_CXX
+  !checkCompiler($$QMAKE_CXX) {
+    error("$$QMAKE_CXX is too old, need at least g++ 4.6")
+  }
 }
 
 contains(MEMCHECK,yes) {
@@ -235,6 +252,13 @@ win32 {
       LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
       enable-js:LIB_V8 = -lv8-multitouch1_d -lnode-multitouch1_d
     }
+
+  # output pdbs for release builds as well. Otherwise, profiling is impossible
+  CONFIG(release):pdb-in-release {
+    QMAKE_LFLAGS += /MAP
+    QMAKE_CFLAGS += /Zi
+    QMAKE_LFLAGS += /debug /opt:ref
+  }
 }
 
 #

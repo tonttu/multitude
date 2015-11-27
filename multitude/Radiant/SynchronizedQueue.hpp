@@ -128,6 +128,36 @@ namespace Radiant
       return *this;
     }
 
+    template <typename InputIterator>
+    void push(InputIterator begin, InputIterator end)
+    {
+      Radiant::Guard g(m_mutex);
+      while(begin != end) {
+        m_data.enqueue(*begin);
+        ++begin;
+      }
+      m_cond.wakeAll();
+    }
+
+    std::vector<T> popElements(int num, unsigned int millisecs=0)
+    {
+      std::vector<T> elems;
+      Radiant::Guard g(m_mutex);
+
+      for(int i = 0; i < num; ++i) {
+
+        if(m_data.empty()) {
+
+          bool hasValue = millisecs == 0 ? m_cond.wait(m_mutex) :
+                                           m_cond.wait(m_mutex, millisecs);
+          if(hasValue)
+            break;
+        }
+        elems.push_back(m_data.takeFirst());
+      }
+      return elems;
+    }
+
   private:
     mutable Mutex m_mutex;
     mutable Condition m_cond;

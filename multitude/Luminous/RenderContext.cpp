@@ -499,7 +499,7 @@ namespace Luminous
     };
 
     // Draw fill
-    if (style.fillColor().w > 0.f) {
+    if (style.hasFill()) {
       const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
       auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_FAN, 0, linesegments + 2, program, style.fillColor(), 1.f, style);
       // Center is the first vertex in a fan
@@ -509,7 +509,7 @@ namespace Luminous
     }
 
     // Draw stroke
-    if(style.strokeWidth() > 0.f && style.strokeColor().alpha() > 0.f) {
+    if (style.hasStroke()) {
       Luminous::Style s = style;
       s.stroke().clear();
       s.setFillColor(style.strokeColor());
@@ -1075,9 +1075,7 @@ namespace Luminous
     const float strokeWidth = std::min(1.0f, style.strokeWidth() / magic);
 
     if (style.dropShadowColor().alpha() > 0.0f) {
-      uniform.colorIn = uniform.colorOut = style.dropShadowColor();
-      uniform.colorIn.w *= opacity();
-      uniform.colorOut.w *= opacity();
+      uniform.colorIn = uniform.colorOut = style.dropShadowColor().toPreMultipliedAlpha() * opacity();
       const float blur = style.dropShadowBlur();
       //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
       uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
@@ -1085,9 +1083,7 @@ namespace Luminous
     }
 
     if (style.glow() > 0.0f) {
-      uniform.colorIn = uniform.colorOut = style.glowColor();
-      uniform.colorIn.w *= opacity();
-      uniform.colorOut.w *= opacity();
+      uniform.colorIn = uniform.colorOut = style.glowColor().toPreMultipliedAlpha() * opacity();
       uniform.outline.make(edge * (1.0f - style.glow()), edge);
       drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
     }
@@ -1098,11 +1094,8 @@ namespace Luminous
     uniform.split = strokeWidth < 0.000001f ? 0 : edge;
     uniform.outline.make(edge - strokeWidth, edge - strokeWidth);
 
-    uniform.colorIn = style.fillColor();
-    uniform.colorOut = style.strokeColor();
-
-    uniform.colorIn.w *= opacity();
-    uniform.colorOut.w *= opacity();
+    uniform.colorIn = style.fillColor().toPreMultipliedAlpha() * opacity();
+    uniform.colorOut = style.strokeColor().toPreMultipliedAlpha() * opacity();
 
     drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
   }
@@ -1131,8 +1124,7 @@ namespace Luminous
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid()) {
-        uniform.colorIn = Radiant::Color(group.color);
-        uniform.colorIn.w *= opacity();
+        uniform.colorIn = Radiant::Color(group.color).toPreMultipliedAlpha() * opacity();
       }
 
       for (int i = 0; i < int(group.items.size());) {

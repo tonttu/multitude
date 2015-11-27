@@ -87,7 +87,7 @@
   }                                                                \
   std::weak_ptr<T> T::s_multiSingletonInstance;
 
-/// @todo this can not be used to properly export the instace() function from
+/// @todo this can not be used to properly export the instance() function from
 /// libraries. The macro needs one more parameter.
 #define DECLARE_SINGLETON(T)                                       \
   public: static std::shared_ptr<T> instance();                    \

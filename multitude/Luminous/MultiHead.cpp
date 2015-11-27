@@ -285,6 +285,14 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
+  namespace
+  {
+#ifdef MULTITACTION_FIRMWARE
+    const int s_default_fsaa_samples = 0;
+#else
+    const int s_default_fsaa_samples = 4;
+#endif
+  }
   MultiHead::Window::Window(MultiHead * screen)
     : Node(0, "Window"),
       m_screen(screen),
@@ -293,7 +301,7 @@ namespace Luminous
       m_frameless(this, "frameless", true),
       m_fullscreen(this, "fullscreen", false),
       m_resizeable(this, "resizeable", false),
-      m_fsaaSamplesPerPixel(this, "fsaa-samples", 4),
+      m_fsaaSamplesPerPixel(this, "fsaa-samples", s_default_fsaa_samples),
       m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4) << 36),
       m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
@@ -398,9 +406,8 @@ namespace Luminous
   bool MultiHead::Window::isAreaSoftwareColorCorrected(int areaIndex) const
   {
     const bool isSW = m_areas[areaIndex]->rgbCube().isDefined() || !m_areas[areaIndex]->colorCorrection().isIdentity();
-    const bool isHW = m_screen->hwColorCorrection().ok();
 
-    return !isHW && isSW;
+    return isSW;
   }
 
   Nimble::Recti MultiHead::Window::getRect() const {
@@ -447,9 +454,7 @@ namespace Luminous
   MultiHead::MultiHead()
       : Node(0, "MultiHead", false),
       m_iconify(this, "iconify", false),
-      m_dpms(this, "dpms", Nimble::Vector3i(0, 0, 0)),
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
-      m_hwColorCorrectionEnabled(this, "hw-color-correction", false),
       m_vsync(this, "vsync", true),
       m_glFinish(this, "gl-finish", false),
       m_edited(false),
@@ -577,11 +582,6 @@ namespace Luminous
     return (int) (bottom - top);
   }
 
-  void MultiHead::setDpms(const Nimble::Vector3i & dpms)
-  {
-    m_dpms = dpms;
-  }
-
   float MultiHead::dpi() const
   {
     return m_dpi;
@@ -604,7 +604,6 @@ namespace Luminous
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
   {
-    m_hwColorCorrection.syncWith(0);
     m_windows.clear();
 
     bool ok = Node::deserialize(element);
@@ -619,14 +618,6 @@ namespace Luminous
   {
     addAttribute(w.get());
 
-    if(m_hwColorCorrectionEnabled) {
-      /// @todo this is a wrong assumption that area 0 would contain a color
-      /// correction profile. Do this correctly..
-      m_hwColorCorrection.syncWith(&w->area(0).colorCorrection());
-    } else {
-      m_hwColorCorrection.syncWith(0);
-    }
-
     m_windows.push_back(std::move(w));
     eventSend("graphics-bounds-changed");
   }
@@ -634,7 +625,6 @@ namespace Luminous
   void MultiHead::deleteWindows()
   {
     /// @todo this should remove listeners that refer to Areas within the windows
-    m_hwColorCorrection.syncWith(0);
     m_windows.clear();
   }
 

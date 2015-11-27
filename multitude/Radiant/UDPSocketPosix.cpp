@@ -15,6 +15,10 @@
 
 #include <sys/types.h>
 
+#ifdef RADIANT_LINUX
+#include <sys/ioctl.h>
+#endif
+
 namespace Radiant
 {
 
@@ -100,6 +104,24 @@ namespace Radiant
     return true;
   }
 
+  bool UDPSocket::isPendingInput(unsigned int waitMicroSeconds)
+  {
+    if(m_d->m_fd < 0)
+      return false;
+
+    struct pollfd pfd;
+    memset( & pfd, 0, sizeof(pfd));
+
+    pfd.fd = m_d->m_fd;
+    pfd.events = POLLRDNORM;
+    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
+    if(status == -1) {
+      Radiant::error("UDPSocket::isPendingInput %s", SocketWrapper::strerror(SocketWrapper::err()));
+    }
+
+    return (pfd.revents & POLLRDNORM) == POLLRDNORM;
+  }
+
   bool UDPSocket::isOpen() const
   {
     return m_d->m_fd >= 0;
@@ -144,6 +166,8 @@ namespace Radiant
         if(!readAll) return pos;
       } else if(tmp == 0 || m_d->m_fd == -1) {
         return pos;
+      } else if(SocketWrapper::err() == EINTR) {
+        continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         if(readAll || (waitfordata && pos == 0)) {
           struct pollfd pfd;
@@ -183,6 +207,8 @@ namespace Radiant
       int tmp = send(m_d->m_fd, data + pos, max, 0);
       if(tmp > 0) {
         pos += tmp;
+      } else if(SocketWrapper::err() == EINTR) {
+        continue;
       } else if(SocketWrapper::err() == EAGAIN || SocketWrapper::err() == EWOULDBLOCK) {
         struct pollfd pfd;
         pfd.fd = m_d->m_fd;
@@ -209,4 +235,21 @@ namespace Radiant
     }
     return true;
   }
+
+#ifdef RADIANT_LINUX
+  TimeStamp UDPSocket::timestamp() const
+  {
+    if (m_d->m_fd < 0)
+      return TimeStamp();
+
+    struct timeval tv;
+    if (ioctl(m_d->m_fd, SIOCGSTAMP, &tv) == -1)
+      return TimeStamp();
+
+    int64_t tmp = tv.tv_sec;
+    tmp <<= 24;
+    tmp |= (int64_t) (tv.tv_usec * (TimeStamp::FRACTIONS_PER_SECOND * 0.000001));
+    return TimeStamp(tmp);
+  }
+#endif
 }

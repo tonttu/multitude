@@ -626,6 +626,7 @@ namespace Radiant
     inline void deref()
     {
       if(m_counter) {
+        assert(m_counter->useCount > 0);
         INTRUSIVE_PTR_DEBUG_RELEASE;
         if(!m_counter->useCount.deref()) {
           intrusivePtrRelease(m_ptr);

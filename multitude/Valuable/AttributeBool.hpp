@@ -25,7 +25,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param value The value of this object
-    AttributeT(Node * host, const QByteArray &name, bool value, bool transit = false);
+    AttributeT(Node * host = nullptr, const QByteArray &name = QByteArray(), bool value = false, bool transit = false);
     virtual ~AttributeT();
 
     /// @cond
@@ -34,8 +34,10 @@ namespace Valuable
 
     /// Boolean values can be set as integers in CSS files
     virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
+    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
 
+    virtual float asFloat(bool * const ok = 0, Layer layer = LAYER_CURRENT) const OVERRIDE;
     virtual int asInt(bool * const ok, Layer layer) const OVERRIDE;
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
 

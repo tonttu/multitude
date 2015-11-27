@@ -54,7 +54,6 @@ namespace Radiant
     : m_state(WAITING),
       m_canceled(false),
       m_priority(p),
-      m_scheduled(0),
       m_host(0)
   {}
 
@@ -94,6 +93,11 @@ namespace Radiant
 
   Task::~Task()
   {}
+
+  double Task::secondsUntilScheduled() const { return -m_scheduled.time(); }
+
+  void Task::scheduleFromNowSecs(double seconds)
+  { m_scheduled.start(seconds); }
 
   void Task::initialize()
   {}

@@ -12,13 +12,8 @@
 #define RADIANT_TIMER_HPP
 
 #include "Export.hpp"
-#include "Radiant/TimeStamp.hpp"
 
-#if defined(RADIANT_WINDOWS)
-    #include <Windows.h>
-#else
-    #include <unistd.h>
-#endif
+#include <chrono>
 
 namespace Radiant
 {
@@ -32,6 +27,9 @@ namespace Radiant
   /// double elapsed = t.time();
   /// @endcode
   /// @sa Radiant::TimeStamp
+  ///
+  /// The clock is monotonic except on visual studio <= 2013.
+  /// See https://connect.microsoft.com/VisualStudio/feedback/details/753115/
   class Timer
   {
   public:
@@ -39,23 +37,20 @@ namespace Radiant
     inline Timer();
 
     /// Start the timer
-    /// Starts the timer by resetting its clock to the current time
-    inline void start();
+    /// Starts the timer by resetting its clock to the current time offset with fromNowSeconds
+    /// @param fromNow offset for the start time, for example -1.0 is 1 second ago
+    inline void start(double fromNowSeconds=0.0);
     /// Get start time
     /// Returns the time of the last @ref start call.
-    /// @return start time in seconds since unix epoch time.
+    /// @return start time in seconds since an arbitrary (but fixed) time point in the past.
     inline double startTime() const;
     /// Get elapsed time
     /// Returns the elapsed time in seconds since last @ref start call.
     /// @return elapsed time in seconds
     inline double time() const;
-    /// Get the timer resolution
-    /// Returns the number of timer ticks per second.
-    /// @return resolution in ticks per second
-    inline int resolution() const;
 
   private:
-    double m_startTime;
+    std::chrono::time_point<std::chrono::steady_clock> m_startTime;
   };
 
   Timer::Timer()
@@ -63,24 +58,22 @@ namespace Radiant
     start();
   }
 
-  void Timer::start()
+  void Timer::start(double fromNowSeconds)
   {
-      m_startTime = TimeStamp::currentTime().secondsD();
-  }
-
-  int Timer::resolution() const
-  {
-      return (int)TimeStamp::ticksPerSecond().value();
+    m_startTime = std::chrono::steady_clock::now();
+    if(fromNowSeconds != 0.0)
+      m_startTime += std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(fromNowSeconds));
   }
 
   double Timer::startTime() const
   {
-    return m_startTime;
+    return std::chrono::duration_cast<std::chrono::duration<double>>(m_startTime.time_since_epoch()).count();
   }
 
   double Timer::time() const
   {
-      return TimeStamp::currentTime().secondsD() - m_startTime;
+    return std::chrono::duration_cast<std::chrono::duration<double>>(
+        std::chrono::steady_clock::now() - m_startTime).count();
   }
 }
 

@@ -68,8 +68,7 @@ namespace Nimble
   bool Rectangle::isInside(const Nimble::Rectangle & r) const
   {
     // rectangle is inside if all points are inside
-    std::array<Nimble::Vector2f, 4> corners;
-    r.computeCorners(corners);
+    std::array<Nimble::Vector2f, 4> corners = r.computeCorners();
 
     for(int i = 0; i < 4; ++i)
       if(!isInside(corners[i])) return false;
@@ -91,10 +90,8 @@ namespace Nimble
         return false;
 
     // Do brute force checking of line segments
-    std::array<Nimble::Vector2f, 4> corners;
-    std::array<Nimble::Vector2f, 4> thatCorners;
-    computeCorners(corners);
-    r.computeCorners(thatCorners);
+    std::array<Nimble::Vector2f, 4> corners = computeCorners();
+    std::array<Nimble::Vector2f, 4> thatCorners = r.computeCorners();
 
     for(int i = 0; i < 4; ++i) {
       int nextI = (i+1) % 4;
@@ -123,15 +120,24 @@ namespace Nimble
     return Nimble::SizeF(2 * m_extent0, 2 * m_extent1);
   }
 
-  void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const
+  std::array<Nimble::Vector2f, 4> Rectangle::computeCorners() const
   {
     Nimble::Vector2f extAxis0 = m_axis0 * m_extent0;
     Nimble::Vector2f extAxis1 = m_axis1 * m_extent1;
 
-    corners[0] = m_origin - extAxis0 - extAxis1;
-    corners[1] = m_origin + extAxis0 - extAxis1;
-    corners[2] = m_origin + extAxis0 + extAxis1;
-    corners[3] = m_origin - extAxis0 + extAxis1;
+#if 0 /// @todo enable for new enough compilers (GCC >= 4.7, maybe Visual Studio >= 2013)
+    return {{ m_origin - extAxis0 - extAxis1,  m_origin + extAxis0 - extAxis1,
+          m_origin + extAxis0 + extAxis1, m_origin - extAxis0 + extAxis1 }};
+#else
+    std::array<Nimble::Vector2f, 4> arr = {{ m_origin - extAxis0 - extAxis1,  m_origin + extAxis0 - extAxis1,
+          m_origin + extAxis0 + extAxis1, m_origin - extAxis0 + extAxis1 }};
+    return arr;
+#endif
+  }
+
+  void Rectangle::computeCorners(std::array<Nimble::Vector2f, 4> & corners) const
+  {
+    corners = computeCorners();
   }
 
   Nimble::Rectangle Nimble::Rectangle::merge(const Nimble::Rectangle &a, const Nimble::Rectangle &b)
@@ -154,12 +160,10 @@ namespace Nimble
     box.m_axis1.normalize();
 
     // Project input corner points on the new axii and compute the extents
-    std::array<Nimble::Vector2f, 4> vertex;
+    std::array<Nimble::Vector2f, 4> vertex = a.computeCorners();
     Nimble::Vector2f min(0, 0);
     Nimble::Vector2f max(0, 0);
     const Nimble::Vector2f axes[] =  { box.m_axis0, box.m_axis1 };
-
-    a.computeCorners(vertex);
 
     for(int i = 0; i < 4; i++) {
 
@@ -176,7 +180,7 @@ namespace Nimble
       }
     }
 
-    b.computeCorners(vertex);
+    vertex = b.computeCorners();
 
     for(int i = 0; i < 4; i++) {
 
@@ -205,8 +209,7 @@ namespace Nimble
 
   void Rectangle::transform(const Nimble::Matrix3 &m)
   {
-    std::array<Nimble::Vector2, 4> vertex;
-    computeCorners(vertex);
+    std::array<Nimble::Vector2, 4> vertex = computeCorners();
 
     for(size_t i = 0; i < 4; i++)
       vertex[i] = m.project(vertex[i]);
