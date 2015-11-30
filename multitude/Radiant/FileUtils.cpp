@@ -497,9 +497,14 @@ namespace Radiant
 #else
 		return QString("/");
 #endif
-	}
+  }
 
 #ifdef RADIANT_LINUX
+  int FileUtils::runInShell(QString cmd, QByteArray * out, QByteArray * err, bool quiet)
+  {
+    return run("/bin/sh", QStringList() << "-c" << cmd, out, err, quiet);
+  }
+
   int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
   {
     QByteArray outStdout, outStderr;

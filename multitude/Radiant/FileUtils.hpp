@@ -195,6 +195,12 @@ namespace Radiant
 
 #ifdef RADIANT_LINUX
     /// @todo these run-functions are in a wrong place
+
+    /// Will run /bin/sh -c 'cmd'
+    /// @param cmd - command to pass to /bin/sh -c
+    static int runInShell(QString cmd,
+                          QByteArray * out = nullptr, QByteArray * err = nullptr,
+                          bool quiet = false);
     static int run(QString cmd, QStringList argv = QStringList(),
                    QByteArray * out = 0, QByteArray * err = 0, bool quiet = false);
     static int runAsRoot(QString cmd, QStringList argv = QStringList(),

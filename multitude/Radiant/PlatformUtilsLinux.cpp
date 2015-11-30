@@ -14,6 +14,7 @@
 
 #include "PlatformUtils.hpp"
 #include "Trace.hpp"
+#include "FileUtils.hpp"
 
 #include <dlfcn.h>
 #include <assert.h>
@@ -34,26 +35,12 @@
 
 namespace
 {
-
   // Utility similar to system()
   int run(QString cmd, QStringList argv = QStringList(),
           QByteArray * out = 0, QByteArray * err = 0)
   {
-    QProcess p;
-    p.start(cmd, argv, QProcess::ReadOnly);
-    p.waitForStarted();
-    p.waitForFinished(-1);
-    if(out) *out = p.readAllStandardOutput();
-    if(err) {
-      *err = p.readAllStandardError();
-    } else {
-      QByteArray e = p.readAllStandardError();
-      if(!e.isEmpty())
-        Radiant::error("%s: %s", cmd.toUtf8().data(), e.data());
-    }
-    return p.exitCode();
+    return Radiant::FileUtils::run(cmd, argv, out, err);
   }
-
 }
 
 namespace Radiant
@@ -142,7 +129,7 @@ namespace Radiant
 
       const QString cmd = QString("grep %1 /proc/%2/maps | awk '{print $6}'| head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
 
-      if (system(cmd.toUtf8().data()) != 0)
+      if (FileUtils::runInShell(cmd) != 0)
         Radiant::error("PlatformUtils::getLibraryPath # Failed to get library path for %s", libraryName.toUtf8().data());
 
       return file.readAll().trimmed();
@@ -174,7 +161,7 @@ namespace Radiant
     {
       const auto cmd = QString("killall %1").arg(processName);
 
-      int err = system(cmd.toUtf8().data());
+      int err = FileUtils::runInShell(cmd);
       if(err != 0)
         Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
     }
