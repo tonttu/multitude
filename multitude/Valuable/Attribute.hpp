@@ -517,7 +517,7 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE
     {
-      return m_currentLayer > DEFAULT;
+      return m_currentLayer > DEFAULT && value() != value(DEFAULT);
     }
 
     /// Unsets the value from a specific layer
