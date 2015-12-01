@@ -35,6 +35,8 @@ CONFIG += enable-deft
 # JS can still be enabled with enable-js
 enable-taction:CONFIG += enable-deft-cuda
 enable-taction:CONFIG += disable-js
+enable-taction:CONFIG += disable-cef
+
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
 
 # deft can be disabled with -config disable-deft
