@@ -47,6 +47,9 @@ namespace Luminous
     case QImage::Format_ARGB4444_Premultiplied:
       formatOut = PixelFormat::rgbaUByte();
       break;
+    case QImage::Format_Grayscale8:
+      formatOut = PixelFormat::redUByte();
+      break;
     default:
       return false;
     }
