@@ -20,6 +20,7 @@ namespace Radiant
   #elif defined(RADIANT_CLANG) || defined(RADIANT_GNUC)
       return __builtin_ffs(bits)-1;
   #else
+#error "Don't know how to get firstSetBit"
   #endif
     }
   }
