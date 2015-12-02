@@ -148,6 +148,8 @@ namespace Radiant
 
       if(nonEmptyInteresting == 0) {
         m_mutex.lock();
+        nonEmptyInteresting = m_nonEmpty & queues;
+
         while(timeLeft > 0 && nonEmptyInteresting == 0) {
           m_queuesNotEmpty.wait2(m_mutex, timeLeft);
           nonEmptyInteresting = m_nonEmpty & queues;
