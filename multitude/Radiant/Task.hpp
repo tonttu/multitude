@@ -123,7 +123,9 @@ namespace Radiant
 
     /// If the task isn't already finished, runs the task immediately in the
     /// calling thread. If the task is running in a background thread, waits
-    /// until the task is released.
+    /// until the task is released. The task will be removed from the background
+    /// thread, even if it is not finished.
+    ///
     /// Will call initialize() and finished() -functions if necessary.
     /// It's fine to call this function either before or after the task is
     /// added to BGThread, but this shouldn't be called at the same time as
