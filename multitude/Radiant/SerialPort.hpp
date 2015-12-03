@@ -46,6 +46,9 @@ namespace Radiant
     /// Delete the object and close the port
     ~SerialPort();
 
+    /// Move serialport
+    SerialPort(SerialPort && port);
+
     /// Opens a serial port for communications
     /** If the port was open, this method will close it before opening it.
       @param device name of the device to open
@@ -137,6 +140,9 @@ namespace Radiant
 #endif
 
     enum class WaitStatus { Ok, Error, Interrupt };
+
+  private:
+    SerialPort(const SerialPort & port);
 
   private:
     QString m_device;

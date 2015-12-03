@@ -296,6 +296,12 @@ namespace Radiant {
     /// @return time-stamp as string
     QString asString() const;
 
+    /// Returns string representation in ISO8601 format:
+    ///   YYYY-MM-DDTHH:mm:ss.SSSZ
+    ///
+    /// Time is always in UTC timezone and milliseconds are included
+    QString asStringISO8601() const;
+
     /// Converts the time-stamp to QDateTime object
     QDateTime asQDateTime() const;
 

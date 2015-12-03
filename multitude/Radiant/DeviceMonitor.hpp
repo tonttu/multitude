@@ -9,6 +9,7 @@
 #include <QMap>
 #include <QString>
 
+#include <memory>
 #include <vector>
 #include <memory>
 

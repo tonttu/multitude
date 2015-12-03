@@ -12,11 +12,4 @@
 
 namespace Patterns
 {
-
-  NotCopyable::NotCopyable()
-  {}
-
-  NotCopyable::~NotCopyable()
-  {}
-
 }

@@ -56,6 +56,14 @@ namespace Radiant
     m_writeInterruptPipe{-1, -1}
   {}
 
+  SerialPort::SerialPort(SerialPort && port)
+    : m_device(port.m_device),
+      m_fd(port.m_fd)
+  {
+    port.m_device.clear();
+    port.m_fd = -1;
+  }
+
   SerialPort::~SerialPort()
   {
     close();
@@ -289,6 +297,8 @@ namespace Radiant
       case WaitStatus::Error:
         safeset(ok, false);
         return written;
+      default:
+        break;
       }
       do {
         WriteStatus status;
