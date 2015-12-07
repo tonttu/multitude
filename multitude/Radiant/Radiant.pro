@@ -152,7 +152,7 @@ linux*:SOURCES += DeviceMonitor.cpp
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
 
-linux-*: LIBS += -lX11
+linux-*: LIBS += -lX11 -lrt
 
 macx:LIBS += -framework,CoreFoundation
 
