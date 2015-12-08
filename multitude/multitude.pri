@@ -141,6 +141,8 @@ linux-*{
   !checkCompiler($$QMAKE_CXX) {
     error("$$QMAKE_CXX is too old, need at least g++ 4.6")
   }
+
+  LIB_RADIANT += -lrt
 }
 
 contains(MEMCHECK,yes) {
