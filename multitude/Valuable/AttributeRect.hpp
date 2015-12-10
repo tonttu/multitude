@@ -19,6 +19,7 @@
 
 namespace Valuable
 {
+
   template <typename T>
   struct IsRect { static constexpr bool value = false; };
 
@@ -26,17 +27,17 @@ namespace Valuable
   struct IsRect<Nimble::RectT<E>> { static constexpr bool value = true; };
 
   /// A valuable object holding a Nimble::Rect object
-  template <class T>
-  class AttributeT<T, typename std::enable_if<IsRect<T>::value>::type>
-      : public AttributeBaseT<T>
+  template <class RectType>
+  class AttributeT<RectType, typename std::enable_if<IsRect<RectType>::value>::type>
+      : public AttributeBaseT<RectType>
   {
-    typedef AttributeBaseT<T> Base;
+    typedef AttributeBaseT<RectType> Base;
   public:
     using Base::operator =;
 
     /// @copydoc Attribute::Attribute(Node *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the AttributeRect
-    AttributeT(Node * host, const QByteArray & name, const Nimble::RectT<T> & r, bool transit = false)
+    AttributeT(Node * host = nullptr, const QByteArray & name = QByteArray(), const RectType & r = RectType(), bool transit = false)
       : Base(host, name, r, transit) {}
 
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE
@@ -46,8 +47,14 @@ namespace Valuable
       return Radiant::StringUtils::toString(this->value(layer));
     }
 
+    static inline RectType interpolate(RectType a, RectType b, float m)
+    {
+      return m >= 0.5f ? b : a;
+    }
+
     /// Converts the object to rectangle
-    Nimble::RectT<T> asRect() const { return this->value(); }
+    /// FIXME: can this be just removed? why not call value() or operator*?
+    RectType asRect() const { return this->value(); }
   };
 
   /// Default floating point AttributeRectT typedef

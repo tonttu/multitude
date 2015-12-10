@@ -57,7 +57,7 @@ namespace Radiant
     /** The task is the property of the BGThread, which will delete the object when its
         operation is finished and the shared pointer's reference count goes to zero.
 
-        @param task The task that needs to be added.
+        @param task The task that needs to be added. Must not be null
     */
     virtual void addTask(TaskPtr task);
 
@@ -67,10 +67,10 @@ namespace Radiant
         (#Radiant::Task::setFinished) and schedule it for immediate processing
         after which BGThread will remove it when it has a chance.
 
-        @param task The task to be removed
+        @param task The task to be removed. Must not be null
         @param cancel Should the task be cancelled if succesfully removed
         @param wait Block until the task execution returns, if the task is currently running
-        @return True if the task was successfully removes, false otherwise.
+        @return True if the task was successfully removed, false otherwise.
         @sa Radiant::Task::setFinished
         @sa Radiant::Task::schedule
     */
@@ -79,14 +79,14 @@ namespace Radiant
     /// Notify the BGThread that a task execution time has been rescheduled.
     /// This function should always be called after modifying the time-stamp of a
     /// task.
-    /// @param task task to reschedule
+    /// @param task task to reschedule. Must not be null
     virtual void reschedule(TaskPtr task);
     /// @copydoc reschedule
     /// @param p new task priority
     void reschedule(TaskPtr task, Priority p);
 
     /// Change the priority of a task
-    /// @param task task to modify
+    /// @param task task to modify. Must not be null
     /// @param p task priority
     virtual void setPriority(TaskPtr task, Priority p);
 

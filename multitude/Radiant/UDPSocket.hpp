@@ -12,6 +12,7 @@
 #define RADIANT_UDP_SOCKET_HPP
 
 #include <Radiant/BinaryStream.hpp>
+#include <Radiant/TimeStamp.hpp>
 
 #include <QString>
 #include <cstdint>
@@ -71,6 +72,8 @@ namespace Radiant
     /// @return True if the socket was succesfully closed.
     bool close();
 
+    virtual bool isPendingInput(unsigned int waitMicroSeconds);
+
     /** Reads datagram packets from the socket.
         @param buffer buffer to write to
         @param bytes maximum bytes to read
@@ -94,6 +97,11 @@ namespace Radiant
     /// @param bytes Requested number of bytes for the receiving buffer
     /// @return True if the size of the receive buffer was succusfully updated
     bool setReceiveBufferSize(size_t bytes);
+
+#ifdef RADIANT_LINUX
+    /// @returns timestamp of the last packet read
+    Radiant::TimeStamp timestamp() const;
+#endif
 
   private:
     class D;

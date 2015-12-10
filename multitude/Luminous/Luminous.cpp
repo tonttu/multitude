@@ -21,6 +21,7 @@
 #include "ImageCodecSVG.hpp"
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
+#include "ImageCodecCS.hpp"
 #include "GPUAssociation.hpp"
 
 #include <QImageWriter>
@@ -143,6 +144,13 @@ namespace Luminous
       /// Luminuos::PixelFormat::redUByte(). Give this codec a priority
       Image::codecs()->registerCodec(std::make_shared<ImageCodecTGA>());
 
+#if !defined(RADIANT_IOS)
+      // Image::codecs()->registerCodec(new ImageCodecSVG());
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecSVG>());
+      // Qt5 added support for DDS, but we don't want to use that
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
+#endif
+
       QList<QByteArray> formats = QImageWriter::supportedImageFormats ();
       for(QList<QByteArray>::iterator it = formats.begin(); it != formats.end(); ++it) {
         QByteArray & format = (*it);
@@ -151,11 +159,7 @@ namespace Luminous
 
       Image::codecs()->registerCodec(std::make_shared<ImageCodecQT>("jpg"));
 
-#if !defined(RADIANT_IOS)
-      // Image::codecs()->registerCodec(new ImageCodecSVG());
-      Image::codecs()->registerCodec(std::make_shared<ImageCodecSVG>());
-      Image::codecs()->registerCodec(std::make_shared<ImageCodecDDS>());
-#endif
+      Image::codecs()->registerCodec(std::make_shared<ImageCodecCS>());
 
     } // MULTI_ONCE
   }

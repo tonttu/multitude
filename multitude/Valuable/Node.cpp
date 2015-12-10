@@ -171,19 +171,26 @@ namespace Valuable
       : Attribute(),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId()),
+      m_id(nullptr, "id", generateId()),
       m_frame(0),
       m_listenersId(0)
-  {}
+  {
+    eventAddOut("attribute-added");
+    eventAddOut("attribute-removed");
+    addAttribute("id", &m_id);
+  }
 
   Node::Node(Node * host, const QByteArray & name, bool transit)
       : Attribute(host, name, transit),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(this, "id", generateId()),
+      m_id(nullptr, "id", generateId()),
       m_frame(0),
       m_listenersId(0)
   {
+    eventAddOut("attribute-added");
+    eventAddOut("attribute-removed");
+    addAttribute("id", &m_id);
   }
 
   Node::~Node()
@@ -314,12 +321,10 @@ namespace Valuable
 
   Attribute * Node::attribute(const QByteArray & name) const
   {
-    size_t slashIndex = name.indexOf('/');
+    const int slashIndex = name.indexOf('/');
 
-    if(slashIndex == std::string::npos) {
-      container::const_iterator it = m_attributes.find(name);
-
-      return it == m_attributes.end() ? 0 : it->second;
+    if(slashIndex == -1) {
+      return m_attributes.value(name);
     }
     else {
       const QByteArray part1 = name.left(slashIndex);
@@ -371,6 +376,7 @@ namespace Valuable
 
     m_attributes[attribute->name()] = attribute;
     attribute->m_host  = this;
+    eventSend("attribute-added", attribute->name());
     attributeAdded(attribute);
 
     return true;
@@ -382,6 +388,7 @@ namespace Valuable
       if (it->second == attribute) {
         m_attributes.erase(it);
         attribute->m_host = nullptr;
+        eventSend("attribute-removed", attribute->name());
         attributeRemoved(attribute);
         return;
       }
@@ -804,7 +811,7 @@ namespace Valuable
   void Node::eventAddOut(const QByteArray & id)
   {
     if (m_eventSendNames.contains(id)) {
-      Radiant::warning("Node::eventAddSend # Trying to register event '%s' that is already registered", id.data());
+      Radiant::warning("Node::eventAddOut # Trying to register event '%s' that is already registered", id.data());
     } else {
       m_eventSendNames.insert(id);
 #ifdef MULTI_DOCUMENTER
@@ -816,12 +823,31 @@ namespace Valuable
   void Node::eventAddIn(const QByteArray &id)
   {
     if (m_eventListenNames.contains(id)) {
-      Radiant::warning("Node::eventAddListen # Trying to register duplicate event handler for event '%s'", id.data());
+      Radiant::warning("Node::eventAddIn # Trying to register duplicate event handler for event '%s'", id.data());
     } else {
       m_eventListenNames.insert(id);
 #ifdef MULTI_DOCUMENTER
       s_eventListenNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
 #endif
+    }
+  }
+
+  void Node::eventRemoveOut(const QByteArray & eventId)
+  {
+    if (m_eventSendNames.contains(eventId)) {
+      m_eventSendNames.remove(eventId);
+    } else {
+      Radiant::warning("Node::eventRemoveOut # Couldn't find event '%s'", eventId.data());
+    }
+
+  }
+
+  void Node::eventRemoveIn(const QByteArray & messageId)
+  {
+    if (m_eventListenNames.contains(messageId)) {
+      m_eventListenNames.remove(messageId);
+    } else {
+      Radiant::warning("Node::eventRemoveIn # Couldn't find event '%s'", messageId.data());
     }
   }
 
@@ -1025,6 +1051,14 @@ namespace Valuable
   {
     for(auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
       i->second->setAsDefaults();
+  }
+
+  bool Node::isChanged() const
+  {
+    for (auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
+      if (i->second->isChanged())
+        return true;
+    return false;
   }
 
   void Node::eventAddDeprecated(const QByteArray &deprecatedId, const QByteArray &newId)

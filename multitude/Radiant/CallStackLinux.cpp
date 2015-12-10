@@ -28,6 +28,7 @@
 #include <QRegExp>
 
 #include "StringUtils.hpp"
+#include "FileUtils.hpp"
 
 // Utility function
 QString file_and_line(const QString & file, long ptr)
@@ -39,7 +40,7 @@ QString file_and_line(const QString & file, long ptr)
   static const char * opts = 0;
   if(!opts) {
     // check for --pretty-print
-    if(system("addr2line -pe /bin/false 0 >/dev/null 2>&1") == 0)
+    if(Radiant::FileUtils::runInShell("addr2line -pe /bin/false 0 >/dev/null 2>&1") == 0)
       opts = "-pie";
     else
       opts = "-ie";

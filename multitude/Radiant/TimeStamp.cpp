@@ -16,6 +16,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <QDateTime>
+
 #ifndef WIN32
 #include <sys/time.h>
 #else
@@ -155,6 +157,11 @@ namespace Radiant {
 
 #endif // WIN32
 
+  TimeStamp::TimeStamp(const QDateTime & datetime)
+    : m_val(datetime.toTime_t() * ticksPerSecond().value())
+  {
+  }
+
   TimeStamp TimeStamp::createDate(const char * date,
 				  const char * delim,
 				  bool yearfirst)
@@ -261,6 +268,32 @@ namespace Radiant {
 	return QString(str);
 #endif
 
+  }
+
+  QString TimeStamp::asStringISO8601() const
+  {
+    QDateTime datetime = QDateTime::fromMSecsSinceEpoch(milliseconds()).toUTC();
+    QDate date = datetime.date();
+    QTime time = datetime.time();
+
+    QChar fill = QLatin1Char('0');
+
+    /// YYYY-MM-DDTHH:mm:ss.SSSZ
+    QString str = QString("%1-%2-%3T%4:%5:%6.%7Z")
+        .arg(date.year(), 4, 10, fill)
+        .arg(date.month(), 2, 10, fill)
+        .arg(date.day(), 2, 10, fill)
+        .arg(time.hour(), 2, 10, fill)
+        .arg(time.minute(), 2, 10, fill)
+        .arg(time.second(), 2, 10, fill)
+        .arg(time.msec(), 3, 10, fill);
+
+    return str;
+  }
+
+  QDateTime TimeStamp::asQDateTime() const
+  {
+    return QDateTime::fromTime_t(m_val / ticksPerSecond().value());
   }
 
   std::ostream & operator<<(std::ostream & os, const TimeStamp & ts)

@@ -27,8 +27,8 @@
 namespace Radiant {
   class BinaryStream;
 }
-
-
+#if 0
+#endif
 namespace Radiant {
 
   /// OSC-like binary data storage
@@ -247,10 +247,14 @@ namespace Radiant {
     /// @param n bytes to read
     /// @return true on success
     bool readBlob(void * ptr, int n);
-    /// Reads a blob of expected size
+    /// Reads a blob
     /// @param[out] buf buffer to write to. The buffer will be resized to fit the data
     /// @return true on success
     bool readBlob(std::vector<uint8_t> & buf);
+    /// Reads a blob without copying the data
+    /// @param ptr will be assigned to be the beginning of the blob data
+    /// @returns size of blob, or -1 in case of error
+    int readBlobPtr(void *& ptr);
 
     /// Reads a 2D 32-bit floating point vector from the buffer
     /// @param[out] ok check if the read was successful

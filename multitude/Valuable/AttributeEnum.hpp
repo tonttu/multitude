@@ -27,6 +27,11 @@ namespace Valuable
       m_allowIntegers = allow;
     }
 
+    bool allowIntegers() const
+    {
+      return m_allowIntegers;
+    }
+
     const QMap<QString, int> & enumValues() const { return m_enumValues; }
 
   protected:
@@ -64,7 +69,7 @@ namespace Valuable
    *   AttributeT<Mode> m_mode;
    *
    *   /// m_priority is an integer, but has shortcuts low/medium/high
-   *   AttributeEnumT<int> m_priority;
+   *   AttributeT<int> m_priority;
    * };
    *
    * //////////////////////////////////////////////////////////////////////////

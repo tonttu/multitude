@@ -270,14 +270,15 @@ namespace Luminous
   class Style
   {
   public:
-    Style() {}
-    Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)) {}
-    Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke) {}
+    Style() : m_hasPremultipliedAlpha(false) {}
+    Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)), m_hasPremultipliedAlpha(s.m_hasPremultipliedAlpha) {}
+    Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke), m_hasPremultipliedAlpha(s.m_hasPremultipliedAlpha) {}
 
     Style & operator=(Style && s)
     {
       m_fill = std::move(s.m_fill);
       m_stroke = std::move(s.m_stroke);
+      m_hasPremultipliedAlpha = s.m_hasPremultipliedAlpha;
       return *this;
     }
 
@@ -285,6 +286,7 @@ namespace Luminous
     {
       m_fill = s.m_fill;
       m_stroke = s.m_stroke;
+      m_hasPremultipliedAlpha = s.m_hasPremultipliedAlpha;
       return *this;
     }
 
@@ -368,9 +370,24 @@ namespace Luminous
     /// @param texture Texture to be tied with the name
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
+    bool hasPremultipliedAlpha() const { return m_hasPremultipliedAlpha; }
+    void setPremultipliedAlpha(bool v) { m_hasPremultipliedAlpha = v; }
+
+    bool hasFill() const
+    {
+      return m_fill.color().alpha() > 0.f || (m_hasPremultipliedAlpha && !m_fill.color().isZero());
+    }
+
+    bool hasStroke() const
+    {
+      return m_stroke.width() > 0.f && (m_stroke.color().alpha() > 0.f ||
+                                        (m_hasPremultipliedAlpha && !m_stroke.color().isZero()));
+    }
+
   private:
     Fill m_fill;
     Stroke m_stroke;
+    bool m_hasPremultipliedAlpha;
   };
 
 

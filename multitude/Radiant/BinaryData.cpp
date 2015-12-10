@@ -533,6 +533,29 @@ namespace Radiant {
 
   }
 
+  int BinaryData::readBlobPtr(void *& ptr)
+  {
+    if(!available(sizeof(int32_t))) {
+      unavailable("BinaryData::readBlobPtr");
+      return -1;
+    }
+
+    int32_t marker = getRef<int32_t>();
+
+    if(marker != BLOB_MARKER) {
+      skipParameter(marker);
+      return -1;
+    }
+
+    int32_t recv = getRef<int32_t>();
+
+    ptr = &m_buf[m_current];
+
+    m_current += recv;
+
+    return recv;
+  }
+
 #define BD_STR_TO_VEC(type, n, ok) \
   const char * source = & m_buf[m_current]; \
                         Radiant::Variant v(source); \

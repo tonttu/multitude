@@ -40,6 +40,14 @@ namespace Radiant {
     /// even if the underlying APIs might imply this.
     /// @param usecs Number of microseconds to sleep
     static void sleepUs(uint64_t usecs);
+
+    /// Wrapper for Windows Sleep and Linux usleep. In windows this version has
+    /// probably no better than 10ms accuracy, in Linux this might
+    /// spontaneously return before timeout has passed. This function will
+    /// always save some CPU resources, unlike some other functions in this
+    /// class that might eventually end up using busy loops.
+    /// @param seconds seconds to sleep
+    static void sleepSome(double seconds);
   };
 
   /////////////////////////////////////////////////////////////////////////////

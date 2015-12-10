@@ -48,6 +48,12 @@ namespace Valuable
     return true;
   }
 
+  bool AttributeBool::set(float v, Attribute::Layer layer, Attribute::ValueUnit)
+  {
+    setValue(!!v, layer);
+    return true;
+  }
+
   bool AttributeBool::set(const StyleValue & v, Layer layer)
   {
     if(v.size() == 1 && v.type() == StyleValue::TYPE_KEYWORD) {
@@ -58,5 +64,11 @@ namespace Valuable
       return true;
     }
     return false;
+  }
+
+  float AttributeBool::asFloat(bool * const ok, Attribute::Layer layer) const
+  {
+    if(ok) *ok = true;
+    return value(layer);
   }
 }

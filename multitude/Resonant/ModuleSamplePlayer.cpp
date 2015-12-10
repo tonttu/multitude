@@ -923,7 +923,11 @@ namespace Resonant {
         sprintf(command, "mpg123 %s --wav %s", file.toUtf8().data(), wavname.c_str());
 #endif
         Radiant::info("Performing mp3 -> wav conversion with [%s]", command);
+#ifdef RADIANT_LINUX
+        int err = Radiant::FileUtils::runInShell(command);
+#else
         int err = system(command);
+#endif
         if(err != 0)
           Radiant::error("ModuleSamplePlayer::createAmbientBackground # '%s' failed", command);
 

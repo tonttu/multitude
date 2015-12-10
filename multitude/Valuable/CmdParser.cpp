@@ -49,16 +49,14 @@ namespace Valuable
 
     QStringList out = parseAndStore(tmp, opts);
 
-    if(out.size() > 0) {
-      int argv_out = 1;
-      for(int i = 1, j = 0; i < argc; ++i) {
-        if(j < out.size() && argv[i] == out[j]) {
-          argv[argv_out++] = argv[i];
-          ++j;
-        }
+    int argv_out = 1;
+    for(int i = 1, j = 0; i < argc; ++i) {
+      if(j < out.size() && argv[i] == out[j]) {
+        argv[argv_out++] = argv[i];
+        ++j;
       }
-      argc = argv_out;
     }
+    argc = argv_out;
     return out;
   }
 

@@ -326,6 +326,11 @@ namespace Luminous
     /// Pops the current frame buffer from the stack.
     void popFrameBuffer();
 
+    typedef uint64_t ObjectMask;
+    void pushBlockObjects(ObjectMask objectMask);
+    void popBlockObjects();
+    bool blockObject(ObjectMask mask) const;
+
     //////////////////////////////////////////////////////////////////////////
     // Implementation
 
@@ -1050,6 +1055,21 @@ namespace Luminous
 
   private:
     RenderContext * m_rc;
+  };
+
+  class BlockObjectsGuard : public Patterns::NotCopyable
+  {
+  public:
+    BlockObjectsGuard(Luminous::RenderContext & r, RenderContext::ObjectMask mask)
+      : m_rc(&r)
+    {
+      r.pushBlockObjects(mask);
+    }
+
+    ~BlockObjectsGuard() { if (m_rc) m_rc->popBlockObjects(); }
+
+  private:
+    Luminous::RenderContext * m_rc;
   };
 
   /// This class provides a simple guard for setting transformations. It will

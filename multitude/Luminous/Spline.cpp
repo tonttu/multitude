@@ -82,6 +82,7 @@ namespace Luminous {
       , m_mingap(2.0f)
       , m_maxgap(3.0f)
       , m_generation(0)
+      , m_removePathsWhenErase(true)
     {
       /// @todo should share these among instances of the spline   
       m_shader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
@@ -107,7 +108,15 @@ namespace Luminous {
 
     void addPoint(const Point & p);
     void endPath();
-    void erase(const Nimble::Rectangle &eraser, float time, bool permanent);
+
+    /// Should return true if the point is completely erased, false if the point is only
+    /// partially removed (f.ex. clamp time range)
+    typedef std::function<bool(Point &p)> EraserFunc;
+    /// Return true if the point is completely erased
+    typedef std::function<bool(const Point &p)> IsErasedFunc;
+
+    void erase(const Nimble::Rectangle &eraser, const EraserFunc& eraseFunc,
+               const IsErasedFunc& isErased, std::set<std::pair<size_t, size_t>>* erasedPoints);
 
     Point interpolate(const Path & path, float index) const;
 
@@ -137,6 +146,8 @@ namespace Luminous {
     
     std::size_t m_generation;
 
+    bool m_removePathsWhenErase;
+
     Luminous::VertexDescription m_descr;
     Luminous::Program m_shader;
   };
@@ -165,7 +176,8 @@ namespace Luminous {
     m_path = nullptr;
   }
 
-  void Spline::D::erase(const Nimble::Rectangle & eraser, float time, bool permanent)
+  void Spline::D::erase(const Nimble::Rectangle & eraser, const EraserFunc& eraseFunc,
+                        const IsErasedFunc& isErased, std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
     if(!eraser.intersects(m_bounds))
       return;
@@ -177,32 +189,32 @@ namespace Luminous {
 
       std::vector<Point> & points = m_paths[i].points;
 
-      if(permanent) {
-        int validPoints = 0;
-        for(std::size_t j = 0; j < points.size(); ++j) {
-          Point & p = points[j];
-          if(p.m_range.y > 0.0f) {
-            if(eraser.isInside(p.m_location)) {
-              p.m_range.y = 0;
-              changed = true;
-            } else ++validPoints;
+      int validPoints = 0;
+      for(std::size_t j = 0; j < points.size(); ++j) {
+        Point & p = points[j];
+
+        if(isErased(p))
+          continue;
+
+        if(eraser.isInside(p.m_location)) {
+          changed = true;
+          if(!eraseFunc(p)) {
+            ++validPoints;
+          } else if(erasedPoints) {
+            erasedPoints->insert(std::make_pair(i,j));
           }
-        }
-        if(validPoints < 2) {
-          std::swap(m_paths[i], m_paths.back());
-          m_paths.resize(m_paths.size()-1);
-          --i;
-        }
-      } else {
-        for(std::size_t j = 0; j < points.size(); ++j) {
-          Point & p = points[j];
-          if(p.m_range.x <= time && p.m_range.y > time && eraser.isInside(p.m_location)) {
-            p.m_range.y = time;
-            changed = true;
-          }
+        } else {
+          ++validPoints;
         }
       }
+
+      if(validPoints < 2 && m_removePathsWhenErase) {
+        std::swap(m_paths[i], m_paths.back());
+        m_paths.resize(m_paths.size()-1);
+        --i;
+      }
     }
+
     /// @todo could just change m_vertices directly? or make some kind of light-version of recalculate?
     if(changed)
       recalculate();
@@ -392,7 +404,8 @@ namespace Luminous {
     std::copy(m_vertices.begin(), m_vertices.end(), b.vertex);
 
     /// @todo what color to use here?
-    b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
+    const float opacity = r.opacity();
+    b.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
     b.uniform->time = time;
     b.uniform->depth = b.depth;
   }
@@ -500,15 +513,53 @@ namespace Luminous {
       m_d->clear();
   }
 
-  void Spline::erase(const Nimble::Rectangle & eraser, float time)
+  void Spline::eraseWithTransparency(const Nimble::Rectangle &eraser,
+                                     std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
-    if(m_d)
-      m_d->erase(eraser, time, false);
+    auto isErased = [](const Point& p) {
+      return p.m_color.alpha() == 0.f;
+    };
+
+    auto eraseFunc = [](Point& p){
+      p.m_color.setAlpha(0.f);
+      return true;
+    };
+
+    m_d->m_removePathsWhenErase = false;
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
+    m_d->m_removePathsWhenErase = true;
   }
 
-  void Spline::erasePermanent(const Nimble::Rectangle &eraser)
+  void Spline::erase(const Nimble::Rectangle & eraser, float time,
+                     std::set<std::pair<size_t, size_t>>* erasedPoints)
   {
-    m_d->erase(eraser, 0.0f, true);
+    auto isErased = [](const Point& p) {
+      (void) p;
+      return false;
+    };
+
+    auto eraseFunc = [time](Point& p){
+      if(p.m_range.x <= time && p.m_range.y > time)
+        p.m_range.y = time;
+      return p.m_range.x >= p.m_range.y;
+    };
+
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
+  }
+
+  void Spline::erasePermanent(const Nimble::Rectangle &eraser,
+                              std::set<std::pair<size_t, size_t>>* erasedPoints)
+  {
+    auto isErased = [](const Point& p) {
+      return p.m_range.y <= 0.f;
+    };
+
+    auto eraseFunc = [](Point &p) {
+      p.m_range.y = 0.f;
+      return true;
+    };
+
+    m_d->erase(eraser, eraseFunc, isErased, erasedPoints);
   }
 
   void Spline::render(Luminous::RenderContext & r, float time) const
@@ -540,6 +591,39 @@ namespace Luminous {
   float Spline::endTime() const
   {
     return m_d->m_endTime;
+  }
+
+  void Spline::makeTransparent(const std::set<std::pair<size_t, size_t>>& points)
+  {
+    for(auto p : points) {
+      size_t i = p.first;
+      size_t j = p.second;
+      if(i < m_d->m_paths.size()) {
+        D::Path& p = m_d->m_paths[i];
+
+        if(j < p.points.size())
+          p.points[j].m_color.setAlpha(0.f);
+      }
+    }
+
+    recalculate();
+  }
+
+  void Spline::makeOpaque(const std::set<std::pair<size_t, size_t>>& points)
+  {
+    for(auto p : points) {
+      size_t i = p.first;
+      size_t j = p.second;
+      if(i < m_d->m_paths.size()) {
+        D::Path& path = m_d->m_paths[i];
+
+        if(j < path.points.size()) {
+          path.points[j].m_color.setAlpha(1.f);
+        }
+      }
+    }
+
+    recalculate();
   }
 
   int Spline::undoRedo(int points)
@@ -580,6 +664,83 @@ namespace Luminous {
       out.writeRawData(reinterpret_cast<const char*>(points.data()), size * sizeof(points[0]));
     }
     return out;
+  }
+
+  Spline Spline::clone() const
+  {
+    Spline copy;
+    copy.m_d->m_index = m_d->m_index;
+    copy.m_d->m_vertices = m_d->m_vertices;
+    copy.m_d->m_paths = m_d->m_paths;
+    copy.m_d->m_path = nullptr;
+
+    copy.m_d->m_redoLocation = m_d->m_redoLocation;
+    copy.m_d->m_endTime = m_d->m_endTime;
+    copy.m_d->m_mingap = m_d->m_mingap;
+    copy.m_d->m_maxgap = m_d->m_maxgap;
+    copy.m_d->m_bounds = m_d->m_bounds;
+    copy.m_d->m_generation = m_d->m_generation;
+
+    return copy;
+  }
+
+  QString Spline::serialize() const
+  {
+    QString str = QString("%1\n").arg(m_d->m_paths.size());
+    for(size_t i = 0; i < m_d->m_paths.size(); ++i) {
+      const std::vector<Point>& points = m_d->m_paths[i].points;
+
+      QByteArray path = QByteArray::number(int(points.size()));
+      path.append("\n");
+      for(const Point& p : points) {
+        path.append(QByteArray::number(p.m_location.x));    path.append(' ');
+        path.append(QByteArray::number(p.m_location.y));    path.append(' ');
+        path.append(QByteArray::number(p.m_range.x));       path.append(' ');
+        path.append(QByteArray::number(p.m_range.y));       path.append(' ');
+        path.append(QByteArray::number(p.m_color.red()));   path.append(' ');
+        path.append(QByteArray::number(p.m_color.green())); path.append(' ');
+        path.append(QByteArray::number(p.m_color.blue()));  path.append(' ');
+        path.append(QByteArray::number(p.m_color.alpha())); path.append(' ');
+        path.append(QByteArray::number(p.m_width));         path.append("\n");
+      }
+      str.append(path);
+    }
+    return str;
+  }
+
+  void Spline::deserialize(const QString &str)
+  {
+    clear();
+
+    QStringList lines = str.split("\n");
+    assert(lines.size() >= 1);
+    int line = 0;
+
+    int paths = lines[line++].toInt();
+    for(int i = 0; i < paths; ++i) {
+
+      int points = lines[line++].toInt();
+      points = std::min(points, lines.size() - line);
+
+      for(int j = 0; j < points; ++j) {
+        QStringList numbers = lines[line++].split(" ");
+
+        // See the rest of the scope for an explanation for magical 9
+        if(numbers.size() != 9)
+          continue;
+
+        Point p;
+        p.m_location = Nimble::Vector2f(numbers[0].toFloat(), numbers[1].toFloat());
+        p.m_range = Nimble::Vector2f(numbers[2].toFloat(), numbers[3].toFloat());
+        p.m_color = Radiant::Color(numbers[4].toFloat(), numbers[5].toFloat(),
+            numbers[6].toFloat(), numbers[7].toFloat());
+        p.m_width = numbers[8].toFloat();
+
+        m_d->addPoint(p);
+      }
+      m_d->endPath();
+    }
+    recalculate();
   }
 
   QDataStream & operator>>(QDataStream & in, Spline & spline)

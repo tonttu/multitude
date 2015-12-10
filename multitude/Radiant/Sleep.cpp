@@ -25,6 +25,7 @@
 #include <chrono>
 #include <errno.h>
 #include <time.h>
+#include <assert.h>
 
 namespace Radiant {
 
@@ -49,11 +50,9 @@ namespace Radiant {
 
     static const TIMECAPS tc = caps();
     static __declspec(thread) EventHandle t_event;
-#endif
 
     void nativeSleep(uint64_t usecs)
     {
-#ifdef RADIANT_WINDOWS
       // sleep(0) == yield
       if (usecs == 0) {
         ::Sleep(0);
@@ -69,7 +68,6 @@ namespace Radiant {
 
         uint64_t sleepUs = std::min<uint64_t>(tc.wPeriodMax * 1000, usecs - elapsed);
         // We can't get under 1 ms accuracy using multimedia timers, use sleep(0)
-        // in a loop instead. This might get ~1us accuracy if there is no cpu load
         // on the computer, but on the other hand, ::Sleep(0) can take significantly
         // longer than 1 ms as well. There is no good solution for this.
         if (sleepUs < tc.wPeriodMin * 1000) {
@@ -81,42 +79,83 @@ namespace Radiant {
           timeKillEvent(id);
         }
       }
+   }
 #else
+
+#ifdef RADIANT_LINUX
+    /// Assumes arguments are well formed - have nsec in [0, 999999999]
+    timespec addTimespecs(const timespec & a, const timespec & b)
+    {
+      timespec result;
+      result.tv_sec = a.tv_sec + b.tv_sec;
+      result.tv_nsec = a.tv_nsec + b.tv_nsec;
+      if(result.tv_nsec >= 1000*1000*1000) {
+        result.tv_sec++;
+        result.tv_nsec-=1000*1000*1000;
+      }
+      return result;
+    }
+    
+    void sleepTimespec(timespec req)
+    {
+      timespec now;
+      int res = clock_gettime(CLOCK_MONOTONIC, &now);
+      assert(res == 0);
+      timespec then = addTimespecs(now, req);
+      do {
+        res = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &then, nullptr);
+      } while(res == EINTR);
+      assert(res == 0);
+    }
+#else
+    void sleepTimespec(timespec req)
+    {
+      timespec rem = {0, 0};
+      while(req.tv_sec || req.tv_nsec) {
+        if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
+          std::swap(req, rem);
+        } else {
+          break;
+        }
+      }
+    }
+#endif
+    void nativeSleep(uint64_t usecs)
+    {
       if(usecs == 0) {
         sched_yield();
       } else {
         timespec req;
-
         req.tv_sec = static_cast<std::time_t>(usecs / 1000000);
         req.tv_nsec = static_cast<long>(1000*(usecs % 1000000));
-        timespec rem = {0, 0};
-
-        while(req.tv_sec || req.tv_nsec) {
-          if(nanosleep(&req, &rem) != 0 && errno == EINTR) {
-            std::swap(req, rem);
-          } else {
-            break;
-          }
-        }
+        sleepTimespec(req);
       }
-#endif
     }
-  }
+#endif  // RADIANT_LINUX
+  }  // unnamed namespace
 
   void Sleep::sleepS(uint32_t secs)
   {
-    nativeSleep(1e6*secs);
+    nativeSleep(1000*1000*(uint64_t)secs);
   }
 
   void Sleep::sleepMs(uint32_t msecs)
   {
-    nativeSleep(1e3*msecs);
+    nativeSleep(1000*(uint64_t)msecs);
   }
-
 
   void Sleep::sleepUs(uint64_t usecs)
   {
     nativeSleep(usecs);
+  }
+
+  void Sleep::sleepSome(double seconds)
+  {
+#ifdef WIN32
+    ::Sleep(seconds * 1000);
+#else
+    usleep(seconds * 1000*1000);
+#endif
   }
 
   /** Sleep in synchronous mode. The argument value is added to current time value.*/

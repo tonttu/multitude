@@ -77,6 +77,8 @@ namespace Radiant {
 // For overloading new/delete operators
 #define MEMCHECKED \
   public: \
+    static inline void *operator new(size_t s, void * ptr) { return ::operator new(s, ptr); } \
+    static inline void *operator new[](size_t s, void * ptr) { return ::operator new[](s, ptr); } \
     static inline void *operator new(size_t s) { return Radiant::mtmalloc(s); } \
     static inline void *operator new[](size_t s) { return Radiant::mtmalloc(s); } \
     static inline void operator delete(void *ptr) { Radiant::mtfree(ptr); } \

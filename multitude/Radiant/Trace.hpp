@@ -171,6 +171,16 @@ namespace Radiant {
   /// @param filename output filename
   RADIANT_API void setTraceFile(const char * filename);
 
+#ifdef RADIANT_LINUX
+  /// Enable syslog logging
+  /// @param ident Application name or "ident" in syslog
+  /// @param minSeverity limit syslog logging to messages with severy at least minSeverity
+  RADIANT_API void openSyslog(const QString & ident, Severity minSeverity);
+
+  /// Disable syslog logging
+  RADIANT_API void closeSyslog();
+#endif
+
   /// This class provides an output stream for debugging information.
   class Trace
   {

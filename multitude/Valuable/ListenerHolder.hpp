@@ -5,6 +5,7 @@
 #include "Node.hpp"
 
 #include <unordered_map>
+#include <Radiant/Mutex.hpp>
 
 namespace Valuable
 {
@@ -17,7 +18,7 @@ namespace Valuable
   ///
   /// If the target Node or Attribute dies, ListenerHolder does not try to unregister events for those objects.
   ///
-  /// Not thread safe. Should only be used from the same thread as the target nodes and attributes.
+  /// Thread safe but could use a bit more granular locks.
   class VALUABLE_API ListenerHolder
   {
   public:
@@ -44,6 +45,8 @@ namespace Valuable
              const Node::ListenerFuncBd & func,
              Node::ListenerType listenerType = Node::ListenerType::DIRECT);
 
+    void removeListeners(Attribute * attr);
+
   private:
     ListenerHolder(const ListenerHolder&);
     void operator=(const ListenerHolder&);
@@ -51,6 +54,7 @@ namespace Valuable
     void setupRemoveListener(Attribute * attr);
     void attributeGotDeleted(Attribute * attr);
 
+    Radiant::Mutex m_mutex;
     std::unordered_map<Attribute*, long> m_deleteListeners;
     std::unordered_multimap<Attribute*, long> m_attributeListeners;
     std::unordered_multimap<Node*, long> m_eventListeners;

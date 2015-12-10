@@ -16,6 +16,8 @@
 #include "Directory.hpp"
 #include "Radiant.hpp"
 #include "Trace.hpp"
+#include "Timer.hpp"
+#include "ProcessRunner.hpp"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -29,6 +31,13 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
+#include <QThread>
+#include <QTemporaryFile>
+
+#ifdef RADIANT_LINUX
+#include <errno.h>
+#include <sys/file.h>
+#endif
 
 #ifdef RADIANT_WINDOWS
 #include <io.h>
@@ -44,37 +53,216 @@
 
 namespace {
   Radiant::Mutex s_fileWriterMutex;
-  void (*s_fileWriterInit)() = 0;
-  void (*s_fileWriterDeinit)() = 0;
-  volatile int s_fileWriterCount = 0;
+  bool s_fileWriterMountedRW = false;
+  bool s_fileWriterEnabled = false;
+  int s_fileWriterCount = 0;
+  std::function<void (Radiant::FileWriter::FileWriterMode mode)> s_callback = nullptr;
+
+#ifdef RADIANT_LINUX
+
+  bool do_flock(QFile & file, int flags = LOCK_EX) {
+    while(flock(file.handle(), flags) == -1) {
+      if(errno != EINTR) return false;
+    }
+    return true;
+  }
+
+  bool try_flock(QFile & file, bool exclusive = true) {
+    while(flock(file.handle(), (exclusive ? LOCK_EX : LOCK_SH) | LOCK_NB) == -1) {
+      if(errno == EWOULDBLOCK) return false;
+      if(errno != EINTR) return false;
+    }
+    return true;
+  }
+
+  QFile s_globalLockfile;
+  QFile s_usersLockfile;
+
+  bool s_initLocks()
+  {
+    if(!s_globalLockfile.isOpen()) {
+      s_globalLockfile.setFileName("/tmp/mount-rw-lock");
+      if(!s_globalLockfile.open(QFile::WriteOnly)) {
+        Radiant::error("Failed to open /tmp/mount-rw-lock: %s", s_globalLockfile.errorString().toUtf8().data());
+        return false;
+      }
+    }
+
+    if(!s_usersLockfile.isOpen()) {
+      s_usersLockfile.setFileName("/tmp/mount-rw-users");
+      if(!s_usersLockfile.open(QFile::WriteOnly)) {
+        Radiant::error("Failed to open /tmp/mount-rw-users: %s", s_usersLockfile.errorString().toUtf8().data());
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  void s_mountRW(const QString & name)
+  {
+    if(!s_initLocks()) return;
+
+    if(!do_flock(s_globalLockfile)) {
+      Radiant::error("Failed to acquire the global lock: %s", strerror(errno));
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(try_flock(s_usersLockfile)) {
+      Radiant::info("Remounting root filesystem to read-write -mode (reason: %s)", name.toUtf8().data());
+      Radiant::FileUtils::runAsRoot("mount", QStringList() << "-o" << "remount,rw" << "/");
+
+      if(!do_flock(s_usersLockfile, LOCK_UN)) {
+        Radiant::error("Failed to release the users lock: %s", strerror(errno));
+        s_globalLockfile.close();
+        s_usersLockfile.close();
+        return;
+      }
+    }
+
+    if(!do_flock(s_usersLockfile, LOCK_SH)) {
+      Radiant::error("Failed to increase the use count");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(!do_flock(s_globalLockfile, LOCK_UN)) {
+      Radiant::error("Failed to release the global lock");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+  }
+
+  void s_mountRO()
+  {
+    if(!s_initLocks()) return;
+
+    if(!do_flock(s_globalLockfile)) {
+      Radiant::error("Failed to acquire the global lock: %s", strerror(errno));
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(!do_flock(s_usersLockfile, LOCK_UN)) {
+      Radiant::error("Failed to decrease the use count");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+
+    if(try_flock(s_usersLockfile)) {
+      Radiant::info("Remounting root filesystem to read-only -mode");
+      /// @todo should this happen asynchronously?
+      Radiant::FileUtils::run("sync");
+      Radiant::FileUtils::runAsRoot("mount", QStringList() << "-o" << "remount,ro" << "/");
+
+      if(!do_flock(s_usersLockfile, LOCK_UN)) {
+        Radiant::error("Failed to release the users lock: %s", strerror(errno));
+        s_globalLockfile.close();
+        s_usersLockfile.close();
+        return;
+      }
+    }
+
+    if(!do_flock(s_globalLockfile, LOCK_UN)) {
+      Radiant::error("Failed to release the global lock");
+      s_globalLockfile.close();
+      s_usersLockfile.close();
+      return;
+    }
+  }
+
+  void fileWriterInit()
+  {
+    s_fileWriterEnabled = Radiant::FileWriter::wantRootFileSystemReadOnly();
+    if(s_fileWriterEnabled)
+      Radiant::info("Root filesystem is mounted in read-only mode, using rw-remounting when necessary.");
+  }
+#endif
 }
 
 namespace Radiant
 {
-  FileWriter::FileWriter()
+  FileWriter::FileWriter(const QString & name)
   {
-    if(!s_fileWriterInit) return;
+    (void)name;
+#ifdef RADIANT_LINUX
+    MULTI_ONCE{ fileWriterInit(); }
+#endif
+    if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
-    if(s_fileWriterCount++ == 0)
-      s_fileWriterInit();
+    s_fileWriterCount++;
+    if (!s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
+      s_mountRW(name);
+#endif
+      s_fileWriterMountedRW = true;
+      if(s_callback)
+        s_callback(READ_WRITE);
+    }
   }
 
   FileWriter::~FileWriter()
   {
-    if(!s_fileWriterDeinit) return;
+    if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
-    if(--s_fileWriterCount == 0)
-      s_fileWriterDeinit();
+    if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
+      s_mountRO();
+#endif
+      s_fileWriterMountedRW = false;
+      if(s_callback)
+        s_callback(READ_ONLY);
+    }
   }
 
-  void FileWriter::setInitFunction(void (*f)())
+  bool FileWriter::wantRootFileSystemReadOnly()
   {
-    s_fileWriterInit = f;
+#ifdef RADIANT_LINUX
+    /// We are looking at /etc/fstab instead of /proc/mounts, because we want
+    /// to know if we prefer to have the root filesystem in ro-state, instead
+    /// of looking at the current state, that could be temporarily different.
+    QFile file("/etc/fstab");
+    if(file.open(QFile::ReadOnly)) {
+      // UUID=4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9	/	ext4	noatime,errors=remount-ro,ro	0	0
+      // /dev/disk/by-uuid/4d518a9b-9ea8-4f15-8e75-e4fb4f7e4af9 / ext4 rw,noatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
+      QRegExp re("(?:^|\\n)[^\\s]+\\s+/\\s+[^\\s]+\\s+([^\\s]+)\\s+\\d+\\s+\\d+(?:\\n|$)");
+      if(re.indexIn(QString::fromUtf8(file.readAll())) >= 0) {
+        QStringList mountOptions = re.cap(1).split(",");
+        return mountOptions.contains("ro");
+      }
+    }
+#endif
+    return false;
   }
 
-  void FileWriter::setDeinitFunction(void (*f)())
+  void FileWriter::setCallback(std::function<void (FileWriter::FileWriterMode)> callback)
   {
-    s_fileWriterDeinit = f;
+    s_callback = callback;
+  }
+
+  FileWriterMerger::FileWriterMerger()
+  {
+    Guard g(s_fileWriterMutex);
+    s_fileWriterCount++;
+  }
+
+  FileWriterMerger::~FileWriterMerger()
+  {
+    Guard g(s_fileWriterMutex);
+    if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
+#ifdef RADIANT_LINUX
+      s_mountRO();
+#endif
+      s_fileWriterMountedRW = false;
+      if(s_callback)
+        s_callback(FileWriter::READ_ONLY);
+    }
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -122,14 +310,14 @@ namespace Radiant
 
   bool FileUtils::renameFile(const char * from, const char * to)
   {
-    FileWriter writer;
+    FileWriter writer("FileUtils::renameFile");
     int ok = rename(from, to);
     return (ok == 0);
   }
 
   bool FileUtils::removeFile(const char * filename)
   {
-    FileWriter writer;
+    FileWriter writer("FileUtils::removeFile");
     return remove(filename) == 0;
   }
 
@@ -143,6 +331,7 @@ namespace Radiant
 
   bool FileUtils::writeTextFile(const char * filename, const char * contents)
   {
+    FileWriter writer("FileUtils::writeTextFile");
     uint32_t len = uint32_t(strlen(contents));
 
     QString tmpname = QString(filename)+".cornerstone_tmp";
@@ -308,5 +497,61 @@ namespace Radiant
 #else
 		return QString("/");
 #endif
-	}
+  }
+
+#ifdef RADIANT_LINUX
+  int FileUtils::runInShell(QString cmd, QByteArray * out, QByteArray * err, bool quiet)
+  {
+    return run("/bin/sh", QStringList() << "-c" << cmd, out, err, quiet);
+  }
+
+  int FileUtils::run(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
+  {
+    QByteArray outStdout, outStderr;
+    ProcessIO io = ProcessIO(OutputRedirect(&outStdout), OutputRedirect(&outStderr));
+
+    auto runner = newProcessRunner();
+    assert(runner);
+
+    ProcessRunner::Result result = runner->run(cmd, argv, 300.0, io);
+
+    if(out) *out = outStdout;
+    if(err) *err = outStderr;
+
+    if(!outStderr.isEmpty() && !quiet) {
+      Radiant::error("%s: %s", cmd.toUtf8().data(), outStderr.data());
+    }
+
+    return result.exitCode;
+  }
+
+  int FileUtils::runAsRoot(QString cmd, QStringList argv, QByteArray * out, QByteArray * err, bool quiet)
+  {
+    if(geteuid() == 0) {
+      return run(cmd, argv, out, err, quiet);
+    } else {
+      return run("sudo", (QStringList() << "-n" << "--" << cmd) + argv, out, err, quiet);
+    }
+    return 0;
+  }
+
+  void FileUtils::writeAsRoot(const QString & filename, const QByteArray & data, bool quiet)
+  {
+    Radiant::FileWriter writer("FileUtils::writeAsRoot");
+
+    QTemporaryFile file("taction.tmpfile");
+    if(file.open()) {
+      file.write(data);
+      file.close();
+      runAsRoot("mv", QStringList() << file.fileName() << filename, 0, 0, quiet);
+      runAsRoot("chown", QStringList() << "root:root" << filename, 0, 0, quiet);
+      runAsRoot("chmod", QStringList() << "0644" << filename, 0, 0, quiet);
+
+      file.setAutoRemove(false);
+    } else {
+      if (!quiet)
+        Radiant::error("Failed to write %s", filename.toUtf8().data());
+    }
+  }
+#endif
 }

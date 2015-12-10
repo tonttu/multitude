@@ -82,7 +82,10 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0)
+      m_generation(0),
+      m_hasPreMultipliedAlpha(false)
+      // m_dataReady(false),
+      // m_ready(false)
   {}
 
   Image::Image(const Image& img)
@@ -91,6 +94,7 @@ namespace Luminous
     , m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN)
     , m_data(nullptr)
     , m_generation(0)
+    , m_hasPreMultipliedAlpha(img.m_hasPreMultipliedAlpha)
   {
     *this = img;
   }
@@ -143,39 +147,68 @@ namespace Luminous
     const float sx = float(src.width()) / float(w);
     const float sy = float(src.height()) / float(h);
 
-    for(int y0 = 0; y0 < h; y0++) {
+    m_hasPreMultipliedAlpha = src.m_hasPreMultipliedAlpha;
+    if (m_hasPreMultipliedAlpha || !hasAlpha()) {
+      for(int y0 = 0; y0 < h; y0++) {
 
-      for(int x0 = 0; x0 < w; x0++) {
+        for(int x0 = 0; x0 < w; x0++) {
 
-        int count = 0;
-        int alphaCount = 0;
-        float alphaSum = 0.f;
-        Nimble::Vector3 colorSum(0.f, 0.f, 0.f);
+          int count = 0;
+          Nimble::Vector4 colorSum(0.f, 0.f, 0.f, 0.f);
 
-        // Take 'floor' of the limits in order to avoid floating point accuracy problems
-        int maxY = sy * y0 + sy;
-        int maxX = sx * x0 + sx;
+          // Take 'floor' of the limits in order to avoid floating point accuracy problems
+          int maxY = sy * y0 + sy;
+          int maxX = sx * x0 + sx;
 
-        for(int j = sy * y0; j < maxY; ++j) {
-          for(int i = sx * x0; i < maxX; ++i) {
-            Nimble::Vector4 p = src.pixel(i,j);
-            // If this pixel contributes any color, scale by alpha and add it to the sum
-            if (p.w > std::numeric_limits<float>::epsilon()) {
-              alphaSum += p.w;
-              colorSum += p.vector3() * p.w;
-              ++alphaCount;
+          for(int j = sy * y0; j < maxY; ++j) {
+            for(int i = sx * x0; i < maxX; ++i) {
+              colorSum += src.pixel(i,j);
+              ++count;
             }
-            ++count;
           }
-        }
-        if (alphaCount > 0) {
-          colorSum /= alphaSum;
-          alphaSum /= count;
-          // Round the color (setPixel just makes float -> int conversion wihtout rounding)
-          colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
-        }
 
-        setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
+          // Round the color (setPixel just makes float -> int conversion wihtout rounding)
+          colorSum += Nimble::Vector4f(1/512.0f, 1/512.0f, 1/512.0f, 1/512.0f);
+
+          setPixel(x0, y0, colorSum / count);
+        }
+      }
+    } else {
+
+      for(int y0 = 0; y0 < h; y0++) {
+
+        for(int x0 = 0; x0 < w; x0++) {
+
+          int count = 0;
+          int alphaCount = 0;
+          float alphaSum = 0.f;
+          Nimble::Vector3 colorSum(0.f, 0.f, 0.f);
+
+          // Take 'floor' of the limits in order to avoid floating point accuracy problems
+          int maxY = sy * y0 + sy;
+          int maxX = sx * x0 + sx;
+
+          for(int j = sy * y0; j < maxY; ++j) {
+            for(int i = sx * x0; i < maxX; ++i) {
+              Nimble::Vector4 p = src.pixel(i,j);
+              // If this pixel contributes any color, scale by alpha and add it to the sum
+              if (p.w > std::numeric_limits<float>::epsilon()) {
+                alphaSum += p.w;
+                colorSum += p.vector3() * p.w;
+                ++alphaCount;
+              }
+              ++count;
+            }
+          }
+          if (alphaCount > 0) {
+            colorSum /= alphaSum;
+            alphaSum /= count;
+            // Round the color (setPixel just makes float -> int conversion wihtout rounding)
+            colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
+          }
+
+          setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
+        }
       }
     }
 
@@ -185,6 +218,9 @@ namespace Luminous
 
   bool Image::copyResample(const Image & source, int w, int h)
   {
+    if (m_hasPreMultipliedAlpha) {
+      Radiant::error("Image::copyResample # Not implemented with pre-multiplied alpha");
+    }
     changed();
 
     if(source.pixelFormat() == PixelFormat::rgbUByte()) {
@@ -337,6 +373,10 @@ namespace Luminous
   /// @todo this function is retarded. It should be simplified.
   bool Image::quarterSize(const Image & source)
   {
+    if (m_hasPreMultipliedAlpha) {
+      Radiant::error("Image::quarterSize # Not implemented with pre-multiplied alpha");
+    }
+
     changed();
 
     const int sw = source.width();
@@ -559,6 +599,8 @@ namespace Luminous
     unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
     memcpy(m_data, img.m_data, bytes);
 
+    m_hasPreMultipliedAlpha = img.m_hasPreMultipliedAlpha;
+
     changed();
 
     // Copy associated texture (if any)
@@ -590,6 +632,7 @@ namespace Luminous
     m_data = img.m_data;
     m_generation = img.m_generation;
     m_texture = std::move(img.m_texture);
+    m_hasPreMultipliedAlpha = img.m_hasPreMultipliedAlpha;
 
     /// Invalidate the old
     img.m_width = 0;
@@ -597,6 +640,7 @@ namespace Luminous
     img.m_pixelFormat = Luminous::PixelFormat();
     img.m_data = nullptr;
     img.m_generation = 0;
+    img.m_hasPreMultipliedAlpha = false;
 
     return *this;
   }
@@ -645,7 +689,7 @@ namespace Luminous
     return type;
   }
 */
-  bool Image::read(const QString & filename)
+  bool Image::read(const QString & filename, bool usePreMultipliedAlpha)
   {
     initDefaultImageCodecs();
 
@@ -680,11 +724,20 @@ namespace Luminous
     if(m_texture)
       m_texture->setData(width(), height(), pixelFormat(), m_data);
 
+    if (usePreMultipliedAlpha) {
+      toPreMultipliedAlpha();
+    }
+
     return result;
   }
 
   bool Image::write(const QString & filename) const
   {
+    if (m_hasPreMultipliedAlpha) {
+      Luminous::Image tmp(*this);
+      tmp.toPostMultipliedAlpha();
+      return tmp.write(filename);
+    }
     initDefaultImageCodecs();
 
     bool ret = false;
@@ -778,6 +831,7 @@ namespace Luminous
     m_height = 0;
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
+    m_hasPreMultipliedAlpha = false;
     changed();
 
     m_texture.reset();
@@ -923,6 +977,70 @@ namespace Luminous
     }
 
     return *m_texture.get();
+  }
+
+  void Image::toPreMultipliedAlpha()
+  {
+    if (!hasAlpha() || m_hasPreMultipliedAlpha)
+      return;
+
+    if (m_pixelFormat.numChannels() == 4 && m_pixelFormat.bytesPerPixel() == 4) {
+      // optimization to use integer arithmetic for most common pixel format
+      for (int y = 0; y < m_height; ++y) {
+        for (unsigned char * px = line(y), * end = px + m_width * 4; px != end; px += 4) {
+          // +127 for rounding to correct direction
+          px[0] = (px[0] * px[3] + 127) / 255;
+          px[1] = (px[1] * px[3] + 127) / 255;
+          px[2] = (px[2] * px[3] + 127) / 255;
+        }
+      }
+    } else {
+      // This should work for generic cases
+      for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+          Nimble::Vector4f c = pixel(x, y);
+          c.x *= c.w;
+          c.y *= c.w;
+          c.z *= c.w;
+          setPixel(x, y, c);
+        }
+      }
+    }
+    m_hasPreMultipliedAlpha = true;
+  }
+
+  void Image::toPostMultipliedAlpha()
+  {
+    if (!hasAlpha() || !m_hasPreMultipliedAlpha)
+      return;
+
+    if (m_pixelFormat.numChannels() == 4 && m_pixelFormat.bytesPerPixel() == 4) {
+      // optimization to use integer arithmetic for most common pixel format
+      for (int y = 0; y < m_height; ++y) {
+        for (unsigned char * px = line(y), * end = px + m_width * 4; px != end; px += 4) {
+          // if alpha is zero, then r,g,b is also zero, since this was pre-multiplied image
+          // alpha>>1 is for rounding to the right direction
+          int alpha = std::max<unsigned char>(px[3], 1);
+          px[0] = ((alpha>>1) + px[0] * 255) / alpha;
+          px[1] = ((alpha>>1) + px[1] * 255) / alpha;
+          px[2] = ((alpha>>1) + px[2] * 255) / alpha;
+        }
+      }
+    } else {
+      // This should work for generic cases
+      for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+          Nimble::Vector4f c = pixel(x, y);
+          if (c.w > 0.0f) {
+            c.x /= c.w;
+            c.y /= c.w;
+            c.z /= c.w;
+          }
+          setPixel(x, y, c);
+        }
+      }
+    }
+    m_hasPreMultipliedAlpha = false;
   }
 
   /////////////////////////////////////////////////////////////////////////////

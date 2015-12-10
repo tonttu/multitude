@@ -76,6 +76,13 @@ namespace Valuable
       /// Assigns by subtraction
       AttributeT & operator -= (const VectorType & v) { *this = value() - v; return *this; }
 
+      /// Assigns by multiplication
+      template<typename S>
+      AttributeT & operator *= (S v) { *this = value() * v; return *this; }
+      /// Assigns by division
+      template<typename S>
+      AttributeT & operator /= (S v) { *this = value() / v; return *this; }
+
       /// Subtraction operator
       VectorType operator -
       (const VectorType & v) const { return value() - v; }

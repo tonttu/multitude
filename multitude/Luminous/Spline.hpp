@@ -18,6 +18,8 @@
 
 #include <Patterns/NotCopyable.hpp>
 
+#include <set>
+
 /// @cond
 
 class QDataStream;
@@ -40,10 +42,19 @@ namespace Luminous {
     void endPath();
     void clear();
 
-    void erase(const Nimble::Rectangle & eraser, float time = 0.0f);
-    void erasePermanent(const Nimble::Rectangle & eraser);
+    void erase(const Nimble::Rectangle & eraser, float time = 0.0f,
+               std::set<std::pair<size_t, size_t>> *erasedPoints=nullptr);
+
+    void erasePermanent(const Nimble::Rectangle & eraser,
+                        std::set<std::pair<size_t, size_t>> *erasedPoints=nullptr);
+
+    void eraseWithTransparency(const Nimble::Rectangle & eraser,
+                               std::set<std::pair<size_t, size_t>> *erasedPoints=nullptr);
 
     void render(Luminous::RenderContext & r, float time = 0.0f) const;
+
+    void makeTransparent(const std::set<std::pair<size_t, size_t>>& points);
+    void makeOpaque(const std::set<std::pair<size_t, size_t>>& points);
 
     void setCalculationParameters(float mingap, float maxgap);
     void recalculate();
@@ -58,6 +69,11 @@ namespace Luminous {
     Nimble::Rect controlPointBounds() const;
 
     bool isEmpty() const;
+
+    Spline clone() const;
+
+    QString serialize() const;
+    void deserialize(const QString& str);
 
   private:
     friend LUMINOUS_API QDataStream & operator<<(QDataStream & out, const Spline & spline);
