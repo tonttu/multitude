@@ -57,6 +57,8 @@ widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
+INCLUDEPATH += $$PWD/ThirdParty/expected/include
+
 withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
