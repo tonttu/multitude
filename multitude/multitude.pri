@@ -159,6 +159,7 @@ macx {
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
   system([ `uname -r | cut -d . -f1` -eq 14 ] ):DEFINES+=RADIANT_OSX_YOSEMITE
+  system([ `uname -r | cut -d . -f1` -eq 15 ] ):DEFINES+=RADIANT_OSX_EL_CAPITAN
 }
 
 #

@@ -1,4 +1,4 @@
-#if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION) || defined(RADIANT_OSX_YOSEMITE)
+#if defined(RADIANT_OSX_LION) || defined(RADIANT_OSX_MOUNTAIN_LION) || defined(RADIANT_OSX_YOSEMITE) || defined(RADIANT_OSX_EL_CAPITAN)
 
 #include "Luminous.hpp"
 #import "CocoaWindow.hpp"
