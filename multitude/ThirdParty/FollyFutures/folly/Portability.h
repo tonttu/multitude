@@ -19,40 +19,14 @@
 
 #include <cstddef>
 
-#ifndef FOLLY_NO_CONFIG
-#include <folly/folly-config.h>
-#endif
-
 #ifdef FOLLY_PLATFORM_CONFIG
 #include FOLLY_PLATFORM_CONFIG
-#endif
-
-#if FOLLY_HAVE_FEATURES_H
-#include <features.h>
 #endif
 
 #include <folly/CPortability.h>
 
 #ifdef __APPLE__
 # include <malloc/malloc.h>
-#endif
-
-#if FOLLY_HAVE_SCHED_H
- #include <sched.h>
- #ifndef FOLLY_HAVE_PTHREAD_YIELD
-  #define pthread_yield sched_yield
- #endif
-#endif
-
-// A change in folly/MemoryMapping.cpp uses MAP_ANONYMOUS, which is named
-// MAP_ANON on OSX/BSD.
-#if defined(__APPLE__) || defined(__FreeBSD__)
-  #include <sys/mman.h>
-  #ifndef MAP_ANONYMOUS
-    #ifdef MAP_ANON
-      #define MAP_ANONYMOUS MAP_ANON
-    #endif
-  #endif
 #endif
 
 // compiler specific attribute translation
@@ -166,21 +140,6 @@
 namespace std { typedef ::max_align_t max_align_t; }
 #endif
 
-/* Define macro wrappers for C++11's "final" and "override" keywords, which
- * are supported in gcc 4.7 but not gcc 4.6. */
-#if !defined(FOLLY_FINAL) && !defined(FOLLY_OVERRIDE)
-# if defined(__clang__) || __GNUC_PREREQ(4, 7)
-#  define FOLLY_FINAL final
-#  define FOLLY_OVERRIDE override
-# elif defined(_MSC_VER) && _MSC_VER >= 1600
-#  define FOLLY_FINAL final
-#  define FOLLY_OVERRIDE override
-# else
-#  define FOLLY_FINAL /**/
-#  define FOLLY_OVERRIDE /**/
-# endif
-#endif
-
 /* Platform specific TLS support
  * gcc implements __thread
  * msvc implements __declspec(thread)
@@ -215,21 +174,6 @@ namespace std { typedef ::max_align_t max_align_t; }
 #else
 #define FOLLY_NAMESPACE_STD_BEGIN     namespace std {
 #define FOLLY_NAMESPACE_STD_END       }
-#endif
-
-// Some platforms lack clock_gettime(2) and clock_getres(2). Inject our own
-// versions of these into the global namespace.
-#if FOLLY_HAVE_CLOCK_GETTIME
-#include <time.h>
-#else
-#include <folly/detail/Clock.h>
-#endif
-
-// Provide our own std::__throw_* wrappers for platforms that don't have them
-#if FOLLY_HAVE_BITS_FUNCTEXCEPT_H
-#include <bits/functexcept.h>
-#else
-#include <folly/detail/FunctionalExcept.h>
 #endif
 
 #if defined(__cplusplus)
@@ -309,23 +253,9 @@ typedef SSIZE_T ssize_t;
 # endif
 #endif
 
-#if FOLLY_UNUSUAL_GFLAGS_NAMESPACE
-namespace FOLLY_GFLAGS_NAMESPACE { }
-namespace gflags {
-using namespace FOLLY_GFLAGS_NAMESPACE;
-}  // namespace gflags
-#endif
-
 // for TARGET_OS_IPHONE
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#endif
-
-// MacOS doesn't have malloc_usable_size()
-#if defined(__APPLE__) && !defined(FOLLY_HAVE_MALLOC_USABLE_SIZE)
-inline size_t malloc_usable_size(void* ptr) {
-  return malloc_size(ptr);
-}
 #endif
 
 // RTTI may not be enabled for this compilation unit.

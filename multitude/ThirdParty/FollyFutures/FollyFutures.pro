@@ -12,7 +12,6 @@ HEADERS += folly/ApplyTuple.h \
            folly/CPortability.h \
            folly/ExceptionWrapper.h \
            folly/Executor.h \
-           folly/folly-config.h \
            folly/Hash.h \
            folly/Likely.h \
            folly/Memory.h \
