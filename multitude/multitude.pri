@@ -204,8 +204,17 @@ win32 {
     CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
 
     exists($$CORNERSTONE_DEPS_PATH) {
-      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
-      LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
+
+      TEST=$$(USE_FFMPEG)
+      isEmpty(TEST) {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
+      } else {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/ffmpeg/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/ffmpeg/bin
+        DEFINES += USE_FFMPEG
+      }
+
       enable-js {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/node/include
         LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin

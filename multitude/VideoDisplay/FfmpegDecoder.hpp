@@ -1,35 +1,26 @@
-/* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
- * and others.
- *
- * This file is licensed under GNU Lesser General Public License (LGPL),
- * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
- * distributed with this source package or obtained from the GNU organization
- * (www.gnu.org).
- * 
- */
-
-#ifndef VIDEODISPLAY_LIBAV_DECODER_HPP
-#define VIDEODISPLAY_LIBAV_DECODER_HPP
+#ifndef FFMPEGDECODER_HPP
+#define FFMPEGDECODER_HPP
 
 #include "AVDecoder.hpp"
 
 namespace VideoDisplay
 {
-  /// Initialize Libav. This is called automatically from LibavDecoder, but
-  /// should also be called manually if there is a need to call raw Libav
+
+  /// Initialize Ffmpeg. This is called automatically from FfmpegDecoder, but
+  /// should also be called manually if there is a need to call raw Ffmpeg
   /// functions outside VideoDisplay library.
   /// This will:
   ///  * Register Cornerstone log handlers
   ///  * Register Cornerstone lock manager
   ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
-  VIDEODISPLAY_API void libavInit();
+  VIDEODISPLAY_API void ffmpegInit();
 
-  /// Audio/Video decoder implementation that uses Libav as a backend
-  class LibavDecoder : public AVDecoder
+  /// Audio/Video decoder implementation that uses Ffmpeg as a backend
+  class FfmpegDecoder : public AVDecoder
   {
   public:
-    LibavDecoder();
-    ~LibavDecoder();
+    FfmpegDecoder();
+    ~FfmpegDecoder();
 
     virtual void close() OVERRIDE;
 
@@ -73,8 +64,9 @@ namespace VideoDisplay
 
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
+
 }
 
-#endif // VIDEODISPLAY_LIBAV_DECODER_HPP
+#endif // FFMPEGDECODER_HPP
