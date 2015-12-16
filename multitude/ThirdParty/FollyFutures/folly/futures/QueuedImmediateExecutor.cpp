@@ -15,17 +15,18 @@
  */
 
 #include <folly/futures/QueuedImmediateExecutor.h>
-#include <boost/thread/tss.hpp>
+#include <QThreadStorage>
 #include <queue>
 
 namespace folly {
 
 void QueuedImmediateExecutor::addStatic(Func callback) {
-  static boost::thread_specific_ptr<std::queue<Func>> q_;
-  if (!q_.get()) {
-    q_.reset(new std::queue<Func>());
+  static QThreadStorage<std::queue<Func>*> threadLocalQueue;
+  if (!threadLocalQueue.hasLocalData()) {
+    threadLocalQueue.setLocalData(new std::queue<Func>());
   }
 
+  std::queue<Func> *q_ = threadLocalQueue.localData();
   if (q_->empty()) {
     q_->push(std::move(callback));
     while (!q_->empty()) {

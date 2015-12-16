@@ -4,7 +4,6 @@ include(../../library.pri)
 INCLUDEPATH += .
 
 CONFIG += c++11
-QT -= core
 QT -= gui
 
 DEFINES += FOLLY_EXPORT
