@@ -17,6 +17,7 @@
 #pragma once
 
 #include <folly/Executor.h>
+#include <folly/Export.h>
 
 namespace folly {
 
@@ -25,7 +26,7 @@ namespace folly {
  * to this executor by one of its own callbacks will be queued instead of
  * executed inline (nested). This is usually better behavior than Inline.
  */
-class QueuedImmediateExecutor : public Executor {
+class FOLLY_API QueuedImmediateExecutor : public Executor {
  public:
   /// There's really only one queue per thread, no matter how many
   /// QueuedImmediateExecutor objects you may have.

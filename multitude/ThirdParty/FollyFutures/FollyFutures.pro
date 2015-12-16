@@ -7,11 +7,14 @@ CONFIG += c++11
 QT -= core
 QT -= gui
 
+DEFINES += FOLLY_EXPORT
+
 HEADERS += folly/ApplyTuple.h \
            folly/Baton.h \
            folly/CPortability.h \
            folly/ExceptionWrapper.h \
            folly/Executor.h \
+           folly/Export.h \
            folly/Hash.h \
            folly/Likely.h \
            folly/Memory.h \

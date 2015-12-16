@@ -2,6 +2,7 @@
 
 #include <folly/futures/Timekeeper.h>
 #include <folly/futures/Future.h>
+#include <folly/Export.h>
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -12,7 +13,7 @@
 namespace folly { namespace detail {
 
 /// Very simple timekeeper that keeps pending events in an ordered map
-class SimpleTimekeeper : public Timekeeper {
+class FOLLY_API SimpleTimekeeper : public Timekeeper {
  public:
   SimpleTimekeeper();
   ~SimpleTimekeeper();
@@ -39,7 +40,7 @@ class SimpleTimekeeper : public Timekeeper {
   std::thread thread_;
 };
 
-Timekeeper* getTimekeeperSingleton();
+FOLLY_API Timekeeper* getTimekeeperSingleton();
 
 }  // namespace detail
 }  // namespace folly

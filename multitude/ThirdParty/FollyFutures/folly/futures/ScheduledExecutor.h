@@ -17,13 +17,14 @@
 #pragma once
 
 #include <folly/Executor.h>
+#include <folly/Export.h>
 #include <chrono>
 #include <memory>
 #include <stdexcept>
 
 namespace folly {
   // An executor that supports timed scheduling. Like RxScheduler.
-  class ScheduledExecutor : public virtual Executor {
+  class FOLLY_API ScheduledExecutor : public virtual Executor {
    public:
      // Reality is that better than millisecond resolution is very hard to
      // achieve. However, we reserve the right to be incredible.

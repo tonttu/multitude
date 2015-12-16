@@ -17,6 +17,7 @@
 #pragma once
 
 #include <folly/Executor.h>
+#include <folly/Export.h>
 
 namespace folly {
 
@@ -36,7 +37,7 @@ namespace folly {
  * These will be most helpful in tests, for instance if you need to pump a mock
  * EventBase until Futures complete.
  */
-class DrivableExecutor : public virtual Executor {
+class FOLLY_API DrivableExecutor : public virtual Executor {
  public:
   virtual ~DrivableExecutor() = default;
 

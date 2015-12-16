@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #pragma once
+
+#include <folly/Export.h>
+
 namespace folly {
 
 /// In functional programming, the degenerate case is often called "unit". In
@@ -22,7 +25,7 @@ namespace folly {
 /// metaprogramming. So, instead of e.g. Future<void>, we have Future<Unit>.
 /// You can ignore the actual value, and we port some of the syntactic
 /// niceties like setValue() instead of setValue(Unit{}).
-struct Unit {
+struct FOLLY_API Unit {
   /// Lift type T into Unit. This is the definition for all non-void types.
   template <class T> struct Lift : public std::false_type {
     using type = T;

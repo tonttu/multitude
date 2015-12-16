@@ -17,6 +17,7 @@
 
 #include <folly/futures/Future.h>
 #include <folly/Portability.h>
+#include <folly/Export.h>
 
 namespace folly {
 
@@ -38,7 +39,7 @@ namespace futures {
   /// The Timekeeper thread will be lazily created the first time it is
   /// needed. If your program never uses any timeouts or other time-based
   /// Futures you will pay no Timekeeper thread overhead.
-  Future<Unit> sleep(Duration, Timekeeper* = nullptr);
+  FOLLY_API Future<Unit> sleep(Duration, Timekeeper* = nullptr);
 
   /**
    * Set func as the callback for each input Future and return a vector of
@@ -73,7 +74,7 @@ template <class T>
 Future<typename std::decay<T>::type> makeFuture(T&& t);
 
 /** Make a completed void Future. */
-Future<Unit> makeFuture();
+FOLLY_API Future<Unit> makeFuture();
 
 /** Make a completed Future by executing a function. If the function throws
   we capture the exception, otherwise we capture the result. */
@@ -114,7 +115,7 @@ Future<T> makeFuture(Try<T>&& t);
  *
  * @returns a void Future that will call back on the given executor
  */
-inline Future<Unit> via(
+inline FOLLY_API Future<Unit> via(
     Executor* executor,
     int8_t priority = Executor::MID_PRI);
 
@@ -330,7 +331,7 @@ retrying(Policy&& p, FF&& ff);
  *  generic retrying policies
  */
 
-inline
+inline FOLLY_API
 std::function<bool(size_t, const exception_wrapper&)>
 retryingPolicyBasic(
     size_t max_tries);

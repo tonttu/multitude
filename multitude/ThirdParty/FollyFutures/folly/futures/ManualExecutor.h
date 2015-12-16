@@ -17,6 +17,7 @@
 #pragma once
 #include <folly/futures/DrivableExecutor.h>
 #include <folly/futures/ScheduledExecutor.h>
+#include <folly/Export.h>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -32,8 +33,8 @@ namespace folly {
   ///
   /// NB No attempt has been made to make anything other than add and schedule
   /// threadsafe.
-  class ManualExecutor : public DrivableExecutor,
-                         public ScheduledExecutor {
+  class FOLLY_API ManualExecutor : public DrivableExecutor,
+                                   public ScheduledExecutor {
    public:
     void add(Func) override;
 

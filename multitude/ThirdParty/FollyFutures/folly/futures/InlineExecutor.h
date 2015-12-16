@@ -16,13 +16,14 @@
 
 #pragma once
 #include <folly/Executor.h>
+#include <folly/Export.h>
 
 namespace folly {
 
   /// When work is "queued", execute it immediately inline.
   /// Usually when you think you want this, you actually want a
   /// QueuedImmediateExecutor.
-  class InlineExecutor : public Executor {
+  class FOLLY_API InlineExecutor : public Executor {
    public:
     void add(Func f) override {
       f();

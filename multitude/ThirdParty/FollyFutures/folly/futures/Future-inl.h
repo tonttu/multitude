@@ -1296,6 +1296,7 @@ retryingPolicyCappedJitteredExponentialBackoff(
 
 }
 
+/*
 // Instantiate the most common Future types to save compile time
 extern template class Future<Unit>;
 extern template class Future<bool>;
@@ -1303,5 +1304,6 @@ extern template class Future<int>;
 extern template class Future<int64_t>;
 extern template class Future<std::string>;
 extern template class Future<double>;
+*/
 
 } // namespace folly

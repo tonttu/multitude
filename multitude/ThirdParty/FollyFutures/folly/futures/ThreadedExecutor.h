@@ -20,6 +20,7 @@
 #include <mutex>
 #include <thread>
 #include <folly/Executor.h>
+#include <folly/Export.h>
 
 namespace folly { namespace futures {
 
@@ -28,7 +29,7 @@ namespace folly { namespace futures {
  *
  *  Kind of simple. Suitable for a few types of strange cases.
  */
-class ThreadedExecutor : public Executor {
+class FOLLY_API ThreadedExecutor : public Executor {
 public:
   ~ThreadedExecutor();
   void add(Func f) override;
