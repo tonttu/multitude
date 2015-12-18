@@ -107,8 +107,9 @@ namespace Luminous
 
     LUMINOUS_API int uniformBufferOffsetAlignment() const OVERRIDE;
 
-    LUMINOUS_API bool setSwapGroup(unsigned int group, unsigned int barrier) OVERRIDE;
     LUMINOUS_API void setVSync(bool vsync) OVERRIDE;
+
+    LUMINOUS_API void setupSwapGroup() OVERRIDE;
 
     LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
 
@@ -121,7 +122,7 @@ namespace Luminous
   private:
 
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
-  private:
+
     class D;
     D * m_d;
   };
