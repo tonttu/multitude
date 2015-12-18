@@ -2,6 +2,7 @@ include(../multitude.pri)
 
 HEADERS += TempFailureRetry.hpp
 HEADERS += ArrayMap.hpp
+HEADERS += ThreadPoolExecutor.hpp
 HEADERS += ObjectPool.hpp
 HEADERS += CommandLineArguments.hpp
 HEADERS += SerialPortHelpers.hpp \
@@ -83,7 +84,8 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    ThreadPoolExecutor.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \

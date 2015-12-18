@@ -47,7 +47,7 @@ class Executor {
   ///
   /// Returns true if the job could be cancelled. For example if the job was
   /// in a queue but not started yet.
-  virtual bool cancel(JobId) { return false; };
+  virtual bool cancel(JobId) { return false; }
 
   /// Enqueue a function with a given priority, where 0 is the medium priority
   /// This is up to the implementation to enforce
