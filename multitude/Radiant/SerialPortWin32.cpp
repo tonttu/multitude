@@ -67,11 +67,12 @@ namespace Radiant
   {}
 
   SerialPort::SerialPort(SerialPort && port)
-    : m_device(port.m_device),
-      m_hPort(port.m_hPort)
+    : m_device(port.m_device)
   {
+    m_d->m_hPort = port.m_d->m_hPort;
+
     port.m_device.clear();
-    port.m_hPort = 0;
+    port.m_d->m_hPort = 0;
   }
 
   SerialPort::~SerialPort()
