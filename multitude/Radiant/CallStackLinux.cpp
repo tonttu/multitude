@@ -10,7 +10,7 @@
 
 #include "Platform.hpp"
 
-#ifndef RADIANT_WINDOWS
+#ifdef RADIANT_LINUX
 
 #include "CallStack.hpp"
 #include "Mutex.hpp"

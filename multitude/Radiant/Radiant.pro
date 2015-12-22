@@ -1,5 +1,6 @@
 include(../multitude.pri)
 
+HEADERS += TempFailureRetry.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ObjectPool.hpp
 HEADERS += CommandLineArguments.hpp
@@ -155,7 +156,10 @@ linux*:SOURCES += DeviceMonitor.cpp
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
 
-linux-*: LIBS += -lX11
+linux-* {
+  LIBS += -lX11
+  PKGCONFIG += libudev
+}
 
 macx:LIBS += -framework,CoreFoundation
 
@@ -163,7 +167,6 @@ DEFINES += RADIANT_EXPORT
 
 unix {
   LIBS += -lpthread $$LIB_RT -ldl
-  PKGCONFIG += libudev
   CONFIG += qt
   QT = core network gui
 }

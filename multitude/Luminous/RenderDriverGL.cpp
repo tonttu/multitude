@@ -8,6 +8,7 @@
  *
  */
 
+#include "SwapGroups.hpp"
 #include "Luminous/ProgramGL.hpp"
 #include "Luminous/RenderDriverGL.hpp"
 #include "Luminous/StateGL.hpp"
@@ -27,7 +28,6 @@
 #include "Luminous/StencilMode.hpp"
 #include "Luminous/GPUAssociation.hpp"
 #include "RenderQueues.hpp"
-#include "SwapGroups.hpp"
 
 #include <Nimble/Matrix4.hpp>
 #include <memory>

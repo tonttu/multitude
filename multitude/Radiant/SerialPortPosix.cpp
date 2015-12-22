@@ -29,6 +29,7 @@
 #include <poll.h>
 #include <assert.h>
 #include "SerialPortHelpers.hpp"
+#include "TempFailureRetry.hpp"
 
 namespace Radiant
 {
