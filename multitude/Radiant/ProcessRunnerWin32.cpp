@@ -7,7 +7,7 @@ namespace Radiant
   {
     class ProcessRunnerWin32 : public ProcessRunner
     {
-      Result run(const QString & path, const QStringList & args, double, const ProcessIO, const ProcessNotifications)
+      Result run(const QString & path, const QStringList & args, double, const ProcessIO&, const ProcessNotifications&) override
       {
         QString run = path + " " + args.join(" ");
         Radiant::error("ProcessRunner is not implemented on Windows. Can't run: %s", run.toUtf8().data());

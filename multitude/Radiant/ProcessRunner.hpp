@@ -98,6 +98,10 @@ namespace Radiant
         environment(env) { }
   };
 
+#ifdef RADIANT_WINDOWS
+  typedef uint32_t pid_t;
+#endif
+
   /// Called after fork but maybe before exec
   typedef std::function<void(pid_t pid)> ProcessStartHandler;
 
