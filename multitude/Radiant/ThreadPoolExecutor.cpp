@@ -30,6 +30,11 @@ namespace Radiant
         if(m_func && tryMarkStarted()) {
           m_func();
         }
+        // This might not actually work if the QThreadPool checks
+        // autoDelete on the runnable after we suicide. It currently does
+        // not do that, but might in the future.
+        //
+        // Could run a cleanup task on the thread pool every now and then.
         suicide();
       }
 
@@ -134,13 +139,13 @@ namespace Radiant
     return m_threadPool.get() ? *m_threadPool : *QThreadPool::globalInstance();
   }
 
-  ThreadPoolExecutor & ThreadPoolExecutor::instance()
+  const std::shared_ptr<ThreadPoolExecutor>& ThreadPoolExecutor::instance()
   {
     static std::once_flag once;
-    static std::unique_ptr<ThreadPoolExecutor> ptr;
+    static std::shared_ptr<ThreadPoolExecutor> ptr;
     std::call_once(once, [] {
       ptr.reset(new ThreadPoolExecutor());
     });
-    return *ptr;
+    return ptr;
   }
 }

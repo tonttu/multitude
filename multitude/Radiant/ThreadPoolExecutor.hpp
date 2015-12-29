@@ -1,6 +1,7 @@
 #ifndef RADIANT_THREADPOOLEXECUTOR_HPP
 #define RADIANT_THREADPOOLEXECUTOR_HPP
 
+#include <Radiant/Export.hpp>
 #include <folly/Executor.h>
 #include <QThreadPool>
 #include <memory>
@@ -9,10 +10,10 @@ namespace Radiant
 {
   typedef folly::JobId JobId;
 
-  class ThreadPoolExecutor : public folly::Executor
+  class RADIANT_API ThreadPoolExecutor : public folly::Executor
   {
   public:
-    typedef std::function<void()> Func;
+    typedef folly::Func Func;
 
     /// @param threadPool - uses the given thread pool. If null, uses the global
     /// QThreadPool pool
@@ -28,7 +29,7 @@ namespace Radiant
     /// which can't be represented as a uint8_t.
     uint8_t getNumPriorities() const override;
 
-    static ThreadPoolExecutor & instance();
+    static const std::shared_ptr<ThreadPoolExecutor> & instance();
 
     class D;
   private:
