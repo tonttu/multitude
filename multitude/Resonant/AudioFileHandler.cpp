@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include <cassert>
-#include <unistd.h>
 
 namespace Resonant {
   
