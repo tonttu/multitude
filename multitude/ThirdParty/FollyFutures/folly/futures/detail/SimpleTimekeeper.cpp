@@ -23,9 +23,13 @@ Future<Unit> SimpleTimekeeper::after(Duration duration) {
   key.time = std::chrono::steady_clock::now() + duration;
   key.counter = counter_++;
   Promise<Unit> promise;
-  promise.setInterruptHandler([this, key](const exception_wrapper&) {
+  promise.setInterruptHandler([this, key](const exception_wrapper& e) {
     std::lock_guard<std::mutex> lock(mutex_);
-    pending_.erase(key);
+    auto it = pending_.find(key);
+    if (it != pending_.end()) {
+      it->second.setException(e);
+      pending_.erase(key);
+    }
   });
   auto result = promise.getFuture();
   std::lock_guard<std::mutex> lock(mutex_);

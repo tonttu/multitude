@@ -32,7 +32,8 @@ namespace folly { namespace futures {
 class FOLLY_API ThreadedExecutor : public Executor {
 public:
   ~ThreadedExecutor();
-  void add(Func f) override;
+  JobId add(Func f) override;
+  bool cancel(JobId) override { return false; }
 private:
   std::mutex mutex_;
   std::list<std::thread> threads_;

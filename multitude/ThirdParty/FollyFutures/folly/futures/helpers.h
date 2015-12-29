@@ -116,14 +116,14 @@ Future<T> makeFuture(Try<T>&& t);
  * @returns a void Future that will call back on the given executor
  */
 inline FOLLY_API Future<Unit> via(
-    Executor* executor,
+    const ExecutorWeakPtr& executor,
     int8_t priority = Executor::MID_PRI);
 
 /// Execute a function via the given executor and return a future.
 /// This is semantically equivalent to via(executor).then(func), but
 /// easier to read and slightly more efficient.
 template <class Func>
-auto via(Executor*, Func func)
+auto via(const ExecutorWeakPtr&, Func func)
   -> Future<typename isFuture<decltype(func())>::Inner>;
 
 /** When all the input Futures complete, the returned Future will complete.
@@ -228,6 +228,8 @@ auto collectN(Collection&& c, size_t n)
     this is basically a sliding window of Futures of size n
 
     func must return a Future for each value in input
+
+    Cancellation does not propagate to the futures returned by func.
   */
 template <class Collection, class F,
           class ItT = typename std::iterator_traits<

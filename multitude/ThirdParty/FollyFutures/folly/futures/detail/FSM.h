@@ -19,6 +19,7 @@
 #include <atomic>
 #include <mutex>
 #include <folly/MicroSpinLock.h>
+#include <folly/ScopeGuard.h>
 
 namespace folly { namespace detail {
 
@@ -59,9 +60,9 @@ public:
       mutex_.unlock();
       return false;
     }
+    SCOPE_EXIT { mutex_.unlock(); };
     action();
     state_.store(B, std::memory_order_release);
-    mutex_.unlock();
     return true;
   }
 
@@ -121,6 +122,9 @@ public:
   case (a): \
     FSM_UPDATE2(fsm, (b), (protectedAction), (unprotectedAction)); \
     break;
+
+#define FSM_RUN(fsm, protectedAction, unprotectedAction) \
+      FSM_UPDATE2((fsm), state, (protectedAction), (unprotectedAction))
 
 #define FSM_BREAK done = true; break;
 #define FSM_END }}}

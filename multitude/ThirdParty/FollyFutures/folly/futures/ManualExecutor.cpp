@@ -19,17 +19,45 @@
 #include <string.h>
 #include <string>
 #include <tuple>
-
+#include <algorithm>
 #include <stdexcept>
 
 namespace folly {
 
-void ManualExecutor::add(Func callback) {
+JobId ManualExecutor::add(Func callback) {
+  JobId key;
   {
     std::lock_guard<std::mutex> lock(lock_);
-    funcs_.push(std::move(callback));
+    key = jobId_++;
+    funcs_.emplace_back(std::move(callback), key);
   }
   cond_.notify_all();
+  return key;
+}
+
+bool ManualExecutor::cancel(JobId id) {
+  std::lock_guard<std::mutex> lock(lock_);
+
+  auto queuedMatch = [id] (const QueuedFunc & func) {
+    return func.jobId == id;
+  };
+  auto newQueueEnd = std::remove_if(funcs_.begin(), funcs_.end(), queuedMatch);
+  if (newQueueEnd != funcs_.end()) {
+    funcs_.erase(newQueueEnd, funcs_.end());
+    return true;
+  }
+  auto scheduledMatch = [id](const std::pair<const ScheduleKey, Func> & pair) {
+    return pair.first.jobId == id;
+  };
+  for(auto it = scheduledFuncs_.begin(); it != scheduledFuncs_.end();) {
+    if(scheduledMatch(*it)) {
+      scheduledFuncs_.erase(it);
+      return true;
+    } else {
+      ++it;
+    }
+  }
+  return false;
 }
 
 size_t ManualExecutor::run() {
@@ -41,11 +69,11 @@ size_t ManualExecutor::run() {
     std::lock_guard<std::mutex> lock(lock_);
 
     while (!scheduledFuncs_.empty()) {
-      auto& sf = scheduledFuncs_.top();
-      if (sf.time > now_)
+      auto it = scheduledFuncs_.begin();
+      if (it->first.time > now_)
         break;
-      funcs_.push(sf.func);
-      scheduledFuncs_.pop();
+      funcs_.emplace_back(std::move(it->second), it->first.jobId);
+      scheduledFuncs_.erase(it);
     }
 
     n = funcs_.size();
@@ -58,8 +86,8 @@ size_t ManualExecutor::run() {
         break;
       }
 
-      func = std::move(funcs_.front());
-      funcs_.pop();
+      func = std::move(funcs_.front().func);
+      funcs_.pop_front();
     }
     func();
   }

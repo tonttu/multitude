@@ -109,12 +109,11 @@ Future<T>::thenImplementation(F func, detail::argResult<isTry, F, Args...>) {
 
   // wrap these so we can move them into the lambda
   folly::MoveWrapper<Promise<B>> p;
-  p->core_->setInterruptHandlerNoLock(core_->getInterruptHandler());
+  p->core_->chainFrom(*core_);
   folly::MoveWrapper<F> funcm(std::forward<F>(func));
 
   // grab the Future now before we lose our handle on the Promise
   auto f = p->getFuture();
-  f.core_->setExecutorNoLock(getExecutor());
 
   /* This is a bit tricky.
 
@@ -175,12 +174,11 @@ Future<T>::thenImplementation(F func, detail::argResult<isTry, F, Args...>) {
 
   // wrap these so we can move them into the lambda
   folly::MoveWrapper<Promise<B>> p;
-  p->core_->setInterruptHandlerNoLock(core_->getInterruptHandler());
+  p->core_->chainFrom(*core_);
   folly::MoveWrapper<F> funcm(std::forward<F>(func));
 
   // grab the Future now before we lose our handle on the Promise
   auto f = p->getFuture();
-  f.core_->setExecutorNoLock(getExecutor());
 
   setCallback_(
     [p, funcm](Try<T>&& t) mutable {
@@ -217,8 +215,8 @@ Future<T>::then(R(Caller::*func)(Args...), Caller *instance) {
 }
 
 template <class T>
-template <class Executor, class Arg, class... Args>
-auto Future<T>::then(Executor* x, Arg&& arg, Args&&... args)
+template <class Arg, class... Args>
+auto Future<T>::then(const ExecutorWeakPtr& x, Arg&& arg, Args&&... args)
   -> decltype(this->then(std::forward<Arg>(arg),
                          std::forward<Args>(args)...))
 {
@@ -247,7 +245,7 @@ Future<T>::onError(F&& func) {
       "Return type of onError callback must be T or Future<T>");
 
   Promise<T> p;
-  p.core_->setInterruptHandlerNoLock(core_->getInterruptHandler());
+  p.core_->chainFrom(*core_);
   auto f = p.getFuture();
   auto pm = folly::makeMoveWrapper(std::move(p));
   auto funcm = folly::makeMoveWrapper(std::move(func));
@@ -278,6 +276,7 @@ Future<T>::onError(F&& func) {
   typedef typename detail::Extract<F>::FirstArg Exn;
 
   Promise<T> p;
+  p.core_->chainFrom(*core_);
   auto f = p.getFuture();
   auto pm = folly::makeMoveWrapper(std::move(p));
   auto funcm = folly::makeMoveWrapper(std::move(func));
@@ -331,6 +330,7 @@ Future<T>::onError(F&& func) {
       "Return type of onError callback must be T or Future<T>");
 
   Promise<T> p;
+  p.core_->chainFrom(*core_);
   auto f = p.getFuture();
   auto pm = folly::makeMoveWrapper(std::move(p));
   auto funcm = folly::makeMoveWrapper(std::move(func));
@@ -367,6 +367,7 @@ Future<T>::onError(F&& func) {
       "Return type of onError callback must be T or Future<T>");
 
   Promise<T> p;
+  p.core_->chainFrom(*core_);
   auto f = p.getFuture();
   auto pm = folly::makeMoveWrapper(std::move(p));
   auto funcm = folly::makeMoveWrapper(std::move(func));
@@ -414,7 +415,7 @@ Optional<Try<T>> Future<T>::poll() {
 }
 
 template <class T>
-inline Future<T> Future<T>::via(Executor* executor, int8_t priority) && {
+inline Future<T> Future<T>::via(const ExecutorWeakPtr& executor, int8_t priority) && {
   throwIfInvalid();
 
   setExecutor(executor, priority);
@@ -423,7 +424,7 @@ inline Future<T> Future<T>::via(Executor* executor, int8_t priority) && {
 }
 
 template <class T>
-inline Future<T> Future<T>::via(Executor* executor, int8_t priority) & {
+inline Future<T> Future<T>::via(const ExecutorWeakPtr& executor, int8_t priority) & {
   throwIfInvalid();
 
   MoveWrapper<Promise<T>> p;
@@ -434,7 +435,7 @@ inline Future<T> Future<T>::via(Executor* executor, int8_t priority) & {
 
 
 template <class Func>
-auto via(Executor* x, Func func)
+auto via(const ExecutorWeakPtr& x, Func func)
   -> Future<typename isFuture<decltype(func())>::Inner>
 {
   // TODO make this actually more performant. :-P #7260175
@@ -460,6 +461,11 @@ bool Future<T>::hasException() {
 template <class T>
 void Future<T>::raise(exception_wrapper exception) {
   core_->raise(std::move(exception));
+}
+
+template <class T>
+void Future<T>::cancel() {
+  core_->cancel();
 }
 
 // makeFuture
@@ -506,7 +512,7 @@ Future<T> makeFuture(Try<T>&& t) {
 }
 
 // via
-Future<Unit> via(Executor* executor, int8_t priority) {
+Future<Unit> via(const ExecutorWeakPtr& executor, int8_t priority) {
   return makeFuture().via(executor, priority);
 }
 
@@ -545,16 +551,19 @@ collectAll(InputIterator first, InputIterator last) {
     typename std::iterator_traits<InputIterator>::value_type::value_type T;
 
   struct CollectAllContext {
-    CollectAllContext(int n) : results(n) {}
+    CollectAllContext(int n) : results(n), cancelMany(p, n) { }
     ~CollectAllContext() {
       p.setValue(std::move(results));
     }
     Promise<std::vector<Try<T>>> p;
     std::vector<Try<T>> results;
+    detail::CancelManyContext cancelMany;
   };
 
   auto ctx = std::make_shared<CollectAllContext>(std::distance(first, last));
+  ctx->cancelMany.addCores(first, last);
   mapSetCallback<T>(first, last, [ctx](size_t i, Try<T>&& t) {
+    ctx->cancelMany.done(i);
     ctx->results[i] = std::move(t);
   });
   return ctx->p.getFuture();
@@ -578,7 +587,7 @@ struct CollectContext {
     Nothing,
     std::vector<Optional<T>>>::type;
 
-  explicit CollectContext(int n) : result(n) {}
+  explicit CollectContext(int n) : result(n), cancelMany(p, n) { }
   ~CollectContext() {
     if (!threw.exchange(true)) {
       // map Optional<T> -> T
@@ -591,11 +600,13 @@ struct CollectContext {
     }
   }
   inline void setPartialResult(size_t i, Try<T>& t) {
+    cancelMany.done(i);
     result[i] = std::move(t.value());
   }
   Promise<Result> p;
   InternalResult result;
   std::atomic<bool> threw {false};
+  detail::CancelManyContext cancelMany;
 };
 
 }
@@ -609,6 +620,7 @@ collect(InputIterator first, InputIterator last) {
 
   auto ctx = std::make_shared<detail::CollectContext<T>>(
     std::distance(first, last));
+  ctx->cancelMany.addCores(first, last);
   mapSetCallback<T>(first, last, [ctx](size_t i, Try<T>&& t) {
     if (t.hasException()) {
        if (!ctx->threw.exchange(true)) {
@@ -647,13 +659,16 @@ collectAny(InputIterator first, InputIterator last) {
     typename std::iterator_traits<InputIterator>::value_type::value_type T;
 
   struct CollectAnyContext {
-    CollectAnyContext() {};
+    CollectAnyContext(size_t n) : cancelMany(p, n) {};
     Promise<std::pair<size_t, Try<T>>> p;
     std::atomic<bool> done {false};
+    detail::CancelManyContext cancelMany;
   };
 
-  auto ctx = std::make_shared<CollectAnyContext>();
+  auto ctx = std::make_shared<CollectAnyContext>(std::distance(first, last));
+  ctx->cancelMany.addCores(first, last);
   mapSetCallback<T>(first, last, [ctx](size_t i, Try<T>&& t) {
+    ctx->cancelMany.done(i);
     if (!ctx->done.exchange(true)) {
       ctx->p.setValue(std::make_pair(i, std::move(t)));
     }
@@ -672,19 +687,24 @@ collectN(InputIterator first, InputIterator last, size_t n) {
   typedef std::vector<std::pair<size_t, Try<T>>> V;
 
   struct CollectNContext {
+    CollectNContext(size_t n) : cancelMany(p, n) { }
+
     V v;
     std::atomic<size_t> completed = {0};
     Promise<V> p;
+    detail::CancelManyContext cancelMany;
   };
-  auto ctx = std::make_shared<CollectNContext>();
+  auto ctx = std::make_shared<CollectNContext>(std::distance(first, last));
 
   if (size_t(std::distance(first, last)) < n) {
     ctx->p.setException(std::runtime_error("Not enough futures"));
   } else {
+    ctx->cancelMany.addCores(first, last);
     // for each completed Future, increase count and add to vector, until we
     // have n completed futures at which point we fulfil our Promise with the
     // vector
     mapSetCallback<T>(first, last, [ctx, n](size_t i, Try<T>&& t) {
+      ctx->cancelMany.done(i);
       auto c = ++ctx->completed;
       if (c <= n) {
         assert(ctx->v.size() < n);
@@ -810,7 +830,8 @@ Future<T> unorderedReduce(It first, It last, T initial, F func) {
   struct UnorderedReduceContext {
     UnorderedReduceContext(T&& memo, F&& fn, size_t n)
         : lock_(), memo_(makeFuture<T>(std::move(memo))),
-          func_(std::move(fn)), numThens_(0), numFutures_(n), promise_()
+          func_(std::move(fn)), numThens_(0), numFutures_(n), promise_(),
+          cancelMany(promise_, n)
       {};
     folly::MicroSpinLock lock_; // protects memo_ and numThens_
     Future<T> memo_;
@@ -818,12 +839,14 @@ Future<T> unorderedReduce(It first, It last, T initial, F func) {
     size_t numThens_; // how many Futures completed and called .then()
     size_t numFutures_; // how many Futures in total
     Promise<T> promise_;
+    detail::CancelManyContext cancelMany;
   };
 
   auto ctx = std::make_shared<UnorderedReduceContext>(
     std::move(initial), std::move(func), std::distance(first, last));
-
+  ctx->cancelMany.addCores(first, last);
   mapSetCallback<ItT>(first, last, [ctx](size_t i, Try<ItT>&& t) {
+    ctx->cancelMany.done(i);
     folly::MoveWrapper<Try<ItT>> mt(std::move(t));
     // Futures can be completed in any order, simultaneously.
     // To make this non-blocking, we create a new Future chain in
@@ -949,7 +972,7 @@ void waitImpl(Future<T>& f, Duration dur) {
 }
 
 template <class T>
-void waitViaImpl(Future<T>& f, DrivableExecutor* e) {
+void waitViaImpl(Future<T>& f, const std::shared_ptr<DrivableExecutor>& e) {
   while (!f.isReady()) {
     e->drive();
   }
@@ -982,13 +1005,13 @@ Future<T>&& Future<T>::wait(Duration dur) && {
 }
 
 template <class T>
-Future<T>& Future<T>::waitVia(DrivableExecutor* e) & {
+Future<T>& Future<T>::waitVia(const std::shared_ptr<DrivableExecutor>& e) & {
   detail::waitViaImpl(*this, e);
   return *this;
 }
 
 template <class T>
-Future<T>&& Future<T>::waitVia(DrivableExecutor* e) && {
+Future<T>&& Future<T>::waitVia(const std::shared_ptr<DrivableExecutor>& e) && {
   detail::waitViaImpl(*this, e);
   return std::move(*this);
 }
@@ -1009,7 +1032,7 @@ T Future<T>::get(Duration dur) {
 }
 
 template <class T>
-T Future<T>::getVia(DrivableExecutor* e) {
+T Future<T>::getVia(const std::shared_ptr<DrivableExecutor>& e) {
   return std::move(waitVia(e).value());
 }
 
@@ -1066,7 +1089,7 @@ auto Future<T>::thenMulti(Callback&& fn, Callbacks&&... fns)
 
 template <class T>
 template <class Callback, class... Callbacks>
-auto Future<T>::thenMultiWithExecutor(Executor* x, Callback&& fn,
+auto Future<T>::thenMultiWithExecutor(const ExecutorWeakPtr& x, Callback&& fn,
                                       Callbacks&&... fns)
     -> decltype(this->then(std::forward<Callback>(fn)).
                       thenMulti(std::forward<Callbacks>(fns)...)) {
@@ -1080,7 +1103,7 @@ auto Future<T>::thenMultiWithExecutor(Executor* x, Callback&& fn,
 
 template <class T>
 template <class Callback>
-auto Future<T>::thenMultiWithExecutor(Executor* x, Callback&& fn)
+auto Future<T>::thenMultiWithExecutor(const ExecutorWeakPtr& x, Callback&& fn)
     -> decltype(this->then(std::forward<Callback>(fn))) {
   // thenMulti with one callback is just a then with an executor
   return then(x, std::forward<Callback>(fn));

@@ -97,14 +97,14 @@ class Future {
   // don't get access-after-free situations in chaining.
   // https://akrzemi1.wordpress.com/2014/06/02/ref-qualifiers/
   inline Future<T> via(
-      Executor* executor,
+      const ExecutorWeakPtr& executor,
       int8_t priority = Executor::MID_PRI) &&;
 
   /// This variant creates a new future, where the ref-qualifier && version
   /// moves `this` out. This one is less efficient but avoids confusing users
   /// when "return f.via(x);" fails.
   inline Future<T> via(
-      Executor* executor,
+      const ExecutorWeakPtr& executor,
       int8_t priority = Executor::MID_PRI) &;
 
   /** True when the result (or exception) is ready. */
@@ -136,7 +136,7 @@ class Future {
   /// Call e->drive() repeatedly until the future is fulfilled. Examples
   /// of DrivableExecutor include EventBase and ManualExecutor. Returns the
   /// value (moved out), or throws the exception.
-  T getVia(DrivableExecutor* e);
+  T getVia(const std::shared_ptr<DrivableExecutor>& e);
 
   /// Unwraps the case of a Future<Future<T>> instance, and returns a simple
   /// Future<T> instance.
@@ -197,8 +197,8 @@ class Future {
   ///
   /// In the former both b and c execute via x. In the latter, only b executes
   /// via x, and c executes via the same executor (if any) that f had.
-  template <class Executor, class Arg, class... Args>
-  auto then(Executor* x, Arg&& arg, Args&&... args)
+  template <class Arg, class... Args>
+  auto then(const ExecutorWeakPtr& x, Arg&& arg, Args&&... args)
     -> decltype(this->then(std::forward<Arg>(arg),
                            std::forward<Args>(args)...));
 
@@ -324,9 +324,32 @@ class Future {
   /// asynchronously, of course.)
   void raise(exception_wrapper interrupt);
 
-  void cancel() {
-    raise(FutureCancellation());
-  }
+  /// Cancel the future. Cancel or bypass executors and return a
+  /// FutureCancellation exception.
+  ///
+  /// If the future is part of a chain (formed by calling .then, .onError or
+  /// .ensure), it will walk the chain backwards and cancel the earliest promise
+  /// that does not have a value. The earliest promise that can be cancelled
+  /// might be the current one - because there is no chain, or because it's the
+  /// first in the chain, or because all the earlier promises have already
+  /// called their callback. A cancelled promise with no callback but with a
+  /// value will not return FutureCancellation on get(), it will just return the
+  /// value.
+  ///
+  /// The FutureCancellation exception is inserted into the future chain as
+  /// early as possible. Execution continues normally from there - so it is
+  /// possible to handle FutureCancellation in an onError and recover from it
+  /// for example.
+  ///
+  /// Not all executors support cancellation. And even when they do, the
+  /// callback might already be executing when cancel() is called so it can't
+  /// be stopped anymore. This means that even after cancel(), get() might
+  /// block until the uncancellable work finishes.
+  ///
+  /// This is not the same as raising FutureCancellation. Interrupts are only
+  /// picked up by the first promise in the chain, and only if there is a
+  /// handler. Cancelling works also if execution is part-way through the chain.
+  void cancel();
 
   /// Throw TimedOut if this Future does not complete within the given
   /// duration from now. The optional Timeekeeper is as with futures::sleep().
@@ -359,10 +382,10 @@ class Future {
   /// of DrivableExecutor include EventBase and ManualExecutor. Returns a
   /// reference to this Future so that you can chain calls if desired.
   /// value (moved out), or throws the exception.
-  Future<T>& waitVia(DrivableExecutor* e) &;
+  Future<T>& waitVia(const std::shared_ptr<DrivableExecutor>& e) &;
 
   /// Overload of waitVia() for rvalue Futures
-  Future<T>&& waitVia(DrivableExecutor* e) &&;
+  Future<T>&& waitVia(const std::shared_ptr<DrivableExecutor>& e) &&;
 
   /// If the value in this Future is equal to the given Future, when they have
   /// both completed, the value of the resulting Future<bool> will be true. It
@@ -408,19 +431,21 @@ class Future {
   ///
   ///   f.thenMultiWithExecutor(executor, a, b, c);
   template <class Callback, class... Callbacks>
-  auto thenMultiWithExecutor(Executor* x, Callback&& fn, Callbacks&&... fns)
+  auto thenMultiWithExecutor(const ExecutorWeakPtr& x, Callback&& fn, Callbacks&&... fns)
     -> decltype(this->then(std::forward<Callback>(fn)).
                       thenMulti(std::forward<Callbacks>(fns)...));
 
   // Nothing to see here, just thenMultiWithExecutor's base case
   template <class Callback>
-  auto thenMultiWithExecutor(Executor* x, Callback&& fn)
+  auto thenMultiWithExecutor(const ExecutorWeakPtr& x, Callback&& fn)
     -> decltype(this->then(std::forward<Callback>(fn)));
 
   /// Discard a result, but propagate an exception.
   Future<Unit> unit() {
     return then([]{ return Unit{}; });
   }
+
+  detail::Cancellable* cancellable() const { return core_; }
 
  protected:
   typedef detail::Core<T>* corePtr;
@@ -476,8 +501,8 @@ class Future {
   typename std::enable_if<R::ReturnsFuture::value, typename R::Return>::type
   thenImplementation(F func, detail::argResult<isTry, F, Args...>);
 
-  Executor* getExecutor() { return core_->getExecutor(); }
-  void setExecutor(Executor* x, int8_t priority = Executor::MID_PRI) {
+  ExecutorWeakPtr getExecutor() { return core_->getExecutor(); }
+  void setExecutor(const ExecutorWeakPtr& x, int8_t priority = Executor::MID_PRI) {
     core_->setExecutor(x, priority);
   }
 };

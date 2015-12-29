@@ -25,8 +25,9 @@ namespace folly {
   /// QueuedImmediateExecutor.
   class FOLLY_API InlineExecutor : public Executor {
    public:
-    void add(Func f) override {
+    JobId add(Func f) override {
       f();
+      return 0;
     }
   };
 

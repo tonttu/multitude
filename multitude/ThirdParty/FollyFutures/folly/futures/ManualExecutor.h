@@ -20,9 +20,9 @@
 #include <folly/Export.h>
 #include <memory>
 #include <mutex>
-#include <queue>
-#include <cstdio>
+#include <deque>
 #include <condition_variable>
+#include <map>
 
 namespace folly {
   /// A ManualExecutor only does work when you turn the crank, by calling
@@ -36,7 +36,8 @@ namespace folly {
   class FOLLY_API ManualExecutor : public DrivableExecutor,
                                    public ScheduledExecutor {
    public:
-    void add(Func) override;
+    JobId add(Func) override;
+    bool cancel(JobId id) override;
 
     /// Do work. Returns the number of functions that were executed (maybe 0).
     /// Non-blocking, in the sense that we don't wait for work (we can't
@@ -74,12 +75,15 @@ namespace folly {
 
     }
 
-    virtual void scheduleAt(Func&& f, TimePoint const& t) override {
+    virtual JobId scheduleAt(Func&& f, TimePoint const& t) override {
+      JobId key;
       {
         std::lock_guard<std::mutex> lock(lock_);
-        scheduledFuncs_.emplace(t, std::move(f));
+        key = jobId_++;
+        scheduledFuncs_.emplace(ScheduleKey(t, key), std::move(f));
       }
       cond_.notify_all();
+      return key;
     }
 
     /// Advance the clock. The clock never advances on its own.
@@ -97,31 +101,35 @@ namespace folly {
     TimePoint now() override { return now_; }
 
    private:
-    std::mutex lock_;
-    std::queue<Func> funcs_;
-    std::condition_variable cond_;
-
-    // helper class to enable ordering of scheduled events in the priority
-    // queue
-    struct ScheduledFunc {
-      TimePoint time;
-      size_t ordinal;
+    struct QueuedFunc {
       Func func;
+      JobId jobId;
 
-      ScheduledFunc(TimePoint const& t, Func&& f)
-        : time(t), func(std::move(f))
-      {
-        static size_t seq = 0;
-        ordinal = seq++;
-      }
+      QueuedFunc(Func&& f, JobId id)
+        : func(std::move(f)), jobId(id) { }
+    };
 
-      bool operator<(ScheduledFunc const& b) const {
+    std::mutex lock_;
+    std::deque<QueuedFunc> funcs_;
+    std::condition_variable cond_;
+    JobId jobId_ = 0;
+
+    // helper class to enable ordering of scheduled events in the map
+    struct ScheduleKey {
+      TimePoint time;
+      JobId jobId;
+
+      ScheduleKey(TimePoint const& t, JobId id)
+        : time(t), jobId(id) { }
+
+      bool operator<(ScheduleKey const& b) const {
         if (time == b.time)
-          return ordinal < b.ordinal;
+          return jobId < b.jobId;
         return time < b.time;
       }
     };
-    std::priority_queue<ScheduledFunc> scheduledFuncs_;
+
+    std::map<ScheduleKey, Func> scheduledFuncs_;
     TimePoint now_ = now_.min();
   };
 

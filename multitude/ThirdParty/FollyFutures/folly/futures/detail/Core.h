@@ -31,6 +31,7 @@
 #include <folly/Executor.h>
 #include <folly/futures/detail/FSM.h>
 #include <folly/ScopeGuard.h>
+#include <folly/futures/FutureException.h>
 
 namespace folly { namespace detail {
 
@@ -54,6 +55,14 @@ enum class State : uint8_t {
   Done,
 };
 
+class Cancellable {
+ public:
+  virtual void attachOne() = 0;
+  virtual void detachOne() = 0;
+  virtual bool cancel() = 0;
+  virtual ~Cancellable() { }
+};
+
 /// The shared state object for Future and Promise.
 /// Some methods must only be called by either the Future thread or the
 /// Promise thread. The Future thread is the thread that currently "owns" the
@@ -73,7 +82,7 @@ enum class State : uint8_t {
 /// doesn't access a Future or Promise object from more than one thread at a
 /// time there won't be any problems.
 template<typename T>
-class Core {
+class Core : public Cancellable {
   static_assert(!std::is_void<T>::value,
                 "void futures are not supported. Use Unit instead.");
  public:
@@ -181,7 +190,22 @@ class Core {
   /// Call only from Promise thread
   void setResult(Try<T>&& t) {
     bool transitionToArmed = false;
-    auto setResult_ = [&]{ result_ = std::move(t); };
+    auto setResult_ = [&]{
+      // Bypass executor if set with FutureCancellation,
+      // even if cancel was not called explicitly.
+      auto onCancel = [&](FutureCancellation&) {
+        // don't hold the cancelMutex since we're already holding
+        // the fsm mutex and we must always lock cancelMutex first.
+        // But the only reader of cancelled_ is doCallback which
+        // can't execute now.
+        //
+        // Also, we don't want to cancel prev since it either does
+        // not exist or it ran already if we have a value.
+        cancelled_ = true;
+      };
+      t.template withException<FutureCancellation>(onCancel);
+      result_ = std::move(t);
+    };
     FSM_START(fsm_)
       case State::Start:
         FSM_UPDATE(fsm_, State::OnlyResult, setResult_);
@@ -234,21 +258,20 @@ class Core {
   bool isActive() { return active_.load(std::memory_order_acquire); }
 
   /// Call only from Future thread
-  void setExecutor(Executor* x, int8_t priority = Executor::MID_PRI) {
+  void setExecutor(const ExecutorWeakPtr& x, int8_t priority = Executor::MID_PRI) {
     if (!executorLock_.try_lock()) {
       executorLock_.lock();
     }
-    executor_ = x;
-    priority_ = priority;
+    setExecutorNoLock(x, priority);
     executorLock_.unlock();
   }
 
-  void setExecutorNoLock(Executor* x, int8_t priority = Executor::MID_PRI) {
+  void setExecutorNoLock(const ExecutorWeakPtr& x, int8_t priority = Executor::MID_PRI) {
     executor_ = x;
     priority_ = priority;
   }
 
-  Executor* getExecutor() {
+  ExecutorWeakPtr getExecutor() {
     return executor_;
   }
 
@@ -299,6 +322,117 @@ class Core {
     interruptHandler_ = std::move(fn);
   }
 
+  template<class U>
+  void chainFrom(Core<U> & prev) {
+    prev_ = &prev;
+    setInterruptHandlerNoLock(prev.getInterruptHandler());
+    setExecutorNoLock(prev.getExecutor());
+  }
+
+  bool isCancelled() const {
+    return cancelled_;
+  }
+
+  bool cancelPrev() {
+    bool result = false;
+
+    auto keepPrevAlive = [this] {
+      // While holding the lock, inc prev's reference count. This ensures prev is alive
+      // while calling cancel, since it can't die while the callback is executing and the
+      // callback can't exit because we're holding the FSM lock.
+      prev_->attachOne();
+    };
+
+    auto doCancelPrev = [this, &result]{
+      SCOPE_EXIT { prev_->detachOne(); };
+      result = prev_->cancel();
+    };
+
+    // Only attempt to cancel prev if our result is not set. This means that prev must
+    // be alive.
+    FSM_START(fsm_)
+      case State::Start:
+        FSM_RUN(fsm_, keepPrevAlive, doCancelPrev);
+        break;
+
+      case State::OnlyCallback:
+        FSM_RUN(fsm_, keepPrevAlive, doCancelPrev);
+        break;
+
+      default:
+        FSM_BREAK
+    FSM_END
+
+    return result;
+  }
+
+  bool cancel() override {
+    if (cancelled_) {
+      // If we are calling cancel a second time, we might want to cancel
+      // something that is happening further up the chain. Maybe more futures
+      // were chained since the last call. We can only return true if we
+      // are certain that we can insert a future cancellation. This can only
+      // ever happen if our callback was not yet started.
+      //
+      // If our callback did start already it means either the old cancellation
+      // was before or after the callback. If the old cancellation was before,
+      // then we're fine. If it was after, it will have tried to cancel the
+      // callback. Whether it failed or not it does not matter, we can do
+      // nothing more.
+      //
+      // So we can only return true if callback has not started and we are
+      // certain nothing but FutureCancellation can leave this promise.
+      std::unique_lock<std::mutex> guard(cancelMutex_);
+      return !callbackStarted_;
+    }
+
+    if (prev_) {
+      bool done = cancelPrev();
+      if (done) {
+        // Only need to cancel in one place. If we inserted a
+        // FutureCancellation somewhere we can stop since it will propagate.
+        return true;
+      }
+    }
+
+    cancelled_ = true;
+    // Tell the source promise that we got cancelled. Don't hold the
+    // cancelMutex while doing so, else through setResult or by somehow
+    // calling cancel recursively we might deadlock.
+    raise(FutureCancellation());
+
+    std::unique_lock<std::mutex> guard(cancelMutex_);
+    if(!callbackStarted_) {
+      // we set cancelled_ and the doCallback code will test that and emit
+      // a FutureCancellation
+      return true;
+    }
+
+    // Callback has started, let's see if we can stop it
+    auto executor = executorRunningCallback_.lock();
+    if (executor) {
+      bool ok = executor->cancel(executorJobId_);
+      if (ok) {
+        executorRunningCallback_.reset();
+        // don't hold the lock while executing the callback
+        guard.unlock();
+        // Executor will not run callback anymore.
+        // Resolve manually with FutureCancellation.
+        SCOPE_EXIT { callback_ = nullptr; };
+        callback_(Try<T>(exception_wrapper(FutureCancellation())));
+      }
+      // If we did not manage to stop the executor, we can't guarantee the
+      // cancellation will occur.
+      return ok;
+    } else {
+      // If there is no executor it means either the promise thread will run
+      // the callback and we can't stop it, or the executor has finished and
+      // we're too late. Either way, we can't guarantee that the cancellation
+      // has been taken into account.
+      return false;
+    }
+  }
+
  protected:
   void maybeCallback() {
     FSM_START(fsm_)
@@ -314,49 +448,81 @@ class Core {
   }
 
   void doCallback() {
-    Executor* x = executor_;
+    ExecutorWeakPtr weak;
     int8_t priority;
-    if (x) {
-      if (!executorLock_.try_lock()) {
-        executorLock_.lock();
-      }
-      x = executor_;
-      priority = priority_;
-      executorLock_.unlock();
+    if (!executorLock_.try_lock()) {
+      executorLock_.lock();
+    }
+    weak = executor_;
+    priority = priority_;
+    executorLock_.unlock();
+
+    std::unique_lock<std::mutex> guard(cancelMutex_);
+    callbackStarted_ = true;
+
+    auto runCallbackNow = [&](Try<T>&& t) {
+      // don't hold the lock while executing the callback
+      guard.unlock();
+      // clear callback so any captured stuff is released
+      SCOPE_EXIT { callback_ = nullptr; };
+      callback_(std::move(t));
+    };
+
+    if (cancelled_) {
+      // bypass the executor if cancelled
+      runCallbackNow(Try<T>(exception_wrapper(FutureCancellation())));
+      return;
     }
 
-    if (x) {
+    if (weak) {
+      ExecutorPtr x = weak.lock();
+      if (!x) {
+        // executor_ was alive at some point but it eventually died.
+        runCallbackNow(Try<T>(exception_wrapper(DeadExecutor())));
+        return;
+      }
+
       // keep Core alive until executor did its thing
       ++attached_;
       try {
+        executorRunningCallback_ = weak;
+
+        auto runCallbackOnExecutor = [this]() {
+          SCOPE_EXIT { detachOne(); };
+          // After the callback finishes, job id can be reused. Make sure
+          // we don't try to cancel a reused job id.
+          SCOPE_EXIT { executorRunningCallback_.reset(); };
+          // clear callback so any captured stuff is released
+          SCOPE_EXIT { callback_ = nullptr; };
+          callback_(std::move(*result_));
+        };
+
         if (LIKELY(x->getNumPriorities() == 1)) {
-          x->add([this]() mutable {
-            SCOPE_EXIT { detachOne(); };
-            callback_(std::move(*result_));
-          });
+          executorJobId_ = x->add(runCallbackOnExecutor);
         } else {
-          x->addWithPriority([this]() mutable {
-            SCOPE_EXIT { detachOne(); };
-            callback_(std::move(*result_));
-          }, priority);
+          executorJobId_ = x->addWithPriority(runCallbackOnExecutor, priority);
         }
       } catch (...) {
+        executorRunningCallback_.reset();
         --attached_; // Account for extra ++attached_ before try
         result_ = Try<T>(exception_wrapper(std::current_exception()));
-        callback_(std::move(*result_));
+        runCallbackNow(std::move(*result_));
       }
     } else {
-      callback_(std::move(*result_));
+      runCallbackNow(std::move(*result_));
     }
   }
 
-  void detachOne() {
+  void detachOne() override {
     auto a = --attached_;
     assert(a >= 0);
-    assert(a <= 2);
     if (a == 0) {
       delete this;
     }
+  }
+
+  void attachOne() override {
+    ++attached_;
   }
 
   // lambdaBuf occupies exactly one cache line
@@ -373,16 +539,110 @@ class Core {
   folly::MicroSpinLock interruptLock_ {0};
   folly::MicroSpinLock executorLock_ {0};
   int8_t priority_ {-1};
-  Executor* executor_ {nullptr};
+  // You might expect this to be a shared_ptr not a weak_ptr. But that
+  // would make it possible for Core to be the only thing keeping the
+  // executor alive. So when the executor executes the callback it will
+  // in effect kill itself, which will lead to all sorts of nice crashes
+  // and deadlocks.
+  ExecutorWeakPtr executor_;
   std::unique_ptr<exception_wrapper> interrupt_ {};
   std::function<void(exception_wrapper const&)> interruptHandler_ {nullptr};
+
+  // Keep track of previous promise that chains its result into this one.
+  // This is to enable cancellation.
+  Cancellable * prev_ { nullptr };
+  // Protects executorJobId_, executorHandlingCallback_, cancelled_.
+  // Always lock this first, then fsm lock or executor lock.
+  //
+  // The mutex is held in cancel() and doCallback(). This ensures that as
+  // the cancellation signal moves from the end of the chain to the beginning,
+  // and the value moves from beginning to end, they can't bypass each other
+  // due to race conditions.
+  std::mutex cancelMutex_;
+  // Need to copy executor ptr when we start the callback since it can be
+  // changed afterwards. This is only set while the callback is on the
+  // executor - either queued or running.
+  ExecutorWeakPtr executorRunningCallback_;
+  JobId executorJobId_ {0};
+  // Atomic not naked bool so we can set it during setResult without holding
+  // the cancelMutex (since we're holding the fsm lock there already and we
+  // don't want to deadlock by locking in wrong order).
+  //
+  // Need a boolean to keep track of cancellation state since we might not
+  // be able to cancel the prev callback, if the prev executor has already
+  // started it. In that case, prev might setResult in the future, after
+  // the call to cancel returns.
+  std::atomic<bool> cancelled_ {false};
+  // Need to know in which order the critical sections in cancel and doCallback
+  // are executed. doCallback is only ever executed once and it sets this bool.
+  bool callbackStarted_ {false};
+};
+
+class CancelManyContext {
+ public:
+  template<class T>
+  CancelManyContext(Promise<T>& p, size_t n = 0)
+  {
+    setInterruptHandler(p);
+    if (n)
+      cores_.reserve(n);
+  }
+
+  void addCore(Cancellable* ptr) {
+    cores_.push_back(ptr);
+  }
+
+  template<class Iterator>
+  void addCores(Iterator begin, Iterator end) {
+    for(auto it = begin; it != end; ++it) {
+      cores_.push_back(it->cancellable());
+    }
+  }
+
+  void done(size_t i) {
+    folly::MSLGuard guard(cancelLock_);
+    cores_[i] = nullptr;
+  }
+
+  void cancel() {
+    for (auto core : cores_) {
+      // Don't hold the lock while calling cancel, else
+      // might deadlock through the callback recursing into done()
+      Cancellable* ptr = nullptr;
+      {
+        folly::MSLGuard guard(cancelLock_);
+        if (core) {
+          core->attachOne();
+          ptr = core;
+        }
+      }
+      if (ptr) {
+        SCOPE_EXIT { core->detachOne(); };
+        core->cancel();
+      }
+    }
+  }
+
+ private:
+  template<class T>
+  void setInterruptHandler(Promise<T>& p) {
+    p.setInterruptHandler([this](const exception_wrapper& e) {
+      e.with_exception<FutureCancellation>([&](const FutureCancellation&) {
+        cancel();
+      });
+    });
+  }
+
+  folly::MicroSpinLock cancelLock_ {0};
+  std::vector<Cancellable*> cores_;
 };
 
 template <typename... Ts>
 struct CollectAllVariadicContext {
-  CollectAllVariadicContext() {}
+  CollectAllVariadicContext() : cancelMany(p) {}
   template <typename T, size_t I>
   inline void setPartialResult(Try<T>& t) {
+    cancelMany.done(I);
     std::get<I>(results) = std::move(t);
   }
   ~CollectAllVariadicContext() {
@@ -391,20 +651,22 @@ struct CollectAllVariadicContext {
   Promise<std::tuple<Try<Ts>...>> p;
   std::tuple<Try<Ts>...> results;
   typedef Future<std::tuple<Try<Ts>...>> type;
+  CancelManyContext cancelMany;
 };
 
 template <typename... Ts>
 struct CollectVariadicContext {
-  CollectVariadicContext() {}
+  CollectVariadicContext() : cancelMany(p) { }
   template <typename T, size_t I>
   inline void setPartialResult(Try<T>& t) {
+    cancelMany.done(I);
     if (t.hasException()) {
-       if (!threw.exchange(true)) {
-         p.setException(std::move(t.exception()));
-       }
-     } else if (!threw) {
-       std::get<I>(results) = std::move(t.value());
-     }
+      if (!threw.exchange(true)) {
+        p.setException(std::move(t.exception()));
+      }
+    } else if (!threw) {
+      std::get<I>(results) = std::move(t.value());
+    }
   }
   ~CollectVariadicContext() {
     if (!threw.exchange(true)) {
@@ -414,6 +676,7 @@ struct CollectVariadicContext {
   Promise<std::tuple<Ts...>> p;
   std::tuple<Ts...> results;
   std::atomic<bool> threw {false};
+  CancelManyContext cancelMany;
   typedef Future<std::tuple<Ts...>> type;
 };
 
@@ -426,6 +689,7 @@ template <template <typename ...> class T, typename... Ts,
           typename THead, typename... TTail>
 void collectVariadicHelper(const std::shared_ptr<T<Ts...>>& ctx,
                            THead&& head, TTail&&... tail) {
+  ctx->cancelMany.addCore(head.cancellable());
   head.setCallback_([ctx](Try<typename THead::value_type>&& t) {
     ctx->template setPartialResult<typename THead::value_type,
                                    sizeof...(Ts) - sizeof...(TTail) - 1>(t);

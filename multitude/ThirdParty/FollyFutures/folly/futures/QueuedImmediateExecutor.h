@@ -32,8 +32,9 @@ class FOLLY_API QueuedImmediateExecutor : public Executor {
   /// QueuedImmediateExecutor objects you may have.
   static void addStatic(Func);
 
-  void add(Func func) override {
+  JobId add(Func func) override {
     addStatic(std::move(func));
+    return 0;
   }
 };
 

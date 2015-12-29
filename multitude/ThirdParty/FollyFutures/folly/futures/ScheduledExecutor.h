@@ -33,20 +33,21 @@ namespace folly {
 
      virtual ~ScheduledExecutor() = default;
 
-     virtual void add(Func) override = 0;
+     virtual JobId add(Func) override = 0;
+     virtual bool cancel(JobId) override = 0;
 
      /// Alias for add() (for Rx consistency)
-     void schedule(Func&& a) { add(std::move(a)); }
+     JobId schedule(Func&& a) { return add(std::move(a)); }
 
      /// Schedule a Func to be executed after dur time has elapsed
      /// Expect millisecond resolution at best.
-     void schedule(Func&& a, Duration const& dur) {
-       scheduleAt(std::move(a), now() + dur);
+     JobId schedule(Func&& a, Duration const& dur) {
+       return scheduleAt(std::move(a), now() + dur);
      }
 
      /// Schedule a Func to be executed at time t, or as soon afterward as
      /// possible. Expect millisecond resolution at best. Must be threadsafe.
-     virtual void scheduleAt(Func&&, TimePoint const&) {
+     virtual JobId scheduleAt(Func&&, TimePoint const&) {
        throw std::logic_error("unimplemented");
      }
 

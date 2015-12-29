@@ -29,10 +29,11 @@ ThreadedExecutor::~ThreadedExecutor() {
   }
 }
 
-void ThreadedExecutor::add(Func f) {
+JobId ThreadedExecutor::add(Func f) {
   lock_guard<mutex> lock(mutex_);
   assert(!destructing_);
   threads_.emplace_back(std::move(f));
+  return 0;
 }
 
 }}

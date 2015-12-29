@@ -96,4 +96,9 @@ class PredicateDoesNotObtain : public FutureException {
   PredicateDoesNotObtain() : FutureException("Predicate does not obtain") {}
 };
 
+class DeadExecutor : public FutureException {
+ public:
+  DeadExecutor() : FutureException("Executor was deleted") { }
+};
+
 }

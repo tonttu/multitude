@@ -44,6 +44,8 @@ template <class> class Core;
 template <class...> struct CollectAllVariadicContext;
 template <class...> struct CollectVariadicContext;
 template <class> struct CollectContext;
+class CancelManyContext;
+class Cancellable;
 
 template<typename F, typename... Args>
 using resultOf = decltype(std::declval<F>()(std::declval<Args>()...));

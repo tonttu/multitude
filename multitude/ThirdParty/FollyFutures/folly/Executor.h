@@ -20,10 +20,13 @@
 #include <climits>
 #include <functional>
 #include <stdexcept>
+#include <memory>
+#include <cstdint>
 
 namespace folly {
 
 typedef std::function<void()> Func;
+typedef uint64_t JobId;
 
 /// An Executor accepts units of work with add(), which should be
 /// threadsafe.
@@ -33,11 +36,22 @@ class Executor {
 
   /// Enqueue a function to executed by this executor. This and all
   /// variants must be threadsafe.
-  virtual void add(Func) = 0;
+  ///
+  /// Returns a job id that must be unique among all running and queued jobs.
+  /// After a job is finished the id can be reused.
+  virtual JobId add(Func) = 0;
+
+  /// Will remove a function from the queue. Id is the result of an 'add' call.
+  /// Job ids can be reused, so be wary of cancelling a finished job. To be safe
+  /// you need to keep track of when the job finishes externally.
+  ///
+  /// Returns true if the job could be cancelled. For example if the job was
+  /// in a queue but not started yet.
+  virtual bool cancel(JobId) { return false; };
 
   /// Enqueue a function with a given priority, where 0 is the medium priority
   /// This is up to the implementation to enforce
-  virtual void addWithPriority(Func, int8_t /*priority*/) {
+  virtual JobId addWithPriority(Func, int8_t /*priority*/) {
     throw std::runtime_error(
         "addWithPriority() is not implemented for this Executor");
   }
@@ -60,5 +74,85 @@ class Executor {
     this->add([fn]() mutable { (*fn)(); });
   }
 };
+
+typedef std::shared_ptr<Executor> ExecutorPtr;
+
+/// Weak pointer that tracks if it was ever set with a non-null value.
+/// Normal weak_ptrs don't know if they are uninitialized or pointing
+/// to a dead shared_ptr.
+template<class T>
+class StickyWeakPtr {
+ public:
+  StickyWeakPtr() noexcept : isSet_(false) { }
+
+  template<class U>
+  StickyWeakPtr(const std::weak_ptr<U>& other, bool isSet) noexcept
+    : isSet_(isSet), ptr_(other) { }
+
+  template<class U>
+  StickyWeakPtr(const std::weak_ptr<U>&& other, bool isSet) noexcept
+    : isSet_(isSet), ptr_(std::move(other)) { }
+
+  template<class U>
+  StickyWeakPtr(const StickyWeakPtr<U>& other) noexcept
+    : isSet_(other.isSet_), ptr_(other.ptr_) { }
+
+  template<class U>
+  StickyWeakPtr(StickyWeakPtr<U>&& other) noexcept
+    : isSet_(other.isSet_), ptr_(std::move(other.ptr_)) { }
+
+  template<class U>
+  StickyWeakPtr(const std::shared_ptr<U>& ptr) noexcept
+    : isSet_(ptr), ptr_(ptr) { }
+
+  template<class U>
+  StickyWeakPtr<T>& operator=(const StickyWeakPtr<U>& other) noexcept {
+    isSet_ = other.isSet_;
+    ptr_ = other.ptr_;
+    return *this;
+  }
+
+  template<class U>
+  StickyWeakPtr<T>& operator=(const StickyWeakPtr<U>&& other) noexcept {
+    isSet_ = other.isSet_;
+    ptr_ = std::move(other.ptr_);
+    return *this;
+  }
+
+  template<class U>
+  StickyWeakPtr<T>& operator=(const std::shared_ptr<U>& ptr) noexcept {
+    isSet_ = static_cast<bool>(ptr);
+    ptr_ = ptr;
+    return *this;
+  }
+
+  void reset() noexcept {
+    isSet_ = false;
+    ptr_.reset();
+  }
+
+  void swap(StickyWeakPtr<T>& other) noexcept {
+    using std::swap;
+    swap(isSet_, other.isSet_);
+    swap(ptr_, other.ptr_);
+  }
+
+  long use_count() const noexcept { return ptr_.use_count(); }
+  bool expired() const noexcept { return ptr_.expired(); }
+  std::shared_ptr<T> lock() const noexcept { return ptr_.lock(); }
+  template<class U>
+  bool owner_before(const U & other) const noexcept {
+    return ptr_.owner_before(other);
+  }
+
+  operator bool() const noexcept { return isSet_; }
+  operator std::weak_ptr<T>() const noexcept { return ptr_; }
+
+ private:
+  bool isSet_;
+  std::weak_ptr<T> ptr_;
+};
+
+typedef StickyWeakPtr<Executor> ExecutorWeakPtr;
 
 } // folly
