@@ -1,7 +1,7 @@
 #ifndef SWAPGROUPS_HPP
 #define SWAPGROUPS_HPP
 
-#include <GL/glew.h>
+#include "Luminous.hpp"
 
 namespace Luminous
 {
