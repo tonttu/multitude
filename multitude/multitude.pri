@@ -101,6 +101,9 @@ LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
 
+INCLUDEPATH += $$PWD/ThirdParty/glbinding/include
+LIB_GLBINDING = -lglbinding$${CORNERSTONE_LIB_SUFFIX}
+
 #
 # Platform specific: GNU Linux
 #
