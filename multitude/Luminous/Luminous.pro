@@ -33,7 +33,6 @@ HEADERS += RichTextLayout.hpp
 HEADERS += SimpleTextLayout.hpp
 HEADERS += TextLayout.hpp
 
-HEADERS += CocoaWindow.hpp
 HEADERS += CodecRegistry.hpp
 HEADERS += ColorCorrection.hpp
 HEADERS += RGBCube.hpp
@@ -180,8 +179,6 @@ win32 {
 
 # Platform specific: Apple OS X
 macx {
-  OBJECTIVE_SOURCES += CocoaWindow.mm
-  src_code.files += $$OBJECTIVE_SOURCES
 } else {
   HEADERS += ScreenDetectorAMD.hpp
   HEADERS += ScreenDetectorNV.hpp
