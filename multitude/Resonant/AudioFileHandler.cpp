@@ -17,6 +17,10 @@
 
 #include <sndfile.h>
 
+#ifdef RADIANT_LINUX
+# include <unistd.h>
+#endif
+
 #ifndef WIN32
 #include <sched.h>
 #endif
