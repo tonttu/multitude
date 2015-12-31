@@ -34,12 +34,6 @@
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 
-#if defined (RADIANT_WINDOWS)
-#  include <GL/wglew.h>
-#elif defined (RADIANT_LINUX)
-#  include <GL/glxew.h>
-#endif
-
 #include <cassert>
 #include <map>
 #include <vector>
@@ -988,42 +982,6 @@ namespace Luminous
       return alignment;
     Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
     return 256;
-  }
-
-  void RenderDriverGL::setVSync(bool vsync)
-  {
-#if defined(RADIANT_LINUX)
-    if (!glxewIsSupported("GLX_EXT_swap_control")) {
-      Radiant::warning("GLX_EXT_swap_control not supported");
-      return;
-    }
-
-    Display *dpy = glXGetCurrentDisplay();
-    GLXDrawable drawable = glXGetCurrentDrawable();
-    const int interval = (vsync ? 1 : 0);
-
-    // VirtuaGL means that the X server we are connected to is not the
-    // server that is actually connected to the display. Setting this
-    // might crash the server. For example on NVIDIA Optimus laptops
-    // we need to skip this.
-    const char * vendor = glXGetClientString(dpy, GLX_VENDOR);
-    if (vendor && std::string(vendor) == "VirtualGL") {
-      Radiant::warning("RenderDriverGL::setVSync # Not setting vsync on VirtualGL GLX");
-      return;
-    }
-
-    glXSwapIntervalEXT(dpy, drawable, interval);
-#elif defined (RADIANT_WINDOWS)
-    if (!wglewIsSupported("WGL_EXT_swap_control")) {
-      Radiant::warning("WGL_EXT_swap_control not supported");
-      return;
-    }
-
-    const int interval = (vsync ? 1 : 0);
-    wglSwapIntervalEXT(interval);
-#else
-#  warning "setVSync not implemented on this platform"
-#endif
   }
 
   void RenderDriverGL::setUpdateFrequency(float fps)

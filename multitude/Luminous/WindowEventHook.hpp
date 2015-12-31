@@ -11,58 +11,69 @@
 #ifndef LUMINOUS_WINDOWEVENTHOOK_HPP
 #define LUMINOUS_WINDOWEVENTHOOK_HPP
 
-namespace Radiant
-{
-  class DropEvent;
-  class KeyEvent;
-  class MouseEvent;
-  class TabletEvent;
-  class TouchEvent;
-}
+#include <QtGlobal>
+
+class QExposeEvent;
+class QFocusEvent;
+class QHideEvent;
+class QKeyEvent;
+class QMouseEvent;
+class QResizeEvent;
+class QShowEvent;
+class QTabletEvent;
+class QTouchEvent;
+class QWheelEvent;
+class QMoveEvent;
+class QDropEvent;
+class QEvent;
 
 namespace Luminous
 {
+  class Window;
 
   /// Class for getting window events
   class WindowEventHook
   {
   public:
+    WindowEventHook() : m_window(nullptr) {}
     virtual ~WindowEventHook() {}
 
-    /// Different mouse buttons
-    enum MouseButtonMask {
-      NoButton = 0,
-      LeftButton = 1,
-      RightButton = 2,
-      MiddleButton = 4,
-      WheelForward = 8,
-      WheelBackward = 16
-    };
+    virtual void exposeEvent(QExposeEvent* ev) { Q_UNUSED(ev); }
+    virtual void focusInEvent(QFocusEvent* ev) { Q_UNUSED(ev); }
+    virtual void focusOutEvent(QFocusEvent* ev) { Q_UNUSED(ev); }
+    virtual void hideEvent(QHideEvent* ev) { Q_UNUSED(ev); }
+    virtual void keyPressEvent(QKeyEvent* ev) { Q_UNUSED(ev); }
+    virtual void keyReleaseEvent(QKeyEvent* ev) { Q_UNUSED(ev); }
+    virtual void mouseDoubleClickEvent(QMouseEvent* ev) { Q_UNUSED(ev); }
+    virtual void mouseMoveEvent(QMouseEvent* ev) { Q_UNUSED(ev); }
+    virtual void mousePressEvent(QMouseEvent* ev) { Q_UNUSED(ev); }
+    virtual void mouseReleaseEvent(QMouseEvent* ev) { Q_UNUSED(ev); }
+    virtual void moveEvent(QMoveEvent* ev) { Q_UNUSED(ev); }
+    virtual bool nativeEvent(const QByteArray& eventType, void* message, long* result)
+    {
+      Q_UNUSED(eventType);
+      Q_UNUSED(message);
+      Q_UNUSED(result);
 
-    /// Callback to handle keyboard events
-    virtual void handleKeyboardEvent(const Radiant::KeyEvent & event) = 0;
-    /// Callback to handle mouse events
-    virtual void handleMouseEvent(const Radiant::MouseEvent & event) = 0;
-    /// Callback to handle drop events
-    virtual void handleDropEvent(const Radiant::DropEvent & event) = 0;
-    /// Used to handle tablet events
-    virtual void handleTabletEvent(const Radiant::TabletEvent & event) = 0;
-    /// Used to handle touch events
-    virtual void handleTouchEvent(const Radiant::TouchEvent & event) = 0;
-    /// Handle resize events
-    virtual void handleWindowMove(int x, int y, int width, int height) = 0;
+      return false;
+    }
 
-    /// Handle the event where a window is iconified
-    virtual void handleWindowIconifyEvent() = 0;
-    /// Handle the case where a window is de-iconified
-    virtual void handleWindowRestoreEvent() = 0;
-    /// Handle the case where a window is closed.
-    /// This is typically triggered when the user clicks on the window-close icon.
-    virtual void handleWindowCloseEvent() = 0;
+    virtual void resizeEvent(QResizeEvent* ev) { Q_UNUSED(ev); }
+    virtual void showEvent(QShowEvent* ev) { Q_UNUSED(ev); }
+    virtual void tabletEvent(QTabletEvent* ev) { Q_UNUSED(ev); }
+    virtual void touchEvent(QTouchEvent* ev) { Q_UNUSED(ev); }
+    virtual void wheelEvent(QWheelEvent* ev) { Q_UNUSED(ev); }
+    virtual void dropEvent(QDropEvent* ev) { Q_UNUSED(ev); }
+    virtual bool event(QEvent* ev) { Q_UNUSED(ev); return false; }
 
     /// Time since last keyboard or mouse activity
     virtual double lastActivity() const = 0;
 
+    void setWindow(Window* window) { m_window = window; }
+    Window* window() { return m_window; }
+
+  protected:
+    Window* m_window;
   };
 
 }
