@@ -555,8 +555,8 @@ namespace Luminous
 
     Luminous::TransformGuard::RightMul transformGuard(*this, Nimble::Matrix3::makeTranslation(center) * Nimble::Matrix3::makeRotation(rotation));
 
-    bool isFilled = style.fillColor().alpha() > 0.f;
-    bool stroke = style.strokeWidth() > 0.0f;
+    bool isFilled = style.hasFill();
+    bool stroke = style.hasStroke();
 
     bool needInnerStroke = std::min(a, b) - width/2.0f > 0.0f;
 
@@ -864,7 +864,7 @@ namespace Luminous
   void RenderContext::drawQuad(const Nimble::Vector2 *vertices, const Nimble::Vector2 *uvs, const Style &style)
   {
     assert(vertices);
-    if (style.fillColor().w > 0.f) {
+    if (style.hasFill()) {
       if(!style.fill().hasTextures()) {
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
         auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
@@ -893,7 +893,7 @@ namespace Luminous
     }
 
     // Draw the outline
-    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+    if (style.hasStroke()) {
       Luminous::Style s;
       s.setFillColor(style.strokeColor());
       if(style.strokeProgram())
@@ -929,7 +929,7 @@ namespace Luminous
                                        const Nimble::Rectf & hole,
                                        const Luminous::Style & style)
   {
-    if (style.fillColor().w > 0.f) {
+    if (style.hasFill()) {
       if (!style.fill().hasTextures()) {
         // Untextured
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
@@ -984,7 +984,7 @@ namespace Luminous
     }
 
     // Draw the stroke
-    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+    if (style.hasStroke()) {
       Luminous::Style s = style;
       s.stroke().clear();
       s.setFillColor(style.strokeColor());
@@ -1044,8 +1044,9 @@ namespace Luminous
     }
 
     // Stroke should be of constant width, so use drawDonut for the outline
-    if(style.strokeColor().alpha() > 0.f && style.strokeWidth() > 0.f) {
+    if(style.hasStroke()) {
       s.setFillColor(style.strokeColor());
+      s.setPremultipliedAlpha(style.hasPremultipliedAlpha());
       drawDonut(center,
                 axis,
                 otherAxisLength,
@@ -1077,6 +1078,7 @@ namespace Luminous
     const float edge = 0.5f - style.fontRenderWidth() / magic;
     const float strokeWidth = std::min(1.0f, style.strokeWidth() / magic);
 
+    /// @fixme check that these work with already premultiplied colors
     if (style.dropShadowColor().alpha() > 0.0f) {
       uniform.colorIn = uniform.colorOut = style.dropShadowColor().toPreMultipliedAlpha() * opacity();
       const float blur = style.dropShadowBlur();
