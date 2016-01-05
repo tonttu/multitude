@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS += glbinding
+SUBDIRS += qjson
 
 # ADL SDK only has headers, we install them here manually
 adl_headers.path = /src/multitude/ThirdParty/adl_sdk

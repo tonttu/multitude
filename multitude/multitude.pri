@@ -2,6 +2,25 @@ lessThan(QT_MAJOR_VERSION, 5) {
   error("Cornerstone SDK requires Qt 5")
 }
 
+enable-taction {
+  CONFIG += enable-deft
+}
+
+enable-deft {
+  CONFIG += enable-mushy
+  CONFIG += enable-deft-cuda
+}
+
+enable-experience {
+  CONFIG += enable-mushy
+  CONFIG += enable-js
+  CONFIG += enable-cef
+}
+
+enable-old-production {
+  CONFIG += enable-mushy
+}
+
 # Use this to setup global build options & variables.
 # This file is to be included by all project files of qmake.
 CONFIG += qt
@@ -29,29 +48,8 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
   *clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 }
 
-# Always include Deft
-CONFIG += enable-deft
-# On taction tracker build, enable cuda backend but disable js by default
-# JS can still be enabled with enable-js
-enable-taction:CONFIG += enable-deft-cuda
-enable-taction:CONFIG += disable-js
-enable-taction:CONFIG += disable-cef
-
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
-
-# deft can be disabled with -config disable-deft
-disable-deft:CONFIG -= enable-deft enable-deft-cuda
-disable-deft-cuda:CONFIG -= enable-deft-cuda
-disable-deft-opencl:CONFIG -= enable-deft-opencl
-
-# JS is enabled by default
-!disable-js:CONFIG += enable-js
-enable-js:CONFIG -= disable-js
 enable-js:DEFINES += CORNERSTONE_JS=1
-
-# CEF is enabled by default
-!disable-cef:CONFIG += enable-cef
-
 FFMPEG=$$(USE_FFMPEG)
 !isEmpty(FFMPEG) {
   DEFINES += USE_FFMPEG
@@ -88,6 +86,7 @@ with-ftd2xx {
 
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
+INCLUDEPATH += $$PWD/ThirdParty/qjson/include
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
@@ -98,6 +97,7 @@ LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 #LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
+LIB_QJSON = -lqjson$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
 
 INCLUDEPATH += $$PWD/ThirdParty/glbinding/include
