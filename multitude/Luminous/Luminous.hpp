@@ -20,7 +20,10 @@
 #   include <OpenGL/gl3ext.h>
 #   define MULTI_WITHOUT_GLEW 1
 #else
-#   include <GL/glew.h>
+#   include <glbinding/gl/gl.h>
+
+using namespace gl;
+
 #endif
 
 #define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))
@@ -64,23 +67,29 @@ namespace Luminous
   /// @return true if the extension is supported; otherwise false
   LUMINOUS_API bool isSampleShadingSupported();
 
+  /// Check if the given OpenGL extension is supported on the current OpenGL
+  /// context.
+  /// @param e extension to check
+  /// @return true if the extension is supported; otherwise false
+  LUMINOUS_API bool isOpenGLExtensionSupported(gl::GLextension e);
+
   //////////////////////////////////////////////////////////////////////////
 
   /// Primitive type used for rendering
   enum PrimitiveType
   {
     /// Primitive corresponding to separate triangles
-    PRIMITIVE_TRIANGLE       = GL_TRIANGLES,
+    PRIMITIVE_TRIANGLE       = static_cast<unsigned int>(GL_TRIANGLES),
     /// Primitive corresponding to triangle strips
-    PRIMITIVE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
+    PRIMITIVE_TRIANGLE_STRIP = static_cast<unsigned int>(GL_TRIANGLE_STRIP),
     /// Primitive corresponding to triangle fan
-    PRIMITIVE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
+    PRIMITIVE_TRIANGLE_FAN   = static_cast<unsigned int>(GL_TRIANGLE_FAN),
     /// Primitive corresponding to line
-    PRIMITIVE_LINE           = GL_LINES,
+    PRIMITIVE_LINE           = static_cast<unsigned int>(GL_LINES),
     /// Primitive corresponding to line strip
-    PRIMITIVE_LINE_STRIP     = GL_LINE_STRIP,
+    PRIMITIVE_LINE_STRIP     = static_cast<unsigned int>(GL_LINE_STRIP),
     /// Primitive corresponding to points
-    PRIMITIVE_POINT          = GL_POINTS
+    PRIMITIVE_POINT          = static_cast<unsigned int>(GL_POINTS)
   };
 
   /// Mask to define which rendering buffers are cleared

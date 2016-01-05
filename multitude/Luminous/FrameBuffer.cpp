@@ -18,7 +18,7 @@ namespace Luminous
   {
   public:
     D()
-      : m_format(0)
+      : m_format(GL_NONE)
       , m_samples(0)
     {}
 

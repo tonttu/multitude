@@ -23,7 +23,7 @@ namespace Luminous
 
   void CommandClearGL::execute()
   {
-    GLbitfield glMask = 0;
+    ClearBufferMask glMask = GL_NONE_BIT;
 
     // Clear color buffer
     if (m_clearMask & CLEARMASK_COLOR) {
@@ -74,9 +74,9 @@ namespace Luminous
     glEnable(GL_BLEND);
     glBlendColor(m_mode.constantColor().red(), m_mode.constantColor().green(), m_mode.constantColor().blue(), m_mode.constantColor().alpha() );
     GLERROR("CommandSetBlendMode::execute # glBlendColor");
-    glBlendEquation(m_mode.equation());
+    glBlendEquation(static_cast<GLenum>(m_mode.equation()));
     GLERROR("CommandSetBlendMode::execute # glBlendEquation");
-    glBlendFunc(m_mode.sourceFunction(), m_mode.destFunction());
+    glBlendFunc(static_cast<GLenum>(m_mode.sourceFunction()), static_cast<GLenum>(m_mode.destFunction()));
     GLERROR("CommandSetBlendMode::execute # glBlendFunc");
   }
 
@@ -91,7 +91,7 @@ namespace Luminous
   void CommandSetDepthMode::execute()
   {
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(m_mode.function());
+    glDepthFunc(static_cast<GLenum>(m_mode.function()));
     GLERROR("RenderDriverGL::setDepthMode # glDepthFunc");
     glDepthRange(m_mode.range().low(), m_mode.range().high());
     GLERROR("RenderDriverGL::setDepthMode # glDepthRange");
@@ -108,14 +108,14 @@ namespace Luminous
   void CommandSetStencilMode::execute()
   {
     glEnable(GL_STENCIL_TEST);
-    glStencilFuncSeparate(GL_FRONT, m_mode.frontFunction(), m_mode.frontRefValue(), m_mode.frontMaskValue());
+    glStencilFuncSeparate(GL_FRONT, static_cast<GLenum>(m_mode.frontFunction()), m_mode.frontRefValue(), m_mode.frontMaskValue());
     GLERROR("RenderDriverGL::setStencilMode # glStencilFuncSeparate");
-    glStencilOpSeparate(GL_FRONT, m_mode.frontStencilFailOp(), m_mode.frontDepthFailOp(), m_mode.frontPassOp());
+    glStencilOpSeparate(GL_FRONT, static_cast<GLenum>(m_mode.frontStencilFailOp()), static_cast<GLenum>(m_mode.frontDepthFailOp()), static_cast<GLenum>(m_mode.frontPassOp()));
     GLERROR("RenderDriverGL::setStencilMode # glStencilOpSeparate");
 
-    glStencilFuncSeparate(GL_BACK, m_mode.backFunction(), m_mode.backRefValue(), m_mode.backMaskValue());
+    glStencilFuncSeparate(GL_BACK, static_cast<GLenum>(m_mode.backFunction()), static_cast<GLint>(m_mode.backRefValue()), static_cast<GLint>(m_mode.backMaskValue()));
     GLERROR("RenderDriverGL::setStencilMode # glStencilFuncSeparate");
-    glStencilOpSeparate(GL_BACK, m_mode.backStencilFailOp(), m_mode.backDepthFailOp(), m_mode.backPassOp());
+    glStencilOpSeparate(GL_BACK, static_cast<GLenum>(m_mode.backStencilFailOp()), static_cast<GLenum>(m_mode.backDepthFailOp()), static_cast<GLenum>(m_mode.backPassOp()));
     GLERROR("RenderDriverGL::setStencilMode # glStencilOpSeparate");
   }
   //////////////////////////////////////////////////////////////////////
@@ -188,7 +188,8 @@ namespace Luminous
 
   void CommandBlitGL::execute()
   {
-    GLbitfield glMask = 0;
+    ClearBufferMask glMask = GL_NONE_BIT;
+
     if (m_mask & CLEARMASK_COLOR)
       glMask |= GL_COLOR_BUFFER_BIT;
     if (m_mask & CLEARMASK_DEPTH)
@@ -198,7 +199,7 @@ namespace Luminous
 
     glBlitFramebuffer(m_src.low().x, m_src.low().y, m_src.high().x, m_src.high().y,
                       m_dst.low().x, m_dst.low().y, m_dst.high().x, m_dst.high().y,
-                      glMask, m_filter);
+                      glMask, static_cast<GLenum>(m_filter));
     GLERROR("CommandBlitGL::execute glBlitFramebuffer");
   }
 
@@ -219,7 +220,7 @@ namespace Luminous
       GLERROR("CommandCullMode::execute # glDisable");
     }
 
-    glCullFace(m_mode.face());
+    glCullFace(static_cast<GLenum>(m_mode.face()));
     GLERROR("CommandCullMode::execute # glCullFace");
   }
 
@@ -232,7 +233,7 @@ namespace Luminous
 
   void CommandFrontFace::execute()
   {
-    glFrontFace(m_winding);
+    glFrontFace(static_cast<GLenum>(m_winding));
     GLERROR("CommandFrontFace::execute # glFrontFace");
   }
 
@@ -264,7 +265,7 @@ namespace Luminous
   //////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
-  CommandDrawBuffers::CommandDrawBuffers(const std::vector<int> & buffers)
+  CommandDrawBuffers::CommandDrawBuffers(const std::vector<GLenum>& buffers)
     : m_buffers(buffers)
   {
   }

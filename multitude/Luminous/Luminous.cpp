@@ -32,6 +32,9 @@
 
 #include <QString>
 
+#include <glbinding/ContextInfo.h>
+#include <glbinding/Binding.h>
+
 namespace Luminous
 {
   bool isSampleShadingSupported()
@@ -41,7 +44,7 @@ namespace Luminous
 #elif defined(RADIANT_OSX_MOUNTAIN_LION)
     return false;
 #else
-    static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
+    static bool s_supported = glbinding::ContextInfo::extensions().count(GLextension::GL_ARB_sample_shading) > 0;
     return s_supported;
 #endif
   }
@@ -55,59 +58,37 @@ namespace Luminous
     initDefaultImageCodecs();
 
     if (initOpenGL) {
-      static bool s_ok = true;
-      MULTI_ONCE {
 
-#ifndef RADIANT_OSX
-        GLenum err = glewInit();
+      glbinding::Binding::initialize();
 
-        if(err != GLEW_OK) {
-          Radiant::error("Failed to initialize GLEW: %s", glewGetErrorString(err));
-          s_ok = false;
-          return false;
-        }
+      // Check for DXT support
+      bool dxtSupport = isOpenGLExtensionSupported(GLextension::GL_EXT_texture_compression_s3tc);
+      Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
 
 
-        if(Luminous::GPUAssociation::isSupported()) {
-          unsigned int gpuCount = Luminous::GPUAssociation::numGPUs();
-          Radiant::info("Available GPUs: %u", gpuCount);
-        }
+      if (!isOpenGLExtensionSupported(GLextension::GL_ARB_sample_shading)) {
+        Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
+                         "some multi-sampling features will be disabled.");
+        // This is only a warning, no need to set s_ok to false
+      }
 
-        // Check for DXT support
-        bool dxtSupport = glewIsSupported("GL_EXT_texture_compression_s3tc");
-        Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
+      if (!isOpenGLExtensionSupported(GLextension::GL_ARB_uniform_buffer_object)) {
+        Radiant::error("OpenGL 3.1 or GL_ARB_uniform_buffer_object not supported by this computer");
+        /// @todo If we have the extension with older OpenGL, can we call
+        ///       BindBufferRange etc or should we call ARB/EXT -versions of those functions?
+      }
 
+      const char * glvendor = (const char *) glGetString(GL_VENDOR);
+      const char * glver = (const char *) glGetString(GL_VERSION);
+      const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-        if (!glewIsSupported("GL_ARB_sample_shading")) {
-          Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
-                           "some multi-sampling features will be disabled.");
-          // This is only a warning, no need to set s_ok to false
-        }
+      Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
 
-        if (!GLEW_VERSION_3_1 && !glewIsSupported("GL_ARB_uniform_buffer_object")) {
-          Radiant::error("OpenGL 3.1 or GL_ARB_uniform_buffer_object not supported by this computer");
-          /// @todo If we have the extension with older OpenGL, can we call
-          ///       BindBufferRange etc or should we call ARB/EXT -versions of those functions?
-          s_ok = false;
-        }
-#endif
-        const char * glvendor = (const char *) glGetString(GL_VENDOR);
-        const char * glver = (const char *) glGetString(GL_VERSION);
-        const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-
-        Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
-
-        if (glsl) {
-          Radiant::info("GLSL: %s", glsl);
-        } else {
-          Radiant::error("GLSL not supported");
-          s_ok = false;
-        }
-
-      } // MULTI_ONCE
-      if(s_ok)
-        s_luminousInitialized = true;
-      return s_ok;
+      if (glsl) {
+        Radiant::info("GLSL: %s", glsl);
+      } else {
+        Radiant::error("GLSL not supported");
+      }
     }
 
     s_luminousInitialized = true;
@@ -164,6 +145,11 @@ namespace Luminous
       Image::codecs()->registerCodec(std::make_shared<ImageCodecCS>());
 
     } // MULTI_ONCE
+  }
+
+  bool isOpenGLExtensionSupported(GLextension e)
+  {
+    return glbinding::ContextInfo::extensions().count(e) > 0;
   }
 
 }

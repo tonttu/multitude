@@ -27,7 +27,7 @@ namespace Luminous
 
   void glErrorToString(const QString & msg, int line)
   {
-    static QMap<GLuint, QString> errors;
+    static QMap<GLenum, QString> errors;
 
     MULTI_ONCE {
 
