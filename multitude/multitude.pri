@@ -192,7 +192,7 @@ macx {
   QMAKE_LIBDIR += $$PWD/OSX/lib
 
   LIB_OPENCL = -framework,OpenCL
-  LIB_OPENGL = -framework,OpenGL
+  LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -framework,OpenGL
 
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION

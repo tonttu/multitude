@@ -59,6 +59,7 @@ namespace Luminous
 
     if (initOpenGL) {
 
+      /// @todo check if glbinding is thread-safe. Doesn't seem like it.
       glbinding::Binding::initialize();
 
       // Check for DXT support

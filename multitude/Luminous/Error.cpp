@@ -15,13 +15,6 @@
 
 #include <QMap>
 
-// OS X (Core 3.2) doesn't have these
-#if defined(RADIANT_OSX)
-#  define GL_STACK_OVERFLOW 0x0503
-#  define GL_STACK_UNDERFLOW 0x504
-#  define GL_TABLE_TOO_LARGE 0x8031
-#endif
-
 namespace Luminous
 {
 

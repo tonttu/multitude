@@ -15,16 +15,9 @@
 #include <Radiant/Platform.hpp>
 #include <Radiant/Trace.hpp>
 
-#if defined(RADIANT_OSX)
-#   include <OpenGL/gl3.h>
-#   include <OpenGL/gl3ext.h>
-#   define MULTI_WITHOUT_GLEW 1
-#else
-#   include <glbinding/gl/gl.h>
-
+/// @todo could use <glbinding/gl32/functions.h> and gl32 namespace
+#include <glbinding/gl/gl.h>
 using namespace gl;
-
-#endif
 
 #define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))
 
