@@ -1362,62 +1362,51 @@ namespace VideoDisplay
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
 
-        if(false && m_audioFilter.graph) {
-#if 0
-          AVFilterBufferRef * ref = avfilter_get_audio_buffer_ref_from_arrays(
-                m_av.frame->data, m_av.frame->linesize[0], AV_PERM_READ | AV_PERM_WRITE,
-              m_av.frame->nb_samples, (AVSampleFormat)m_av.frame->format, m_av.frame->channel_layout);
-          ref->buf->free = [](AVFilterBuffer *ptr) { av_free(ptr); };
-          if (!ref) {
-            Radiant::error("LibavDecoder::D::decodeAudioPacket # %s: avfilter_get_audio_buffer_ref_from_arrays failed",
-                           m_options.source().toUtf8().data());
-          } else {
-            avfilter_copy_frame_props(ref, m_av.frame);
-            av_buffersrc_buffer(m_audioFilter.bufferSourceFilter, ref);
-            while (true) {
-              AVFilterBufferRef * output = nullptr;
-              int err = av_buffersink_read(m_audioFilter.bufferSinkFilter, &output);
-              if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
-                break;
+        if(m_audioFilter.graph) {
 
-              if (err < 0) {
-                avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
-                        arg(m_options.source()), err);
-                break;
-              }
+          av_buffersrc_add_frame(m_audioFilter.bufferSourceFilter, m_av.frame);
+          while (true) {
 
-              if(output) {
-                while(true) {
-                  decodedAudioBuffer = audioTransfer->takeFreeBuffer(
-                        m_av.decodedAudioBufferSamples - output->audio->nb_samples);
-                  if(decodedAudioBuffer) break;
-                  if(!m_running) return gotFrames;
-                  Radiant::Sleep::sleepMs(10);
-                  // Make sure that we don't get stuck with a file that doesn't
-                  // have video frames in the beginning
-                  audioTransfer->setEnabled(true);
-                }
+            int err = av_buffersink_get_frame_flags(m_audioFilter.bufferSinkFilter, m_av.frame, 0);
+            if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+              break;
 
-                /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
-                /// @todo should we care?
-                /*if(output->pts != (int64_t) AV_NOPTS_VALUE) {
-                  pts = output->pts;
-                  dpts = av.audioTsToSecs * output->pts;
-                  nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
-                }*/
-
-                decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_seekGeneration),
-                                               av_get_channel_layout_nb_channels(output->audio->channel_layout),
-                                               output->audio->nb_samples, (const float **)(output->data));
-                audioTransfer->putReadyBuffer(output->audio->nb_samples);
-                avfilter_unref_buffer(output);
-              }
+            if (err < 0) {
+              avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
+                      arg(m_options.source()), err);
+              break;
             }
+
+
+            while(true) {
+              decodedAudioBuffer = audioTransfer->takeFreeBuffer(
+                    m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
+              if(decodedAudioBuffer) break;
+              if(!m_running) return gotFrames;
+              Radiant::Sleep::sleepMs(10);
+              // Make sure that we don't get stuck with a file that doesn't
+              // have video frames in the beginning
+              audioTransfer->setEnabled(true);
+            }
+
+            /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
+            /// @todo should we care?
+            /*if(output->pts != (int64_t) AV_NOPTS_VALUE) {
+              pts = output->pts;
+              dpts = av.audioTsToSecs * output->pts;
+              nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
+            }*/
+
+            int64_t channel_layout = av_frame_get_channel_layout(m_av.frame);
+            decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_seekGeneration),
+                                         av_get_channel_layout_nb_channels(channel_layout),
+                                         m_av.frame->nb_samples, (const float **)(m_av.frame->data));
+            audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
           }
-#endif
+
         } else {
-          /// This branch will play audio (and hence video) about 10% slower than
-          /// it should
+          /// This branch will mess up the audio playback completely. I have
+          /// no idea what this is supposed to do
 
           while(true) {
             decodedAudioBuffer = audioTransfer->takeFreeBuffer(
