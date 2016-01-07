@@ -140,7 +140,6 @@ namespace VideoDisplay
 
     AVFormatContext * formatContext;
 
-    /// @todo this is deprecated
     AVCodecContext * videoCodecContext;
     AVCodec * videoCodec;
 
@@ -205,12 +204,15 @@ namespace VideoDisplay
     // Partially borrowed from libav / ffplay
     int64_t guessCorrectPts(AVFrame * frame);
 
+    //int64_t videoDpts(AVFrame * frame);
+    //int64_t audioDpts(AVFrame * frame);
+
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
     VideoFrameFfmpeg * getFreeFrame(bool & setTimestampToPts, double & dpts);
     void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
 
-    static int getBuffer(AVCodecContext * context, AVFrame * frame);
+    static int getBuffer(AVCodecContext * context, AVFrame * frame, int flags);
 
     static void releaseBuffer(AVCodecContext * context, AVFrame * frame);
     //static void releaseFilterBuffer(AVFilterBuffer * filterBuffer);
@@ -363,7 +365,7 @@ namespace VideoDisplay
   bool FfmpegDecoder::D::initFilters(FilterGraph &filterGraph,
                                      const QString &description, bool video)
   {
-    QByteArray errorMsg("LibavDecoder::D::initFilters # " + m_options.source().toUtf8() +
+    QByteArray errorMsg("FfmpegDecoder::D::initFilters # " + m_options.source().toUtf8() +
                         " " + (video ? "video" : "audio") +":");
 
     AVFilter * buffersrc = nullptr;
@@ -415,8 +417,6 @@ namespace VideoDisplay
         av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
                                      m_av.audioCodecContext->channels, m_av.audioCodecContext->channel_layout);
 
-        /// @todo "ffmpeg" application uses AVStream instead of codec context to
-        ///       read time_base, is this wrong?
         args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
                      m_av.audioCodecContext->time_base.num,
                      m_av.audioCodecContext->time_base.den,
@@ -572,6 +572,7 @@ namespace VideoDisplay
         m_av.videoCodecContext = m_av.formatContext->streams[m_av.videoStreamIndex]->codec;
         assert(m_av.videoCodecContext);
         m_av.videoCodecContext->opaque = this;
+        m_av.videoCodecContext->refcounted_frames = 1;
         // Using multi-threaded decoding here would improve decoding speed
         // on one 4k video on a slow pc, but will slow down everything else
         // by spawning too many threads.
@@ -597,6 +598,7 @@ namespace VideoDisplay
         assert(m_av.audioCodecContext);
         m_av.audioCodecContext->opaque = this;
         m_av.audioCodecContext->thread_count = 1;
+        m_av.audioCodecContext->refcounted_frames = 1;
       }
     }
 
@@ -679,8 +681,8 @@ namespace VideoDisplay
     // buffer after decoding. When using filters, we just use buffer refs
 
     if(m_av.videoCodecContext) {
-      if(m_av.videoCodecContext && (m_av.videoCodec->capabilities & CODEC_CAP_DR1)) {
-        //m_av.videoCodecContext->get_buffer = getBuffer;
+      if(m_av.videoCodecContext && (m_av.videoCodec->capabilities & AV_CODEC_CAP_DR1)) {
+        //m_av.videoCodecContext->get_buffer2 = getBuffer;
         //videoCodecContext->reget_buffer = LibavDecoder::D::regetBuffer;
         //m_av.videoCodecContext->release_buffer = releaseBuffer;
         m_av.dr1 = true;
@@ -736,15 +738,13 @@ namespace VideoDisplay
     if(m_av.videoCodecContext) {
       const auto & time_base = m_av.formatContext->streams[m_av.videoStreamIndex]->time_base;
       m_av.videoTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(m_av.videoCodecContext->time_base) *
-                                              m_av.videoCodecContext->ticks_per_frame;
+                                              av_q2d(m_av.videoCodecContext->framerate);
     }
 
     if(m_av.audioCodecContext) {
       const auto & time_base = m_av.formatContext->streams[m_av.audioStreamIndex]->time_base;
       m_av.audioTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(m_av.audioCodecContext->time_base) *
-                                              m_av.audioCodecContext->ticks_per_frame;
+                                              av_q2d(m_av.audioCodecContext->framerate);
     }
 
     // Size of the decoded audio buffer, in samples (~44100 samples means one second buffer)
@@ -1069,12 +1069,44 @@ namespace VideoDisplay
     for(int i = frame.planes(); i < 4; ++i)
       frame.clear(i);
   }
+/*
+  int64_t FfmpegDecoder::D::audioDpts(AVFrame *frame)
+  {
+    int64_t pts = AV_NOPTS_VALUE;
+    AVRational tb{1, 1};//frame->sample_rate};
 
+    if(frame->pts != AV_NOPTS_VALUE)
+      pts = av_rescale_q(frame->pts, m_av.audioCodecContext->time_base, tb);
+    else if(frame->pkt_pts != AV_NOPTS_VALUE)
+      pts = av_rescale_q(frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
+
+    return pts;
+  }
+
+  int64_t FfmpegDecoder::D::videoDpts(AVFrame *frame)
+  {
+    int64_t pts = AV_NOPTS_VALUE;
+    pts = av_frame_get_best_effort_timestamp(frame);
+
+    AVRational tb{1, 1};//frame->sample_rate};
+
+    if(frame->pts != AV_NOPTS_VALUE)
+      pts = av_rescale_q(frame->pts, m_av.audioCodecContext->time_base, tb);
+    else if(frame->pkt_pts != AV_NOPTS_VALUE)
+      pts = av_rescale_q(frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
+
+    return pts;
+  }
+*/
   int64_t FfmpegDecoder::D::guessCorrectPts(AVFrame* frame)
   {
+    /// Rest is equivalent of m_ptscorrection - stuff
+
+
     int64_t reordered_pts = frame->pkt_pts;
     int64_t dts = frame->pkt_dts;
     int64_t pts = AV_NOPTS_VALUE;
+
 
     if (dts != (int64_t) AV_NOPTS_VALUE) {
       m_ptsCorrection.num_faulty_dts += dts <= m_ptsCorrection.last_dts;
@@ -1384,6 +1416,9 @@ namespace VideoDisplay
           }
 #endif
         } else {
+          /// This branch will play audio (and hence video) about 10% slower than
+          /// it should
+
           while(true) {
             decodedAudioBuffer = audioTransfer->takeFreeBuffer(
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
@@ -1392,10 +1427,12 @@ namespace VideoDisplay
             Radiant::Sleep::sleepMs(10);
           }
 
+          int samples = m_av.frame->nb_samples;
+
           decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_seekGeneration),
-                                   m_av.audioCodecContext->channels, m_av.frame->nb_samples,
+                                   m_av.audioCodecContext->channels, samples,
                                    reinterpret_cast<const int16_t *>(m_av.frame->data[0]));
-          audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
+          audioTransfer->putReadyBuffer(samples);
         }
       } else {
         flush = false;
@@ -1406,17 +1443,105 @@ namespace VideoDisplay
     return gotFrames;
   }
 
-  int FfmpegDecoder::D::getBuffer(AVCodecContext *context, AVFrame *frame)
+  int FfmpegDecoder::D::getBuffer(AVCodecContext *context, AVFrame *frame, int flags)
   {
-    return 0;
-    /// @todo DR1
-    /*
+    (void) flags;
+
     frame->opaque = nullptr;
+
+    /// According documentation CODEC_FLAG_EMU_EDGE is deprecated and always
+    /// set so additional edges shouldn't be needed. Still the following wouldn't
+    /// go through
+    /// assert((context->flags & CODEC_FLAG_EMU_EDGE) != 0);
 
     Nimble::Vector2i bufferSize(context->width, context->height);
     if(av_image_check_size(context->width, context->height, 0, context) || context->pix_fmt < 0)
       return -1;
-*/
+
+    auto * fmtDescriptor = av_pix_fmt_desc_get(context->pix_fmt);
+    const int pixelSize = fmtDescriptor->comp[0].step_minus1+1;
+
+    int hChromaShift, vChromaShift;
+    avcodec_get_chroma_sub_sample(context->pix_fmt, &hChromaShift, &vChromaShift);
+
+    int strideAlign[AV_NUM_DATA_POINTERS];
+    avcodec_align_dimensions2(context, &bufferSize.x, &bufferSize.y, strideAlign);
+
+    int unaligned = 0;
+    do {
+      // NOTE: do not align linesizes individually, this breaks e.g. assumptions
+      // that linesize[0] == 2*linesize[1] in the MPEG-encoder for 4:2:2
+      av_image_fill_linesizes(frame->linesize, context->pix_fmt, bufferSize.x);
+      // increase alignment of w for next try (rhs gives the lowest bit set in w)
+      bufferSize.x += bufferSize.x & ~(bufferSize.x-1);
+
+      unaligned = 0;
+      for(int i = 0; i < 4; ++i)
+        unaligned |= frame->linesize[i] % strideAlign[i];
+    } while (unaligned);
+
+    const int tmpsize = av_image_fill_pointers(frame->data, context->pix_fmt,
+                                               bufferSize.y, NULL, frame->linesize);
+
+    if(tmpsize < 0)
+      return -1;
+
+    int size[4] = {0, 0, 0, 0};
+    int lastPlane = 0;
+    for(; lastPlane < 3 && frame->data[lastPlane + 1]; ++lastPlane)
+      size[lastPlane] = frame->data[lastPlane + 1] - frame->data[lastPlane];
+    size[lastPlane] = tmpsize - (frame->data[lastPlane] - frame->data[0]);
+
+    // According the documentation in frame.h, 16 extra bytes are needed
+    const int totalsize = size[0] + size[1] + size[2] + size[3] + (lastPlane+1)*16;
+
+    assert(context->opaque);
+    FfmpegDecoder::D & d = *static_cast<FfmpegDecoder::D*>(context->opaque);
+    DecodedImageBuffer * buffer = d.m_imageBuffers.get();
+    if(!buffer) {
+      Radiant::error("FfmpegDecoder::D::getBuffer # %s: not enough ImageBuffers",
+                     d.m_options.source().toUtf8().data());
+      return -1;
+    }
+
+    buffer->refcount() = 1;
+    frame->opaque = buffer;
+    buffer->data().resize(totalsize);
+
+    int offset = 0;
+    int plane = 0;
+    for(; plane < 4 && size[plane]; ++plane) {
+      //const int hShift = plane == 0 ? 0 : hChromaShift;
+      //const int vShift = plane == 0 ? 0 : vChromaShift;
+
+      /// note that edges shouldn't be required/used anymore
+      frame->data[plane] = buffer->data().data() + offset;
+      offset += size[plane] + 16;
+    }
+    for (; plane < AV_NUM_DATA_POINTERS; ++plane) {
+      frame->data[plane] = nullptr;
+      frame->linesize[plane] = 0;
+    }
+
+    /// @todo set_systematic_pal2 is hidden to internal-header so maybe it
+    /// should not used ? let's try without
+    //if(size[1] && !size[2])
+    //  avpriv_set_systematic_pal2((uint32_t*)frame->data[1], context->pix_fmt);
+
+    frame->extended_data = frame->data;
+    frame->sample_aspect_ratio = context->sample_aspect_ratio;
+
+    frame->pkt_pts = AV_NOPTS_VALUE;
+
+    frame->reordered_opaque = context->reordered_opaque;
+    frame->sample_aspect_ratio = context->sample_aspect_ratio;
+    frame->width = context->width;
+    frame->height = context->height;
+    frame->format = context->pix_fmt;
+
+
+
+    return 0;
   }
 
   void FfmpegDecoder::D::releaseBuffer(AVCodecContext *context, AVFrame *frame)
