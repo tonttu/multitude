@@ -387,6 +387,7 @@ namespace VideoDisplay
 
       filterGraph.graph = avfilter_graph_alloc();
       if(!filterGraph.graph) throw "Failed to allocate filter graph";
+      filterGraph.graph->thread_type = 0;
 
       QString args;
       if(video) {
