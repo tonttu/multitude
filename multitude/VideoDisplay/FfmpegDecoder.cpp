@@ -159,8 +159,6 @@ namespace VideoDisplay
     double duration;
     double start;
     Nimble::Size videoSize;
-
-    bool dr1;
   };
 
   struct PtsCorrectionContext
@@ -212,10 +210,6 @@ namespace VideoDisplay
     VideoFrameFfmpeg * getFreeFrame(bool & setTimestampToPts, double & dpts);
     void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
 
-    static int getBuffer(AVCodecContext * context, AVFrame * frame, int flags);
-
-    static void releaseBuffer(AVCodecContext * context, AVFrame * frame);
-    //static void releaseFilterBuffer(AVFilterBuffer * filterBuffer);
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
 
@@ -258,10 +252,6 @@ namespace VideoDisplay
     double m_maxAudioDelay;
     double m_lastDecodedAudioPts;
     double m_lastDecodedVideoPts;
-
-    /// From main thread to decoder thread, list of BufferRefs that should be
-    /// released. Can't run that in the main thread without locking.
-    Utils::LockFreeQueue<AVFrame*, 40> m_consumedBufferRefs;
 
     Utils::LockFreeQueue<VideoFrameFfmpeg, 40> m_decodedVideoFrames;
 
@@ -387,6 +377,7 @@ namespace VideoDisplay
 
       filterGraph.graph = avfilter_graph_alloc();
       if(!filterGraph.graph) throw "Failed to allocate filter graph";
+      /// Ensure that filters do not spawn threads
       filterGraph.graph->thread_type = 0;
 
       QString args;
@@ -676,24 +667,7 @@ namespace VideoDisplay
       return false;
     }
 
-    // We want to use our own ImageBuffers with AVFrames to avoid data copying
-    // and to extend the lifetimes of the buffers outside this class
-    // If the codec doesn't support that, we have to make a copy of the data
-    // buffer after decoding. When using filters, we just use buffer refs
-
     if(m_av.videoCodecContext) {
-      if(m_av.videoCodecContext && (m_av.videoCodec->capabilities & AV_CODEC_CAP_DR1)) {
-        //m_av.videoCodecContext->get_buffer2 = getBuffer;
-        //videoCodecContext->reget_buffer = LibavDecoder::D::regetBuffer;
-        //m_av.videoCodecContext->release_buffer = releaseBuffer;
-        m_av.dr1 = true;
-      } else {
-        Radiant::debug("%s Codec has no CODEC_CAP_DR1, need to copy the image data every frame", errorMsg.data());
-        m_av.dr1 = false;
-      }
-
-      /// TODO figure out how to implement dr1-thingy
-      m_av.dr1 = false;
 
       bool pixelFormatSupported = false;
       for (auto fmt: m_pixelFormats) {
@@ -1070,40 +1044,9 @@ namespace VideoDisplay
     for(int i = frame.planes(); i < 4; ++i)
       frame.clear(i);
   }
-/*
-  int64_t FfmpegDecoder::D::audioDpts(AVFrame *frame)
-  {
-    int64_t pts = AV_NOPTS_VALUE;
-    AVRational tb{1, 1};//frame->sample_rate};
 
-    if(frame->pts != AV_NOPTS_VALUE)
-      pts = av_rescale_q(frame->pts, m_av.audioCodecContext->time_base, tb);
-    else if(frame->pkt_pts != AV_NOPTS_VALUE)
-      pts = av_rescale_q(frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
-
-    return pts;
-  }
-
-  int64_t FfmpegDecoder::D::videoDpts(AVFrame *frame)
-  {
-    int64_t pts = AV_NOPTS_VALUE;
-    pts = av_frame_get_best_effort_timestamp(frame);
-
-    AVRational tb{1, 1};//frame->sample_rate};
-
-    if(frame->pts != AV_NOPTS_VALUE)
-      pts = av_rescale_q(frame->pts, m_av.audioCodecContext->time_base, tb);
-    else if(frame->pkt_pts != AV_NOPTS_VALUE)
-      pts = av_rescale_q(frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
-
-    return pts;
-  }
-*/
   int64_t FfmpegDecoder::D::guessCorrectPts(AVFrame* frame)
   {
-    /// Rest is equivalent of m_ptscorrection - stuff
-
-
     int64_t reordered_pts = frame->pkt_pts;
     int64_t dts = frame->pkt_dts;
     int64_t pts = AV_NOPTS_VALUE;
@@ -1158,60 +1101,25 @@ namespace VideoDisplay
 
     bool setTimestampToPts = false;
 
-    DecodedImageBuffer * buffer = nullptr;
-    if(m_av.dr1 && m_av.frame->opaque) {
-      buffer = static_cast<DecodedImageBuffer*>(m_av.frame->opaque);
-      buffer->ref();
-    }
-
     VideoFrameFfmpeg * frame = nullptr;
 
     if(m_videoFilter.graph) {
-      // If we don't have dr1, we can't use buffer refs, we need to actually copy the data
-      int err;
-      if (m_av.dr1) {
-        // AVFilterBufferRefs do not exist in ffmpeg anymore
-#if 0
-        AVFilterBufferRef * ref = avfilter_get_video_buffer_ref_from_arrays(
-              m_av.frame->data, m_av.frame->linesize, AV_PERM_READ | AV_PERM_WRITE,
-              m_av.frame->width, m_av.frame->height,
-              AVPixelFormat(m_av.frame->format));
-
-        if (ref)
-          avfilter_copy_frame_props(ref, m_av.frame);
-
-        if(buffer) {
-          ref->buf->priv = new std::pair<FfmpegDecoder::D *, DecodedImageBuffer *>(this, buffer);
-          ref->buf->free = releaseFilterBuffer;
-        }
-        err = av_buffersrc_buffer(m_videoFilter.bufferSourceFilter, ref);
-        if (err < 0)
-          avfilter_unref_buffer(ref);
-#endif
-      } else {
-        err = av_buffersrc_write_frame(m_videoFilter.bufferSourceFilter, m_av.frame);
-      }
+      int err = av_buffersrc_write_frame(m_videoFilter.bufferSourceFilter, m_av.frame);
 
       if(err < 0) {
         avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref/av_buffersrc_write_frame failed").
                 arg(m_options.source()), err);
       } else {
         while (true) {
-          // we either use custom deleter (releaseFilterBuffer) or the
-          // default one with the actual data cleared
-          // without dr1, we let libav handle the memory
-          if (m_av.dr1 && !buffer)
-            m_av.packet.data = nullptr;
 
           frame = getFreeFrame(setTimestampToPts, dpts);
 
-          if(!frame) /// @todo Should we first call av_buffersink_get_frame ?
+          if(!frame)
             return false;
 
           if(!frame->frame) {
             frame->frame = av_frame_alloc();
           }
-
 
           err = av_buffersink_get_frame(m_videoFilter.bufferSinkFilter, frame->frame);
           if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
@@ -1273,40 +1181,37 @@ namespace VideoDisplay
       if(!frame)
         return false;
 
-      frame->frame = nullptr;
-      frame->setImageBuffer(buffer);
+      if(!frame->frame) {
+        frame->frame = av_frame_alloc();
+      }
       frame->setIndex(m_index++);
 
-      auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(m_av.frame->format));
+      av_frame_ref(frame->frame, m_av.frame);
+
+      /// Copy properties to VideoFrame, that acts as a proxy to AVFrame
+
+      auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
+
+      int planes = (fmtDescriptor->flags & AV_PIX_FMT_FLAG_PLANAR) ? fmtDescriptor->nb_components : 1;
+
+      assert(frame->frame->format == m_av.frame->format);
+      assert(frame->frame->width == m_av.frame->width);
+      assert(frame->frame->height == m_av.frame->height);
+      for(int i = 0; i < planes; ++i) {
+        assert(frame->frame->linesize[i] == m_av.frame->linesize[i]);
+        assert(frame->frame->data[i] == m_av.frame->data[i]);
+      }
+
       int bytes = 0;
+
       setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       for(int i = 0; i < frame->planes(); ++i) {
-        frame->setLineSize(i, m_av.frame->linesize[i]);
-        frame->setData(i, m_av.frame->data[i]);
+        frame->setLineSize(i, frame->frame->linesize[i]);
+        frame->setData(i, frame->frame->data[i]);
         bytes += frame->bytes(i);
       }
 
-      if(!buffer) {
-        buffer = m_imageBuffers.get();
-        if(!buffer) {
-          Radiant::error("FfmpegDecoder::D::decodeVideoPacket # %s: Not enough ImageBuffers",
-                         m_options.source().toUtf8().data());
-          for(int i = 0; i < frame->planes(); ++i)
-            frame->setData(i, nullptr);
-          frame->setPlanes(0);
-        } else {
-          buffer->refcount() = 1;
-          frame->setImageBuffer(buffer);
-          buffer->data().resize(bytes);
-          for(int offset = 0, i = 0; i < frame->planes(); ++i) {
-            uint8_t * dst = buffer->data().data() + offset;
-            bytes = frame->bytes(i);
-            offset += bytes;
-            memcpy(dst, m_av.frame->data[i], bytes);
-            frame->setData(i, dst);
-          }
-        }
-      }
+      frame->setImageBuffer(nullptr); /// Use AVFrames for this
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
@@ -1406,8 +1311,9 @@ namespace VideoDisplay
           }
 
         } else {
-          /// This branch will mess up the audio playback completely. I have
-          /// no idea what this is supposed to do
+          /// @todo verify that this branch will actually work with AV_SAMPLE_FMT_FLTP
+          /// as the only case we end up here is when AudioCodecContext has
+          /// AV_SAMPLE_FMT_FLTP as sample_fmt
 
           while(true) {
             decodedAudioBuffer = audioTransfer->takeFreeBuffer(
@@ -1433,118 +1339,6 @@ namespace VideoDisplay
     return gotFrames;
   }
 
-  int FfmpegDecoder::D::getBuffer(AVCodecContext *context, AVFrame *frame, int flags)
-  {
-    (void) flags;
-
-    frame->opaque = nullptr;
-
-    /// According documentation CODEC_FLAG_EMU_EDGE is deprecated and always
-    /// set so additional edges shouldn't be needed. Still the following wouldn't
-    /// go through
-    /// assert((context->flags & CODEC_FLAG_EMU_EDGE) != 0);
-
-    Nimble::Vector2i bufferSize(context->width, context->height);
-    if(av_image_check_size(context->width, context->height, 0, context) || context->pix_fmt < 0)
-      return -1;
-
-    auto * fmtDescriptor = av_pix_fmt_desc_get(context->pix_fmt);
-    const int pixelSize = fmtDescriptor->comp[0].step_minus1+1;
-
-    int hChromaShift, vChromaShift;
-    avcodec_get_chroma_sub_sample(context->pix_fmt, &hChromaShift, &vChromaShift);
-
-    int strideAlign[AV_NUM_DATA_POINTERS];
-    avcodec_align_dimensions2(context, &bufferSize.x, &bufferSize.y, strideAlign);
-
-    int unaligned = 0;
-    do {
-      // NOTE: do not align linesizes individually, this breaks e.g. assumptions
-      // that linesize[0] == 2*linesize[1] in the MPEG-encoder for 4:2:2
-      av_image_fill_linesizes(frame->linesize, context->pix_fmt, bufferSize.x);
-      // increase alignment of w for next try (rhs gives the lowest bit set in w)
-      bufferSize.x += bufferSize.x & ~(bufferSize.x-1);
-
-      unaligned = 0;
-      for(int i = 0; i < 4; ++i)
-        unaligned |= frame->linesize[i] % strideAlign[i];
-    } while (unaligned);
-
-    const int tmpsize = av_image_fill_pointers(frame->data, context->pix_fmt,
-                                               bufferSize.y, NULL, frame->linesize);
-
-    if(tmpsize < 0)
-      return -1;
-
-    int size[4] = {0, 0, 0, 0};
-    int lastPlane = 0;
-    for(; lastPlane < 3 && frame->data[lastPlane + 1]; ++lastPlane)
-      size[lastPlane] = frame->data[lastPlane + 1] - frame->data[lastPlane];
-    size[lastPlane] = tmpsize - (frame->data[lastPlane] - frame->data[0]);
-
-    // According the documentation in frame.h, 16 extra bytes are needed
-    const int totalsize = size[0] + size[1] + size[2] + size[3] + (lastPlane+1)*16;
-
-    assert(context->opaque);
-    FfmpegDecoder::D & d = *static_cast<FfmpegDecoder::D*>(context->opaque);
-    DecodedImageBuffer * buffer = d.m_imageBuffers.get();
-    if(!buffer) {
-      Radiant::error("FfmpegDecoder::D::getBuffer # %s: not enough ImageBuffers",
-                     d.m_options.source().toUtf8().data());
-      return -1;
-    }
-
-    buffer->refcount() = 1;
-    frame->opaque = buffer;
-    buffer->data().resize(totalsize);
-
-    int offset = 0;
-    int plane = 0;
-    for(; plane < 4 && size[plane]; ++plane) {
-      //const int hShift = plane == 0 ? 0 : hChromaShift;
-      //const int vShift = plane == 0 ? 0 : vChromaShift;
-
-      /// note that edges shouldn't be required/used anymore
-      frame->data[plane] = buffer->data().data() + offset;
-      offset += size[plane] + 16;
-    }
-    for (; plane < AV_NUM_DATA_POINTERS; ++plane) {
-      frame->data[plane] = nullptr;
-      frame->linesize[plane] = 0;
-    }
-
-    /// @todo set_systematic_pal2 is hidden to internal-header so maybe it
-    /// should not used ? let's try without
-    //if(size[1] && !size[2])
-    //  avpriv_set_systematic_pal2((uint32_t*)frame->data[1], context->pix_fmt);
-
-    frame->extended_data = frame->data;
-    frame->sample_aspect_ratio = context->sample_aspect_ratio;
-
-    frame->pkt_pts = AV_NOPTS_VALUE;
-
-    frame->reordered_opaque = context->reordered_opaque;
-    frame->sample_aspect_ratio = context->sample_aspect_ratio;
-    frame->width = context->width;
-    frame->height = context->height;
-    frame->format = context->pix_fmt;
-
-
-
-    return 0;
-  }
-
-  void FfmpegDecoder::D::releaseBuffer(AVCodecContext *context, AVFrame *frame)
-  {
-    ///@todo DR1
-  }
-
-  /*
-  void FfmpegDecoder::D::releaseFilterBuffer(AVFilterBuffer *filterBuffer)
-  {
-    ///@todo dr1
-  }
-/*/
   void FfmpegDecoder::D::checkSeek(double &nextVideoDpts, double &videoDpts, double &nextAudioDpts)
   {
     if((m_seekRequest.type() != SEEK_NONE)) {
@@ -1681,22 +1475,9 @@ namespace VideoDisplay
       VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames.readyItem();
       assert(frame);
 
-      DecodedImageBuffer * buffer = frame->imageBuffer();
-      if(buffer && !buffer->deref())
-        m_d->m_imageBuffers.put(*buffer);
-
-      /** TODO bufferRef thingy!
-      if(frame->bufferRef) {
-        AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.takeFree();
-        if(ref) {
-          *ref = frame->bufferRef;
-          m_d->m_consumedBufferRefs.put();
-        } else {
-          Radiant::error("FfmpegDecoder::releaseOldVideoFrames # consumedBufferRefs is full, leaking memory");
-        }
-        frame->bufferRef = nullptr;
+      if(frame->frame) {
+        av_frame_unref(frame->frame);
       }
-      */
 
       m_d->m_decodedVideoFrames.next();
     }
@@ -1878,16 +1659,6 @@ namespace VideoDisplay
 
     while(m_d->m_running) {
       m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames());
-
-      while(true) {
-        break;
-        /** TODO unref consumed buffers/frames
-        AVFilterBufferRef ** ref = m_d->m_consumedBufferRefs.readyItem();
-        if(!ref) break;
-        avfilter_unref_buffer(*ref);
-        m_d->m_consumedBufferRefs.next();
-        */
-      }
 
       int err = 0;
 
