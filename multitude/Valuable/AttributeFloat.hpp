@@ -11,6 +11,9 @@
 #ifndef VALUABLE_VALUE_FLOAT_HPP
 #define VALUABLE_VALUE_FLOAT_HPP
 
+#include "SimpleExpression.hpp"
+#include "StyleValue.hpp"
+
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Export.hpp>
@@ -61,6 +64,7 @@ namespace Valuable
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
       {
+        m_exprs[layer].reset();
         m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
         this->setValue(v, layer);
         return true;
@@ -69,13 +73,26 @@ namespace Valuable
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
       {
+        m_exprs[layer].reset();
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
           this->setValue(v * m_src, layer);
         } else {
+          m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
           this->setValue(v, layer);
         }
         return true;
+      }
+
+      virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE
+      {
+        if (value.size() == 1 && value.type() == StyleValue::TYPE_EXPR) {
+          setPercentage(std::numeric_limits<float>::quiet_NaN(), layer);
+          m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
+          this->setValue(m_exprs[layer]->evaluate({m_src}), layer);
+          return true;
+        }
+        return false;
       }
 
       void setSrc(float src)
@@ -84,8 +101,11 @@ namespace Valuable
         for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
             l = Attribute::Layer(l + 1)) {
           if(!this->isValueDefinedOnLayer(l)) continue;
-          if(!Nimble::Math::isNAN(m_factors[l]))
+          if(m_exprs[l]) {
+            this->setValue(m_exprs[l]->evaluate({m_src}), l);
+          } else if(!Nimble::Math::isNAN(m_factors[l])) {
             this->setValue(m_factors[l] * src, l);
+          }
         }
       }
 
@@ -126,6 +146,7 @@ namespace Valuable
   private:
       float m_factors[Attribute::LAYER_COUNT];
       float m_src;
+      std::unique_ptr<SimpleExpression> m_exprs[Attribute::LAYER_COUNT];
   };
 
   /// Float value object

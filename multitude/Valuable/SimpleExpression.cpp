@@ -208,7 +208,7 @@ namespace Valuable
 
   float SimpleExpression::evaluate(const std::vector<float> & params) const
   {
-    if (m_d->m_paramCount != int(params.size())) {
+    if (m_d->m_paramCount > int(params.size())) {
       Radiant::error("SimpleExpression::evaluate # Expression uses %d params, but %d given",
                      m_d->m_paramCount, int(params.size()));
       return 0;
