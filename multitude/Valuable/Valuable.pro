@@ -12,7 +12,8 @@ HEADERS += Archive.hpp \
     TransitionManager.hpp \
     TransitionImpl.hpp \
     TransitionAnim.hpp \
-    SimpleExpression.hpp
+    SimpleExpression.hpp \
+    SimpleExpressionLink.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -50,7 +51,8 @@ SOURCES += Archive.cpp \
     AttributeStringList.cpp \
     AttributeStringMap.cpp \
     TransitionManager.cpp \
-    SimpleExpression.cpp
+    SimpleExpression.cpp \
+    SimpleExpressionLink.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
