@@ -74,12 +74,6 @@ namespace Luminous
         // This is only a warning, no need to set s_ok to false
       }
 
-      if (!isOpenGLExtensionSupported(GLextension::GL_ARB_uniform_buffer_object)) {
-        Radiant::error("OpenGL 3.1 or GL_ARB_uniform_buffer_object not supported by this computer");
-        /// @todo If we have the extension with older OpenGL, can we call
-        ///       BindBufferRange etc or should we call ARB/EXT -versions of those functions?
-      }
-
       const char * glvendor = (const char *) glGetString(GL_VENDOR);
       const char * glver = (const char *) glGetString(GL_VERSION);
       const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
