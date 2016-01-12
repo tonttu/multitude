@@ -33,12 +33,12 @@ namespace Luminous
 {
 
   /** Initializes the Luminous library.
-      In practice this function only initializes the GLEW and checks
-      the capabilities of the underlying OpenGL implementation. If the
-      OpenGL version is below 2.0, then a warning message is
-      issued.
+      In practice this function initializes image codecs, glbinding and checks
+      the capabilities of the underlying OpenGL implementation.
 
-      @param initOpenGL if set to false, glew will not be initialized
+      This function should be called once for each rendering thread / context.
+
+      @param initOpenGL if set to false, glbinding will not be initialized
 
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
