@@ -62,6 +62,7 @@ SOURCES += UnitTest++/AssertException.cpp \
 win32 {
   HEADERS += UnitTest++/Win32/TimeHelpers.h
   SOURCES += UnitTest++/Win32/TimeHelpers.cpp
+  DEFINES += UNITTEST_WIN32_DLL
 } else {
   HEADERS += UnitTest++/Posix/TimeHelpers.h
   HEADERS += UnitTest++/Posix/SignalTranslator.h

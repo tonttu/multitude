@@ -34,7 +34,7 @@ HEADERS += $$PRIVATE_HEADERS $$PUBLIC_HEADERS
 SOURCES += \
   $$SRC/json_parser.cc \
   $$SRC/json_scanner.cc \
-  $$SRC/json_scanner.cpp \
+  $$SRC/json_scanner2.cpp \
   $$SRC/parser.cpp \
   $$SRC/parserrunnable.cpp \
   $$SRC/qobjecthelper.cpp \
