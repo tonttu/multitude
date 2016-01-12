@@ -223,7 +223,7 @@ namespace Valuable
       } else if (t.tag == TOKEN_PARAM) {
         stack[++head] = params[t.paramIndex];
       } else {
-        stack[head-1] = evalOp(stack[head], t.tag, stack[head-1]);
+        stack[head-1] = evalOp(stack[head-1], t.tag, stack[head]);
         --head;
       }
     }
