@@ -1104,13 +1104,22 @@ namespace VideoDisplay
     VideoFrameFfmpeg * frame = nullptr;
 
     if(m_videoFilter.graph) {
-      int err = av_buffersrc_write_frame(m_videoFilter.bufferSourceFilter, m_av.frame);
+      int err = av_buffersrc_add_frame(m_videoFilter.bufferSourceFilter, m_av.frame);
 
       if(err < 0) {
         avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref/av_buffersrc_write_frame failed").
                 arg(m_options.source()), err);
       } else {
         while (true) {
+
+          err = av_buffersink_get_frame(m_videoFilter.bufferSinkFilter, m_av.frame);
+          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+            break;
+          if (err < 0) {
+            avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersink_read failed").
+                    arg(m_options.source()), err);
+            break;
+          }
 
           frame = getFreeFrame(setTimestampToPts, dpts);
 
@@ -1121,59 +1130,49 @@ namespace VideoDisplay
             frame->frame = av_frame_alloc();
           }
 
-          err = av_buffersink_get_frame(m_videoFilter.bufferSinkFilter, frame->frame);
-          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
-            break;
-          if (err < 0) {
-            avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersink_read failed").
-                    arg(m_options.source()), err);
-            break;
-          }
+          av_frame_ref(frame->frame, m_av.frame);
 
-          bool gotFrameFromSink = true; /// todo check properly based on the call above
-          if(gotFrameFromSink) {
+          frame->setImageBuffer(nullptr);
+          frame->setIndex(m_index++);
 
-            frame->setImageBuffer(nullptr);
-            frame->setIndex(m_index++);
-
-            auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
-            setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(frame->frame->width, frame->frame->height));
-            for (int i = 0; i < frame->planes(); ++i) {
-              if (frame->frame->linesize[i] < 0) {
-                /// @todo if we have a negative linesize, we should just make a copy of the data,
-                ///       since OpenGL doesn't support negative linesizes (GL_UNPACK_ROW_LENGTH
-                ///       needs to be positive). For now some formats and filters (like vflip)
-                ///       won't work.
-              }
+          auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
+          setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(frame->frame->width, frame->frame->height));
+          for (int i = 0; i < frame->planes(); ++i) {
+            if (frame->frame->linesize[i] < 0) {
+              /// @todo if we have a negative linesize, we should just make a copy of the data,
+              ///       since OpenGL doesn't support negative linesizes (GL_UNPACK_ROW_LENGTH
+              ///       needs to be positive). For now some formats and filters (like vflip)
+              ///       won't work.
+            } else {
               frame->setLineSize(i, frame->frame->linesize[i]);
               frame->setData(i, frame->frame->data[i]);
             }
-
-            /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
-            /// but some filters just set it always to zero
-            if(frame->frame->pts != (int64_t) AV_NOPTS_VALUE && frame->frame->pts != 0) {
-              pts = frame->frame->pts;
-              dpts = m_av.videoTsToSecs * frame->frame->pts;
-            }
-
-            frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
-            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
-
-            VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
-            if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
-                lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
-              // There was a problem with the stream, previous frame had larger timestamp than this
-              // frame, that should be newer. This must be broken stream or concatenated MPEG file
-              // or something similar. We treat this like it was a seek request
-              // On some files there are some individual frames out-of-order, we try to minimize
-              // this by allowing maximum difference of maxPtsReorderDiff
-              /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
-              increaseSeekGeneration();
-              frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
-              setTimestampToPts = false;
-            }
-            m_decodedVideoFrames.put();
           }
+
+          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
+          /// but some filters just set it always to zero
+          if(frame->frame->pts != (int64_t) AV_NOPTS_VALUE && frame->frame->pts != 0) {
+            pts = frame->frame->pts;
+            dpts = m_av.videoTsToSecs * frame->frame->pts;
+          }
+
+          frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
+          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+
+          VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
+          if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
+              lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
+            // There was a problem with the stream, previous frame had larger timestamp than this
+            // frame, that should be newer. This must be broken stream or concatenated MPEG file
+            // or something similar. We treat this like it was a seek request
+            // On some files there are some individual frames out-of-order, we try to minimize
+            // this by allowing maximum difference of maxPtsReorderDiff
+            /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
+            increaseSeekGeneration();
+            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+            setTimestampToPts = false;
+          }
+          m_decodedVideoFrames.put();
         }
       }
     } else {
@@ -1202,13 +1201,10 @@ namespace VideoDisplay
         assert(frame->frame->data[i] == m_av.frame->data[i]);
       }
 
-      int bytes = 0;
-
       setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       for(int i = 0; i < frame->planes(); ++i) {
         frame->setLineSize(i, frame->frame->linesize[i]);
         frame->setData(i, frame->frame->data[i]);
-        bytes += frame->bytes(i);
       }
 
       frame->setImageBuffer(nullptr); /// Use AVFrames for this
