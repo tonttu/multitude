@@ -161,6 +161,11 @@ namespace Valuable
     return m_d->m_tokens == expr.m_d->m_tokens;
   }
 
+  bool SimpleExpression::isConstant() const
+  {
+    return m_d->m_tokens.size() == 1 && m_d->m_tokens[0].tag == TOKEN_FLOAT;
+  }
+
   void SimpleExpression::replace(Tag op, const SimpleExpression & expr)
   {
     const std::vector<D::Token> & exprTokens = expr.m_d->m_tokens;
@@ -208,9 +213,14 @@ namespace Valuable
 
   float SimpleExpression::evaluate(const std::vector<float> & params) const
   {
-    if (m_d->m_paramCount > int(params.size())) {
+    return evaluate(params.data(), params.size());
+  }
+
+  float SimpleExpression::evaluate(const float * params, std::size_t numparams) const
+  {
+    if (m_d->m_paramCount > int(numparams)) {
       Radiant::error("SimpleExpression::evaluate # Expression uses %d params, but %d given",
-                     m_d->m_paramCount, int(params.size()));
+                     m_d->m_paramCount, int(numparams));
       return 0;
     }
     // we could use std::stack<float, std::vector<float> > stack, but that allocates memory

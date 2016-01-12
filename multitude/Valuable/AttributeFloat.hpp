@@ -89,7 +89,7 @@ namespace Valuable
         if (value.size() == 1 && value.type() == StyleValue::TYPE_EXPR) {
           setPercentage(std::numeric_limits<float>::quiet_NaN(), layer);
           m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
-          this->setValue(m_exprs[layer]->evaluate({m_src}), layer);
+          this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
           return true;
         }
         return false;
@@ -102,7 +102,7 @@ namespace Valuable
             l = Attribute::Layer(l + 1)) {
           if(!this->isValueDefinedOnLayer(l)) continue;
           if(m_exprs[l]) {
-            this->setValue(m_exprs[l]->evaluate({m_src}), l);
+            this->setValue(m_exprs[l]->evaluate(&m_src, 1), l);
           } else if(!Nimble::Math::isNAN(m_factors[l])) {
             this->setValue(m_factors[l] * src, l);
           }

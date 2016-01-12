@@ -45,12 +45,15 @@ namespace Valuable
 
     bool operator==(const SimpleExpression & expr);
 
+    bool isConstant() const;
+
     /// If the current expression is A, replace it to be ((A) op (expr))
     void replace(Tag op, const SimpleExpression & expr);
     void replace(Tag op, float literalValue);
     void replace(Tag op, Param p);
 
     float evaluate(const std::vector<float> & params) const;
+    float evaluate(const float * params = nullptr, std::size_t numparams = 0) const;
     QByteArray toString() const;
 
   private:
