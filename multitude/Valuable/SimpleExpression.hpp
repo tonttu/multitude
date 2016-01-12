@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+#include <QByteArray>
+
 namespace Valuable
 {
   class VALUABLE_API SimpleExpression
@@ -49,6 +51,7 @@ namespace Valuable
     void replace(Tag op, Param p);
 
     float evaluate(const std::vector<float> & params) const;
+    QByteArray toString() const;
 
   private:
     class D;

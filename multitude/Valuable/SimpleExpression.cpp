@@ -229,4 +229,21 @@ namespace Valuable
     }
     return stack[0];
   }
+
+  QByteArray SimpleExpression::toString() const
+  {
+    std::array<QByteArray, 200> stack;
+    int head = -1;
+    for (D::Token t: m_d->m_tokens) {
+      if (t.tag == TOKEN_FLOAT) {
+        stack[++head] = QByteArray::number(t.f);
+      } else if (t.tag == TOKEN_PARAM) {
+        stack[++head] = "param"+QByteArray::number(t.paramIndex);
+      } else {
+        stack[head-1] = "(" + stack[head-1] + " " + "+-*/"[t.tag] + " " + stack[head] + ")";
+        --head;
+      }
+    }
+    return stack[0];
+  }
 } // namespace Valuable
