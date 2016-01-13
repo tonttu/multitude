@@ -32,6 +32,11 @@ enable-js:DEFINES += CORNERSTONE_JS=1
 # CEF is enabled by default
 !disable-cef:CONFIG += enable-cef
 
+FFMPEG=$$(USE_FFMPEG)
+!isEmpty(FFMPEG) {
+  DEFINES += USE_FFMPEG
+}
+
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
 INCLUDEPATH += $$PWD
@@ -86,9 +91,16 @@ linux-*{
 
   QMAKE_LIBDIR += $$PWD/Linux/lib
 
-  exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
-    INCLUDEPATH += /opt/multitouch-libav2/include
+  isEmpty(FFMPEG) {
+    exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
+      MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
+      INCLUDEPATH += /opt/multitouch-libav2/include
+    }
+  } else {
+    exists(/opt/multitouch-ffmpeg2/include/libavcodec/avcodec.h) {
+      MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg2/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch -lavfilter-multitouch -lswscale-multitouch
+      INCLUDEPATH += /opt/multitouch-ffmpeg2/include
+    }
   }
 
   enable-js {
@@ -205,14 +217,12 @@ win32 {
 
     exists($$CORNERSTONE_DEPS_PATH) {
 
-      TEST=$$(USE_FFMPEG)
-      isEmpty(TEST) {
+      isEmpty(FFMPEG) {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
         LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
       } else {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/ffmpeg/include
         LIBS += -L$$CORNERSTONE_DEPS_PATH/ffmpeg/bin
-        DEFINES += USE_FFMPEG
       }
 
       enable-js {
