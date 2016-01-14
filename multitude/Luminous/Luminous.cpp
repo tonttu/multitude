@@ -36,8 +36,10 @@ namespace Luminous
 {
   bool isSampleShadingSupported()
   {
-#ifdef RADIANT_OSX
+#if defined(RADIANT_OSX_YOSEMITE) || defined(RADIANT_OSX_EL_CAPITAN)
     return true;
+#elif defined(RADIANT_OSX_MOUNTAIN_LION)
+    return false;
 #else
     static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
     return s_supported;

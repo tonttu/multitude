@@ -10,7 +10,7 @@
 
 #include "AudioTransfer.hpp"
 
-#include "LibavDecoder.hpp"
+#include "AVDecoder.hpp"
 
 #include <Resonant/AudioLoop.hpp>
 
@@ -68,7 +68,7 @@ namespace VideoDisplay
   class AudioTransfer::D
   {
   public:
-    D(LibavDecoder * avff, int channels)
+    D(AVDecoder * avff, int channels)
       : m_avff(avff)
       , m_channels(channels)
       , m_seekGeneration(0)
@@ -86,7 +86,7 @@ namespace VideoDisplay
       /*, samplesProcessed(0)*/
     {}
 
-    LibavDecoder * m_avff;
+    AVDecoder * m_avff;
     const int m_channels;
     int m_seekGeneration;
     AVDecoder::PlayMode m_playMode;
@@ -145,7 +145,7 @@ namespace VideoDisplay
     ++m_buffersReader;
   }
 
-  AudioTransfer::AudioTransfer(LibavDecoder * avff, int channels)
+  AudioTransfer::AudioTransfer(AVDecoder * avff, int channels)
     : m_d(new D(avff, channels))
   {
     assert(channels > 0);

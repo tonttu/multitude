@@ -55,12 +55,12 @@ namespace VideoDisplay
     std::vector<AlignedFloatVector> m_data;
   };
 
-  class LibavDecoder;
+  class AVDecoder;
 
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(LibavDecoder *, int channels);
+    AudioTransfer(AVDecoder *, int channels);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;

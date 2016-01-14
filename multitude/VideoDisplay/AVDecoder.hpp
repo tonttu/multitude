@@ -33,6 +33,16 @@
 namespace VideoDisplay
 {
 
+  /// Initialize underlying video library. This is called automatically when
+  /// using AVDecoder, but should also be called manually if there is a need to
+  /// call raw functions of the implementation (libav/ffmpeg) outside VideoDisplay
+  /// library.
+  /// This will:
+  ///  * Register Cornerstone log handlers
+  ///  * Register Cornerstone lock manager
+  ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
+  VIDEODISPLAY_API void init();
+
   /// @cond
 
   class Timestamp
@@ -694,6 +704,8 @@ namespace VideoDisplay
     /// @returns new decoder
     static std::shared_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");
+
+    virtual void audioTransferDeleted() {}
 
   protected:
     /// Constructs a new empty decoder, load() function will always be called after this

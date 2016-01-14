@@ -11,10 +11,24 @@
 #include "AVDecoder.hpp"
 
 /// @todo this include is just for create(), should be removed
+#ifndef USE_FFMPEG
 #include "LibavDecoder.hpp"
+#else
+#include "FfmpegDecoder.hpp"
+#endif
 
 namespace VideoDisplay
 {
+
+  void init()
+  {
+#ifndef USE_FFMPEG
+    libavInit();
+#else
+    ffmpegInit();
+#endif
+  }
+
   class AVDecoder::D
   {
   public:
@@ -77,7 +91,11 @@ namespace VideoDisplay
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
   {
     /// @todo add some great factory registry thing here
+#ifndef USE_FFMPEG
     std::shared_ptr<AVDecoder> decoder(new LibavDecoder());
+#else
+    std::shared_ptr<AVDecoder> decoder(new FfmpegDecoder());
+#endif
     decoder->load(options);
     return decoder;
   }
