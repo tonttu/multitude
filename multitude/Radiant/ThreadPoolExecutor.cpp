@@ -131,6 +131,7 @@ namespace Radiant
       pool().cancel(&func);
       return true;
     }
+    m_funcs.erase(it);
     return false;
   }
 
