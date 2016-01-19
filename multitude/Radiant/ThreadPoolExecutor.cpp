@@ -130,18 +130,27 @@ namespace Radiant
 
   bool ThreadPoolExecutor::D::cancel(JobId id)
   {
-    Guard guard(m_funcs->mutex);
-    auto it = m_funcs->funcs.find(id);
-    if(it == m_funcs->funcs.end()) {
-      return false;
+    bool stopped = false;
+    FuncRunnable * func = nullptr;
+    {
+      Guard guard(m_funcs->mutex);
+      auto it = m_funcs->funcs.find(id);
+      if(it == m_funcs->funcs.end()) {
+        return false;
+      }
+      func = it->second;
+      stopped = func->tryMarkStarted();
+      m_funcs->funcs.erase(it);
     }
-    FuncRunnable& func = *it->second;
-    bool stopped = func.tryMarkStarted();
-    if(stopped) {
-      pool().cancel(&func);
+    if(stopped && func) {
+      // Call pool.cancel() outside the lock, else we can deadlock like this:
+      // 1. pool holds an internal lock while executing the runnable
+      // 2. the executing runnable waits for m_funcs->mutex to remove itself from the map
+      // 3. we are holding m_funcs->mutex because we are cancelling and finally
+      // 4. when calling pool().cancel() we are waiting for the internal pool lock
+      pool().cancel(func);
       return true;
     }
-    m_funcs->funcs.erase(it);
     return false;
   }
 
