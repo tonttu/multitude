@@ -82,7 +82,7 @@ namespace Radiant
 
   JobId ThreadPoolExecutor::add(ThreadPoolExecutor::Func func)
   {
-    return addWithPriority(func, 0);
+    return addWithPriority(std::move(func), 0);
   }
 
   JobId ThreadPoolExecutor::addWithPriority(ThreadPoolExecutor::Func func, int8_t priority)
