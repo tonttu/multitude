@@ -142,11 +142,7 @@ namespace Radiant
 
   const std::shared_ptr<ThreadPoolExecutor>& ThreadPoolExecutor::instance()
   {
-    static std::once_flag once;
-    static std::shared_ptr<ThreadPoolExecutor> ptr;
-    std::call_once(once, [] {
-      ptr.reset(new ThreadPoolExecutor());
-    });
+    static auto ptr = std::make_shared<ThreadPoolExecutor>();
     return ptr;
   }
 }
