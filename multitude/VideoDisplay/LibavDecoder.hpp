@@ -62,7 +62,7 @@ namespace VideoDisplay
 
     /// Called from AudioTransfer::~AudioTransfer
     /// @todo we should make non-intrusive AudioTransfer monitoring instead of this
-    void audioTransferDeleted();
+    virtual void audioTransferDeleted() OVERRIDE;
 
     /// @endcond
 

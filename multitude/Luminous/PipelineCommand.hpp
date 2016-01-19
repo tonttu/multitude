@@ -216,11 +216,11 @@ namespace Luminous
   class CommandDrawBuffers : public PipelineCommand
   {
   public:
-    CommandDrawBuffers(const std::vector<int> & buffers);
+    CommandDrawBuffers(const std::vector<GLenum> & buffers);
 
     virtual void execute() OVERRIDE;
   private:
-    std::vector<int> m_buffers;
+    std::vector<GLenum> m_buffers;
   };
 }
 

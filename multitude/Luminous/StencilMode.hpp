@@ -31,21 +31,21 @@ namespace Luminous
     enum Operation
     {
       /// Keep the current value
-      Keep            = GL_KEEP,
+      Keep            = static_cast<unsigned int>(GL_KEEP),
       /// Set stencil value to 0
-      Zero            = GL_ZERO,
+      Zero            = static_cast<unsigned int>(GL_ZERO),
       /// replace current value
-      Replace         = GL_REPLACE,
+      Replace         = static_cast<unsigned int>(GL_REPLACE),
       /// Increment current value.
-      Increment       = GL_INCR,
+      Increment       = static_cast<unsigned int>(GL_INCR),
       /// Increment current value. Wrap in case of overflow
-      IncrementWrap   = GL_INCR_WRAP,
+      IncrementWrap   = static_cast<unsigned int>(GL_INCR_WRAP),
       /// Decrement current value
-      Decrement       = GL_DECR,
+      Decrement       = static_cast<unsigned int>(GL_DECR),
       /// Decrement current value. Wrap in case of underflow
-      DecrementWrap   = GL_DECR_WRAP,
+      DecrementWrap   = static_cast<unsigned int>(GL_DECR_WRAP),
       /// Bitvise invert current value
-      Invert          = GL_INVERT,
+      Invert          = static_cast<unsigned int>(GL_INVERT),
     };
 
     /// Enumeration for stencil test
@@ -53,21 +53,21 @@ namespace Luminous
     enum Function
     {
       /// Never pass the test
-      Never         = GL_NEVER,
+      Never         = static_cast<unsigned int>(GL_NEVER),
       /// Pass if the reference value is less than stencil value
-      Less          = GL_LESS,
+      Less          = static_cast<unsigned int>(GL_LESS),
       /// Pass if the reference value is less than or equal to stencil value
-      LessEqual     = GL_LEQUAL,
+      LessEqual     = static_cast<unsigned int>(GL_LEQUAL),
       /// Pass if the reference value is greater than stencil value
-      Greater       = GL_GREATER,
+      Greater       = static_cast<unsigned int>(GL_GREATER),
       /// Pass if the reference value is greater than or equal to stencil value
-      GreaterEqual  = GL_GEQUAL,
+      GreaterEqual  = static_cast<unsigned int>(GL_GEQUAL),
       /// Pass if the reference value is equal to stencil value
-      Equal         = GL_EQUAL,
+      Equal         = static_cast<unsigned int>(GL_EQUAL),
       /// Pass if the refence value is inequal to stencil value
-      NotEqual      = GL_NOTEQUAL,
+      NotEqual      = static_cast<unsigned int>(GL_NOTEQUAL),
       /// Always pass
-      Always        = GL_ALWAYS,
+      Always        = static_cast<unsigned int>(GL_ALWAYS),
     };
 
   public:

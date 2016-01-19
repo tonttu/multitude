@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
-
 include(multitude.pri)
+CONFIG += ordered
 
 SUBDIRS += ThirdParty
 SUBDIRS += Patterns
@@ -11,9 +11,10 @@ SUBDIRS += Squish
 SUBDIRS += Luminous
 SUBDIRS += Resonant
 SUBDIRS += VideoDisplay
-SUBDIRS += Applications
 
-CONFIG += ordered
+enable-extras {
+  SUBDIRS += Applications
+}
 
 # Install some build files to the source package
 stuff.path = /src/multitude

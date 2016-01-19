@@ -4,7 +4,9 @@
 
 namespace Luminous {
 
-#ifdef RADIANT_LINUX
+/// @fixme esa re-implement
+#if 0
+//#ifdef RADIANT_LINUX
 
 #include <GL/glxew.h>
 
@@ -44,7 +46,7 @@ namespace Luminous {
     return glXQuerySwapGroupNV(dpy, drawable, &group, &barrier);
   }
 
-#elif defined(RADIANT_WINDOWS)
+//#elif defined(RADIANT_WINDOWS)
 
 #include <GL/wglew.h>
 

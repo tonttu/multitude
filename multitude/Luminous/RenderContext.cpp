@@ -1728,14 +1728,14 @@ namespace Luminous
     m_data->m_driverGL->setCullMode(mode);
   }
 
-  void RenderContext::setDrawBuffers(const std::vector<int> & buffers)
+  void RenderContext::setDrawBuffers(const std::vector<GLenum> & buffers)
   {
     m_data->m_driverGL->setDrawBuffers(buffers);
   }
 
   void RenderContext::setDefaultDrawBuffers()
   {
-    std::vector<int> buffers;
+    std::vector<GLenum> buffers;
     buffers.push_back(GL_BACK_LEFT);
     setDrawBuffers(buffers);
   }

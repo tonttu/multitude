@@ -5,15 +5,15 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 // For PRIx64
 #define __STDC_FORMAT_MACROS
 
 #include "LibavDecoder.hpp"
-#include "MemoryPool.hpp"
 #include "AudioTransfer.hpp"
+#include "Utils.hpp"
 
 #include <Nimble/Vector2.hpp>
 
@@ -32,7 +32,6 @@
 #include <QThread>
 #include <QFileInfo>
 
-#include <array>
 #include <cassert>
 
 extern "C" {
@@ -59,97 +58,6 @@ extern "C" {
 
 namespace
 {
-  template <typename T, size_t N>
-  class LockFreeQueue
-  {
-  public:
-    LockFreeQueue();
-
-    bool setSize(int items);
-    int size() const;
-
-    T * takeFree();
-    void put();
-
-    int itemCount() const;
-
-    T * readyItem(int index = 0);
-    T * lastReadyItem();
-    void next();
-
-  private:
-    std::array<T, N> m_data;
-    QAtomicInt m_readyItems;
-    // index of the current queue head, "next ready item" (if m_readyItems > 0)
-    int m_reader;
-    // index of the next free item (if m_readyItems < m_size)
-    int m_writer;
-    int m_size;
-  };
-
-  template <typename T, size_t N>
-  LockFreeQueue<T, N>::LockFreeQueue()
-    : m_reader(0)
-    , m_writer(0)
-    , m_size(N)
-  {}
-
-  template <typename T, size_t N>
-  bool LockFreeQueue<T, N>::setSize(int items)
-  {
-    m_size = std::min<int>(items, m_data.size());
-    return m_size == items;
-  }
-
-  template <typename T, size_t N>
-  int LockFreeQueue<T, N>::size() const
-  {
-    return m_size;
-  }
-
-  template <typename T, size_t N>
-  T * LockFreeQueue<T, N>::takeFree()
-  {
-    if(itemCount() >= m_size)
-      return 0;
-
-    int index = m_writer++;
-
-    return & m_data[index % N];
-  }
-
-  template <typename T, size_t N>
-  void LockFreeQueue<T, N>::put()
-  {
-    m_readyItems.ref();
-  }
-
-  template <typename T, size_t N>
-  int LockFreeQueue<T, N>::itemCount() const
-  {
-    return m_readyItems.load();
-  }
-
-  template <typename T, size_t N>
-  T * LockFreeQueue<T, N>::readyItem(int index)
-  {
-    if(index >= itemCount()) return nullptr;
-    return & m_data[(m_reader + index) % N];
-  }
-
-  template <typename T, size_t N>
-  T * LockFreeQueue<T, N>::lastReadyItem()
-  {
-    if(itemCount() < 1) return nullptr;
-    return & m_data[(m_reader + itemCount() - 1) % N];
-  }
-
-  template <typename T, size_t N>
-  void LockFreeQueue<T, N>::next()
-  {
-    m_readyItems.deref();
-    ++m_reader;
-  }
 
   int libavLock(void ** mutexPtr, enum AVLockOp op)
   {
@@ -317,7 +225,7 @@ namespace VideoDisplay
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
 
-    MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
+    Utils::MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
 
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
@@ -356,9 +264,9 @@ namespace VideoDisplay
 
     /// From main thread to decoder thread, list of BufferRefs that should be
     /// released. Can't run that in the main thread without locking.
-    LockFreeQueue<AVFilterBufferRef*, 40> m_consumedBufferRefs;
+    Utils::LockFreeQueue<AVFilterBufferRef*, 40> m_consumedBufferRefs;
 
-    LockFreeQueue<VideoFrameLibav, 40> m_decodedVideoFrames;
+    Utils::LockFreeQueue<VideoFrameLibav, 40> m_decodedVideoFrames;
 
     int m_index;
 
@@ -963,7 +871,7 @@ namespace VideoDisplay
       audioTransfer->shutdown();
       Resonant::DSPNetwork::instance()->markDone(audioTransfer);
     }
-    
+
   }
 
   bool LibavDecoder::D::seekToBeginning()

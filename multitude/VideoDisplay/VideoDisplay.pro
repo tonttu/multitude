@@ -1,13 +1,23 @@
 include(../multitude.pri)
 
 HEADERS += Export.hpp
+
 HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
 
 SOURCES += SubTitles.cpp
 
-HEADERS += AudioTransfer.hpp AVDecoder.hpp LibavDecoder.hpp MemoryPool.hpp
-SOURCES += AudioTransfer.cpp AVDecoder.cpp LibavDecoder.cpp
+HEADERS += AudioTransfer.hpp AVDecoder.hpp Utils.hpp
+SOURCES += AudioTransfer.cpp AVDecoder.cpp
+
+TEST=$$(USE_FFMPEG)
+isEmpty(TEST) {
+  HEADERS += LibavDecoder.hpp
+  SOURCES += LibavDecoder.cpp
+} else {
+  HEADERS += FfmpegDecoder.hpp
+  SOURCES += FfmpegDecoder.cpp
+}
 
 LIBS += $$MULTI_FFMPEG_LIBS
 

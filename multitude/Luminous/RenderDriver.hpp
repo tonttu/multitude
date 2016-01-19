@@ -90,7 +90,7 @@ namespace Luminous
     LUMINOUS_API virtual void enableClipDistance(const QList<int> & planes) = 0;
     LUMINOUS_API virtual void disableClipDistance(const QList<int> & planes) = 0;
 
-    LUMINOUS_API virtual void setDrawBuffers(const std::vector<int> & buffers) = 0;
+    LUMINOUS_API virtual void setDrawBuffers(const std::vector<GLenum> & buffers) = 0;
 
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) = 0;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) = 0;
@@ -106,8 +106,6 @@ namespace Luminous
     LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) = 0;
 
     LUMINOUS_API virtual int uniformBufferOffsetAlignment() const = 0;
-
-    LUMINOUS_API virtual void setVSync(bool vsync) = 0;
 
     LUMINOUS_API virtual void setupSwapGroup() = 0;
 

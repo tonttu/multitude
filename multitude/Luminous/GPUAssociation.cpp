@@ -1,69 +1,23 @@
 #include "GPUAssociation.hpp"
+#include "Luminous.hpp"
 
 #include <Radiant/Platform.hpp>
 
 #include <cassert>
 
-// Platform specific OpenGL context handle. Using these includes in a header
-// messes things up with Qt (conflicting #defines), so we have to hide them
-// here.
-#if defined(RADIANT_WINDOWS)
-  #include <GL/wglew.h>
-  typedef HGLRC PlatformOpenGLContextHandle;
-#elif defined(RADIANT_LINUX)
-  #include <GL/glxew.h>
-  typedef GLXContext PlatformOpenGLContextHandle;
-#elif defined(RADIANT_OSX)
-  typedef void* PlatformOpenGLContextHandle;
-#endif
-
 namespace Luminous
 {
-  class OpenGLContextHandle::D
-  {
-  public:
-    D() : ctx(nullptr) {}
 
-    PlatformOpenGLContextHandle ctx;
-  };
-
-  OpenGLContextHandle::OpenGLContextHandle()
-    : m_d(new D())
-  {}
-
-  OpenGLContextHandle::~OpenGLContextHandle()
-  {
-    delete m_d;
-  }
-
-  bool OpenGLContextHandle::getCurrentContext()
-  {
-    // Grab the OpenGL context handle
-#ifdef RADIANT_WINDOWS
-    m_d->ctx = wglGetCurrentContext();
-#elif defined(RADIANT_LINUX)
-    m_d->ctx = glXGetCurrentContext();
-#endif
-    return m_d->ctx != nullptr;
-  }
-
-  void *OpenGLContextHandle::getRawHandle()
-  {
-    return m_d->ctx;
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////
-
+  /// @todo fixme esa re-implement
   bool GPUAssociation::isSupported()
   {
     bool ok = false;
 
-#if defined(RADIANT_WINDOWS)
-    ok = WGLEW_AMD_gpu_association;
-#elif defined(RADIANT_LINUX)
-    ok = GLXEW_AMD_gpu_association;
-#endif
+//#if defined(RADIANT_WINDOWS)
+//    ok = WGLEW_AMD_gpu_association;
+//#elif defined(RADIANT_LINUX)
+//    ok = GLXEW_AMD_gpu_association;
+//#endif
 
     return ok;
   }
@@ -72,24 +26,24 @@ namespace Luminous
   {
     unsigned int count = 0;
 
-#if defined(RADIANT_WINDOWS)
-    count = wglGetGPUIDsAMD(0, nullptr);
-#elif defined(RADIANT_LINUX)
-    count = glXGetGPUIDsAMD(0, nullptr);
-#endif
+//#if defined(RADIANT_WINDOWS)
+//    count = wglGetGPUIDsAMD(0, nullptr);
+//#elif defined(RADIANT_LINUX)
+//    count = glXGetGPUIDsAMD(0, nullptr);
+//#endif
 
     return count;
   }
 
-  unsigned int GPUAssociation::gpuId(OpenGLContextHandle* handle)
+  unsigned int GPUAssociation::gpuId(glbinding::ContextHandle handle)
   {
     unsigned int id = 0;
 
-#if defined(RADIANT_WINDOWS)
-    id = wglGetContextGPUIDAMD(handle->m_d->ctx);
-#elif defined(RADIANT_LINUX)
-    id = glXGetContextGPUIDAMD(handle->m_d->ctx);
-#endif
+//#if defined(RADIANT_WINDOWS)
+//    id = wglGetContextGPUIDAMD(handle->m_d->ctx);
+//#elif defined(RADIANT_LINUX)
+//    id = glXGetContextGPUIDAMD(handle->m_d->ctx);
+//#endif
 
     return id;
   }
@@ -97,11 +51,11 @@ namespace Luminous
   unsigned int GPUAssociation::gpuRam(unsigned int gpuId)
   {
     GLuint totalMemoryInMB = 0;
-#if defined(RADIANT_WINDOWS)
-    wglGetGPUInfoAMD(gpuId, WGL_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
-#elif defined(RADIANT_LINUX)
-    glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
-#endif
+//#if defined(RADIANT_WINDOWS)
+//    wglGetGPUInfoAMD(gpuId, WGL_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
+//#elif defined(RADIANT_LINUX)
+//    glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
+//#endif
 
     return totalMemoryInMB;
   }

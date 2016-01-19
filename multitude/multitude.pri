@@ -2,6 +2,25 @@ lessThan(QT_MAJOR_VERSION, 5) {
   error("Cornerstone SDK requires Qt 5")
 }
 
+enable-taction {
+  CONFIG += enable-deft
+}
+
+enable-deft {
+  CONFIG += enable-mushy
+  CONFIG += enable-deft-cuda
+}
+
+enable-experience {
+  CONFIG += enable-mushy
+  CONFIG += enable-js
+  CONFIG += enable-cef
+}
+
+enable-old-production {
+  CONFIG += enable-mushy
+}
+
 # Use this to setup global build options & variables.
 # This file is to be included by all project files of qmake.
 CONFIG += qt
@@ -29,28 +48,12 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
   *clang*:QMAKE_CXXFLAGS += -std=c++11 -Qunused-arguments
 }
 
-# Always include Deft
-CONFIG += enable-deft
-# On taction tracker build, enable cuda backend but disable js by default
-# JS can still be enabled with enable-js
-enable-taction:CONFIG += enable-deft-cuda
-enable-taction:CONFIG += disable-js
-enable-taction:CONFIG += disable-cef
-
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
-
-# deft can be disabled with -config disable-deft
-disable-deft:CONFIG -= enable-deft enable-deft-cuda
-disable-deft-cuda:CONFIG -= enable-deft-cuda
-disable-deft-opencl:CONFIG -= enable-deft-opencl
-
-# JS is enabled by default
-!disable-js:CONFIG += enable-js
-enable-js:CONFIG -= disable-js
 enable-js:DEFINES += CORNERSTONE_JS=1
-
-# CEF is enabled by default
-!disable-cef:CONFIG += enable-cef
+FFMPEG=$$(USE_FFMPEG)
+!isEmpty(FFMPEG) {
+  DEFINES += USE_FFMPEG
+}
 
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
@@ -82,8 +85,9 @@ with-ftd2xx {
 }
 
 LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
-INCLUDEPATH += $$PWD/ThirdParty/glew/include
+LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
+INCLUDEPATH += $$PWD/ThirdParty/qjson/include
+INCLUDEPATH += $$PWD/ThirdParty/unittest-cpp
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
@@ -94,7 +98,12 @@ LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 #LIB_PATTERNS = -lPatterns$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
+LIB_QJSON = -lqjson$${CORNERSTONE_LIB_SUFFIX}
+LIB_UNITTEST_CPP = -lunittest-cpp$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
+
+INCLUDEPATH += $$PWD/ThirdParty/glbinding/include
+LIB_GLBINDING = -lglbinding$${CORNERSTONE_LIB_SUFFIX}
 
 #
 # Platform specific: GNU Linux
@@ -108,9 +117,16 @@ linux-*{
 
   QMAKE_LIBDIR += $$PWD/Linux/lib
 
-  exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
-    MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
-    INCLUDEPATH += /opt/multitouch-libav2/include
+  isEmpty(FFMPEG) {
+    exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
+      MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
+      INCLUDEPATH += /opt/multitouch-libav2/include
+    }
+  } else {
+    exists(/opt/multitouch-ffmpeg2/include/libavcodec/avcodec.h) {
+      MULTI_FFMPEG_LIBS = -L/opt/multitouch-ffmpeg2/lib -lavcodec-multitouch -lavutil-multitouch -lavformat-multitouch -lavdevice-multitouch -lavfilter-multitouch -lswscale-multitouch
+      INCLUDEPATH += /opt/multitouch-ffmpeg2/include
+    }
   }
 
   enable-js {
@@ -178,12 +194,13 @@ macx {
   QMAKE_LIBDIR += $$PWD/OSX/lib
 
   LIB_OPENCL = -framework,OpenCL
-  LIB_OPENGL = -framework,OpenGL
+  LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -framework,OpenGL
 
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
   system([ `uname -r | cut -d . -f1` -eq 12 ] ):DEFINES+=RADIANT_OSX_MOUNTAIN_LION
   system([ `uname -r | cut -d . -f1` -eq 14 ] ):DEFINES+=RADIANT_OSX_YOSEMITE
+  system([ `uname -r | cut -d . -f1` -eq 15 ] ):DEFINES+=RADIANT_OSX_EL_CAPITAN
 
   # By default pkg-config support is disabled on OSX, re-enable it here
   QT_CONFIG -= no-pkg-config
@@ -207,7 +224,7 @@ win32 {
     exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
     exists("C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"):DDK_PATH="C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"
 
-    LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
+    LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
     # Make VS a bit less spammy
     QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
     # conversion from 'size_t' to 'type', possible loss of data
@@ -231,8 +248,15 @@ win32 {
     CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
 
     exists($$CORNERSTONE_DEPS_PATH) {
-      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
-      LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
+
+      isEmpty(FFMPEG) {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
+      } else {
+        INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/ffmpeg/include
+        LIBS += -L$$CORNERSTONE_DEPS_PATH/ffmpeg/bin
+      }
+
       enable-js {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/node/include
         LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin
@@ -253,7 +277,7 @@ win32 {
 
     # These libs have an extra extension for debug builds
     CONFIG(debug,debug|release) {
-      LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
+      LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
       enable-js:LIB_V8 = -lv8-multitouch1_d -lnode-multitouch1_d
     }
 
@@ -317,9 +341,3 @@ disable-deprecation-warnings {
 }
 
 *g++*:QMAKE_LFLAGS += -Wl,--exclude-libs,ALL
-
-!enable-drm {
-  *clang* | *g++* {
-    QMAKE_CXXFLAGS_RELEASE += -g
-  }
-}
