@@ -22,7 +22,12 @@ namespace Radiant
         , m_suicide(killFn)
         , m_started(false)
       {
-        setAutoDelete(false);
+        setAutoDelete(true);
+      }
+
+      ~FuncRunnable()
+      {
+        suicide();
       }
 
       void run() override
@@ -30,12 +35,6 @@ namespace Radiant
         if(m_func && tryMarkStarted()) {
           m_func();
         }
-        // This might not actually work if the QThreadPool checks
-        // autoDelete on the runnable after we suicide. It currently does
-        // not do that, but might in the future.
-        //
-        // Could run a cleanup task on the thread pool every now and then.
-        suicide();
       }
 
       bool tryMarkStarted()
@@ -61,7 +60,9 @@ namespace Radiant
     struct Funcs
     {
       Mutex mutex;
-      std::unordered_map<JobId, std::unique_ptr<FuncRunnable>> funcs;
+      // QThreadPool handles the lifetime of FuncRunnable so we can have
+      // naked pointers here.
+      std::unordered_map<JobId, FuncRunnable*> funcs;
     };
   }  // unnamed namespace
 
@@ -118,11 +119,10 @@ namespace Radiant
       }
     };
     FuncRunnable *runnable = new FuncRunnable(std::move(func), std::move(kill));
-    auto runnablePtr = std::unique_ptr<FuncRunnable>(runnable);
     {
       Guard guard(m_funcs->mutex);
       assert(m_funcs->funcs.find(key) == m_funcs->funcs.end());
-      m_funcs->funcs.emplace(key, std::move(runnablePtr));
+      m_funcs->funcs.emplace(key, runnable);
     }
     pool().start(runnable, priority);
     return key;
@@ -135,7 +135,7 @@ namespace Radiant
     if(it == m_funcs->funcs.end()) {
       return false;
     }
-    FuncRunnable& func = *it->second.get();
+    FuncRunnable& func = *it->second;
     bool stopped = func.tryMarkStarted();
     if(stopped) {
       pool().cancel(&func);
