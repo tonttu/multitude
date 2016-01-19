@@ -14,63 +14,34 @@
 #include "Export.hpp"
 #include "WindowEventHook.hpp"
 
-#include <Nimble/Vector2.hpp>
+#include <QWindow>
+
+// Only forward declaration to keep OpenGL includes to a minimum to avoid
+// conflicts
+class QOpenGLContext;
 
 namespace Luminous
 {
 
   /// Virtual base classes for OpenGL windows
-  class LUMINOUS_API Window
+  class LUMINOUS_API Window : public QWindow
   {
+    Q_OBJECT
+
   public:
     /// Construct an empty window with zero size
-    Window();
+    Window(QScreen* screen);
     /// Destructor
     virtual ~Window();
 
-    /// Queries if the window is closed.
-    /// This would happen if the user closes the window.
-    /// @return true if the window has been closed
-    bool isFinished() const;
-
-    /// Sets the full-screen mode of the window
-    /// @param fullscreen true to enable fullscreen mode; false to disable it
-    void setFullscreen(bool fullscreen);
-
-    /// Update window system (mouse & keyboard) events
-    virtual void poll() = 0;
-    /// Swap OpenGL buffers
-    virtual void swapBuffers() = 0;
+    /// Swap the back and front buffers of this window
+    virtual void swapBuffers();
 
     /// Sets the OpenGL context for the calling thread
-    virtual void makeCurrent() = 0;
+    virtual bool makeCurrent();
 
     /// Clears the OpenGL context for the calling thread
-    virtual void doneCurrent() = 0;
-
-    /// Sets the icon for the window
-    virtual bool setIcon(const QString & filename) = 0;
-
-    /// Gets the native GPU id for the OpenGL context of this window
-    virtual unsigned gpuId() const { return 0; };
-
-    /// This function can be used to perform any initialization that must be
-    /// performed in the main-thread.
-    virtual bool mainThreadInit() { return true; }
-
-    /// Returns the width of the window
-    /// @return width of the window in pixels
-    virtual int width() const = 0;
-    /// Returns the height of the window
-    /// @return height of the window in pixels
-    virtual int height() const = 0;
-
-    /// Set the width of the window
-    /// @param w window width in pixels
-    virtual void setWidth(int w) = 0;
-    /// Set the height of the window
-    /// @param h window height in pixels
-    virtual void setHeight(int h) = 0;
+    virtual void doneCurrent();
 
     /// Set the event handler for window events. The event handler must remain
     /// valid for the lifetime of the window.
@@ -80,36 +51,50 @@ namespace Luminous
     /// @return pointer to the event handler
     WindowEventHook * eventHook() const;
 
-    /// This function can be used to perform any initialization that must be
-    /// executed in the render-thread associated with the window.
-    virtual void init() {}
+    /// Set the thread-affinity of the OpenGL context in this window to given
+    /// thread. This function must be called from the thread that current owns the
+    /// context.
+    /// @param thread thread to move the OpenGL context to
+    void setOpenGLThreadAffinity(QThread* thread);
 
-    /// Cleanup any window resources. Default implementation does nothing.
-    virtual void deinit() {}
+    /// Attempt to create an OpenGL context for this window with the given
+    /// surface format.
+    /// @param surfaceFormat surface format for the context
+    /// @return true if context
+    bool createOpenGLContext(const QSurfaceFormat& surfaceFormat);
 
-    /// Minimize the window
-    virtual void minimize() = 0;
-    /// Maximize the window
-    virtual void maximize() = 0;
-    /// Restore the window from minimized state
-    virtual void restore() = 0;
+    /// Returns the format of the OpenGL context, if the context has been
+    /// created.
+    /// @return OpenGL context format
+    QSurfaceFormat format() const;
 
-    /// Get the window position
-    /// @return window position
-    virtual Nimble::Vector2i position() const = 0;
-    /// Set the window position
-    /// @param pos window position
-    virtual void setPosition(Nimble::Vector2i pos) = 0;
+  signals:
+    void closed();
 
-    /// Control mouse cursor visibility
-    /// @param visible true to show cursor; false to hide it
-    virtual void showCursor(bool visible) = 0;
+  protected:
+    void exposeEvent(QExposeEvent* ev) override;
+    void focusInEvent(QFocusEvent *ev) override;
+    void focusOutEvent(QFocusEvent *ev) override;
+    void hideEvent(QHideEvent* ev) override;
+    void keyPressEvent(QKeyEvent* ev) override;
+    void keyReleaseEvent(QKeyEvent* ev) override;
+    void mouseDoubleClickEvent(QMouseEvent* ev) override;
+    void mouseMoveEvent(QMouseEvent* ev) override;
+    void mousePressEvent(QMouseEvent* ev) override;
+    void mouseReleaseEvent(QMouseEvent* ev) override;
+    void moveEvent(QMoveEvent* ev) override;
+    bool nativeEvent(const QByteArray& eventType, void* message, long* result) override;
+    void resizeEvent(QResizeEvent* ev) override;
+    void showEvent(QShowEvent* ev) override;
+    void tabletEvent(QTabletEvent* ev) override;
+    void touchEvent(QTouchEvent* ev) override;
+    void wheelEvent(QWheelEvent* ev) override;
+    bool event(QEvent* ev) override;
 
   private:
-    bool m_finished;
-    bool m_fullscreen;
-
-    WindowEventHook * m_eventHook;
+    QScreen* m_screen;
+    QOpenGLContext* m_openGLContext;
+    WindowEventHook* m_eventHook;
   };
 
 }

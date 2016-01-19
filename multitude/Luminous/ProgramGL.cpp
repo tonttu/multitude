@@ -94,10 +94,10 @@ namespace Luminous
     GLERROR("ShaderGL::compile # glShaderSource");
     glCompileShader(m_handle);
     GLERROR("ShaderGL::compile # glCompileShader");
-    GLint compiled = GL_FALSE;
+    GLint compiled = static_cast<GLint>(GL_FALSE);
     glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled);
     GLERROR("ShaderGL::compile # glGetShaderiv");
-    if (compiled != GL_TRUE) {
+    if (compiled != static_cast<GLint>(GL_TRUE)) {
       Radiant::error("Failed to compile shader %s", shader.filename().toUtf8().data());
 
       // Dump info log
@@ -217,7 +217,7 @@ namespace Luminous
     glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
     GLERROR("ProgramGL::link # glGetProgramiv");
 
-    if(status == GL_FALSE) {
+    if(status == static_cast<GLint>(GL_FALSE)) {
       Radiant::error("Failed to link shader program (shaders %s)", program.shaderFilenames().join(", ").toUtf8().data());
       GLsizei len;
       glGetProgramiv(m_handle, GL_INFO_LOG_LENGTH, &len);

@@ -87,8 +87,7 @@ with-ftd2xx {
 }
 
 LIB_OPENCL = -lOpenCL
-LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
-INCLUDEPATH += $$PWD/ThirdParty/glew/include
+LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
 
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
@@ -100,6 +99,9 @@ LIB_VALUABLE = -lValuable$${CORNERSTONE_LIB_SUFFIX}
 LIB_SQUISH = -lSquish$${CORNERSTONE_LIB_SUFFIX}
 LIB_RESONANT = -lResonant$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
+
+INCLUDEPATH += $$PWD/ThirdParty/glbinding/include
+LIB_GLBINDING = -lglbinding$${CORNERSTONE_LIB_SUFFIX}
 
 #
 # Platform specific: GNU Linux
@@ -190,7 +192,7 @@ macx {
   QMAKE_LIBDIR += $$PWD/OSX/lib
 
   LIB_OPENCL = -framework,OpenCL
-  LIB_OPENGL = -framework,OpenGL
+  LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -framework,OpenGL
 
   system([ `uname -r | cut -d . -f1` -eq 10 ] ):DEFINES+=RADIANT_OSX_SNOW_LEOPARD
   system([ `uname -r | cut -d . -f1` -eq 11 ] ):DEFINES+=RADIANT_OSX_LION
@@ -220,7 +222,7 @@ win32 {
     exists("C:\\WinDDK\\7600.16385.1"):DDK_PATH="C:\\WinDDK\\7600.16385.1"
     exists("C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"):DDK_PATH="C:\\Program Files (x86)\\Windows Kits\\8.0\\Include"
 
-    LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
+    LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
     # Make VS a bit less spammy
     QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
     # conversion from 'size_t' to 'type', possible loss of data
@@ -273,7 +275,7 @@ win32 {
 
     # These libs have an extra extension for debug builds
     CONFIG(debug,debug|release) {
-      LIB_OPENGL = -lglew$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
+      LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
       enable-js:LIB_V8 = -lv8-multitouch1_d -lnode-multitouch1_d
     }
 
