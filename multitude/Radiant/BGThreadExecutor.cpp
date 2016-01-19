@@ -16,8 +16,17 @@ namespace Radiant
       FuncTask(const Func & func, int8_t priority, Func && kill)
         : m_func(func), m_kill(std::move(kill))
       {
-        // map priority from [-128, 127] to [0, 1000]
-        setPriority(priority * 500.0f / 128 + 500);
+        float lowPriority = Task::PRIORITY_LOW;
+        float normalPriority = Task::PRIORITY_NORMAL;
+        float highPriority = Task::PRIORITY_URGENT;
+        float intervalWidth = std::max(highPriority - normalPriority,
+                                       normalPriority - lowPriority);
+        float overshoot = 1.1f;
+        // Map priority from [-128, 127] to
+        // [NORMAL - width * overshoot, NORMAL + width * overshoot].
+        // 0 priority must map to PRIORITY_NORMAL, and we need to be able
+        // to go a bit over PRIORITY_URGENT and under PRIORITY_LOW.
+        setPriority(priority / 128.0f * intervalWidth * overshoot + normalPriority);
       }
 
       void doTask() override
