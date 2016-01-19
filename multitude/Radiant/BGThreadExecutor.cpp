@@ -41,25 +41,35 @@ namespace Radiant
       std::function<void()> m_func;
       std::function<void()> m_kill;
     };
+
+    struct Tasks
+    {
+      Radiant::Mutex mutex;
+      std::unordered_map<JobId, std::shared_ptr<FuncTask>> tasks;
+    };
   }  // unnamed namespace
 
   class BGThreadExecutor::D
   {
   public:
     D(const std::shared_ptr<BGThread> & bgThread)
-      : m_bgThread(bgThread), m_jobId(0) { }
+      : m_bgThread(bgThread), m_jobId(0), m_tasks(new Tasks()) { }
 
     JobId addWithPriority(const Func& func, int8_t priority)
     {
       JobId key = m_jobId++;
-      auto kill = [this, key] {
-        Guard guard(m_tasksMutex);
-        m_tasks.erase(key);
+      std::weak_ptr<Tasks> weakTasks = m_tasks;
+      auto kill = [weakTasks, key] {
+        auto ptr = weakTasks.lock();
+        if(ptr) {
+          Guard guard(ptr->mutex);
+          ptr->tasks.erase(key);
+        }
       };
       auto taskPtr = std::make_shared<FuncTask>(func, priority, std::move(kill));
       {
-        Guard guard(m_tasksMutex);
-        m_tasks.emplace(key, taskPtr);
+        Guard guard(m_tasks->mutex);
+        m_tasks->tasks.emplace(key, taskPtr);
       }
       if(!m_bgThread->isRunning()) {
         m_bgThread->run(QThread::idealThreadCount());
@@ -72,22 +82,21 @@ namespace Radiant
     {
       std::shared_ptr<FuncTask> ptr;
       {
-        Guard guard(m_tasksMutex);
-        auto it = m_tasks.find(id);
-        if(it == m_tasks.end()) {
+        Guard guard(m_tasks->mutex);
+        auto it = m_tasks->tasks.find(id);
+        if(it == m_tasks->tasks.end()) {
           return false;
         }
         ptr = it->second;
-        m_tasks.erase(it);
+        m_tasks->tasks.erase(it);
       }
       return m_bgThread->removeTask(ptr, true, false);
     }
 
   private:
     std::shared_ptr<BGThread> m_bgThread;
-    Radiant::Mutex m_tasksMutex;
-    std::unordered_map<JobId, std::shared_ptr<FuncTask>> m_tasks;
     std::atomic<JobId> m_jobId;
+    std::shared_ptr<Tasks> m_tasks;
   };
 
   BGThreadExecutor::BGThreadExecutor(const std::shared_ptr<BGThread> & bgThread)
