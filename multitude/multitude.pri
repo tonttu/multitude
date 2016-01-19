@@ -341,3 +341,11 @@ disable-deprecation-warnings {
 }
 
 *g++*:QMAKE_LFLAGS += -Wl,--exclude-libs,ALL
+
+enable-coverage {
+  linux-g++ {
+    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
+    QMAKE_LDFLAGS += -fprofile-arcs -ftest-coverage
+    LIBS += -lgcov
+  }
+}
