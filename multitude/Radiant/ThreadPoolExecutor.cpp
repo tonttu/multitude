@@ -57,12 +57,19 @@ namespace Radiant
       std::function<void()> m_suicide;
       std::atomic<bool> m_started;
     };
+
+    struct Funcs
+    {
+      Mutex mutex;
+      std::unordered_map<JobId, std::unique_ptr<FuncRunnable>> funcs;
+    };
   }  // unnamed namespace
 
   class ThreadPoolExecutor::D
   {
   public:
-    D(const std::shared_ptr<QThreadPool> & pool) : m_threadPool(pool) { }
+    D(const std::shared_ptr<QThreadPool> & pool)
+      : m_threadPool(pool), m_funcs(new Funcs()) { }
     JobId addWithPriority(ThreadPoolExecutor::Func func, int8_t priority);
     bool cancel(JobId id);
 
@@ -70,9 +77,8 @@ namespace Radiant
     QThreadPool & pool();
 
     std::shared_ptr<QThreadPool> m_threadPool;
-    Mutex m_funcsMutex;
-    std::unordered_map<JobId, std::unique_ptr<FuncRunnable>> m_funcs;
     std::atomic<JobId> m_jobId;
+    std::shared_ptr<Funcs> m_funcs;
   };
 
   ThreadPoolExecutor::ThreadPoolExecutor(const std::shared_ptr<QThreadPool> & pool)
@@ -103,16 +109,20 @@ namespace Radiant
   JobId ThreadPoolExecutor::D::addWithPriority(ThreadPoolExecutor::Func func, int8_t priority)
   {
     JobId key = m_jobId++;
-    auto kill = [this, key] {
-      Guard guard(m_funcsMutex);
-      m_funcs.erase(key);
+    std::weak_ptr<Funcs> weakFuncs = m_funcs;
+    auto kill = [weakFuncs, key] {
+      auto ptr = weakFuncs.lock();
+      if(ptr) {
+        Guard guard(ptr->mutex);
+        ptr->funcs.erase(key);
+      }
     };
     FuncRunnable *runnable = new FuncRunnable(std::move(func), std::move(kill));
     auto runnablePtr = std::unique_ptr<FuncRunnable>(runnable);
     {
-      Guard guard(m_funcsMutex);
-      assert(m_funcs.find(key) == m_funcs.end());
-      m_funcs.emplace(key, std::move(runnablePtr));
+      Guard guard(m_funcs->mutex);
+      assert(m_funcs->funcs.find(key) == m_funcs->funcs.end());
+      m_funcs->funcs.emplace(key, std::move(runnablePtr));
     }
     pool().start(runnable, priority);
     return key;
@@ -120,9 +130,9 @@ namespace Radiant
 
   bool ThreadPoolExecutor::D::cancel(JobId id)
   {
-    Guard guard(m_funcsMutex);
-    auto it = m_funcs.find(id);
-    if(it == m_funcs.end()) {
+    Guard guard(m_funcs->mutex);
+    auto it = m_funcs->funcs.find(id);
+    if(it == m_funcs->funcs.end()) {
       return false;
     }
     FuncRunnable& func = *it->second.get();
@@ -131,7 +141,7 @@ namespace Radiant
       pool().cancel(&func);
       return true;
     }
-    m_funcs.erase(it);
+    m_funcs->funcs.erase(it);
     return false;
   }
 
