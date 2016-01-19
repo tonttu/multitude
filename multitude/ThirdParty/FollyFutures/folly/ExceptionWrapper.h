@@ -188,11 +188,7 @@ class exception_wrapper {
   const std::exception* getCopied() const { return item_.get(); }
 
   static std::string exceptionStdStr(const std::exception& e) {
-#ifdef FOLLY_HAS_RTTI
     return std::string(typeid(e).name()) + ": " + e.what();
-#else
-    return std::string("Exception (no RTTI available): ") + e.what();
-#endif
   }
 
   std::string what() const {

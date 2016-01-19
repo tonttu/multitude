@@ -90,7 +90,7 @@ class StickyWeakPtr {
     : isSet_(isSet), ptr_(other) { }
 
   template<class U>
-  StickyWeakPtr(const std::weak_ptr<U>&& other, bool isSet) noexcept
+  StickyWeakPtr(std::weak_ptr<U>&& other, bool isSet) noexcept
     : isSet_(isSet), ptr_(std::move(other)) { }
 
   template<class U>
@@ -113,7 +113,7 @@ class StickyWeakPtr {
   }
 
   template<class U>
-  StickyWeakPtr<T>& operator=(const StickyWeakPtr<U>&& other) noexcept {
+  StickyWeakPtr<T>& operator=(StickyWeakPtr<U>&& other) noexcept {
     isSet_ = other.isSet_;
     ptr_ = std::move(other.ptr_);
     return *this;
@@ -145,7 +145,8 @@ class StickyWeakPtr {
     return ptr_.owner_before(other);
   }
 
-  operator bool() const noexcept { return isSet_; }
+  bool wasEverAlive() const noexcept { return isSet_; }
+
   operator std::weak_ptr<T>() const noexcept { return ptr_; }
 
  private:

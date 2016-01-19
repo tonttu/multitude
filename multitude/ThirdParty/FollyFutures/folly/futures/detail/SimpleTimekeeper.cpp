@@ -13,6 +13,7 @@ SimpleTimekeeper::SimpleTimekeeper()
 
 SimpleTimekeeper::~SimpleTimekeeper() {
   continue_ = false;
+  cond_.notify_all();
   if (thread_.joinable()) {
     thread_.join();
   }
@@ -32,15 +33,28 @@ Future<Unit> SimpleTimekeeper::after(Duration duration) {
     }
   });
   auto result = promise.getFuture();
-  std::lock_guard<std::mutex> lock(mutex_);
-  assert(pending_.find(key) == pending_.end());
-  pending_.emplace(std::make_pair(key, std::move(promise)));
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    assert(pending_.find(key) == pending_.end());
+    pending_.emplace(std::make_pair(key, std::move(promise)));
+  }
+  cond_.notify_all();
   return result;
 }
 
 void SimpleTimekeeper::threadLoop() {
   while (continue_) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    {
+      // sleep until the first pending promise, or until a new promise
+      // is added.
+      std::unique_lock<std::mutex> guard(mutex_);
+      if (pending_.empty()) {
+        cond_.wait(guard);
+      } else {
+        auto until = pending_.begin()->first.time;
+        cond_.wait_until(guard, until);
+      }
+    }
     auto now = std::chrono::steady_clock::now();
     setValues(now);
   }
@@ -64,11 +78,7 @@ void SimpleTimekeeper::setValues(std::chrono::time_point<std::chrono::steady_clo
 }
 
 Timekeeper* getTimekeeperSingleton() {
-  static std::once_flag once;
-  static std::shared_ptr<Timekeeper> ptr;
-  std::call_once(once, [] {
-    ptr = std::make_shared<SimpleTimekeeper>();
-  });
+  static auto ptr = std::make_shared<SimpleTimekeeper>();
   return ptr.get();
 }
 

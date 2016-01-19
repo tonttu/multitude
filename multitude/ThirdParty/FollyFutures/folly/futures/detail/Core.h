@@ -474,7 +474,7 @@ class Core : public Cancellable {
       return;
     }
 
-    if (weak) {
+    if (weak.wasEverAlive()) {
       ExecutorPtr x = weak.lock();
       if (!x) {
         // executor_ was alive at some point but it eventually died.

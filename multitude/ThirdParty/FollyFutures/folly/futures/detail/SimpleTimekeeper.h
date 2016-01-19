@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include <map>
+#include <condition_variable>
 
 namespace folly { namespace detail {
 
@@ -36,6 +37,7 @@ class FOLLY_API SimpleTimekeeper : public Timekeeper {
   std::atomic<uint64_t> counter_;
   std::atomic<bool> continue_;
   std::mutex mutex_;
+  std::condition_variable cond_;
   std::map<Key, Promise<Unit>> pending_;
   std::thread thread_;
 };
