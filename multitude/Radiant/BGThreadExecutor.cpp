@@ -105,11 +105,7 @@ namespace Radiant
 
   const std::shared_ptr<BGThreadExecutor>& BGThreadExecutor::instance()
   {
-    static std::once_flag once;
-    static std::shared_ptr<BGThreadExecutor> ptr;
-    std::call_once(once, [] {
-      ptr.reset(new BGThreadExecutor());
-    });
+    static auto ptr = std::make_shared<BGThreadExecutor>();
     return ptr;
   }
 }
