@@ -64,11 +64,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 
-#if (!defined(CLANG_XML_VS) && _MSC_VER < 1900) || (defined(CLANG_XML_VS) && CLANG_XML_VS < 14)
-// Grmblrgrmbl, weird windows CRT stuffs
-#define snprintf _snprintf
-#endif
-
 //
 // Detect linux
 //
