@@ -84,7 +84,7 @@ namespace Valuable
           l = Attribute::Layer(l + 1)) {
         if(!isValueDefinedOnLayer(l)) continue;
         if(!Nimble::Math::isNAN(m_factors[l].x))
-          this->setValue(Nimble::Vector2f(src * m_factors[l].x, value().y), l);
+          this->setValue(Nimble::Vector2f(src * m_factors[l].x, value(l).y), l);
       }
     }
 
@@ -95,7 +95,7 @@ namespace Valuable
           l = Attribute::Layer(l + 1)) {
         if(!isValueDefinedOnLayer(l)) continue;
         if(!Nimble::Math::isNAN(m_factors[l].y))
-          this->setValue(Nimble::Vector2f(value().x, src * m_factors[l].y), l);
+          this->setValue(Nimble::Vector2f(value(l).x, src * m_factors[l].y), l);
       }
     }
 
