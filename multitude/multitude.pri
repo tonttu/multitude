@@ -272,6 +272,8 @@ win32 {
         LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin
         QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/node/lib
       }
+
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/boost_1_55_0
     } else {
       # Builds from distributed source code
       CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_VERSION_STR}
