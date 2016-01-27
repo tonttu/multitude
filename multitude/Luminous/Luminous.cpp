@@ -22,7 +22,6 @@
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
 #include "ImageCodecCS.hpp"
-#include "GPUAssociation.hpp"
 
 #include <QImageWriter>
 #include <QImageReader>
