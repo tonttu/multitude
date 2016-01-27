@@ -312,77 +312,6 @@ struct is_negative_impl<T, false> {
   constexpr static bool check(T) { return false; }
 };
 
-// folly::to integral specializations can end up generating code
-// inside what are really static ifs (not executed because of the templated
-// types) that violate -Wsign-compare so suppress them in order to not prevent
-// all calling code from using it.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-
-template <typename RHS, RHS rhs, typename LHS>
-bool less_than_impl(
-  typename std::enable_if<
-    (rhs <= std::numeric_limits<LHS>::max()
-      && rhs > std::numeric_limits<LHS>::min()),
-    LHS
-  >::type const lhs
-) {
-  return lhs < rhs;
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool less_than_impl(
-  typename std::enable_if<
-    (rhs > std::numeric_limits<LHS>::max()),
-    LHS
-  >::type const
-) {
-  return true;
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool less_than_impl(
-  typename std::enable_if<
-    (rhs <= std::numeric_limits<LHS>::min()),
-    LHS
-  >::type const
-) {
-  return false;
-}
-
-#pragma GCC diagnostic pop
-
-template <typename RHS, RHS rhs, typename LHS>
-bool greater_than_impl(
-  typename std::enable_if<
-    (rhs <= std::numeric_limits<LHS>::max()
-      && rhs >= std::numeric_limits<LHS>::min()),
-    LHS
-  >::type const lhs
-) {
-  return lhs > rhs;
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool greater_than_impl(
-  typename std::enable_if<
-    (rhs > std::numeric_limits<LHS>::max()),
-    LHS
-  >::type const
-) {
-  return false;
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool greater_than_impl(
-  typename std::enable_if<
-    (rhs < std::numeric_limits<LHS>::min()),
-    LHS
-  >::type const
-) {
-  return true;
-}
-
 } // namespace detail {
 
 // same as `x < 0`
@@ -403,20 +332,6 @@ constexpr bool is_positive(T x) { return !is_non_positive(x); }
 template <typename T>
 constexpr bool is_non_negative(T x) {
   return !x || is_positive(x);
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool less_than(LHS const lhs) {
-  return detail::less_than_impl<
-    RHS, rhs, typename std::remove_reference<LHS>::type
-  >(lhs);
-}
-
-template <typename RHS, RHS rhs, typename LHS>
-bool greater_than(LHS const lhs) {
-  return detail::greater_than_impl<
-    RHS, rhs, typename std::remove_reference<LHS>::type
-  >(lhs);
 }
 
 } // namespace folly

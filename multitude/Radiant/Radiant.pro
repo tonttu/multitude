@@ -159,6 +159,7 @@ linux*:SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
+LIBS += $$LIB_FOLLY_FUTURES
 
 linux-* {
   LIBS += -lX11

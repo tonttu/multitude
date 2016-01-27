@@ -18,6 +18,7 @@
 
 #include <folly/futures/detail/Types.h>
 #include <folly/futures/Unit.h>
+#include <folly/Export.h>
 
 namespace folly {
 
@@ -49,7 +50,7 @@ template <class> class Future;
 ///
 ///    timekeeper.after(std::chrono::duration_cast<Duration>(
 ///      someNanoseconds))
-class Timekeeper {
+class FOLLY_API Timekeeper {
  public:
   virtual ~Timekeeper() = default;
 

@@ -6,6 +6,8 @@ INCLUDEPATH += .
 CONFIG += c++11
 QT -= gui
 
+win32:QMAKE_CXXFLAGS += /bigobj
+
 DEFINES += FOLLY_EXPORT
 
 HEADERS += folly/ApplyTuple.h \

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "Export.h"
+
 #include <atomic>
 #include <climits>
 #include <functional>
@@ -30,7 +32,7 @@ typedef uint64_t JobId;
 
 /// An Executor accepts units of work with add(), which should be
 /// threadsafe.
-class Executor {
+class FOLLY_API Executor {
  public:
   virtual ~Executor() = default;
 

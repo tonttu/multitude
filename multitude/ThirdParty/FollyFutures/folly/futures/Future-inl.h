@@ -32,7 +32,7 @@ namespace folly {
 class Timekeeper;
 
 namespace detail {
-  Timekeeper* getTimekeeperSingleton();
+  FOLLY_API Timekeeper* getTimekeeperSingleton();
 }
 
 template <class T>
@@ -51,10 +51,12 @@ template <class T2, typename>
 Future<T>::Future(T2&& val)
   : core_(new detail::Core<T>(Try<T>(std::forward<T2>(val)))) {}
 
+/* For some reason VC++ 2015 does not like this. It thinks the ctor is undefined
 template <class T>
 template <typename, typename>
 Future<T>::Future()
   : core_(new detail::Core<T>(Try<T>(T()))) {}
+*/
 
 template <class T>
 Future<T>::~Future() {

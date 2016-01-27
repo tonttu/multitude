@@ -63,7 +63,8 @@ class Future {
   template <class T2 = T, typename =
             typename std::enable_if<
               std::is_same<Unit, T2>::value>::type>
-  Future();
+  Future()
+    : core_(new detail::Core<T>(Try<T>(T()))) {}
 
   ~Future();
 
