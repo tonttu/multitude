@@ -13,7 +13,8 @@ HEADERS += Archive.hpp \
     TransitionImpl.hpp \
     TransitionAnim.hpp \
     SimpleExpression.hpp \
-    SimpleExpressionLink.hpp
+    SimpleExpressionLink.hpp \
+    AttributeTuple.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
