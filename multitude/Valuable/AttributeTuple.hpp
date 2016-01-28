@@ -51,7 +51,8 @@ namespace Valuable
   class AttributeTuple : public Attribute
   {
   public:
-    typedef decltype(WrappedValue()[0]) ElementType;
+    typedef typename std::remove_cv<typename std::remove_reference<
+                     decltype(WrappedValue()[0])>::type>::type ElementType;
     const static int N = Elements<WrappedValue>::value;
 
     AttributeTuple(Node* host, const QByteArray& name,
@@ -68,7 +69,7 @@ namespace Valuable
     WrappedValue value(Layer layer) const;
 
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE;
-    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;
+    virtual QString asString(bool * const ok=nullptr, Layer layer=LAYER_CURRENT) const OVERRIDE;
 
     virtual bool deserialize(const ArchiveElement &element) OVERRIDE;
 
@@ -94,23 +95,22 @@ namespace Valuable
 
 
 
-    /// Override to change element names
     QString elementName(int tupleIndex, QString baseName) const;
 
     /// This function changes index used in in tuple to the index in the given range:
     /// [0, range-1] in WrappedValue or similar (most notably Nimble::Vectors).
     /// This can be overriden for shuffling the indices. For example css margin values
     /// can be specified by 3 values, where the order of values is not straightforward.
-    virtual int t2r(int tupleIndex, int range=N) const;
+    int t2r(int tupleIndex, int range=N) const;
 
     /// Getter of value from wrapped value
-    virtual ElementType unwrap(const WrappedValue& v, int index) const;
+    ElementType unwrap(const WrappedValue& v, int index) const;
     /// Setter of value from wrapped value
-    virtual void setWrapped(WrappedValue& v, int index, ElementType elem) const;
+    void setWrapped(WrappedValue& v, int index, ElementType elem) const;
 
   protected:
     /// CRTP implementation. override in subclass
-    virtual QString priv_elementName(int tupleIndex, QString baseName) const;
+    static QString priv_elementName(int tupleIndex, QString baseName);
     virtual int priv_t2r(int tupleIndex, int range) const;
     virtual ElementType priv_unwrap(const WrappedValue& v, int index) const;
     /// This needs to be always overriden
@@ -129,11 +129,11 @@ namespace Valuable
   template <typename T, typename A>
   QString AttributeTuple<T, A>::elementName(int tupleIndex, QString baseName) const
   {
-    return static_cast<const A*>(this)->priv_elementName(tupleIndex, baseName);
+    return A::priv_elementName(tupleIndex, baseName);
   }
 
   template <typename T, typename A>
-  QString AttributeTuple<T, A>::priv_elementName(int tupleIndex, QString baseName) const
+  QString AttributeTuple<T, A>::priv_elementName(int tupleIndex, QString baseName)
   {
     static const char *suffixes[] = {"-x", "-y", "-z", "-w"};
     return baseName.append(suffixes[tupleIndex]);
