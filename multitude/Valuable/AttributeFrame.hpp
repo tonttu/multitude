@@ -13,8 +13,7 @@
 
 #include <Nimble/Frame4.hpp>
 
-#include "AttributeFloat.hpp"
-#include "AttributeVector.hpp"
+#include "AttributeTuple.hpp"
 #include "StyleValue.hpp"
 
 #include <QStringList>
@@ -27,262 +26,47 @@ namespace Valuable
   /// frame width can be individually defined for top, right, bottom, and left
   /// edges of the frame. This class is used by the CSS engine.
   template <>
-  class AttributeT<Nimble::Frame4f> : public Attribute
+  class AttributeT<Nimble::Frame4f> :
+      public AttributeTuple<Nimble::Frame4f, AttributeT<Nimble::Frame4f>>
   {
   public:
+    using AttributeTuple<Nimble::Frame4f, AttributeT<Nimble::Frame4f>>::operator=;
+
+    typedef AttributeT<Nimble::Frame4f> AttributeType;
+
+
     AttributeT(Node * host, const QByteArray & name,
-                   const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
-      : Attribute(host, name, transit)
-      , m_inChangeTransaction(false)
-      , m_emitChangedAfterTransaction(false)
+               const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
+      : AttributeTuple<Nimble::Frame4f, AttributeType>(host, name, v, transit)
     {
-      m_values[0] = new AttributeFloat(host, name + "-top", v.top(), transit);
-      m_values[1] = new AttributeFloat(host, name + "-right", v.right(), transit);
-      m_values[2] = new AttributeFloat(host, name + "-bottom", v.bottom(), transit);
-      m_values[3] = new AttributeFloat(host, name + "-left", v.left(), transit);
-
-#ifndef CLANG_XML
-      for (int i = 0; i < 4; ++i) {
-        m_values[i]->addListener(std::bind(&AttributeT::valuesChanged, this));
-        m_values[i]->setOwnerShorthand(this);
-      }
-#endif
-      setSerializable(false);
     }
 
-    ~AttributeT()
+    static QString priv_elementName(int tupleIndex, QString baseName)
     {
-      for(int i = 0; i < 4; ++i)
-        delete m_values[i];
+      static const char* suffixes[] = {"-top", "-right", "-bottom", "-left"};
+      return baseName.append(suffixes[tupleIndex]);
     }
 
-    virtual QString asString(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE
+    bool set(const Nimble::Frame4f& frame, AttributeType::Layer layer,
+             QList<ValueUnit> units = QList<ValueUnit>())
     {
-      if (ok) *ok = true;
-      return QString("%1 %2 %3 %4").arg(m_values[0]->value(layer)).arg(m_values[1]->value(layer)).
-          arg(m_values[2]->value(layer)).arg(m_values[3]->value(layer));
+      Nimble::Vector4f v(frame.x,frame.y,frame.z,frame.w);
+      return set(v, layer, units);
     }
 
-    virtual bool deserialize(const ArchiveElement & element) OVERRIDE
+    virtual int priv_t2r(int tupleIndex, int range) const OVERRIDE
     {
-      QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
-      if (lst.size() == 4) {
-        Nimble::Frame4f frame;
-        for (int i = 0; i < 4; ++i) {
-          bool ok = false;
-          frame[i] = lst[i].toFloat(&ok);
-          if (!ok)
-            return false;
-        }
-        *this = frame;
-
-        return true;
-      }
-
-      return false;
-    }
-
-    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v, layer, unit);
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v, layer, unit);
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    /// v.x goes to top and bottom, v.y goes to right and left
-    virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v[i % 2], layer, i >= units.size() ? VU_UNKNOWN : units[i % 2]);
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    /// v.x = top, v.y = right and left, v.z = bottom
-    virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i) {
-        const int j = i == 3 ? 1 : i;
-        m_values[i]->set(v[j], layer, j >= units.size() ? VU_UNKNOWN : units[j]);
-      }
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->set(v[i], layer, i >= units.size() ? VU_UNKNOWN : units[i]);
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    virtual bool isChanged() const OVERRIDE
-    {
-      for (int i = 0; i < 4; ++i)
-        if (m_values[i]->isChanged())
-          return true;
-      return false;
-    }
-
-    virtual void clearValue(Layer layout) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->clearValue(layout);
-
-      endChangeTransaction();
-    }
-
-    virtual void setAsDefaults() OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->setAsDefaults();
-
-      endChangeTransaction();
-    }
-
-    void setSrc(float src)
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->setSrc(src);
-
-      endChangeTransaction();
-    }
-
-    void setSrc(const Nimble::Vector4f & src)
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        m_values[i]->setSrc(src[i]);
-
-      endChangeTransaction();
-    }
-
-    AttributeT & operator=(const AttributeT & frame)
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        *m_values[i] = **frame.m_values[i];
-
-      endChangeTransaction();
-
-      return *this;
-    }
-
-    AttributeT & operator=(const Nimble::Frame4f & frame)
-    {
-      beginChangeTransaction();
-
-      for (int i = 0; i < 4; ++i)
-        *m_values[i] = frame[i];
-
-      endChangeTransaction();
-
-      return *this;
-    }
-
-    Nimble::Frame4f operator*() const
-    {
-      return value();
-    }
-
-    Nimble::Frame4f value() const
-    {
-      return Nimble::Frame4f(*m_values[0], *m_values[1], *m_values[2], *m_values[3]);
-    }
-
-    Nimble::Frame4f value(Layer layer) const
-    {
-      return Nimble::Frame4f(m_values[0]->value(layer), m_values[1]->value(layer),
-          m_values[2]->value(layer), m_values[3]->value(layer));
-    }
-
-    bool handleShorthand(const StyleValue & value,
-                         Radiant::ArrayMap<Attribute *, StyleValue> & expanded) OVERRIDE
-    {
-      if (value.size() > 0 && value.size() < 5) {
-        // 'top'
-        expanded[m_values[0]] = value[0];
-        // value missing from 'right' is replaced with value given to 'top'
-        expanded[m_values[1]] = value[1 % value.size()];
-        // value missing from 'bottom' is replaced with value given to 'top'
-        expanded[m_values[2]] = value[2 % value.size()];
-        // value missing from 'left' is replaced with value given to 'right',
-        // or if that is not available, from 'top'
-        expanded[m_values[3]] = value[value.size() / 2 * 3 / 2];
-        return true;
-      }
-      return false;
-    }
-
-  private:
-    void valuesChanged()
-    {
-      if(m_inChangeTransaction)
-        m_emitChangedAfterTransaction = true;
+      if(tupleIndex != 3 || range != 3)
+        return tupleIndex % range;
       else
-        Attribute::emitChange();
+        return 1;
     }
 
-    void beginChangeTransaction()
+    virtual void priv_setWrapped(Nimble::Frame4f &v, int index, ElementType elem) const OVERRIDE
     {
-      assert(m_inChangeTransaction == false);
-      m_inChangeTransaction = true;
+      v[index] = elem;
     }
 
-    void endChangeTransaction()
-    {
-      assert(m_inChangeTransaction);
-
-      m_inChangeTransaction = false;
-
-      if(m_emitChangedAfterTransaction) {
-        m_emitChangedAfterTransaction = false;
-        Attribute::emitChange();
-      }
-    }
-
-    std::array<AttributeFloat *, 4> m_values;
-
-    bool m_inChangeTransaction;
-    bool m_emitChangedAfterTransaction;
   };
   typedef AttributeT<Nimble::Frame4f> AttributeFrame;
 }
