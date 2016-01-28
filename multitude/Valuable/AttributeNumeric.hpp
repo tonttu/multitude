@@ -15,6 +15,9 @@
 
 #include <Valuable/Export.hpp>
 #include <Valuable/Attribute.hpp>
+#include <Valuable/StyleValue.hpp>
+#include <Valuable/SimpleExpression.hpp>
+
 
 namespace Valuable
 {
@@ -49,6 +52,23 @@ namespace Valuable
     {
       if (ok) *ok = true;
       return static_cast<int> (value(layer));
+    }
+
+    virtual bool set(const StyleValue &value, Attribute::Layer layer) OVERRIDE
+    {
+      if(value.size() != 1)
+        return false;
+
+      auto type = value.type();
+      if(type == StyleValue::TYPE_EXPR) {
+        SimpleExpression expr = value.asExpr();
+        this->setValue(static_cast<T>(expr.evaluate(nullptr, 0)), layer);
+        return true;
+      } else if(type == StyleValue::TYPE_INT || type == StyleValue::TYPE_FLOAT) {
+        this->setValue(static_cast<T>(value.asFloat()), layer);
+        return true;
+      }
+      return false;
     }
 
     /// Converts the numeric value to string

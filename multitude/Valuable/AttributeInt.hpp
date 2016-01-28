@@ -98,6 +98,11 @@ namespace Valuable
       return true;
     }
 
+    virtual bool set(const StyleValue &value, Attribute::Layer layer) OVERRIDE
+    {
+      return Base::set(value, layer);
+    }
+
     /// Compares less than
     bool operator < (const T & i) const { return value() < i; }
     /// Compares less or equal than

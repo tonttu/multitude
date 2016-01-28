@@ -83,8 +83,9 @@ namespace Valuable
           m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
           this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
           return true;
+        } else {
+          return Base::set(value, layer);
         }
-        return false;
       }
 
       void setSrc(float src)
