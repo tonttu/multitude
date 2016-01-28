@@ -31,6 +31,8 @@ namespace Valuable
       : public Valuable::AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>
   {
   public:
+    using AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>::operator=;
+
     typedef AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type> AttributeType;
     typedef typename AttributeTuple<T, AttributeType>::ElementType ElementType;
 
@@ -102,30 +104,6 @@ namespace Valuable
       AttributeTuple<T,AttributeType>::endChangeTransaction();
 
       return true;
-    }
-
-    AttributeT & operator=(Nimble::Vector2T<ElementType> vec)
-    {
-      AttributeTuple<T,AttributeType>::beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        *AttributeTuple<T,AttributeType>::m_values[i] = vec[i];
-
-      AttributeTuple<T,AttributeType>::endChangeTransaction();
-
-      return *this;
-    }
-
-    AttributeT & operator=(Nimble::SizeT<ElementType> vec)
-    {
-      AttributeTuple<T,AttributeType>::beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        *AttributeTuple<T,AttributeType>::m_values[i] = vec[i];
-
-      AttributeTuple<T,AttributeType>::endChangeTransaction();
-
-      return *this;
     }
 
     virtual void priv_setWrapped(T& v, int index, ElementType elem) const OVERRIDE
