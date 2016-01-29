@@ -37,22 +37,22 @@ namespace Luminous
   */
   LUMINOUS_API void initLuminous();
   /** Initializes the Luminous library.
-      In practice this function initializes glbinding and checks
-      the capabilities of the underlying OpenGL implementation.
+      In practice this function initializes glbinding and checks the
+      capabilities of the underlying OpenGL implementation.
 
       This function should be called once for each rendering thread / context.
 
-      @param concurrentThreads if set to positive number, a barrier will be
-             created that waits concurrentThreads threads to execute glbinding
+      @param concurrentThreadCount if set to positive number, a barrier will be
+             created that waits concurrentThreadCount threads to execute glbinding
              initialization before continuing. This is needed since it's not
-             thread-safe to use any OpenGL function in any threads before all
+             thread-safe to use any OpenGL function in any thread before all
              possible threads have been initialized.
 
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
       too low OpenGL version).
   */
-  LUMINOUS_API bool initGl(int concurrentThreads);
+  LUMINOUS_API bool initOpenGL(int concurrentThreadCount);
   /** Checks if the initLuminous function has been called successfully. */
   LUMINOUS_API bool isLuminousInitialized();
 

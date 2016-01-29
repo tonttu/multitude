@@ -63,24 +63,24 @@ namespace Luminous
     s_luminousInitialized = true;
   }
 
-  bool initGl(int concurrentThreads)
+  bool initOpenGL(int concurrentThreadCount)
   {
-    // glbinding initialization is not thread-safe, and it's also not safe
-    // to use the newly initialized context before all threads have finished
-    // initialization. Use mutex and barrier for initialization.
-    // This needs to be called from all threads using OpenGL.
+    // glbinding initialization is not thread-safe, and it's also not safe to
+    // use the newly initialized OpenGL context before all threads have
+    // finished initialization. Use mutex and barrier for initialization. This
+    // needs to be called from all threads using OpenGL.
     {
       Radiant::Guard g(s_glbindingMutex);
-      if (concurrentThreads > 0) {
+      if (concurrentThreadCount > 0) {
         if (s_glbindingWaitingThreadCount == -1) {
           // we are the first ones here, initialize the barrier
-          s_glbindingWaitingThreadCount = concurrentThreads;
+          s_glbindingWaitingThreadCount = concurrentThreadCount;
         }
       }
 
       glbinding::Binding::initialize();
 
-      if (concurrentThreads > 0) {
+      if (concurrentThreadCount > 0) {
         if (--s_glbindingWaitingThreadCount == 0) {
           s_glbindingBarrier.wakeAll();
         }
