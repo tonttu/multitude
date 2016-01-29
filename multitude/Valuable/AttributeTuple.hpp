@@ -68,6 +68,10 @@ namespace Valuable
     WrappedValue value() const;
     WrappedValue value(Layer layer) const;
 
+    WrappedValue defaultValue() const;
+    Layer currentLayer() const;
+
+
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE;
     virtual QString asString(bool * const ok=nullptr, Layer layer=LAYER_CURRENT) const OVERRIDE;
 
@@ -228,6 +232,23 @@ namespace Valuable
   {
     for(int i = 0; i < N; ++i)
       delete m_values[i];
+  }
+
+  template <typename T, typename A>
+  T AttributeTuple<T,A>::defaultValue() const
+  {
+    return value(Attribute::DEFAULT);
+  }
+
+  template <typename T, typename A>
+  Attribute::Layer AttributeTuple<T,A>::currentLayer() const
+  {
+    for(int l = int(Attribute::LAYER_COUNT) - 1; l  > Attribute::DEFAULT; --l) {
+      Attribute::Layer layer = Attribute::Layer(l);
+      if(isValueDefinedOnLayer(layer))
+        return layer;
+    }
+    return Attribute::DEFAULT;
   }
 
   template <typename T, typename A>
