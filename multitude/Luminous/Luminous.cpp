@@ -22,12 +22,12 @@
 #include "ImageCodecDDS.hpp"
 #include "ImageCodecQT.hpp"
 #include "ImageCodecCS.hpp"
-#include "GPUAssociation.hpp"
 
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
 
+#include <Radiant/Condition.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QString>
@@ -50,44 +50,68 @@ namespace Luminous
   }
 
   static bool s_luminousInitialized = false;
+  static Radiant::Mutex s_glbindingMutex;
+  static Radiant::Condition s_glbindingBarrier;
+  static int s_glbindingWaitingThreadCount = -1;
 
-  bool initLuminous(bool initOpenGL)
+  void initLuminous()
   {
     // Only run this function once. First from simpleInit then later from
     // RenderThread if the first run fails.
     initDefaultImageCodecs();
 
-    if (initOpenGL) {
+    s_luminousInitialized = true;
+  }
 
-      // Initializing glbinding is thread-safe. This needs to be called from
-      // all threads using OpenGL.
-      glbinding::Binding::initialize();
-
-      // Check for DXT support
-      bool dxtSupport = isOpenGLExtensionSupported(GLextension::GL_EXT_texture_compression_s3tc);
-      Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
-
-
-      if (!isOpenGLExtensionSupported(GLextension::GL_ARB_sample_shading)) {
-        Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
-                         "some multi-sampling features will be disabled.");
-        // This is only a warning, no need to set s_ok to false
+  bool initOpenGL(int concurrentThreadCount)
+  {
+    // glbinding initialization is not thread-safe, and it's also not safe to
+    // use the newly initialized OpenGL context before all threads have
+    // finished initialization. Use mutex and barrier for initialization. This
+    // needs to be called from all threads using OpenGL.
+    {
+      Radiant::Guard g(s_glbindingMutex);
+      if (concurrentThreadCount > 0) {
+        if (s_glbindingWaitingThreadCount == -1) {
+          // we are the first ones here, initialize the barrier
+          s_glbindingWaitingThreadCount = concurrentThreadCount;
+        }
       }
 
-      const char * glvendor = (const char *) glGetString(GL_VENDOR);
-      const char * glver = (const char *) glGetString(GL_VERSION);
-      const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+      glbinding::Binding::initialize();
 
-      Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
-
-      if (glsl) {
-        Radiant::info("GLSL: %s", glsl);
-      } else {
-        Radiant::error("GLSL not supported");
+      if (concurrentThreadCount > 0) {
+        if (--s_glbindingWaitingThreadCount == 0) {
+          s_glbindingBarrier.wakeAll();
+        }
+        while (s_glbindingWaitingThreadCount > 0) {
+          s_glbindingBarrier.wait(s_glbindingMutex);
+        }
       }
     }
 
-    s_luminousInitialized = true;
+    // Check for DXT support
+    bool dxtSupport = isOpenGLExtensionSupported(GLextension::GL_EXT_texture_compression_s3tc);
+    Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
+
+
+    if (!isOpenGLExtensionSupported(GLextension::GL_ARB_sample_shading)) {
+      Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
+                       "some multi-sampling features will be disabled.");
+      // This is only a warning, no need to set s_ok to false
+    }
+
+    const char * glvendor = (const char *) glGetString(GL_VENDOR);
+    const char * glver = (const char *) glGetString(GL_VERSION);
+    const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+    Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
+
+    if (glsl) {
+      Radiant::info("GLSL: %s", glsl);
+    } else {
+      Radiant::error("GLSL not supported");
+    }
 
     return true;
   }

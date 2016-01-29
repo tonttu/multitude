@@ -894,11 +894,7 @@ namespace Luminous
     bool ok = false;
 
 #ifndef RADIANT_OSX
-    /// @todo if GPU Association would support querying available memory we
-    ///       should use that
-    if(false && GPUAssociation::isSupported()) {
-
-    } else if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
+    if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
 
       ok = true;
 
@@ -999,23 +995,24 @@ namespace Luminous
     return m_d->m_gpuId;
   }
 
-  void RenderDriverGL::setupSwapGroup()
+  bool RenderDriverGL::setupSwapGroup(int group)
   {
     // Do nothing if the extension is not supported
     if(!SwapGroups::isExtensionSupported())
-      return;
+      return false;
 
     // Query the number of available swap groups and barriers
     GLuint maxGroups, maxBarriers;
     if(SwapGroups::queryMaxSwapGroup(maxGroups, maxBarriers)) {
 
       // If we have any swap groups, join the first one
-      const int defaultSwapGroup = 1;
       if(maxGroups > 0) {
-        SwapGroups::joinSwapGroup(defaultSwapGroup);
+        return SwapGroups::joinSwapGroup(group);
       }
 
     }
+
+    return false;
   }
 
 }
