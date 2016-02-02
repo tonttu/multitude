@@ -13,6 +13,7 @@
 
 #include "Export.hpp"
 #include "Attribute.hpp"
+#include "SimpleExpression.hpp"
 
 #include <QString>
 #include <Radiant/Color.hpp>
@@ -44,7 +45,8 @@ namespace Valuable
       TYPE_INT,     ///< Integer value, example:        10
       TYPE_COLOR,   ///< Color value, example:          #fff
       TYPE_STRING,  ///< Quoted string, example:        "image.png"
-      TYPE_KEYWORD  ///< Unquoted string, example:      transparent
+      TYPE_KEYWORD, ///< Unquoted string, example:      transparent
+      TYPE_EXPR     ///< Simple expression, example:    calc(100%/3+30px)
     };
 
     /// One part of StyleValue list, variant / tagged union type with some convertions
@@ -69,6 +71,9 @@ namespace Valuable
       /// Create a keyword component
       /// @param keyword value
       Component(const QByteArray & keyword);
+      /// Create a expression component
+      /// @param expr value
+      Component(const SimpleExpression & expr);
       /// Delete the component
       ~Component();
 
@@ -100,9 +105,12 @@ namespace Valuable
       /// @returns the component value as keyword, works with string and keyword types,
       ///          otherwise prints an error and returns a null bytearray
       QByteArray asKeyword() const;
-      /// @returns the component value as color, if the type is not color,
+      /// @returns the component value as color. If the type is not color,
       ///          prints an error and returns a default Radiant::Color()
       Radiant::Color asColor() const;
+      /// @returns the component value as expression. If the type is not simple
+      ///          expression, prints an error and returns a zero
+      SimpleExpression asExpr() const;
 
       /// @param t try to convert this component to this type
       /// @returns true if this component could be converted to type t
@@ -140,6 +148,7 @@ namespace Valuable
         Radiant::Color * m_color;
         QString * m_string;
         QByteArray * m_keyword;
+        SimpleExpression * m_expr;
       } m_data;
       ValueType m_type;
       Attribute::ValueUnit m_unit;
@@ -174,6 +183,8 @@ namespace Valuable
     /// @param map map that is converted to StyleValue, see asMap() for exact format
     StyleValue(const QMap<QString, QString> & map);
 
+    StyleValue(const SimpleExpression & expr);
+
     /// Deletes StyleValue and its components
     ~StyleValue();
 
@@ -183,6 +194,7 @@ namespace Valuable
     QString asString(int idx = 0) const;
     QByteArray asKeyword(int idx = 0) const;
     Radiant::Color asColor(int idx = 0) const;
+    SimpleExpression asExpr(int idx = 0) const;
     ValueType type(int idx = 0) const;
     Attribute::ValueUnit unit(int idx = 0) const;
 

@@ -11,145 +11,66 @@
 #ifndef VALUABLE_ATTRIBUTE_LOCATION_HPP
 #define VALUABLE_ATTRIBUTE_LOCATION_HPP
 
-#include "AttributeVector.hpp"
+#include "AttributeTuple.hpp"
+#include <Nimble/Vector2.hpp>
 
 namespace Valuable
 {
 
-  /// This class provides an attribute for Nimble::Vector2f.
-  class AttributeLocation2f : public AttributeT<Nimble::Vector2f>
+  /// This class is needed as template parameter to differentiate with AttributeVectors
+  class Separate {};
+
+  /// This class provides an attribute for location
+  template <typename T>
+  class AttributeT<Nimble::Vector2T<T>, Separate> :
+      public AttributeTuple<Nimble::Vector2T<T>, AttributeT<Nimble::Vector2T<T>, Separate>>
   {
-    typedef AttributeT<Nimble::Vector2f> Base;
   public:
-    using Base::operator =;
+    typedef AttributeT<Nimble::Vector2T<T>, Separate> AttributeType;
+    typedef AttributeTuple<Nimble::Vector2T<T>, AttributeType> Base;
 
-    AttributeLocation2f(Node * host, const QByteArray & name,
-                        const Nimble::Vector2f & v = Nimble::Vector2f(0, 0),
-                        bool transit = false)
+    using Base::operator=;
+
+
+    AttributeT(Node * host, const QByteArray & name,
+               const Nimble::Vector2T<T> & v = Nimble::Vector2T<T>(0, 0),
+               bool transit = false)
       : Base(host, name, v, transit)
-      , m_src(0, 0)
     {
-      for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
-        for(int j = 0; j < m_factors[i].ELEMENTS; ++j)
-          m_factors[i][j] = std::numeric_limits<float>::quiet_NaN();
     }
 
-    virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
+    virtual void priv_setWrapped(Nimble::Vector2T<T> &v, int index, T elem) const OVERRIDE
     {
-      const Nimble::Vector2f f(v, v);
-      if(unit == VU_PERCENTAGE) {
-        m_factors[layer] = f;
-        setValue(Nimble::Vector2(f.x * m_src.x, f.y * m_src.y), layer);
-      } else {
-        for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-        setValue(f, layer);
-      }
-      return true;
+      v[index] = elem;
     }
 
-    virtual bool set(int v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
+    T x() const
     {
-      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
-        m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      setValue(Nimble::Vector2f(v, v), layer);
-      return true;
+      return this->m_values[0]->value();
     }
 
-    void set(const Nimble::Vector2f & v, Layer layer = USER)
+    T y() const
     {
-      m_factors[layer][0] = m_factors[layer][1] = std::numeric_limits<float>::quiet_NaN();
-      setValue(v, layer);
+      return this->m_values[1]->value();
     }
 
-    virtual bool set(const Nimble::Vector2f & v, Layer layer, QList<ValueUnit> units) OVERRIDE
+    void setX(float x, Attribute::Layer layer = Attribute::USER, Attribute::ValueUnit unit = Attribute::VU_PXS)
     {
-      Nimble::Vector2f f(v);
-      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j) {
-        if(j < units.size() && units[j] == VU_PERCENTAGE) {
-          m_factors[layer][j] = f[j];
-          f[j] *= m_src[j];
-        } else {
-          m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-        }
-      }
-      setValue(f, layer);
-      return true;
+      Base::beginChangeTransaction();
+      Base::m_values[0]->set(x, layer, unit);
+      Base::endChangeTransaction();
     }
 
-    void setSrcx(float src)
+    void setY(float y, Attribute::Layer layer = Attribute::USER, Attribute::ValueUnit unit = Attribute::VU_PXS)
     {
-      m_src.x = src;
-      for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
-          l = Attribute::Layer(l + 1)) {
-        if(!isValueDefinedOnLayer(l)) continue;
-        if(!Nimble::Math::isNAN(m_factors[l].x))
-          this->setValue(Nimble::Vector2f(src * m_factors[l].x, value().y), l);
-      }
+      Base::beginChangeTransaction();
+      Base::m_values[1]->set(y, layer, unit);
+      Base::endChangeTransaction();
     }
 
-    void setSrcy(float src)
-    {
-      m_src.y = src;
-      for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
-          l = Attribute::Layer(l + 1)) {
-        if(!isValueDefinedOnLayer(l)) continue;
-        if(!Nimble::Math::isNAN(m_factors[l].y))
-          this->setValue(Nimble::Vector2f(value().x, src * m_factors[l].y), l);
-      }
-    }
-
-    void setSrc(Nimble::Vector2f src)
-    {
-      setSrcx(src.x);
-      setSrcy(src.y);
-    }
-
-    void setX(float x, Layer layer = USER, ValueUnit unit = VU_PXS)
-    {
-      Nimble::Vector2f f(x, value().y);
-      if (unit == VU_PERCENTAGE) {
-        m_factors[layer][0] = x;
-        f[0] *= m_src[0];
-      } else {
-        m_factors[layer][0] = std::numeric_limits<float>::quiet_NaN();
-      }
-      setValue(f, layer);
-    }
-
-    void setY(float y, Layer layer = USER, ValueUnit unit = VU_PXS)
-    {
-      Nimble::Vector2f f(value().x, y);
-      if (unit == VU_PERCENTAGE) {
-        m_factors[layer][1] = y;
-        f[1] *= m_src[1];
-      } else {
-        m_factors[layer][1] = std::numeric_limits<float>::quiet_NaN();
-      }
-      setValue(f, layer);
-    }
-
-    virtual void clearValue(Attribute::Layer layer = USER) OVERRIDE
-    {
-      for(int j = 0; j < m_factors[layer].ELEMENTS; ++j)
-        m_factors[layer][j] = std::numeric_limits<float>::quiet_NaN();
-      Base::clearValue(layer);
-    }
-
-    virtual void setAsDefaults() OVERRIDE
-    {
-      if (!isValueDefinedOnLayer(Attribute::USER))
-        return;
-      m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
-      setValue(value(Attribute::USER), Attribute::DEFAULT);
-      clearValue(Attribute::USER);
-    }
-
-  private:
-    Nimble::Vector2f m_factors[Attribute::LAYER_COUNT];
-    Nimble::Vector2f m_src;
   };
 
+  typedef AttributeT<Nimble::Vector2T<float>, Separate> AttributeLocation2f;
 }
 
 #endif // VALUABLE_ATTRIBUTE_LOCATION_HPP

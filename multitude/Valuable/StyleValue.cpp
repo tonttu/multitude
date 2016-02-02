@@ -89,6 +89,15 @@ namespace Valuable
     m_data.m_keyword = new QByteArray(keyword);
   }
 
+  StyleValue::Component::Component(const SimpleExpression & expr)
+    : m_data()
+    , m_type(TYPE_EXPR)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
+  {
+    m_data.m_expr = new SimpleExpression(expr);
+  }
+
   StyleValue::Component::~Component()
   {
     switch (m_type) {
@@ -100,6 +109,9 @@ namespace Valuable
       break;
     case TYPE_KEYWORD:
       delete m_data.m_keyword;
+      break;
+    case TYPE_EXPR:
+      delete m_data.m_expr;
       break;
     default:
       break;
@@ -134,6 +146,9 @@ namespace Valuable
       break;
     case TYPE_KEYWORD:
       m_data.m_keyword = new QByteArray(*component.m_data.m_keyword);
+      break;
+    case TYPE_EXPR:
+      m_data.m_expr = new SimpleExpression(*component.m_data.m_expr);
       break;
     default:
       break;
@@ -225,6 +240,14 @@ namespace Valuable
     return Radiant::Color();
   }
 
+  SimpleExpression StyleValue::Component::asExpr() const
+  {
+    if (m_type == TYPE_EXPR)
+      return *m_data.m_expr;
+    Radiant::error("StyleValue::Component::asExpr # cannot convert %s to expr", typeName());
+    return SimpleExpression(0.0f);
+  }
+
   bool StyleValue::Component::canConvert(StyleValue::ValueType t) const
   {
     return canConvertType(m_type, t);
@@ -248,6 +271,8 @@ namespace Valuable
       return "string";
     case TYPE_KEYWORD:
       return "keyword";
+    case TYPE_EXPR:
+      return "expr";
     default:
       return "none";
     }
@@ -271,6 +296,8 @@ namespace Valuable
       return *m_data.m_string == *v.m_data.m_string;
     case TYPE_KEYWORD:
       return *m_data.m_keyword == *v.m_data.m_keyword;
+    case TYPE_EXPR:
+      return *m_data.m_expr == *v.m_data.m_expr;
     default:
       return false;
     }
@@ -340,6 +367,12 @@ namespace Valuable
     }
   }
 
+  StyleValue::StyleValue(const SimpleExpression & expr)
+    : m_isUniform(true)
+  {
+    m_components << expr;
+  }
+
   StyleValue::~StyleValue()
   {}
 
@@ -366,6 +399,11 @@ namespace Valuable
   Radiant::Color StyleValue::asColor(int idx) const
   {
     return m_components[idx].asColor();
+  }
+
+  SimpleExpression StyleValue::asExpr(int idx) const
+  {
+    return m_components[idx].asExpr();
   }
 
   StyleValue::ValueType StyleValue::type(int idx) const

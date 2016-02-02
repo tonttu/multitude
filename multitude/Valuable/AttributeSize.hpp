@@ -11,15 +11,11 @@
 #ifndef VALUABLE_ATTRIBUTESIZE_HPP
 #define VALUABLE_ATTRIBUTESIZE_HPP
 
-#include "AttributeFloat.hpp"
-#include "AttributeInt.hpp"
+#include "Attribute.hpp"
+#include "AttributeTuple.hpp"
 #include "StyleValue.hpp"
 
 #include <Nimble/Size.hpp>
-
-#include <QStringList>
-
-#include <array>
 
 namespace Valuable
 {
@@ -32,10 +28,13 @@ namespace Valuable
   /// This class defines an attribute that stores a Nimble::SizeT object.
   template <typename T>
   class AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>
-      : public Valuable::Attribute
+      : public Valuable::AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>
   {
   public:
-    typedef decltype(T().width()) ElementType;
+    using AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>::operator=;
+
+    typedef AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type> AttributeType;
+    typedef typename AttributeTuple<T, AttributeType>::ElementType ElementType;
 
     /// Constructor
     /// @param host host node
@@ -45,267 +44,75 @@ namespace Valuable
     /// @param size initial value
     /// @param transit (ignored)
     AttributeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const T & size = T(), bool transit = false)
-      : Attribute(host, name, transit)
-      , m_inChangeTransaction(false)
-      , m_emitChangedAfterTransaction(false)
+      : AttributeTuple<T, AttributeType>(host, name, size, transit)
     {
-      m_values[0] = new AttributeT<ElementType>(host, widthName, size.width(), transit);
-      m_values[1] = new AttributeT<ElementType>(host, heightName, size.height(), transit);
-
-      for(int i = 0; i < 2; ++i) {
-        m_values[i]->addListener([this] { valuesChanged(); });
-        m_values[i]->setOwnerShorthand(this);
-      }
-      setSerializable(false);
+      AttributeTuple<T ,AttributeType>::m_values[0]->setName(widthName);
+      AttributeTuple<T, AttributeType>::m_values[1]->setName(heightName);
     }
 
-    ~AttributeT()
+    bool setWidth(ElementType w, Attribute::Layer layer = Attribute::USER,
+                  Attribute::ValueUnit unit = Attribute::VU_PXS)
     {
-      for(int i = 0; i < 2; ++i)
-        delete m_values[i];
-    }
-
-    bool setWidth(ElementType w, Layer layer = USER, ValueUnit unit = VU_PXS)
-    {
-      beginChangeTransaction();
-      m_values[0]->set(w, layer, unit);
-      endChangeTransaction();
+      AttributeTuple<T,AttributeType>::beginChangeTransaction();
+      AttributeTuple<T,AttributeType>::m_values[0]->set(w, layer, unit);
+      AttributeTuple<T,AttributeType>::endChangeTransaction();
 
       return true;
     }
 
-    bool setHeight(ElementType h, Layer layer = USER, ValueUnit unit = VU_PXS)
+    bool setHeight(ElementType h, Attribute::Layer layer = Attribute::USER,
+                   Attribute::ValueUnit unit = Attribute::VU_PXS)
     {
-      beginChangeTransaction();
-      m_values[1]->set(h, layer, unit);
-      endChangeTransaction();
+      AttributeTuple<T,AttributeType>::beginChangeTransaction();
+      AttributeTuple<T,AttributeType>::m_values[1]->set(h, layer, unit);
+      AttributeTuple<T,AttributeType>::endChangeTransaction();
 
       return true;
     }
 
     ElementType width() const
     {
-      return *m_values[0];
+      return *AttributeTuple<T,AttributeType>::m_values[0];
     }
 
     ElementType height() const
     {
-      return *m_values[1];
-    }
-
-    /// Returns true if width or height is defined on the given layer
-    /// @param layer Layer to inspect
-    /// @return False if neither width nor height is defined on given layer
-    virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
-    {
-      return m_values[0]->isValueDefinedOnLayer(layer) || m_values[1]->isValueDefinedOnLayer(layer);
-    }
-
-    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
-    {
-      if(ok) *ok = true;
-      return QString("%1 %2").arg(m_values[0]->value(layer)).arg(m_values[1]->value(layer));
-    }
-
-    virtual bool deserialize(const ArchiveElement &element) OVERRIDE
-    {
-      QStringList lst = element.get().split(QRegExp("\\s"), QString::SkipEmptyParts);
-
-      if(lst.size() == 2) {
-
-        Nimble::Vector2T<ElementType> size;
-
-        for(int i = 0; i < 2; ++i) {
-          bool ok = false;
-          size[i] = lst[i].toFloat(&ok);
-          if(!ok)
-            return false;
-        }
-
-        *this = size;
-        return true;
-      }
-
-      return false;
+      return *AttributeTuple<T,AttributeType>::m_values[1];
     }
 
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
       bool ok = true;
-      Nimble::Vector2 s = data.readVector2Float32(&ok);
+      Nimble::Vector2f s = data.readVector2Float32(&ok);
       if (ok) {
-        set(s);
+        AttributeTuple<T,AttributeType>::set(s);
       } else {
         Radiant::warning("AttributeSizeT::eventProcess # Failed to parse data");
       }
     }
 
-    virtual bool set(ElementType v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE
+
+    bool set(const Nimble::SizeF & v, Attribute::Layer layer = Attribute::USER,
+             Attribute::ValueUnit widthUnit = Attribute::VU_PXS,
+             Attribute::ValueUnit heightUnit = Attribute::VU_PXS)
     {
-      beginChangeTransaction();
+      AttributeTuple<T,AttributeType>::beginChangeTransaction();
 
-      for(int i = 0; i < 2; ++i)
-        m_values[i]->set(v, layer, unit);
+      AttributeTuple<T,AttributeType>::m_values[0]->set(v.width(), layer, widthUnit);
+      AttributeTuple<T,AttributeType>::m_values[1]->set(v.height(), layer, heightUnit);
 
-      endChangeTransaction();
+      AttributeTuple<T,AttributeType>::endChangeTransaction();
 
       return true;
     }
 
-
-    virtual bool set(const Nimble::Vector2f &v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE
+    virtual void priv_setWrapped(T& v, int index, ElementType elem) const OVERRIDE
     {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        m_values[i]->set(static_cast<ElementType>(v[i]), layer, i >= units.size() ? VU_UNKNOWN : units[i]);
-
-      endChangeTransaction();
-
-      return true;
+      if(index == 0) v.setWidth(elem);
+      else v.setHeight(elem);
     }
 
-    bool set(const Nimble::SizeF & v, Layer layer = USER, ValueUnit widthUnit = VU_PXS, ValueUnit heightUnit = VU_PXS)
-    {
-      beginChangeTransaction();
 
-      m_values[0]->set(v.width(), layer, widthUnit);
-      m_values[1]->set(v.height(), layer, heightUnit);
-
-      endChangeTransaction();
-
-      return true;
-    }
-
-    bool handleShorthand(const Valuable::StyleValue & value,
-                         Radiant::ArrayMap<Valuable::Attribute *, Valuable::StyleValue> & expanded) OVERRIDE
-    {
-
-      if (value.size() == 1 && value.isNumber()) {
-        expanded[m_values[0]] = value;
-        expanded[m_values[1]] = value;
-      } else if (value.size() == 2 && value.isUniform()) {
-        expanded[m_values[0]] = value[0];
-        expanded[m_values[1]] = value[1];
-      } else {
-        return false;
-      }
-      return true;
-    }
-
-    virtual bool isChanged() const OVERRIDE
-    {
-      for(int i = 0; i < 2; ++i)
-        if(m_values[i]->isChanged())
-          return true;
-      return false;
-    }
-
-    virtual void clearValue(Layer layout) OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        m_values[i]->clearValue(layout);
-
-      endChangeTransaction();
-    }
-
-    virtual void setAsDefaults() OVERRIDE
-    {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        m_values[i]->setAsDefaults();
-
-      endChangeTransaction();
-    }
-
-    void setSrc(Nimble::Vector2T<ElementType> src)
-    {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        m_values[i]->setSrc(src[i]);
-
-      endChangeTransaction();
-    }
-
-    const T operator * () const { return value(); }
-    operator const T () const { return value(); }
-
-    AttributeT & operator=(const AttributeT & size)
-    {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        *m_values[i] = *size.m_values[i];
-
-      endChangeTransaction();
-
-      return *this;
-    }
-
-    AttributeT & operator=(Nimble::Vector2T<ElementType> vec)
-    {
-      beginChangeTransaction();
-
-      for(int i = 0; i < 2; ++i)
-        *m_values[i] = vec[i];
-
-      endChangeTransaction();
-
-      return *this;
-    }
-
-    AttributeT & operator=(const T & size)
-    {
-      beginChangeTransaction();
-
-      *m_values[0] = size.width();
-      *m_values[1] = size.height();
-
-      endChangeTransaction();
-
-      return *this;
-    }
-
-    T value() const
-    {
-      return T(*m_values[0], *m_values[1]);
-    }
-
-  private:
-    void valuesChanged()
-    {
-      if(m_inChangeTransaction)
-        m_emitChangedAfterTransaction = true;
-      else
-        Attribute::emitChange();
-    }
-
-    void beginChangeTransaction()
-    {
-      assert(m_inChangeTransaction == false);
-      m_inChangeTransaction = true;
-    }
-
-    void endChangeTransaction()
-    {
-      assert(m_inChangeTransaction);
-
-      m_inChangeTransaction = false;
-
-      if(m_emitChangedAfterTransaction) {
-        m_emitChangedAfterTransaction = false;
-        Attribute::emitChange();
-      }
-    }
-
-    std::array<AttributeT<ElementType>*, 2> m_values;
-
-    bool m_inChangeTransaction;
-    bool m_emitChangedAfterTransaction;
   };
 
   typedef AttributeT<Nimble::SizeF> AttributeSizeF;

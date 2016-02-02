@@ -11,6 +11,9 @@
 #ifndef VALUABLE_VALUE_FLOAT_HPP
 #define VALUABLE_VALUE_FLOAT_HPP
 
+#include "SimpleExpression.hpp"
+#include "StyleValue.hpp"
+
 #include <Radiant/StringUtils.hpp>
 
 #include <Valuable/Export.hpp>
@@ -35,8 +38,6 @@ namespace Valuable
 
       AttributeT() : Base(), m_src(1)
       {
-        for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
-          m_factors[i] = std::numeric_limits<float>::quiet_NaN();
       }
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object
@@ -44,8 +45,6 @@ namespace Valuable
       : AttributeNumericT<T>(host, name, v, transit),
         m_src(1)
       {
-        for(int i = 0; i < Attribute::LAYER_COUNT; ++i)
-          m_factors[i] = std::numeric_limits<float>::quiet_NaN();
       }
 
       /// Assignment by subtraction
@@ -61,7 +60,7 @@ namespace Valuable
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
       {
-        m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
+        m_exprs[layer].reset();
         this->setValue(v, layer);
         return true;
       }
@@ -69,13 +68,24 @@ namespace Valuable
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
       {
+        m_exprs[layer].reset();
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
-          this->setValue(v * m_src, layer);
         } else {
           this->setValue(v, layer);
         }
         return true;
+      }
+
+      virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE
+      {
+        if (value.size() == 1 && value.type() == StyleValue::TYPE_EXPR) {
+          m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
+          this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
+          return true;
+        } else {
+          return Base::set(value, layer);
+        }
       }
 
       void setSrc(float src)
@@ -84,24 +94,30 @@ namespace Valuable
         for(Attribute::Layer l = Attribute::DEFAULT; l < Attribute::LAYER_COUNT;
             l = Attribute::Layer(l + 1)) {
           if(!this->isValueDefinedOnLayer(l)) continue;
-          if(!Nimble::Math::isNAN(m_factors[l]))
-            this->setValue(m_factors[l] * src, l);
+          if(m_exprs[l]) {
+            this->setValue(m_exprs[l]->evaluate(&m_src, 1), l);
+          }
         }
       }
 
       void setPercentage(float factor, Attribute::Layer layer = Attribute::USER)
       {
-        m_factors[layer] = factor;
+        SimpleExpression expr(factor);
+        expr.replace(SimpleExpression::OP_MUL, SimpleExpression::Param(0));
+        m_exprs[layer].reset(new SimpleExpression(expr));
+        this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
       }
 
       float percentage(Attribute::Layer layer) const
       {
-        return m_factors[layer];
+        if(!m_exprs[layer] || m_exprs[layer]->isConstant())
+          return std::numeric_limits<float>::quiet_NaN();
+        return m_exprs[layer]->evaluate({1.f});
       }
 
       virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
-        m_factors[layer] = std::numeric_limits<float>::quiet_NaN();
+        m_exprs[layer].reset();
         Base::clearValue(layer);
       }
 
@@ -118,14 +134,15 @@ namespace Valuable
       {
         if (!this->isValueDefinedOnLayer(Attribute::USER))
           return;
-        m_factors[Attribute::DEFAULT] = m_factors[Attribute::USER];
+        m_exprs[Attribute::DEFAULT] = std::move(m_exprs[Attribute::USER]);
+        m_exprs[Attribute::USER].reset();
         this->setValue(this->value(Attribute::USER), Attribute::DEFAULT);
         clearValue(Attribute::USER);
       }
 
   private:
-      float m_factors[Attribute::LAYER_COUNT];
       float m_src;
+      std::unique_ptr<SimpleExpression> m_exprs[Attribute::LAYER_COUNT];
   };
 
   /// Float value object
