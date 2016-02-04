@@ -24,7 +24,7 @@ namespace Radiant {
   enum Severity
   {
     /// Debug information, that is usually not useful for the end user
-    /** Debug mesages are printed out only if verbose output is
+    /** Debug messages are printed out only if verbose output is
     enabled. */
     DEBUG,
     /// Useful information to all users.
@@ -35,7 +35,9 @@ namespace Radiant {
     /// An error occurred
     FAILURE,
     /// Fatal error, causes application shutdown
-    FATAL
+    FATAL,
+    /// Use this only as a parameter for setMinimumSeverityLevel
+    SILENT
   };
 
 #ifdef __GNUC__
@@ -135,6 +137,9 @@ namespace Radiant {
   /// @param enable Are the colors forced.
   RADIANT_API void forceColors(bool enable = true);
 
+  /// Set minimum severity level for all printing. If the severity is below
+  /// this, then it is not printed
+  RADIANT_API void setMinimumSeverityLevel(Severity s);
 
   /// Toggle duplicate filter
   /// If enabled, duplicate messages will be ignored
