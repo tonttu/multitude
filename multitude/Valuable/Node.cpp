@@ -700,6 +700,11 @@ namespace Valuable
     return false;
   }
 
+  void Node::setBeingDestroyed()
+  {
+    m_isBeingDestroyed = true;
+  }
+
   void Node::attributeAdded(Attribute *)
   {
   }

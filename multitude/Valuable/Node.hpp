@@ -524,6 +524,13 @@ namespace Valuable
     }
 
   protected:
+    /// Sets 'isBeginDestroyed' flag to true. This is set at least in
+    /// Widget::preDestroy and Operator::~Operator.
+    void setBeingDestroyed();
+    /// Returns true if we are about to delete this object. This flag needs to
+    /// be set manually using setBeginDestroyed, not all classes inheriting
+    /// from this might set it.
+    bool isBeingDestroyed() const { return m_isBeingDestroyed; }
 
     /// Get the sender of the event, only valid in DIRECT events
     /// @returns the sender of the event, can be read in eventProcess()
@@ -579,6 +586,7 @@ namespace Valuable
     typedef std::map<Valuable::Node *, int> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
+    bool m_isBeingDestroyed = false;
 
     // set of all attributes that this Node is listening to
     QSet<Attribute*> m_attributeListening;
