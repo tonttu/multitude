@@ -191,49 +191,8 @@ namespace Valuable
     // Host of Node class member Attributes must be zeroed to avoid double-delete
     m_id.removeHost();
 
-    while(!m_eventSources.empty()) {
-      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
-      m_eventSources.begin()->first->eventRemoveListener(this);
-    }
-
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
-
-      if(it->m_listener)
-        it->m_listener->eventRemoveSource(this);
-
-    }
-
-    foreach(Attribute* vo, m_attributeListening) {
-      for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
-        if(it->listener == this) {
-          it = vo->m_listeners.erase(it);
-        } else ++it;
-      }
-    }
-
-    {
-      Radiant::Guard g(s_queueMutex);
-      for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
-        auto & item = *it;
-        if(item->target == this) {
-          item->target = nullptr;
-          item->func = ListenerFuncVoid();
-          item->func2 = ListenerFuncBd();
-        }
-        if(item->sender == this)
-          item->sender = 0;
-      }
-      for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
-        auto & item = *it;
-        if(item->target == this) {
-          item->target = nullptr;
-          item->func = ListenerFuncVoid();
-          item->func2 = ListenerFuncBd();
-        }
-        if(item->sender == this)
-          item->sender = 0;
-      }
-    }
+    // Removes event listeners
+    setBeingDestroyed();
 
     // Release memory for any attributes that are left (should be only
     // heap-allocated at this point)
@@ -554,6 +513,9 @@ namespace Valuable
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
+    if (isBeingDestroyed())
+      return -1;
+
     const QByteArray from = validateEvent(fromIn);
 
     ValuePass vp(++m_listenersId);
@@ -598,6 +560,9 @@ namespace Valuable
   long Node::eventAddListener(const QByteArray & fromIn, ListenerFuncVoid func,
                               ListenerType listenerType)
   {
+    if (isBeingDestroyed())
+      return -1;
+
     const QByteArray from = validateEvent(fromIn);
 
     ValuePass vp(++m_listenersId);
@@ -612,6 +577,9 @@ namespace Valuable
 
   long Node::eventAddListener(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncVoid func, Node::ListenerType listenerType)
   {
+    if (isBeingDestroyed())
+      return -1;
+
     const QByteArray from = validateEvent(eventId);
 
     ValuePass vp(++m_listenersId);
@@ -630,6 +598,9 @@ namespace Valuable
 
   long Node::eventAddListenerBd(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncBd func, Node::ListenerType listenerType)
   {
+    if (isBeingDestroyed())
+      return -1;
+
     const QByteArray from = validateEvent(eventId);
 
     ValuePass vp(++m_listenersId);
@@ -649,6 +620,9 @@ namespace Valuable
   long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
+    if (isBeingDestroyed())
+      return -1;
+
     const QByteArray from = validateEvent(fromIn);
 
     ValuePass vp(++m_listenersId);
@@ -702,7 +676,10 @@ namespace Valuable
 
   void Node::setBeingDestroyed()
   {
-    m_isBeingDestroyed = true;
+    if (!m_isBeingDestroyed) {
+      internalRemoveListeners();
+      m_isBeingDestroyed = true;
+    }
   }
 
   void Node::attributeAdded(Attribute *)
@@ -720,6 +697,9 @@ namespace Valuable
 
   void Node::eventAddSource(Valuable::Node * source)
   {
+    if (isBeingDestroyed())
+      return;
+
     ++m_eventSources[source];
   }
 
@@ -1032,6 +1012,53 @@ namespace Valuable
     }
 
     return from;
+  }
+
+  void Node::internalRemoveListeners()
+  {
+    while(!m_eventSources.empty()) {
+      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
+      m_eventSources.begin()->first->eventRemoveListener(this);
+    }
+
+    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
+
+      if(it->m_listener)
+        it->m_listener->eventRemoveSource(this);
+
+    }
+
+    foreach(Attribute* vo, m_attributeListening) {
+      for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
+        if(it->listener == this) {
+          it = vo->m_listeners.erase(it);
+        } else ++it;
+      }
+    }
+
+    {
+      Radiant::Guard g(s_queueMutex);
+      for(auto it = s_queue.begin(); it != s_queue.end(); ++it) {
+        auto & item = *it;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
+        if(item->sender == this)
+          item->sender = nullptr;
+      }
+      for(auto it = s_queueTmp.begin(); it != s_queueTmp.end(); ++it) {
+        auto & item = *it;
+        if(item->target == this) {
+          item->target = nullptr;
+          item->func = ListenerFuncVoid();
+          item->func2 = ListenerFuncBd();
+        }
+        if(item->sender == this)
+          item->sender = nullptr;
+      }
+    }
   }
 
 }

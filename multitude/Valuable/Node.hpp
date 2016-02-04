@@ -524,12 +524,14 @@ namespace Valuable
     }
 
   protected:
-    /// Sets 'isBeginDestroyed' flag to true. This is set at least in
-    /// Widget::preDestroy and Operator::~Operator.
+    /// Sets 'isBeginDestroyed' flag to true and removes all event listeners
+    /// to this object. This is set at least in Widget::preDestroy and
+    /// Operator::~Operator.
     void setBeingDestroyed();
     /// Returns true if we are about to delete this object. This flag needs to
     /// be set manually using setBeginDestroyed, not all classes inheriting
-    /// from this might set it.
+    /// from this might set it. If Node is being destroyed, it won't receive
+    /// any events. You also can't set any new event listeners to it.
     bool isBeingDestroyed() const { return m_isBeingDestroyed; }
 
     /// Get the sender of the event, only valid in DIRECT events
@@ -552,6 +554,9 @@ namespace Valuable
     /// Check that the given event is registered. Also convert deprecated
     /// events to new ids and issue warnings.
     QByteArray validateEvent(const QByteArray & from);
+
+    /// Renamed 'internal' so that it won't be confused with Attribute::removeListeners
+    void internalRemoveListeners();
 
   private:
 
