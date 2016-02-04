@@ -3,6 +3,8 @@
 #include "XmlTestReporter.h"
 #include "TestReporterStdout.h"
 
+#include <Radiant/Trace.hpp>
+
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QProcess>
@@ -83,7 +85,7 @@ namespace UnitTest
     }
 
     int runOneTest(int index, int count, const UnitTest::Test* const test, QString xmlOutput,
-                   const char *procName)
+                   const char *procName, bool verbose)
     {
       QProcess process;
       process.setProcessChannelMode(QProcess::ForwardedChannels);
@@ -91,6 +93,10 @@ namespace UnitTest
       QString singleArg = test->m_details.suiteName;
       singleArg += "/";
       singleArg += test->m_details.testName;
+
+      if(verbose)
+        newArgs << "-v";
+
       newArgs << "--single" << singleArg << xmlOutput;
       if (QFile::exists(xmlOutput))
         QFile::remove(xmlOutput);
@@ -178,7 +184,7 @@ namespace UnitTest
       }
     }
 
-    int runTests(QString match, QString xmlOutput, const char *procName)
+    int runTests(QString match, QString xmlOutput, const char *procName, bool verbose)
     {
       std::vector<const UnitTest::Test*> toRun = filteredTests(match);
       int count = toRun.size();
@@ -193,7 +199,7 @@ namespace UnitTest
         ++index;
         // run the test in a subprocess. Creating a MultiWidgets::Application after one
         // has been destroyed does not work properly.
-        int procExitCode = runOneTest(index, count, test, xmlOutput, procName);
+        int procExitCode = runOneTest(index, count, test, xmlOutput, procName, verbose);
 
         exitCode = std::max(exitCode, procExitCode);
         exitCode = std::max(exitCode, mergeXml(dom, xmlOutput));
@@ -280,7 +286,10 @@ namespace UnitTest
     QCommandLineOption matchOption("match",
                                    "Run only the tests that match the given regex.",
                                    "REGEX");
-    parser.addOptions({singleOption, listOption, matchOption});
+
+    QCommandLineOption v("v", "Verbose mode. Otherwise suppresses the printing");
+
+    parser.addOptions({singleOption, listOption, matchOption, v});
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -297,6 +306,10 @@ namespace UnitTest
     if (parser.isSet("list")) {
       return listTests();
     }
+
+    bool verbose = parser.isSet("v");
+    if(!verbose)
+      Radiant::setMinimumSeverityLevel(Radiant::SILENT);
 
     QString single = parser.value("single");
     if(!single.isEmpty()) {
@@ -315,7 +328,7 @@ namespace UnitTest
       }
       return runSingleTest(name, suite, xmlOutput);
     } else {
-      runTests(parser.value("match"), xmlOutput, argv[0]);
+      runTests(parser.value("match"), xmlOutput, argv[0], verbose);
     }
     return 0;
   }
