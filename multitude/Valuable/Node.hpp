@@ -225,9 +225,10 @@ namespace Valuable
     const container & attributes() const { return m_attributes; }
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a listener will get the messages with id @a messageId whenever this object
-        has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a listener will get the messages with id @a messageId whenever this
+        object has events with @a eventId. This function can fail if the Node is being
+        destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param messageId the event id to use when delivering the event to listener.
@@ -238,7 +239,8 @@ namespace Valuable
         @param defaultData the default binary data to be used when delivering
                            the message, used only if @ref eventSend doesn't
                            include BinaryData
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     template <typename Widget>
     long eventAddListener(const QByteArray &eventId,
@@ -252,9 +254,10 @@ namespace Valuable
 
     /// @todo the raw pointers in these should be fixed!
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a listener will get the messages with id @a messageId whenever this object
-        has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a listener will get the messages with id @a messageId whenever this
+        object has events with @a eventId. This function can fail if the Node is being
+        destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param messageId the event id to use when delivering the event to listener.
@@ -265,7 +268,8 @@ namespace Valuable
         @param defaultData the default binary data to be used when delivering
                            the message, used only if @ref eventSend doesn't
                            include BinaryData
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
@@ -274,13 +278,16 @@ namespace Valuable
                           const Radiant::BinaryData * defaultData = 0);
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a func will be called whenever this object has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a func will be called whenever this object has events with @a eventId.
+        This function can fail if the Node is being destroyed while calling this
+        function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param func the listener callback
         @param listenerType defines when to call the callback
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
@@ -289,13 +296,15 @@ namespace Valuable
     long eventAddListenerBd(const QByteArray & eventId, Node * dstNode, ListenerFuncBd func, ListenerType listenerType = DIRECT);
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a func will be called whenever this object has events with @a eventId.
+        This function is part of the event passing framework. After calling this, @a
+        func will be called whenever this object has events with @a eventId. This
+        function can fail if the Node is being destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param func the listener callback that will get event BinaryData as a parameter
         @param listenerType defines when to call the callback
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListenerBd(const QByteArray & eventId, ListenerFuncBd func,
                             ListenerType listenerType = DIRECT);

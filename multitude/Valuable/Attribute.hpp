@@ -285,21 +285,32 @@ namespace Valuable
     /** Sets the host pointer to zero and removes this object from the host. */
     void removeHost();
 
-    /// Adds a listener that is invoked whenever the value is changed
+    /// Adds a listener that is invoked whenever the value is changed. Returns
+    /// an id that can be used to remove the listener later.
     /// @param func listener function
     /// @param role when should the listener function be called
-    /// @returns listener id that can be used to remove the listener with removeListener
+    /// @return listener id
+    /// @sa removeListener
     long addListener(ListenerFunc func, int role = CHANGE_ROLE);
-    /// Adds a listener that is invoked whenever the value is changed
-    /// The listener is removed when the listener object is deleted
-    /// @returns listener id that can be used to remove the listener with removeListener
+
+    /// Adds a listener that is invoked whenever the value is changed. Returns
+    /// an id that can be used to remove the listener later.  The listener is
+    /// removed when the listener object is deleted. This function can fail and
+    /// return -1 if the target listener is being destroyed when this function
+    /// is called.
+    /// @param listener listener that owns the callback
+    /// @param func listener function
+    /// @param role when should the listener function be called
+    /// @return listener id or -1 on failure
+    /// @sa removeListener
     long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
 
 #ifdef CORNERSTONE_JS
     /// Adds a JavaScript listener that is invoked whenever the value is changed
     /// @param func listener function
     /// @param role when should the listener function be called
-    /// @returns listener id that can be used to remove the listener with removeListener
+    /// @return listener id that can be used to remove the listener with removeListener
+    /// @sa removeListener
     long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
 #endif
 
