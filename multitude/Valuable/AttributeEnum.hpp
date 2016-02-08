@@ -97,9 +97,9 @@ namespace Valuable
    */
   template <typename T>
   class AttributeT<T, typename std::enable_if<std::is_enum<T>::value>::type>
-      : public AttributeNumericT<T>, public AttributeEnum
+      : public AttributeBaseT<T>, public AttributeEnum
   {
-    typedef AttributeNumericT<T> Base;
+    typedef AttributeBaseT<T> Base;
 
   public:
     using Base::operator =;

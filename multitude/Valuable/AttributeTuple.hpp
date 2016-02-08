@@ -170,13 +170,13 @@ namespace Valuable
   }
 
   template <typename T, typename A>
-  void AttributeTuple<T,A>::setWrapped(T &v, int index, AttributeTuple<T,A>::ElementType elem) const
+  void AttributeTuple<T,A>::setWrapped(T &v, int index, typename AttributeTuple<T,A>::ElementType elem) const
   {
     static_cast<const A*>(this)->priv_setWrapped(v, index, elem);
   }
 
   template <typename T, typename A>
-  void AttributeTuple<T,A>::priv_setWrapped(T &v, int index, AttributeTuple<T,A>::ElementType elem) const
+  void AttributeTuple<T,A>::priv_setWrapped(T &v, int index, typename AttributeTuple<T,A>::ElementType elem) const
   {
     (void) v; (void) index; (void) elem;
     /// This needs to be overloaded in every class
