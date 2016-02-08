@@ -225,7 +225,5 @@ win32 {
 
 QT += core-private
 CONFIG += no_private_qt_headers_warning
-# FIXME: Remove this. Currently a hack to make QKeyEvent::createExtendedKeyEvent() available in Qt 5.5
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
 
 include(../library.pri)

@@ -26,9 +26,9 @@ namespace Radiant
   };
 
   KeyEvent::KeyEvent(const QKeyEvent & e)
-    : m_d(new D(QKeyEvent::createExtendedKeyEvent(e.type(), e.key(), e.modifiers(), e.nativeScanCode(),
-                                                  e.nativeVirtualKey(), e.nativeModifiers(), e.text(),
-                                                  e.isAutoRepeat(), e.count())))
+    : m_d(new D(new QKeyEvent(e.type(), e.key(), e.modifiers(), e.nativeScanCode(),
+                              e.nativeVirtualKey(), e.nativeModifiers(), e.text(),
+                              e.isAutoRepeat(), e.count())))
   {
   }
 
