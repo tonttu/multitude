@@ -1,19 +1,29 @@
 TEMPLATE = subdirs
 include(multitude.pri)
-CONFIG += ordered
 
 SUBDIRS += ThirdParty
 SUBDIRS += Patterns
 SUBDIRS += Nimble
+
 SUBDIRS += Radiant
+Radiant.depends = Nimble
+
 SUBDIRS += Valuable
+Valuable.depends = Radiant Nimble
+
 SUBDIRS += Squish
 SUBDIRS += Luminous
+Luminous.depends = ThirdParty Valuable
+
 SUBDIRS += Resonant
+Resonant.depends = Radiant Nimble Valuable
+
 SUBDIRS += VideoDisplay
+VideoDisplay.depends = Resonant Luminous
 
 enable-extras {
   SUBDIRS += Applications
+  Applications.depends = Radiant Nimble Luminous
 }
 
 # Install some build files to the source package
