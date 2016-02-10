@@ -9,7 +9,7 @@ namespace Luminous
   {
     size_t depth = rc.currentClipMaskDepth();
 
-    rc.pushClipMaskDepth();
+    rc.pushClipMaskStack(depth + 1);
 
     // Assuming 8-bit stencil and no other stencil operations
     assert(depth < 256);
@@ -39,7 +39,7 @@ namespace Luminous
   {
     if(m_rc) {
 
-      m_rc->popClipMaskDepth();
+      m_rc->popClipMaskStack();
 
       size_t depth = m_rc->currentClipMaskDepth();
 
