@@ -64,6 +64,14 @@ namespace Radiant {
     /// @return true if paused; otherwise false
     bool paused() const { return m_paused; }
 
+    /// Add a listener that is called just before the watchdog is shutting down the process
+    /// @returns listener id
+    long addListener(std::function<void()> callback);
+
+    /// Remove listener
+    /// @param id listener id
+    void removeListener(long id);
+
     /// Is the watchdog disabled by the user
     /// @return true if watchdog is enabled
     /// @sa setEnabled
@@ -94,6 +102,9 @@ namespace Radiant {
     volatile bool m_continue;
     volatile float m_intervalSeconds;
     volatile bool m_paused;
+
+    std::map<long, std::function<void()>> m_listeners;
+    long m_nextListenerId = 0;
   };
 
 }
