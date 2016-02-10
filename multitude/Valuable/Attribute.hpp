@@ -14,6 +14,7 @@
 #include "Export.hpp"
 #include "Archive.hpp"
 #include "DOMElement.hpp"
+#include "TransitionAnim.hpp"
 #include "TransitionManager.hpp"
 
 #include <Nimble/Vector4.hpp>
@@ -395,6 +396,12 @@ namespace Valuable
     /// Invokes the change valueChanged function of all listeners
     virtual void emitChange();
 
+    /// Invoked when animated value is set. Can dynamically be adjusted by setting
+    /// callback using "onAnimatedValueSet". Meant to use with attributes that are
+    /// created by composition from multiple attributes
+    void animatedValueSet(float dt);
+    void onAnimatedValueSet(const std::function<void(Attribute*, float)> &f);
+
   protected:
 
     /// Invokes the change valueDeleted function of all listeners
@@ -406,6 +413,7 @@ namespace Valuable
     Attribute * m_ownerShorthand;
     QByteArray m_name;
     bool m_transit;
+    std::function<void(Attribute*,float)> m_onAnimation;
 
     struct AttributeListener
     {
@@ -476,7 +484,7 @@ namespace Valuable
 
     virtual ~AttributeBaseT() {
       if (m_transition)
-        TransitionManagerT<T>::remove(m_transition);
+        m_transition->remove();
     }
 
     /// Access the wrapped object with the dereference operator
@@ -499,6 +507,7 @@ namespace Valuable
 
     /// @returns the active layer that has the highest priority
     Layer currentLayer() const { return m_currentLayer; }
+
 
     /// Sets a new value for a specific layer. If currentLayer() is more important
     /// than the layer given as a parameter, the active value of the attribute
@@ -586,24 +595,18 @@ namespace Valuable
 
     virtual void setTransitionAnim(float durationSeconds, float delaySeconds) FINAL
     {
-      if (durationSeconds <= 0.0f) {
-        if (m_transition) {
-          TransitionManagerT<T>::remove(m_transition);
-          m_transition = nullptr;
-        }
-      } else {
-        if (!m_transition)
-          m_transition = TransitionManagerT<T>::create(this);
-        m_transition->setDuration(durationSeconds);
-        m_transition->setDelay(delaySeconds);
+      m_transitionCurve.duration = durationSeconds;
+      m_transitionCurve.delay = delaySeconds;
+      if(m_transition) {
+        m_transition->setParameters(m_transitionCurve);
       }
     }
 
-    void setAnimatedValue(T t)
+    void setAnimatedValue(T t, float dt)
     {
       if (m_currentValue != t) {
         m_currentValue = t;
-        Attribute::emitChange();
+        Attribute::animatedValueSet(dt);
       }
     }
 
@@ -613,11 +616,31 @@ namespace Valuable
       setValue(val, to);
     }
 
+    inline void updateTransitionPointer(TransitionAnim* ptr)
+    {
+      m_transition = ptr;
+    }
+
+    bool hasActiveAnimation(float dt) const
+    {
+      if(!m_transition)
+        return false;
+      auto *tData = m_transition->typeData();
+      if(!tData)
+        return false;
+      return m_transition->normalizedPos() + dt >= 0.f && !tData->deleted;
+    }
+
   protected:
     virtual void emitChange() FINAL
     {
-      if (m_transition) {
-        m_transition->setTarget(m_values[m_currentLayer]);
+      if(m_transitionCurve.isValid()) {
+
+        if(!m_transition) {
+          m_transition = TransitionManagerT<T>::create(this, m_transitionCurve);
+        }
+        TransitionManagerT<T>::setTarget(m_transition, m_values[m_currentLayer]);
+
       } else {
         m_currentValue = m_values[m_currentLayer];
         Attribute::emitChange();
@@ -625,8 +648,8 @@ namespace Valuable
     }
 
   private:
-    friend class TransitionAnimT<T>;
-    TransitionAnimT<T> * m_transition;
+    TransitionAnim* m_transition;
+    TransitionCurve m_transitionCurve;
     T m_currentValue;
     Layer m_currentLayer;
     T m_values[LAYER_COUNT];

@@ -222,6 +222,19 @@ namespace Valuable
                      Radiant::StringUtils::demangle(typeid(*this).name()).data(), name().data());
   }
 
+  void Attribute::onAnimatedValueSet(const std::function<void(Attribute *, float)>& f)
+  {
+    m_onAnimation = f;
+  }
+
+  void Attribute::animatedValueSet(float dt)
+  {
+    if(!m_onAnimation)
+      Valuable::Attribute::emitChange();
+    else
+      m_onAnimation(this, dt);
+  }
+
   void Attribute::emitChange()
   {
     // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
