@@ -31,6 +31,7 @@ namespace Luminous
 
     RenderContext* m_rc;
     Nimble::Rect m_rect;
+    Luminous::StencilMode m_originalStencilMode;
   };
 
 }

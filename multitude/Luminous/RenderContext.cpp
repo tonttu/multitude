@@ -251,6 +251,7 @@ namespace Luminous
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
+    Luminous::StencilMode m_stencilMode;
 
     struct BufferPool
     {
@@ -1711,7 +1712,13 @@ namespace Luminous
 
   void RenderContext::setStencilMode(const StencilMode & mode)
   {
+    m_data->m_stencilMode = mode;
     m_data->m_driverGL->setStencilMode(mode);
+  }
+
+  StencilMode RenderContext::stencilMode() const
+  {
+    return m_data->m_stencilMode;
   }
 
   void RenderContext::setCullMode(const CullMode& mode)

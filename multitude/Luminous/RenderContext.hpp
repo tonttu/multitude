@@ -531,6 +531,8 @@ namespace Luminous
     /// @param mode Stencil mode to use
     void setStencilMode(const StencilMode & mode);
 
+    StencilMode stencilMode() const;
+
     /// Set the active cull mode
     /// @param mode Cull mode to use
     void setCullMode(const CullMode & mode);
