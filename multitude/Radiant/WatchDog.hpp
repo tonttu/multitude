@@ -17,6 +17,7 @@
 #include <Radiant/Thread.hpp>
 
 #include <map>
+#include <functional>
 
 namespace Radiant {
 
