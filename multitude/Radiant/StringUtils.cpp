@@ -64,7 +64,7 @@ namespace Radiant
       FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 0,
         GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), szErrStr, errStrSize, 0);
 
-      return QString::fromAscii(szErrStr);
+      return szErrStr;
     }
 #endif
 
