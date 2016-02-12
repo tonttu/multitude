@@ -139,7 +139,11 @@ namespace Valuable
 
       LAYER_COUNT,
 
-      LAYER_CURRENT
+      CURRENT_LAYER,     ///< This layer corresponds to the layer that has the
+                         ///  highest priority among the layers having value set
+      CURRENT_VALUE      ///< This pseudo-layer should used only for reading. It is
+                         ///  different from the value in current layer only in the
+                         ///  case where value is currently under the transition.
     };
 
     /// Units of a value
@@ -246,15 +250,15 @@ namespace Valuable
     /// Converts the value object in a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a float, the default implementation returns 0.0f
-    virtual float       asFloat(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual float       asFloat(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
     /// Converts the value object in an integer
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a int, the default implementation returns zero
-    virtual int         asInt(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual int         asInt(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
     /// Converts the value object to a string
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a string, the default implementation returns an empty string
-    virtual QString asString(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual QString asString(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
 
     /// Sets the value of the object
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);
@@ -500,7 +504,10 @@ namespace Valuable
 
     /// @param layer layer to use
     /// @returns attribute value on given layer
-    inline const T & value(Layer layer) const { return m_values[layer == LAYER_CURRENT ? currentLayer() : layer]; }
+    inline const T & value(Layer layer) const {
+      if(layer == CURRENT_VALUE) return value();
+      return m_values[layer == CURRENT_LAYER ? currentLayer() : layer];
+    }
 
     /// @returns attribute active value
     inline const T & value() const { return m_currentValue; }
@@ -517,7 +524,7 @@ namespace Valuable
     /// @param layer value will be set to this layer
     inline void setValue(const T & t, Layer layer = USER)
     {
-      layer = layer == LAYER_CURRENT ? currentLayer() : layer;
+      layer = layer == CURRENT_LAYER ? currentLayer() : layer;
       bool top = layer >= m_currentLayer;
       bool sendSignal = top && value() != t;
       if(top) m_currentLayer = layer;

@@ -319,7 +319,7 @@ namespace Valuable {
     /// be confusing in some situations.
     Flags value(Layer layer) const
     {
-      return layer == LAYER_CURRENT ? value() : value(layer, layer);
+      return layer >= CURRENT_LAYER ? value() : value(layer, layer);
     }
 
     /// Collects bits between layers topLayer to bottomLayer (inclusive) to bitmask

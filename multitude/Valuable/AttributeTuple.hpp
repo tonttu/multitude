@@ -72,7 +72,7 @@ namespace Valuable
     Layer currentLayer() const;
 
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE;
-    virtual QString asString(bool * const ok=nullptr, Layer layer=LAYER_CURRENT) const OVERRIDE;
+    virtual QString asString(bool * const ok=nullptr, Layer layer=CURRENT_VALUE) const OVERRIDE;
 
     virtual bool deserialize(const ArchiveElement &element) OVERRIDE;
 
