@@ -127,6 +127,14 @@ linux-*{
     else:checkCompiler(gcc-4.8): QMAKE_CC=gcc-4.8
   }
   !checkCompiler($$QMAKE_LINK): QMAKE_LINK=$$QMAKE_CXX
+
+  *clang* | *g++* {
+
+    # Include debug symbols in release builds on Linux so we can use them with
+    # breakpad during the build. The executables will get stripped by debian
+    # package tools before packaging.
+    QMAKE_CXXFLAGS_RELEASE += -g
+  }
 }
 
 contains(MEMCHECK,yes) {
@@ -283,7 +291,3 @@ disable-deprecation-warnings {
 }
 
 *g++*:QMAKE_LFLAGS += -Wl,--exclude-libs,ALL
-
-*clang* | *g++* {
-  QMAKE_CXXFLAGS_RELEASE += -g
-}
