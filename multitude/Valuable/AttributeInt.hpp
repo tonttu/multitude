@@ -120,6 +120,13 @@ namespace Valuable
       if(ok)
         *this = v;
     }
+
+    static inline T interpolate(T a, T b, float m)
+    {
+      float tmp = a*(1.f - m) + b*m;
+      if(tmp > 0.f) return (T)(tmp + 0.5f);
+      else return (T)(tmp - 0.5f);
+    }
   };
 
   /// 32-bit integer value object.

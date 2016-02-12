@@ -22,7 +22,6 @@ namespace Valuable
 
   /// Dispatcher between the default trivial interpolation and custom
   /// interpolator implementation (AttributeT<T>::interpolate)
-  /// @todo make sure we don't use this version with ints
   template <typename T, bool = hasCustomInterpolator<T>::value>
   struct TransitionInterpolator
   {
