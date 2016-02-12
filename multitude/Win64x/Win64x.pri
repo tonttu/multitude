@@ -5,6 +5,7 @@ CORNERSTONE_DEPS_PATH=C:/Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
 # Install Windows 3rd party dlls to bin
 win64_runtime_dlls.path = /bin
 win64_runtime_dlls.files = $$PWD/bin64/*
+win64_runtime_dlls.files += $$CORNERSTONE_DEPS_PATH/ssl/*dll
 
 # Install libraries under 'src'
 win64_sdk_libs1.path = /src/multitude/Win64x/lib64
