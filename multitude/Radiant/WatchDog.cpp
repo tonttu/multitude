@@ -102,50 +102,19 @@ namespace Radiant {
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
               "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
               "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
-              "export NO_WATCHDOG=1;\n", (float) m_intervalSeconds);
+              "export NO_WATCHDOG=1\n", (float) m_intervalSeconds);
 
-#ifdef RADIANT_LINUX
-        struct rlimit limit;
-        getrlimit(RLIMIT_CORE, &limit);
-
-        if(limit.rlim_max > 0) {
-          // Set the maximum core size limit
-          limit.rlim_cur = limit.rlim_max;
-          setrlimit(RLIMIT_CORE, &limit);
-
-          FILE * pattern = fopen("/proc/sys/kernel/core_pattern", "r");
-          char buffer[5] = {0};
-          char * foo1 = fgets(buffer, sizeof(buffer), pattern);
-          (void) foo1;
-          fclose(pattern);
-
-          // If there isn't any fancy core naming rule,
-          // put the core in /tmp/core-timestamp directory
-          if(strcmp(buffer, "core") == 0) {
-            DateTime dt(TimeStamp::currentTime());
-            char filename[255];
-            sprintf(filename, "/tmp/core-%d.%04d-%02d-%02d", getpid(), dt.year(), dt.month()+1, dt.monthDay()+1);
-            mkdir(filename, 0700);
-            int foo = chdir(filename);
-            (void) foo; // Silence the GCC warning
-            info("Changing working directory to %s", filename);
-          }
+        std::map<long, std::function<void()>> listeners;
+        {
+          Radiant::Guard g(m_mutex);
+          listeners = m_listeners;
         }
-#endif
+        for (auto & p: listeners) {
+          p.second();
+        }
 
-        // Stop the app:
+        // Stop the app
         abort();
-
-        _exit(1);
-
-        // Stop it again:
-        Sleep::sleepS(1);
-        Sleep::sleepS(1);
-        int * bad = 0;
-        *bad = 123456;
-
-        // And again:
-        exit(0);
       }
 
       debugRadiant("WATCHDOG CHECK");
@@ -161,6 +130,20 @@ namespace Radiant {
     m_continue = false;
     while(isRunning())
       waitEnd(100);
+  }
+
+  long WatchDog::addListener(std::function<void ()> callback)
+  {
+    Radiant::Guard g(m_mutex);
+    long id = m_nextListenerId++;
+    m_listeners[id] = std::move(callback);
+    return id;
+  }
+
+  void WatchDog::removeListener(long id)
+  {
+    Radiant::Guard g(m_mutex);
+    m_listeners.erase(id);
   }
 
   bool WatchDog::isEnabled()
