@@ -10,13 +10,13 @@ SOURCES += SubTitles.cpp
 HEADERS += AudioTransfer.hpp AVDecoder.hpp Utils.hpp
 SOURCES += AudioTransfer.cpp AVDecoder.cpp
 
-TEST=$$(USE_FFMPEG)
+TEST=$$(USE_LIBAV)
 isEmpty(TEST) {
-  HEADERS += LibavDecoder.hpp
-  SOURCES += LibavDecoder.cpp
-} else {
   HEADERS += FfmpegDecoder.hpp
   SOURCES += FfmpegDecoder.cpp
+} else {
+  HEADERS += LibavDecoder.hpp
+  SOURCES += LibavDecoder.cpp
 }
 
 LIBS += $$MULTI_FFMPEG_LIBS
