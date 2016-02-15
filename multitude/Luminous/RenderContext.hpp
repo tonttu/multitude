@@ -220,13 +220,13 @@ namespace Luminous
     size_t recursionLimit() const;
 
     /// Increment the current clip mask recursion depth
-    void pushClipMaskDepth();
+    void pushClipMaskStack(size_t depth);
     /// Get current clip mask recursion depth
     /// @return Current clip mask recursion depth
     size_t currentClipMaskDepth() const;
 
     /// Decrement the current clip mask recursion depth
-    void popClipMaskDepth();
+    void popClipMaskStack();
 
     /// Save the current clipping stack and start with a empty one
     void pushClipStack();
@@ -321,7 +321,6 @@ namespace Luminous
 
     /// Pushes new frame buffer to the stack.
     /// @param target frame buffer for rendering commands.
-    /// @return Guard which pops this frame buffer automatically on its destruction.
     void pushFrameBuffer(const FrameBuffer & target);
     /// Pops the current frame buffer from the stack.
     void popFrameBuffer();
@@ -536,6 +535,8 @@ namespace Luminous
     /// Set the active stencil mode
     /// @param mode Stencil mode to use
     void setStencilMode(const StencilMode & mode);
+
+    StencilMode stencilMode() const;
 
     /// Set the active cull mode
     /// @param mode Cull mode to use

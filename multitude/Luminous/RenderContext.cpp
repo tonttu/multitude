@@ -47,7 +47,6 @@ namespace Luminous
     enum { MAX_TEXTURES = 64, BUFFERSETS = 1 };
     Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win, unsigned gpuId)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
-        , m_recursionDepth(0)
         , m_renderCount(0)
         , m_unfinishedRenderCount(0)
         , m_frameCount(0)
@@ -175,7 +174,7 @@ namespace Luminous
     }
 
     size_t m_recursionLimit;
-    size_t m_recursionDepth;
+    std::stack<size_t, std::vector<size_t> > m_recursionDepthStack;
 
     std::stack<Nimble::ClipStack> m_clipStacks;
  
@@ -255,6 +254,7 @@ namespace Luminous
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
+    Luminous::StencilMode m_stencilMode;
 
     struct BufferPool
     {
@@ -320,7 +320,6 @@ namespace Luminous
       m_data(new Internal(driver, win, gpuId))
   {
     resetTransform();
-    m_data->m_recursionDepth = 0;
   }
 
   RenderContext::~RenderContext()
@@ -389,19 +388,20 @@ namespace Luminous
     return m_data->m_recursionLimit;
   }
 
-  void RenderContext::pushClipMaskDepth()
+  void RenderContext::pushClipMaskStack(size_t depth)
   {
-    ++m_data->m_recursionDepth;
+    m_data->m_recursionDepthStack.push(depth);
   }
 
   size_t RenderContext::currentClipMaskDepth() const
   {
-    return m_data->m_recursionDepth;
+    assert(!m_data->m_recursionDepthStack.empty());
+    return m_data->m_recursionDepthStack.top();
   }
 
-  void RenderContext::popClipMaskDepth()
+  void RenderContext::popClipMaskStack()
   {
-    --m_data->m_recursionDepth;
+    m_data->m_recursionDepthStack.pop();
   }
 
   /// Save the current clipping stack and start with a empty one
@@ -1371,6 +1371,9 @@ namespace Luminous
     // Push viewport
     pushViewport(viewport);
 
+    // Push and reset the clip mask
+    pushClipMaskStack(0);
+
     // Reset the render call count for this target
     m_data->m_renderCalls.push(0);
   }
@@ -1389,6 +1392,8 @@ namespace Luminous
 
     assert(!m_data->m_frameBufferStack.empty());
     m_data->m_frameBufferStack.pop();
+
+    popClipMaskStack();
 
     m_data->m_renderCalls.pop();
     m_data->m_driverGL->popFrameBuffer();
@@ -1720,7 +1725,13 @@ namespace Luminous
 
   void RenderContext::setStencilMode(const StencilMode & mode)
   {
+    m_data->m_stencilMode = mode;
     m_data->m_driverGL->setStencilMode(mode);
+  }
+
+  StencilMode RenderContext::stencilMode() const
+  {
+    return m_data->m_stencilMode;
   }
 
   void RenderContext::setCullMode(const CullMode& mode)

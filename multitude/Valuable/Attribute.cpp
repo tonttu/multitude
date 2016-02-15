@@ -283,6 +283,10 @@ namespace Valuable
 
   long Attribute::addListener(Node * listener, ListenerFunc func, int role)
   {
+    if (listener && listener->isBeingDestroyed()) {
+      return -1;
+    }
+
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role, listener);
     if(listener) listener->m_attributeListening << this;

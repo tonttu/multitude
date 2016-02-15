@@ -6,10 +6,11 @@ namespace Luminous
   MaskGuard::MaskGuard(RenderContext &rc, const Nimble::Rect & rect)
     : m_rc(&rc)
     , m_rect(rect)
+    , m_originalStencilMode(rc.stencilMode())
   {
     size_t depth = rc.currentClipMaskDepth();
 
-    rc.pushClipMaskDepth();
+    rc.pushClipMaskStack(depth + 1);
 
     // Assuming 8-bit stencil and no other stencil operations
     assert(depth < 256);
@@ -29,7 +30,7 @@ namespace Luminous
     // Setup stencil mode to render content using the mask
     rc.setRenderBuffers(true, true, true);
 
-    mode.setFunction(FRONT_AND_BACK, StencilMode::Less, depth, 0xff);
+    mode.setFunction(FRONT_AND_BACK, StencilMode::Equal, depth+1, 0xff);
     mode.setOperation(FRONT_AND_BACK, StencilMode::Keep, StencilMode::Keep, StencilMode::Keep);
 
     rc.setStencilMode(mode);
@@ -39,7 +40,7 @@ namespace Luminous
   {
     if(m_rc) {
 
-      m_rc->popClipMaskDepth();
+      m_rc->popClipMaskStack();
 
       size_t depth = m_rc->currentClipMaskDepth();
 
@@ -58,14 +59,7 @@ namespace Luminous
       m_rc->setRenderBuffers(true, true, true);
 
       // Restore stencil mode
-      if(depth > 0) {
-        mode.setFunction(FRONT_AND_BACK, StencilMode::LessEqual, depth, 0xff);
-        mode.setOperation(FRONT_AND_BACK, StencilMode::Keep, StencilMode::Keep, StencilMode::Keep);
-
-        m_rc->setStencilMode(mode);
-      } else {
-        m_rc->setStencilMode(StencilMode::Default());
-      }
+      m_rc->setStencilMode(m_originalStencilMode);
     }
   }
 
@@ -80,6 +74,7 @@ namespace Luminous
   {
     m_rc = g.m_rc;
     m_rect = g.m_rect;
+    m_originalStencilMode = g.m_originalStencilMode;
 
     g.m_rc = nullptr;
   }

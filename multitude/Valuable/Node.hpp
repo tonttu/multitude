@@ -232,9 +232,10 @@ namespace Valuable
     const container & attributes() const { return m_attributes; }
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a listener will get the messages with id @a messageId whenever this object
-        has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a listener will get the messages with id @a messageId whenever this
+        object has events with @a eventId. This function can fail if the Node is being
+        destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param messageId the event id to use when delivering the event to listener.
@@ -245,7 +246,8 @@ namespace Valuable
         @param defaultData the default binary data to be used when delivering
                            the message, used only if @ref eventSend doesn't
                            include BinaryData
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     template <typename Widget>
     long eventAddListener(const QByteArray &eventId,
@@ -259,9 +261,10 @@ namespace Valuable
 
     /// @todo the raw pointers in these should be fixed!
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a listener will get the messages with id @a messageId whenever this object
-        has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a listener will get the messages with id @a messageId whenever this
+        object has events with @a eventId. This function can fail if the Node is being
+        destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param messageId the event id to use when delivering the event to listener.
@@ -272,7 +275,8 @@ namespace Valuable
         @param defaultData the default binary data to be used when delivering
                            the message, used only if @ref eventSend doesn't
                            include BinaryData
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListener(const QByteArray & eventId,
                           const QByteArray & messageId,
@@ -281,13 +285,16 @@ namespace Valuable
                           const Radiant::BinaryData * defaultData = 0);
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a func will be called whenever this object has events with @a eventId.
+        This function is part of the event passing framework. After calling
+        this, @a func will be called whenever this object has events with @a eventId.
+        This function can fail if the Node is being destroyed while calling this
+        function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param func the listener callback
         @param listenerType defines when to call the callback
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListener(const QByteArray & eventId, ListenerFuncVoid func,
                           ListenerType listenerType = DIRECT);
@@ -296,13 +303,15 @@ namespace Valuable
     long eventAddListenerBd(const QByteArray & eventId, Node * dstNode, ListenerFuncBd func, ListenerType listenerType = DIRECT);
 
     /** Add an event listener to this object.
-        This function is part of the event passing framework. After calling this,
-        @a func will be called whenever this object has events with @a eventId.
+        This function is part of the event passing framework. After calling this, @a
+        func will be called whenever this object has events with @a eventId. This
+        function can fail if the Node is being destroyed while calling this function.
         @param eventId the event id to match when in the @ref eventSend. Corresponds
                        to the first parameter in @ref eventSend
         @param func the listener callback that will get event BinaryData as a parameter
         @param listenerType defines when to call the callback
-        @returns event id, can be used with @ref eventRemoveListener(long)
+        @returns event id or -1 on failure
+        @sa eventRemoveListener
     */
     long eventAddListenerBd(const QByteArray & eventId, ListenerFuncBd func,
                             ListenerType listenerType = DIRECT);
@@ -539,6 +548,15 @@ namespace Valuable
     }
 
   protected:
+    /// Sets 'isBeginDestroyed' flag to true and removes all event listeners
+    /// to this object. This is set at least in Widget::preDestroy and
+    /// Operator::~Operator.
+    void setBeingDestroyed();
+    /// Returns true if we are about to delete this object. This flag needs to
+    /// be set manually using setBeginDestroyed, not all classes inheriting
+    /// from this might set it. If Node is being destroyed, it won't receive
+    /// any events. You also can't set any new event listeners to it.
+    bool isBeingDestroyed() const { return m_isBeingDestroyed; }
 
     /// Get the sender of the event, only valid in DIRECT events
     /// @returns the sender of the event, can be read in eventProcess()
@@ -560,6 +578,9 @@ namespace Valuable
     /// Check that the given event is registered. Also convert deprecated
     /// events to new ids and issue warnings.
     QByteArray validateEvent(const QByteArray & from);
+
+    /// Renamed 'internal' so that it won't be confused with Attribute::removeListeners
+    void internalRemoveListeners();
 
   private:
 
@@ -594,6 +615,7 @@ namespace Valuable
     typedef std::map<Valuable::Node *, int> Sources;
     Sources m_eventSources;
     bool m_eventsEnabled;
+    bool m_isBeingDestroyed = false;
 
     // set of all attributes that this Node is listening to
     QSet<Attribute*> m_attributeListening;

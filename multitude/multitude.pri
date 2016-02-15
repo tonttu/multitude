@@ -178,6 +178,14 @@ linux-*{
   !checkCompiler($$QMAKE_CXX) {
     error("$$QMAKE_CXX is too old, need at least g++ 4.6")
   }
+
+  *clang* | *g++* {
+
+    # Include debug symbols in release builds on Linux so we can use them with
+    # breakpad during the build. The executables will get stripped by debian
+    # package tools before packaging.
+    QMAKE_CXXFLAGS_RELEASE += -g
+  }
 }
 
 contains(MEMCHECK,yes) {
