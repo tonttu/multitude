@@ -257,7 +257,7 @@ win32 {
 
     exists($$CORNERSTONE_DEPS_PATH) {
 
-      isEmpty(FFMPEG) {
+      !isEmpty(LIBAV) {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libav/include
         LIBS += -L$$CORNERSTONE_DEPS_PATH/libav/bin
       } else {
