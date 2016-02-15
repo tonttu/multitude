@@ -42,8 +42,6 @@ INSTALLS += includes src_code extra_inc
 
 # On Windows, put DLLs into /bin with the exes
 win32 {
-  DLLDESTDIR = $$shadowed($$PWD)/bin
-
   # Optimized debug libraries
   CONFIG(debug,debug|release) {
     CONFIG(optimized) {

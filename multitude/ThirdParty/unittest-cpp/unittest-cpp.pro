@@ -69,3 +69,4 @@ win32 {
   SOURCES += UnitTest++/Posix/TimeHelpers.cpp
   SOURCES += UnitTest++/Posix/SignalTranslator.cpp
 }
+DEFINES += UNITTEST_USE_CUSTOM_STREAMS
