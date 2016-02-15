@@ -2,6 +2,8 @@ include(../multitude.pri)
 
 HEADERS += TempFailureRetry.hpp
 HEADERS += ArrayMap.hpp
+HEADERS += ThreadPoolExecutor.hpp
+HEADERS += BGThreadExecutor.hpp
 HEADERS += ObjectPool.hpp
 HEADERS += CommandLineArguments.hpp
 HEADERS += SerialPortHelpers.hpp \
@@ -83,7 +85,9 @@ HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 
-SOURCES += Mime.cpp
+SOURCES += Mime.cpp \
+    ThreadPoolExecutor.cpp \
+    BGThreadExecutor.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \
@@ -155,6 +159,7 @@ linux*:SOURCES += DeviceMonitor.cpp
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FTD2XX
+LIBS += $$LIB_FOLLY_FUTURES
 
 linux-* {
   LIBS += -lX11

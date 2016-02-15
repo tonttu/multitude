@@ -96,7 +96,9 @@ LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lGLU -lGL
 INCLUDEPATH += $$PWD/ThirdParty/qjson/include
 INCLUDEPATH += $$PWD/ThirdParty/unittest-cpp
+INCLUDEPATH += $$PWD/ThirdParty/FollyFutures
 
+LIB_FOLLY_FUTURES = -lFollyFutures$${CORNERSTONE_LIB_SUFFIX}
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}
@@ -270,6 +272,8 @@ win32 {
         LIBS += -L$$CORNERSTONE_DEPS_PATH/node/bin
         QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/node/lib
       }
+
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/boost_1_55_0
     } else {
       # Builds from distributed source code
       CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_VERSION_STR}

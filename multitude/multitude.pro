@@ -6,7 +6,7 @@ SUBDIRS += Patterns
 SUBDIRS += Nimble
 
 SUBDIRS += Radiant
-Radiant.depends = Nimble
+Radiant.depends = Nimble ThirdParty
 
 SUBDIRS += Valuable
 Valuable.depends = Radiant Nimble

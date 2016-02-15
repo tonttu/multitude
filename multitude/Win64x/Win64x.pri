@@ -117,6 +117,12 @@ win64_clang_headers.files = $$CORNERSTONE_DEPS_PATH/libcxx/include/*
 win64_clangxml.path = /bin
 win64_clangxml.files = $$CORNERSTONE_DEPS_PATH/clangxml/ClangXML.exe
 
+win64_boost_headers1.path = /include
+win64_boost_headers1.files = $$CORNERSTONE_DEPS_PATH/boost_1_55_0/boost
+
+win64_boost_headers2.path = /src/multitude/Win64x/include
+win64_boost_headers2.files = $${win64_boost_headers1.files}
+
 !enable-taction {
   win64_curl_dlls1.path = /bin
   win64_curl_dlls1.files = $$CORNERSTONE_DEPS_PATH/curl/dlls/*
@@ -160,6 +166,8 @@ INSTALLS += win64_curl_libs1
 INSTALLS += win64_curl_libs2
 INSTALLS += win64_curl_headers1
 INSTALLS += win64_curl_headers2
+INSTALLS += win64_boost_headers1
+INSTALLS += win64_boost_headers2
 
 # Install Qt
 enable-taction {
