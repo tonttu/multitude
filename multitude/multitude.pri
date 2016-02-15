@@ -58,7 +58,7 @@ CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
 
 enable-taction:DEFINES += MULTITACTION_FIRMWARE
 enable-js:DEFINES += CORNERSTONE_JS=1
-LIBAV=$$(USE_FFMPEG)
+LIBAV=$$(USE_LIBAV)
 !isEmpty(LIBAV) {
   DEFINES += USE_LIBAV
 }
@@ -125,7 +125,7 @@ linux-*{
 
   QMAKE_LIBDIR += $$PWD/Linux/lib
 
-  isEmpty(FFMPEG) {
+  !isEmpty(LIBAV) {
     exists(/opt/multitouch-libav2/include/libavcodec/avcodec.h) {
       MULTI_FFMPEG_LIBS = -L/opt/multitouch-libav2/lib -lavcodec-multitouch2 -lavutil-multitouch2 -lavformat-multitouch2 -lavdevice-multitouch2 -lavfilter-multitouch2 -lswscale-multitouch2
       INCLUDEPATH += /opt/multitouch-libav2/include
