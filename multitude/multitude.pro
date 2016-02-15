@@ -1,19 +1,28 @@
 TEMPLATE = subdirs
 include(multitude.pri)
+include(ThirdParty/ThirdParty.pri)
 
-SUBDIRS += ThirdParty
+SUBDIRS += glwrapper
+
+SUBDIRS += qjson
+
+SUBDIRS += unittests
+unittests.depends += Radiant
+
+SUBDIRS += folly
+
 SUBDIRS += Patterns
 SUBDIRS += Nimble
 
 SUBDIRS += Radiant
-Radiant.depends = Nimble ThirdParty
+Radiant.depends = Nimble folly
 
 SUBDIRS += Valuable
 Valuable.depends = Radiant Nimble
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
-Luminous.depends = ThirdParty Valuable
+Luminous.depends = glwrapper Valuable
 
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
@@ -25,6 +34,8 @@ enable-extras {
   SUBDIRS += Applications
   Applications.depends = Radiant Nimble Luminous
 }
+
+
 
 # Install some build files to the source package
 stuff.path = /src/multitude

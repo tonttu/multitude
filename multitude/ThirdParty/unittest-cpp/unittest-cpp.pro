@@ -59,6 +59,8 @@ SOURCES += UnitTest++/AssertException.cpp \
            UnitTest++/XmlTestReporter.cpp \
            UnitTest++/MultiTactionTestRunner.cpp
 
+LIBS += $$LIB_RADIANT
+
 win32 {
   HEADERS += UnitTest++/Win32/TimeHelpers.h
   SOURCES += UnitTest++/Win32/TimeHelpers.cpp
