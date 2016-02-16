@@ -115,6 +115,13 @@ namespace Valuable
       }
     }
 
+    /// Converts the enum value to integer if integers are allowed
+    virtual int asInt(bool * const ok = nullptr, Attribute::Layer layer = Attribute::CURRENT_VALUE) const OVERRIDE
+    {
+      if(ok) *ok = m_allowIntegers;
+      return static_cast<int> (value(layer));
+    }
+
     virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
