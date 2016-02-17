@@ -222,6 +222,8 @@ macx {
 
   # By default pkg-config support is disabled on OSX, re-enable it here
   QT_CONFIG -= no-pkg-config
+
+  DEFINES += FOLLY_USE_LIBCPP
 }
 
 #
