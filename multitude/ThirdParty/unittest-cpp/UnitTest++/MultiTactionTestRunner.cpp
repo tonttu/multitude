@@ -8,6 +8,7 @@
 #include <QProcess>
 #include <QDomDocument>
 #include <QFile>
+#include <QMap>
 
 #include <fstream>
 #include <functional>
@@ -132,6 +133,51 @@ namespace UnitTest
       return toRun;
     }
 
+    void printTestReport(const QDomDocument & doc)
+    {
+      auto root = doc.documentElement();
+      int failedTests = root.attribute("failedtests").toInt();
+      int tests = root.attribute("tests").toInt();
+      int failures = root.attribute("failures").toInt();
+      float time = root.attribute("time").toFloat();
+
+      int secs = time;
+      int mins = secs / 60;
+      secs = secs % 60;
+      printf("Ran %d test in %d min %d s\n", tests, mins, secs);
+      if (failedTests == 0 && failures == 0) {
+        printf("No errors\n");
+      } else {
+        printf("FAILED - %d failed tests, %d errors\n", failedTests, failures);
+        auto testElements = root.elementsByTagName("test");
+        for (int i = 0; i < testElements.size(); ++i) {
+          QDomElement e = testElements.item(i).toElement();
+          auto failureElements = e.elementsByTagName("failure");
+          if (!failureElements.isEmpty()) {
+            printf("\n%s/%s [%.3f s]: %d %s:\n", e.attribute("suite").toUtf8().data(),
+                   e.attribute("name").toUtf8().data(), e.attribute("time").toFloat(),
+                   failureElements.size(), failureElements.size() == 1 ? "error" : "errors");
+            QMap<QString, int> count;
+            QStringList messages;
+            for (int j = 0; j < failureElements.size(); ++j) {
+              auto msg = failureElements.item(j).toElement().attribute("message");
+              if (count[msg]++ == 0) {
+                messages << msg;
+              }
+            }
+            for (auto msg: messages) {
+              int c = count[msg];
+              if (c > 1) {
+                printf("  %s [%d times]\n", msg.toUtf8().data(), c);
+              } else {
+                printf("  %s\n", msg.toUtf8().data());
+              }
+            }
+          }
+        }
+      }
+    }
+
     int runTests(QString match, QString xmlOutput, const char *procName)
     {
       std::vector<const UnitTest::Test*> toRun = filteredTests(match);
@@ -167,6 +213,8 @@ namespace UnitTest
                 match.toUtf8().data());
         return 1;
       }
+
+      printTestReport(dom);
 
       return exitCode;
     }
