@@ -36,6 +36,8 @@ namespace Radiant
     /// Construct a new Timer and @ref start it
     inline Timer();
 
+    // Construct a new Timer with explicit starting time
+    inline Timer(double startTime);
     /// Start the timer
     /// Starts the timer by resetting its clock to the current time offset with fromNowSeconds
     /// @param fromNow offset for the start time, for example -1.0 is 1 second ago
@@ -56,6 +58,12 @@ namespace Radiant
   Timer::Timer()
   {
     start();
+  }
+
+  Timer::Timer(double startTime)
+    : m_startTime(std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(startTime)))
+
+  {
   }
 
   void Timer::start(double fromNowSeconds)
