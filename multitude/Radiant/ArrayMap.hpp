@@ -104,7 +104,7 @@ namespace Radiant
     void insert(const value_type & value);
     void insert(value_type && value);
 
-    void erase(iterator it);
+    iterator erase(iterator it);
     std::size_t erase(const Key & key);
 
     void swap(ArrayMap & other) { m_data.swap(other); }
@@ -199,10 +199,13 @@ namespace Radiant
   }
 
   template <typename Key, typename T, typename Allocator>
-  void ArrayMap<Key, T, Allocator>::erase(iterator it)
+  typename ArrayMap<Key, T, Allocator>::iterator ArrayMap<Key, T, Allocator>::erase(iterator it)
   {
+    //auto idx = it - begin();
     *it = std::move(m_data.back());
     m_data.resize(m_data.size() - 1);
+    return it;
+    //return begin() + idx;
   }
 
   template <typename Key, typename T, typename Allocator>

@@ -119,7 +119,7 @@ namespace Radiant
     template <typename it>
     void insert(it first, it last);
 
-    void erase(iterator pos) { m_data.erase(pos); }
+    iterator erase(iterator pos) { return m_data.erase(pos); }
     bool erase(const Key & key);
 
     void swap(ArraySet & set) { std::swap(m_data, set.m_data); }
