@@ -264,7 +264,7 @@ namespace UnitTest
 
   int runTests(int argc, char ** argv)
   {
-    QCoreApplication app(argc, argv);
+    auto app = new QCoreApplication(argc, argv);
 
     /// Avoid number separator mess
     setlocale(LC_NUMERIC, "C");
@@ -312,6 +312,7 @@ namespace UnitTest
       Radiant::setMinimumSeverityLevel(Radiant::SILENT);
 
     QString single = parser.value("single");
+    delete app;
     if(!single.isEmpty()) {
       QStringList parts = single.split("/");
       QString name, suite;
