@@ -274,4 +274,9 @@ namespace Radiant
   {
     return Color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
   }
+
+  const QMap<QByteArray, Color> & Color::namedColors()
+  {
+    return colors();
+  }
 }
