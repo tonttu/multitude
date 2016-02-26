@@ -15,6 +15,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QMap>
 
 #include <Nimble/Vector4.hpp>
 
