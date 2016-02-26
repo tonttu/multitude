@@ -118,7 +118,7 @@ namespace Luminous
     /// Clear the stroke to default state (black, zero width)
     void clear()
     {
-      m_color.make(0.f, 0.f, 0.f, 0.f);
+      m_color.setRGBA(0.f, 0.f, 0.f, 0.f);
       m_program = nullptr;
       m_uniforms.reset();
       m_width = 0.f;
@@ -246,7 +246,7 @@ namespace Luminous
     /// Clear the style to default values (black)
     void clear()
     {
-      m_color.make(0.f, 0.f, 0.f, 0.f);
+      m_color.setRGBA(0.f, 0.f, 0.f, 0.f);
       m_program = nullptr;
       m_textures.reset();
       m_uniforms.reset();
@@ -456,7 +456,7 @@ namespace Luminous
     /// Set text glow color
     void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
     /// Set text glow color
-    void setGlowColor(float r, float g, float b, float a) { m_glowColor.make(r, g, b, a); }
+    void setGlowColor(float r, float g, float b, float a) { m_glowColor.setRGBA(r, g, b, a); }
 
     /// Get text sharpness
     float textSharpness() const { return m_textSharpness; }
@@ -473,7 +473,7 @@ namespace Luminous
     /// Set the drop-shadow color
     void setDropShadowColor(const Radiant::Color & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
     /// Set the drop-shadow color
-    void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor.make(r, g, b, a); }
+    void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor.setRGBA(r, g, b, a); }
 
     /// Get the drop-shadow offset
     const Nimble::Vector2f & dropShadowOffset() const { return m_dropShadowOffset; }

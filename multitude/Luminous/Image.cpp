@@ -154,7 +154,7 @@ namespace Luminous
         for(int x0 = 0; x0 < w; x0++) {
 
           int count = 0;
-          Nimble::Vector4 colorSum(0.f, 0.f, 0.f, 0.f);
+          Radiant::Color colorSum(0.f, 0.f, 0.f, 0.f);
 
           // Take 'floor' of the limits in order to avoid floating point accuracy problems
           int maxY = sy * y0 + sy;
@@ -168,7 +168,7 @@ namespace Luminous
           }
 
           // Round the color (setPixel just makes float -> int conversion wihtout rounding)
-          colorSum += Nimble::Vector4f(1/512.0f, 1/512.0f, 1/512.0f, 1/512.0f);
+          colorSum += Radiant::Color(1/512.0f, 1/512.0f, 1/512.0f, 1/512.0f);
 
           setPixel(x0, y0, colorSum / count);
         }
@@ -190,11 +190,11 @@ namespace Luminous
 
           for(int j = sy * y0; j < maxY; ++j) {
             for(int i = sx * x0; i < maxX; ++i) {
-              Nimble::Vector4 p = src.pixel(i,j);
+              Radiant::Color p = src.pixel(i,j);
               // If this pixel contributes any color, scale by alpha and add it to the sum
-              if (p.w > std::numeric_limits<float>::epsilon()) {
-                alphaSum += p.w;
-                colorSum += p.vector3() * p.w;
+              if (p.a > std::numeric_limits<float>::epsilon()) {
+                alphaSum += p.a;
+                colorSum += p.rgb() * p.a;
                 ++alphaCount;
               }
               ++count;
@@ -207,7 +207,7 @@ namespace Luminous
             colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
           }
 
-          setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
+          setPixel(x0, y0, Radiant::Color(colorSum, alphaSum));
         }
       }
     }
@@ -884,7 +884,7 @@ namespace Luminous
       m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
-  Nimble::Vector4 Image::safePixel(int x, int y) const
+  Radiant::Color Image::safePixel(int x, int y) const
   {
     if(x < 0 || x >= width())
       return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
@@ -895,7 +895,7 @@ namespace Luminous
     return pixel(x, y);
   }
 
-  Nimble::Vector4 Image::pixel(int x, int y) const
+  Radiant::Color Image::pixel(int x, int y) const
   {
     assert(m_data);
     assert(x >= 0 && x < width() && y >= 0 && y < height());
@@ -916,10 +916,10 @@ namespace Luminous
       assert(0);
     }
 
-    return Nimble::Vector4(0, 0, 0, 1);
+    return Radiant::Color(0, 0, 0, 1);
   }
 
-  void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4 &pixel)
+  void Image::setPixel(unsigned x, unsigned y, const Radiant::Color &pixel)
   {
     assert(int(x) < width());
     assert(int(y) < height());
@@ -929,18 +929,18 @@ namespace Luminous
 
 
     if(m_pixelFormat == PixelFormat::redUByte()) {
-        px[0] = pixel.x * 255;
+        px[0] = pixel.r * 255;
     } else if(m_pixelFormat == PixelFormat::alphaUByte()) {
-        px[0] = pixel.w * 255;
+        px[0] = pixel.a * 255;
     } else if(pixelFormat().numChannels() == 3) {
-        px[0] = pixel.x * 255;
-        px[1] = pixel.y * 255;
-        px[2] = pixel.z * 255;
+        px[0] = pixel.r * 255;
+        px[1] = pixel.g * 255;
+        px[2] = pixel.b * 255;
     } else if(pixelFormat().numChannels() == 4) {
-        px[0] = pixel.x * 255;
-        px[1] = pixel.y * 255;
-        px[2] = pixel.z * 255;
-        px[3] = pixel.w * 255;
+        px[0] = pixel.r * 255;
+        px[1] = pixel.g * 255;
+        px[2] = pixel.b * 255;
+        px[3] = pixel.a * 255;
     } else {
       Radiant::error("Image::setPixel # unsupported pixel format");
       assert(0);
@@ -998,10 +998,10 @@ namespace Luminous
       // This should work for generic cases
       for (int y = 0; y < m_height; ++y) {
         for (int x = 0; x < m_width; ++x) {
-          Nimble::Vector4f c = pixel(x, y);
-          c.x *= c.w;
-          c.y *= c.w;
-          c.z *= c.w;
+          Radiant::Color c = pixel(x, y);
+          c.r *= c.a;
+          c.g *= c.a;
+          c.b *= c.a;
           setPixel(x, y, c);
         }
       }
@@ -1030,11 +1030,11 @@ namespace Luminous
       // This should work for generic cases
       for (int y = 0; y < m_height; ++y) {
         for (int x = 0; x < m_width; ++x) {
-          Nimble::Vector4f c = pixel(x, y);
-          if (c.w > 0.0f) {
-            c.x /= c.w;
-            c.y /= c.w;
-            c.z /= c.w;
+          Radiant::Color c = pixel(x, y);
+          if (c.a > 0.0f) {
+            c.r /= c.a;
+            c.g /= c.a;
+            c.b /= c.a;
           }
           setPixel(x, y, c);
         }

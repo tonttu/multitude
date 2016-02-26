@@ -135,6 +135,11 @@ namespace Luminous
     /// @param data Value of the uniform
     ShaderUniform(const Nimble::Vector4f & data) { m_type = Float4; memcpy(m_data.f, &data, sizeof(data)); }
 
+    /// Constructor for 4-dimensional floating point vector (color)
+    /// Sets Type of this uniform to Float4
+    /// @param data Value of the uniform
+    ShaderUniform(const Radiant::Color & data) { m_type = Float4; memcpy(m_data.f, data.data(), sizeof(data)); }
+
     /// Constructor for 2x2-dimensional matrix
     /// Sets Type of this uniform to Float2x2
     /// @param data Value of the uniform

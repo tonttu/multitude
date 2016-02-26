@@ -953,7 +953,7 @@ namespace Luminous
       if(imageTex.image) {
         if(locked || old == time || imageTex.lastUsed.testAndSetOrdered(old, time)) {
           Nimble::Vector2i pixel(relLoc.x * imageTex.image->width(), relLoc.y * imageTex.image->height());
-          float v = imageTex.image->safePixel(pixel.x, pixel.y).w;
+          float v = imageTex.image->safePixel(pixel.x, pixel.y).a;
           if(locked) imageTex.locked = 0;
           return v;
         } else {

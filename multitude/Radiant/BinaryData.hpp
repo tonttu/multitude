@@ -204,6 +204,8 @@ namespace Radiant {
     /// @param v Value to write
     inline void write(const Nimble::Vector4f & v) { writeVector4Float32(v); }
 
+    inline void write(const Radiant::Color & c) { write(c.toVector()); }
+
     /// Appends another BinaryData object to this
     /// @param that BinaryData to append
     void append(const BinaryData & that);

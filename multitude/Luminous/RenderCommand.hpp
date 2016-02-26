@@ -80,7 +80,7 @@ namespace Luminous
     /// Model matrix for the geometry. Transforms vertices from model to world coordinates.
     Nimble::Matrix4f modelMatrix;
     /// Color of the vertices.
-    Nimble::Vector4f color;
+    Radiant::Color color;
     /// Depth of the vertices.
     float depth;
   };
@@ -98,8 +98,8 @@ namespace Luminous
   {
     Nimble::Matrix4f projMatrix;
     Nimble::Matrix4f modelMatrix;
-    Nimble::Vector4f colorIn;
-    Nimble::Vector4f colorOut;
+    Radiant::Color colorIn;
+    Radiant::Color colorOut;
     Nimble::Rectf clip;
     /// Start and stop locations of edge fading, default is (0.5, 0.5), that means
     /// sharp edge at the correct glyph border. (0.0, 0.5) would generate a halo

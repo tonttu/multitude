@@ -85,7 +85,7 @@ namespace Luminous
     const Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
-    bool translucent = shader.translucent() || (color.w * opacity() < 0.99999999f) ||
+    bool translucent = shader.translucent() || (color.a * opacity() < 0.99999999f) ||
         style.fill().hasTranslucentTextures();
 
     RenderBuilder<Vertex,UniformBlock> b = render<Vertex, UniformBlock>(translucent, primType, indexCount, vertexCount, width, shader,
@@ -133,7 +133,7 @@ namespace Luminous
     } else {
 
       // Is this a non-textured fill?
-      if(style.fillColor().w > 0.f) {
+      if(style.fillColor().a > 0.f) {
 
         // Draw rectangle without texture coordinates
         const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
@@ -153,7 +153,7 @@ namespace Luminous
   void RenderContext::drawRect(const Nimble::RectT<T>& rect, const Nimble::Rectf & uvs, const Style & style)
   {
     // Draw rectangle with texture coordinates
-    if (style.fillColor().w > 0.f) {
+    if (style.fillColor().a > 0.f) {
       const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
       auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.fillColor(), 1.f, style);
 
@@ -178,7 +178,7 @@ namespace Luminous
   void RenderContext::drawRectStroke(const Nimble::RectT<T>& rect, const Style &style)
   {
     // Draw the outline
-    if (style.strokeWidth() > 0.f && style.strokeColor().w > 0.f) {
+    if (style.strokeWidth() > 0.f && style.strokeColor().a > 0.f) {
 
       Luminous::Style s = style;
       s.stroke().clear();

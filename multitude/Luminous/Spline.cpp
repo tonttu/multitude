@@ -50,7 +50,7 @@ namespace
 
     Nimble::Vector2f location;
     Nimble::Vector2f range;
-    Nimble::Vector4f color;
+    Radiant::Color color;
   };
 
   struct UniformBlock : public Luminous::BasicUniformBlock
@@ -488,7 +488,7 @@ namespace Luminous {
     return *this;
   }
 
-  void Spline::addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width, float time)
+  void Spline::addControlPoint(Nimble::Vector2 point, Radiant::Color color, float width, float time)
   {
     Point p;
     p.m_location = point;

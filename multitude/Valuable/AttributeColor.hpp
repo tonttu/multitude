@@ -98,13 +98,13 @@ namespace Valuable
     Radiant::Color asColor() const { return value(); }
 
     /// Returns the red comoponent of the color (0-1).
-    inline float red() const   { return value()[0]; }
+    inline float red() const   { return value().r; }
     /// Returns the green comoponent of the color (0-1).
-    inline float green() const { return value()[1]; }
+    inline float green() const { return value().g; }
     /// Returns the blue comoponent of the color (0-1).
-    inline float blue() const  { return value()[2]; }
+    inline float blue() const  { return value().b; }
     /// Returns the alpha comoponent of the color (0-1).
-    inline float alpha() const { return value()[3]; }
+    inline float alpha() const { return value().a; }
   };
   typedef AttributeT<Radiant::Color> AttributeColor;
 }
