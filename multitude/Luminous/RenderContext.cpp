@@ -79,28 +79,28 @@ namespace Luminous
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
 
-      m_basicShader.loadShader("Luminous/GLSL150/basic.vs", Shader::Vertex);
-      m_basicShader.loadShader("Luminous/GLSL150/basic.fs", Shader::Fragment);
+      m_basicShader.loadShader("cornerstone:Luminous/GLSL150/basic.vs", Shader::Vertex);
+      m_basicShader.loadShader("cornerstone:Luminous/GLSL150/basic.fs", Shader::Fragment);
       Luminous::VertexDescription desc;
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       m_basicShader.setVertexDescription(desc);
 
-      m_texShader.loadShader("Luminous/GLSL150/tex.vs", Shader::Vertex);
-      m_texShader.loadShader("Luminous/GLSL150/tex.fs", Shader::Fragment);
+      m_texShader.loadShader("cornerstone:Luminous/GLSL150/tex.vs", Shader::Vertex);
+      m_texShader.loadShader("cornerstone:Luminous/GLSL150/tex.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
 
-      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.vs", Shader::Vertex);
-      m_trilinearTexShader.loadShader("Luminous/GLSL150/trilinear_filtering.fs", Shader::Fragment);
+      m_trilinearTexShader.loadShader("cornerstone:Luminous/GLSL150/trilinear_filtering.vs", Shader::Vertex);
+      m_trilinearTexShader.loadShader("cornerstone:Luminous/GLSL150/trilinear_filtering.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_trilinearTexShader.setVertexDescription(desc);
 
-      m_fontShader.loadShader("Luminous/GLSL150/distance_field.vs", Shader::Vertex);
-      m_fontShader.loadShader("Luminous/GLSL150/distance_field.fs", Shader::Fragment);
+      m_fontShader.loadShader("cornerstone:Luminous/GLSL150/distance_field.vs", Shader::Vertex);
+      m_fontShader.loadShader("cornerstone:Luminous/GLSL150/distance_field.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
@@ -108,8 +108,8 @@ namespace Luminous
       m_fontShader.setVertexDescription(desc);
       m_fontShader.setSampleShading(1.0f);
 
-      m_splineShader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
-      m_splineShader.loadShader("Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
+      m_splineShader.loadShader("cornerstone:Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
+      m_splineShader.loadShader("cornerstone:Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2f>("vertex_range");

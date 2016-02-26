@@ -9,16 +9,14 @@
  */
 
 #include "Mime.hpp"
-
 #include "Thread.hpp"
-#include "ResourceLocator.hpp"
 #include "Trace.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <cassert>
 
-#include <QStringList>
+#include <QFileInfo>
 #include <QSet>
 
 namespace Radiant
@@ -48,14 +46,14 @@ namespace Radiant
   void MimeManager::initialize()
   {
     MULTI_ONCE {
-      const QStringList filenames = Radiant::ResourceLocator::instance()->locate("Mime/mime.types");
-      if (filenames.isEmpty()) {
-        Radiant::error("FileLoader : Could not find mime.types");
+
+      QFileInfo fi("cornerstone:Mime/mime.types");
+      if(!fi.exists()) {
+        Radiant::error("MimeManager::initialize # failed to find %s", fi.absoluteFilePath().toUtf8().data());
         return;
       }
 
-      const QString filename = filenames.front();
-      std::ifstream fileStream(filename.toUtf8().data());
+      std::ifstream fileStream(fi.absoluteFilePath().toUtf8().data());
       if (!fileStream) {
         Radiant::info("FileLoader : Could not load mime.types");
         return;

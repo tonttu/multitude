@@ -10,7 +10,6 @@
 
 #include <Radiant/Allocators.hpp>
 #include <Radiant/Trace.hpp>
-#include <Radiant/ResourceLocator.hpp>
 #include <Radiant/Sleep.hpp>
 
 #include <Resonant/DSPNetwork.hpp>
@@ -479,12 +478,8 @@ namespace VideoDisplay
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
 
-    QString src(m_options.source());
-    QStringList srcs = Radiant::ResourceLocator::instance()->locate(m_options.source());
-
-    if(!srcs.empty())
-      src = srcs.front();
-
+    const QString src(m_options.source());
+    const QFileInfo sourceFileInfo(src);
 
     QByteArray errorMsg("FfmpegDecoder::D::open # " + src.toUtf8() + ":");
 
@@ -505,8 +500,7 @@ namespace VideoDisplay
       if (v4l2m.exactMatch(src)) {
         m_options.setFormat("video4linux2");
       } else {
-        QFileInfo fi(src);
-        if (fi.isSymLink() && v4l2m.exactMatch(fi.symLinkTarget()))
+        if (sourceFileInfo.isSymLink() && v4l2m.exactMatch(sourceFileInfo.symLinkTarget()))
           m_options.setFormat("video4linux2");
       }
     }
@@ -521,8 +515,14 @@ namespace VideoDisplay
         Radiant::warning("%s Failed to find input format '%s'", errorMsg.data(), m_options.format().toUtf8().data());
     }
 
-    // Open the actual video
-    int err = avformat_open_input(&m_av.formatContext, src.toUtf8().data(),
+    // If source exists, we want to pass it through QFileInfo so Qt resource
+    // system paths get dereferenced. Otherwise pass use it directly in case it
+    // is a video stream, webcam, or something similar.
+    QString openTarget = src;
+    if(sourceFileInfo.exists())
+      openTarget = sourceFileInfo.absoluteFilePath();
+
+    int err = avformat_open_input(&m_av.formatContext, openTarget.toUtf8().data(),
                                   inputFormat, &avoptions);
 
     {

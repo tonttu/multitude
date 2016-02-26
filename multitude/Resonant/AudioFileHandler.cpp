@@ -13,7 +13,8 @@
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
-#include <Radiant/ResourceLocator.hpp>
+
+#include <QFileInfo>
 
 #include <sndfile.h>
 
@@ -33,12 +34,12 @@ namespace Resonant {
   
   SNDFILE* AudioFileHandler::open(const QString& filename, int openMode, SF_INFO *info)
   {
-    QStringList files = Radiant::ResourceLocator::instance()->locate(filename);
-    SNDFILE * sndf = nullptr;
-    if(!files.empty())
-      sndf = sf_open(files.front().toLocal8Bit().data(), openMode, info);
-    else
-      sndf = sf_open(filename.toLocal8Bit().data(), openMode, info);
+    // Run through QFileInfo so search paths are taken into account
+    QFileInfo fi(filename);
+    if(!fi.exists())
+      return nullptr;
+
+    SNDFILE* sndf = sf_open(fi.absoluteFilePath().toUtf8().data(), openMode, info);
     return sndf;
   }
 
