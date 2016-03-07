@@ -79,9 +79,7 @@ HEADERS += WatchDog.hpp
 HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 HEADERS += Singleton.hpp
-HEADERS += VideoCameraCMU.hpp
 HEADERS += VideoCamera1394.hpp
-HEADERS += VideoCameraPTGrey.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 
@@ -142,9 +140,7 @@ SOURCES += PlatformUtilsWin32.cpp
 SOURCES += SerialPortWin32.cpp
 SOURCES += LockFileWin32.cpp
 SOURCES += CallStackW32.cpp
-SOURCES += VideoCameraCMU.cpp
 SOURCES += VideoCamera1394.cpp
-SOURCES += VideoCameraPTGrey.cpp
 SOURCES += IntrusivePtr.cpp
 
 linux*:SOURCES += ProcessRunnerPosix.cpp
