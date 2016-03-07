@@ -2,8 +2,6 @@
 Makefile
 *~
 moc_*.cpp
-Applications/FireCapture/FireCapture
-Applications/FireView/FireView
 Applications/ListPortAudioDevices/ListPortAudioDevices
 Applications/MoviePlayer/MoviePlayer
 Examples/AmbientSounds/AmbientSounds
