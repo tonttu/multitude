@@ -66,7 +66,7 @@ namespace Luminous
     /// Returns the format of the OpenGL context, if the context has been
     /// created.
     /// @return OpenGL context format
-    QSurfaceFormat format() const;
+    QSurfaceFormat format() const override;
 
   signals:
     void closed();

@@ -45,7 +45,7 @@ namespace Valuable
 
     static void setTarget(TransitionAnim*, T target);
 
-    virtual void updateTargetAttributePointer(TransitionAnim* anim);
+    virtual void updateTargetAttributePointer(TransitionAnim* anim) override;
 
   private:
     virtual void update(TransitionAnim& anim, float dt) const FINAL;
