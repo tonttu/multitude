@@ -395,24 +395,24 @@ SOURCES += source/AbstractFunction.cpp \
            source/Binding_objects_x.cpp \
            source/Binding_objects_y.cpp \
            source/Binding_objects_z.cpp \
-           source/Binding_pch.cpp \
+           #source/Binding_pch.cpp \
            source/callbacks.cpp \
            source/ContextHandle.cpp \
            source/ContextInfo.cpp \
            source/logging.cpp \
            source/Meta.cpp \
-           source/Meta_BitfieldsByString.cpp \
-           source/Meta_BooleansByString.cpp \
-           source/Meta_EnumsByString.cpp \
-           source/Meta_ExtensionsByFunctionString.cpp \
+           #source/Meta_BitfieldsByString.cpp \
+           #source/Meta_BooleansByString.cpp \
+           #source/Meta_EnumsByString.cpp \
+           #source/Meta_ExtensionsByFunctionString.cpp \
            source/Meta_ExtensionsByString.cpp \
-           source/Meta_FunctionStringsByExtension.cpp \
+           #source/Meta_FunctionStringsByExtension.cpp \
            source/Meta_getStringByBitfield.cpp \
            source/Meta_ReqVersionsByExtension.cpp \
-           source/Meta_StringsByBitfield.cpp \
-           source/Meta_StringsByBoolean.cpp \
-           source/Meta_StringsByEnum.cpp \
-           source/Meta_StringsByExtension.cpp \
+           #source/Meta_StringsByBitfield.cpp \
+           #source/Meta_StringsByBoolean.cpp \
+           #source/Meta_StringsByEnum.cpp \
+           #source/Meta_StringsByExtension.cpp \
            source/ProcAddress.cpp \
            source/Value.cpp \
            source/Version.cpp \

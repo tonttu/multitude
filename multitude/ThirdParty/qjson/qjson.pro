@@ -40,3 +40,5 @@ SOURCES += \
   $$SRC/qobjecthelper.cpp \
   $$SRC/serializer.cpp \
   $$SRC/serializerrunnable.cpp
+
+macx:QMAKE_CXXFLAGS += -Wno-deprecated-register -Wno-null-conversion
