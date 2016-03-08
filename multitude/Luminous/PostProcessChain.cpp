@@ -38,7 +38,8 @@ namespace Luminous
   bool PostProcessChain::hasFilterType(const std::type_info & type)
   {
     for(FilterChain::iterator it = m_d->m_chain.begin(); it != m_d->m_chain.end(); ++it) {
-      if(typeid(*it->second) == type)
+      auto & ctx = *it->second;
+      if(typeid(ctx) == type)
         return true;
     }
     return false;
