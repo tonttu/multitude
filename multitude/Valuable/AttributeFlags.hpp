@@ -377,7 +377,7 @@ namespace Valuable {
       setValue((valueUser & mask) | (valueDefault & ~mask), DEFAULT);
     }
 
-    QString asString(bool * const ok, Layer layer) const
+    virtual QString asString(bool * const ok, Layer layer) const override
     {
       if (ok)
         *ok = true;

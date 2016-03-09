@@ -194,7 +194,7 @@ namespace Valuable
   QString Attribute::asString(bool * const ok, Layer) const
   {
     if(ok) *ok = true;
-    return QString().sprintf("Attribute: '%s' @ %08p", name().constData(), this);
+    return QString().sprintf("Attribute: '%s' @ %p", name().constData(), this);
   }
 
   ArchiveElement Attribute::serialize(Archive & archive) const

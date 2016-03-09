@@ -184,6 +184,7 @@ namespace Valuable
       }
     }
     assert(false && "Should never reach this");
+    return nullptr;
   }
 
   size_t TransitionContainer::size() const

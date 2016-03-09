@@ -499,7 +499,8 @@ namespace Resonant {
       checkValidId(item);
       m_newItems.pop_front();
       m_items.push_front(item);
-      const char * type = typeid(* item->m_module).name();
+      auto & module = *item->m_module;
+      const char * type = typeid(module).name();
 
       if(!compile(item, 0)) {
         Radiant::error("DSPNetwork::checkNewItems # Could not add module %s", type);
@@ -771,8 +772,9 @@ namespace Resonant {
     item->m_compiled = true;
 
     ModulePtr m = item->m_module;
+    auto & module = *m;
 
-    debugResonant("DSPNetwork::compile # compiled %p %s", m.get(), typeid(*m).name());
+    debugResonant("DSPNetwork::compile # compiled %p %s", m.get(), typeid(module).name());
 
     return true;
   }
@@ -915,9 +917,10 @@ namespace Resonant {
     int index = 0;
     for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
       ItemPtr item = *it;
+      auto & module = *item->m_module;
 
       fprintf(f, "  DSP ITEM [%d] %s %s %p\n",
-              index, item->m_module->id().data(), typeid(*item->m_module).name(), item->m_module.get());
+              index, item->m_module->id().data(), typeid(module).name(), item->m_module.get());
 
       for(size_t i = 0; i < item->m_ins.size(); i++) {
         fprintf(f, "    INPUT PTR [%d] %p\n", (int) i, item->m_ins[i]);

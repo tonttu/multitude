@@ -82,7 +82,7 @@ namespace Valuable
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
-    virtual bool set(const StyleValue& value, Layer layer = USER);
+    virtual bool set(const StyleValue& value, Layer layer = USER) override;
 
     virtual bool isChanged() const OVERRIDE;
     virtual void clearValue(Layer layer) OVERRIDE;
