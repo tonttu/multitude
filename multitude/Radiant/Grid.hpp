@@ -14,6 +14,8 @@
 #include "Radiant.hpp"
 #include "Export.hpp"
 
+#include "Memory.hpp"
+
 #include <Nimble/Vector4.hpp>
 #include <Nimble/Math.hpp>
 
@@ -27,6 +29,14 @@ namespace Radiant {
 
   /// Grid (aka 2D array) base class with memory management
   /// @tparam T Type of objects to store
+  ///
+  /// Note that only simple value types are supported, meaning the following
+  /// requirements must be satisfied:
+  ///
+  ///  * Constructors/destructors don't need to be called
+  ///  * Arbitrary bits are considered as a valid, yet unspecified state
+  ///  * It can be made "zero" by writing zero bytes over it
+  ///
   template <class T>
   class GridMemT
   {
@@ -59,7 +69,7 @@ namespace Radiant {
     /// Destructor
     ~GridMemT()
     {
-      delete [] m_data;
+      alignedFree(m_data);
     }
 
     /// Resizes this grid, by allocating new memory as necessary
@@ -83,12 +93,12 @@ namespace Radiant {
       if(m_size >= s)
         return;
 
-      delete [] m_data;
+      alignedFree(m_data);
       m_size = s;
 
-      if(s)
-        m_data = new T[s];
-      else
+      if(s) {
+        m_data = (T*)alignedMalloc(s*sizeof(T), 4096);
+      } else
         m_data = 0;
     }
 
@@ -99,7 +109,7 @@ namespace Radiant {
 
     /// Frees up the memory, and sets the width and height of this
     /// object to zero.
-    void clear() { delete [] m_data; m_width = m_height = 0; m_data = 0; m_size = 0; }
+    void clear() { alignedFree(m_data); m_width = m_height = 0; m_data = 0; m_size = 0; }
 
     /// Copies data from memory
     /// @param src Source image data
@@ -238,15 +248,9 @@ namespace Radiant {
     /// Checks if the given point is inside the grid
     /// @param v Point coordinate
     /// @returns true if the given coordinates are inside the grid
-    inline bool isInside(const Nimble::Vector2i & v) const
-    { return ((unsigned) v.x < this->m_width) &&
-        ((unsigned) v.y < this->m_height); }
-    /// Checks if the given point is inside the grid
-    /// @param v Point coordinate
-    /// @returns true if the given coordinates are inside the grid
-    inline bool isInside(const Nimble::Vector2f & v) const
-    { return ((unsigned) v.x < this->m_width) &&
-        ((unsigned) v.y < this->m_height); }
+    template<typename U>
+    bool isInside(const Nimble::Vector2T<U> & v) const
+    { return isInside(v.x, v.y); }
 
     /// Gets an element from the grid. If the arguments are outside
     /// the grid area, then result is undefined. In certain debug
@@ -258,6 +262,7 @@ namespace Radiant {
     /// @returns Reference to the element at (x,y)
     inline T & get(unsigned x, unsigned y)
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
+
     /// @copydoc get
     inline const T & get(unsigned x, unsigned y) const
     { GRID_CHECK(x,y); return this->m_data[this->m_width * y + x]; }
@@ -265,23 +270,28 @@ namespace Radiant {
     /// @copybrief get(unsigned x, unsigned y)
     /// @param v Coordinate of element
     /// @returns Reference to the element at (v.x,v.y)
-    inline T & get(const Nimble::Vector2i & v)
+    template<typename U>
+    inline typename std::enable_if<std::is_integral<U>::value, T&>::type
+    get(const Nimble::Vector2T<U> & v)
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
+
     /// @copydoc get(const Nimble::Vector2i & v)
-    inline const T & get(const Nimble::Vector2i & v) const
+    template<typename U>
+    inline typename std::enable_if<std::is_integral<U>::value, const T&>::type
+    get(const Nimble::Vector2T<U> & v) const
     { GRID_CHECK2(v); return this->m_data[this->m_width * v.y + v.x]; }
+
     /// @copydoc get(const Nimble::Vector2i & v)
-    inline T & get(const Nimble::Vector2f & v)
-    {
-      GRID_CHECK2(v);
-      return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
-    }
+    template<typename U>
+    inline typename std::enable_if<std::is_floating_point<U>::value, T&>::type
+    get(const Nimble::Vector2T<U> & v)
+    { GRID_CHECK2(v); return this->m_data[this->m_width * unsigned(v.y) + unsigned(v.x)]; }
+
     /// @copydoc get(const Nimble::Vector2i & v)
-    inline T & get(const Nimble::Vector2f & v) const
-    {
-      GRID_CHECK2(v);
-      return this->m_data[this->m_width * (unsigned) v.y + (unsigned) v.x];
-    }
+    template<typename U>
+    inline typename std::enable_if<std::is_floating_point<U>::value, const T&>::type
+    get(const Nimble::Vector2T<U> & v) const
+    { GRID_CHECK2(v); return this->m_data[this->m_width * unsigned(v.y) + unsigned(v.x)]; }
 
     /// Gets an element from the grid.
     /// @param x X-coordinate of element
@@ -302,13 +312,17 @@ namespace Radiant {
     /// Safe getter for grid data. If coordinates are invalid, this will return null element of T.
     /// @param v Coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
-    inline T getSafe(const Nimble::Vector2i & v) const
+    template<typename U>
+    inline typename std::enable_if<std::is_integral<U>::value, T>::type
+    getSafe(const Nimble::Vector2T<U> & v) const
     { if(isInside(v)) return this->m_data[this->m_width * v.y + v.x];return createNull<T>();}
     /// Safe getter for grid data. If coordinates are invalid, this will return null element of T.
     /// @param x X-coordinate of element
     /// @param y Y-coordinate of element
     /// @returns The requested element from the grid or zero if the coordinate is outside of the grid
-    inline T getSafe(int x, int y) const
+    template<typename U>
+    inline typename std::enable_if<std::is_integral<U>::value, T>::type
+    getSafe(U x, U y) const
     { if(isInside(x, y)) return this->m_data[this->m_width * y + x];return createNull<T>();}
 
     /// Returns a reference to the grid element that is closest to the
