@@ -395,24 +395,14 @@ SOURCES += source/AbstractFunction.cpp \
            source/Binding_objects_x.cpp \
            source/Binding_objects_y.cpp \
            source/Binding_objects_z.cpp \
-           #source/Binding_pch.cpp \
            source/callbacks.cpp \
            source/ContextHandle.cpp \
            source/ContextInfo.cpp \
            source/logging.cpp \
            source/Meta.cpp \
-           #source/Meta_BitfieldsByString.cpp \
-           #source/Meta_BooleansByString.cpp \
-           #source/Meta_EnumsByString.cpp \
-           #source/Meta_ExtensionsByFunctionString.cpp \
            source/Meta_ExtensionsByString.cpp \
-           #source/Meta_FunctionStringsByExtension.cpp \
            source/Meta_getStringByBitfield.cpp \
            source/Meta_ReqVersionsByExtension.cpp \
-           #source/Meta_StringsByBitfield.cpp \
-           #source/Meta_StringsByBoolean.cpp \
-           #source/Meta_StringsByEnum.cpp \
-           #source/Meta_StringsByExtension.cpp \
            source/ProcAddress.cpp \
            source/Value.cpp \
            source/Version.cpp \
@@ -445,6 +435,21 @@ SOURCES += source/AbstractFunction.cpp \
            source/gl/functions_y.cpp \
            source/gl/functions_z.cpp \
            source/gl/types.cpp
+
+# Extra glbinding meta information, normally disabled
+extensive-meta {
+  DEFINES += EXTENSIVE_META
+
+  SOURCES += source/Meta_BitfieldsByString.cpp
+  SOURCES += source/Meta_BooleansByString.cpp
+  SOURCES += source/Meta_EnumsByString.cpp
+  SOURCES += source/Meta_ExtensionsByFunctionString.cpp
+  SOURCES += source/Meta_FunctionStringsByExtension.cpp
+  SOURCES += source/Meta_StringsByBitfield.cpp
+  SOURCES += source/Meta_StringsByBoolean.cpp
+  SOURCES += source/Meta_StringsByEnum.cpp
+  SOURCES += source/Meta_StringsByExtension.cpp
+}
 
 DESTDIR = ../../lib
 

@@ -41,4 +41,5 @@ SOURCES += \
   $$SRC/serializer.cpp \
   $$SRC/serializerrunnable.cpp
 
-macx:QMAKE_CXXFLAGS += -Wno-deprecated-register -Wno-null-conversion
+# flex/bison generates old-style C code
+clang*:QMAKE_CXXFLAGS += -Wno-deprecated-register -Wno-null-conversion
