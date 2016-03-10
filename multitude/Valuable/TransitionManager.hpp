@@ -3,13 +3,14 @@
 
 #include "Export.hpp"
 
-#include "TransitionAnim.hpp"
-
 #include <list>
 #include <vector>
 
+#include "TransitionAnim.hpp"
+
 namespace Valuable
 {
+
   /// Base class for type-specific transition managers
   class VALUABLE_API TransitionManager
   {
@@ -19,8 +20,14 @@ namespace Valuable
 
     static void updateAll(float dt);
 
-  private:
-    virtual void update(float dt) = 0;
+    virtual void update(TransitionAnim& anim, float dt) const = 0;
+    virtual void remove(TransitionAnim * anim) = 0;
+    virtual void updateTargetAttributePointer(TransitionAnim* anim) = 0;
+
+    static std::size_t activeTransitions();
+
+  protected:
+    static TransitionAnim* createAnim(TransitionManager* manager);
   };
 
   /// Type-specific transition animation manager
@@ -32,20 +39,16 @@ namespace Valuable
   public:
     /// Creates a new animation for given attribute
     /// @param attr attribute that the transition animation controls
-    static TransitionAnimT<T> * create(AttributeBaseT<T> * attr);
+    static TransitionAnim * create(AttributeBaseT<T> * attr, TransitionCurve curve);
     /// @param anim Transition animation to remove
-    static void remove(TransitionAnimT<T> * anim);
+    virtual void remove(TransitionAnim * anim) OVERRIDE;
+
+    static void setTarget(TransitionAnim*, T target);
+
+    virtual void updateTargetAttributePointer(TransitionAnim* anim) override;
 
   private:
-    virtual void update(float dt) FINAL;
-
-  private:
-    /// Store all animations of this type in a list of vectors.
-    /// These vectors are never resized, they are originally pre-allocated to
-    /// contain null animations that can then later be used. Ideally only the
-    /// first vector is actually used, but if it really runs out of animations,
-    /// the next one is allocated, doubling the capacity of the previous one.
-    std::list<std::vector<TransitionAnimT<T>>> m_storage;
+    virtual void update(TransitionAnim& anim, float dt) const FINAL;
   };
 
 } // namespace Valuable

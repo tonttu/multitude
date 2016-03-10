@@ -56,11 +56,11 @@ namespace Valuable
     bool operator != (const QString & that) const;
 
     /// Returns the value as float
-    virtual float asFloat(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
+    virtual float asFloat(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
     /// Returns the value as integer
-    virtual int asInt(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
+    virtual int asInt(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
     /// Returns the value as string
-    virtual QString asString(bool * const ok = nullptr, Layer layer = LAYER_CURRENT) const OVERRIDE;
+    virtual QString asString(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
 
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
 

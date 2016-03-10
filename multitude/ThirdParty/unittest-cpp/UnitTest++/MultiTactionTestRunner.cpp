@@ -3,11 +3,14 @@
 #include "XmlTestReporter.h"
 #include "TestReporterStdout.h"
 
+#include <Radiant/Trace.hpp>
+
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QProcess>
 #include <QDomDocument>
 #include <QFile>
+#include <QMap>
 
 #include <fstream>
 #include <functional>
@@ -82,7 +85,7 @@ namespace UnitTest
     }
 
     int runOneTest(int index, int count, const UnitTest::Test* const test, QString xmlOutput,
-                   const char *procName)
+                   const char *procName, bool verbose)
     {
       QProcess process;
       process.setProcessChannelMode(QProcess::ForwardedChannels);
@@ -90,6 +93,10 @@ namespace UnitTest
       QString singleArg = test->m_details.suiteName;
       singleArg += "/";
       singleArg += test->m_details.testName;
+
+      if(verbose)
+        newArgs << "-v";
+
       newArgs << "--single" << singleArg << xmlOutput;
       if (QFile::exists(xmlOutput))
         QFile::remove(xmlOutput);
@@ -132,7 +139,52 @@ namespace UnitTest
       return toRun;
     }
 
-    int runTests(QString match, QString xmlOutput, const char *procName)
+    void printTestReport(const QDomDocument & doc)
+    {
+      auto root = doc.documentElement();
+      int failedTests = root.attribute("failedtests").toInt();
+      int tests = root.attribute("tests").toInt();
+      int failures = root.attribute("failures").toInt();
+      float time = root.attribute("time").toFloat();
+
+      int secs = time;
+      int mins = secs / 60;
+      secs = secs % 60;
+      printf("Ran %d test in %d min %d s\n", tests, mins, secs);
+      if (failedTests == 0 && failures == 0) {
+        printf("No errors\n");
+      } else {
+        printf("FAILED - %d failed tests, %d errors\n", failedTests, failures);
+        auto testElements = root.elementsByTagName("test");
+        for (int i = 0; i < testElements.size(); ++i) {
+          QDomElement e = testElements.item(i).toElement();
+          auto failureElements = e.elementsByTagName("failure");
+          if (!failureElements.isEmpty()) {
+            printf("\n%s/%s [%.3f s]: %d %s:\n", e.attribute("suite").toUtf8().data(),
+                   e.attribute("name").toUtf8().data(), e.attribute("time").toFloat(),
+                   failureElements.size(), failureElements.size() == 1 ? "error" : "errors");
+            QMap<QString, int> count;
+            QStringList messages;
+            for (int j = 0; j < failureElements.size(); ++j) {
+              auto msg = failureElements.item(j).toElement().attribute("message");
+              if (count[msg]++ == 0) {
+                messages << msg;
+              }
+            }
+            for (auto msg: messages) {
+              int c = count[msg];
+              if (c > 1) {
+                printf("  %s [%d times]\n", msg.toUtf8().data(), c);
+              } else {
+                printf("  %s\n", msg.toUtf8().data());
+              }
+            }
+          }
+        }
+      }
+    }
+
+    int runTests(QString match, QString xmlOutput, const char *procName, bool verbose)
     {
       std::vector<const UnitTest::Test*> toRun = filteredTests(match);
       int count = toRun.size();
@@ -147,7 +199,7 @@ namespace UnitTest
         ++index;
         // run the test in a subprocess. Creating a MultiWidgets::Application after one
         // has been destroyed does not work properly.
-        int procExitCode = runOneTest(index, count, test, xmlOutput, procName);
+        int procExitCode = runOneTest(index, count, test, xmlOutput, procName, verbose);
 
         exitCode = std::max(exitCode, procExitCode);
         exitCode = std::max(exitCode, mergeXml(dom, xmlOutput));
@@ -167,6 +219,8 @@ namespace UnitTest
                 match.toUtf8().data());
         return 1;
       }
+
+      printTestReport(dom);
 
       return exitCode;
     }
@@ -210,7 +264,7 @@ namespace UnitTest
 
   int runTests(int argc, char ** argv)
   {
-    QCoreApplication app(argc, argv);
+    auto app = new QCoreApplication(argc, argv);
 
     /// Avoid number separator mess
     setlocale(LC_NUMERIC, "C");
@@ -232,7 +286,10 @@ namespace UnitTest
     QCommandLineOption matchOption("match",
                                    "Run only the tests that match the given regex.",
                                    "REGEX");
-    parser.addOptions({singleOption, listOption, matchOption});
+
+    QCommandLineOption v("v", "Verbose mode. Otherwise suppresses the printing");
+
+    parser.addOptions({singleOption, listOption, matchOption, v});
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -250,7 +307,12 @@ namespace UnitTest
       return listTests();
     }
 
+    bool verbose = parser.isSet("v");
+    if(!verbose)
+      Radiant::setMinimumSeverityLevel(Radiant::SILENT);
+
     QString single = parser.value("single");
+    delete app;
     if(!single.isEmpty()) {
       QStringList parts = single.split("/");
       QString name, suite;
@@ -267,7 +329,7 @@ namespace UnitTest
       }
       return runSingleTest(name, suite, xmlOutput);
     } else {
-      runTests(parser.value("match"), xmlOutput, argv[0]);
+      runTests(parser.value("match"), xmlOutput, argv[0], verbose);
     }
     return 0;
   }

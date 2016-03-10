@@ -202,8 +202,10 @@ macx {
 
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
-  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-self-assign -Wno-overloaded-virtual -Qunused-arguments
-  QMAKE_OBJECTIVE_CFLAGS += -std=c++11 -stdlib=libc++
+  # -Qunused-arguments is for ccache + clang, see
+  # http://petereisentraut.blogspot.fi/2011/05/ccache-and-clang.html
+  QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Qunused-arguments
+  QMAKE_OBJECTIVE_CFLAGS += -std=c++11 -stdlib=libc++ -Qunused-arguments
   QMAKE_LFLAGS += -stdlib=libc++
 
   QMAKE_CFLAGS_WARN_ON =
@@ -222,6 +224,8 @@ macx {
 
   # By default pkg-config support is disabled on OSX, re-enable it here
   QT_CONFIG -= no-pkg-config
+
+  DEFINES += FOLLY_USE_LIBCPP
 }
 
 #
@@ -326,7 +330,10 @@ unix {
     }
   }
 
-  exists($$CORNERSTONE_DEPS_DIR):INCLUDEPATH+=$$CORNERSTONE_DEPS_DIR/include
+  exists($$CORNERSTONE_DEPS_DIR) {
+    QMAKE_CXXFLAGS += -isystem $$CORNERSTONE_DEPS_DIR/include
+    INCLUDEPATH += $$CORNERSTONE_DEPS_DIR/include
+  }
   exists($$CORNERSTONE_DEPS_DIR):LIBS+=-L$$CORNERSTONE_DEPS_DIR/lib
 }
 

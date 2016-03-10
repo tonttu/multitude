@@ -15,6 +15,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QMap>
 
 #include <Nimble/Vector4.hpp>
 
@@ -103,6 +104,11 @@ namespace Radiant
       /// @param alpha Value of alpha (transparency)
       /// @return Corresponding color object
       RADIANT_API static Color fromRGBA(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha = 255u);
+
+      /// Returns all named colors Color recognizes.
+      /// These are CSS Color Module Level 3 - Extended color keywords
+      /// (SVG 1.0 color keywords)
+      RADIANT_API static const QMap<QByteArray, Color> & namedColors();
 
       /// Returns the red color component
       /// @return Value of red

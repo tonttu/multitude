@@ -40,3 +40,6 @@ SOURCES += \
   $$SRC/qobjecthelper.cpp \
   $$SRC/serializer.cpp \
   $$SRC/serializerrunnable.cpp
+
+# flex/bison generates old-style C code
+clang*:QMAKE_CXXFLAGS += -Wno-deprecated-register -Wno-null-conversion

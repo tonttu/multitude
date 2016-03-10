@@ -71,6 +71,7 @@ namespace Radiant {
   static std::set<QString> g_verboseModules;
   static int s_syslogMinSeverity = -1;
   static QByteArray s_syslogIdent;
+  static Severity s_minimumSeverityLevel = INFO;
 
   QString g_appname;
 
@@ -104,6 +105,11 @@ namespace Radiant {
     return g_enableThreadId;
   }
 
+  void setMinimumSeverityLevel(Severity s)
+  {
+    s_minimumSeverityLevel = s;
+  }
+
   void enableVerboseOutput(bool enable, const QString & module)
   {
 
@@ -130,6 +136,9 @@ namespace Radiant {
 
   static void g_output(Severity s, const char * module, const char * msg, va_list& args)
   {
+    if(s < s_minimumSeverityLevel)
+      return;
+
     static bool stderr_is_tty = false, stdout_is_tty = false;
 
 #ifndef RADIANT_WINDOWS

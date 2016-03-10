@@ -28,15 +28,15 @@ namespace Valuable
     /// Converts the target object to a floating point number
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a float
-    virtual float asFloat(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual float asFloat(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
     /// Converts the target object to an integer
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a int
-    virtual int asInt(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual int asInt(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
     /// Converts the target value to a string
     /// @param ok If non-null, *ok is set to true/false on success/error
     /// @return Object as a string
-    virtual QString asString(bool * const ok = 0, Layer layer = LAYER_CURRENT) const;
+    virtual QString asString(bool * const ok = 0, Layer layer = CURRENT_VALUE) const;
 
     /// Sets the value of the target object
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN);

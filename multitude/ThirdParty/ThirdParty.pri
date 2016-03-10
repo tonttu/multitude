@@ -1,9 +1,11 @@
 TEMPLATE = subdirs
 
-SUBDIRS += glbinding
-SUBDIRS += qjson
-SUBDIRS += unittest-cpp
-SUBDIRS += FollyFutures
+
+glwrapper.subdir = $$PWD/glbinding
+qjson.subdir += $$PWD/qjson
+unittests.subdir += $$PWD/unittest-cpp
+folly.subdir += $$PWD/FollyFutures
+
 
 # ADL SDK only has headers, we install them here manually
 adl_headers.path = /src/multitude/ThirdParty/adl_sdk
@@ -14,6 +16,8 @@ adl_headers.files += adl_sdk/adl_structures.h
 
 # Also install this project file
 third_party_project_file.path = /src/multitude/ThirdParty
-third_party_project_file.files += ThirdParty.pro
+third_party_project_file.files += ThirdParty.pri
+
+#todo should probably install also expected etc..
 
 INSTALLS += adl_headers third_party_project_file

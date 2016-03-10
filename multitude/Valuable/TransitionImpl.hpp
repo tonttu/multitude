@@ -1,6 +1,11 @@
 #ifndef VALUABLE_TRANSITION_IMPL_HPP
 #define VALUABLE_TRANSITION_IMPL_HPP
 
+#include "TransitionAnim.hpp"
+#include "TransitionManager.hpp"
+
+#include <Valuable/Attribute.hpp>
+
 namespace Valuable
 {
   /// hasCustomInterpolator<T>::value is true if there is a function:
@@ -17,7 +22,6 @@ namespace Valuable
 
   /// Dispatcher between the default trivial interpolation and custom
   /// interpolator implementation (AttributeT<T>::interpolate)
-  /// @todo make sure we don't use this version with ints
   template <typename T, bool = hasCustomInterpolator<T>::value>
   struct TransitionInterpolator
   {
@@ -40,74 +44,91 @@ namespace Valuable
   /////////////////////////////////////////////////////////////////////////////
 
   template <typename T>
-  TransitionAnimT<T>::TransitionAnimT(AttributeBaseT<T> * t)
-    : m_active(false),
-      m_pos(1.f),
-      m_delaySeconds(0),
-      m_speed(1),
-      m_src(),
-      m_target(),
-      m_attr(t) {}
-
-  template <typename T>
-  void TransitionAnimT<T>::setTarget(T newTarget)
+  void TransitionManagerT<T>::update(TransitionAnim& anim, float dt) const
   {
-    /// @todo handle animation interrupting right
-    m_src = m_attr->m_currentValue;
-    m_target = newTarget;
-    m_pos = -m_delaySeconds * m_speed;
-    m_active = true;
-  }
+    TransitionTypeDataT<T>* tData = static_cast<TransitionTypeDataT<T>*>(anim.typeData());
 
-  template <typename T>
-  void TransitionAnimT<T>::update(float dt)
-  {
-    assert(m_attr);
-    m_pos += dt * m_speed;
-    if (m_pos >= 1.0f) {
-      m_active = false;
-      m_attr->setAnimatedValue(m_target);
-    } else if (m_pos >= 0.0f) {
-      m_attr->setAnimatedValue(TransitionInterpolator<T>::interpolate(m_src, m_target, m_pos));
+    tData->transitionUpdated = true;
+
+    if(tData->deleted) {
+      return;
+    }
+
+    float pos = anim.m_pos + dt * anim.m_speed;
+    if(pos >= 1.f) {
+      tData->attr->setAnimatedValue(tData->target, dt);
+    } else if(pos >= 0.f) {
+      T val = TransitionInterpolator<T>::interpolate(tData->src, tData->target, pos);
+      tData->attr->setAnimatedValue(val, dt);
     }
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
-
   template <typename T>
-  TransitionAnimT<T> * TransitionManagerT<T>::create(AttributeBaseT<T> * attr)
+  TransitionAnim * TransitionManagerT<T>::create(AttributeBaseT<T> * attr, TransitionCurve curve)
   {
     static TransitionManagerT<T> s_mgr;
-    for (auto & v: s_mgr.m_storage) {
-      for (auto & n: v) {
-        if (n.isNull()) {
-          n = TransitionAnimT<T>(attr);
-          return &n;
-        }
-      }
+
+    assert(curve.isValid());
+
+    TransitionAnim* anim = TransitionManager::createAnim(&s_mgr);
+
+    TransitionTypeDataT<T> * tData = new TransitionTypeDataT<T>();
+    tData->attr = attr;
+    anim->setTypeData(tData);
+    anim->setParameters(curve);
+
+    return anim;
+  }
+
+  template <typename T>
+  void TransitionManagerT<T>::setTarget(TransitionAnim* anim, T target)
+  {
+    TransitionTypeDataT<T>* tData = static_cast<TransitionTypeDataT<T>*>(anim->typeData());
+    if(tData->deleted)
+      return;
+
+    tData->transitionUpdated = false;
+    tData->src = tData->attr->value();
+    tData->target = target;
+    anim->m_pos = -anim->m_delaySeconds * anim->m_speed;
+  }
+
+  template <typename T>
+  void TransitionManagerT<T>::remove(TransitionAnim * anim)
+  {
+    TransitionTypeDataT<T>* tData = static_cast<TransitionTypeDataT<T>*>(anim->typeData());
+    if(tData) {
+      assert(tData->attr);
+      tData->deleted = true;
+      tData->attr->updateTransitionPointer(nullptr);
     }
-
-    int size = s_mgr.m_storage.empty() ? 50 : s_mgr.m_storage.rbegin()->size() * 2;
-    s_mgr.m_storage.push_back(std::vector<TransitionAnimT<T>>(size));
-    s_mgr.m_storage.back()[0] = TransitionAnimT<T>(attr);
-    return &s_mgr.m_storage.back()[0];
   }
 
   template <typename T>
-  void TransitionManagerT<T>::remove(TransitionAnimT<T> * anim)
+  void TransitionManagerT<T>::updateTargetAttributePointer(TransitionAnim * anim)
   {
-    /// @todo check if m_storage could be optimized
-    anim->setNull();
+    TransitionTypeDataT<T>* tData = static_cast<TransitionTypeDataT<T>*>(anim->typeData());
+    if(tData) {
+      assert(tData->attr);
+      tData->attr->updateTransitionPointer(anim);
+    }
   }
 
-  template <typename T>
-  void TransitionManagerT<T>::update(float dt)
+  /////////////////////////////////////////////////////////////////////////////
+
+  void TransitionAnim::update(float dt)
   {
-    for (auto & v: m_storage)
-      for (auto & n: v)
-        if (n.isActive())
-          n.update(dt);
+    m_manager->update(*this, dt);
+  }
+
+  void TransitionAnim::remove()
+  {
+    m_manager->remove(this);
+  }
+
+  void TransitionAnim::updateTargetAttributePointer()
+  {
+    m_manager->updateTargetAttributePointer(this);
   }
 }
 

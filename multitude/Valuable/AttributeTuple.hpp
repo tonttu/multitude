@@ -71,9 +71,8 @@ namespace Valuable
     WrappedValue defaultValue() const;
     Layer currentLayer() const;
 
-
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE;
-    virtual QString asString(bool * const ok=nullptr, Layer layer=LAYER_CURRENT) const OVERRIDE;
+    virtual QString asString(bool * const ok=nullptr, Layer layer=CURRENT_VALUE) const OVERRIDE;
 
     virtual bool deserialize(const ArchiveElement &element) OVERRIDE;
 
@@ -83,11 +82,13 @@ namespace Valuable
     virtual bool set(const Nimble::Vector2f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
-    virtual bool set(const StyleValue& value, Layer layer = USER);
+    virtual bool set(const StyleValue& value, Layer layer = USER) override;
 
     virtual bool isChanged() const OVERRIDE;
     virtual void clearValue(Layer layer) OVERRIDE;
     virtual void setAsDefaults() OVERRIDE;
+
+    virtual void setTransitionAnim(float durationSeconds, float delaySeconds) OVERRIDE;
 
     template<typename T> void setSrc(T src);
     template<typename T> void setSrc(const Nimble::Vector2T<T>& v);
@@ -124,9 +125,15 @@ namespace Valuable
     void beginChangeTransaction();
     void endChangeTransaction();
 
+    void handleAnimation(Attribute* att, float dt);
+
     std::array<AttributeT<ElementType>*, N> m_values;
+    std::array<bool, N> m_animated;
+
     bool m_inChangeTransaction;
     bool m_emitChangedAfterTransaction;
+    int m_animationCallbacksCalled;
+    int m_activeAnimations;
   };
 
 
@@ -188,7 +195,9 @@ namespace Valuable
                                     const T& v, bool transit)
     : Attribute(host, name, transit),
       m_inChangeTransaction(false),
-      m_emitChangedAfterTransaction(false)
+      m_emitChangedAfterTransaction(false),
+      m_animationCallbacksCalled(0),
+      m_activeAnimations(0)
   {
     for(int i = 0; i < N; ++i) {
       ElementType e = unwrap(v, t2r(i));
@@ -198,6 +207,10 @@ namespace Valuable
     for(int i = 0; i < N; ++i) {
       m_values[i]->addListener([this] { valuesChanged(); });
       m_values[i]->setOwnerShorthand(this);
+
+      /// @see comments on handleAnimation what problems this causes
+      ///auto f = [this](Valuable::Attribute* ptr, float dt) { handleAnimation(ptr,dt); };
+      ///m_values[i]->onAnimatedValueSet(f);
     }
     setSerializable(false);
   }
@@ -232,6 +245,42 @@ namespace Valuable
   {
     for(int i = 0; i < N; ++i)
       delete m_values[i];
+  }
+
+  template <typename T, typename A>
+  void AttributeTuple<T,A>::handleAnimation(Attribute *attr, float dt)
+  {
+    /// @todo This is not guaranteed to trigger the listeners for every frame.
+    /// The case where transitions of attributes owned by this class are
+    /// modified from other transitions may lead to the cases where the
+    /// calculation of the active animations fail.
+    if(m_animationCallbacksCalled == 0) {
+      m_activeAnimations = 0;
+      for(int i = 0; i < N; ++i) {
+        if(m_values[i]->hasActiveAnimation(dt))
+          ++m_activeAnimations;
+        m_animated[i] = false;
+      }
+    }
+
+    ++m_animationCallbacksCalled;
+
+    for(int i = 0; i < N; ++i) {
+      if(attr == m_values[i]) {
+        m_animated[i] = true;
+      }
+    }
+
+    if(m_animationCallbacksCalled >= m_activeAnimations) {
+      m_animationCallbacksCalled = 0;
+      beginChangeTransaction();
+      for(int i = 0; i < N; ++i) {
+        if(m_animated[i]) {
+          m_values[i]->Valuable::Attribute::emitChange();
+        }
+      }
+      endChangeTransaction();
+    }
   }
 
   template <typename T, typename A>
@@ -492,6 +541,14 @@ namespace Valuable
       expanded[m_values[i]] = value[t2r(i, value.size())];
     }
     return true;
+  }
+
+  template <typename T, typename A>
+  void AttributeTuple<T,A>::setTransitionAnim(float durationSeconds, float delaySeconds)
+  {
+    for(int i = 0; i < N; ++i) {
+      m_values[i]->setTransitionAnim(durationSeconds, delaySeconds);
+    }
   }
 
   template <typename T, typename A>

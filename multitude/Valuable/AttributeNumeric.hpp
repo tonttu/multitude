@@ -41,14 +41,14 @@ namespace Valuable
       {}
 
     /// Converts the numeric value to float
-    virtual float asFloat(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    virtual float asFloat(bool * const ok = nullptr, Attribute::Layer layer = Attribute::CURRENT_VALUE) const OVERRIDE
     {
       if (ok) *ok = true;
       return static_cast<float> (value(layer));
     }
 
     /// Converts the numeric value to integer
-    virtual int asInt(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    virtual int asInt(bool * const ok = nullptr, Attribute::Layer layer = Attribute::CURRENT_VALUE) const OVERRIDE
     {
       if (ok) *ok = true;
       return static_cast<int> (value(layer));
@@ -72,7 +72,7 @@ namespace Valuable
     }
 
     /// Converts the numeric value to string
-    virtual QString asString(bool * const ok = nullptr, Attribute::Layer layer = Attribute::LAYER_CURRENT) const OVERRIDE
+    virtual QString asString(bool * const ok = nullptr, Attribute::Layer layer = Attribute::CURRENT_VALUE) const OVERRIDE
     {
       if (ok) *ok = true;
       return Radiant::StringUtils::toString(value(layer));
