@@ -22,7 +22,6 @@
 #include <Radiant/Directory.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
-#include <Radiant/ResourceLocator.hpp>
 
 #include <sndfile.h>
 #include <cassert>

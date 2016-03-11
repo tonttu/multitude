@@ -41,10 +41,7 @@ namespace Radiant
     if(m_filterFlags & HIDDEN) ff |= QDir::Hidden;
     if(m_filterFlags & SYSTEM) ff |= QDir::System;
  
-    // We must use QFileInfo here to make ResourceLocator work. QDir
-    // constructor will ignore it.
-
-    QDir dir(QFileInfo(m_path).absoluteFilePath(), "", sf, ff);
+    QDir dir(m_path, "", sf, ff);
 
     // Add entries
     QStringList list = dir.entryList();

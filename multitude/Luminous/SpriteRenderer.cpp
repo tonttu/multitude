@@ -14,7 +14,7 @@
 #include <Luminous/Program.hpp>
 #include <Luminous/VertexDescription.hpp>
 
-#include <Radiant/ResourceLocator.hpp>
+#include <QFileInfo>
 
 namespace Luminous {
 
@@ -41,26 +41,18 @@ namespace Luminous {
       /// @todo Share default texture between instances of the renderer
       createFuzzyTexture(64, 0.5f, 0.5f, 0.5f);
 
-      QStringList shaderPaths = Radiant::ResourceLocator::instance()->locate("Luminous/GLSL150");
+      m_program.loadShader("cornerstone:Luminous/GLSL150/sprites.fs", Luminous::Shader::Fragment);
+      m_program.loadShader("cornerstone:Luminous/GLSL150/sprites.vs", Luminous::Shader::Vertex);
+      m_program.loadShader("cornerstone:Luminous/GLSL150/sprites.gs", Luminous::Shader::Geometry);
 
-      if(shaderPaths.isEmpty()) {
-        Radiant::error("SpriteRenderer::SpriteRenderer # Could not locate shaders");
-      }
-      else {
-        const QString shaderPath = shaderPaths.front();
-        m_program.loadShader(shaderPath + "/sprites.fs", Luminous::Shader::Fragment);
-        m_program.loadShader(shaderPath + "/sprites.vs", Luminous::Shader::Vertex);
-        m_program.loadShader(shaderPath + "/sprites.gs", Luminous::Shader::Geometry);
-
-        Luminous::VertexDescription vdescr;
-        vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
-        vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
-        vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
-        vdescr.addAttribute<float>("vertex_rotation");
-        vdescr.addAttribute<float>("vertex_size");
-        m_program.setVertexDescription(vdescr);
-        m_varray.addBinding(m_vbo, vdescr);
-      }
+      Luminous::VertexDescription vdescr;
+      vdescr.addAttribute<Nimble::Vector2f>("vertex_position");
+      vdescr.addAttribute<Nimble::Vector2f>("vertex_velocity");
+      vdescr.addAttribute<Nimble::Vector4f>("vertex_color");
+      vdescr.addAttribute<float>("vertex_rotation");
+      vdescr.addAttribute<float>("vertex_size");
+      m_program.setVertexDescription(vdescr);
+      m_varray.addBinding(m_vbo, vdescr);
 
       // Particles should always pass Z-test since they're drawn on the same depth
       m_depthMode.setFunction(DepthMode::ALWAYS);
