@@ -44,7 +44,7 @@ namespace Radiant
 
     struct Tasks
     {
-      Radiant::Mutex mutex;
+      std::mutex mutex;
       std::unordered_map<JobId, std::shared_ptr<FuncTask>> tasks;
     };
   }  // unnamed namespace
@@ -62,13 +62,13 @@ namespace Radiant
       auto kill = [weakTasks, key] {
         auto ptr = weakTasks.lock();
         if(ptr) {
-          Guard guard(ptr->mutex);
+          std::lock_guard<std::mutex> g(ptr->mutex);
           ptr->tasks.erase(key);
         }
       };
       auto taskPtr = std::make_shared<FuncTask>(func, priority, std::move(kill));
       {
-        Guard guard(m_tasks->mutex);
+        std::lock_guard<std::mutex> g(m_tasks->mutex);
         m_tasks->tasks.emplace(key, taskPtr);
       }
       if(!m_bgThread->isRunning()) {
@@ -83,7 +83,8 @@ namespace Radiant
     {
       std::shared_ptr<FuncTask> ptr;
       {
-        Guard guard(m_tasks->mutex);
+        std::lock_guard<std::mutex> g(m_tasks->mutex);
+
         auto it = m_tasks->tasks.find(id);
         if(it == m_tasks->tasks.end()) {
           return false;

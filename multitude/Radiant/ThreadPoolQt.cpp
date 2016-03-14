@@ -9,7 +9,6 @@
  */
 
 #include "ThreadPool.hpp"
-#include "Mutex.hpp"
 
 #include <QThread>
 #include <QMap>
@@ -42,7 +41,7 @@ namespace Radiant {
       void run()
       {
         {
-          Radiant::Guard g(m_private.m_mutex);
+          std::lock_guard<std::mutex> g(m_private.m_mutex);
           if(m_private.m_threads[this] == STOPPING) {
             m_private.m_threads[this] = STOPPED;
             return;
@@ -53,7 +52,7 @@ namespace Radiant {
 
         m_private.m_threadPool.childLoop();
 
-        Radiant::Guard g(m_private.m_mutex);
+        std::lock_guard<std::mutex> g(m_private.m_mutex);
         m_private.m_threads[this] = STOPPED;
       }
 
@@ -65,7 +64,7 @@ namespace Radiant {
     ~Private()
     {
       // But there really shouldn't be anybody else doing anything anymore!
-      Radiant::Guard g(m_mutex);
+      std::lock_guard<std::mutex> g(m_mutex);
       foreach(QThread * thread, m_threads.keys())
         delete thread;
     }
@@ -73,7 +72,7 @@ namespace Radiant {
     bool setThreads(int number)
     {
       bool signal = false;
-      Radiant::Guard g(m_mutex);
+      std::lock_guard<std::mutex> g(m_mutex);
 
       /// Delete old threads
       QMutableMapIterator<QThread*, ThreadState> it(m_threads);
@@ -135,7 +134,7 @@ namespace Radiant {
       return num;
     }
 
-    Radiant::Mutex m_mutex;
+    std::mutex m_mutex;
     ThreadPool & m_threadPool;
     Threads m_threads;
   };
@@ -176,18 +175,18 @@ namespace Radiant {
 
   int ThreadPool::threads() const
   {
-    Radiant::Guard g(m_p->m_mutex);
+    std::lock_guard<std::mutex> g(m_p->m_mutex);
     return m_p->threadCount();
   }
 
   bool ThreadPool::running() const
   {
-    Radiant::Guard g(m_p->m_mutex);
+    std::lock_guard<std::mutex> g(m_p->m_mutex);
     return m_p->m_threads[QThread::currentThread()] == RUNNING;
   }
 
   void ThreadPool::wakeAll()
   {
-    m_wait.wakeAll(m_mutexWait);
+    m_wait.notify_all();
   }
 }

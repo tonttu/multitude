@@ -13,8 +13,6 @@
 
 #include <Radiant/Export.hpp>
 #include <Radiant/Task.hpp>
-#include <Radiant/Condition.hpp>
-#include <Radiant/Mutex.hpp>
 #include <Radiant/Singleton.hpp>
 #include <Radiant/ThreadPool.hpp>
 
@@ -130,7 +128,7 @@ namespace Radiant
     container::iterator findTask(TaskPtr task);
 
     void wakeThread();
-    void wakeAll();
+    virtual void wakeAll() override;
 
     /// @todo pimpl
 
@@ -138,11 +136,11 @@ namespace Radiant
     container m_taskQueue;
 
     // a thread is already waiting for these tasks
-    std::set<TaskPtr > m_reserved;
+    std::set<TaskPtr> m_reserved;
 
     // number of idle threads, excluding ones that are reserving a task
     int m_idle;
-    Radiant::Condition m_idleWait;
+    std::condition_variable m_idleWait;
 
     // protected with m_mutexWait
     std::set<TaskPtr> m_runningTasks;
@@ -151,7 +149,7 @@ namespace Radiant
     // protected with m_mutexWait, includes all tasks that should be removed and not rescheduled
     std::set<TaskPtr> m_removeQueue;
     // Use with m_mutexWait
-    Radiant::Condition m_removeCond;
+    std::condition_variable m_removeCond;
 
     bool m_isShuttingDown;
   };

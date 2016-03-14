@@ -50,7 +50,7 @@ namespace Radiant
     if(task->m_host == this) return;
     task->m_host = this;
 
-    Radiant::Guard g(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
     m_taskQueue.insert(contained(task->priority(), task));
     wakeThread();
   }
@@ -63,10 +63,10 @@ namespace Radiant
     if(task->m_host != this)
       return false;
 
-    Radiant::Guard g(m_mutexWait);
+    std::unique_lock<std::mutex> lock(m_mutexWait);
 
     if(m_reserved.find(task) != m_reserved.end())
-      m_wait.wakeAll();
+      m_wait.notify_all();
 
     container::iterator it = findTask(task);
     if(it != m_taskQueue.end()) {
@@ -84,7 +84,7 @@ namespace Radiant
     if (m_runningTasks.count(task) > 0) {
       m_removeQueue.insert(task);
       while (!m_isShuttingDown && m_removeQueue.count(task) > 0) {
-        m_removeCond.wait(m_mutexWait);
+        m_removeCond.wait(lock);
       }
       if (m_isShuttingDown) {
         m_removeQueue.erase(task);
@@ -103,9 +103,9 @@ namespace Radiant
     assert(task);
     if(!task)
       return;
-    Radiant::Guard g(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
-      m_wait.wakeAll();
+      m_wait.notify_all();
     } else {
       wakeThread();
     }
@@ -116,10 +116,10 @@ namespace Radiant
     assert(task);
     if(!task)
       return;
-    Radiant::Guard g(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
     if(m_reserved.find(task) != m_reserved.end()) {
       task->m_priority = p;
-      m_wait.wakeAll();
+      m_wait.notify_all();
     } else {
       if (task->m_priority != p) {
         container::iterator it = findTask(task);
@@ -139,7 +139,7 @@ namespace Radiant
     if(!task)
       return;
 
-    Radiant::Guard g(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
 
     container::iterator it = findTask(task);
     task->setPriority(p);
@@ -149,14 +149,14 @@ namespace Radiant
       m_taskQueue.erase(it);
       m_taskQueue.insert(contained(p, task));
       if(m_reserved.find(task) != m_reserved.end()) {
-        m_wait.wakeAll();
+        m_wait.notify_all();
       } else wakeThread();
     }
   }
 
   unsigned BGThread::taskCount()
   {
-    Radiant::Guard guard(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
     return (unsigned) m_taskQueue.size() + m_runningTasksCount;
   }
 
@@ -167,7 +167,7 @@ namespace Radiant
 
   unsigned int BGThread::overdueTasks() const
   {
-    Radiant::Guard guard(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
 
     unsigned int counter = 0;
 
@@ -182,7 +182,7 @@ namespace Radiant
 
   void BGThread::dumpInfo(FILE * f, int indent)
   {
-    Radiant::Guard guard(m_mutexWait);
+    std::lock_guard<std::mutex> g(m_mutexWait);
 
     if(!f)
       f = stdout;
@@ -231,14 +231,14 @@ namespace Radiant
         task->m_host = 0;
       }
 
-      Radiant::Guard guard(m_mutexWait);
+      std::lock_guard<std::mutex> g(m_mutexWait);
       m_runningTasks.erase(task);
       --m_runningTasksCount;
 
       auto it = m_removeQueue.find(task);
       if (it != m_removeQueue.end()) {
         m_removeQueue.erase(it);
-        m_removeCond.wakeAll();
+        m_removeCond.notify_all();
       } else if (!done) {
         // If we are still running, push the task to the back of the given
         // priority range so that other tasks with the same priority will be
@@ -257,7 +257,7 @@ namespace Radiant
       // otherwise there is a risk of getting a deadlock.
       std::shared_ptr<Task> reservedTask;
 
-      Radiant::Guard guard(m_mutexWait);
+      std::unique_lock<std::mutex> lock(m_mutexWait);
 
       container::iterator nextTask = m_taskQueue.end();
 
@@ -280,7 +280,7 @@ namespace Radiant
 
       if(nextTask == m_taskQueue.end()) {
         ++m_idle;
-        m_idleWait.wait(m_mutexWait);
+        m_idleWait.wait(lock);
         --m_idle;
       } else {
         reservedTask = nextTask->second;
@@ -289,7 +289,8 @@ namespace Radiant
         unsigned int waitTimei =
             waitTimeMs > std::numeric_limits<unsigned int>::max()
             ? std::numeric_limits<unsigned int>::max() - 1 : std::ceil(waitTimeMs);
-        m_wait.wait(m_mutexWait, waitTimei);
+
+        m_wait.wait_for(lock, std::chrono::milliseconds(waitTimei));
         m_reserved.erase(reservedTask);
       }
     }
@@ -324,18 +325,18 @@ namespace Radiant
     // assert(locked)
     // if there is at least one idle thread, we can just wake any of those threads randomly
     if(m_idle > 0)
-      m_idleWait.wakeOne();
+      m_idleWait.notify_one();
     else if(!m_reserved.empty())
       // wake all threads that are reserving any tasks,
       // since those could all be waiting for wrong tasks
-      m_wait.wakeAll();
+      m_wait.notify_all();
     // if there are no idle/reserving threads, then there is no point waking up anybody
   }
 
   void BGThread::wakeAll()
   {
     ThreadPool::wakeAll();
-    m_idleWait.wakeAll();
+    m_idleWait.notify_all();
   }
 
   void BGThread::shutdown()
@@ -346,7 +347,7 @@ namespace Radiant
     std::set<TaskPtr> reserved;
 
     {
-      Radiant::Guard g(m_mutexWait);
+      std::lock_guard<std::mutex> g(m_mutexWait);
 
       // Cancel all tasks
       for(auto & task : m_taskQueue)

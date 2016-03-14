@@ -19,6 +19,7 @@
 #include <Radiant/Sleep.hpp>
 #include <Radiant/Thread.hpp>
 #include <Radiant/Timer.hpp>
+#include <Radiant/Condition.hpp>
 
 #include <Valuable/AttributeBool.hpp>
 #include <Valuable/AttributeEnum.hpp>

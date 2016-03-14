@@ -12,9 +12,11 @@
 #define RADIANT_THREADPOOL_HPP
 
 #include "Export.hpp"
-#include "Condition.hpp"
 
 #include <Patterns/NotCopyable.hpp>
+
+#include <mutex>
+#include <condition_variable>
 
 namespace Radiant {
 
@@ -81,9 +83,9 @@ namespace Radiant {
 
     /// Every time when we want to delete a thread, this condition variable
     /// will signaled.
-    Radiant::Condition m_wait;
+    std::condition_variable m_wait;
     /// Mutex to be used with m_wait.
-    mutable Radiant::Mutex m_mutexWait;
+    mutable std::mutex m_mutexWait;
 
   private:
     class Private;
