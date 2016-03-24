@@ -19,6 +19,8 @@
 #include <Radiant/Trace.hpp>
 #include <memory>
 
+#include <Punctual/TaskScheduler.hpp>
+
 #include <algorithm>
 #include <typeinfo>
 #include <cstring>
@@ -854,6 +856,11 @@ namespace Valuable
 #endif
   int Node::processQueue()
   {
+    /// Which should be first?
+    auto exec = Punctual::TaskScheduler::instance()->afterUpdate();
+    /// @todo should we have some 'max' parameter for manual executor?
+    exec->run();
+
     {
       Radiant::Guard g(s_processingQueueMutex);
       s_processingQueue = true;

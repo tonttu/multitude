@@ -98,6 +98,7 @@ INCLUDEPATH += $$PWD/ThirdParty/qjson/include
 INCLUDEPATH += $$PWD/ThirdParty/unittest-cpp
 INCLUDEPATH += $$PWD/ThirdParty/FollyFutures
 
+LIB_PUNCTUAL = -lPunctual$${CORNERSTONE_LIB_SUFFIX}
 LIB_FOLLY_FUTURES = -lFollyFutures$${CORNERSTONE_LIB_SUFFIX}
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}

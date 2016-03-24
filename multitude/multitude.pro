@@ -17,8 +17,13 @@ SUBDIRS += Nimble
 SUBDIRS += Radiant
 Radiant.depends = Nimble folly
 
+# Make executors separate so that this can be dependency for different
+# subcomponents (like Luminous for render threads, Valuable for after events)
+SUBDIRS += Punctual
+Punctual.depends = folly Radiant
+
 SUBDIRS += Valuable
-Valuable.depends = Radiant Nimble
+Valuable.depends = Radiant Nimble Punctual folly
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
