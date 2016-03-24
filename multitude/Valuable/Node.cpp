@@ -858,10 +858,8 @@ namespace Valuable
   {
     /// Which should be first?
     auto exec = Punctual::TaskScheduler::instance()->afterUpdate();
-    auto man = std::dynamic_pointer_cast<folly::ManualExecutor>(exec);
-    assert(man);
-    /// @todo should have some 'max' parameter for manual executor
-    man->run();
+    /// @todo should we have some 'max' parameter for manual executor?
+    exec->run();
 
     {
       Radiant::Guard g(s_processingQueueMutex);

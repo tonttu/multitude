@@ -8,7 +8,7 @@ namespace Punctual
   {
   }
 
-  folly::ExecutorPtr TaskScheduler::afterUpdate()
+  std::shared_ptr<folly::ManualExecutor> TaskScheduler::afterUpdate()
   {
     return m_afterUpdate;
   }

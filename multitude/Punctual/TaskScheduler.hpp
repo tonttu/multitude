@@ -3,7 +3,6 @@
 
 #include "Export.hpp"
 
-#include <folly/Executor.h>
 #include <folly/futures/ManualExecutor.h>
 
 #include <Radiant/Singleton.hpp>
@@ -16,8 +15,11 @@ namespace Punctual
     DECLARE_SINGLETON(TaskScheduler);
   public:
 
-    /// @todo Should probably have better protection for this.
-    folly::ExecutorPtr afterUpdate();
+    /// Do not manually run this (only in Node::processQueue)
+    /// @todo consider this API, should we protect direct address
+    /// to executors some clever way -- the challenge is that in order
+    /// to work with folly::Futures there must be way accessable executor)
+    std::shared_ptr<folly::ManualExecutor> afterUpdate();
 
   private:
     TaskScheduler();
