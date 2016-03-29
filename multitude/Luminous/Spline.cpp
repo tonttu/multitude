@@ -405,7 +405,7 @@ namespace Luminous {
 
     /// @todo what color to use here?
     const float opacity = r.opacity();
-    b.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
+    b.uniform->color = Radiant::Color(opacity, opacity, opacity, opacity);
     b.uniform->time = time;
     b.uniform->depth = b.depth;
   }
