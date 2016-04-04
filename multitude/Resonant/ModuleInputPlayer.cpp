@@ -217,6 +217,7 @@ namespace Resonant
           // Radiant::warning("ModuleInputPlayer::process # Buffer underrun (%d frames)", n - size);
         }
       } else if (gain < 0.001f) {
+        input.consume(std::min(n, input.size()));
         std::fill_n(output, n, 0);
       } else {
         int remaining = n;
