@@ -3,7 +3,8 @@ include(../multitude.pri)
 unix: PKGCONFIG += sndfile portaudio-2.0
 
 HEADERS += AudioFileHandler.hpp \
-    LimiterAlgorithm.hpp
+    LimiterAlgorithm.hpp \
+    ModuleInputPlayer.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
@@ -21,7 +22,8 @@ HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
 SOURCES += AudioFileHandler.cpp \
-    LimiterAlgorithm.cpp
+    LimiterAlgorithm.cpp \
+    ModuleInputPlayer.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
