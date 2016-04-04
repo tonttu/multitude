@@ -36,6 +36,13 @@ namespace Resonant
 
     // One buffer per channel
     std::vector<Radiant::BlockRingBuffer<float>> m_buffers;
+
+    // Configurable maximum latency (in frames)
+    int m_maxLatency = 0.020 * s_sampleRate;
+
+    // Measured minimum latency == extra buffer size
+    int m_minLatency = 0;
+    int m_latencyFrames = 0;
   };
 
   PaStreamCallbackResult ModuleInputPlayer::D::capture(const float * const * input, unsigned long frameCount,
@@ -151,6 +158,16 @@ namespace Resonant
     return m_d->m_gain;
   }
 
+  void ModuleInputPlayer::setMaxLatency(float secs)
+  {
+    m_d->m_maxLatency = std::round(secs * s_sampleRate);
+  }
+
+  float ModuleInputPlayer::maxLatency() const
+  {
+    return m_d->m_maxLatency / s_sampleRate;
+  }
+
   bool ModuleInputPlayer::prepare(int & channelsIn, int & channelsOut)
   {
     if (m_d->m_stream) {
@@ -165,6 +182,29 @@ namespace Resonant
 
   void ModuleInputPlayer::process(float **, float ** out, int n, const CallbackTime &)
   {
+    if (m_d->m_channels > 0) {
+      const int latencyCheckSecs = 3;
+
+      if (m_d->m_latencyFrames == 0) {
+        m_d->m_minLatency = m_d->m_buffers[0].size();
+        m_d->m_latencyFrames = n;
+      } else {
+        m_d->m_minLatency = std::min(m_d->m_buffers[0].size(), m_d->m_minLatency);
+        m_d->m_latencyFrames += n;
+      }
+
+      if (m_d->m_latencyFrames >= s_sampleRate * latencyCheckSecs) {
+        m_d->m_latencyFrames = 0;
+
+        if (m_d->m_minLatency > m_d->m_maxLatency) {
+          // Drop frames to reduce latency
+          for (auto & input: m_d->m_buffers) {
+            input.consume(m_d->m_minLatency - m_d->m_maxLatency);
+          }
+        }
+      }
+    }
+
     for (int c = 0; c < m_d->m_channels; ++c) {
       auto & input = m_d->m_buffers[c];
       float * output = out[c];

@@ -27,8 +27,13 @@ namespace Resonant
     /// Synchronously closes the input source
     void close();
 
-    void setGain(float gain);
     float gain() const;
+    void setGain(float gain);
+
+    /// Target maximum latency in seconds, the lower the latency, the more
+    /// expected buffer underruns.
+    float maxLatency() const;
+    void setMaxLatency(float secs);
 
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time) OVERRIDE;

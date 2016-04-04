@@ -130,7 +130,6 @@ namespace Radiant
       return m_size;
     }
 
-  private:
     void consume(int count)
     {
       m_reader = (m_reader + count) % m_buffer.size();
