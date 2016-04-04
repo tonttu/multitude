@@ -125,11 +125,15 @@ namespace Radiant
       return Reader(*this, m_buffer.data() + m_reader, count);
     }
 
+    /// Returns the number of elements in the buffer. Can be called from all threads.
     int size() const
     {
       return m_size;
     }
 
+    /// Consumes exactly count elements from the buffer. Can be called only
+    /// from the reader thread.
+    /// @param count number of elements to consume, must not be bigger than size().
     void consume(int count)
     {
       m_reader = (m_reader + count) % m_buffer.size();

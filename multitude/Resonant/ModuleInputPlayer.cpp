@@ -5,6 +5,10 @@
 #include <portaudio.h>
 
 static const int s_sampleRate = 44100;
+static const float s_bufferSizeSecs = .5f;
+
+// Uncomment if you want to see buffer underrun or overflow errors
+// #define BUFFER_WARNINGS
 
 namespace
 {
@@ -52,10 +56,12 @@ namespace Resonant
     for (int c = 0; c < m_channels; ++c) {
       int wrote = m_buffers[c].write(input[c], frameCount);
       (void)wrote;
-      /*if (wrote != frameCount) {
+#ifdef BUFFER_WARNINGS
+      if (wrote != frameCount) {
         Radiant::warning("ModuleInputPlayer::D::capture # Buffer overflow (%d frames)",
                          frameCount - wrote);
-      }*/
+      }
+#endif
     }
     return paContinue;
   }
@@ -173,7 +179,7 @@ namespace Resonant
     if (m_d->m_stream) {
       channelsIn = 0;
       channelsOut = m_d->m_channels;
-      m_d->m_buffers.resize(m_d->m_channels, 0.3 * s_sampleRate);
+      m_d->m_buffers.resize(m_d->m_channels, s_bufferSizeSecs * s_sampleRate);
       return true;
     } else {
       return false;
@@ -210,18 +216,28 @@ namespace Resonant
       float * output = out[c];
       const float gain = m_d->m_gain;
 
+      // If gain is close to one, we can just directly memcpy the data to output,
+      // which can be a performance gain.
       if (std::abs(gain-1.0) < 0.001f) {
         int size = input.read(output, n);
         if (size < n) {
           std::fill_n(output + size, n - size, 0);
-          // Radiant::warning("ModuleInputPlayer::process # Buffer underrun (%d frames)", n - size);
+#ifdef BUFFER_WARNINGS
+          Radiant::warning("ModuleInputPlayer::process # Buffer underrun (%d frames)", n - size);
+#endif
         }
       } else if (gain < 0.001f) {
+        // If the gain is close to zero, we can just consume the buffer and
+        // fill the output with zeroes. If we wouldn't consume the buffer,
+        // there would be old data there when we set gain back to non-zero
         input.consume(std::min(n, input.size()));
         std::fill_n(output, n, 0);
       } else {
         int remaining = n;
 
+        // Normal case is when gain is something else than zero or one, and we
+        // need to multiple every sample with the gain. Do this using the reader
+        // object, which allows us to make the whole thing without an extra copy.
         while (remaining > 0) {
           auto reader = input.read(remaining);
           if (reader.size() == 0) break;
@@ -234,7 +250,9 @@ namespace Resonant
 
         if (remaining > 0) {
           std::fill_n(output, remaining, 0);
-          // Radiant::warning("ModuleInputPlayer::process # Buffer underrun (%d frames)", remaining);
+#ifdef BUFFER_WARNINGS
+          Radiant::warning("ModuleInputPlayer::process # Buffer underrun (%d frames)", remaining);
+#endif
         }
       }
     }
