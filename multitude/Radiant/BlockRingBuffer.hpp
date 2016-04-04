@@ -58,6 +58,7 @@ namespace Radiant
       : m_buffer(capacity)
     {}
 
+    /// Copies the object, not thread-safe
     BlockRingBuffer(const BlockRingBuffer & o)
       : m_buffer(o.m_buffer)
       , m_reader(o.m_reader)
@@ -66,6 +67,7 @@ namespace Radiant
     {
     }
 
+    /// Copies the object, not thread-safe
     BlockRingBuffer & operator=(const BlockRingBuffer & o)
     {
       m_buffer = o.m_buffer;
