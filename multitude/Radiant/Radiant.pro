@@ -1,7 +1,8 @@
 
 include(../multitude.pri)
 
-HEADERS += ArrayMap.hpp
+HEADERS += ArrayMap.hpp \
+    BlockRingBuffer.hpp
 HEADERS += CommandLineArguments.hpp
 HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
