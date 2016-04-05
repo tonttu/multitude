@@ -47,12 +47,20 @@ namespace Resonant
     // Measured minimum latency == extra buffer size
     int m_minLatency = 0;
     int m_latencyFrames = 0;
+
+    // Set to true in prepare() once all buffers have been initialized and
+    // ready for use
+    std::atomic<bool> m_buffersInitialized{false};
   };
 
   PaStreamCallbackResult ModuleInputPlayer::D::capture(const float * const * input, unsigned long frameCount,
                                                        const PaStreamCallbackTimeInfo *,
                                                        PaStreamCallbackFlags)
   {
+    if (!m_buffersInitialized) {
+      return paContinue;
+    }
+
     for (int c = 0; c < m_channels; ++c) {
       int wrote = m_buffers[c].write(input[c], frameCount);
       (void)wrote;
@@ -180,6 +188,7 @@ namespace Resonant
       channelsIn = 0;
       channelsOut = m_d->m_channels;
       m_d->m_buffers.resize(m_d->m_channels, s_bufferSizeSecs * s_sampleRate);
+      m_d->m_buffersInitialized = true;
       return true;
     } else {
       return false;
