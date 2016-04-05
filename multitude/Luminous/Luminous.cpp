@@ -33,6 +33,9 @@
 
 namespace Luminous
 {
+  Radiant::Mutex s_glVersionMutex;
+  OpenGLVersion s_glVersion;
+
   bool isSampleShadingSupported()
   {
 #if defined(RADIANT_OSX_YOSEMITE) || defined(RADIANT_OSX_EL_CAPITAN)
@@ -93,16 +96,20 @@ namespace Luminous
         const char * glvendor = (const char *) glGetString(GL_VENDOR);
         const char * glver = (const char *) glGetString(GL_VERSION);
         const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+        const char * renderer = (const char *) glGetString(GL_RENDERER);
 
-        Radiant::info("OpenGL vendor: %s (OpenGL version: %s)", glvendor, glver);
+        Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
 
-        if (glsl) {
-          Radiant::info("GLSL: %s", glsl);
-        } else {
+        if (!glsl) {
           Radiant::error("GLSL not supported");
           s_ok = false;
         }
 
+        Radiant::Guard g(s_glVersionMutex);
+        s_glVersion.vendor = glvendor ? QByteArray(glvendor) : QByteArray();
+        s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
+        s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
+        s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
       } // MULTI_ONCE
       if(s_ok)
         s_luminousInitialized = true;
@@ -160,6 +167,12 @@ namespace Luminous
 #endif
 
     } // MULTI_ONCE
+  }
+
+  OpenGLVersion glVersion()
+  {
+    Radiant::Guard g(s_glVersionMutex);
+    return s_glVersion;
   }
 
 }
