@@ -180,6 +180,7 @@ linux-*{
     error("$$QMAKE_CXX is too old, need at least g++ 4.6")
   }
 
+  LIB_RADIANT += -lrt
   *clang* | *g++* {
 
     # Include debug symbols in release builds on Linux so we can use them with

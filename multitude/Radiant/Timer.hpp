@@ -13,7 +13,18 @@
 
 #include "Export.hpp"
 
+
+#if defined(__GNUC__) && (__GNUC__ < 4 || ( \
+    __GNUC__ == 4 && ( \
+      __GNUC_MINOR__ < 8 || (__GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ < 1) \
+    ) \
+  ))
+#include <cmath>
+#include <time.h>
+#else
+#define RADIANT_TIMER_USE_CHRONO
 #include <chrono>
+#endif
 
 namespace Radiant
 {
@@ -50,7 +61,11 @@ namespace Radiant
     inline double time() const;
 
   private:
+#ifdef RADIANT_TIMER_USE_CHRONO
     std::chrono::time_point<std::chrono::steady_clock> m_startTime;
+#else
+    timespec m_startTime;
+#endif
   };
 
   Timer::Timer()
@@ -58,6 +73,7 @@ namespace Radiant
     start();
   }
 
+#ifdef RADIANT_TIMER_USE_CHRONO
   void Timer::start(double fromNowSeconds)
   {
     m_startTime = std::chrono::steady_clock::now();
@@ -75,6 +91,36 @@ namespace Radiant
     return std::chrono::duration_cast<std::chrono::duration<double>>(
         std::chrono::steady_clock::now() - m_startTime).count();
   }
+#undef RADIANT_TIMER_USE_CHRONO
+#else
+  void Timer::start(double fromNowSeconds)
+  {
+    // ignoring error checking on purpose, we should just use std::chrono in the future
+    clock_gettime(CLOCK_MONOTONIC, &m_startTime);
+    if(fromNowSeconds != 0.0) {
+      // std::round is not available on gcc 4.7
+      time_t secs = round(fromNowSeconds);
+      long nsecs = (fromNowSeconds - secs) * 1e9;
+      m_startTime.tv_sec += secs;
+      // might become more than one second, maybe even become negative if
+      // nsecs is negative because of a rounding error, but we don't care,
+      // it doesn't matter for the other functions.
+      m_startTime.tv_nsec += nsecs;
+    }
+  }
+
+  double Timer::startTime() const
+  {
+    return m_startTime.tv_sec + m_startTime.tv_nsec / 1e9;
+  }
+
+  double Timer::time() const
+  {
+    timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return now.tv_sec - m_startTime.tv_sec + (now.tv_nsec - m_startTime.tv_nsec) / 1e9;
+  }
+#endif
 }
 
 #endif // RADIANT_TIMER_HPP
