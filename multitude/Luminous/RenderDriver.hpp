@@ -44,7 +44,7 @@ namespace Luminous
     virtual ~RenderDriver() {}
 
     // Clear the current framebuffer
-    LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil) = 0;
+    LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil) = 0;
 
     // Draw primitives
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) = 0;

@@ -1046,7 +1046,6 @@ namespace Luminous
     // Stroke should be of constant width, so use drawDonut for the outline
     if(style.hasStroke()) {
       s.setFillColor(style.strokeColor());
-      s.setPremultipliedAlpha(style.hasPremultipliedAlpha());
       drawDonut(center,
                 axis,
                 otherAxisLength,
@@ -1080,7 +1079,7 @@ namespace Luminous
 
     /// @fixme check that these work with already premultiplied colors
     if (style.dropShadowColor().alpha() > 0.0f) {
-      uniform.colorIn = uniform.colorOut = style.dropShadowColor().toPreMultipliedAlpha() * opacity();
+      uniform.colorIn = uniform.colorOut = style.dropShadowColor() * opacity();
       const float blur = style.dropShadowBlur();
       //uniform.outline.make(edge - (blur + strokeWidth) * 0.5f, edge + (blur - strokeWidth) * 0.5f);
       uniform.outline.make(edge - blur * 0.5f - strokeWidth, edge + blur * 0.5f - strokeWidth);
@@ -1088,7 +1087,7 @@ namespace Luminous
     }
 
     if (style.glow() > 0.0f) {
-      uniform.colorIn = uniform.colorOut = style.glowColor().toPreMultipliedAlpha() * opacity();
+      uniform.colorIn = uniform.colorOut = style.glowColor() * opacity();
       uniform.outline.make(edge * (1.0f - style.glow()), edge);
       drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
     }
@@ -1099,8 +1098,8 @@ namespace Luminous
     uniform.split = strokeWidth < 0.000001f ? 0 : edge;
     uniform.outline.make(edge - strokeWidth, edge - strokeWidth);
 
-    uniform.colorIn = style.fillColor().toPreMultipliedAlpha() * opacity();
-    uniform.colorOut = style.strokeColor().toPreMultipliedAlpha() * opacity();
+    uniform.colorIn = style.fillColor() * opacity();
+    uniform.colorOut = style.strokeColor() * opacity();
 
     drawTextImpl(layout, location, Nimble::Vector2f(0, 0), viewRect, style, uniform, fontShader(), model, ignoreVerticalAlign);
   }
@@ -1128,7 +1127,7 @@ namespace Luminous
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid()) {
-        uniform.colorIn = Radiant::Color(group.color).toPreMultipliedAlpha() * opacity();
+        uniform.colorIn = Radiant::ColorPMA(group.color) * opacity();
       }
 
       for (int i = 0; i < int(group.items.size());) {
@@ -1303,7 +1302,7 @@ namespace Luminous
   // All these commands generate a RenderCommand that can be reordered
   //
   //////////////////////////////////////////////////////////////////////////
-  void RenderContext::clear(ClearMask mask, const Radiant::Color & clearColor, double clearDepth, int clearStencil)
+  void RenderContext::clear(ClearMask mask, const Radiant::ColorPMA & clearColor, double clearDepth, int clearStencil)
   {
     m_data->m_driver.clear(mask, clearColor, clearDepth, clearStencil);
   }

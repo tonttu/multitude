@@ -44,6 +44,7 @@ namespace Valuable
       TYPE_FLOAT,   ///< Floating point value, example: 10.0
       TYPE_INT,     ///< Integer value, example:        10
       TYPE_COLOR,   ///< Color value, example:          #fff
+      TYPE_COLOR_PMA, ///< Color value (pre-multiplied alpha), example: 0.7, 0.4, 0.7, 0.9
       TYPE_STRING,  ///< Quoted string, example:        "image.png"
       TYPE_KEYWORD, ///< Unquoted string, example:      transparent
       TYPE_EXPR     ///< Simple expression, example:    calc(100%/3+30px)
@@ -65,6 +66,9 @@ namespace Valuable
       /// Create a color component
       /// @param color value
       Component(const Radiant::Color & color);
+      /// Create a color component
+      /// @param color value
+      Component(const Radiant::ColorPMA & color);
       /// Create a string component
       /// @param string value
       Component(const QString & string);
@@ -108,6 +112,9 @@ namespace Valuable
       /// @returns the component value as color. If the type is not color,
       ///          prints an error and returns a default Radiant::Color()
       Radiant::Color asColor() const;
+      /// @returns the component value as color. If the type is not color,
+      ///          prints an error and returns a default Radiant::ColorPMA()
+      Radiant::ColorPMA asColorPMA() const;
       /// @returns the component value as expression. If the type is not simple
       ///          expression, prints an error and returns a zero
       SimpleExpression asExpr() const;
@@ -146,6 +153,7 @@ namespace Valuable
         float m_float;
         int m_int;
         Radiant::Color * m_color;
+        Radiant::ColorPMA * m_colorPMA;
         QString * m_string;
         QByteArray * m_keyword;
         SimpleExpression * m_expr;
@@ -169,6 +177,9 @@ namespace Valuable
     /// Creates a new StyleValue with one color component
     /// @param color color value
     StyleValue(const Radiant::Color & color);
+    /// Creates a new StyleValue with one color component
+    /// @param color color value
+    StyleValue(const Radiant::ColorPMA & color);
     /// Creates a new StyleValue with one string component
     /// @param string string value
     StyleValue(const QString & string);
@@ -194,6 +205,7 @@ namespace Valuable
     QString asString(int idx = 0) const;
     QByteArray asKeyword(int idx = 0) const;
     Radiant::Color asColor(int idx = 0) const;
+    Radiant::ColorPMA asColorPMA(int idx = 0) const;
     SimpleExpression asExpr(int idx = 0) const;
     ValueType type(int idx = 0) const;
     Attribute::ValueUnit unit(int idx = 0) const;

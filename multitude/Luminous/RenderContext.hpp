@@ -374,7 +374,7 @@ namespace Luminous
       */
     template <typename Vertex, typename UniformBlock>
     RenderBuilder<Vertex, UniformBlock> drawPrimitiveT(Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
-      const Luminous::Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style);
+      const Luminous::Program & shader, const Radiant::ColorPMA & color, float width, const Luminous::Style & style);
 
     /// Draws a rectangle with rectangular hole
     /// @param area Outer rectangle
@@ -660,7 +660,7 @@ namespace Luminous
     /// @param clearColor All values in color buffer will be initialized to this if it is cleared
     /// @param clearDepth All values in depth buffer will be initialized to this if it is cleared
     /// @param clearStencil All values in stencil buffer will be initialized to this if it is cleared
-    void clear(ClearMask mask, const Radiant::Color & clearColor = Radiant::Color(0,0,0,0),
+    void clear(ClearMask mask, const Radiant::ColorPMA & clearColor = Radiant::ColorPMA(0,0,0,0),
                double clearDepth = 1.0, int clearStencil = 0);
 
     /// Adds rendering command to the rendering queue. The difference between this and

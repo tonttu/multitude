@@ -60,7 +60,7 @@ namespace Luminous
     ContextArrayT<QRegion> dirtyRegions;
     Filter m_minFilter, m_magFilter;
     Wrap m_wrap[3];
-    Radiant::Color m_borderColor;
+    Radiant::ColorPMA m_borderColor;
     bool m_mipmapsEnabled;
     // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
     int m_paramsGeneration;
@@ -309,7 +309,7 @@ namespace Luminous
     r = m_d->m_wrap[2];
   }
 
-  void Texture::setBorderColor(const Radiant::Color & color)
+  void Texture::setBorderColor(const Radiant::ColorPMA & color)
   {
     if (m_d->m_borderColor == color)
       return;
@@ -317,7 +317,7 @@ namespace Luminous
     ++m_d->m_paramsGeneration;
   }
 
-  const Radiant::Color & Texture::borderColor() const
+  const Radiant::ColorPMA & Texture::borderColor() const
   {
     return m_d->m_borderColor;
   }

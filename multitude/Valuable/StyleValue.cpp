@@ -71,6 +71,15 @@ namespace Valuable
     m_data.m_color = new Radiant::Color(color);
   }
 
+  StyleValue::Component::Component(const Radiant::ColorPMA & color)
+    : m_data()
+    , m_type(TYPE_COLOR_PMA)
+    , m_unit(Attribute::VU_UNKNOWN)
+    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
+  {
+    m_data.m_colorPMA = new Radiant::ColorPMA(color);
+  }
+
   StyleValue::Component::Component(const QString & string)
     : m_data()
     , m_type(TYPE_STRING)
@@ -103,6 +112,9 @@ namespace Valuable
     switch (m_type) {
     case TYPE_COLOR:
       delete m_data.m_color;
+      break;
+    case TYPE_COLOR_PMA:
+      delete m_data.m_colorPMA;
       break;
     case TYPE_STRING:
       delete m_data.m_string;
@@ -140,6 +152,9 @@ namespace Valuable
       break;
     case TYPE_COLOR:
       m_data.m_color = new Radiant::Color(*component.m_data.m_color);
+      break;
+    case TYPE_COLOR_PMA:
+      m_data.m_colorPMA = new Radiant::ColorPMA(*component.m_data.m_colorPMA);
       break;
     case TYPE_STRING:
       m_data.m_string = new QString(*component.m_data.m_string);
@@ -230,6 +245,8 @@ namespace Valuable
   {
     if (m_type == TYPE_COLOR)
       return *m_data.m_color;
+    if (m_type == TYPE_COLOR_PMA)
+      return m_data.m_colorPMA->toColor();
     if (m_type == TYPE_KEYWORD) {
       Radiant::Color color;
       if (color.set(*m_data.m_keyword)) {
@@ -237,6 +254,22 @@ namespace Valuable
       }
     }
     Radiant::error("StyleValue::Component::asColor # cannot convert %s to color", typeName());
+    return Radiant::Color();
+  }
+
+  Radiant::ColorPMA StyleValue::Component::asColorPMA() const
+  {
+    if (m_type == TYPE_COLOR)
+      return *m_data.m_color;
+    if (m_type == TYPE_COLOR_PMA)
+      return *m_data.m_colorPMA;
+    if (m_type == TYPE_KEYWORD) {
+      Radiant::Color color;
+      if (color.set(*m_data.m_keyword)) {
+        return color;
+      }
+    }
+    Radiant::error("StyleValue::Component::asColorPMA # cannot convert %s to color", typeName());
     return Radiant::Color();
   }
 
@@ -267,6 +300,8 @@ namespace Valuable
       return "int";
     case TYPE_COLOR:
       return "color";
+    case TYPE_COLOR_PMA:
+      return "color-pma";
     case TYPE_STRING:
       return "string";
     case TYPE_KEYWORD:
@@ -292,6 +327,8 @@ namespace Valuable
       return m_data.m_int == v.m_data.m_int;
     case TYPE_COLOR:
       return *m_data.m_color == *v.m_data.m_color;
+    case TYPE_COLOR_PMA:
+      return *m_data.m_colorPMA == *v.m_data.m_colorPMA;
     case TYPE_STRING:
       return *m_data.m_string == *v.m_data.m_string;
     case TYPE_KEYWORD:
@@ -332,6 +369,12 @@ namespace Valuable
   }
 
   StyleValue::StyleValue(const Radiant::Color & color)
+    : m_isUniform(true)
+  {
+    m_components << color;
+  }
+
+  StyleValue::StyleValue(const Radiant::ColorPMA & color)
     : m_isUniform(true)
   {
     m_components << color;
@@ -399,6 +442,11 @@ namespace Valuable
   Radiant::Color StyleValue::asColor(int idx) const
   {
     return m_components[idx].asColor();
+  }
+
+  Radiant::ColorPMA StyleValue::asColorPMA(int idx) const
+  {
+    return m_components[idx].asColorPMA();
   }
 
   SimpleExpression StyleValue::asExpr(int idx) const
@@ -501,6 +549,9 @@ namespace Valuable
                arg(c.green(), 2, 16, QLatin1Char('0')).
                arg(c.blue(), 2, 16, QLatin1Char('0')).
                arg(c.alpha(), 2, 16, QLatin1Char('0'));
+      } else if(t == TYPE_COLOR_PMA) {
+        out << QString("%1 %2 %3 %4").arg(v.asColorPMA().r).arg(v.asColorPMA().g).
+               arg(v.asColorPMA().b).arg(v.asColorPMA().a);
       } else {
         Radiant::error("StyleValue::stringify # Unknown component type %d (%s)", t, v.typeName());
         continue;

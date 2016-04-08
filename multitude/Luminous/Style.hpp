@@ -94,10 +94,10 @@ namespace Luminous
 
     /// Sets the color of the stroke
     /// @param color stroke color
-    void setColor(const Radiant::Color & color) { m_color = color; }
+    void setColor(const Radiant::ColorPMA & color) { m_color = color; }
     /// Returns the color of the stroke
     /// @return stroke color
-    const Radiant::Color & color() const { return m_color; }
+    const Radiant::ColorPMA & color() const { return m_color; }
 
     /// Set the value of a shader uniform for the stroke program
     /// @param name Name for the uniform
@@ -125,7 +125,7 @@ namespace Luminous
     }
 
   private:
-    Radiant::Color m_color;
+    Radiant::ColorPMA m_color;
     Luminous::Program * m_program;
     std::unique_ptr<std::map<QByteArray, ShaderUniform> > m_uniforms;
     float m_width;
@@ -182,10 +182,10 @@ namespace Luminous
 
     /// Get the fill color
     /// @return fill color
-    const Radiant::Color & color() const { return m_color; }
+    const Radiant::ColorPMA & color() const { return m_color; }
     /// Sets the color of the fill
     /// @param c fill color
-    void setColor(const Radiant::Color & c) { m_color = c; }
+    void setColor(const Radiant::ColorPMA & c) { m_color = c; }
 
     /// Shader program to be used for fill
     /// @return fill shader program
@@ -254,7 +254,7 @@ namespace Luminous
     }
 
   private:
-    Radiant::Color m_color;
+    Radiant::ColorPMA m_color;
     const Luminous::Program * m_program;
 
     std::unique_ptr<std::map<QByteArray, const Texture *> > m_textures;
@@ -270,15 +270,14 @@ namespace Luminous
   class Style
   {
   public:
-    Style() : m_hasPremultipliedAlpha(false) {}
-    Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)), m_hasPremultipliedAlpha(s.m_hasPremultipliedAlpha) {}
-    Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke), m_hasPremultipliedAlpha(s.m_hasPremultipliedAlpha) {}
+    Style() {}
+    Style(Style && s) : m_fill(std::move(s.m_fill)), m_stroke(std::move(s.m_stroke)) {}
+    Style(const Style & s) : m_fill(s.m_fill), m_stroke(s.m_stroke) {}
 
     Style & operator=(Style && s)
     {
       m_fill = std::move(s.m_fill);
       m_stroke = std::move(s.m_stroke);
-      m_hasPremultipliedAlpha = s.m_hasPremultipliedAlpha;
       return *this;
     }
 
@@ -286,7 +285,6 @@ namespace Luminous
     {
       m_fill = s.m_fill;
       m_stroke = s.m_stroke;
-      m_hasPremultipliedAlpha = s.m_hasPremultipliedAlpha;
       return *this;
     }
 
@@ -301,11 +299,11 @@ namespace Luminous
     const Fill & fill() const { return m_fill; }
 
     /// Returns the fill color
-    const Radiant::Color & fillColor() const { return m_fill.color(); }
+    const Radiant::ColorPMA & fillColor() const { return m_fill.color(); }
 
     /// Sets the fill color
     /// @param c Fill color
-    void setFillColor(const Radiant::Color & c) { m_fill.setColor(c); }
+    void setFillColor(const Radiant::ColorPMA & c) { m_fill.setColor(c); }
 
     /// Sets the fill color
     /// @param r Red intensity
@@ -351,10 +349,10 @@ namespace Luminous
 
     /// Sets the stroke color
     /// @param color Stroke color
-    void setStrokeColor(const Radiant::Color & color) { m_stroke.setColor(color); }
+    void setStrokeColor(const Radiant::ColorPMA & color) { m_stroke.setColor(color); }
 
     /// Returns the stroke color of the
-    const Radiant::Color & strokeColor() const { return m_stroke.color(); }
+    const Radiant::ColorPMA & strokeColor() const { return m_stroke.color(); }
 
     /// Sets the width of the stroke
     /// @param width The stroke width
@@ -370,24 +368,19 @@ namespace Luminous
     /// @param texture Texture to be tied with the name
     void setTexture(const QByteArray & name, const Luminous::Texture & texture) { m_fill.setTexture(name, texture); }
 
-    bool hasPremultipliedAlpha() const { return m_hasPremultipliedAlpha; }
-    void setPremultipliedAlpha(bool v) { m_hasPremultipliedAlpha = v; }
-
     bool hasFill() const
     {
-      return m_fill.color().alpha() > 0.f || (m_hasPremultipliedAlpha && !m_fill.color().isZero());
+      return !m_fill.color().isZero();
     }
 
     bool hasStroke() const
     {
-      return m_stroke.width() > 0.f && (m_stroke.color().alpha() > 0.f ||
-                                        (m_hasPremultipliedAlpha && !m_stroke.color().isZero()));
+      return m_stroke.width() > 0.f && !m_stroke.color().isZero();
     }
 
   private:
     Fill m_fill;
     Stroke m_stroke;
-    bool m_hasPremultipliedAlpha;
   };
 
 
@@ -452,11 +445,11 @@ namespace Luminous
     void setGlow(float glow) { m_glow = glow; }
 
     /// Get the text glow color
-    const Radiant::Color & glowColor() const { return m_glowColor; }
+    const Radiant::ColorPMA & glowColor() const { return m_glowColor; }
     /// Set text glow color
-    void setGlowColor(const Radiant::Color & glowColor) { m_glowColor = glowColor; }
-    /// Set text glow color
-    void setGlowColor(float r, float g, float b, float a) { m_glowColor.setRGBA(r, g, b, a); }
+    void setGlowColor(const Radiant::ColorPMA & glowColor) { m_glowColor = glowColor; }
+    /// Set text glow color in non-premultiplied format
+    void setGlowColor(float r, float g, float b, float a) { m_glowColor = Radiant::Color(r, g, b, a); }
 
     /// Get text sharpness
     float textSharpness() const { return m_textSharpness; }
@@ -469,11 +462,11 @@ namespace Luminous
     void setDropShadowBlur(float blur) { m_dropShadowBlur = blur; }
 
     /// Get the drop-shadow color
-    const Radiant::Color & dropShadowColor() const { return m_dropShadowColor; }
+    const Radiant::ColorPMA & dropShadowColor() const { return m_dropShadowColor; }
     /// Set the drop-shadow color
-    void setDropShadowColor(const Radiant::Color & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
-    /// Set the drop-shadow color
-    void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor.setRGBA(r, g, b, a); }
+    void setDropShadowColor(const Radiant::ColorPMA & dropShadowColor) { m_dropShadowColor = dropShadowColor; }
+    /// Set the drop-shadow color in non-premultiplied format
+    void setDropShadowColor(float r, float g, float b, float a) { m_dropShadowColor = Radiant::Color(r, g, b, a); }
 
     /// Get the drop-shadow offset
     const Nimble::Vector2f & dropShadowOffset() const { return m_dropShadowOffset; }
@@ -485,13 +478,13 @@ namespace Luminous
 
     /// from 0 to 1
     float m_glow;
-    Radiant::Color m_glowColor;
+    Radiant::ColorPMA m_glowColor;
 
     float m_textSharpness;
 
     /// from 0 to 1
     float m_dropShadowBlur;
-    Radiant::Color m_dropShadowColor;
+    Radiant::ColorPMA m_dropShadowColor;
     Nimble::Vector2f m_dropShadowOffset;
 
     QFont m_font;

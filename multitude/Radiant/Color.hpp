@@ -163,13 +163,6 @@ namespace Radiant
     /// @param color QColor to be copied
     RADIANT_API Color(const QColor & color);
 
-
-    /// Convert the color from post-multiplied to pre-multiplied alpha mode
-    /// (multiplies red, green and blue components with alpha)
-    /// @returns color with pre-multiplied alpha
-    inline Color toPreMultipliedAlpha() const { return Color(r*a, g*a, b*a, a); }
-
-
     /// Make HSVA color from floats. Valid range for parameters is [0, 1]
     /// @param hue Hue of the color
     /// @param saturation Saturation of the color
@@ -204,8 +197,49 @@ namespace Radiant
     RADIANT_API static const QMap<QByteArray, Color> & namedColors();
 
     inline Nimble::Vector3f rgb() const { return {r, g, b}; }
+
+    inline Nimble::Vector4f toVector() const { return {r, g, b, a}; }
   };
+
+  /// Color that has premultiplied alpha
+  class ColorPMA : public ColorBase<ColorPMA>
+  {
+  public:
+    inline ColorPMA() : ColorBase(0, 0, 0, 1) {}
+
+    /// Construct a color from a string
+    /// @param color Name of the color.
+    /// @sa set
+    inline ColorPMA(const QByteArray & color)
+      : ColorPMA(Color(color)) {}
+
+    inline ColorPMA(const char * color)
+      : ColorPMA(Color(color)) {}
+
+    inline ColorPMA(const Nimble::Vector4f & v)
+      : ColorBase(v.x, v.y, v.z, v.w) {}
+
+    inline ColorPMA(float red, float green, float blue, float alpha = 1.f)
+      : ColorBase(red, green, blue, alpha) {}
+
+    inline ColorPMA(const Color & color)
+      : ColorBase(color.r * color.a, color.g * color.a, color.b * color.a, color.a) {}
+
+    inline Color toColor() const
+    {
+      if (std::abs(a) > std::numeric_limits<float>::epsilon()) {
+        return Color(r / a, g / a, b / a, a);
+      } else {
+        /// @todo what to do here actually?
+        return Color(r, g, b, a);
+      }
+    }
+
+    inline Nimble::Vector4f toVector() const { return {r, g, b, a}; }
+  };
+
   static_assert(sizeof(Color) == sizeof(float) * 4, "Color alignment check");
+  static_assert(sizeof(ColorPMA) == sizeof(float) * 4, "Color alignment check");
 
   inline std::ostream & operator<<(std::ostream & os, const Color & t)
   {
@@ -213,6 +247,16 @@ namespace Radiant
   }
 
   inline std::istream & operator>>(std::istream & is, Color & t)
+  {
+    return is >> t.r >> t.g >> t.b >> t.a;
+  }
+
+  inline std::ostream & operator<<(std::ostream & os, const ColorPMA & t)
+  {
+    return os << t.r << ' ' << t.g << ' ' << t.b << ' ' << t.a;
+  }
+
+  inline std::istream & operator>>(std::istream & is, ColorPMA & t)
   {
     return is >> t.r >> t.g >> t.b >> t.a;
   }

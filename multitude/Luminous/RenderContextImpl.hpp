@@ -82,7 +82,7 @@ namespace Luminous
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::drawPrimitiveT(
     Luminous::PrimitiveType primType, unsigned int indexCount, unsigned int vertexCount,
-    const Program & shader, const Radiant::Color & color, float width, const Luminous::Style & style)
+    const Program & shader, const Radiant::ColorPMA & color, float width, const Luminous::Style & style)
   {
     /// @todo Should we be able to overrule this with Style::Translucent
     bool translucent = shader.translucent() || (color.a * opacity() < 0.99999999f) ||
@@ -93,7 +93,7 @@ namespace Luminous
                                           style.fill().uniforms());
 
     // Set the color and apply opacity
-    b.uniform->color = (style.hasPremultipliedAlpha() ? color : color.toPreMultipliedAlpha()) * opacity();
+    b.uniform->color = color * opacity();
     // Set default depth
     b.uniform->depth = b.depth;
 

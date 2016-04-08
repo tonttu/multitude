@@ -47,7 +47,7 @@ namespace Luminous {
       /** The velocity information is used to implement motion blur/stretching. */
       Nimble::Vector2f velocity;
       /// The color of the sprite
-      Radiant::Color color;
+      Radiant::ColorPMA color;
       /// The rotation of the sprite
       float rotation;
       /// The size (diameter) of the particle.

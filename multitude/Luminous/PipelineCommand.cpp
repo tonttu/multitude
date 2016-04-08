@@ -13,7 +13,7 @@
 namespace Luminous
 {
 
-  CommandClearGL::CommandClearGL(Luminous::ClearMask clearMask, const Radiant::Color & clearColor, float clearDepth, int clearStencil)
+  CommandClearGL::CommandClearGL(Luminous::ClearMask clearMask, const Radiant::ColorPMA & clearColor, float clearDepth, int clearStencil)
     : m_clearMask(clearMask)
     , m_clearColor(clearColor)
     , m_clearDepth(clearDepth)
