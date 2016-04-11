@@ -52,10 +52,11 @@ namespace Valuable
     ~AttributeT()
     {}
 
+    /// Sets the attribute color in non-premultiplied format
     bool set(const Nimble::Vector4f & color, Layer layer = USER,
              QList<ValueUnit> = QList<ValueUnit>()) OVERRIDE
     {
-      this->setValue(Radiant::ColorPMA(color.x, color.y, color.z, color.w), layer);
+      this->setValue(Radiant::Color(color.x, color.y, color.z, color.w), layer);
       return true;
     }
 
@@ -92,13 +93,13 @@ namespace Valuable
     /// Converts the value object to color
     Radiant::ColorPMA asColor() const { return value(); }
 
-    /// Returns the red comoponent of the color (0-1).
+    /// Returns the premultiplied red component of the color (0-1).
     inline float red() const   { return value().r; }
-    /// Returns the green comoponent of the color (0-1).
+    /// Returns the premultiplied green component of the color (0-1).
     inline float green() const { return value().g; }
-    /// Returns the blue comoponent of the color (0-1).
+    /// Returns the premultiplied blue component of the color (0-1).
     inline float blue() const  { return value().b; }
-    /// Returns the alpha comoponent of the color (0-1).
+    /// Returns the alpha component of the color (0-1).
     inline float alpha() const { return value().a; }
   };
   typedef AttributeT<Radiant::ColorPMA> AttributeColor;
