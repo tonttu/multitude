@@ -91,31 +91,38 @@ namespace Resonant
     }
   }
 
-  bool ModuleInputPlayer::open(const QString & deviceName)
+  ModuleInputPlayer::OpenResult ModuleInputPlayer::open(const QString & deviceName, QString * error)
   {
     if (!m_d->m_initialized) {
       PaError e = Pa_Initialize();
       if(e == paNoError) {
         m_d->m_initialized = true;
       } else {
-        Radiant::error("ModuleInputPlayer::open # %s", Pa_GetErrorText(e));
-        return false;
+        if (error) {
+          *error = Pa_GetErrorText(e);
+        }
+        return OpenResult::PA_INIT_ERROR;
       }
     }
 
     PaStreamParameters params;
     params.device = findPaDeviceIndex(deviceName);
     if (params.device < 0) {
-      Radiant::error("ModuleInputPlayer::open # Failed to find portaudio stream for device %s",
-                     deviceName.toUtf8().data());
-      return false;
+      if (error) {
+        *error = QString("Failed to find portaudio stream for device %1").
+            arg(deviceName);
+      }
+      return OpenResult::PA_DEVICE_NOT_FOUND;
     }
 
     const PaDeviceInfo * info = Pa_GetDeviceInfo(params.device);
 
     if (info->maxInputChannels <= 0) {
-      Radiant::error("ModuleInputPlayer::open # Device %s doesn't have any input channels", info->name);
-      return false;
+      if (error) {
+        *error = QString("Device %1 doesn't have any input channels").
+            arg(info->name);
+      }
+      return OpenResult::NO_INPUT_CHANNELS;
     }
 
     m_d->m_channels = info->maxInputChannels;
@@ -135,22 +142,26 @@ namespace Resonant
     PaError e = Pa_OpenStream(&m_d->m_stream, &params, nullptr, s_sampleRate, 0,
                               paClipOff, callback, m_d.get());
     if (e != paNoError) {
-      Radiant::error("ModuleInputPlayer::open # Failed to open %s: %s",
-                     info->name, Pa_GetErrorText(e));
+      if (error) {
+        *error = QString("Failed to open %1: %2").
+            arg(info->name, Pa_GetErrorText(e));
+      }
       m_d->m_stream = nullptr;
-      return false;
+      return OpenResult::PA_OPEN_ERROR;
     }
 
     /// @todo Pa_SetStreamFinishedCallback
     e = Pa_StartStream(m_d->m_stream);
     if (e != paNoError) {
-      Radiant::error("ModuleInputPlayer::open # Failed to start stream %s: %s",
-                     info->name, Pa_GetErrorText(e));
+      if (error) {
+        *error = QString("Failed to start stream %1: %2").
+            arg(info->name, Pa_GetErrorText(e));
+      }
       close();
-      return false;
+      return OpenResult::PA_START_ERROR;
     }
 
-    return true;
+    return OpenResult::SUCCESS;
   }
 
   void ModuleInputPlayer::close()

@@ -11,6 +11,17 @@ namespace Resonant
   class RESONANT_API ModuleInputPlayer : public Resonant::Module
   {
   public:
+    enum class OpenResult
+    {
+      SUCCESS,               ///< Device was opened successfully
+      PA_INIT_ERROR,         ///< Pa_Initialize failed
+      PA_DEVICE_NOT_FOUND,   ///< Failed to find PortAudio device with the given name
+      NO_INPUT_CHANNELS,     ///< There are no input channels on the device
+      PA_OPEN_ERROR,         ///< Failed to open PA stream
+      PA_START_ERROR         ///< Failed to start PA stream
+    };
+
+  public:
     /// Constructs an inactive module
     ModuleInputPlayer();
     /// Calls close if the player wasn't closed already
@@ -21,8 +32,8 @@ namespace Resonant
     ///                   ListPortAudioDevices to list them all), or just ALSA
     ///                   name like "hw:2,0" in the same format how PortAudio
     ///                   prints it.
-    /// @returns true if opening succeeded
-    bool open(const QString & deviceName);
+    /// @param errorMessage[out] Error message
+    OpenResult open(const QString & deviceName, QString * errorMessage);
 
     /// Synchronously closes the input source
     void close();
