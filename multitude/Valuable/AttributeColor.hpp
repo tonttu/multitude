@@ -74,11 +74,23 @@ namespace Valuable
     {
       if (v.size() != 1)
         return false;
-      Radiant::Color c;
-      if (c.set(v.stringify().toUtf8())) {
-        this->setValue(c, layer);
+
+      auto & c = v[0];
+
+      if (c.type() == StyleValue::TYPE_COLOR) {
+        this->setValue(c.asColor(), layer);
         return true;
+      } else if (c.type() == StyleValue::TYPE_COLOR_PMA) {
+        this->setValue(c.asColorPMA(), layer);
+        return true;
+      } else if (c.canConvert(StyleValue::TYPE_KEYWORD)) {
+        Radiant::Color tmp;
+        if (tmp.set(c.asKeyword())) {
+          this->setValue(tmp, layer);
+          return true;
+        }
       }
+
       return false;
     }
 
