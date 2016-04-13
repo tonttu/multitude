@@ -791,7 +791,7 @@ namespace Luminous
     if(!m_mipmap.isReady())
       return false;
 
-    if(level > m_maxLevel)
+    if(int(level) > m_maxLevel)
       return false;
 
     const MipmapLevel & imageTex = m_levels[level];

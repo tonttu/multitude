@@ -82,7 +82,7 @@ namespace Radiant
       return m_queueSize;
     }
 
-    int64_t approxItemsQueued(int id) const
+    int64_t approxItemsQueued(std::size_t id) const
     {
       return m_writers[id] - m_readers[id];
     }

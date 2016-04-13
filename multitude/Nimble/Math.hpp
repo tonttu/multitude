@@ -308,7 +308,7 @@ namespace Nimble {
     {
       double mean[] = { 0, 0 };
 
-      for(size_t i=0; i < n; ++i) {
+      for(int i=0; i < n; ++i) {
         mean[0] += values[i][0];
         mean[1] += values[i][1];
       }
@@ -318,7 +318,7 @@ namespace Nimble {
       float covariance[3] = { 0, 0, 0 };
 
 
-      for(size_t i=0; i < n; ++i) {
+      for(int i=0; i < n; ++i) {
         double vx = values[i][0] - mean[0];
         double vy = values[i][1] - mean[1];
 
