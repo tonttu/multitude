@@ -400,7 +400,6 @@ namespace Resonant {
   AudioFileHandler::Handle * AudioFileHandler::readFile
   (const char * filename, long startFrame, Radiant::AudioSampleFormat userFormat)
   {
-    assert(this);
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
     Handle * h = new Handle(this, filename, Radiant::IO_INPUT, startFrame, userFormat);
@@ -426,7 +425,6 @@ namespace Resonant {
    /// The sample format that the application is using.
    Radiant::AudioSampleFormat userFormat)
   {
-    assert(this);
     assert(userFormat == Radiant::ASF_FLOAT32 || userFormat == Radiant::ASF_INT32);
 
 
@@ -457,8 +455,6 @@ namespace Resonant {
 
   void AudioFileHandler::start()
   {
-    assert(this);
-
     if(!m_done)
       return;
 
@@ -469,8 +465,6 @@ namespace Resonant {
 
   void AudioFileHandler::stop()
   {
-    assert(this);
-
     if(m_done)
       return;
 
@@ -495,8 +489,6 @@ namespace Resonant {
 
   void AudioFileHandler::childLoop()
   {  
-    assert(this);
-
 #ifdef __linux__
     {
       // Set real-time scheduler:
@@ -526,8 +518,6 @@ namespace Resonant {
 
   bool AudioFileHandler::update()
   {
-    assert(this);
-
     bool something = false;
 
     {
