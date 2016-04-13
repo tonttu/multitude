@@ -15,10 +15,8 @@ HEADERS += ModuleGain.hpp
 HEADERS += Module.hpp
 HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
-HEADERS += ModulePulseAudio.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
-HEADERS += PulseAudioCore.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
@@ -33,10 +31,8 @@ SOURCES += ModuleFilePlay.cpp
 SOURCES += ModuleGain.cpp
 SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
-SOURCES += ModulePulseAudio.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
-SOURCES += PulseAudioCore.cpp
 SOURCES += SoundRectangle.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
