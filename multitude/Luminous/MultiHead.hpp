@@ -471,7 +471,7 @@ namespace Luminous {
     Valuable::AttributeBool m_glFinish;
     Valuable::AttributeVector2i m_layerSize;
 
-    bool m_edited;
+    bool m_edited = false;
   };
 
 }

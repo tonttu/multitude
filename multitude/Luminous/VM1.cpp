@@ -137,7 +137,7 @@ namespace Luminous
     QByteArray m_writeBuffer;
     Radiant::Mutex m_writeBufferMutex;
 
-    std::atomic<bool> m_requestReconnect;
+    std::atomic<bool> m_requestReconnect { false };
 
     bool m_updateScheduled;
 
@@ -246,8 +246,7 @@ namespace Luminous
       m_reInit("(Initialize IO|Initialize DVI|Copy EDID|Set LEDs|Copy logo|Load EEPROM|Power LCD|Clear timer)... ok"),
       m_reFrameRate("Set ([0-9.]+) Hz frame rate"),
       m_reFailToLock("Failed to lock to DVI input"),
-      m_reClockLost("clock lost"),
-      m_requestReconnect(false)
+      m_reClockLost("clock lost")
   {
     // These are required so that Mushy serialization works
     m_autoSelect.setAllowIntegers(true);

@@ -457,7 +457,6 @@ namespace Luminous
       m_dpi(this, "dpi", 40.053), /* DPI for 55" */
       m_vsync(this, "vsync", true),
       m_glFinish(this, "gl-finish", false),
-      m_edited(false),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
     eventAddIn("graphics-bounds-changed");
