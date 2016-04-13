@@ -4,7 +4,8 @@ unix: PKGCONFIG += sndfile portaudio-2.0
 
 HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
-    ModuleInputPlayer.hpp
+    ModuleBufferPlayer.hpp \
+    PortAudioSource.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
@@ -23,7 +24,8 @@ HEADERS += SoundRectangle.hpp
 
 SOURCES += AudioFileHandler.cpp \
     LimiterAlgorithm.cpp \
-    ModuleInputPlayer.cpp
+    ModuleBufferPlayer.cpp \
+    PortAudioSource.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
