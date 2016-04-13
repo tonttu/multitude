@@ -68,6 +68,7 @@ widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
+unix: QMAKE_CXXFLAGS += -isystem $$PWD/ThirdParty/expected/include
 INCLUDEPATH += $$PWD/ThirdParty/expected/include
 
 withbundles = $$(MULTI_BUNDLES)
