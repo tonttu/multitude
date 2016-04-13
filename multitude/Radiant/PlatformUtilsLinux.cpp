@@ -135,7 +135,7 @@ namespace Radiant
       return file.readAll().trimmed();
     }
     
-    void openFirewallPortTCP(int port, const QString & name)
+    void openFirewallPortTCP(int /*port*/, const QString & /*name*/)
     {
     }
 
