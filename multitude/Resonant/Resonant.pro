@@ -5,7 +5,8 @@ unix: PKGCONFIG += sndfile portaudio-2.0
 HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
     ModuleBufferPlayer.hpp \
-    PortAudioSource.hpp
+    PortAudioSource.hpp \
+    PulseAudioSource.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
@@ -17,13 +18,15 @@ HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
+HEADERS += PulseAudioContext.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
 SOURCES += AudioFileHandler.cpp \
     LimiterAlgorithm.cpp \
     ModuleBufferPlayer.cpp \
-    PortAudioSource.cpp
+    PortAudioSource.cpp \
+    PulseAudioSource.cpp
 SOURCES += AudioLoop.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
@@ -33,6 +36,7 @@ SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
+SOURCES += PulseAudioContext.cpp
 SOURCES += SoundRectangle.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE

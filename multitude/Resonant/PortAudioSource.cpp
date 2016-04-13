@@ -44,7 +44,7 @@ namespace Resonant
       int wrote = buffers[c].write(input[c], frameCount);
       (void)wrote;
 #ifdef BUFFER_WARNINGS
-      if (wrote != frameCount) {
+      if (wrote != frameCount && c == 0) {
         Radiant::warning("PortAudioSource::D::capture # Buffer overflow (%d frames)",
                          frameCount - wrote);
       }
@@ -150,5 +150,10 @@ namespace Resonant
       Pa_CloseStream(m_d->m_stream);
       m_d->m_stream = nullptr;
     }
+  }
+
+  ModuleBufferPlayerPtr PortAudioSource::module() const
+  {
+    return m_d->m_module;
   }
 } // namespace Resonant

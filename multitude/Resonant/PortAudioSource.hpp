@@ -9,7 +9,7 @@ namespace Resonant
   /// to the DSPNetwork. PortAudio will most likely spawn a new thread when using
   /// this class.
   /// First open the source, and then add module() to DSPNetwork manually.
-  class PortAudioSource
+  class RESONANT_API PortAudioSource
   {
   public:
     enum class OpenResult
