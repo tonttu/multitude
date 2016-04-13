@@ -379,3 +379,5 @@ enable-coverage {
     LIBS += -lgcov
   }
 }
+
+*g++*:QMAKE_CXXFLAGS_WARN_ON += -Wextra
