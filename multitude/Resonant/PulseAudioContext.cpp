@@ -135,6 +135,7 @@ namespace Resonant
     Radiant::Mutex m_contextReadyMutex;
     Radiant::Condition m_contextReadyCond;
     bool m_contextReady = false;
+    std::vector<std::function<void()>> m_onReady;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -156,10 +157,19 @@ namespace Resonant
 
   void PulseAudioContext::D::setReady(bool ready)
   {
+    std::vector<std::function<void()>> onReady;
     {
       m_contextReady = ready;
-      m_contextReadyCond.wakeAll(m_contextReadyMutex);
+      Radiant::Guard g(m_contextReadyMutex);
+      if (ready) {
+        std::swap(onReady, m_onReady);
+      }
+      m_contextReadyCond.wakeAll();
     }
+    for (auto & f: onReady) {
+      f();
+    }
+
     if (auto host = m_host.lock()) {
       host->eventSend(ready ? "ready" : "not-ready");
     }
@@ -350,6 +360,22 @@ namespace Resonant
     }
 
     return m_d->m_contextReady;
+  }
+
+  void PulseAudioContext::onReady(std::function<void()> func)
+  {
+    bool run = false;
+    {
+      Radiant::Guard g(m_d->m_contextReadyMutex);
+      if (m_d->m_contextReady) {
+        run = true;
+      } else {
+        m_d->m_onReady.push_back(std::move(func));
+      }
+    }
+    if (run) {
+      func();
+    }
   }
 
   pa_context * PulseAudioContext::paContext() const

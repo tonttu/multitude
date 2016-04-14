@@ -11,6 +11,7 @@
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
 #include "AudioLoopPortAudio.hpp"
+#include "AudioLoopPulseAudio.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
@@ -130,7 +131,7 @@ namespace Resonant {
       m_buffers[i].clear();
   }
 
-  bool DSPNetwork::start(const QString & device)
+  bool DSPNetwork::start(AudioLoopBackend backend)
   {
     Radiant::Guard g(m_startupMutex);
 
@@ -139,8 +140,6 @@ namespace Resonant {
     if(isRunning())
       return false;
 
-    m_devName = device;
-
     // m_continue = true;
 
     int channels = 2;
@@ -148,7 +147,11 @@ namespace Resonant {
       channels = atoi(outchannels);
     }
 
-    m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
+    if (backend == AUDIO_LOOP_PULSE_AUDIO) {
+      m_audioLoop.reset(new AudioLoopPulseAudio(*this, m_collect));
+    } else {
+      m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
+    }
     return m_audioLoop->start(44100, channels);
   }
 

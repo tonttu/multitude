@@ -1,5 +1,6 @@
 #include "PulseAudioSource.hpp"
 #include "PulseAudioContext.hpp"
+#include "AudioLoopPulseAudio.hpp"
 
 #include <Radiant/Timer.hpp>
 
@@ -7,8 +8,6 @@
 
 namespace Resonant
 {
-  std::weak_ptr<PulseAudioContext> s_sharedContext;
-
   class PulseAudioSource::D
   {
   public:
@@ -57,13 +56,7 @@ namespace Resonant
   bool PulseAudioSource::D::prepareContext(QString * errorMsg, double timeoutSecs)
   {
     if (!m_context) {
-      m_context = s_sharedContext.lock();
-    }
-
-    if (!m_context) {
-      m_context = PulseAudioContext::create("Cornerstone audio capture");
-      m_context->start();
-      s_sharedContext = m_context;
+      m_context = AudioLoopPulseAudio::sharedContext();
     }
 
     if (!m_context->waitForReady(timeoutSecs)) {

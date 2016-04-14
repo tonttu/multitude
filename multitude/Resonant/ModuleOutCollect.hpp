@@ -49,7 +49,9 @@ namespace Resonant {
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
 
     /// Access the collected frames, which have been interleaved
-    const float * interleaved() const { return & m_interleaved[0]; }
+    const float * interleaved() const { return m_interleaved; }
+
+    void setInterleavedBuffer(float * buffer) { m_interleaved = buffer ? buffer : m_internalInterleavedBuffer.data(); }
 
     /// Returns the number of channels that are collected by this module
     size_t channels() const { return m_channels; }
@@ -60,7 +62,10 @@ namespace Resonant {
     int  m_subwooferChannel;
     bool m_compressOutput;
     DSPNetwork * m_host;
-    std::vector<float> m_interleaved;
+
+    /// Active interleaved buffer, either m_internalInterleavedBuffer or user-provieded buffer
+    float * m_interleaved = nullptr;
+    std::vector<float> m_internalInterleavedBuffer;
     std::vector<ChannelLimiter> m_limiters;
 
     typedef std::vector<Move> container;

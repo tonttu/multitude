@@ -60,6 +60,7 @@ namespace Resonant
     void addOperation(PaOperationPtr op);
 
     bool waitForReady(double timeoutSecs);
+    void onReady(std::function<void()> func);
 
     pa_context * paContext() const;
 

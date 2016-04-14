@@ -54,6 +54,15 @@ namespace Resonant {
     DECLARE_SINGLETON(DSPNetwork);
   public:
 
+    /// Which AudioLoop backend to use
+    enum AudioLoopBackend
+    {
+      AUDIO_LOOP_DEFAULT,
+
+      AUDIO_LOOP_PORT_AUDIO,
+      AUDIO_LOOP_PULSE_AUDIO
+    };
+
     /** Holds audio sample buffers for inter-module transfer.
 
     Note the lack of destructor. You need to call "clear"
@@ -224,10 +233,10 @@ namespace Resonant {
 
         To get a list of possible sound device names we recommend you use utility application
         ListPortAudioDevices.
-        @param device Device name or empty string for default device
+        @param backend AudioLoop backend
         @return False on error
     */
-    bool start(const QString & device = "");
+    bool start(AudioLoopBackend backend = AUDIO_LOOP_DEFAULT);
 
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
@@ -336,7 +345,6 @@ DSPNetwork::instance().send(control);
 
     std::unique_ptr<AudioLoop> m_audioLoop;
 
-    QString m_devName;
     // bool        m_continue;
 
     int         m_doneCount; // Protected by m_newMutex
