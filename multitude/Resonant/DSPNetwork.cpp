@@ -143,8 +143,13 @@ namespace Resonant {
 
     // m_continue = true;
 
+    int channels = 2;
+    if (auto outchannels = getenv("RESONANT_OUTCHANNELS")) {
+      channels = atoi(outchannels);
+    }
+
     m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
-    return m_audioLoop->start(44100, 8);
+    return m_audioLoop->start(44100, channels);
   }
 
   void DSPNetwork::addModule(ItemPtr item)

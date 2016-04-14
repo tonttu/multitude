@@ -364,12 +364,6 @@ namespace Resonant
   {
     assert(!isRunning());
 
-    const char * chankey = getenv("RESONANT_OUTCHANNELS");
-    int forcechans = -1;
-    if(chankey != 0) {
-      forcechans = atoi(chankey);
-    }
-
     /// List of device/channel request pairs
     /// For example [("Sound Blaster 1", 3), ("Turtle Beach", 2), (7, 1)]
     /// means that channels 0..2 will be mapped to Sound Blaster channels 0..2,
@@ -478,18 +472,6 @@ namespace Resonant
           debugResonant("AudioLoopPortAudio::startReadWrite # Available %d: %s (API = %s)",
                         i, info2->name, apiinfo->name);
         }
-      }
-
-      // int minchans = std::min(info->maxInputChannels, info->maxOutputChannels);
-      int minchans = info->maxOutputChannels;
-
-      if(forcechans > 0) {
-        channels = forcechans;
-      }
-      else if(minchans < channels || (channels != minchans)) {
-        debugResonant("AudioLoopPortAudio::startReadWrite # Expanding to %d channels",
-                      minchans);
-        channels = minchans;
       }
 
       debugResonant("AudioLoopPortAudio::startReadWrite # channels = %d limits = %d %d",
