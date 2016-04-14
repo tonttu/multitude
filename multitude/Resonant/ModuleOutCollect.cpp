@@ -49,7 +49,7 @@ namespace Resonant {
     channelsOut = 0;
 
     channelsIn = (int) m_map.size();
-    m_channels = m_host->outChannels();
+    m_channels = m_host->audioLoop()->outChannels();
 
     /* For debugging purposes you can override (=expand) the number of
        output channels. */

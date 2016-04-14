@@ -49,7 +49,7 @@ namespace Resonant {
       a reference to the shared pointer returned by the DSPNetwork::instance()
       function. It is strongly recommended that you keep a reference to it
       during the lifetime of your application.*/
-  class RESONANT_API DSPNetwork : public AudioLoop
+  class RESONANT_API DSPNetwork
   {
     DECLARE_SINGLETON(DSPNetwork);
   public:
@@ -286,17 +286,19 @@ DSPNetwork::instance().send(control);
 
     std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
+    AudioLoop * audioLoop() { return m_audioLoop.get(); }
+
+    bool isRunning() const { return m_audioLoop ? m_audioLoop->isRunning() : false; }
+
+    /// @cond
+
+    void doCycle(int framesPerBuffer, const CallbackTime & time);
+
+    /// @endcond
+
   private:
     /// Creates an empty DSPNetwork object.
     DSPNetwork();
-
-    virtual int callback(const void *in, void *out,
-                         unsigned long framesPerBuffer,
-                         int streamid,
-                         const PaStreamCallbackTimeInfo & time,
-                         unsigned long flags);
-
-    void doCycle(int, const CallbackTime & time);
 
     void checkNewControl();
     void checkNewItems();
@@ -332,17 +334,12 @@ DSPNetwork::instance().send(control);
     Radiant::BinaryData m_incopy;
     Radiant::Mutex m_inMutex;
 
+    std::unique_ptr<AudioLoop> m_audioLoop;
+
     QString m_devName;
     // bool        m_continue;
-    long        m_frames;
 
     int         m_doneCount; // Protected by m_newMutex
-
-    struct
-    {
-      Radiant::TimeStamp baseTime;
-      int framesProcessed;
-    } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
     mutable Radiant::Mutex m_itemMutex;

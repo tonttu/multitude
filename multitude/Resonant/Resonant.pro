@@ -6,9 +6,9 @@ HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
     ModuleBufferPlayer.hpp \
     PortAudioSource.hpp \
-    PulseAudioSource.hpp
+    PulseAudioSource.hpp \
+    AudioLoopPortAudio.hpp
 HEADERS += AudioLoop.hpp
-HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
 HEADERS += Export.hpp
 HEADERS += ModuleFilePlay.hpp
@@ -26,8 +26,8 @@ SOURCES += AudioFileHandler.cpp \
     LimiterAlgorithm.cpp \
     ModuleBufferPlayer.cpp \
     PortAudioSource.cpp \
-    PulseAudioSource.cpp
-SOURCES += AudioLoop.cpp
+    PulseAudioSource.cpp \
+    AudioLoopPortAudio.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
 SOURCES += ModuleFilePlay.cpp

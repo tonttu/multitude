@@ -10,7 +10,7 @@
 
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
-#include "AudioLoop_private.hpp"
+#include "AudioLoopPortAudio.hpp"
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
@@ -25,12 +25,6 @@
 #include <portaudio.h>
 
 namespace Resonant {
-
-  static Radiant::TimeStamp s_previousUnderflowWarning;
-  static long s_framesOnLastWarning = 0;
-  static unsigned int s_sampleRateWarnings = 0;
-  static unsigned int s_underflowWarningsTimer = 0;
-  static unsigned int s_underflowWarnings = 0;
 
   DSPNetwork::Item::Item()
     : m_module(0),
@@ -114,9 +108,7 @@ namespace Resonant {
   DSPNetwork::DSPNetwork()
     : // m_continue(false),
     m_panner(0),
-    m_frames(0),
     m_doneCount(0),
-    m_syncinfo(),
     m_itemMutex(true)
   {
     m_collect = std::make_shared<ModuleOutCollect>(this);
@@ -130,7 +122,9 @@ namespace Resonant {
 
   DSPNetwork::~DSPNetwork()
   {
-    stop();
+    if (m_audioLoop) {
+      m_audioLoop->stop();
+    }
 
     for(size_t i = 0; i < m_buffers.size(); i++)
       m_buffers[i].clear();
@@ -149,9 +143,9 @@ namespace Resonant {
 
     // m_continue = true;
 
-    return startReadWrite(44100, 8);
+    m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
+    return m_audioLoop->start(44100, 8);
   }
-
 
   void DSPNetwork::addModule(ItemPtr item)
   {
@@ -211,6 +205,9 @@ namespace Resonant {
 
   std::shared_ptr<ModuleSamplePlayer> DSPNetwork::samplePlayer()
   {
+    if (!audioLoop()) {
+      return nullptr;
+    }
     ModulePtr m = findModule("sampleplayer");
 
     if(m)
@@ -223,7 +220,7 @@ namespace Resonant {
     item->setUsePanner(false);
 
     Radiant::BinaryData control;
-    control.writeInt32(static_cast<int32_t> (outChannels()));
+    control.writeInt32(static_cast<int32_t> (audioLoop()->outChannels()));
     control.rewind();
 
     player->eventProcess("channels", control);
@@ -247,155 +244,6 @@ namespace Resonant {
     control.writeInt64((int64_t) f);
 
     send(control);
-  }
-
-  int DSPNetwork::callback(const void *in, void *out,
-                           unsigned long framesPerBuffer, int streamnum,
-                           const PaStreamCallbackTimeInfo & time,
-                           unsigned long flags)
-  {
-    (void) in;
-
-    size_t streams = m_d->m_streams.size();
-
-    Radiant::TimeStamp outputTime;
-    double latency;
-
-    const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
-
-    if (streamnum == 0 && s_underflowWarnings) {
-      s_underflowWarningsTimer += framesPerBuffer;
-    }
-
-    if(flags & paOutputUnderflow) {
-      ++s_underflowWarnings;
-    }
-    if(flags & paOutputOverflow) {
-      Radiant::warning("DSPNetwork::callback # output overflow");
-    }
-
-    if (streamnum == 0 && s_underflowWarnings > 0 && s_underflowWarningsTimer >= (44100*10)) {
-      if (s_previousUnderflowWarning.value() != 0) {
-        double secs = s_previousUnderflowWarning.sinceSecondsD();
-        int sampleRate = (m_frames - s_framesOnLastWarning) / secs;
-        if (sampleRate > 50000) {
-          if (++s_sampleRateWarnings > 1) {
-            Radiant::warning("DSPNetwork # Unexpected sample rate, current sample rate is %d, expected about 44100",
-                             sampleRate);
-          }
-        } else {
-          s_sampleRateWarnings = 0;
-        }
-      }
-      s_previousUnderflowWarning = Radiant::TimeStamp::currentTime();
-      Radiant::warning("DSPNetwork # %d output underflow errors in the last 10 seconds", s_underflowWarnings);
-      s_underflowWarnings = 0;
-      s_underflowWarningsTimer = 0;
-      s_framesOnLastWarning = m_frames;
-    }
-
-    // We either have multiple streams or have a broken implementation
-    // (Linux/Pulseaudio). In that case we just generate the timing information
-    // ourselves. In this case we also guess that the latency is ~30 ms
-    // (on Linux/Alsa it seems to be ~20-30 ms when having some cheap hw)
-    // On some broken platforms outputBufferDacTime is just not implemented
-    // and is always 0, but on some other platforms it seems to be just a small
-    // number (~0.001..0.005), too small and random to be the audio latency or
-    // anything like that.
-    if(time.outputBufferDacTime < 1.0) {
-      latency = 0.030;
-      /// @todo shouldn't hardcode 44100
-      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
-         outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
-            Radiant::TimeStamp::createSeconds(latency);
-        outputTime = m_syncinfo.baseTime;
-        m_syncinfo.framesProcessed = 0;
-      } else {
-        outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
-              m_syncinfo.framesProcessed / 44100.0);
-      }
-    } else if(streams <= 1 || streamnum == 0) {
-      // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
-      if (time.currentTime == 0) {
-        latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
-        /// In principle outputBufferDacTime and timestamps are incompatible as PaTimes
-        /// have undefined starting point. For example in Windows the origin seems to
-        /// be the startup time of the PC. However in Linux they seem to be compatible.
-        assert(std::abs(latency) < 120.f);
-      } else {
-        latency = time.outputBufferDacTime - time.currentTime;
-      }
-
-      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
-         outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
-            Radiant::TimeStamp::createSeconds(latency);
-        m_syncinfo.framesProcessed = 0;
-      }
-
-      outputTime = m_syncinfo.baseTime +
-          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
-    }
-    m_syncinfo.framesProcessed += framesPerBuffer;
-
-    /// Here we assume that every stream (== audio device) is running in its
-    /// own separate thread, that is, this callback is called from multiple
-    /// different threads at the same time, one for each audio device.
-    /// The first thread is responsible for filling the buffer
-    /// (m_collect->interleaved()) by calling doCycle. This thread first waits
-    /// until all other threads have finished processing the previous data,
-    /// then runs the next cycle and informs everyone else that they can continue
-    /// running from the barrier.
-    /// We also assume, that framesPerBuffer is somewhat constant in different
-    /// threads at the same time.
-    if(streams == 1) {
-      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
-    } else if(streamnum == 0) {
-      m_d->m_sem.acquire(static_cast<int> (streams));
-      doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
-      for (size_t i = 1; i < streams; ++i)
-        m_d->m_streams[i].m_barrier->release();
-    } else {
-      m_d->m_streams[streamnum].m_barrier->acquire();
-    }
-
-    int outChannels = m_d->m_streams[streamnum].outParams.channelCount;
-
-    const float * res = m_collect->interleaved();
-    if(res != 0) {
-      for (Channels::iterator it = m_d->m_channels.begin(); it != m_d->m_channels.end(); ++it) {
-        if (streamnum != it->second.device) continue;
-        int from = it->first;
-        int to = it->second.channel;
-
-        const float * data = res + from;
-        float* target = (float*)out;
-        target += to;
-
-        size_t chans_from = m_collect->channels();
-
-        for (size_t i = 0; i < framesPerBuffer; ++i) {
-          *target = *data;
-          target += outChannels;
-          data += chans_from;
-        }
-      }
-      //memcpy(out, res, 4 * framesPerBuffer * outChannels);
-    }
-    else {
-      Radiant::error("DSPNetwork::callback # No data to play");
-      memset(out, 0, 4 * framesPerBuffer * outChannels);
-    }
-    if(streams > 1) m_d->m_sem.release();
-
-    m_frames += framesPerBuffer;
-
-    if(m_frames < 40000) {
-      debugResonant("DSPNetwork::callback # %lu", framesPerBuffer);
-    }
-
-    return paContinue;
   }
 
   void DSPNetwork::doCycle(int framesPerBuffer, const CallbackTime & time)
@@ -910,7 +758,7 @@ namespace Resonant {
     if(!f)
       f = stdout;
 
-    fprintf(f, "DSPNetwork %p on frame %ld\n", this, m_frames);
+    // fprintf(f, "DSPNetwork %p on frame %ld\n", this, m_frames);
 
     int index = 0;
     for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
