@@ -49,10 +49,19 @@ namespace Resonant {
       a reference to the shared pointer returned by the DSPNetwork::instance()
       function. It is strongly recommended that you keep a reference to it
       during the lifetime of your application.*/
-  class RESONANT_API DSPNetwork : public AudioLoop
+  class RESONANT_API DSPNetwork
   {
     DECLARE_SINGLETON(DSPNetwork);
   public:
+
+    /// Which AudioLoop backend to use
+    enum AudioLoopBackend
+    {
+      AUDIO_LOOP_DEFAULT,
+
+      AUDIO_LOOP_PORT_AUDIO,
+      AUDIO_LOOP_PULSE_AUDIO
+    };
 
     /** Holds audio sample buffers for inter-module transfer.
 
@@ -224,10 +233,10 @@ namespace Resonant {
 
         To get a list of possible sound device names we recommend you use utility application
         ListPortAudioDevices.
-        @param device Device name or empty string for default device
+        @param backend AudioLoop backend
         @return False on error
     */
-    bool start(const QString & device = "");
+    bool start(AudioLoopBackend backend = AUDIO_LOOP_DEFAULT);
 
     /// Adds a DSP #Resonant::Module to the signal processing graph
     /** This function does not perform the actual addition, but puts the module into a FIFO,
@@ -286,17 +295,19 @@ DSPNetwork::instance().send(control);
 
     std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
+    AudioLoop * audioLoop() { return m_audioLoop.get(); }
+
+    bool isRunning() const { return m_audioLoop ? m_audioLoop->isRunning() : false; }
+
+    /// @cond
+
+    void doCycle(int framesPerBuffer, const CallbackTime & time);
+
+    /// @endcond
+
   private:
     /// Creates an empty DSPNetwork object.
     DSPNetwork();
-
-    virtual int callback(const void *in, void *out,
-                         unsigned long framesPerBuffer,
-                         int streamid,
-                         const PaStreamCallbackTimeInfo & time,
-                         unsigned long flags);
-
-    void doCycle(int, const CallbackTime & time);
 
     void checkNewControl();
     void checkNewItems();
@@ -332,17 +343,11 @@ DSPNetwork::instance().send(control);
     Radiant::BinaryData m_incopy;
     Radiant::Mutex m_inMutex;
 
-    QString m_devName;
+    std::unique_ptr<AudioLoop> m_audioLoop;
+
     // bool        m_continue;
-    long        m_frames;
 
     int         m_doneCount; // Protected by m_newMutex
-
-    struct
-    {
-      Radiant::TimeStamp baseTime;
-      int framesProcessed;
-    } m_syncinfo;
 
     Radiant::Mutex m_newMutex;
     mutable Radiant::Mutex m_itemMutex;

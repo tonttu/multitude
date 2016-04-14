@@ -53,6 +53,41 @@ namespace Radiant
       int m_size;
     };
 
+    class Writer
+    {
+    private:
+      Writer(BlockRingBuffer<T> & buffer, T* data, int size)
+        : m_buffer(buffer)
+        , m_data(data)
+        , m_size(size)
+      {}
+
+    public:
+      Writer(Writer && r)
+        : m_buffer(r.m_buffer)
+        , m_data(r.m_data)
+        , m_size(r.m_size)
+      {
+        r.m_size = 0;
+      }
+
+      Writer(const Writer & r) = delete;
+
+      ~Writer()
+      {
+        if (m_size) m_buffer.produce(m_size);
+      }
+
+      T* data() const { return m_data; }
+      int size() const { return m_size; }
+
+    private:
+      friend class BlockRingBuffer<T>;
+      BlockRingBuffer<T> & m_buffer;
+      T* m_data;
+      int m_size;
+    };
+
     /// Creates a new buffer with given capacity
     BlockRingBuffer(int capacity)
       : m_buffer(capacity)
@@ -94,6 +129,14 @@ namespace Radiant
       m_size += count;
 
       return count;
+    }
+
+    Writer write(int count)
+    {
+      const int capacity = m_buffer.size();
+      count = std::min(capacity - m_writer, std::min<int>(count, capacity - m_size));
+
+      return Writer(*this, m_buffer.data() + m_writer, count);
     }
 
     /// Consumes max count elements from the buffer and writes them to output
@@ -140,6 +183,16 @@ namespace Radiant
     {
       m_reader = (m_reader + count) % m_buffer.size();
       m_size -= count;
+    }
+
+    /// Consumes exactly count elements from the buffer. Can be called only
+    /// from the reader thread.
+    /// @param count number of elements to consume, must not be bigger than
+    ///              available buffer size().
+    void produce(int count)
+    {
+      m_writer = (m_writer + count) % m_buffer.size();
+      m_size += count;
     }
 
   private:

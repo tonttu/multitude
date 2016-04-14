@@ -11,20 +11,13 @@
 #ifndef RESONANT_AUDIO_LOOP_HPP
 #define RESONANT_AUDIO_LOOP_HPP
 
-#include <Patterns/NotCopyable.hpp>
+#include "Export.hpp"
 
 #include <Radiant/TimeStamp.hpp>
 
-#include <Resonant/Export.hpp>
-
-#include <cstdlib>
-
-class QString;
-struct PaStreamCallbackTimeInfo;
-namespace Resonant {
-
-  /// @cond
-
+namespace Resonant
+{
+  /// Timing and latency information about the processed samples.
   struct CallbackTime
   {
     CallbackTime(Radiant::TimeStamp outputTime, double latency, unsigned long flags)
@@ -40,82 +33,29 @@ namespace Resonant {
     const unsigned long flags;
   };
 
-  /// @endcond
-
-  /** A simple audio IO class.
-
-      This class uses PortAudio to handle the real work. It is basically a
-      utility class that hides all the PortAudio code behind a bit easier API.
-  */
-
-  class RESONANT_API AudioLoop : public Patterns::NotCopyable
+  /// A simple audio IO class API.
+  ///
+  /// Implement this to provide different backends for DSPNetwork.
+  class AudioLoop
   {
   public:
-    /// Creates a new audio IO object
-    AudioLoop();
-    /// Deletes an audio IO object
-    virtual ~AudioLoop();
-
     /// Start the AudioLoop.
-    /// In practice this spans a new thread that is managed by the PortAudio (or rather,
-    /// the operating system audio engine).
+    /// In practice this spans a new thread that is managed by the backend.
     /// @param samplerate Desired samplerate, 44100 is safe choice
     /// @param channels Number of channels to open
     /// @return False on error
-    bool startReadWrite(int samplerate, int channels);
-    /// Check if the audio IO is operational
-    inline bool isRunning() { return m_isRunning; }
+    virtual bool start(int samplerate, int channels) = 0;
 
     /// Stop the audio processing
-    bool stop();
+    virtual bool stop() = 0;
+
+    /// Check if the audio IO is operational
+    virtual bool isRunning() const = 0;
 
     /// Returns the number of output channels in the current setup.
-    /** This number reflects the numer of channels that the current sound
-        card has. It is quite typical for sound cards to advertise more channels
-        they actually have. This may be caused by a sound-card manufacturer
-        using the same chips in two sounds cards, with a one card having 10
-        DACs, while the other might have only 4 (case with M-Audio delta 44 vs 1010).
-        @return Number of channels
-    */
-    size_t outChannels() const;
-
-    /// Set the global resonand devices configuration XML file, look for example
-    /// resonant-devices.xml for more information
-    /// @param xmlFilename Filename to the configuration that will be used with
-    ///                    all new AudioLoops
-    static void setDevicesFile(const QString & xmlFilename);
-
-  protected:
-    /// This is called from PortAudio thread when the stream becomes inactive
-    /// @param streamid Device / Stream number, @see setDevicesFile()
-    virtual void finished(int streamid);
-
-    /// Callback function that is called from the PortAudio thread
-    /// @param in Array of interleaved input samples for each channel
-    /// @param[out] out Array of interleaved input samples for each channel,
-    ///                 this should be filled by the callback function.
-    /// @param framesPerBuffer The number of sample frames to be processed
-    /// @param streamid Device / Stream number, @see setDevicesFile()
-    /// @return paContinue, paComplete or paAbort. See PaStreamCallbackResult
-    ///         for more information
-    /// @see PaStreamCallback in PortAudio documentation
-    virtual int callback(const void * in, void * out,
-                         unsigned long framesPerBuffer, int streamid,
-                         const PaStreamCallbackTimeInfo & time,
-                         unsigned long flags) = 0;
-
-    /// @cond
-    bool       m_isRunning;
-    bool       m_initialized;
-
-    class AudioLoopInternal;
-
-    AudioLoopInternal * m_d;
-    /// @endcond
- };
-
+    virtual std::size_t outChannels() const = 0;
+  };
 }
-
 
 #endif
 
