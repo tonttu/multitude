@@ -7,7 +7,12 @@ enable-all {
 }
 
 lessThan(QT_MAJOR_VERSION, 5) {
-  error("Cornerstone SDK requires Qt 5")
+  error("Cornerstone SDK requires Qt 5.6 or newer")
+}
+equals(QT_MAJOR_VERSION, 5) {
+  lessThan(QT_MINOR_VERSION, 6) {
+    error("Cornerstone SDK requires Qt 5.6 or newer")
+  }
 }
 
 enable-taction {
