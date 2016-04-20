@@ -21,9 +21,9 @@ namespace Valuable
 {
   /** A value object holding a #Radiant::Color value. */
   template <>
-  class AttributeT<Radiant::Color> : public AttributeBaseT<Radiant::Color>
+  class AttributeT<Radiant::ColorPMA> : public AttributeBaseT<Radiant::ColorPMA>
   {
-    typedef AttributeBaseT<Radiant::Color> Base;
+    typedef AttributeBaseT<Radiant::ColorPMA> Base;
   public:
     using Base::operator=;
 
@@ -33,7 +33,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param c The color value
-    AttributeT(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
+    AttributeT(Node * host, const QByteArray & name, const Radiant::ColorPMA & c, bool transit = false)
       : Base(host, name, c, transit)
     {}
 
@@ -52,10 +52,11 @@ namespace Valuable
     ~AttributeT()
     {}
 
+    /// Sets the attribute color in non-premultiplied format
     bool set(const Nimble::Vector4f & color, Layer layer = USER,
              QList<ValueUnit> = QList<ValueUnit>()) OVERRIDE
     {
-      this->setValue(color, layer);
+      this->setValue(Radiant::Color(color.x, color.y, color.z, color.w), layer);
       return true;
     }
 
@@ -73,11 +74,23 @@ namespace Valuable
     {
       if (v.size() != 1)
         return false;
-      Radiant::Color c;
-      if (c.set(v.stringify().toUtf8())) {
-        this->setValue(c, layer);
+
+      auto & c = v[0];
+
+      if (c.type() == StyleValue::TYPE_COLOR) {
+        this->setValue(c.asColor(), layer);
         return true;
+      } else if (c.type() == StyleValue::TYPE_COLOR_PMA) {
+        this->setValue(c.asColorPMA(), layer);
+        return true;
+      } else if (c.canConvert(StyleValue::TYPE_KEYWORD)) {
+        Radiant::Color tmp;
+        if (tmp.set(c.asKeyword())) {
+          this->setValue(tmp, layer);
+          return true;
+        }
       }
+
       return false;
     }
 
@@ -85,28 +98,23 @@ namespace Valuable
     {
       if (ok)
         *ok = true;
-      Radiant::Color c = value(layer);
-      int r = Nimble::Math::Clamp<int>(0, 255, c.red()*255);
-      int g = Nimble::Math::Clamp<int>(0, 255, c.green()*255);
-      int b = Nimble::Math::Clamp<int>(0, 255, c.blue()*255);
-      int a = Nimble::Math::Clamp<int>(0, 255, c.alpha()*255);
-      return QString("#%1%2%3%4").arg(r, 2, 16, QChar('0')).arg(g, 2, 16, QChar('0')).
-          arg(b, 2, 16, QChar('0')).arg(a, 2, 16, QChar('0'));
+      Radiant::ColorPMA c = value(layer);
+      return QString("rgba_pma(%1, %2, %3, %4)").arg(c.r*255, c.g*255, c.b*255, c.a);
     }
 
     /// Converts the value object to color
-    Radiant::Color asColor() const { return value(); }
+    Radiant::ColorPMA asColor() const { return value(); }
 
-    /// Returns the red comoponent of the color (0-1).
-    inline float red() const   { return value()[0]; }
-    /// Returns the green comoponent of the color (0-1).
-    inline float green() const { return value()[1]; }
-    /// Returns the blue comoponent of the color (0-1).
-    inline float blue() const  { return value()[2]; }
-    /// Returns the alpha comoponent of the color (0-1).
-    inline float alpha() const { return value()[3]; }
+    /// Returns the premultiplied red component of the color (0-1).
+    inline float red() const   { return value().r; }
+    /// Returns the premultiplied green component of the color (0-1).
+    inline float green() const { return value().g; }
+    /// Returns the premultiplied blue component of the color (0-1).
+    inline float blue() const  { return value().b; }
+    /// Returns the alpha component of the color (0-1).
+    inline float alpha() const { return value().a; }
   };
-  typedef AttributeT<Radiant::Color> AttributeColor;
+  typedef AttributeT<Radiant::ColorPMA> AttributeColor;
 }
 
 #endif

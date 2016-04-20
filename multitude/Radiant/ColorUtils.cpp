@@ -65,8 +65,8 @@ namespace Radiant
   Color ColorUtils::rgbTohsv(const Color & rgb)
   {
     Color hsv;
-    hsv.w = rgb.w;
-    ColorUtils::rgbTohsv(rgb[0], rgb[1], rgb[2], hsv[0], hsv[1], hsv[2]);
+    hsv.a = rgb.a;
+    ColorUtils::rgbTohsv(rgb.r, rgb.g, rgb.b, hsv.r, hsv.g, hsv.b);
     return hsv;
   }
 
@@ -118,8 +118,8 @@ namespace Radiant
   Color ColorUtils::hsvTorgb(const Color & hsv)
   {
     Color rgb;
-    rgb.w = hsv.w;
-    hsvTorgb(hsv[0], hsv[1], hsv[2], rgb[0], rgb[1], rgb[2]);
+    rgb.a = hsv.a;
+    hsvTorgb(hsv.r, hsv.g, hsv.b, rgb.r, rgb.g, rgb.b);
     return rgb;
   }
 

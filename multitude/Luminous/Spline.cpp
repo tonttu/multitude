@@ -34,7 +34,7 @@ namespace
     Nimble::Vector2   m_location;
     /* valid time range when this point should be visible, [m_range.x, m_range.y) */
     Nimble::Vector2f  m_range;
-    Radiant::Color    m_color;
+    Radiant::ColorPMA m_color;
     float             m_width;
   };
 
@@ -50,7 +50,7 @@ namespace
 
     Nimble::Vector2f location;
     Nimble::Vector2f range;
-    Nimble::Vector4f color;
+    Radiant::ColorPMA color;
   };
 
   struct UniformBlock : public Luminous::BasicUniformBlock
@@ -405,7 +405,7 @@ namespace Luminous {
 
     /// @todo what color to use here?
     const float opacity = r.opacity();
-    b.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
+    b.uniform->color = Radiant::Color(opacity, opacity, opacity, opacity);
     b.uniform->time = time;
     b.uniform->depth = b.depth;
   }
@@ -488,7 +488,7 @@ namespace Luminous {
     return *this;
   }
 
-  void Spline::addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width, float time)
+  void Spline::addControlPoint(Nimble::Vector2 point, Radiant::ColorPMA color, float width, float time)
   {
     Point p;
     p.m_location = point;
@@ -732,7 +732,7 @@ namespace Luminous {
         Point p;
         p.m_location = Nimble::Vector2f(numbers[0].toFloat(), numbers[1].toFloat());
         p.m_range = Nimble::Vector2f(numbers[2].toFloat(), numbers[3].toFloat());
-        p.m_color = Radiant::Color(numbers[4].toFloat(), numbers[5].toFloat(),
+        p.m_color = Radiant::ColorPMA(numbers[4].toFloat(), numbers[5].toFloat(),
             numbers[6].toFloat(), numbers[7].toFloat());
         p.m_width = numbers[8].toFloat();
 

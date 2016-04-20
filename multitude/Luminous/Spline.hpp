@@ -16,6 +16,8 @@
 #include <Nimble/Vector4.hpp>
 #include <Nimble/Rectangle.hpp>
 
+#include <Radiant/Color.hpp>
+
 #include <Patterns/NotCopyable.hpp>
 
 #include <set>
@@ -38,7 +40,7 @@ namespace Luminous {
     Spline & operator=(Spline && spline);
 
     /// @param time use only posivive timestamps here, if negative time is given, it's clamped to 0
-    void addControlPoint(Nimble::Vector2 point, Nimble::Vector4 color, float width, float time = 0.0f);
+    void addControlPoint(Nimble::Vector2 point, Radiant::ColorPMA color, float width, float time = 0.0f);
     void endPath();
     void clear();
 

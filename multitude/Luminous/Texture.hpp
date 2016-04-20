@@ -221,10 +221,10 @@ namespace Luminous
 
     /// Set the texture border color
     /// @param color border color
-    LUMINOUS_API void setBorderColor(const Radiant::Color & color);
+    LUMINOUS_API void setBorderColor(const Radiant::ColorPMA & color);
     /// Get the texture border color
     /// @return border color
-    LUMINOUS_API const Radiant::Color & borderColor() const;
+    LUMINOUS_API const Radiant::ColorPMA & borderColor() const;
 
     /// Enables or disables automatic GPU mipmap generation
     LUMINOUS_API void setMipmapsEnabled(bool enabled);

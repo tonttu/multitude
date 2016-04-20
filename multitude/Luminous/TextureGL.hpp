@@ -71,7 +71,7 @@ namespace Luminous
 
     Texture::Filter m_minFilter, m_magFilter;
     Texture::Wrap m_wrap[3];
-    Radiant::Color m_borderColor;
+    Radiant::ColorPMA m_borderColor;
   };
 
   /////////////////////////////////////////////////////////////////////////////

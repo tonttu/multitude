@@ -37,13 +37,13 @@ namespace Luminous
   class CommandClearGL : public PipelineCommand
   {
   public:
-    CommandClearGL(Luminous::ClearMask clearMask, const Radiant::Color & clearColor, float clearDepth, int clearStencil);
+    CommandClearGL(Luminous::ClearMask clearMask, const Radiant::ColorPMA & clearColor, float clearDepth, int clearStencil);
 
     virtual void execute() OVERRIDE;
 
   private:
     Luminous::ClearMask m_clearMask;
-    Radiant::Color m_clearColor;
+    Radiant::ColorPMA m_clearColor;
     float m_clearDepth;
     int m_clearStencil;
   };

@@ -211,7 +211,7 @@ namespace Luminous
     /// @param x pixel x coordinate
     /// @param y pixel y coordinate
     /// @return color at the given pixel
-    Nimble::Vector4 pixel(int x, int y) const;
+    Nimble::Vector4f pixel(int x, int y) const;
 
     /// Get a pixel from the image. This function does additional checks for
     /// make sure the requested pixels are within the image. If the requested
@@ -220,13 +220,13 @@ namespace Luminous
     /// @param x pixel x coordinate
     /// @param y pixel y coordinate
     /// @return pixel color
-    Nimble::Vector4 safePixel(int x, int y) const;
+    Nimble::Vector4f safePixel(int x, int y) const;
 
     /// Set a pixel to given color. The color must be normalized.
     /// @param x x coordinate of the pixel
     /// @param y y coordinate of the pixel
     /// @param pixel pixel color
-    void setPixel(unsigned x, unsigned y, const Nimble::Vector4 & pixel);
+    void setPixel(unsigned x, unsigned y, const Nimble::Vector4f & pixel);
 
     /// Increments the generation count.
     /// This function should be called when the image has been modified.

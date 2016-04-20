@@ -180,51 +180,31 @@ const QMap<QByteArray, Radiant::Color> & colors()
 namespace Radiant
 {
 
-  Color::Color()
-    : Nimble::Vector4f(0.0f, 0.0f, 0.0f, 1.0f)
-  {}
-
   Color::Color(const QByteArray & color)
-    : Nimble::Vector4f(0.0f, 0.0f, 0.0f, 1.0f)
   {
-    if (!set(color))
+    if (!set(color)) {
+      setRGBA(0, 0, 0, 1);
       Radiant::warning("Color::Color # Failed to parse color '%s'", color.data());
+    }
   }
 
   Color::Color(const char * color)
-    : Nimble::Vector4f(0.0f, 0.0f, 0.0f, 1.0f)
   {
-    if (!set(color))
+    if (!set(color)) {
+      setRGBA(0, 0, 0, 1);
       Radiant::warning("Color::Color # Failed to parse color '%s'", color);
+    }
   }
-
-  Color::Color(float r, float g, float b, float a)
-  {
-    setRGBA(r, g, b, a);
-  }
-
-  Color::Color(const Nimble::Vector4f & v)
-    : Nimble::Vector4f(v)
-  {
-  }
-
-  Color::~Color()
-  {}
 
   Color::Color(const QColor & c)
-    : Nimble::Vector4f(c.redF(), c.greenF(), c.blueF(), c.alphaF())
+    : ColorBase(c.redF(), c.greenF(), c.blueF(), c.alphaF())
   {}
-
-  void Color::setRGBA(float r, float g, float b, float a)
-  {
-    make(r, g, b, a);
-  }
 
   void Color::setHSVA(float h, float s, float v, float a)
   {
     float r, g, b;
     ColorUtils::hsvTorgb(h, s, v, r, g, b);
-    make(r, g, b, a);
+    setRGBA(r, g, b, a);
   }
 
   bool Color::set(const QByteArray & color)
@@ -238,7 +218,7 @@ namespace Radiant
           int t = color.mid(i+1, 1).toInt(&ok, 16);
           if (!ok)
             return false;
-          c[i] = ((t << 4) | t) / 255.0f;
+          c.data()[i] = ((t << 4) | t) / 255.0f;
         }
       } else if (color.size() == 7 || color.size() == 9) {
         // #RRGGBB or #RRGGBBAA
@@ -246,7 +226,7 @@ namespace Radiant
           int t = color.mid(i+1, 2).toInt(&ok, 16);
           if (!ok || t < 0)
             return false;
-          c[i/2] = t / 255.0f;
+          c.data()[i/2] = t / 255.0f;
         }
       } else {
         return false;
@@ -267,12 +247,7 @@ namespace Radiant
   QColor Color::toQColor() const
   {
     using Nimble::Math::Clamp;
-    return QColor::fromRgbF(Clamp(x, 0.f, 1.f), Clamp(y, 0.f, 1.f), Clamp(z, 0.f, 1.f), Clamp(w, 0.f, 1.f));
-  }
-
-  Color Color::fromRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-  {
-    return Color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+    return QColor::fromRgbF(Clamp(r, 0.f, 1.f), Clamp(g, 0.f, 1.f), Clamp(b, 0.f, 1.f), Clamp(a, 0.f, 1.f));
   }
 
   const QMap<QByteArray, Color> & Color::namedColors()

@@ -154,7 +154,7 @@ namespace Luminous
         for(int x0 = 0; x0 < w; x0++) {
 
           int count = 0;
-          Nimble::Vector4 colorSum(0.f, 0.f, 0.f, 0.f);
+          Nimble::Vector4f colorSum(0.f, 0.f, 0.f, 0.f);
 
           // Take 'floor' of the limits in order to avoid floating point accuracy problems
           int maxY = sy * y0 + sy;
@@ -190,7 +190,7 @@ namespace Luminous
 
           for(int j = sy * y0; j < maxY; ++j) {
             for(int i = sx * x0; i < maxX; ++i) {
-              Nimble::Vector4 p = src.pixel(i,j);
+              Nimble::Vector4f p = src.pixel(i,j);
               // If this pixel contributes any color, scale by alpha and add it to the sum
               if (p.w > std::numeric_limits<float>::epsilon()) {
                 alphaSum += p.w;
@@ -207,7 +207,7 @@ namespace Luminous
             colorSum += Nimble::Vector3f(1/512.0f, 1/512.0f, 1/512.0f);
           }
 
-          setPixel(x0, y0, Nimble::Vector4(colorSum.x, colorSum.y, colorSum.z, alphaSum));
+          setPixel(x0, y0, Nimble::Vector4f(colorSum.x, colorSum.y, colorSum.z, alphaSum));
         }
       }
     }
@@ -884,7 +884,7 @@ namespace Luminous
       m_texture->addDirtyRect(QRect(0, 0, width(), height()));
   }
 
-  Nimble::Vector4 Image::safePixel(int x, int y) const
+  Nimble::Vector4f Image::safePixel(int x, int y) const
   {
     if(x < 0 || x >= width())
       return Nimble::Vector4(0.f, 0.f, 0.f, 0.f);
@@ -895,7 +895,7 @@ namespace Luminous
     return pixel(x, y);
   }
 
-  Nimble::Vector4 Image::pixel(int x, int y) const
+  Nimble::Vector4f Image::pixel(int x, int y) const
   {
     assert(m_data);
     assert(x >= 0 && x < width() && y >= 0 && y < height());
@@ -916,10 +916,10 @@ namespace Luminous
       assert(0);
     }
 
-    return Nimble::Vector4(0, 0, 0, 1);
+    return Nimble::Vector4f(0, 0, 0, 1);
   }
 
-  void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4 &pixel)
+  void Image::setPixel(unsigned x, unsigned y, const Nimble::Vector4f &pixel)
   {
     assert(int(x) < width());
     assert(int(y) < height());

@@ -480,7 +480,7 @@ namespace Luminous
     delete m_d;
   }
 
-  void RenderDriverGL::clear(ClearMask mask, const Radiant::Color & color, double depth, int stencil)
+  void RenderDriverGL::clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil)
   {
     m_d->newRenderQueueSegment(new CommandClearGL(mask, color, depth, stencil));
   }
