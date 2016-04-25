@@ -160,7 +160,7 @@ linux-* {
   PKGCONFIG += libudev
 }
 
-macx:LIBS += -framework,CoreFoundation
+macx:LIBS += -framework CoreFoundation
 
 DEFINES += RADIANT_EXPORT
 

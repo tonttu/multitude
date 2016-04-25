@@ -28,7 +28,7 @@ LIBS += $$LIB_RADIANT $$LIB_OPENGL $$LIB_RESONANT
 LIBS += $$LIB_PATTERNS $$LIB_VALUABLE
 
 macx {
-  LIBS += -framework,OpenGL
+  LIBS += -framework OpenGL
   PKGCONFIG += libavdevice
 }
 
