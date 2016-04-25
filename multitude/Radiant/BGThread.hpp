@@ -121,7 +121,7 @@ namespace Radiant
     void shutdown();
 
   private:
-    virtual void childLoop();
+    virtual void childLoop() OVERRIDE;
 
     TaskPtr pickNextTask();
 

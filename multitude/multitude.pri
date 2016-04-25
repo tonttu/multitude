@@ -213,7 +213,7 @@ macx {
   # -Qunused-arguments is for ccache + clang, see
   # http://petereisentraut.blogspot.fi/2011/05/ccache-and-clang.html
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Qunused-arguments
-  QMAKE_OBJECTIVE_CFLAGS += -std=c++11 -stdlib=libc++ -Qunused-arguments
+  QMAKE_OBJECTIVE_CFLAGS += -Qunused-arguments
   QMAKE_LFLAGS += -stdlib=libc++
 
   QMAKE_CFLAGS_WARN_ON =

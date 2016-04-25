@@ -13,8 +13,7 @@
 
 #include "Export.hpp"
 
-
-#if defined(__GNUC__) && (__GNUC__ < 4 || ( \
+#if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ < 4 || ( \
     __GNUC__ == 4 && ( \
       __GNUC_MINOR__ < 8 || (__GNUC_MINOR__ == 8 && __GNUC_PATCHLEVEL__ < 1) \
     ) \
