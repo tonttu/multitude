@@ -50,9 +50,10 @@ namespace Radiant
        messages.
 
        @param port The port number to listen to
+       @param bindAddress Address that the socket should be bound to
        @return Zero on success, otherwise an error code
     */
-    int openServer(int port);
+    int openServer(int port, const char * bindAddress = "0.0.0.0");
     /** Opens a client socket for sending packets to given address.
 
         @param host The host address. On UNIX you can use both numeric (192.168.0.12),

@@ -52,7 +52,7 @@ namespace Radiant
     delete m_d;
   }
 
-  int UDPSocket::openServer(int port)
+  int UDPSocket::openServer(int port, const char * bindAddress)
   {
     close();
 
@@ -60,7 +60,7 @@ namespace Radiant
     m_d->m_port = port;
 
     QString errstr;
-    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, "0.0.0.0", port, errstr,
+    int err = SocketUtilPosix::bindOrConnectSocket(m_d->m_fd, bindAddress, port, errstr,
                   true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(err) {
       error("UDPSocket::open # Failed to bind to port %d: %s", port, errstr.toUtf8().data());
