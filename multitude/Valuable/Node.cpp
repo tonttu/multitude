@@ -886,7 +886,7 @@ namespace Valuable
       // call some destructors that iterate s_queue
     }
 
-    int r = s_queue.size();
+    int r = static_cast<int>(s_queue.size());
 
     {
       // Make a temporary copy to prevent weird callback recursion bugs

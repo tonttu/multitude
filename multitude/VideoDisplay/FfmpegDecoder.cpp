@@ -84,7 +84,7 @@ namespace
 
     char buffer[512];
     vsnprintf(buffer, sizeof(buffer), fmt, vl);
-    for(int i = strlen(buffer) - 1; i >= 0; --i) {
+    for(int i = static_cast<int>(strlen(buffer)) - 1; i >= 0; --i) {
       if(buffer[i] == '\r' || buffer[i] == '\n')
         buffer[i] = '\0';
       else

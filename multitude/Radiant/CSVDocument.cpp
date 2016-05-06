@@ -114,7 +114,7 @@ namespace Radiant {
     for(size_t i = 0; i < r->size(); i++) {
 
       if(r->at(i) == key)
-        return i;
+        return static_cast<int>(i);
     }
 
     return -1;

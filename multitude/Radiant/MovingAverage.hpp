@@ -73,7 +73,7 @@ namespace Radiant
       T avg = m_data[m_pos].value;
       int num = 1;
       for(size_t i = 1; i <= m_data.size(); ++i) {
-        const int j = m_pos-i;
+        const int j = m_pos-static_cast<int>(i);
         const BufferValue & b = m_data[(j + m_data.size() * 2) % m_data.size()];
         if(b.ts == Radiant::TimeStamp(0) || ts-b.ts > m_history) break;
         ++num;

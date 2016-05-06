@@ -105,7 +105,7 @@ namespace Radiant
     template <> inline unsigned long long fromString<unsigned long long>(const QByteArray & str) { return str.toULongLong(); }
     template <> inline float fromString<float>(const QByteArray & str) { return str.toFloat(); }
     template <> inline double fromString<double>(const QByteArray & str) { return str.toDouble(); }
-    template <> inline bool fromString<bool>(const QByteArray & str) { return str.toInt(); }
+    template <> inline bool fromString<bool>(const QByteArray & str) { return str.toInt() > 0; }
 
     /// @endcond
 

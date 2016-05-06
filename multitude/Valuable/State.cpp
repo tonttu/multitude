@@ -226,7 +226,7 @@ namespace Valuable
   bool StateInt::removeListener(long id)
   {
     Radiant::Guard g(m_d->m_stateMutex);
-    int n = m_d->m_onceCallbacks.erase(id);
+    auto n = m_d->m_onceCallbacks.erase(id);
     n += m_d->m_callbacks.erase(id);
     n += m_d->m_changeCallbacks.erase(id);
     return n > 0;

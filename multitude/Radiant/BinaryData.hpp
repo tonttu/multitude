@@ -373,7 +373,7 @@ namespace Radiant {
   template <> inline double BinaryData::read(bool * ok)           { return readFloat64(ok); }
   template <> inline int BinaryData::read(bool * ok)              { return readInt32(ok); }
   template <> inline unsigned int BinaryData::read(bool * ok)     { return readInt32(ok); }
-  template <> inline bool BinaryData::read(bool * ok)             { return readInt32(ok); }
+  template <> inline bool BinaryData::read(bool * ok)             { return readInt32(ok) != 0; }
   template <> inline int64_t BinaryData::read(bool * ok)          { return readInt64(ok); }
   template <> inline TimeStamp BinaryData::read(bool * ok)        { return readTimeStamp(ok); }
   template <> inline uint64_t BinaryData::read(bool * ok)         { return readInt64(ok); }

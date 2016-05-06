@@ -167,8 +167,8 @@ namespace Luminous {
     m_path->curve.add(p.m_location);
     m_path->bounds.expand(p.m_location);
     m_endTime = std::max(m_endTime, p.m_range.x);
-    m_redoLocation.pathIndex = m_paths.size() - 1;
-    m_redoLocation.nextPointIndex = m_path->points.size();
+    m_redoLocation.pathIndex = static_cast<int>(m_paths.size()) - 1;
+    m_redoLocation.nextPointIndex = static_cast<int>(m_path->points.size());
   }
 
   void Spline::D::endPath()
@@ -393,7 +393,8 @@ namespace Luminous {
     if(it == m_index.begin() && it->first > time)
       return;
 
-    const std::size_t vertices = (it == m_index.end() ? m_vertices.size() : it->second);
+    const int vertices = static_cast<int>(it == m_index.end() ?
+                                            m_vertices.size() : it->second);
 
     /// @todo Should we be able to overrule this with Style::Translucent
     /// @todo Guess this depends on all the vertex colors
@@ -424,7 +425,7 @@ namespace Luminous {
         if(m_redoLocation.pathIndex <= 0)
           break;
         --m_redoLocation.pathIndex;
-        m_redoLocation.nextPointIndex = m_paths[m_redoLocation.pathIndex].points.size();
+        m_redoLocation.nextPointIndex = static_cast<int>(m_paths[m_redoLocation.pathIndex].points.size());
       }
       int diff = std::min(m_redoLocation.nextPointIndex, -points);
       points += diff;
@@ -661,7 +662,8 @@ namespace Luminous {
       const std::vector<Point> & points = spline.m_d->m_paths[i].points;
       const qint64 size = points.size();
       out << size;
-      out.writeRawData(reinterpret_cast<const char*>(points.data()), size * sizeof(points[0]));
+      out.writeRawData(reinterpret_cast<const char*>(points.data()),
+                       static_cast<int>(size * sizeof(points[0])));
     }
     return out;
   }
@@ -759,7 +761,8 @@ namespace Luminous {
         return in;
       }
       points.resize(size);
-      in.readRawData(reinterpret_cast<char*>(points.data()), size * sizeof(points[0]));
+      in.readRawData(reinterpret_cast<char*>(points.data()),
+                     static_cast<int>(size * sizeof(points[0])));
       if (in.status() != QDataStream::Ok) {
         spline.clear();
         return in;

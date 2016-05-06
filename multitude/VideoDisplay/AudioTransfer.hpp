@@ -41,7 +41,7 @@ namespace VideoDisplay
       return m_data[channel].data();
     }
 
-    int samples() const { return m_data.empty() ? 0 : m_data[0].size(); }
+    int samples() const { return m_data.empty() ? 0 : (int)m_data[0].size(); }
 
   private:
     //DecodedAudioBuffer(const DecodedAudioBuffer &);

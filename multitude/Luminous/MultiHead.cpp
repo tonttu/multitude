@@ -454,7 +454,7 @@ namespace Luminous
   MultiHead::MultiHead()
       : Node(0, "MultiHead", false),
       m_iconify(this, "iconify", false),
-      m_dpi(this, "dpi", 40.053), /* DPI for 55" */
+      m_dpi(this, "dpi", 40.053f), /* DPI for 55" */
       m_vsync(this, "vsync", true),
       m_glFinish(this, "gl-finish", false),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))

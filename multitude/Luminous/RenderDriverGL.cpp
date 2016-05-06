@@ -167,16 +167,17 @@ namespace Luminous
       static int foo = 0;
       if(foo++ % 60 == 0) {
 
-        int segments = m_masterRenderQueue.size();
+        int segments = static_cast<int>(m_masterRenderQueue.size());
         int stateChanges = 0;
-        int programs = m_programs.size();
-        int textures = m_textures.size();
-        int buffers = m_buffers.size();
-        int vertexArrays = m_vertexArrays.size();
+        int programs = static_cast<int>(m_programs.size());
+        int textures = static_cast<int>(m_textures.size());
+        int buffers = static_cast<int>(m_buffers.size());
+        int vertexArrays = static_cast<int>(m_vertexArrays.size());
 
         for(auto i = m_masterRenderQueue.begin(); i != m_masterRenderQueue.end(); ++i) {
           const RenderQueueSegment & segment = *i;
-          stateChanges += segment.opaqueQueue.size() + segment.translucentQueue.queue->size();
+          stateChanges += static_cast<int>(segment.opaqueQueue.size()) +
+                          static_cast<int>(segment.translucentQueue.queue->size());
         }
 
         Radiant::info("Render stats: %2d Segments, %2d State changes, %2d Programs, %2d Textures, %2d Buffer Objects, %2d VertexArrays",
@@ -231,7 +232,7 @@ namespace Luminous
     for(std::size_t t = 0; t < state.textures.size(); ++t) {
       if(!state.textures[t]) break;
       else {
-        state.textures[t]->bind(t);
+        state.textures[t]->bind(static_cast<int>(t));
       }
     }
 
@@ -308,13 +309,15 @@ namespace Luminous
 
     if (cmd.indexed) {
       // Draw using the index buffer
-      glDrawElementsBaseVertex(static_cast<GLenum>(cmd.primitiveType), cmd.primitiveCount, GL_UNSIGNED_INT,
+      glDrawElementsBaseVertex(static_cast<GLenum>(cmd.primitiveType),
+                               static_cast<GLsizei>(cmd.primitiveCount), GL_UNSIGNED_INT,
                                (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
       GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
-      glDrawArrays(static_cast<GLenum>(cmd.primitiveType), cmd.vertexOffset, cmd.primitiveCount);
+      glDrawArrays(static_cast<GLenum>(cmd.primitiveType), cmd.vertexOffset,
+                   static_cast<GLsizei>(cmd.primitiveCount));
       GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
@@ -739,7 +742,7 @@ namespace Luminous
         GLint uniformHandle = state.uniformBuffer->handle();
         GLint uniformBlockIndex = 0;
 
-        for(int i = opaque.queue->size() - 1; i >= 0; --i) {
+        for(int i = static_cast<int>(opaque.queue->size()) - 1; i >= 0; --i) {
           m_d->render((*opaque.queue)[i], uniformHandle, uniformBlockIndex);
         }
 
@@ -751,7 +754,7 @@ namespace Luminous
       }
 
       for(std::size_t i = 0; i < queues.translucentQueue.queue->size(); ++i) {
-        auto p = (*queues.translucentQueue.queue)[i];
+        auto p = (*queues.translucentQueue.queue)[(int)i];
         const RenderState & state = p.first;
         const RenderCommand & cmd = p.second;
         m_d->setState(state);

@@ -732,7 +732,7 @@ namespace Luminous
 #endif
     assert(data);
     data += buffer->reservedBytes;
-    offset = buffer->reservedBytes / vertexSize;
+    offset = static_cast<unsigned int>(buffer->reservedBytes / vertexSize);
     buffer->reservedBytes += vertexSize * maxVertexCount;
     return std::make_pair(data, buffer);
   }
@@ -831,7 +831,7 @@ namespace Luminous
       char * data = ibuffer->data.data();
 #endif
       mappedIndexBuffer = reinterpret_cast<unsigned int*>(data + ibuffer->reservedBytes);
-      indexOffset = ibuffer->reservedBytes / sizeof(unsigned int);
+      indexOffset = static_cast<unsigned int>(ibuffer->reservedBytes) / sizeof(unsigned int);
       ibuffer->reservedBytes += sizeof(unsigned int)*indexCount;
     }
 
@@ -839,8 +839,8 @@ namespace Luminous
     cmd.indexed = (indexCount > 0);
     cmd.indexOffset = indexOffset;
     cmd.vertexOffset = vertexOffset;
-    cmd.uniformOffsetBytes = uniformOffset * uniformSize;
-    cmd.uniformSizeBytes = uniformSize;
+    cmd.uniformOffsetBytes = uniformOffset * static_cast<unsigned int>(uniformSize);
+    cmd.uniformSizeBytes = static_cast<unsigned int>(uniformSize);
 
     depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
     ++(m_data->m_renderCalls.top());
@@ -1131,7 +1131,7 @@ namespace Luminous
       }
 
       for (int i = 0; i < int(group.items.size());) {
-        const int count = std::min<int>(group.items.size() - i, maxGlyphsPerCmd);
+        const int count = std::min(static_cast<int>(group.items.size()) - i, maxGlyphsPerCmd);
 
         auto b = render<FontVertex, FontUniformBlock>(
               true, PRIMITIVE_TRIANGLE_STRIP, count*6 - 2, count*4, 1, program, &textures);
@@ -1525,7 +1525,7 @@ namespace Luminous
     // Add color correction filter if any of the areas have a profile defined
     for(size_t i = 0; i < m_data->m_window->areaCount(); ++i) {
 
-      if(m_data->m_window->isAreaSoftwareColorCorrected(i)) {
+      if(m_data->m_window->isAreaSoftwareColorCorrected(static_cast<int>(i))) {
         Radiant::info("Enabling software color correction for area %lu", i);
 
         // Check if filter already exists
@@ -1546,7 +1546,7 @@ namespace Luminous
   void RenderContext::postProcess()
   {
     PostProcessChain & chain = m_data->m_postProcessChain;
-    const unsigned numFilters = chain.numEnabledFilters();
+    size_t numFilters = chain.numEnabledFilters();
 
     if(numFilters == 0)
       return;

@@ -596,7 +596,7 @@ namespace Luminous
           const int expire = ptr->m_d->m_expireDeciSeconds;
           std::vector<MipmapLevel> & levels = ptr->m_d->m_levels;
           // do not expire the last mipmap level (smallest image)
-          for(int level = 0, s = levels.size() - 1; level < s; ++level) {
+          for(int level = 0, s = static_cast<int>(levels.size()) - 1; level < s; ++level) {
             MipmapLevel & imageTex = levels[level];
             int lastUsed = imageTex.lastUsed.load();
             if (lastUsed <= Loading)
