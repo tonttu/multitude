@@ -129,9 +129,9 @@ namespace Valuable
 
   void AttributeSpline::changeUniform(float v)
   {
-    for (int i = 0, s = m_points.size(); i < s; ++i)
+    for (size_t i = 0, s = m_points.size(); i < s; ++i)
       m_points[i].y += v;
-    for (int i = 0, s = m_intermediatePoints.size(); i < s; ++i)
+    for (size_t i = 0, s = m_intermediatePoints.size(); i < s; ++i)
       m_intermediatePoints[i].y += v;
 
     update(v == 0.f);
@@ -139,7 +139,7 @@ namespace Valuable
 
   bool AttributeSpline::isIdentity() const
   {
-    for (int i = 0, s = m_points.size(); i < s; ++i)
+    for (size_t i = 0, s = m_points.size(); i < s; ++i)
       if (!qFuzzyCompare(m_points[i].x, m_points[i].y))
         return false;
     return true;
@@ -160,7 +160,7 @@ namespace Valuable
 
     if (high == m_points.end()) {
       controlPointOut = m_points.back();
-      return m_points.size() - 1;
+      return static_cast<int>(m_points.size()) - 1;
     }
 
     if (high == m_points.begin()) {

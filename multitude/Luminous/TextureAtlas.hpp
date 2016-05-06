@@ -146,7 +146,7 @@ namespace Luminous
     m_items.emplace_back(new Item());
     Item & item = *m_items.back();
 
-    for (int i = 0, s = m_atlases.size(); i <= s; ++i) {
+    for (size_t i = 0, s = m_atlases.size(); i <= s; ++i) {
       if (i == s) {
         int size = std::min(maxSize, baseSize << i);
         m_atlases.emplace_back(new TextureAtlas(Nimble::Size(size, size), m_pixelFormat));

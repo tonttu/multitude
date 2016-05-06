@@ -99,7 +99,7 @@ namespace Utils
   template <typename T, size_t N>
   bool LockFreeQueue<T, N>::setSize(int items)
   {
-    m_size = std::min<int>(items, m_data.size());
+    m_size = std::min(items, (int)m_data.size());
     return m_size == items;
   }
 

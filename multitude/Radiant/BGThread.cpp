@@ -270,7 +270,7 @@ namespace Radiant
         if(next <= 0) {
           m_taskQueue.erase(it);
           m_runningTasks.insert(task);
-          m_runningTasksCount = m_runningTasks.size();
+          m_runningTasksCount = static_cast<int>(m_runningTasks.size());
           return task;
         } else if(next < wait && m_reserved.find(task) == m_reserved.end()) {
           wait = next;

@@ -105,7 +105,7 @@ namespace Valuable
 
       if(alive && !freePositions.empty()) {
         assert(freePositions.back() < i);
-        int pos = freePositions.front();
+        size_t pos = freePositions.front();
         freePositions.pop();
         m_transitions[pos] = m_transitions[i];
         freePositions.push(i);

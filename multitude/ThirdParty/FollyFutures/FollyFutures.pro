@@ -6,7 +6,7 @@ INCLUDEPATH += .
 CONFIG += c++11
 QT -= gui
 
-win32:QMAKE_CXXFLAGS += /bigobj
+win32:QMAKE_CXXFLAGS += /bigobj -w44624
 
 DEFINES += FOLLY_EXPORT
 

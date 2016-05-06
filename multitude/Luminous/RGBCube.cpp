@@ -386,7 +386,7 @@ namespace Luminous
       float d = (color - m_d->getIndex(i)).length();
       if(error > d) {
         error = d;
-        index = i;
+        index = static_cast<int>(i);
       }
     }
 

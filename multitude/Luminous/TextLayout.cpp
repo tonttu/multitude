@@ -130,11 +130,12 @@ namespace Luminous
 
   TextLayout::Group & TextLayout::D::findGroup(Texture & texture, QColor color)
   {
-    auto it = m_groupCache.find(std::make_pair(texture.resourceId(), color));
+    std::pair<RenderResource::Id, QColor> key = std::make_pair(texture.resourceId(), color);
+    auto it = m_groupCache.find(key);
     if (it != m_groupCache.end()) {
       return m_groups[it->second];
     }
-    m_groupCache.insert(std::make_pair(std::make_pair(texture.resourceId(), color), m_groups.size()));
+    m_groupCache.insert(std::make_pair(key, static_cast<int>(m_groups.size())));
     m_groups.emplace_back(texture, color);
     return m_groups.back();
   }
@@ -165,7 +166,7 @@ namespace Luminous
     return *this;
   }
 
-  int TextLayout::groupCount() const
+  size_t TextLayout::groupCount() const
   {
     return m_d->m_groups.size();
   }

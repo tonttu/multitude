@@ -75,7 +75,7 @@ namespace Valuable {
 
     virtual bool set(int v, Layer layer, ValueUnit) OVERRIDE
     {
-      m_master.setFlags(m_flags, v, layer);
+      m_master.setFlags(m_flags, v != 0, layer);
       return true;
     }
 

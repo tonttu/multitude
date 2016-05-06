@@ -184,13 +184,13 @@ namespace Radiant
 
       std::vector<wchar_t> buffer(MAX_PATH);
 
-      DWORD got = GetModuleFileName(handle, &buffer[0], buffer.size());
+      DWORD got = GetModuleFileName(handle, &buffer[0], static_cast<DWORD>(buffer.size()));
 
       while(got == buffer.size()) {
 
         buffer.resize(2 * buffer.size());
 
-        got = GetModuleFileName(handle, &buffer[0], buffer.size());
+        got = GetModuleFileName(handle, &buffer[0], static_cast<DWORD>(buffer.size()));
       }
 
       if(got == 0) {
@@ -212,12 +212,15 @@ namespace Radiant
 
     bool createHardLink(const QString & from, const QString & to)
     {
+      (void) from;
+      (void) to;
       Radiant::error("Hard links not implemented on windows yet");
       return false;
     }
 
     int numberOfHardLinks(const QString & file)
     {
+      (void) file;
       Radiant::error("numberOfHardLinks not implemented on windows yet");
       return -1;
     }

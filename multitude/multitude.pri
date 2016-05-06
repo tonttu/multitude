@@ -257,18 +257,8 @@ win32 {
     LIB_OPENGL = -lglbinding$${CORNERSTONE_LIB_SUFFIX} -lglu32 -lopengl32
     # Make VS a bit less spammy
     QMAKE_CXXFLAGS += -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS
-    # conversion from 'size_t' to 'type', possible loss of data
-    QMAKE_CXXFLAGS += -wd4267
-    # conversion from 'type1' to 'type2', possible lost of data
-    QMAKE_CXXFLAGS += -wd4244
     # class 'type' needs to have dll-interface to be used by clients of class 'type2'
     QMAKE_CXXFLAGS += -wd4251
-    # this used in base member initializer list
-    QMAKE_CXXFLAGS += -wd4355
-    # Truncation from double to float
-    QMAKE_CXXFLAGS += -wd4305
-    # Signed/unsigned mismatch
-    QMAKE_CXXFLAGS += -wd4018
     # Use the non-standard math defines from math.h
     QMAKE_CXXFLAGS += -D_USE_MATH_DEFINES
     # Use multiprocessor compilation
