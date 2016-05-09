@@ -60,7 +60,9 @@ namespace Resonant
     void addOperation(PaOperationPtr op);
 
     bool waitForReady(double timeoutSecs);
-    void onReady(std::function<void()> func);
+    /// func is called every time the context is (re)initialized
+    long onReady(std::function<void()> func);
+    void removeOnReadyListener(long id);
 
     pa_context * paContext() const;
 
