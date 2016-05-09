@@ -4,6 +4,8 @@
 
 #include <pulse/pulseaudio.h>
 
+#include <Radiant/Sleep.hpp>
+
 namespace Resonant
 {
   std::weak_ptr<PulseAudioContext> s_sharedContext;
@@ -75,6 +77,20 @@ namespace Resonant
   {
     if (m_outputStream) {
       pa_stream_disconnect(m_outputStream);
+      // pa_stream_disconnect is asynchronous, wait up to 1 second for streams
+      // to finish. Without this we might delete the context while some
+      // callbacks are still running.
+      const int maxWaitMs = 1000;
+      const int steps = 10;
+      const int sleepMs = maxWaitMs / (steps*10/2);
+
+      for (int i = 0; i < steps; ++i) {
+        pa_stream_state_t state = pa_stream_get_state(m_outputStream);
+        if (state == PA_STREAM_FAILED || state == PA_STREAM_TERMINATED) {
+          break;
+        }
+        Radiant::Sleep::sleepMs(i*sleepMs);
+      }
       pa_stream_unref(m_outputStream);
       m_outputStream = nullptr;
     }
