@@ -19,11 +19,13 @@ namespace Resonant
 
     int m_channelCount = 0;
     bool m_running = false;
+    long m_onReadyListener = -1;
 
   public:
     D(DSPNetwork & dsp, const std::shared_ptr<ModuleOutCollect> & collect);
 
     void start(int samplerate, int channels);
+    void stop();
     void callback(std::size_t foo);
   };
 
@@ -38,6 +40,8 @@ namespace Resonant
 
   void AudioLoopPulseAudio::D::start(int samplerate, int channels)
   {
+    stop();
+
     pa_sample_spec ss { PA_SAMPLE_FLOAT32, uint32_t(samplerate), uint8_t(channels) };
     m_outputStream = pa_stream_new(m_context->paContext(), "Cornerstone AudioLoop",
                                    &ss, nullptr);
@@ -65,6 +69,15 @@ namespace Resonant
         PA_STREAM_ADJUST_LATENCY | PA_STREAM_START_UNMUTED);
 
     pa_stream_connect_playback(m_outputStream, nullptr, &attr, flags, &volume, nullptr);
+  }
+
+  void AudioLoopPulseAudio::D::stop()
+  {
+    if (m_outputStream) {
+      pa_stream_disconnect(m_outputStream);
+      pa_stream_unref(m_outputStream);
+      m_outputStream = nullptr;
+    }
   }
 
   void AudioLoopPulseAudio::D::callback(std::size_t bytes)
@@ -108,7 +121,7 @@ namespace Resonant
     m_d->m_context = sharedContext();
 
     std::weak_ptr<D> weak(m_d);
-    m_d->m_context->onReady([weak, samplerate, channels] {
+    m_d->m_onReadyListener = m_d->m_context->onReady([weak, samplerate, channels] {
       if (auto d = weak.lock()) {
         d->start(samplerate, channels);
       }
@@ -120,12 +133,11 @@ namespace Resonant
 
   bool AudioLoopPulseAudio::stop()
   {
-    if (m_d->m_outputStream) {
-      pa_stream_disconnect(m_d->m_outputStream);
-      pa_stream_unref(m_d->m_outputStream);
-      m_d->m_outputStream = nullptr;
+    m_d->stop();
+    if (m_d->m_context) {
+      m_d->m_context->removeOnReadyListener(m_d->m_onReadyListener);
+      m_d->m_context.reset();
     }
-    m_d->m_context.reset();
     m_d->m_running = false;
     return true;
   }

@@ -108,6 +108,7 @@ namespace Resonant
 
     void contextChange(pa_context_state_t state);
     void restart();
+    void autoSchedule();
     bool openConnection();
     void closeConnection();
 
@@ -123,6 +124,7 @@ namespace Resonant
     Radiant::Mutex m_stateMutex;
     bool m_running = false;
 
+    int m_restartIteration = 0;
     bool m_restart = false;
 
     std::weak_ptr<PulseAudioContext> m_host;
@@ -135,7 +137,8 @@ namespace Resonant
     Radiant::Mutex m_contextReadyMutex;
     Radiant::Condition m_contextReadyCond;
     bool m_contextReady = false;
-    std::vector<std::function<void()>> m_onReady;
+    long m_nextOnReadyId = 1;
+    std::map<long, std::function<void()>> m_onReady;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -157,21 +160,25 @@ namespace Resonant
 
   void PulseAudioContext::D::setReady(bool ready)
   {
-    std::vector<std::function<void()>> onReady;
+    std::map<long, std::function<void()>> onReady;
     {
       m_contextReady = ready;
       Radiant::Guard g(m_contextReadyMutex);
       if (ready) {
-        std::swap(onReady, m_onReady);
+        onReady = m_onReady;
       }
       m_contextReadyCond.wakeAll();
     }
-    for (auto & f: onReady) {
-      f();
+    for (auto & p: onReady) {
+      p.second();
     }
 
     if (auto host = m_host.lock()) {
       host->eventSend(ready ? "ready" : "not-ready");
+    }
+
+    if (ready) {
+      m_restartIteration = 0;
     }
   }
 
@@ -198,16 +205,23 @@ namespace Resonant
     }
   }
 
+  void PulseAudioContext::D::autoSchedule()
+  {
+    // Increase retry iteration time from 1 s up to 5 seconds in 30 seconds
+    scheduleFromNowSecs(std::min(5, (m_restartIteration + 5) / 6));
+  }
+
   void PulseAudioContext::D::restart()
   {
     setReady(false);
 
     Radiant::Guard g(m_stateMutex);
     m_restart = true;
+    ++m_restartIteration;
 
     if (state() == D::DONE) {
       setState(D::WAITING);
-      schedule(Radiant::TimeStamp(0));
+      autoSchedule();
       Radiant::BGThread::instance()->addTask(shared_from_this());
     }
   }
@@ -274,7 +288,8 @@ namespace Resonant
 
       if (!m_context) {
         if (!openConnection()) {
-          scheduleFromNowSecs(5.0);
+          ++m_restartIteration;
+          autoSchedule();
         }
       }
     } else {
@@ -285,7 +300,11 @@ namespace Resonant
 
     Radiant::Guard g(m_stateMutex);
     if (m_running == !!m_context) {
-      setFinished();
+      if (m_running && m_restart) {
+        autoSchedule();
+      } else {
+        setFinished();
+      }
     }
   }
 
@@ -295,7 +314,7 @@ namespace Resonant
     m_running = running;
     if (state() == D::DONE) {
       setState(D::WAITING);
-      schedule(Radiant::TimeStamp(0));
+      autoSchedule();
       Radiant::BGThread::instance()->addTask(shared_from_this());
     }
   }
@@ -362,20 +381,26 @@ namespace Resonant
     return m_d->m_contextReady;
   }
 
-  void PulseAudioContext::onReady(std::function<void()> func)
+  long PulseAudioContext::onReady(std::function<void()> func)
   {
+    long id = 0;
     bool run = false;
     {
       Radiant::Guard g(m_d->m_contextReadyMutex);
-      if (m_d->m_contextReady) {
-        run = true;
-      } else {
-        m_d->m_onReady.push_back(std::move(func));
-      }
+      id = m_d->m_nextOnReadyId++;
+      m_d->m_onReady[id] = std::move(func);
+      run = m_d->m_contextReady;
     }
     if (run) {
       func();
     }
+    return id;
+  }
+
+  void PulseAudioContext::removeOnReadyListener(long id)
+  {
+    Radiant::Guard g(m_d->m_contextReadyMutex);
+    m_d->m_onReady.erase(id);
   }
 
   pa_context * PulseAudioContext::paContext() const
