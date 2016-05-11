@@ -94,6 +94,11 @@ namespace Luminous
 
     /// Constructs new blend mode object
     LUMINOUS_API BlendMode();
+    /// Constructs new blend mode object
+    /// @param equation blending equation
+    /// @param srcFunc source color blending function
+    /// @param dstFunc destination color blending function
+    LUMINOUS_API BlendMode(Equation equation, Function srcFunc, Function dstFunc);
 
     /// Set constant blending color
     /// @param color Color for constant blending color.

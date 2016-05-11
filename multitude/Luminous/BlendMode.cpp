@@ -20,6 +20,13 @@ namespace Luminous
   {
   }
 
+  BlendMode::BlendMode(BlendMode::Equation equation, BlendMode::Function srcFunc, BlendMode::Function dstFunc)
+  {
+    m_equation = equation;
+    m_srcFunction = srcFunc;
+    m_dstFunction = dstFunc;
+  }
+
   BlendMode BlendMode::Additive()
   {
     BlendMode mode;
