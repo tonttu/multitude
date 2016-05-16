@@ -8,7 +8,8 @@ HEADERS += AudioFileHandler.hpp \
     PortAudioSource.hpp \
     PulseAudioSource.hpp \
     AudioLoopPortAudio.hpp \
-    AudioLoopPulseAudio.hpp
+    AudioLoopPulseAudio.hpp \
+    SourceInfo.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp
 HEADERS += Export.hpp

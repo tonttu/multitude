@@ -2,6 +2,7 @@
 #define RESONANT_PORTAUDIOSOURCE_HPP
 
 #include "ModuleBufferPlayer.hpp"
+#include "SourceInfo.hpp"
 
 namespace Resonant
 {
@@ -34,6 +35,8 @@ namespace Resonant
     ///                   prints it.
     /// @param errorMessage[out] Error message
     OpenResult open(const QString & deviceName, QString * errorMessage);
+
+    QList<SourceInfo> sources(QString * errorMessage);
 
     /// Synchronously closes the input source
     void close();
