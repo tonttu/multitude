@@ -25,6 +25,7 @@ namespace Resonant
   public:
     PaStreamCallbackResult capture(const float * const * input, unsigned long frameCount,
                                    const PaStreamCallbackTimeInfo * timeInfo, PaStreamCallbackFlags statusFlags);
+    bool initialize(QString * error);
 
   public:
     bool m_initialized = false;
@@ -53,6 +54,21 @@ namespace Resonant
     return paContinue;
   }
 
+  bool PortAudioSource::D::initialize(QString * error)
+  {
+    if (!m_initialized) {
+      PaError e = Pa_Initialize();
+      if(e == paNoError) {
+        m_initialized = true;
+      } else {
+        if (error) {
+          *error = Pa_GetErrorText(e);
+        }
+      }
+    }
+    return m_initialized;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -71,16 +87,8 @@ namespace Resonant
 
   PortAudioSource::OpenResult PortAudioSource::open(const QString & deviceName, QString * error)
   {
-    if (!m_d->m_initialized) {
-      PaError e = Pa_Initialize();
-      if(e == paNoError) {
-        m_d->m_initialized = true;
-      } else {
-        if (error) {
-          *error = Pa_GetErrorText(e);
-        }
-        return OpenResult::PA_INIT_ERROR;
-      }
+    if (!m_d->initialize(error)) {
+      return OpenResult::PA_INIT_ERROR;
     }
 
     PaStreamParameters params;
@@ -142,6 +150,28 @@ namespace Resonant
     }
 
     return OpenResult::SUCCESS;
+  }
+
+  QList<SourceInfo> PortAudioSource::sources(QString * error)
+  {
+    QList<SourceInfo> sources;
+    if (!m_d->initialize(error)) {
+      return sources;
+    }
+
+    QRegExp alsar("(.*) \\(hw:(\\d+),\\d+\\)");
+    for (PaDeviceIndex i = 0, c = Pa_GetDeviceCount(); i < c; ++i) {
+      const PaDeviceInfo * info = Pa_GetDeviceInfo(i);
+      SourceInfo src;
+      src.name = info->name;
+      if (alsar.exactMatch(src.name)) {
+        src.alsaName = alsar.cap(1);
+        src.alsaCard = alsar.cap(2).toInt();
+      }
+      sources << src;
+    }
+
+    return sources;
   }
 
   void PortAudioSource::close()

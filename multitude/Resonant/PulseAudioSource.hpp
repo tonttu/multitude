@@ -2,6 +2,7 @@
 #define RESONANT_PULSEAUDIOSOURCE_HPP
 
 #include "ModuleBufferPlayer.hpp"
+#include "SourceInfo.hpp"
 
 namespace Resonant
 {
@@ -19,7 +20,7 @@ namespace Resonant
     bool open(const QString & sourceName, QString * errorMessage,
               double timeoutSecs, const QString & uiName = QString());
 
-    QStringList sourceNamesByAlsaCardNumber(int alsaCardNumber, QString * errorMessage, double timeoutSecs);
+    QList<SourceInfo> sources(QString * errorMessage, double timeoutSecs);
 
     /// Synchronously closes the input source
     void close();

@@ -112,24 +112,31 @@ namespace Resonant
     return true;
   }
 
-  QStringList PulseAudioSource::sourceNamesByAlsaCardNumber(int alsaCardNumber, QString * errorMsg, double timeoutSecs)
+  QList<SourceInfo> PulseAudioSource::sources(QString * errorMsg, double timeoutSecs)
   {
+    QList<SourceInfo> srcs;
+
     Radiant::Timer timer;
     if (!m_d->prepareContext(errorMsg, timeoutSecs)) {
-      return QStringList();
+      return srcs;
     }
 
-    QStringList names;
-    auto op = m_d->m_context->listSources([&names, alsaCardNumber] (const pa_source_info * info, bool eol) {
+    auto op = m_d->m_context->listSources([&srcs] (const pa_source_info * info, bool eol) {
       if (eol) {
         return;
       }
 
+      SourceInfo src;
+      src.name = info->name;
+
       if (auto card = pa_proplist_gets(info->proplist, "alsa.card")) {
-        if (QString(card).toInt() == alsaCardNumber) {
-          names << info->name;
-        }
+        src.alsaCard = QString(card).toInt();
       }
+      if (auto name = pa_proplist_gets(info->proplist, "alsa.name")) {
+        src.alsaName = name;
+      }
+
+      srcs << src;
     });
 
     if (!op->waitForFinished(timeoutSecs - timer.time())) {
@@ -139,7 +146,7 @@ namespace Resonant
       op->cancel();
     }
 
-    return names;
+    return srcs;
   }
 
   void PulseAudioSource::close()
