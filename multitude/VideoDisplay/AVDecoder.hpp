@@ -286,6 +286,7 @@ namespace VideoDisplay
         , m_audioBufferSeconds(2.0)
         , m_videoBufferFrames(10)
         , m_pixelFormat(VideoFrame::UNKNOWN)
+        , m_videoDecodingThreads(2)
       {}
 
     public:
@@ -559,6 +560,12 @@ namespace VideoDisplay
       /// @param pixelFormat preferred output pixel format
       void setPixelFormat(VideoFrame::Format pixelFormat) { m_pixelFormat = pixelFormat; }
 
+      /// Number of threads to use in the video decoder, value 0 selects the
+      /// value automatically. Use value 0 carefully, it's optimal only when
+      /// playing one video.
+      int videoDecodingThreads() const { return m_videoDecodingThreads; }
+      void setVideoDecodingThreads(int t) { m_videoDecodingThreads = t; }
+
     private:
       QString m_source;
       QString m_format;
@@ -578,6 +585,7 @@ namespace VideoDisplay
       double m_audioBufferSeconds;
       int m_videoBufferFrames;
       VideoFrame::Format m_pixelFormat;
+      int m_videoDecodingThreads;
     };
 
   public:
