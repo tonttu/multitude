@@ -109,10 +109,13 @@ namespace Luminous
       m_fontShader.setSampleShading(1.0f);
 
       m_splineShader.loadShader("Luminous/GLSL150/spline.fs", Luminous::Shader::Fragment);
-      m_splineShader.loadShader("Luminous/GLSL150/spline.vs", Luminous::Shader::Vertex);
+      /// There are two versions of spline.vs: spline.vs has time range and spline2.vs doesn't.
+      /// Luminous::Spline uses the old spline.vs, so need to keep it for now.
+      /// New Spline uses spline2.vs.
+      /// @todo: remove old spline.vs and rename spline2.vs when Luminous::Spline is removed
+      m_splineShader.loadShader("Luminous/GLSL150/spline2.vs", Luminous::Shader::Vertex);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
-      desc.addAttribute<Nimble::Vector2f>("vertex_range");
       desc.addAttribute<Nimble::Vector4f>("vertex_color");
       m_splineShader.setVertexDescription(desc);
       m_splineShader.setTranslucency(true);
