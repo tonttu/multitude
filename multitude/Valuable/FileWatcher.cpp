@@ -166,12 +166,13 @@ namespace Valuable
 
       // If the file was removed, don't re-add the path to avoid warnings from
       // QFileSystemWatcher
-      if(QFileInfo(path).exists())
+      if(QFileInfo(path).exists()) {
         m_watcher.addPath(path);
 
-      // We can't assume that directory changed preceeds file changed event, so
-      // we must always delay file changed events
-      delayEvent(path, ChangeEvent::MODIFY);
+        // We can't assume that directory changed preceeds file changed event, so
+        // we must always delay file changed events
+        delayEvent(path, ChangeEvent::MODIFY);
+      }
     }
 
     void sendDelayedEvents()
