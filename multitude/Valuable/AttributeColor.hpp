@@ -19,7 +19,7 @@
 
 namespace Valuable
 {
-  /** A value object holding a #Radiant::Color value. */
+  /** A value object holding a #Radiant::ColorPMA value. */
   template <>
   class AttributeT<Radiant::ColorPMA> : public AttributeBaseT<Radiant::ColorPMA>
   {
@@ -78,7 +78,7 @@ namespace Valuable
       auto & c = v[0];
 
       if (c.type() == StyleValue::TYPE_COLOR) {
-        this->setValue(c.asColor(), layer);
+        this->setValue(c.asColorPMA(), layer);
         return true;
       } else if (c.type() == StyleValue::TYPE_COLOR_PMA) {
         this->setValue(c.asColorPMA(), layer);
@@ -115,6 +115,106 @@ namespace Valuable
     inline float alpha() const { return value().a; }
   };
   typedef AttributeT<Radiant::ColorPMA> AttributeColor;
+
+  //////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+
+  /** A value object holding a #Radiant::Color value. */
+  template <>
+  class AttributeT<Radiant::Color> : public AttributeBaseT<Radiant::Color>
+  {
+    typedef AttributeBaseT<Radiant::Color> Base;
+  public:
+    using Base::operator=;
+
+    /// @copydoc Attribute::Attribute()
+    AttributeT() : Base()
+    {}
+
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param c The color value
+    AttributeT(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
+      : Base(host, name, c, transit)
+    {}
+
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param c The color value as string
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
+      : Base(host, name, Radiant::Color(c), transit)
+    {}
+
+    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @param c The color value as string
+    AttributeT(Node * host, const QByteArray & name, const char * c, bool transit = false)
+      : Base(host, name, Radiant::Color(c), transit)
+    {}
+
+    ~AttributeT()
+    {}
+
+    /// Sets the attribute color in non-premultiplied format
+    bool set(const Nimble::Vector4f & color, Layer layer = USER,
+             QList<ValueUnit> = QList<ValueUnit>()) OVERRIDE
+    {
+      this->setValue(Radiant::Color(color.x, color.y, color.z, color.w), layer);
+      return true;
+    }
+
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit = VU_UNKNOWN) OVERRIDE
+    {
+      Radiant::Color c;
+      if (c.set(v.toUtf8())) {
+        this->setValue(c, layer);
+        return true;
+      }
+      return false;
+    }
+
+    virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE
+    {
+      if (v.size() != 1)
+        return false;
+
+      auto & c = v[0];
+
+      if (c.type() == StyleValue::TYPE_COLOR) {
+        this->setValue(c.asColor(), layer);
+        return true;
+      } else if (c.type() == StyleValue::TYPE_COLOR_PMA) {
+        this->setValue(c.asColor(), layer);
+        return true;
+      } else if (c.canConvert(StyleValue::TYPE_KEYWORD)) {
+        Radiant::Color tmp;
+        if (tmp.set(c.asKeyword())) {
+          this->setValue(tmp, layer);
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    virtual QString asString(bool * const ok, Layer layer) const override
+    {
+      if (ok)
+        *ok = true;
+      Radiant::Color c = value(layer);
+      return QString("rgba(%1, %2, %3, %4)").arg(c.r*255, c.g*255, c.b*255, c.a);
+    }
+
+    /// Converts the value object to color
+    Radiant::Color asColor() const { return value(); }
+
+    /// Returns the premultiplied red component of the color (0-1).
+    inline float red() const   { return value().r; }
+    /// Returns the premultiplied green component of the color (0-1).
+    inline float green() const { return value().g; }
+    /// Returns the premultiplied blue component of the color (0-1).
+    inline float blue() const  { return value().b; }
+    /// Returns the alpha component of the color (0-1).
+    inline float alpha() const { return value().a; }
+  };
+
 }
 
 #endif
