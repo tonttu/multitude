@@ -213,7 +213,7 @@ namespace Luminous
 
   bool Image::copyResample(const Image & source, int w, int h)
   {
-    if (hasPreMultipliedAlpha()) {
+    if (source.hasPreMultipliedAlpha()) {
       Radiant::error("Image::copyResample # Not implemented with pre-multiplied alpha");
     }
     changed();
