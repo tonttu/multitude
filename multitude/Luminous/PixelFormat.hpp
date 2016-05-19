@@ -169,8 +169,10 @@ namespace Luminous
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
     {
-      return m_layout == that.m_layout && m_type == that.m_type &&
-          m_compression == that.m_compression;
+      return m_layout == that.m_layout &&
+             m_type == that.m_type &&
+             m_compression == that.m_compression &&
+             m_isPremultipliedAlpha == that.m_isPremultipliedAlpha;
     }
 
     /// Compare if two pixel formats are not the same
