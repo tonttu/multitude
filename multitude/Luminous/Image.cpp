@@ -512,74 +512,11 @@ namespace Luminous
     return false;
   }
 
-  bool Image::forgetLastPixels(int n)
-  {
-    if(n <= 0)
-      return true;
-
-    changed();
-
-    if(pixelFormat() == PixelFormat::rgbUByte()) {
-      int linewidth = m_width * 3;
-      int newlinewidth = (m_width - n) * 3;
-
-      for(int y = 0; y < m_height; y++) {
-        unsigned char * dest = bytes() + y * newlinewidth;
-        unsigned char * src = bytes() + y * linewidth;
-
-        memmove(dest, src, newlinewidth);
-      }
-
-      m_width -= n;
-
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
-
-      return true;
-    }
-
-    return false;
-  }
-
-  void Image::forgetLastLines(int n)
-  {
-
-    if(m_height < n)
-      m_height = 0;
-    else
-      m_height -= n;
-
-    changed();
-
-    if(m_texture)
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
-  }
-
-  void Image::forgetLastLine()
-  {
-    if(m_height) {
-      m_height--;
-      changed();
-
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
-    }
-  }
-
   bool Image::hasAlpha() const
   {
     return (m_pixelFormat.layout() == PixelFormat::LAYOUT_ALPHA) ||
         (m_pixelFormat.layout() == PixelFormat::LAYOUT_RED_GREEN) ||
         (m_pixelFormat.layout() == PixelFormat::LAYOUT_RGBA);
-  }
-
-  void Image::makeValidTexture()
-  {
-    int xlose = width()  & 0x3;
-    int ylose = height() & 0x3;
-
-    forgetLastPixels(xlose);
-    forgetLastLines(ylose);
   }
 
   Image& Image::operator = (const Image& img)

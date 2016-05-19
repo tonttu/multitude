@@ -166,20 +166,7 @@ namespace Luminous
     @param source image to resample
     @return true if resampling succeeded */
     bool quarterSize(const Image & source);
-    /** Remove pixels from the right edge of the image. Works for RGB images.
-    @param n number of pixels to remove
-    @return false if the image is of unsupported pixel format*/
-    bool forgetLastPixels(int n);
-    /** Remove lines from the bottom of the image.
-    @param n number of lines to remove */
-    void forgetLastLines(int n);
-    /** Removes the last line from the image. */
-    void forgetLastLine();
-    /** Checks that the image dimensions are feasible for a texture. In practice
-        this functions removes pixels from the right and bottom, to make the
-        width and height multiples of two.
-    */
-    void makeValidTexture();
+
     /** Returns true if the image has an alpha channel.
         @return true if the image has alpha channel */
     bool hasAlpha() const;
