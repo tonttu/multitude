@@ -1123,7 +1123,7 @@ namespace Luminous
     if(!ignoreVerticalAlign)
       renderLocation.y += layout.verticalOffset();
 
-    for (int g = 0; g < layout.groupCount(); ++g) {
+    for (size_t g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid()) {
