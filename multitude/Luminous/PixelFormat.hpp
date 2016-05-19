@@ -90,10 +90,10 @@ namespace Luminous
     /// Constructs a pixel format with the given info
     /// @param layout layout of the channels
     /// @param type channel data type
-    PixelFormat(ChannelLayout layout = LAYOUT_UNKNOWN, ChannelType type = TYPE_UNKNOWN);
+    PixelFormat(ChannelLayout layout = LAYOUT_UNKNOWN, ChannelType type = TYPE_UNKNOWN, bool isPremultipliedAlpha = false);
     /// Constructs a pixel format using compression
     /// @param compression compression to use
-    PixelFormat(Compression compression);
+    PixelFormat(Compression compression, bool isPremultipliedAlpha = false);
     ~PixelFormat();
 
     /// Returns the number of channels
@@ -110,6 +110,11 @@ namespace Luminous
     /// Check if the format specifies an alpha channel
     /// @return true if alpha channel is specified; otherwise false
     bool hasAlpha() const;
+
+    /// Check if the format specifies a premultiplied alpha
+    bool isPremultipliedAlpha() const;
+    /// Set the premultiplied alpha format
+    void setPremultipliedAlpha(bool isPremultipliedAlpha);
 
     /// Constructs an 8-bit RGB pixel format
     /// @return new pixel format
@@ -181,6 +186,7 @@ namespace Luminous
     ChannelLayout m_layout;
     ChannelType m_type;
     Compression m_compression;
+    bool m_isPremultipliedAlpha;
   };
 
   inline std::ostream& operator<<(std::ostream& os, const Luminous::PixelFormat& pf)

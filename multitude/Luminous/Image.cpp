@@ -82,10 +82,7 @@ namespace Luminous
       m_height(0),
       m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
       m_data(0),
-      m_generation(0),
-      m_hasPreMultipliedAlpha(false)
-      // m_dataReady(false),
-      // m_ready(false)
+      m_generation(0)
   {}
 
   Image::Image(const Image& img)
@@ -94,7 +91,6 @@ namespace Luminous
     , m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN)
     , m_data(nullptr)
     , m_generation(0)
-    , m_hasPreMultipliedAlpha(img.m_hasPreMultipliedAlpha)
   {
     *this = img;
   }
@@ -147,8 +143,7 @@ namespace Luminous
     const float sx = float(src.width()) / float(w);
     const float sy = float(src.height()) / float(h);
 
-    m_hasPreMultipliedAlpha = src.m_hasPreMultipliedAlpha;
-    if (m_hasPreMultipliedAlpha || !hasAlpha()) {
+    if (hasPreMultipliedAlpha() || !hasAlpha()) {
       for(int y0 = 0; y0 < h; y0++) {
 
         for(int x0 = 0; x0 < w; x0++) {
@@ -218,7 +213,7 @@ namespace Luminous
 
   bool Image::copyResample(const Image & source, int w, int h)
   {
-    if (m_hasPreMultipliedAlpha) {
+    if (hasPreMultipliedAlpha()) {
       Radiant::error("Image::copyResample # Not implemented with pre-multiplied alpha");
     }
     changed();
@@ -373,7 +368,7 @@ namespace Luminous
   /// @todo this function is retarded. It should be simplified.
   bool Image::quarterSize(const Image & source)
   {
-    if (m_hasPreMultipliedAlpha) {
+    if (hasPreMultipliedAlpha()) {
       Radiant::error("Image::quarterSize # Not implemented with pre-multiplied alpha");
     }
 
@@ -599,8 +594,6 @@ namespace Luminous
     unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
     memcpy(m_data, img.m_data, bytes);
 
-    m_hasPreMultipliedAlpha = img.m_hasPreMultipliedAlpha;
-
     changed();
 
     // Copy associated texture (if any)
@@ -632,7 +625,6 @@ namespace Luminous
     m_data = img.m_data;
     m_generation = img.m_generation;
     m_texture = std::move(img.m_texture);
-    m_hasPreMultipliedAlpha = img.m_hasPreMultipliedAlpha;
 
     /// Invalidate the old
     img.m_width = 0;
@@ -640,7 +632,6 @@ namespace Luminous
     img.m_pixelFormat = Luminous::PixelFormat();
     img.m_data = nullptr;
     img.m_generation = 0;
-    img.m_hasPreMultipliedAlpha = false;
 
     return *this;
   }
@@ -733,7 +724,7 @@ namespace Luminous
 
   bool Image::write(const QString & filename) const
   {
-    if (m_hasPreMultipliedAlpha) {
+    if (hasPreMultipliedAlpha()) {
       Luminous::Image tmp(*this);
       tmp.toPostMultipliedAlpha();
       return tmp.write(filename);
@@ -831,7 +822,7 @@ namespace Luminous
     m_height = 0;
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
-    m_hasPreMultipliedAlpha = false;
+
     changed();
 
     m_texture.reset();
@@ -981,7 +972,7 @@ namespace Luminous
 
   void Image::toPreMultipliedAlpha()
   {
-    if (!hasAlpha() || m_hasPreMultipliedAlpha)
+    if (!hasAlpha() || hasPreMultipliedAlpha())
       return;
 
     if (m_pixelFormat.numChannels() == 4 && m_pixelFormat.bytesPerPixel() == 4) {
@@ -1006,12 +997,12 @@ namespace Luminous
         }
       }
     }
-    m_hasPreMultipliedAlpha = true;
+    m_pixelFormat.setPremultipliedAlpha(true);
   }
 
   void Image::toPostMultipliedAlpha()
   {
-    if (!hasAlpha() || !m_hasPreMultipliedAlpha)
+    if (!hasAlpha() || !hasPreMultipliedAlpha())
       return;
 
     if (m_pixelFormat.numChannels() == 4 && m_pixelFormat.bytesPerPixel() == 4) {
@@ -1040,7 +1031,7 @@ namespace Luminous
         }
       }
     }
-    m_hasPreMultipliedAlpha = false;
+    m_pixelFormat.setPremultipliedAlpha(false);
   }
 
   /////////////////////////////////////////////////////////////////////////////

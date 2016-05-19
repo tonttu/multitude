@@ -72,25 +72,28 @@ namespace Luminous {
 
       haloweight = Nimble::Math::Clamp(haloweight * 255.5f, 0.0f, 255.1f);
 
-      Nimble::Vector4f pixel(1,1,1,0);
+      // Specify the texture in post-multiplied format
+      Radiant::Color pixel(1,1,1,0);
 
       for(int y = 0; y < dim; y++) {
         for(int x = 0; x < dim; x++) {
           float d = (Nimble::Vector2(x, y) - center).length() * invscale;
           if(d >= 1.0f) {
-            pixel.w = 0.f;
+            pixel.setAlpha(0.f);
           }
           else {
             if(d < centerDotSize)
-              pixel.w = 1.f;
+              pixel.setAlpha(1.f);
             else
-              pixel.w = ((haloweight *
-                powf((cosf(d * Nimble::Math::PI) * 0.5f + 0.5f), halodescent))) / 255.f;
+              pixel.setAlpha(((haloweight *
+                powf((cosf(d * Nimble::Math::PI) * 0.5f + 0.5f), halodescent))) / 255.f);
           }
-          m_image.setPixel(x,y, pixel);
+          m_image.setPixel(x,y, pixel.toVector());
         }
       }
 
+      // Convert the image to pre-multiplied format for texturing
+      m_image.toPreMultipliedAlpha();
       m_texture["tex"] = &m_image.texture();
     }
 

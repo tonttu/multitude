@@ -252,7 +252,7 @@ namespace Luminous
     /// @sa texture
     bool hasTexture() const;
 
-    bool hasPreMultipliedAlpha() const { return m_hasPreMultipliedAlpha; }
+    bool hasPreMultipliedAlpha() const { return m_pixelFormat.isPremultipliedAlpha(); }
 
     /// Convert this image to pre-multiplied alpha, assumes that the image is
     /// using post-multiplied pixel values
@@ -284,8 +284,6 @@ namespace Luminous
 
     mutable std::unique_ptr<Texture> m_texture;
     mutable Radiant::Mutex m_textureMutex;
-
-    bool m_hasPreMultipliedAlpha;
   };
 
 #ifndef LUMINOUS_OPENGLES
