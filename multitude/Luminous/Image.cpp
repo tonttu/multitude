@@ -744,6 +744,16 @@ namespace Luminous
 
     if(src != m_data) delete [] src;
 
+    // Check if the data needs to be converted. Need to override the
+    // premultiplied alpha flag so that the conversion will not early out.
+    if(format.isPremultipliedAlpha() && !srcFormat.isPremultipliedAlpha()) {
+      m_pixelFormat.setPremultipliedAlpha(false);
+      toPreMultipliedAlpha();
+    } else if(!format.isPremultipliedAlpha() && srcFormat.isPremultipliedAlpha()) {
+      m_pixelFormat.setPremultipliedAlpha(true);
+      toPostMultipliedAlpha();
+    }
+
     if(m_texture)
       m_texture->setData(width(), height(), format, m_data);
 
