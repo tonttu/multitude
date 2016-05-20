@@ -18,11 +18,12 @@ HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
-!enable-taction {
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
   HEADERS += PulseAudioContext.hpp \
     PulseAudioSource.hpp \
     AudioLoopPulseAudio.hpp
-}
+#}
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
@@ -39,16 +40,20 @@ SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
-!enable-taction {
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
   SOURCES += PulseAudioContext.cpp \
     PulseAudioSource.cpp \
     AudioLoopPulseAudio.cpp
-}
+#}
 SOURCES += SoundRectangle.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-!enable-taction:linux-*:LIBS += -lpulse
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
+  linux-*:LIBS += -lpulse
+#}
 
 include(../library.pri)
 
