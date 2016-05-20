@@ -74,6 +74,18 @@ namespace Luminous
   /// @return true if the extension is supported; otherwise false
   LUMINOUS_API bool isOpenGLExtensionSupported(gl::GLextension e);
 
+  struct OpenGLVersion
+  {
+    QByteArray vendor;
+    QByteArray version;
+    QByteArray glsl;
+    QByteArray renderer;
+  };
+
+  /// Returns OpenGL version of the first OpenGL context that was initialized
+  /// in initLuminous. This is thread-safe function.
+  LUMINOUS_API OpenGLVersion glVersion();
+
   //////////////////////////////////////////////////////////////////////////
 
   /// Primitive type used for rendering

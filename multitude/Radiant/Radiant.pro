@@ -1,6 +1,7 @@
 include(../multitude.pri)
 
 HEADERS += TempFailureRetry.hpp
+HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
 HEADERS += BGThreadExecutor.hpp

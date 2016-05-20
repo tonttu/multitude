@@ -49,7 +49,7 @@ namespace Resonant {
     channelsOut = 0;
 
     channelsIn = (int) m_map.size();
-    m_channels = m_host->outChannels();
+    m_channels = m_host->audioLoop()->outChannels();
 
     /* For debugging purposes you can override (=expand) the number of
        output channels. */
@@ -62,7 +62,8 @@ namespace Resonant {
 
     assert(m_channels != 0);
 
-    m_interleaved.resize(m_channels * MAX_CYCLE);
+    m_internalInterleavedBuffer.resize(m_channels * MAX_CYCLE);
+    m_interleaved = m_internalInterleavedBuffer.data();
 
     debugResonant("ModuleOutCollect::prepare # %d", (int) m_channels);
 
@@ -130,11 +131,11 @@ namespace Resonant {
   {
     size_t chans = m_channels;
 
-    assert(m_interleaved.size() >= (n * chans));
+    assert(m_internalInterleavedBuffer.size() >= (n * chans));
 
     // Set to zero
-    if(!m_interleaved.empty())
-      memset( & m_interleaved[0], 0, sizeof(float) * n * chans);
+    if(m_interleaved)
+      memset(m_interleaved, 0, sizeof(float) * n * chans);
 
     for(size_t i = 0; i < m_map.size(); i++) {
 
