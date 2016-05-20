@@ -19,8 +19,6 @@ namespace Resonant
     virtual bool isRunning() const OVERRIDE;
     virtual std::size_t outChannels() const OVERRIDE;
 
-    static PulseAudioContextPtr sharedContext();
-
   private:
     class D;
     std::shared_ptr<D> m_d;
