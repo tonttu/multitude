@@ -14,6 +14,7 @@
 
 #include <Radiant/BGThread.hpp>
 #include <Radiant/Task.hpp>
+#include <Radiant/Timer.hpp>
 
 #include "PulseAudioContext.hpp"
 
@@ -371,6 +372,16 @@ namespace Resonant
 
   bool PulseAudioContext::waitForReady(double timeoutSecs)
   {
+    Radiant::Timer timer;
+    for (int i = 0; i < 3 && timer.time() < timeoutSecs && m_d->state() != Radiant::Task::DONE &&
+         m_d->m_running; ++i) {
+      m_d->runNow(false);
+    }
+    // Make sure not to dead-lock by waiting for the condition
+    if (m_d->state() != Radiant::Task::DONE) {
+      return m_d->m_contextReady;
+    }
+    timeoutSecs -= timer.time();
     unsigned int ms = std::max<unsigned int>(timeoutSecs > 0 ? 1 : 0, std::round(timeoutSecs * 1000));
 
     Radiant::Guard g(m_d->m_contextReadyMutex);
