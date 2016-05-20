@@ -56,7 +56,8 @@ namespace Resonant
   bool PulseAudioSource::D::prepareContext(QString * errorMsg, double timeoutSecs)
   {
     if (!m_context) {
-      m_context = AudioLoopPulseAudio::sharedContext();
+      m_context = PulseAudioContext::create("Cornerstone PulseAudioSource");
+      m_context->start();
     }
 
     if (!m_context->waitForReady(timeoutSecs)) {
@@ -77,7 +78,20 @@ namespace Resonant
 
   PulseAudioSource::~PulseAudioSource()
   {
-    close();
+    if (m_d) {
+      close();
+    }
+  }
+
+  PulseAudioSource::PulseAudioSource(PulseAudioSource && src)
+    : m_d(std::move(src.m_d))
+  {
+  }
+
+  PulseAudioSource & PulseAudioSource::operator=(PulseAudioSource && src)
+  {
+    std::swap(m_d, src.m_d);
+    return *this;
   }
 
   bool PulseAudioSource::open(const QString & sourceName, QString * errorMsg,
