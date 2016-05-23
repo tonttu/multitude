@@ -6,9 +6,7 @@ HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
     ModuleBufferPlayer.hpp \
     PortAudioSource.hpp \
-    PulseAudioSource.hpp \
     AudioLoopPortAudio.hpp \
-    AudioLoopPulseAudio.hpp \
     SourceInfo.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp
@@ -20,7 +18,6 @@ HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
-HEADERS += PulseAudioContext.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
@@ -28,9 +25,7 @@ SOURCES += AudioFileHandler.cpp \
     LimiterAlgorithm.cpp \
     ModuleBufferPlayer.cpp \
     PortAudioSource.cpp \
-    PulseAudioSource.cpp \
-    AudioLoopPortAudio.cpp \
-    AudioLoopPulseAudio.cpp
+    AudioLoopPortAudio.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
 SOURCES += ModuleFilePlay.cpp
@@ -39,12 +34,20 @@ SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
-SOURCES += PulseAudioContext.cpp
 SOURCES += SoundRectangle.cpp
 
-LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
+enable-pulse {
+  HEADERS += PulseAudioSource.hpp
+  HEADERS += AudioLoopPulseAudio.hpp
+  HEADERS += PulseAudioContext.hpp
+  SOURCES += PulseAudioSource.cpp
+  SOURCES += AudioLoopPulseAudio.cpp
+  SOURCES += PulseAudioContext.cpp
 
-linux-*:LIBS += -lpulse
+  LIBS += -lpulse
+}
+
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
 include(../library.pri)
 
