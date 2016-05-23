@@ -3,9 +3,12 @@ include(../multitude.pri)
 unix: PKGCONFIG += sndfile portaudio-2.0
 
 HEADERS += AudioFileHandler.hpp \
-    LimiterAlgorithm.hpp
+    LimiterAlgorithm.hpp \
+    ModuleBufferPlayer.hpp \
+    PortAudioSource.hpp \
+    AudioLoopPortAudio.hpp \
+    SourceInfo.hpp
 HEADERS += AudioLoop.hpp
-HEADERS += AudioLoop_private.hpp
 HEADERS += DSPNetwork.hpp
 HEADERS += Export.hpp
 HEADERS += ModuleFilePlay.hpp
@@ -13,31 +16,44 @@ HEADERS += ModuleGain.hpp
 HEADERS += Module.hpp
 HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
-!enable-taction:HEADERS += ModulePulseAudio.hpp
 HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
-!enable-taction:HEADERS += PulseAudioCore.hpp
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
+  HEADERS += PulseAudioContext.hpp \
+    PulseAudioSource.hpp \
+    AudioLoopPulseAudio.hpp
+#}
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
 
 SOURCES += AudioFileHandler.cpp \
-    LimiterAlgorithm.cpp
-SOURCES += AudioLoop.cpp
+    LimiterAlgorithm.cpp \
+    ModuleBufferPlayer.cpp \
+    PortAudioSource.cpp \
+    AudioLoopPortAudio.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
 SOURCES += ModuleFilePlay.cpp
 SOURCES += ModuleGain.cpp
 SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
-!enable-taction:SOURCES += ModulePulseAudio.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
-!enable-taction:SOURCES += PulseAudioCore.cpp
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
+  SOURCES += PulseAudioContext.cpp \
+    PulseAudioSource.cpp \
+    AudioLoopPulseAudio.cpp
+#}
 SOURCES += SoundRectangle.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-!enable-taction:linux-*:LIBS += -lpulse
+# FIXME: separate flag to enable pulseaudio
+#!enable-taction {
+  linux-*:LIBS += -lpulse
+#}
 
 include(../library.pri)
 
