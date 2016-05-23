@@ -4,6 +4,7 @@
 #include "TestReporterStdout.h"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/Timer.hpp>
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -11,6 +12,7 @@
 #include <QDomDocument>
 #include <QFile>
 #include <QMap>
+#include <QTextStream>
 
 #include <fstream>
 #include <functional>
@@ -35,7 +37,12 @@ namespace UnitTest
         return 1;
       }
 
-      if (doc.isNull()) {
+      if (doc.isNull() || doc.documentElement().isNull()) {
+        // Replace the whole document if it's empty.
+        //
+        // It could be non-null and missing a root element
+        // at least if setContent() has been called with
+        // an empty xml file, so handle that too.
         doc.setContent(&file);
       } else {
         QDomDocument importDoc;
@@ -103,22 +110,40 @@ namespace UnitTest
 
       printf("%2d/%2d: Running test %s/%s\n",
              index, count, test->m_details.suiteName, test->m_details.testName);
+
+      // If the test crashes, get an estimate of the time used with a timer
+      Radiant::Timer timer;
+
       process.start(procName, newArgs, QProcess::ReadOnly);
       process.waitForStarted();
       process.waitForFinished(15*60*1000);
+      const double time = timer.time();
 
-      int procExitCode = process.exitCode();
-
-      if(procExitCode) {
-        printf("Test %s failed. See %s for details.\n",
-               test->m_details.testName, xmlOutput.toUtf8().data());
-        return procExitCode;
-      } else if (process.exitStatus() == QProcess::CrashExit) {
+      if(process.exitStatus() == QProcess::CrashExit) {
         printf("Test %s crashed. See %s for details.\n",
                test->m_details.testName, xmlOutput.toUtf8().data());
+        /// xmlOutput will be empty. Just generate fake contents here instead.
+        auto xmlContents = QString("<?xml version=\"1.0\"?>"
+          "<unittest-results tests=\"1\" failedtests=\"1\" failures=\"1\" time=\"%1\">\n"
+            "<test suite=\"%2\" name=\"%3\" time=\"%1\">"
+               "<failure message=\"crashed\"/>"
+            "</test>"
+          "</unittest-results>").arg(time).arg(test->m_details.suiteName)
+            .arg(test->m_details.testName);
+        QFile file(xmlOutput);
+        if(file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+          QTextStream stream(&file);
+          stream << xmlContents;
+          file.close();
+        }
         return 1;
       }
 
+      int procExitCode = process.exitCode();
+      if(procExitCode) {
+        printf("Test %s failed. See %s for details.\n",
+               test->m_details.testName, xmlOutput.toUtf8().data());
+      }
       return procExitCode;
     }
 
