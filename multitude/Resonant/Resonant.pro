@@ -43,11 +43,11 @@ enable-pulse {
   SOURCES += PulseAudioSource.cpp
   SOURCES += AudioLoopPulseAudio.cpp
   SOURCES += PulseAudioContext.cpp
+
+  LIBS += -lpulse
 }
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
-
-linux-*:LIBS += -lpulse
 
 include(../library.pri)
 
