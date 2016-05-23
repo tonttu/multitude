@@ -2,7 +2,7 @@ enable-all {
   CONFIG += enable-js enable-cef enable-experience enable-maps enable-extras
   CONFIG += enable-mushy enable-tests
   linux* {
-    CONFIG += enable-taction enable-old-production enable-coverage
+    CONFIG += enable-old-production enable-coverage
   }
 }
 
