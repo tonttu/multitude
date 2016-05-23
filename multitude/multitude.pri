@@ -126,7 +126,7 @@ LIB_QJSON = -lqjson$${CORNERSTONE_LIB_SUFFIX}
 LIB_UNITTEST_CPP = -lunittest-cpp$${CORNERSTONE_LIB_SUFFIX}
 enable-js:LIB_V8 = -lv8-multitouch1 -lnode-multitouch1
 
-INCLUDEPATH += $$PWD/ThirdParty/glbinding/include
+INCLUDEPATH += $$PWD/ThirdParty/glbinding/source/glbinding/include
 LIB_GLBINDING = -lglbinding$${CORNERSTONE_LIB_SUFFIX}
 
 #
