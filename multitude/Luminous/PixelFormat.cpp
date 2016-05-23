@@ -25,18 +25,21 @@ namespace Luminous
     m_layout = pf.m_layout;
     m_type = pf.m_type;
     m_compression = pf.m_compression;
+    m_isPremultipliedAlpha = pf.m_isPremultipliedAlpha;
   }
 
-  PixelFormat::PixelFormat(ChannelLayout layout, ChannelType type):
+  PixelFormat::PixelFormat(ChannelLayout layout, ChannelType type, bool isPremultipliedAlpha):
     m_layout(layout),
     m_type(type),
-    m_compression(COMPRESSION_NONE)
+    m_compression(COMPRESSION_NONE),
+    m_isPremultipliedAlpha(isPremultipliedAlpha)
   {}
 
-  PixelFormat::PixelFormat(Compression compression)
+  PixelFormat::PixelFormat(Compression compression, bool isPremultipliedAlpha)
     : m_layout(LAYOUT_UNKNOWN),
       m_type(TYPE_UNKNOWN),
-      m_compression(compression)
+      m_compression(compression),
+      m_isPremultipliedAlpha(isPremultipliedAlpha)
   {}
 
   PixelFormat::~PixelFormat()
@@ -135,6 +138,16 @@ namespace Luminous
     }
   }
 
+  bool PixelFormat::isPremultipliedAlpha() const
+  {
+    return m_isPremultipliedAlpha;
+  }
+
+  void PixelFormat::setPremultipliedAlpha(bool isPremultipliedAlpha)
+  {
+    m_isPremultipliedAlpha = isPremultipliedAlpha;
+  }
+
   static QString typeToString(PixelFormat::ChannelType type)
   {
     switch(type)
@@ -199,7 +212,8 @@ namespace Luminous
   QString PixelFormat::toString() const
   {
     /// @todo add support to compressed formats
-    return "PixelFormat(" + layoutToString(m_layout) + ", " + typeToString(m_type) + ")";
+    const QString premul = isPremultipliedAlpha() ? QString("pre-multiplied") : QString("post-multiplied");
+    return QString("PixelFormat(%1, %2, %3").arg(layoutToString(m_layout)).arg(typeToString(m_type)).arg(premul);
   }
 
 }
