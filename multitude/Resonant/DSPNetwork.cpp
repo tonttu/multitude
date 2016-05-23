@@ -11,7 +11,10 @@
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
 #include "AudioLoopPortAudio.hpp"
+
+#ifdef CORNERSTONE_ENABLE_PULSE
 #include "AudioLoopPulseAudio.hpp"
+#endif
 
 #include "ModulePanner.hpp"
 #include "ModuleOutCollect.hpp"
@@ -148,7 +151,12 @@ namespace Resonant {
     }
 
     if (backend == AUDIO_LOOP_PULSE_AUDIO) {
+#ifdef CORNERSTONE_ENABLE_PULSE
       m_audioLoop.reset(new AudioLoopPulseAudio(*this, m_collect));
+#else
+      Radiant::error("DSPNetwork::start # PulseAudio backend was requested but it wasn't included in this build");
+      return false;
+#endif
     } else {
       m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
     }
