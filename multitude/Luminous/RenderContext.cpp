@@ -1749,7 +1749,7 @@ namespace Luminous
   void RenderContext::setDefaultDrawBuffers()
   {
     std::vector<GLenum> buffers;
-    buffers.push_back(GL_BACK_LEFT);
+    buffers.push_back(GL_BACK);
     setDrawBuffers(buffers);
   }
 
