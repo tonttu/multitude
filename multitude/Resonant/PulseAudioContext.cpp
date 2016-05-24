@@ -15,6 +15,7 @@
 #include <Radiant/BGThread.hpp>
 #include <Radiant/Task.hpp>
 #include <Radiant/Timer.hpp>
+#include <Radiant/Condition.hpp>
 
 #include "PulseAudioContext.hpp"
 
