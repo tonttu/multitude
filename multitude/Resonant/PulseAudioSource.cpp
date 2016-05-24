@@ -102,6 +102,8 @@ namespace Resonant
       return false;
     }
 
+    PulseAudioContext::Lock lock(*m_d->m_context);
+
     /// @todo shouldn't hardcode channel count
     pa_sample_spec ss { PA_SAMPLE_FLOAT32, 44100, 2 };
     m_d->m_stream = pa_stream_new(m_d->m_context->paContext(),
@@ -166,6 +168,7 @@ namespace Resonant
   void PulseAudioSource::close()
   {
     if (m_d->m_stream) {
+      PulseAudioContext::Lock lock(*m_d->m_context);
       pa_stream_disconnect(m_d->m_stream);
       pa_stream_unref(m_d->m_stream);
       m_d->m_stream = nullptr;
