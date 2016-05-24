@@ -12,6 +12,7 @@ win32 {
   # Use multi-byte character set instead of unicode
   DEFINES -= UNICODE
   DEFINES += _MBCS
+  DEFINES += SYSTEM_WINDOWS
 
   # Work around C1128
   QMAKE_CXXFLAGS += /bigobj
