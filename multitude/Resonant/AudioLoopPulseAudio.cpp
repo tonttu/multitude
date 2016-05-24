@@ -8,8 +8,6 @@
 
 namespace Resonant
 {
-  std::weak_ptr<PulseAudioContext> s_sharedContext;
-
   class AudioLoopPulseAudio::D
   {
   public:
@@ -134,7 +132,8 @@ namespace Resonant
 
   bool AudioLoopPulseAudio::start(int samplerate, int channels)
   {
-    m_d->m_context = sharedContext();
+    m_d->m_context = PulseAudioContext::create("Cornerstone AudioLoop");
+    m_d->m_context->start();
 
     std::weak_ptr<D> weak(m_d);
     m_d->m_onReadyListener = m_d->m_context->onReady([weak, samplerate, channels] {
@@ -168,16 +167,4 @@ namespace Resonant
     return m_d->m_channelCount;
   }
 
-  PulseAudioContextPtr AudioLoopPulseAudio::sharedContext()
-  {
-    PulseAudioContextPtr context = s_sharedContext.lock();
-
-    if (!context) {
-      context = PulseAudioContext::create("Cornerstone");
-      context->start();
-      s_sharedContext = context;
-    }
-
-    return context;
-  }
 } // namespace Resonant

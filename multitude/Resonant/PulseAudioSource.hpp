@@ -16,6 +16,9 @@ namespace Resonant
     PulseAudioSource();
     ~PulseAudioSource();
 
+    PulseAudioSource(PulseAudioSource && src);
+    PulseAudioSource & operator=(PulseAudioSource &&);
+
     /// Synchronously opens an input device
     bool open(const QString & sourceName, QString * errorMessage,
               double timeoutSecs, const QString & uiName = QString());

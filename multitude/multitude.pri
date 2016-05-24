@@ -68,6 +68,13 @@ LIBAV=$$(USE_LIBAV)
   DEFINES += USE_LIBAV
 }
 
+# Pulse is enabled by default on Linux, disable it with disable-pulse
+# TODO: Might want to change this in Cornerstone 2.2
+linux* {
+  !disable-pulse:CONFIG += enable-pulse
+}
+enable-pulse:DEFINES += CORNERSTONE_ENABLE_PULSE
+
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
 INCLUDEPATH += $$PWD
