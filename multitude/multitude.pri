@@ -2,7 +2,7 @@ enable-all {
   CONFIG += enable-js enable-cef enable-experience enable-maps enable-extras
   CONFIG += enable-mushy enable-tests
   linux* {
-    CONFIG += enable-old-production enable-coverage
+    CONFIG += enable-coverage
   }
 }
 
@@ -28,10 +28,6 @@ enable-experience {
   CONFIG += enable-mushy
   CONFIG += enable-js
   CONFIG += enable-cef
-}
-
-enable-old-production {
-  CONFIG += enable-mushy
 }
 
 # Use this to setup global build options & variables.
