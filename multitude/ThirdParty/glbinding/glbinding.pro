@@ -372,7 +372,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/AbstractValue.cpp \
            source/glbinding/source/Binding.cpp \
            source/glbinding/source/Binding_list.cpp \
-           source/glbinding/source/Binding_objects_0.cpp \
            source/glbinding/source/Binding_objects_a.cpp \
            source/glbinding/source/Binding_objects_b.cpp \
            source/glbinding/source/Binding_objects_c.cpp \
@@ -382,8 +381,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/Binding_objects_g.cpp \
            source/glbinding/source/Binding_objects_h.cpp \
            source/glbinding/source/Binding_objects_i.cpp \
-           source/glbinding/source/Binding_objects_j.cpp \
-           source/glbinding/source/Binding_objects_k.cpp \
            source/glbinding/source/Binding_objects_l.cpp \
            source/glbinding/source/Binding_objects_m.cpp \
            source/glbinding/source/Binding_objects_n.cpp \
@@ -396,10 +393,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/Binding_objects_u.cpp \
            source/glbinding/source/Binding_objects_v.cpp \
            source/glbinding/source/Binding_objects_w.cpp \
-           source/glbinding/source/Binding_objects_x.cpp \
-           source/glbinding/source/Binding_objects_y.cpp \
-           source/glbinding/source/Binding_objects_z.cpp \
-           source/glbinding/source/Binding_pch.cpp \
            source/glbinding/source/CallbackMask.cpp \
            source/glbinding/source/callbacks.cpp \
            source/glbinding/source/ContextHandle.cpp \
@@ -424,7 +417,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/Version.cpp \
            source/glbinding/source/Version_ValidVersions.cpp \
            source/glbinding/source/gl/functions-patches.cpp \
-           source/glbinding/source/gl/functions_0.cpp \
            source/glbinding/source/gl/functions_a.cpp \
            source/glbinding/source/gl/functions_b.cpp \
            source/glbinding/source/gl/functions_c.cpp \
@@ -434,8 +426,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/gl/functions_g.cpp \
            source/glbinding/source/gl/functions_h.cpp \
            source/glbinding/source/gl/functions_i.cpp \
-           source/glbinding/source/gl/functions_j.cpp \
-           source/glbinding/source/gl/functions_k.cpp \
            source/glbinding/source/gl/functions_l.cpp \
            source/glbinding/source/gl/functions_m.cpp \
            source/glbinding/source/gl/functions_n.cpp \
@@ -448,9 +438,6 @@ SOURCES += source/glbinding/source/AbstractFunction.cpp \
            source/glbinding/source/gl/functions_u.cpp \
            source/glbinding/source/gl/functions_v.cpp \
            source/glbinding/source/gl/functions_w.cpp \
-           source/glbinding/source/gl/functions_x.cpp \
-           source/glbinding/source/gl/functions_y.cpp \
-           source/glbinding/source/gl/functions_z.cpp \
            source/glbinding/source/gl/types.cpp
 
 DESTDIR = ../../lib
