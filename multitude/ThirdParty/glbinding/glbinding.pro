@@ -3,6 +3,8 @@
 ######################################################################
 include(../../multitude.pri)
 
+macx:DEFINES += SYSTEM_DARWIN
+
 TEMPLATE = lib
 CONFIG += staticlib
 TARGET = glbinding
