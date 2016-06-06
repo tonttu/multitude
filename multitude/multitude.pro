@@ -2,8 +2,6 @@ TEMPLATE = subdirs
 include(multitude.pri)
 include(ThirdParty/ThirdParty.pri)
 
-SUBDIRS += glwrapper
-
 SUBDIRS += qjson
 
 SUBDIRS += unittests
@@ -27,7 +25,7 @@ Valuable.depends = Radiant Nimble Punctual folly
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
-Luminous.depends = glwrapper Valuable
+Luminous.depends = Valuable
 
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
