@@ -38,17 +38,17 @@ namespace Luminous
     enum ChannelType
     {
       TYPE_UNKNOWN,
-      TYPE_BYTE         = static_cast<unsigned int>(GL_BYTE),
-      TYPE_UBYTE        = static_cast<unsigned int>(GL_UNSIGNED_BYTE),
-      TYPE_SHORT        = static_cast<unsigned int>(GL_SHORT),
-      TYPE_USHORT       = static_cast<unsigned int>(GL_UNSIGNED_SHORT),
+      TYPE_BYTE         = GL_BYTE,
+      TYPE_UBYTE        = GL_UNSIGNED_BYTE,
+      TYPE_SHORT        = GL_SHORT,
+      TYPE_USHORT       = GL_UNSIGNED_SHORT,
 
-      TYPE_FLOAT        = static_cast<unsigned int>(GL_FLOAT),
+      TYPE_FLOAT        = GL_FLOAT,
 
 #ifndef LUMINOUS_OPENGLES
-      TYPE_INT          = static_cast<unsigned int>(GL_INT),
-      TYPE_UINT         = static_cast<unsigned int>(GL_UNSIGNED_INT),
-      TYPE_DOUBLE       = static_cast<unsigned int>(GL_DOUBLE)
+      TYPE_INT          = GL_INT,
+      TYPE_UINT         = GL_UNSIGNED_INT,
+      TYPE_DOUBLE       = GL_DOUBLE
 #endif // LUMINOUS_OPENGLES
                         };
 
@@ -57,10 +57,10 @@ namespace Luminous
     {
       COMPRESSION_NONE                                                 ///< No compression
 #ifndef LUMINOUS_OPENGLES
-      , COMPRESSED_RGB_DXT1         = static_cast<unsigned int>(GL_COMPRESSED_RGB_S3TC_DXT1_EXT),    ///< DXT1 RGB compression
-      COMPRESSED_RGBA_DXT1        = static_cast<unsigned int>(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT),   ///< DXT1 RGBA compression
-      COMPRESSED_RGBA_DXT3        = static_cast<unsigned int>(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT),   ///< DXT3 RGBA compression
-      COMPRESSED_RGBA_DXT5        = static_cast<unsigned int>(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)    ///< DXT5 RGBA compression
+      , COMPRESSED_RGB_DXT1         = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,    ///< DXT1 RGB compression
+      COMPRESSED_RGBA_DXT1        = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,   ///< DXT1 RGBA compression
+      COMPRESSED_RGBA_DXT3        = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,   ///< DXT3 RGBA compression
+      COMPRESSED_RGBA_DXT5        = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT    ///< DXT5 RGBA compression
 #endif // LUMINOUS_OPENGLES
     };
 
@@ -68,19 +68,19 @@ namespace Luminous
     enum ChannelLayout
     {
       LAYOUT_UNKNOWN,
-      LAYOUT_ALPHA                = static_cast<unsigned int>(GL_ALPHA),
-      LAYOUT_RGB                  = static_cast<unsigned int>(GL_RGB),
-      LAYOUT_RGBA                 = static_cast<unsigned int>(GL_RGBA),
-      LAYOUT_RED_GREEN            = static_cast<unsigned int>(GL_RG),
+      LAYOUT_ALPHA                = GL_ALPHA,
+      LAYOUT_RGB                  = GL_RGB,
+      LAYOUT_RGBA                 = GL_RGBA,
+      LAYOUT_RED_GREEN            = GL_RG,
 
 #ifndef LUMINOUS_OPENGLES
-      LAYOUT_STENCIL_INDEX        = static_cast<unsigned int>(GL_STENCIL_INDEX),
-      LAYOUT_DEPTH_COMPONENT      = static_cast<unsigned int>(GL_DEPTH_COMPONENT),
-      LAYOUT_RED                  = static_cast<unsigned int>(GL_RED),
-      LAYOUT_GREEN                = static_cast<unsigned int>(GL_GREEN),
-      LAYOUT_BLUE                 = static_cast<unsigned int>(GL_BLUE),
-      LAYOUT_BGR                  = static_cast<unsigned int>(GL_BGR),
-      LAYOUT_BGRA                 = static_cast<unsigned int>(GL_BGRA),
+      LAYOUT_STENCIL_INDEX        = GL_STENCIL_INDEX,
+      LAYOUT_DEPTH_COMPONENT      = GL_DEPTH_COMPONENT,
+      LAYOUT_RED                  = GL_RED,
+      LAYOUT_GREEN                = GL_GREEN,
+      LAYOUT_BLUE                 = GL_BLUE,
+      LAYOUT_BGR                  = GL_BGR,
+      LAYOUT_BGRA                 = GL_BGRA,
 #endif // LUMINOUS_OPENGLES
     };
 

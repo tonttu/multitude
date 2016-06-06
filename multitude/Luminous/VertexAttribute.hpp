@@ -24,14 +24,14 @@ namespace Luminous
     /// Data type for a component
     enum Type
     {
-      Byte          = static_cast<unsigned int>(GL_BYTE),
-      Short         = static_cast<unsigned int>(GL_SHORT),
-      Int           = static_cast<unsigned int>(GL_INT),
-      Float         = static_cast<unsigned int>(GL_FLOAT),
-      Double        = static_cast<unsigned int>(GL_DOUBLE),
-      UnsignedByte  = static_cast<unsigned int>(GL_UNSIGNED_BYTE),
-      UnsignedShort = static_cast<unsigned int>(GL_UNSIGNED_SHORT),
-      UnsignedInt   = static_cast<unsigned int>(GL_UNSIGNED_INT),
+      Byte          = GL_BYTE,
+      Short         = GL_SHORT,
+      Int           = GL_INT,
+      Float         = GL_FLOAT,
+      Double        = GL_DOUBLE,
+      UnsignedByte  = GL_UNSIGNED_BYTE,
+      UnsignedShort = GL_UNSIGNED_SHORT,
+      UnsignedInt   = GL_UNSIGNED_INT,
     };
 
     /// Construct an empty vertex attribute

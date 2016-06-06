@@ -32,17 +32,17 @@ namespace Luminous
     /// Texture filter mode
     enum Filter {
       /// Point-sampled filtering
-      FILTER_NEAREST = static_cast<unsigned int>(GL_NEAREST),
+      FILTER_NEAREST = GL_NEAREST,
       /// Linear filtering
-      FILTER_LINEAR = static_cast<unsigned int>(GL_LINEAR),
+      FILTER_LINEAR = GL_LINEAR,
       /// Point-sampled filtering, nearest mipmap level
-      FILTER_NEAREST_MIPMAP_NEAREST = static_cast<unsigned int>(GL_NEAREST_MIPMAP_NEAREST),
+      FILTER_NEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST,
       /// Point-sampled filtering, linear filtering between mipmap levels
-      FILTER_NEAREST_MIPMAP_LINEAR = static_cast<unsigned int>(GL_NEAREST_MIPMAP_LINEAR),
+      FILTER_NEAREST_MIPMAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR,
       /// Linear filtering, nearest mipmap level
-      FILTER_LINEAR_MIPMAP_NEAREST = static_cast<unsigned int>(GL_LINEAR_MIPMAP_NEAREST),
+      FILTER_LINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST,
       /// Linear filtering, linear filtering between mipmap levels (trilinear filtering)
-      FILTER_LINEAR_MIPMAP_LINEAR = static_cast<unsigned int>(GL_LINEAR_MIPMAP_LINEAR)
+      FILTER_LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR
     };
 
     /// Texture wrap mode

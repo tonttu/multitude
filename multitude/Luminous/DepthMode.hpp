@@ -25,21 +25,21 @@ namespace Luminous
     enum Function
     {
       /// Never pass comparison of depth test
-      NEVER         = static_cast<unsigned int>(GL_NEVER),
+      NEVER         = GL_NEVER,
       /// Pass the incoming value if it is less than the stored value
-      LESS          = static_cast<unsigned int>(GL_LESS),
+      LESS          = GL_LESS,
       /// Pass if the values are equal
-      EQUAL         = static_cast<unsigned int>(GL_EQUAL),
+      EQUAL         = GL_EQUAL,
       /// Pass if the incoming value is less or equal
-      LESS_EQUAL    = static_cast<unsigned int>(GL_LEQUAL),
+      LESS_EQUAL    = GL_LEQUAL,
       /// Pass the incoming value if it is greeater than the stored value
-      GREATER       = static_cast<unsigned int>(GL_GREATER),
+      GREATER       = GL_GREATER,
       /// Pass if the values are not equal
-      NOT_EQUAL     = static_cast<unsigned int>(GL_NOTEQUAL),
+      NOT_EQUAL     = GL_NOTEQUAL,
       /// Pass if the incoming value is greater or equal
-      GREATER_EQUAL = static_cast<unsigned int>(GL_GEQUAL),
+      GREATER_EQUAL = GL_GEQUAL,
       /// Pass always
-      ALWAYS        = static_cast<unsigned int>(GL_ALWAYS)
+      ALWAYS        = GL_ALWAYS
     };
 
   public:

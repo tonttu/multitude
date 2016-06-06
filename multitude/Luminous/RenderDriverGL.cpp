@@ -309,15 +309,23 @@ namespace Luminous
 
     if (cmd.indexed) {
       // Draw using the index buffer
+<<<<<<< HEAD
       glDrawElementsBaseVertex(static_cast<GLenum>(cmd.primitiveType),
                                static_cast<GLsizei>(cmd.primitiveCount), GL_UNSIGNED_INT,
+=======
+      glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+>>>>>>> parent of 19146f0... Port OpenGL code to use glbinding
                                (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
       GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
+<<<<<<< HEAD
       glDrawArrays(static_cast<GLenum>(cmd.primitiveType), cmd.vertexOffset,
                    static_cast<GLsizei>(cmd.primitiveCount));
+=======
+      glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
+>>>>>>> parent of 19146f0... Port OpenGL code to use glbinding
       GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
@@ -490,14 +498,14 @@ namespace Luminous
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
-    glDrawArrays(static_cast<GLenum>(type), (GLint) offset, (GLsizei) primitives);
+    glDrawArrays(type, (GLint) offset, (GLsizei) primitives);
     GLERROR("RenderDriverGL::draw glDrawArrays");
   }
 
   void RenderDriverGL::drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
-    glDrawElements(static_cast<GLenum>(type), (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
+    glDrawElements(type, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
     GLERROR("RenderDriverGL::draw glDrawElements");
   }
 
@@ -596,8 +604,13 @@ namespace Luminous
     setCullMode(Luminous::CullMode::Default());
 
     // By default render to back buffer
+<<<<<<< HEAD
     std::vector<GLenum> buffers;
     buffers.push_back(GL_BACK);
+=======
+    std::vector<int> buffers;
+    buffers.push_back(GL_BACK_LEFT);
+>>>>>>> parent of 19146f0... Port OpenGL code to use glbinding
     setDrawBuffers(buffers);
 
     // Enable scissor test
@@ -646,7 +659,7 @@ namespace Luminous
     m_d->newRenderQueueSegment(new CommandClipDistance(planes, false));
   }
 
-  void RenderDriverGL::setDrawBuffers(const std::vector<GLenum> & buffers)
+  void RenderDriverGL::setDrawBuffers(const std::vector<int> & buffers)
   {
     m_d->newRenderQueueSegment(new CommandDrawBuffers(buffers));
   }
@@ -897,7 +910,15 @@ namespace Luminous
     bool ok = false;
 
 #ifndef RADIANT_OSX
+<<<<<<< HEAD
     if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
+=======
+    /// @todo if GPU Association would support querying available memory we
+    ///       should use that
+    if(false && GPUAssociation::isSupported()) {
+
+    } else if(GLEW_NVX_gpu_memory_info) {
+>>>>>>> parent of 19146f0... Port OpenGL code to use glbinding
 
       ok = true;
 
@@ -906,7 +927,7 @@ namespace Luminous
       glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
       GLERROR("RenderDriverGL::availableGPUMemory # glGetIntegerv");
 
-    } else if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_ATI_meminfo)) {
+    } else if(GLEW_ATI_meminfo) {
 
       ok = true;
 
@@ -933,14 +954,14 @@ namespace Luminous
     GLint result[4] = {0};
 
 #ifndef RADIANT_OSX
-    if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
+    if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, dedicated video memory, total size (in kb) of the GPU
       // memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
       GLERROR("RenderDriverGL::maxGPUMemory # glGetIntegerv");
 
-    } else if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_ATI_meminfo)) {
+    } else if(GLEW_ATI_meminfo) {
 
       /// @todo see #8923, calling glXGetGPUInfoAMD will make the application
       /// crash on shutdown, this will be fixed in Cornerstone 2.2 / Qt 5 once

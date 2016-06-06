@@ -167,7 +167,7 @@ namespace Luminous
   {
     // Only do actual checking in debug mode since this apparently slows things down quite a bit (10% in twinkle)
 #if RADIANT_DEBUG
-    static QMap<GLenum, QString> errors;
+    static QMap<GLuint, QString> errors;
 
     MULTI_ONCE {
 

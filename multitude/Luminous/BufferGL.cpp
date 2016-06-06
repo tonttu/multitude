@@ -50,7 +50,7 @@ namespace Luminous
 
   void BufferGL::bind(Buffer::Type type)
   {
-    glBindBuffer(static_cast<GLenum>(type), m_handle);
+    glBindBuffer(type, m_handle);
     GLERROR("BufferGL::bind # glBindBuffer");
 
     touch();
@@ -67,10 +67,10 @@ namespace Luminous
 
       /// @todo incremental upload
       if(buffer.size() != m_allocatedSize || buffer.usage() != m_usage) {
-        glBufferData(static_cast<GLenum>(type), buffer.size(), buffer.data(), static_cast<GLenum>(buffer.usage()));
+        glBufferData(type, buffer.size(), buffer.data(), buffer.usage());
         GLERROR("BufferGL::upload # glBufferData");
       } else if (buffer.data()) {
-        glBufferSubData(static_cast<GLenum>(type), 0, buffer.size(), buffer.data());
+        glBufferSubData(type, 0, buffer.size(), buffer.data());
         GLERROR("BufferGL::upload # glBufferSubData");
       }
 
@@ -90,7 +90,7 @@ namespace Luminous
       m_size = length + offset;
     if (m_allocatedSize < m_size)
       allocate(type);
-    glBufferSubData(static_cast<GLenum>(type), offset, length, data);
+    glBufferSubData(type, offset, length, data);
     GLERROR("BufferGL::upload # glBufferSubData");
   }
 
@@ -107,7 +107,7 @@ namespace Luminous
       }
 
       bind(type);
-      glUnmapBuffer(static_cast<GLenum>(type));
+      glUnmapBuffer(type);
       GLERROR("BufferGL::map # glUnmapBuffer");
     } else {
       bind(type);
@@ -116,8 +116,8 @@ namespace Luminous
     if(m_allocatedSize < m_size)
       allocate(type);
 
-    mappings.access = static_cast<GLenum>(access.asInt());
-    mappings.target = static_cast<GLenum>(type);
+    mappings.access = access.asInt();
+    mappings.target = type;
     mappings.offset = offset;
     mappings.length = length;
 
@@ -126,7 +126,7 @@ namespace Luminous
                        offset, int(length), int(m_size));
     }
 
-    mappings.data = glMapBufferRange(mappings.target, mappings.offset, mappings.length, static_cast<BufferAccessMask>(mappings.access));
+    mappings.data = glMapBufferRange(mappings.target, mappings.offset, mappings.length, mappings.access);
     GLERROR("BufferGL::map # glMapBufferRange");
     assert(mappings.data);
 
@@ -145,15 +145,12 @@ namespace Luminous
 
     bind(type);
 
-    BufferAccessMask mask = static_cast<BufferAccessMask>(it->second.access);
-
-    const bool isExplicit = (mask & BufferAccessMask::GL_MAP_FLUSH_EXPLICIT_BIT) == BufferAccessMask::GL_MAP_FLUSH_EXPLICIT_BIT;
-    if(length != std::size_t(-1) && isExplicit) {
-      glFlushMappedBufferRange(static_cast<GLenum>(type), offset, length);
+    if(length != std::size_t(-1) && (it->second.access & GL_MAP_FLUSH_EXPLICIT_BIT)) {
+      glFlushMappedBufferRange(type, offset, length);
       GLERROR("BufferGL::unmap # glFlushMappedBufferRange");
     }
 
-    glUnmapBuffer(static_cast<GLenum>(type));
+    glUnmapBuffer(type);
     GLERROR("BufferGL::unmap # glUnmapBuffer");
 
     m_state.bufferMaps().erase(it);
@@ -163,7 +160,7 @@ namespace Luminous
   {
     touch();
 
-    glBufferData(static_cast<GLenum>(type), m_size, nullptr, static_cast<GLenum>(m_usage));
+    glBufferData(type, m_size, nullptr, m_usage);
     GLERROR("BufferGL::allocate # glBufferData");
     m_allocatedSize = m_size;
   }

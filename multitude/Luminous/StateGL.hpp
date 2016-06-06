@@ -27,7 +27,7 @@ namespace Luminous
 
   struct BufferMapping
   {
-    BufferMapping() : target(GL_NONE), access(GL_NONE), offset(0), length(0), data(0) {}
+    BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
     GLenum target;
     GLenum access;
     int offset;

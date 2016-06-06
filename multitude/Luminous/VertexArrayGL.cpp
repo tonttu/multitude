@@ -122,9 +122,9 @@ namespace Luminous
         Radiant::warning("Unable to bind vertex attribute %s", attr.name.data());
       } else {
 
-        GLboolean normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
+        GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
 
-        glVertexAttribPointer(location, attr.count, static_cast<GLenum>(attr.type), normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+        glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
         GLERROR("VertexArrayGL::setVertexDescription # glVertexAttribPointer");
 
         glEnableVertexAttribArray(location);
