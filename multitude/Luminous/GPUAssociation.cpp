@@ -10,7 +10,7 @@
 #elif defined(RADIANT_WINDOWS)
 # define WIN32_LEAN_AND_MEAN
 # include <Windows.h>
-# include "Luminous.hpp"
+# include <QtPlatformHeaders/QWGLNativeContext>
 #endif
 
 namespace Luminous
@@ -55,12 +55,13 @@ namespace Luminous
     unsigned int id = 0;
 
 #if defined(RADIANT_WINDOWS)
-    using functionPtr = UINT (*)(HGLRC hglrc);
+    QWGLNativeContext nativeContext = context.nativeHandle().value<QWGLNativeContext>();
+    auto wglContext = nativeContext.context();
 
-    auto platformHandle = reinterpret_cast<HGLRC>(context);
+    using functionPtr = UINT (*)(HGLRC hglrc);
     auto wglGetContextGPUIDAMD = (functionPtr)wglGetProcAddress("wglGetContextGPUIDAMD");
 
-    id = wglGetContextGPUIDAMD(platformHandle);
+    id = wglGetContextGPUIDAMD(wglContext);
 
 #elif defined(RADIANT_LINUX)
     QGLXNativeContext nativeContext = context.nativeHandle().value<QGLXNativeContext>();

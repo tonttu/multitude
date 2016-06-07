@@ -1,7 +1,7 @@
 include(../multitude.pri)
 
 CONFIG += qt
-QT += gui opengl
+QT += gui
 
 INCLUDEPATH += ../ThirdParty/adl_sdk
 
