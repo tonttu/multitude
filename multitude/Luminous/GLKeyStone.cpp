@@ -10,7 +10,6 @@
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/GLKeyStone.hpp>
-#include <Luminous/DummyOpenGL.hpp>
 
 #include <Valuable/DOMElement.hpp>
 #include <Nimble/Vector2.hpp>
@@ -175,29 +174,6 @@ namespace Luminous {
     p.x /= p.w;
     p.y /= p.w;
     return p;
-  }
-
-  void GLKeyStone::applyGlState() const
-  {
-    /* if(*m_vertices[0] == Vector2(0, 0) &&
-       *m_vertices[1] == Vector2(1, 0) &&
-       *m_vertices[2] == Vector2(1, 1) &&
-       *m_vertices[3] == Vector2(0, 1))
-      return;
-    */
-    glTranslatef(-1.0, -1.0, 0.0);
-    glScalef(2.0, 2.0, 2.0);
-    //if(GLEW_ARB_transpose_matrix)
-      glMultTransposeMatrixf(m_matrix.data());
-    /*
-      else {
-      Matrix4 tmp(m_matrix);
-      tmp.transpose();
-      glMultMatrixf(tmp.data());
-    }
-    */
-    glScalef(0.5, 0.5, 0.5);
-    glTranslatef(1.0, 1.0, 0.0);
   }
 
   void GLKeyStone::cleanExterior() const

@@ -34,60 +34,60 @@ namespace Luminous
     {
       /// The data store contents will be speciﬁed once by the application, and
       /// sourced many times
-      STATIC_DRAW = static_cast<unsigned int>(GL_STATIC_DRAW),
+      STATIC_DRAW = GL_STATIC_DRAW,
 
       /// The data store contents will be speciﬁed once by reading data from
       /// the GL, and queried many times by the application
-      STATIC_READ = static_cast<unsigned int>(GL_STATIC_READ),
+      STATIC_READ = GL_STATIC_READ,
 
       /// The data store contents will be speciﬁed once by reading data from
       /// the GL, and sourced many times
-      STATIC_COPY = static_cast<unsigned int>(GL_STATIC_COPY),
+      STATIC_COPY = GL_STATIC_COPY,
 
       /// The data store contents will be speciﬁed once by the application, and
       /// sourced at most a few times.
-      STREAM_DRAW = static_cast<unsigned int>(GL_STREAM_DRAW),
+      STREAM_DRAW = GL_STREAM_DRAW,
 
       /// The data store contents will be speciﬁed once by reading data from
       /// the GL, and queried at most a few times by the application
-      STREAM_READ = static_cast<unsigned int>(GL_STREAM_READ),
+      STREAM_READ = GL_STREAM_READ,
 
       /// The data store contents will be speciﬁed once by reading data from
       /// the GL, and sourced at most a few times
-      STREAM_COPY = static_cast<unsigned int>(GL_STREAM_COPY),
+      STREAM_COPY = GL_STREAM_COPY,
 
       /// The data store contents will be respeciﬁed repeatedly by the
       /// application, and sourced many times
-      DYNAMIC_DRAW = static_cast<unsigned int>(GL_DYNAMIC_DRAW),
+      DYNAMIC_DRAW = GL_DYNAMIC_DRAW,
 
       /// The data store contents will be respeciﬁed repeatedly by reading data
       /// from the GL, and queried many times by the application
-      DYNAMIC_READ = static_cast<unsigned int>(GL_DYNAMIC_READ),
+      DYNAMIC_READ = GL_DYNAMIC_READ,
 
       /// The data store contents will be respeciﬁed repeatedly by reading data
       /// from the GL, and sourced many times
-      DYNAMIC_COPY = static_cast<unsigned int>(GL_DYNAMIC_COPY)
+      DYNAMIC_COPY = GL_DYNAMIC_COPY
     };
 
     /// Map access modifiers
     enum MapAccess
     {
-      MAP_READ               = static_cast<unsigned int>(BufferAccessMask::GL_MAP_READ_BIT),
-      MAP_WRITE              = static_cast<unsigned int>(BufferAccessMask::GL_MAP_WRITE_BIT),
+      MAP_READ               = GL_MAP_READ_BIT,
+      MAP_WRITE              = GL_MAP_WRITE_BIT,
       MAP_READ_WRITE         = MAP_READ | MAP_WRITE,
-      MAP_INVALIDATE_RANGE   = static_cast<unsigned int>(BufferAccessMask::GL_MAP_INVALIDATE_RANGE_BIT),
-      MAP_INVALIDATE_BUFFER  = static_cast<unsigned int>(BufferAccessMask::GL_MAP_INVALIDATE_BUFFER_BIT),
-      MAP_FLUSH_EXPLICIT     = static_cast<unsigned int>(BufferAccessMask::GL_MAP_FLUSH_EXPLICIT_BIT),
-      MAP_UNSYNCHRONIZED     = static_cast<unsigned int>(BufferAccessMask::GL_MAP_UNSYNCHRONIZED_BIT)
+      MAP_INVALIDATE_RANGE   = GL_MAP_INVALIDATE_RANGE_BIT,
+      MAP_INVALIDATE_BUFFER  = GL_MAP_INVALIDATE_BUFFER_BIT,
+      MAP_FLUSH_EXPLICIT     = GL_MAP_FLUSH_EXPLICIT_BIT,
+      MAP_UNSYNCHRONIZED     = GL_MAP_UNSYNCHRONIZED_BIT
     };
 
     /// Buffer object type
     enum Type
     {
       UNKNOWN  = 0,
-      VERTEX   = static_cast<unsigned int>(GL_ARRAY_BUFFER),
-      INDEX    = static_cast<unsigned int>(GL_ELEMENT_ARRAY_BUFFER),
-      UNIFORM  = static_cast<unsigned int>(GL_UNIFORM_BUFFER)
+      VERTEX   = GL_ARRAY_BUFFER,
+      INDEX    = GL_ELEMENT_ARRAY_BUFFER,
+      UNIFORM  = GL_UNIFORM_BUFFER
     };
 
   public:

@@ -1,7 +1,6 @@
 TEMPLATE = subdirs
 
 
-glwrapper.subdir = $$PWD/glbinding
 qjson.subdir += $$PWD/qjson
 unittests.subdir += $$PWD/unittest-cpp
 folly.subdir += $$PWD/FollyFutures

@@ -52,7 +52,7 @@ namespace Luminous
   class RenderDriverGL::D
   {
   public:
-    D(unsigned int threadIndex, RenderDriverGL & driver)
+    D(unsigned int threadIndex, RenderDriverGL & driver, OpenGLAPI& opengl)
       : m_driver(driver)
       , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
@@ -60,6 +60,7 @@ namespace Luminous
       , m_frame(0)
       , m_fps(0.0)
       , m_gpuId(static_cast<unsigned int>(-1))
+      , m_opengl(opengl)
     {
       m_state.program = nullptr;
       m_state.textures[0] = nullptr;
@@ -116,6 +117,8 @@ namespace Luminous
 
     // GPU id (AMD_gpu_association)
     unsigned int m_gpuId;
+
+    OpenGLAPI& m_opengl;
 
   public:
 
@@ -239,7 +242,7 @@ namespace Luminous
     if(state.vertexArray) {
       state.vertexArray->bind();
     } else if (m_stateGL.setVertexArray(0)) {
-      glBindVertexArray(0);
+      m_opengl.glBindVertexArray(0);
       GLERROR("RenderDriverGL::setState # glBindVertexArray");
     }
   }
@@ -251,21 +254,21 @@ namespace Luminous
     // Set the uniform
     switch (uniform.type())
     {
-    case ShaderUniform::Int:          glUniform1iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int2:         glUniform2iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int3:         glUniform3iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int4:         glUniform4iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt:  glUniform1uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt2: glUniform2uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt3: glUniform3uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt4: glUniform4uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::Float:        glUniform1fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float2:       glUniform2fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float3:       glUniform3fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float4:       glUniform4fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float2x2:     glUniformMatrix2fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
-    case ShaderUniform::Float3x3:     glUniformMatrix3fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
-    case ShaderUniform::Float4x4:     glUniformMatrix4fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Int:          m_opengl.glUniform1iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int2:         m_opengl.glUniform2iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int3:         m_opengl.glUniform3iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int4:         m_opengl.glUniform4iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt:  m_opengl.glUniform1uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt2: m_opengl.glUniform2uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt3: m_opengl.glUniform3uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt4: m_opengl.glUniform4uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::Float:        m_opengl.glUniform1fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2:       m_opengl.glUniform2fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3:       m_opengl.glUniform3fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4:       m_opengl.glUniform4fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2x2:     m_opengl.glUniformMatrix2fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3x3:     m_opengl.glUniformMatrix3fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4x4:     m_opengl.glUniformMatrix4fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
     default:
       Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
       assert(false);
@@ -278,7 +281,7 @@ namespace Luminous
     // Set texture samplers
     for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
       if(uit->first < 0) break;
-      glUniform1i(uit->first, uit->second);
+      m_opengl.glUniform1i(uit->first, uit->second);
       GLERROR("RenderDriverGL::render # glUniform1i");
     }
 
@@ -288,8 +291,8 @@ namespace Luminous
       applyUniform(uniform.first, uniform.second);
     }
 
-    glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
-                      cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+    m_opengl.glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+                               cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
 
     //Radiant::warning("RenderDriverGL::D::render # OFFSET %d SIZE: %d", cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
 
@@ -297,27 +300,25 @@ namespace Luminous
 
     // Set linewidth
     if (cmd.primitiveType == Luminous::PRIMITIVE_LINE || cmd.primitiveType == Luminous::PRIMITIVE_LINE_STRIP) {
-      glLineWidth(cmd.primitiveSize);
+      m_opengl.glLineWidth(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glLineWidth");
     }
 
     // Set point width
     if (cmd.primitiveType == Luminous::PRIMITIVE_POINT) {
-      glPointSize(cmd.primitiveSize);
+      m_opengl.glPointSize(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glPointSize");
     }
 
     if (cmd.indexed) {
       // Draw using the index buffer
-      glDrawElementsBaseVertex(static_cast<GLenum>(cmd.primitiveType),
-                               static_cast<GLsizei>(cmd.primitiveCount), GL_UNSIGNED_INT,
-                               (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
+      m_opengl.glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+                                        (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
       GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
-      glDrawArrays(static_cast<GLenum>(cmd.primitiveType), cmd.vertexOffset,
-                   static_cast<GLsizei>(cmd.primitiveCount));
+      m_opengl.glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
       GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
@@ -473,8 +474,8 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL(unsigned int threadIndex)
-    : m_d(new RenderDriverGL::D(threadIndex, *this))
+  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, OpenGLAPI& opengl)
+    : m_d(new RenderDriverGL::D(threadIndex, *this, opengl))
   {
   }
 
@@ -485,19 +486,19 @@ namespace Luminous
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil)
   {
-    m_d->newRenderQueueSegment(new CommandClearGL(mask, color, depth, stencil));
+    m_d->newRenderQueueSegment(new CommandClearGL(m_d->m_opengl, mask, color, depth, stencil));
   }
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
-    glDrawArrays(static_cast<GLenum>(type), (GLint) offset, (GLsizei) primitives);
+    m_d->m_opengl.glDrawArrays(type, (GLint) offset, (GLsizei) primitives);
     GLERROR("RenderDriverGL::draw glDrawArrays");
   }
 
   void RenderDriverGL::drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
-    glDrawElements(static_cast<GLenum>(type), (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
+    m_d->m_opengl.glDrawElements(type, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
     GLERROR("RenderDriverGL::draw glDrawElements");
   }
 
@@ -582,12 +583,8 @@ namespace Luminous
 
   void RenderDriverGL::setDefaultState()
   {
-#ifndef RADIANT_OSX_MOUNTAIN_LION
-    if (isSampleShadingSupported()) {
-      glEnable(GL_SAMPLE_SHADING);
-      GLERROR("RenderDriverGL::setDefaultState # glEnable");
-    }
-#endif
+    m_d->m_opengl.glEnable(GL_SAMPLE_SHADING);
+    GLERROR("RenderDriverGL::setDefaultState # glEnable");
 
     // Default modes
     setBlendMode(Luminous::BlendMode::Default());
@@ -601,7 +598,7 @@ namespace Luminous
     setDrawBuffers(buffers);
 
     // Enable scissor test
-    glEnable(GL_SCISSOR_TEST);
+    m_d->m_opengl.glEnable(GL_SCISSOR_TEST);
     GLERROR("RenderDriverGL::setDefaultState # glEnable");
 
     // Invalidate the current cached OpenGL state so it gets reset on the next
@@ -613,65 +610,65 @@ namespace Luminous
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
   {
-    m_d->newRenderQueueSegment(new CommandSetBlendMode(mode));
+    m_d->newRenderQueueSegment(new CommandSetBlendMode(m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setDepthMode(const DepthMode & mode)
   {
-    m_d->newRenderQueueSegment(new CommandSetDepthMode(mode));
+    m_d->newRenderQueueSegment(new CommandSetDepthMode(m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setStencilMode( const StencilMode & mode )
   {
-    m_d->newRenderQueueSegment(new CommandSetStencilMode(mode));
+    m_d->newRenderQueueSegment(new CommandSetStencilMode(m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setCullMode(const CullMode & mode)
   {
-    m_d->newRenderQueueSegment(new CommandCullMode(mode));
+    m_d->newRenderQueueSegment(new CommandCullMode(m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setFrontFace(FaceWinding winding)
   {
-    m_d->newRenderQueueSegment(new CommandFrontFace(winding));
+    m_d->newRenderQueueSegment(new CommandFrontFace(m_d->m_opengl, winding));
   }
 
   void RenderDriverGL::enableClipDistance(const QList<int> & planes)
   {
-    m_d->newRenderQueueSegment(new CommandClipDistance(planes, true));
+    m_d->newRenderQueueSegment(new CommandClipDistance(m_d->m_opengl, planes, true));
   }
 
   void RenderDriverGL::disableClipDistance(const QList<int> & planes)
   {
-    m_d->newRenderQueueSegment(new CommandClipDistance(planes, false));
+    m_d->newRenderQueueSegment(new CommandClipDistance(m_d->m_opengl, planes, false));
   }
 
   void RenderDriverGL::setDrawBuffers(const std::vector<GLenum> & buffers)
   {
-    m_d->newRenderQueueSegment(new CommandDrawBuffers(buffers));
+    m_d->newRenderQueueSegment(new CommandDrawBuffers(m_d->m_opengl, buffers));
   }
 
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)
   {
-    m_d->newRenderQueueSegment(new CommandViewportGL(rect));
+    m_d->newRenderQueueSegment(new CommandViewportGL(m_d->m_opengl, rect));
   }
 
   void RenderDriverGL::setScissor(const Nimble::Recti & rect)
   {
-    glEnable(GL_SCISSOR_TEST);
+    m_d->m_opengl.glEnable(GL_SCISSOR_TEST);
     GLERROR("RenderDriverGL::setScissor # glEnable");
-    m_d->newRenderQueueSegment(new CommandScissorGL(rect));
+    m_d->newRenderQueueSegment(new CommandScissorGL(m_d->m_opengl, rect));
   }
 
   void RenderDriverGL::blit(const Nimble::Recti &src, const Nimble::Recti &dst,
                             Luminous::ClearMask mask, Luminous::Texture::Filter filter)
   {
-    m_d->newRenderQueueSegment(new CommandBlitGL(src, dst, mask, filter));
+    m_d->newRenderQueueSegment(new CommandBlitGL(m_d->m_opengl, src, dst, mask, filter));
   }
 
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
-    m_d->newRenderQueueSegment(new CommandChangeRenderBuffersGL(colorBuffer, depthBuffer, stencilBuffer));
+    m_d->newRenderQueueSegment(new CommandChangeRenderBuffersGL(m_d->m_opengl, colorBuffer, depthBuffer, stencilBuffer));
   }
 
   void * RenderDriverGL::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
@@ -703,9 +700,9 @@ namespace Luminous
   {
     for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
       const BufferMapping & b = it->second;
-      glBindBuffer(b.target, it->first);
+      m_d->m_opengl.glBindBuffer(b.target, it->first);
       GLERROR("RenderDriverGL::flush # glBindBuffer");
-      glUnmapBuffer(b.target);
+      m_d->m_opengl.glUnmapBuffer(b.target);
       GLERROR("RenderDriverGL::flush # glUnmapBuffer");
     }
     m_d->m_stateGL.bufferMaps().clear();
@@ -772,7 +769,7 @@ namespace Luminous
 
     // VAO should be bound only when rendering something or modifying the VAO state
     if (m_d->m_stateGL.setVertexArray(0)) {
-      glBindVertexArray(0);
+      m_d->m_opengl.glBindVertexArray(0);
       GLERROR("RenderDriverGL::flush # glBindVertexArray");
     }
   }
@@ -867,7 +864,7 @@ namespace Luminous
 
     m_d->m_fboStack.push(&rtGL);
 
-    auto cmd = new CommandChangeFrameBufferGL(rtGL);
+    auto cmd = new CommandChangeFrameBufferGL(m_d->m_opengl, rtGL);
 
     m_d->newRenderQueueSegment(cmd);
   }
@@ -884,7 +881,7 @@ namespace Luminous
 
       auto rt = m_d->m_fboStack.top();
 
-      auto cmd = new CommandChangeFrameBufferGL(*rt);
+      auto cmd = new CommandChangeFrameBufferGL(m_d->m_opengl, *rt);
 
       m_d->newRenderQueueSegment(cmd);
     }
@@ -895,9 +892,18 @@ namespace Luminous
     GLint result[4] = {0};
 
     bool ok = false;
+    if(GPUAssociation::isSupported()) {
 
+    }
+
+    /// @todo implement
+/*
 #ifndef RADIANT_OSX
-    if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
+    /// @todo if GPU Association would support querying available memory we
+    ///       should use that
+    if(false && GPUAssociation::isSupported()) {
+
+    } else if(GLEW_NVX_gpu_memory_info) {
 
       ok = true;
 
@@ -906,7 +912,7 @@ namespace Luminous
       glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
       GLERROR("RenderDriverGL::availableGPUMemory # glGetIntegerv");
 
-    } else if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_ATI_meminfo)) {
+    } else if(GLEW_ATI_meminfo) {
 
       ok = true;
 
@@ -924,7 +930,7 @@ namespace Luminous
 #endif
 
     if(okp) *okp = ok;
-
+*/
     return static_cast<unsigned long>(result[0]);
   }
 
@@ -932,15 +938,17 @@ namespace Luminous
   {
     GLint result[4] = {0};
 
+    /// @todo implement
+/*
 #ifndef RADIANT_OSX
-    if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_NVX_gpu_memory_info)) {
+    if(GLEW_NVX_gpu_memory_info) {
 
       // Returns GLint, dedicated video memory, total size (in kb) of the GPU
       // memory
       glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
       GLERROR("RenderDriverGL::maxGPUMemory # glGetIntegerv");
 
-    } else if(Luminous::isOpenGLExtensionSupported(gl::GLextension::GL_ATI_meminfo)) {
+    } else if(GLEW_ATI_meminfo) {
 
       /// @todo see #8923, calling glXGetGPUInfoAMD will make the application
       /// crash on shutdown, this will be fixed in Cornerstone 2.2 / Qt 5 once
@@ -954,7 +962,7 @@ namespace Luminous
 #else
 # warning "RenderDriverGL::maxGPUMemory() not implemented on this platform"
 #endif
-
+*/
     return result[0];
   }
 
@@ -976,8 +984,8 @@ namespace Luminous
   int RenderDriverGL::uniformBufferOffsetAlignment() const
   {
     int alignment;
-    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
-    if(glGetError() == GL_NO_ERROR)
+    m_d->m_opengl.glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
+    if(m_d->m_opengl.glGetError() == GL_NO_ERROR)
       return alignment;
     Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
     return 256;
@@ -1016,6 +1024,11 @@ namespace Luminous
     }
 
     return false;
+  }
+
+  OpenGLAPI& RenderDriverGL::opengl()
+  {
+    return m_d->m_opengl;
   }
 
 }

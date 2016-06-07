@@ -1,7 +1,7 @@
 include(../multitude.pri)
 
 CONFIG += qt
-QT += gui opengl
+QT += gui
 
 INCLUDEPATH += ../ThirdParty/adl_sdk
 
@@ -38,7 +38,6 @@ HEADERS += ColorCorrection.hpp
 HEADERS += RGBCube.hpp
 HEADERS += ContextArray.hpp
 HEADERS += DistanceFieldGenerator.hpp
-HEADERS += DummyOpenGL.hpp
 HEADERS += Export.hpp
 HEADERS += GLKeyStone.hpp
 HEADERS += Buffer.hpp
@@ -83,7 +82,6 @@ HEADERS += XRandR.hpp
 HEADERS += Xinerama.hpp
 
 SOURCES += ImageCodecDDS.cpp \
-    DummyOpenGL.cpp \
     GPUAssociation.cpp \
     MaskGuard.cpp \
     MipmapRenderer.cpp \
@@ -140,6 +138,7 @@ SOURCES += RenderResource.cpp
 SOURCES += FrameBuffer.cpp
 SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
+SOURCES += StateGL.cpp
 SOURCES += Program.cpp
 SOURCES += Spline.cpp
 SOURCES += Texture.cpp

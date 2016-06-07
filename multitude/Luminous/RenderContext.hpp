@@ -38,19 +38,13 @@
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
 
-namespace Nimble
-  {
-  class ClipStack;
-
-  }
-
 namespace Luminous
 {
   class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
   /// Each RenderContext is tied to single RenderThread.
-  class LUMINOUS_API RenderContext : public Transformer
+  class LUMINOUS_API RenderContext : public Transformer, public OpenGLAPI
   {
   public:
 

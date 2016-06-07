@@ -112,7 +112,7 @@ namespace Luminous
     LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 
     // Driver factory
-    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex, OpenGLAPI& opengl);
 
     LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
     LUMINOUS_API virtual unsigned int gpuId() const = 0;
