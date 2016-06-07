@@ -11,7 +11,8 @@
 #ifndef LUMINOUS_STATEGL_HPP
 #define LUMINOUS_STATEGL_HPP
 
-#include "Luminous/Luminous.hpp"
+#include "Export.hpp"
+#include "Luminous.hpp"
 
 #include <Radiant/TimeStamp.hpp>
 
@@ -139,6 +140,10 @@ namespace Luminous
     /// Get the current frame time
     /// @return frame time
     Radiant::TimeStamp frameTime() const { return m_frameTime; }
+
+    /// Return the OpenGL API for the associated render driver
+    /// @todo inline would be nice, but circular dependencies don't allow it
+    LUMINOUS_API OpenGLAPI& opengl();
 
   private:
     /// Currently bound shader program

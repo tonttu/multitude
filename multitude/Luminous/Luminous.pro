@@ -140,6 +140,7 @@ SOURCES += RenderResource.cpp
 SOURCES += FrameBuffer.cpp
 SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
+SOURCES += StateGL.cpp
 SOURCES += Program.cpp
 SOURCES += Spline.cpp
 SOURCES += Texture.cpp

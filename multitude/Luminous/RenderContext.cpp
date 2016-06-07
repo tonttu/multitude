@@ -322,6 +322,9 @@ namespace Luminous
       : Transformer(),
       m_data(new Internal(driver, win, gpuId))
   {
+    // This requires current OpenGL context
+    initializeOpenGLFunctions();
+
     resetTransform();
   }
 
@@ -1507,6 +1510,27 @@ namespace Luminous
     assert(m_data->m_clipStacks.size() == 1);
 
     popClipStack();
+
+    // Call glFinish if configured to minimize latency at the expense of
+    // throughput.
+    const bool useGLFinish = m_data->m_window->screen()->useGlFinish();
+    if(useGLFinish) {
+      // On AMD / Linux / Multi-GPU setup, this is absolute requirement.
+      // If we wouldn't call glFinish, it seems that calling swapBuffers
+      // just adds just added OpenGL commands to a queue, and actually
+      // executes those when there is enough stuff on the queue. With
+      // really small application, that might mean ~100 frame latency,
+      // on huge applications, maybe 1-2 frames.
+      // On NVIDIA / Linux this makes rendering slower, but also seems
+      // to remove ~1-2 frame latency. This was seen with
+      // Experimental/LatencyTest. It is unknown how this affects the
+      // speed and frame latency in other platforms / setups.
+      //
+      // This also makes Luminous::RenderContext::Internal::BUFFERSETS
+      // useless, there doesn't seem to be any difference in speed when
+      // BUFFERSETS is changed to something else than 1.
+      m_data->m_driverGL->opengl().glFinish();
+    }
   }
 
   void RenderContext::beginArea()
@@ -1741,7 +1765,7 @@ namespace Luminous
     m_data->m_driverGL->setCullMode(mode);
   }
 
-  void RenderContext::setDrawBuffers(const std::vector<int> & buffers)
+  void RenderContext::setDrawBuffers(const std::vector<GLenum> & buffers)
   {
     m_data->m_driverGL->setDrawBuffers(buffers);
   }
@@ -1782,14 +1806,14 @@ namespace Luminous
     r.flush();
 
     if(reset) {
-      glPointSize(1.f);
-      glLineWidth(1.f);
-      glUseProgram(0);
-      glDisable(GL_DEPTH_TEST);
-      glBindRenderbuffer(GL_RENDERBUFFER, 0);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      r.glPointSize(1.f);
+      r.glLineWidth(1.f);
+      r.glUseProgram(0);
+      r.glDisable(GL_DEPTH_TEST);
+      r.glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      r.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      r.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      r.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }

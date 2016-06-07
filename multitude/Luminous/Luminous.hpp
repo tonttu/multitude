@@ -30,28 +30,28 @@
 */
 namespace Luminous
 {
+  /// Returns the OpenGL Core API version that is used by Cornerstone.
+  /// @return OpenGL version in major/minor format
+  LUMINOUS_API std::pair<int,int> requestedOpenGLVersion();
+
+  /// This class will provide the OpenGL API that is used by Cornerstone. It
+  /// must match the version defined in @ref requestedOpenGLVersion
+  typedef QOpenGLFunctions_4_1_Core OpenGLAPI;
 
   /** Initializes the Luminous library.
       In practice this function initializes image codecs.
   */
   LUMINOUS_API void initLuminous();
   /** Initializes the Luminous library.
-      In practice this function initializes glbinding and checks the
-      capabilities of the underlying OpenGL implementation.
 
       This function should be called once for each rendering thread / context.
 
-      @param concurrentThreadCount if set to positive number, a barrier will be
-             created that waits concurrentThreadCount threads to execute glbinding
-             initialization before continuing. This is needed since it's not
-             thread-safe to use any OpenGL function in any thread before all
-             possible threads have been initialized.
 
       @return true if all relevant resources were successfully
       initialized, false if something was left missing (for example
       too low OpenGL version).
   */
-  LUMINOUS_API bool initOpenGL(int concurrentThreadCount);
+  LUMINOUS_API bool initOpenGL(OpenGLAPI& opengl);
   /** Checks if the initLuminous function has been called successfully. */
   LUMINOUS_API bool isLuminousInitialized();
 
@@ -61,11 +61,17 @@ namespace Luminous
   */
   LUMINOUS_API void initDefaultImageCodecs();
 
-  /// Check if GL_ARB_sample_shading OpenGL extension is supported. This
-  /// function should only be called after Luminous::initLuminous had been
-  /// called.
-  /// @return true if the extension is supported; otherwise false
-  LUMINOUS_API bool isSampleShadingSupported();
+  struct OpenGLVersion
+  {
+    QByteArray vendor;
+    QByteArray version;
+    QByteArray glsl;
+    QByteArray renderer;
+  };
+
+  /// Returns OpenGL version of the first OpenGL context that was initialized
+  /// in initLuminous. This is thread-safe function.
+  LUMINOUS_API OpenGLVersion glVersion();
 
   //////////////////////////////////////////////////////////////////////////
 

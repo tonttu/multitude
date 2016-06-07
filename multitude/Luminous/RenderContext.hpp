@@ -38,19 +38,13 @@
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
 
-namespace Nimble
-  {
-  class ClipStack;
-
-  }
-
 namespace Luminous
 {
   class GLSLProgramObject;
 
   /// RenderContext contains the current rendering state.
   /// Each RenderContext is tied to single RenderThread.
-  class LUMINOUS_API RenderContext : public Transformer
+  class LUMINOUS_API RenderContext : public Transformer, public OpenGLAPI
   {
   public:
 
@@ -547,7 +541,7 @@ namespace Luminous
     /// The buffers may be one or more of the following:
     /// GL_NONE, GL_FRONT_LEFT, GL_FRONT_RIGHT, GL_BACK_LEFT, GL_BACK_RIGHT, GL_COLOR_ATTACHMENTn
     /// where n is a numerical value starting at 0
-    void setDrawBuffers(const std::vector<int> & buffers);
+    void setDrawBuffers(const std::vector<GLenum>& buffers);
 
     /// Reset the active draw buffers to the default
     void setDefaultDrawBuffers();

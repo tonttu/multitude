@@ -72,14 +72,14 @@ namespace Luminous
     , m_size(0, 0, 0)
     , m_samples(0)
   {
-    glGenTextures(1, &m_handle);
+    m_state.opengl().glGenTextures(1, &m_handle);
     GLERROR("TextureGL::TextureGL # glGenTextures");
   }
 
   TextureGL::~TextureGL()
   {
     if(m_handle) {
-      glDeleteTextures(1, &m_handle);
+      m_state.opengl().glDeleteTextures(1, &m_handle);
       GLERROR("TextureGL::~TextureGL # glDeleteTextures");
     }
   }
@@ -141,8 +141,8 @@ namespace Luminous
       bound = true;
 
       // Create a new texture
-      glTexImage1D(GL_TEXTURE_1D, 0, internalFormat(texture), texture.width(), 0,
-        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+      m_state.opengl().glTexImage1D(GL_TEXTURE_1D, 0, internalFormat(texture), texture.width(), 0,
+                                    texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
       GLERROR("TextureGL::upload # glTexImage1D");
     }
 
@@ -176,18 +176,18 @@ namespace Luminous
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
-      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       GLERROR("TextureGL::upload # glPixelStorei");
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
+      m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
       GLERROR("TextureGL::upload # glPixelStorei");
 
       int uploaded = texture.dataSize();
       /// @todo Use upload limiter
-      glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+      m_state.opengl().glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
       GLERROR("TextureGL::upload1D # glTexSubImage1D");
 
       if (texture.mipmapsEnabled()) {
-        glGenerateMipmap(m_target);
+        m_state.opengl().glGenerateMipmap(m_target);
         GLERROR("TextureGL::upload1D # glGenerateMipmap");
       }
 
@@ -245,18 +245,18 @@ namespace Luminous
       // Create a new texture
       GLenum intFormat = internalFormat(texture);
       if(compressedFormat) {
-        glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
-          texture.height(), 0, texture.dataSize(), texture.data());
+        m_state.opengl().glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
+                                                texture.height(), 0, texture.dataSize(), texture.data());
         GLERROR("TextureGL::upload # glCompressedTexImage2D");
         m_dirtyRegion2D = QRegion();
       }
       else {
         if(texture.samples() > 0) {
-          glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
-            texture.width(), texture.height(), GL_FALSE);
+          m_state.opengl().glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
+                                                   texture.width(), texture.height(), GL_FALSE);
         } else {
-          glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
-            texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+          m_state.opengl().glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
+                                        texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
         }
         /// @todo is it more efficient to call glGenerateMipmap here to pre-allocate the mipmap levels?
         /// We should use glTexStorage2D, but it's OpenGL 4.
@@ -296,9 +296,9 @@ namespace Luminous
       while ((texture.lineSizePixels() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
-      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       GLERROR("TextureGL::upload # glPixelStorei");
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
+      m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
       GLERROR("TextureGL::upload # glPixelStorei");
 
       int uploaded = 0;
@@ -310,8 +310,8 @@ namespace Luminous
       /// @todo glCompressedTexImage2D, probably needs some alignment
       if(compressedFormat) {
         uploaded = texture.dataSize();
-        glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
-          texture.dataFormat().compression(), uploaded, texture.data());
+        m_state.opengl().glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
+                                                   texture.dataFormat().compression(), uploaded, texture.data());
         GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
         m_dirtyRegion2D = QRegion();
       } else {
@@ -324,8 +324,8 @@ namespace Luminous
                       texture.dataFormat().bytesPerPixel();
 
           // Upload data
-          glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanlinesToUpload,
-            texture.dataFormat().layout(), texture.dataFormat().type(), data);
+          m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanlinesToUpload,
+                                           texture.dataFormat().layout(), texture.dataFormat().type(), data);
           GLERROR("TextureGL::upload # glTexSubImage2D");
           uploaded += bytesPerRectScanline * scanlinesToUpload;
           bytesFree -= bytesPerRectScanline * scanlinesToUpload;
@@ -339,7 +339,7 @@ namespace Luminous
         }
       }
       if (texture.mipmapsEnabled()) {
-        glGenerateMipmap(GL_TEXTURE_2D);
+        m_state.opengl().glGenerateMipmap(GL_TEXTURE_2D);
         GLERROR("TextureGL::upload2D # glGenerateMipmap");
       }
 
@@ -393,11 +393,11 @@ namespace Luminous
       // Are we using a compressed format?
       GLenum intFormat = internalFormat(texture);
       if(texture.samples() > 0) {
-        glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
-          texture.width(), texture.height(), texture.depth(), GL_FALSE);
+        m_state.opengl().glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
+                                                 texture.width(), texture.height(), texture.depth(), GL_FALSE);
       } else {
-        glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(), 0,
-          texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
+        m_state.opengl().glTexImage3D(GL_TEXTURE_3D, 0, intFormat, texture.width(), texture.height(), texture.depth(), 0,
+                                      texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
       }
       GLERROR("TextureGL::upload # glTexImage3D");
       paramsDirty = true;
@@ -433,18 +433,18 @@ namespace Luminous
       while ((texture.width() * texture.dataFormat().bytesPerPixel()) % alignment)
         alignment >>= 1;
 
-      glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
       GLERROR("TextureGL::upload # glPixelStorei");
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
+      m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, texture.lineSizePixels());
       GLERROR("TextureGL::upload # glPixelStorei");
 
       int uploaded = texture.dataSize();
-      glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
-        texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+      m_state.opengl().glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
+                                       texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
       GLERROR("TextureGL::upload3D # glTexSubImage3D");
 
       if (texture.mipmapsEnabled()) {
-        glGenerateMipmap(m_target);
+        m_state.opengl().glGenerateMipmap(m_target);
         GLERROR("TextureGL::upload3D # glGenerateMipmap");
       }
 
@@ -492,19 +492,19 @@ namespace Luminous
   void TextureGL::setTexParameters() const
   {
     if(m_samples == 0) {
-      glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
+      m_state.opengl().glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
       GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, m_magFilter);
-      GLERROR("TextureGL::upload # glTexParameteri");
-
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(m_wrap[0]));
-      GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(m_wrap[1]));
-      GLERROR("TextureGL::upload # glTexParameteri");
-      glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(m_wrap[2]));
+      m_state.opengl().glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, m_magFilter);
       GLERROR("TextureGL::upload # glTexParameteri");
 
-      glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, m_borderColor.data());
+      m_state.opengl().glTexParameteri(m_target, GL_TEXTURE_WRAP_S, getWrapMode(m_wrap[0]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+      m_state.opengl().glTexParameteri(m_target, GL_TEXTURE_WRAP_T, getWrapMode(m_wrap[1]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+      m_state.opengl().glTexParameteri(m_target, GL_TEXTURE_WRAP_R, getWrapMode(m_wrap[2]));
+      GLERROR("TextureGL::upload # glTexParameteri");
+
+      m_state.opengl().glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, m_borderColor.data());
       GLERROR("TextureGL::upload # glTexParameterfv GL_TEXTURE_BORDER_COLOR");
     }
   }

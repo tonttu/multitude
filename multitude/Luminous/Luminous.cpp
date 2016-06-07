@@ -37,22 +37,7 @@ namespace Luminous
   Radiant::Mutex s_glVersionMutex;
   OpenGLVersion s_glVersion;
 
-  bool isSampleShadingSupported()
-  {
-#if defined(RADIANT_OSX_YOSEMITE) || defined(RADIANT_OSX_EL_CAPITAN)
-    return true;
-#elif defined(RADIANT_OSX_MOUNTAIN_LION)
-    return false;
-#else
-    static bool s_supported = glewIsSupported("GL_ARB_sample_shading");
-    return s_supported;
-#endif
-  }
-
   static bool s_luminousInitialized = false;
-  static Radiant::Mutex s_glbindingMutex;
-  static Radiant::Condition s_glbindingBarrier;
-  static int s_glbindingWaitingThreadCount = -1;
 
   void initLuminous()
   {
@@ -66,6 +51,12 @@ namespace Luminous
   bool isLuminousInitialized()
   {
     return s_luminousInitialized;
+  }
+
+  OpenGLVersion glVersion()
+  {
+    Radiant::Guard g(s_glVersionMutex);
+    return s_glVersion;
   }
 
   void initDefaultImageCodecs()
@@ -112,6 +103,32 @@ namespace Luminous
       Image::codecs()->registerCodec(std::make_shared<ImageCodecCS>());
 
     } // MULTI_ONCE
+  }
+
+  bool initOpenGL(OpenGLAPI& opengl)
+  {
+    const char * glvendor = (const char *) opengl.glGetString(GL_VENDOR);
+    const char * glver = (const char *) opengl.glGetString(GL_VERSION);
+    const char * glsl = (char *)opengl.glGetString(GL_SHADING_LANGUAGE_VERSION);
+    const char * renderer = (const char *) opengl.glGetString(GL_RENDERER);
+
+    Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
+
+    // Store the OpenGL information so it can be included in breakpad reports
+    {
+      Radiant::Guard g(s_glVersionMutex);
+      s_glVersion.vendor = glvendor ? QByteArray(glvendor) : QByteArray();
+      s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
+      s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
+      s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
+    }
+
+    return true;
+  }
+
+  std::pair<int, int> requestedOpenGLVersion()
+  {
+    return std::make_pair(4, 1);
   }
 
 }

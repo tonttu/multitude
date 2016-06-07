@@ -6,6 +6,7 @@
 
 #if defined(RADIANT_LINUX)
 # include <GL/glx.h>
+# include <QtPlatformHeaders/QGLXNativeContext>
 #elif defined(RADIANT_WINDOWS)
 # define WIN32_LEAN_AND_MEAN
 # include <Windows.h>
@@ -49,7 +50,7 @@ namespace Luminous
     return count;
   }
 
-  unsigned int GPUAssociation::gpuId(glbinding::ContextHandle context)
+  unsigned int GPUAssociation::gpuId(QOpenGLContext& context)
   {
     unsigned int id = 0;
 
@@ -62,12 +63,13 @@ namespace Luminous
     id = wglGetContextGPUIDAMD(platformHandle);
 
 #elif defined(RADIANT_LINUX)
-    using functionPtr = unsigned int (*)(GLXContext ctx);
+    QGLXNativeContext nativeContext = context.nativeHandle().value<QGLXNativeContext>();
+    auto glxContext = nativeContext.context();
 
-    auto platformHandle = reinterpret_cast<GLXContext>(context);
+    using functionPtr = unsigned int (*)(GLXContext ctx);
     auto glXGetContextGPUIDAMD = (functionPtr)glXGetProcAddress((GLubyte*)"glXGetContextGPUIDAMD");
 
-    id = glXGetContextGPUIDAMD(platformHandle);
+    id = glXGetContextGPUIDAMD(glxContext);
 
 #endif
 

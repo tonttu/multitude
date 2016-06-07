@@ -29,7 +29,7 @@ namespace Luminous
   {
   public:
     /// Constructor
-    LUMINOUS_API ShaderGL();
+    LUMINOUS_API ShaderGL(OpenGLAPI& opengl);
     /// Destructor.
     /// Noexcept specifier is needed because it's not default in GCC 4.7.2
     LUMINOUS_API ~ShaderGL() noexcept;
@@ -51,8 +51,8 @@ namespace Luminous
 
   private:
     GLuint m_handle;
+    OpenGLAPI & m_opengl;
 
-  private:
     ShaderGL(const ShaderGL &);
     ShaderGL & operator=(const ShaderGL &);
   };

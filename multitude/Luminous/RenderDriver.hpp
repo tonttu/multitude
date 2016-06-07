@@ -90,7 +90,7 @@ namespace Luminous
     LUMINOUS_API virtual void enableClipDistance(const QList<int> & planes) = 0;
     LUMINOUS_API virtual void disableClipDistance(const QList<int> & planes) = 0;
 
-    LUMINOUS_API virtual void setDrawBuffers(const std::vector<int> & buffers) = 0;
+    LUMINOUS_API virtual void setDrawBuffers(const std::vector<GLenum> & buffers) = 0;
 
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) = 0;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) = 0;
@@ -112,7 +112,7 @@ namespace Luminous
     LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 
     // Driver factory
-    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex, OpenGLAPI& opengl);
 
     LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
     LUMINOUS_API virtual unsigned int gpuId() const = 0;

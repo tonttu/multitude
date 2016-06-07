@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 
-#include <glbinding/ContextHandle.h>
+#include <QOpenGLContext>
 
 namespace Luminous
 {  
@@ -24,7 +24,7 @@ namespace Luminous
     /// Get GPU id for the given OpenGL context
     /// @param context OpenGL context to query
     /// @return id for the GPU attached to the context
-    static LUMINOUS_API unsigned int gpuId(glbinding::ContextHandle context);
+    static LUMINOUS_API unsigned int gpuId(QOpenGLContext& context);
 
     /// Get amount of RAM available on the given GPU in MB
     /// @param gpuId id of the GPU to query

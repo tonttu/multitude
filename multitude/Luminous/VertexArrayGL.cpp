@@ -23,14 +23,14 @@ namespace Luminous
     : ResourceHandleGL(state)
     , m_generation(0)
   {
-    glGenVertexArrays(1, &m_handle);
+    m_state.opengl().glGenVertexArrays(1, &m_handle);
     GLERROR("VertexArrayGL::VertexArrayGL # glGenVertexArrays");
   }
 
   VertexArrayGL::~VertexArrayGL()
   {
     if(m_handle) {
-      glDeleteVertexArrays(1, &m_handle);
+      m_state.opengl().glDeleteVertexArrays(1, &m_handle);
       GLERROR("VertexArrayGL::~VertexArrayGL # glDeleteVertexArrays");
     }
   }
@@ -51,7 +51,7 @@ namespace Luminous
   void VertexArrayGL::bind()
   {
     if(m_state.setVertexArray(m_handle)) {
-      glBindVertexArray(m_handle);
+      m_state.opengl().glBindVertexArray(m_handle);
       GLERROR("VertexArrayGL::bind # glBindVertexArray");
     }
 
@@ -61,7 +61,7 @@ namespace Luminous
   void VertexArrayGL::unbind()
   {
     if (m_state.setVertexArray(0)) {
-      glBindVertexArray(0);
+      m_state.opengl().glBindVertexArray(0);
       GLERROR("VertexArrayGL::unbind # glBindVertexArray");
     }
   }
@@ -124,10 +124,10 @@ namespace Luminous
 
         GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
 
-        glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+        m_state.opengl().glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
         GLERROR("VertexArrayGL::setVertexDescription # glVertexAttribPointer");
 
-        glEnableVertexAttribArray(location);
+        m_state.opengl().glEnableVertexAttribArray(location);
         GLERROR("VertexArrayGL::setVertexDescription # glEnableVertexAttribArray");
       }
     }
