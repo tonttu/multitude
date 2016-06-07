@@ -10,7 +10,6 @@
 
 #include <Luminous/Luminous.hpp>
 #include <Luminous/GLKeyStone.hpp>
-#include <Luminous/DummyOpenGL.hpp>
 
 #include <Valuable/DOMElement.hpp>
 #include <Nimble/Vector2.hpp>

@@ -38,7 +38,6 @@ HEADERS += ColorCorrection.hpp
 HEADERS += RGBCube.hpp
 HEADERS += ContextArray.hpp
 HEADERS += DistanceFieldGenerator.hpp
-HEADERS += DummyOpenGL.hpp
 HEADERS += Export.hpp
 HEADERS += GLKeyStone.hpp
 HEADERS += Buffer.hpp
@@ -83,7 +82,6 @@ HEADERS += XRandR.hpp
 HEADERS += Xinerama.hpp
 
 SOURCES += ImageCodecDDS.cpp \
-    DummyOpenGL.cpp \
     GPUAssociation.cpp \
     MaskGuard.cpp \
     MipmapRenderer.cpp \
