@@ -63,6 +63,8 @@ namespace Luminous
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
         , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
         , m_postProcessFilters(0)
+        , m_supports_GL_NVX_gpu_memory_info(false)
+        , m_supports_GL_ATI_meminfo(false)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -313,6 +315,9 @@ namespace Luminous
     std::stack<float, std::vector<float> > m_opacityStack;
 
     std::stack<const Luminous::FrameBuffer*, std::vector<const Luminous::FrameBuffer*> > m_frameBufferStack;
+
+    bool m_supports_GL_NVX_gpu_memory_info;
+    bool m_supports_GL_ATI_meminfo;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1302,6 +1307,62 @@ namespace Luminous
     return m_data->m_driverGL->handle(vao, program);
   }
 
+  bool RenderContext::isOpenGLExtensionSupported(const QByteArray& name)
+  {
+    // Query number of available extensions
+    GLint extensionCount = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionCount);
+
+    // Check if requested extension is available
+    for(int i = 0; i < extensionCount; ++i) {
+      const char* extensionName = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
+
+      if(name == extensionName)
+        return true;
+    }
+
+    return false;
+  }
+
+  GLint RenderContext::availableGPUMemory()
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    if(m_data->m_supports_GL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  GLint RenderContext::maximumGPUMemory()
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    /// @todo this just returns the currently available memory, not total
+    if(m_data->m_supports_GL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
   // 
@@ -1667,6 +1728,9 @@ namespace Luminous
   bool RenderContext::initialize()
   {
     m_data->initialize();
+
+    m_data->m_supports_GL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
+    m_data->m_supports_GL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
 
     return true;
   }

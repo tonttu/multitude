@@ -601,6 +601,20 @@ namespace Luminous
     /// @return Handle to OpenGL resources of queried vertex array
     VertexArrayGL & handle(const VertexArray & vertexarray, ProgramGL * program);
 
+    /// Check if the given OpenGL extension is supported on the underlying
+    /// OpenGL context
+    /// @param name OpenGL extension name to check (case-sensitive)
+    /// @return true if the extension is supported; otherwise false
+    bool isOpenGLExtensionSupported(const QByteArray& name);
+
+    /// Returns approximate of currently available GPU memory
+    /// @return approximate of available GPU memory in kilobytes
+    GLint availableGPUMemory();
+
+    /// Returns approximate of total available GPU memory
+    /// @return approximate of total GPU memory in kilobytes
+    GLint maximumGPUMemory();
+
   private:
 
 /// @cond

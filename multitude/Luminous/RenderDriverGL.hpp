@@ -98,9 +98,6 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
 
-    LUMINOUS_API virtual unsigned long availableGPUMemory(bool *ok=nullptr) const OVERRIDE;
-    LUMINOUS_API virtual unsigned long maxGPUMemory() const OVERRIDE;
-
     LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
     LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
     LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) OVERRIDE;
