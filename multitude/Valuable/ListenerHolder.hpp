@@ -19,6 +19,19 @@ namespace Valuable
   /// If the target Node or Attribute dies, ListenerHolder does not try to unregister events for those objects.
   ///
   /// Thread safe but could use a bit more granular locks.
+  ///
+  /// Example:
+  /// @code
+  /// void MyClass::addWidget(WidgetPtr widget)
+  /// {
+  ///   // Add a listener to rotation attribute. The listener is automatically
+  ///   // removed when 'this' is deleted, since m_listenerHolder is a member
+  ///   // variable.
+  ///   m_listenerHolder.add(widget->attribute("rotation"), [] {
+  ///     Radiant::info("Rotation changed!");
+  ///   });
+  /// }
+  /// @endcode
   class VALUABLE_API ListenerHolder
   {
   public:
@@ -28,18 +41,38 @@ namespace Valuable
 
     ~ListenerHolder();
 
-    /// Adds an attribute listener
+    /// Adds an attribute listener. Calls attr->addListener(func, role).
+    /// @sa Valuable::Attribute::addListener
+    /// @param attr Attribute where the listener is added, i.e. sender
+    /// @param func Listener callback function
+    /// @param role Listened events
+    /// @returns event id that Attribute::addListener returns
+    /// @todo should this be renamed to addListener, and the others to eventAddListener?
     long add(Attribute * attr,
              const Attribute::ListenerFunc & func,
              int role = Attribute::CHANGE_ROLE);
 
-    /// Adds a node event listener
+    /// Adds a node event listener. Calls node->eventAddListener(name, func, listenerType).
+    /// @sa Valuable::Node::eventAddListener
+    /// @param node Node where the listener is added, i.e. sender
+    /// @param name Listened event name
+    /// @param func Listener callback function
+    /// @param listenerType How the listener callback function is triggered
+    /// @returns event id that Node::eventAddListener returns
     long add(Node * node,
              const QByteArray & name,
              const Node::ListenerFuncVoid & func,
              Node::ListenerType listenerType = Node::ListenerType::DIRECT);
 
-    /// Adds a BinaryData node event listener
+    /// Adds a BinaryData node event listener. Calls node->eventAddListener(name, func, listenerType).
+    /// This is similar to the previous function version, but uses different
+    /// callback type.
+    /// @sa Valuable::Node::eventAddListener
+    /// @param node Node where the listener is added, i.e. sender
+    /// @param name Listened event name
+    /// @param func Listener callback function
+    /// @param listenerType How the listener callback function is triggered
+    /// @returns event id that Node::eventAddListener returns
     long addBd(Node * node,
                const QByteArray & name,
                const Node::ListenerFuncBd & func,

@@ -13,6 +13,8 @@
 
 #include "Export.hpp"
 
+#include <Radiant/Condition.hpp>
+
 #include <Valuable/Node.hpp>
 
 /// @cond
@@ -20,16 +22,35 @@
 struct pa_operation;
 struct pa_source_info;
 struct pa_context;
+struct pa_threaded_mainloop;
 
 namespace Resonant
 {
   class RESONANT_API PulseAudioContext : public Valuable::Node
   {
   public:
+    class Lock
+    {
+    public:
+      Lock(PulseAudioContext & context);
+      Lock(pa_threaded_mainloop * mainloop);
+      ~Lock();
+
+      Lock(const Lock &) = delete;
+      Lock& operator=(const Lock &) = delete;
+
+      Lock(Lock &&);
+      Lock& operator=(Lock &&);
+
+    private:
+      pa_threaded_mainloop * m_mainloop;
+    };
+
     class PaOperation
     {
     public:
-      PaOperation() = default;
+      PaOperation(PulseAudioContext & context);
+      PaOperation(pa_threaded_mainloop * loop);
       virtual ~PaOperation();
 
       PaOperation(PaOperation &&) = delete;
@@ -44,9 +65,14 @@ namespace Resonant
       void setPaOperation(pa_operation * op);
 
       bool waitForFinished(double timeoutSecs);
+      void setFinished();
 
     private:
+      pa_threaded_mainloop * m_mainloop = nullptr;
       pa_operation* m_op = nullptr;
+      bool m_finished = false;
+      Radiant::Condition m_finishedCond;
+      Radiant::Mutex m_finishedCondMutex;
     };
     typedef std::shared_ptr<PaOperation> PaOperationPtr;
 
