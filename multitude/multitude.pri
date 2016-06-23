@@ -7,11 +7,11 @@ enable-all {
 }
 
 lessThan(QT_MAJOR_VERSION, 5) {
-  error("Cornerstone SDK requires Qt 5.6 or newer")
+  error("Cornerstone SDK requires Qt 5.7 or newer")
 }
 equals(QT_MAJOR_VERSION, 5) {
-  lessThan(QT_MINOR_VERSION, 6) {
-    error("Cornerstone SDK requires Qt 5.6 or newer")
+  lessThan(QT_MINOR_VERSION, 7) {
+    error("Cornerstone SDK requires Qt 5.7 or newer")
   }
 }
 
