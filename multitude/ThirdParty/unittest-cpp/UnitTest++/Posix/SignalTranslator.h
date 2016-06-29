@@ -1,12 +1,13 @@
 #ifndef UNITTEST_SIGNALTRANSLATOR_H
 #define UNITTEST_SIGNALTRANSLATOR_H
 
+#include "../HelperMacros.h"
 #include <setjmp.h>
 #include <signal.h>
 
 namespace UnitTest {
 
-   class SignalTranslator
+   class UNITTEST_LINKAGE SignalTranslator
    {
    public:
       SignalTranslator();
