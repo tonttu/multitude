@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <mutex>
 #include <memory>
+#include <cassert>
 
 namespace UnitTest
 {
@@ -139,6 +140,9 @@ namespace UnitTest
         return 1;
       }
 
+      // exitCode() is only valid on normal process exit
+      assert(process.exitStatus() == QProcess::NormalExit);
+
       int procExitCode = process.exitCode();
       if(procExitCode) {
         printf("Test %s failed. See %s for details.\n",
@@ -226,8 +230,13 @@ namespace UnitTest
         // has been destroyed does not work properly.
         int procExitCode = runOneTest(index, count, test, xmlOutput, procName, verbose);
 
-        exitCode = std::max(exitCode, procExitCode);
-        exitCode = std::max(exitCode, mergeXml(dom, xmlOutput));
+        if(procExitCode != 0)
+          exitCode = procExitCode;
+
+        if(mergeXml(dom, xmlOutput) != 0) {
+          Radiant::error("Failed to merge test result XML. Aborting...");
+          break;
+        }
       }
       if (!xmlOutput.isEmpty()) {
         QFile output(xmlOutput);
@@ -354,9 +363,11 @@ namespace UnitTest
       }
       return runSingleTest(name, suite, xmlOutput);
     } else {
-      runTests(parser.value("match"), xmlOutput, argv[0], verbose);
+      return runTests(parser.value("match"), xmlOutput, argv[0], verbose);
     }
-    return 0;
+
+    // Should never happen
+    assert(false);
   }
 
   QStringList getCommandLineArgs()
