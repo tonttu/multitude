@@ -194,4 +194,13 @@ qt_files.files += $$[QT_INSTALL_HEADERS]
 
 INSTALLS += qt_bin_files qt_lib_files qt_files qt_conf_files
 
+# Install Cef
+win64_cef_dlls.path = /bin
+win64_cef_dlls.files = $$CORNERSTONE_DEPS_PATH/cef/Release/*
+
+win64_cef_resources.path = /Resources
+win64_cef_resources.files = $$CORNERSTONE_DEPS_PATH/cef/Resources/*
+
+INSTALLS += win64_cef_dlls win64_cef_resources
+
 message(Including 64-bit Windows Libraries)
