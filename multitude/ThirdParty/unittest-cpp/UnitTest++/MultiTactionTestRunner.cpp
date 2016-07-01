@@ -151,7 +151,7 @@ namespace UnitTest
       return procExitCode;
     }
 
-    std::vector<const UnitTest::Test*> filteredTests(QString match)
+    std::vector<const UnitTest::Test*> includeTests(QString match)
     {
       std::vector<const UnitTest::Test*> toRun;
       QRegExp matchRegex(match);
@@ -161,6 +161,24 @@ namespace UnitTest
         QString suiteName = test->m_details.suiteName;
         QString matchCandidate = suiteName + "/" + testName;
         if(matchRegex.isEmpty() || matchCandidate.contains(matchRegex)) {
+          toRun.push_back(test);
+        }
+        test = test->m_nextTest;
+      }
+      return toRun;
+    }
+
+    std::vector<const UnitTest::Test*> excludeTests(QString match)
+    {
+      std::vector<const UnitTest::Test*> toRun;
+
+      auto test = UnitTest::Test::GetTestList().GetHead();
+      while (test) {
+        QString testName = test->m_details.testName;
+        QString suiteName = test->m_details.suiteName;
+        QString matchCandidate = suiteName + "/" + testName;
+
+        if(!matchCandidate.contains(match)) {
           toRun.push_back(test);
         }
         test = test->m_nextTest;
@@ -213,9 +231,8 @@ namespace UnitTest
       }
     }
 
-    int runTests(QString match, QString xmlOutput, const char *procName, bool verbose)
+    int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName, bool verbose)
     {
-      std::vector<const UnitTest::Test*> toRun = filteredTests(match);
       int count = toRun.size();
 
       if (xmlOutput.isEmpty())
@@ -247,11 +264,6 @@ namespace UnitTest
           return 1;
         }
         output.write(dom.toString().toUtf8());
-      }
-      if(index == 0) {
-        fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
-                match.toUtf8().data());
-        return 1;
       }
 
       printTestReport(dom);
@@ -294,6 +306,33 @@ namespace UnitTest
       }
       return errorCode;
     }
+
+    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose)
+    {
+      std::vector<const UnitTest::Test*> toRun = includeTests(match);
+
+      if(toRun.empty()) {
+        fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
+                match.toUtf8().data());
+        return 1;
+      }
+
+      return runTests(toRun, xmlOutput, procName, verbose);
+    }
+
+    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose)
+    {
+      std::vector<const UnitTest::Test*> toRun = excludeTests(match);
+
+      if(toRun.empty()) {
+        fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
+                match.toUtf8().data());
+        return 1;
+      }
+
+      return runTests(toRun, xmlOutput, procName, verbose);
+    }
+
   }  // unnamed namespace
 
   int runTests(int argc, char ** argv)
@@ -321,9 +360,11 @@ namespace UnitTest
                                    "Run only the tests that match the given regex.",
                                    "REGEX");
 
+    QCommandLineOption excludeOption("exclude", "Pattern to exclude tests (not regexp)", "PATTERN");
+
     QCommandLineOption v("v", "Verbose mode. Otherwise suppresses the printing");
 
-    parser.addOptions({singleOption, listOption, matchOption, v});
+    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -345,9 +386,18 @@ namespace UnitTest
     if(!verbose)
       Radiant::setMinimumSeverityLevel(Radiant::SILENT);
 
-    QString single = parser.value("single");
+    const QString single = parser.value("single");
+    const QString include = parser.value("match");
+    const QString exclude = parser.value("exclude");
+
     delete app;
     if(!single.isEmpty()) {
+
+      if(!include.isEmpty() || !exclude.isEmpty()) {
+        fprintf(stderr, "Don't specify --match or --exclude with --single");
+        return 1;
+      }
+
       QStringList parts = single.split("/");
       QString name, suite;
       if(parts.size() == 1) {
@@ -362,8 +412,17 @@ namespace UnitTest
         return 1;
       }
       return runSingleTest(name, suite, xmlOutput);
+    } else if(!exclude.isEmpty()) {
+
+      if(!include.isEmpty()) {
+        fprintf(stderr, "Don't specify --match with --exclude");
+        return 1;
+      }
+
+      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose);
+
     } else {
-      return runTests(parser.value("match"), xmlOutput, argv[0], verbose);
+      return runTestsInclusive(include, xmlOutput, argv[0], verbose);
     }
 
     // Should never happen
