@@ -539,7 +539,7 @@ namespace Radiant
   {
     Radiant::FileWriter writer("FileUtils::writeAsRoot");
 
-    QTemporaryFile file("taction.tmpfile");
+    QTemporaryFile file(QDir::tempPath() + "/taction.tmpfile");
     if(file.open()) {
       file.write(data);
       file.close();
