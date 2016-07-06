@@ -1,9 +1,6 @@
 enable-all {
   CONFIG += enable-js enable-cef enable-experience enable-maps enable-extras
   CONFIG += enable-mushy enable-tests
-  linux* {
-    CONFIG += enable-coverage
-  }
 }
 
 lessThan(QT_MAJOR_VERSION, 5) {
