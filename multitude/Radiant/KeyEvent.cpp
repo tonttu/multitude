@@ -93,6 +93,7 @@ namespace Radiant
     Qt::MouseButtons buttons;
     Qt::KeyboardModifiers modifiers;
     int delta;
+    bool synthesized;
   };
 
   MouseEvent::MouseEvent(const QMouseEvent & event)
@@ -104,6 +105,7 @@ namespace Radiant
     m_d->buttons = event.buttons();
     m_d->modifiers = event.modifiers();
     m_d->delta = 0;
+    m_d->synthesized = event.source() != Qt::MouseEventNotSynthesized;
   }
 
   MouseEvent::MouseEvent(const QWheelEvent & event)
@@ -115,10 +117,11 @@ namespace Radiant
     m_d->buttons = event.buttons();
     m_d->modifiers = event.modifiers();
     m_d->delta = event.delta();
+    m_d->synthesized = event.source() != Qt::MouseEventNotSynthesized;
   }
 
   MouseEvent::MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
-    Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
+    Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, bool isSynthesized)
     : m_d(new D())
   {
     m_d->type = type;
@@ -127,6 +130,7 @@ namespace Radiant
     m_d->buttons = buttons;
     m_d->modifiers = modifiers;
     m_d->delta = 0;
+    m_d->synthesized = isSynthesized;
   }
 
   MouseEvent::MouseEvent(const MouseEvent & e)
@@ -182,5 +186,46 @@ namespace Radiant
   Qt::KeyboardModifiers MouseEvent::modifiers() const
   {
     return m_d->modifiers;
+  }
+
+  QString MouseEvent::toString() const
+  {
+    QString out;
+    switch (m_d->type) {
+    case QEvent::MouseButtonPress:
+      out += "MouseButtonPress";
+      break;
+    case QEvent::MouseButtonRelease:
+      out += "MouseButtonRelease";
+      break;
+    case QEvent::MouseButtonDblClick:
+      out += "MouseButtonDblClick";
+      break;
+    case QEvent::MouseMove:
+      out += "MouseMove";
+      break;
+    case QEvent::Wheel:
+      out += "Wheel";
+      break;
+    default:
+      out += QString("Unknown event [%1]").arg(m_d->type);
+    }
+
+    out += QString(" location: [%1, %2]").arg(m_d->location.x).arg(m_d->location.y);
+    out += QString(", button: %1").arg(m_d->button, 0, 16);
+    out += QString(", buttons: %1").arg(m_d->buttons, 0, 16);
+    out += QString(", modifiers: %1").arg(m_d->modifiers, 0, 16);
+    out += QString(", delta: %1").arg(m_d->delta);
+    return out;
+  }
+
+  bool MouseEvent::isSynthesized() const
+  {
+    return m_d->synthesized;
+  }
+
+  void MouseEvent::setSynthesized(bool s)
+  {
+    m_d->synthesized = s;
   }
 }

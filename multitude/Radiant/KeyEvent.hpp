@@ -109,8 +109,9 @@ namespace Radiant
     /// @param button the button that caused the event. If the event type is QEvent::MouseMove, the appropriate button for the event is Qt::NoButton
     /// @param buttons state of the mouse buttons
     /// @param modifiers state of keyboard modifiers
+    /// @param isSynthesized true if this mouse event was synthesized from touch event
     MouseEvent(QEvent::Type type, const Nimble::Vector2f & location, Qt::MouseButton button,
-                Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
+                Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, bool isSynthesized);
 
     MouseEvent(MouseEvent &&) = default;
     MouseEvent & operator=(MouseEvent &&) = default;
@@ -130,6 +131,8 @@ namespace Radiant
 
     MULTI_ATTR_DEPRECATED("Use location() instead", int x() const ) { return location().x; }
     MULTI_ATTR_DEPRECATED("Use location() instead", int y() const ) { return location().y; }
+
+    QString toString() const;
 
     /// @endcond
 
@@ -162,6 +165,13 @@ namespace Radiant
     /// Return the keyboard modifiers at the time of the event
     /// @return keyboard modifiers
     Qt::KeyboardModifiers modifiers() const;
+
+    /// Returns true if this mouse event was synthesized from touch event
+    bool isSynthesized() const;
+
+    /// Set the event to be synthesized or real
+    void setSynthesized(bool s);
+
   private:
     class D;
     std::unique_ptr<D> m_d;
