@@ -80,6 +80,7 @@ HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
 HEADERS += XRandR.hpp
 HEADERS += Xinerama.hpp
+HEADERS += SplineManager.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
@@ -149,6 +150,7 @@ SOURCES += VertexArray.cpp
 SOURCES += VertexDescription.cpp
 SOURCES += VM1.cpp
 SOURCES += Window.cpp
+SOURCES += SplineManager.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
