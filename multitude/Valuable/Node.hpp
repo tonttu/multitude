@@ -466,12 +466,6 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE;
 
-    /// Controls what to do when an event mismatch is detected
-    /// The default behavior is to output a warning to the terminal (haltApplication = false).
-    /// The application can also be stopped by calling Radiant::fatal (haltApplication = true).
-    static void setFatalOnEventMismatch(bool haltApplication);
-
-
     /// Sends an event and bd to all listeners on this eventId
     void eventSend(const QByteArray & eventId, Radiant::BinaryData & bd);
     /// Sends an event to all listeners on this eventId

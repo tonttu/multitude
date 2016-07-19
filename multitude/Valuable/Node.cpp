@@ -161,8 +161,6 @@ namespace Valuable
   VALUABLE_API std::map<QString, std::set<QString> > s_eventListenNames;
 #endif
 
-  static bool s_fatalOnEventMismatch = false;
-
   inline bool Node::ValuePass::operator == (const ValuePass & that) const
   {
     return (m_listener == that.m_listener) && (m_from == that.m_from) &&
@@ -571,12 +569,14 @@ namespace Valuable
         */
 
         const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
-        if(s_fatalOnEventMismatch)
+
+#ifdef RADIANT_DEBUG
           Radiant::fatal("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
                            klass.data(), obj->name().data(), obj, to.data());
-        else
+#else
           Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
                            klass.data(), obj->name().data(), obj, to.data());
+#endif
       }
     }
 
@@ -725,11 +725,6 @@ namespace Valuable
 
   void Node::attributeRemoved(Attribute *)
   {
-  }
-
-  void Node::setFatalOnEventMismatch(bool haltApplication)
-  {
-    s_fatalOnEventMismatch = haltApplication;
   }
 
   void Node::eventAddSource(Valuable::Node * source)
@@ -1072,12 +1067,13 @@ namespace Valuable
         return converted;
       }
 
-      if(s_fatalOnEventMismatch)
+
+#ifdef RADIANT_DEBUG
         Radiant::fatal("Node::validateEvent # event '%s' does not exist for this class", from.data());
-      else
+#else
         Radiant::warning("Node::validateEvent # event '%s' does not exist for this class (%s)",
                          from.data(), Radiant::StringUtils::type(*this).data());
-
+#endif
     }
 
     return from;
