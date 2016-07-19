@@ -76,8 +76,7 @@ namespace Luminous {
     };
 
     D()
-      : m_path(nullptr)
-      , m_redoLocation()
+      : m_redoLocation()
       , m_endTime(0)
       , m_mingap(2.0f)
       , m_maxgap(3.0f)
@@ -99,7 +98,7 @@ namespace Luminous {
       m_paths.clear();
       m_vertices.clear();
       m_bounds.clear();
-      m_path = nullptr;
+      m_active = -1;
       m_redoLocation.pathIndex = 0;
       m_redoLocation.nextPointIndex = 0;
       ++m_generation;
@@ -123,7 +122,7 @@ namespace Luminous {
     std::map<float, std::size_t> m_index;
     std::vector<Vertex> m_vertices;
     std::vector<Path> m_paths;
-    Path * m_path;
+    int m_active = -1;
 
     struct {
       int pathIndex;
@@ -147,22 +146,23 @@ namespace Luminous {
     ///       use curve to calculate some immediate points (for erasing)
     m_bounds.expand(p.m_location);
 
-    if(!m_path) {
+    if(m_active < 0 || m_active >= m_paths.size()) {
       m_paths.resize(m_paths.size()+1);
-      m_path = &m_paths.back();
+      m_active = m_paths.size() -1;
     }
 
-    m_path->points.push_back(p);
-    m_path->curve.add(p.m_location);
-    m_path->bounds.expand(p.m_location);
+    auto & path = m_paths[m_active];
+    path.points.push_back(p);
+    path.curve.add(p.m_location);
+    path.bounds.expand(p.m_location);
     m_endTime = std::max(m_endTime, p.m_range.x);
     m_redoLocation.pathIndex = m_paths.size() - 1;
-    m_redoLocation.nextPointIndex = m_path->points.size();
+    m_redoLocation.nextPointIndex = path.points.size();
   }
 
   void Spline::D::endPath()
   {
-    m_path = nullptr;
+    m_active = -1;
   }
 
   void Spline::D::erase(const Nimble::Rectangle & eraser, float time, bool permanent)
@@ -189,6 +189,10 @@ namespace Luminous {
           }
         }
         if(validPoints < 2) {
+          if (m_active == i)
+            m_active = -1;
+          else if (m_active == m_paths.size() -1)
+            m_active = i;
           std::swap(m_paths[i], m_paths.back());
           m_paths.resize(m_paths.size()-1);
           --i;
@@ -552,9 +556,9 @@ namespace Luminous {
 
   size_t Spline::controlPointCount() const
   {
-    if(!m_d->m_path)
+    if(m_d->m_active < 0 || m_d->m_active >= m_d->m_paths.size())
       return 0;
-    return m_d->m_path->points.size();
+    return m_d->m_paths[m_d->m_active].points.size();
   }
 
   Nimble::Rect Spline::controlPointBounds() const
