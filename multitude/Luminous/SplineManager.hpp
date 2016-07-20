@@ -12,7 +12,7 @@ namespace Luminous {
   /// Class for creating, managing and rendering a set of splines on a single 2D surface.
   /// SplineManager contains multiple splines that each has its own width, color
   /// and relative order (depth)
-  class SplineManager
+  class LUMINOUS_API SplineManager
   {
   public:
     typedef Nimble::Vector2 Point;
