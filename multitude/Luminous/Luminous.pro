@@ -195,4 +195,22 @@ linux-* {
   QT += x11extras
 }
 
+enable-pdfium {
+  HEADERS += PDFManager.hpp
+  SOURCES += PDFManager.cpp
+
+  INCLUDEPATH += $$PDFIUM_PATH/public
+  linux*:QMAKE_LIBDIR += $$PDFIUM_PATH/out/build/obj/
+  linux*:QMAKE_LIBDIR += $$PDFIUM_PATH/out/build/obj/third_party
+
+  PDFIUM_LIBS  = -lfdrm -lformfiller -lfpdfapi -lfpdfdoc -lfpdftext -lfxcodec 
+  PDFIUM_LIBS += -lfxcrt -lfxedit -lfxge -ljavascript -lpdfium -lpdfwindow
+  PDFIUM_LIBS += -lbigint -lfx_agg -lfx_freetype -lfx_lcms2 -lfx_libopenjpeg -lfx_lpng 
+  PDFIUM_LIBS += -lfx_zlib -ljpeg
+
+  LIBS += -Wl,-whole-archive $$PDFIUM_LIBS -Wl,-no-whole-archive
+} else {
+  message("Not building pdfium into Luminous. Run ThirdParty/create-pdfium.sh")
+}
+
 include(../library.pri)

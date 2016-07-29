@@ -33,7 +33,7 @@ Valuable.depends = Radiant Nimble Punctual folly
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
-Luminous.depends = Valuable
+Luminous.depends = Valuable Punctual folly Radiant
 
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
