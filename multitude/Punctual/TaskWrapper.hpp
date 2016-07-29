@@ -30,6 +30,12 @@ namespace Punctual
   template <typename T>
   folly::Future<T> createWrappedTask(WrappedTaskFunc<T>&& func);
 
+  template <typename T>
+  folly::Future<T> createWrappedTask(std::function<boost::expected<T>(void)>&& func);
+
+  template <typename T>
+  folly::Future<T> createWrappedTask(std::function<T(void)>&& func);
+
   // ---------------------- Implementation below -----------------------------
   // -------------------------------------------------------------------------
 
@@ -45,7 +51,6 @@ namespace Punctual
     folly::Promise<T> m_promise;
   };
 
-
   // ---------------------------------------------------------------------------
 
   template <typename T>
@@ -56,6 +61,26 @@ namespace Punctual
     auto task = std::make_shared<WrappedTask<T>>(std::move(func), std::move(promise));
     Radiant::BGThread::instance()->addTask(task);
     return future;
+  }
+
+  template <typename T>
+  folly::Future<T> createWrappedTask(std::function<boost::expected<T>(void)>&& func)
+  {
+    folly::MoveWrapper<std::function<boost::expected<T>(void)>> wrap(std::move(func));
+    auto wrapFunc = [wrap] () -> WrappedTaskReturnType<T> {
+      return (*wrap)();
+    };
+    return createWrappedTask<T>(std::move(wrapFunc));
+  }
+
+  template <typename T>
+  folly::Future<T> createWrappedTask(std::function<T(void)>&& func)
+  {
+    folly::MoveWrapper<std::function<T(void)>> wrap(std::move(func));
+    auto wrapFunc = [wrap] () -> WrappedTaskReturnType<T> {
+      return (*wrap)();
+    };
+    return createWrappedTask<T>(std::move(wrapFunc));
   }
 
   // ---------------------------------------------------------------------------
