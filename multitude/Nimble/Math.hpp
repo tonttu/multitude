@@ -298,29 +298,21 @@ namespace Nimble {
     /// Calculate the two principal axes in 2d data
     /// Length of the axes are the corresponding eigenvalues
     /// @param values Array of values, the value type must support operator[] for indices 0 and 1
+    /// @param mean Center to be removed from values. Often mean of the values makes sense here.
     /// @param n Number of values
     /// @param axis1 The major axis
     /// @param axis2 The minor axis
     /// @param variance1 Variance for the projection of values to the major axis
     /// @param variance2 Variance for the projection of values to the minor axis
-    template <class T, class U>
-    void calculatePrincipalAxes(const T* values, int n, U & axis1, U & axis2, float * variance1 = 0, float * variance2 = 0)
+    template <class T, class U, class M>
+    void calculatePrincipalAxesExplicitCenter(const T* values, const M & center, int n, U & axis1, U & axis2, float * variance1 = 0, float * variance2 = 0)
     {
-      double mean[] = { 0, 0 };
-
-      for(int i=0; i < n; ++i) {
-        mean[0] += values[i][0];
-        mean[1] += values[i][1];
-      }
-      mean[0] /= n;
-      mean[1] /= n;
-
       float covariance[3] = { 0, 0, 0 };
 
 
       for(int i=0; i < n; ++i) {
-        double vx = values[i][0] - mean[0];
-        double vy = values[i][1] - mean[1];
+        double vx = values[i][0] - center[0];
+        double vy = values[i][1] - center[1];
 
         covariance[0] += vx*vx;
         covariance[1] += vx*vy;
@@ -378,6 +370,26 @@ namespace Nimble {
         if(variance2)
           *variance2 = e2;
       }
+    }
+
+    template <class T, class U>
+    void calculatePrincipalAxes(const T* values, int n, U & axis1, U & axis2, float * variance1 = 0, float * variance2 = 0, U * center = 0)
+    {
+      double mean[] = {0, 0};
+
+      for(int i=0; i < n; ++i) {
+        mean[0] += values[i][0];
+        mean[1] += values[i][1];
+      }
+      mean[0] /= n;
+      mean[1] /= n;
+
+      if(center) {
+        (*center)[0] = mean[0];
+        (*center)[1] = mean[1];
+      }
+
+      return calculatePrincipalAxesExplicitCenter(values, mean, n, axis1, axis2, variance1, variance2);
     }
   }
 
