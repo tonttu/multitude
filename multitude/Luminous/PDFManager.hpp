@@ -20,14 +20,16 @@ namespace Luminous
     ~PDFManager();
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
-    /// @return number of pages
+    /// @return number of pages. If operation failed contains
+    ///         std::runtime_exception with error message
     folly::Future<size_t> queryPageCount(const QString& pdfAbsoluteFilePath);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @param pageNumber page to render
     /// @param resolution Target resolution of the rendered result. Actual result
     ///                   can be smaller as the aspect ratio is preserved
-    /// @return QImage containing rendered page. If operation failed contains exception
+    /// @return QImage containing rendered page. If operation failed contains
+    ///         std::runtime_exception with error message
     folly::Future<QImage> renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
                                      const Nimble::SizeI& resolution);
 
@@ -36,7 +38,8 @@ namespace Luminous
     /// @param pageAbsoluteFilePath file path for the rendered result
     /// @param resolution Target resolution of the rendered result. Actual result
     ///                   can be smaller as the aspect ratio is preserved
-    /// @return is fulfilled when operation is done. If operation failed contains exception
+    /// @return is fulfilled when operation is done. If operation failed contains
+    ///         std::runtime_exception with error message
     folly::Future<folly::Unit> renderPageToFile(const QString& pdfAbsoluteFilePath,
                                                 int pageNumber,
                                                 const QString& pageAbsoluteFilePath,
@@ -44,7 +47,8 @@ namespace Luminous
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @param pageNumber number of pdf-page
-    /// @return page size in points where single point is ~0.3528mm
+    /// @return page size in points where single point is ~0.3528mm. If operation
+    ///         failed contains std::runtime_exception with error message
     folly::Future<Nimble::SizeF> getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber);
   };
 
