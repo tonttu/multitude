@@ -38,15 +38,17 @@ CONFIG += thread
 CONFIG += embed_manifest_exe
 
 # 1.9.2-rc2
-CORNERSTONE_VERSION_STR = $$cat(../VERSION)
+CORNERSTONE_FULL_VERSION_STR = $$cat(../VERSION)
 # 1.9.2
-CORNERSTONE_VERSION = $$section(CORNERSTONE_VERSION_STR, "-", 0, 0)
+CORNERSTONE_VERSION = $$section(CORNERSTONE_FULL_VERSION_STR, "-", 0, 0)
 # 1
 CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
 # 9
 CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
 # 2
 CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
+# 1.9
+CORNERSTONE_SHORT_VERSION_STR = $${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
 
 # We need C++11 to compile
 !macx {
@@ -80,12 +82,12 @@ withbundles = $$(MULTI_BUNDLES)
 
 MULTI_FFMPEG_LIBS = -lavdevice -lavcodec -lavutil -lavformat -lavfilter -lswscale
 
-CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}
+CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_SHORT_VERSION_STR}
 
 # On Windows, add _d for debug builds
 win32 {
   CONFIG(debug,debug|release) {
-    CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_VERSION_STR}_d
+    CORNERSTONE_LIB_SUFFIX = .$${CORNERSTONE_SHORT_VERSION_STR}_d
   }
 }
 
@@ -203,9 +205,9 @@ contains(MEMCHECK,yes) {
 # Platform specific: Apple OS X
 #
 macx {
-  CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_VERSION_STR
+  CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_SHORT_VERSION_STR
 
-  QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_VERSION_STR/lib
+  QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_SHORT_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   # -Qunused-arguments is for ccache + clang, see
   # http://petereisentraut.blogspot.fi/2011/05/ccache-and-clang.html
@@ -262,7 +264,7 @@ win32 {
     QMAKE_CXXFLAGS += -MP
 
     # For official builds by MultiTouch Ltd.
-    CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+    CORNERSTONE_DEPS_PATH=C:\\Cornerstone-$${CORNERSTONE_SHORT_VERSION_STR}-deps
 
     exists($$CORNERSTONE_DEPS_PATH) {
 
@@ -283,7 +285,7 @@ win32 {
       INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/boost_1_55_0
     } else {
       # Builds from distributed source code
-      CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_VERSION_STR}
+      CORNERSTONE_DEPS_PATH=C:\\Cornerstone-SDK-$${CORNERSTONE_SHORT_VERSION_STR}
 
       exists($$CORNERSTONE_DEPS_PATH) {
         INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/include
