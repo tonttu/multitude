@@ -207,6 +207,8 @@ contains(MEMCHECK,yes) {
 macx {
   CORNERSTONE_DEPS_DIR=/opt/multitouch-$$CORNERSTONE_SHORT_VERSION_STR
 
+  !exists($$CORNERSTONE_DEPS_DIR): error(Dependencies not found in $$CORNERSTONE_DEPS_DIR)
+
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_SHORT_VERSION_STR/lib
   QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
   # -Qunused-arguments is for ccache + clang, see
