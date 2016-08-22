@@ -210,7 +210,7 @@ macx {
   !exists($$CORNERSTONE_DEPS_DIR): error(Dependencies not found in $$CORNERSTONE_DEPS_DIR)
 
   QMAKE_LFLAGS += -Wl,-rpath,/opt/cornerstone-$$CORNERSTONE_SHORT_VERSION_STR/lib
-  QMAKE_MACOSX_DEPLOYMENT_TARGET=10.7
+  QMAKE_MACOSX_DEPLOYMENT_TARGET=10.11
   # -Qunused-arguments is for ccache + clang, see
   # http://petereisentraut.blogspot.fi/2011/05/ccache-and-clang.html
   QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Qunused-arguments
