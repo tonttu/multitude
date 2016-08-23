@@ -97,7 +97,8 @@ namespace Valuable
 
         if(anim.normalizedPos() >= 1.f || tData->deleted) {
           alive = false;
-          anim.remove();
+          if (!tData->deleted)
+            anim.remove();
           anim.setNull();
           freePositions.push(i);
         }
