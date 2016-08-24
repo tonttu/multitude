@@ -2,7 +2,6 @@ TEMPLATE = subdirs
 include(multitude.pri)
 include(ThirdParty/ThirdParty.pri)
 
-SUBDIRS += qjson
 
 SUBDIRS += unittests
 unittests.depends += Radiant

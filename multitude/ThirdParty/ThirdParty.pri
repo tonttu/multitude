@@ -1,7 +1,6 @@
 TEMPLATE = subdirs
 
 
-qjson.subdir += $$PWD/qjson
 unittests.subdir += $$PWD/unittest-cpp
 folly.subdir += $$PWD/FollyFutures
 
