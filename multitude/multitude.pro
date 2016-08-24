@@ -6,6 +6,8 @@ include(ThirdParty/ThirdParty.pri)
 SUBDIRS += unittests
 unittests.depends += Radiant
 
+# 3rd party libraries
+folly.subdir += ThirdParty/folly
 SUBDIRS += folly
 
 SUBDIRS += Patterns

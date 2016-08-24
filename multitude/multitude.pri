@@ -76,6 +76,7 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 unix: QMAKE_CXXFLAGS += -isystem $$PWD/ThirdParty/expected/include
+INCLUDEPATH += $$PWD/ThirdParty
 INCLUDEPATH += $$PWD/ThirdParty/expected/include
 
 withbundles = $$(MULTI_BUNDLES)
@@ -103,10 +104,10 @@ with-ftd2xx {
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGLU -lGL
 INCLUDEPATH += $$PWD/ThirdParty/unittest-cpp
-INCLUDEPATH += $$PWD/ThirdParty/FollyFutures
+INCLUDEPATH += $$PWD/ThirdParty/folly
 
 LIB_PUNCTUAL = -lPunctual$${CORNERSTONE_LIB_SUFFIX}
-LIB_FOLLY_FUTURES = -lFollyFutures$${CORNERSTONE_LIB_SUFFIX}
+LIB_FOLLY_FUTURES = -lfolly$${CORNERSTONE_LIB_SUFFIX}
 LIB_POETIC = -lPoetic$${CORNERSTONE_LIB_SUFFIX}
 LIB_LUMINOUS = -lLuminous$${CORNERSTONE_LIB_SUFFIX}
 LIB_NIMBLE = -lNimble$${CORNERSTONE_LIB_SUFFIX}

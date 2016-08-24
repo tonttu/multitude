@@ -2,7 +2,6 @@ TEMPLATE = subdirs
 
 
 unittests.subdir += $$PWD/unittest-cpp
-folly.subdir += $$PWD/FollyFutures
 
 
 # ADL SDK only has headers, we install them here manually
