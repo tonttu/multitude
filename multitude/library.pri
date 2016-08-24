@@ -27,16 +27,11 @@ contains(EXPORT_SOURCES, nothing) {
 # below)
 target.path = /lib
 
-# Installation target for generated header files (bison, flex)
-extra_inc.path = /include/$$TARGET
-extra_inc.files = $$EXTRA_HEADERS
-extra_inc.CONFIG += no_check_exist
-
 # Combine all source code into one variable for easier access outside this file
-ALL_SOURCE_CODE = $$EXPORT_SOURCES $$EXPORT_HEADERS $$FLEXSOURCES $$BISONSOURCES $$PROJECT_FILE
+ALL_SOURCE_CODE = $$EXPORT_SOURCES $$EXPORT_HEADERS $$LEXSOURCES $$YACCSOURCES
+ALL_SOURCE_CODE += $$PROJECT_FILE
 
 INSTALLS += target
-INSTALLS += extra_inc
 
 isEmpty(skip_install_targets) {
   $$installFiles(/include/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
