@@ -1,20 +1,9 @@
-TEMPLATE = subdirs
+# Don't use default multitude install rules because we want these files to go
+# under ThirdParty. We override this at the end of this file.
+skip_install_targets = true
 
+include(../library.pri)
 
-unittests.subdir += $$PWD/unittest-cpp
-
-
-# ADL SDK only has headers, we install them here manually
-adl_headers.path = /src/multitude/ThirdParty/adl_sdk
-adl_headers.files += adl_sdk/adl_defines.h
-adl_headers.files += adl_sdk/adl_functions.h 
-adl_headers.files += adl_sdk/adl_sdk.h
-adl_headers.files += adl_sdk/adl_structures.h
-
-# Also install this project file
-third_party_project_file.path = /src/multitude/ThirdParty
-third_party_project_file.files += ThirdParty.pri
-
-#todo should probably install also expected etc..
-
-INSTALLS += adl_headers third_party_project_file
+# Create install targets for source code and headers
+$$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+$$installFiles(/src/multitude/ThirdParty/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)

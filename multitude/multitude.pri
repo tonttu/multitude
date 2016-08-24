@@ -72,12 +72,13 @@ enable-pulse:DEFINES += CORNERSTONE_ENABLE_PULSE
 
 widget-profiler:DEFINES += MULTI_WIDGET_PROFILER=1
 
-INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
-unix: QMAKE_CXXFLAGS += -isystem $$PWD/ThirdParty/expected/include
+INCLUDEPATH += $$PWD
 INCLUDEPATH += $$PWD/ThirdParty
 INCLUDEPATH += $$PWD/ThirdParty/expected/include
+
+unix: QMAKE_CXXFLAGS += -isystem $$PWD/ThirdParty/expected/include
 
 withbundles = $$(MULTI_BUNDLES)
 
