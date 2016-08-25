@@ -105,7 +105,6 @@ with-ftd2xx {
 LIB_OPENCL = -lOpenCL
 LIB_OPENGL = -lGLU -lGL
 INCLUDEPATH += $$PWD/ThirdParty/unittest-cpp
-INCLUDEPATH += $$PWD/ThirdParty/folly
 
 LIB_PUNCTUAL = -lPunctual$${CORNERSTONE_LIB_SUFFIX}
 LIB_FOLLY_FUTURES = -lfolly$${CORNERSTONE_LIB_SUFFIX}
