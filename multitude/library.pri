@@ -16,8 +16,8 @@ PROJECT_FILE = $$basename($$_PRO_FILE_)
 # Make sure we don't override this if it has been set already
 isEmpty(DESTDIR):DESTDIR = $$shadowed($$PWD)/lib
 
-isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS
-isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES
+isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS $$EXTRA_HEADERS
+isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES $$EXTRA_SOURCES
 contains(EXPORT_SOURCES, nothing) {
   EXPORT_SOURCES=
   PROJECT_FILE=
@@ -33,7 +33,7 @@ ALL_SOURCE_CODE += $$PROJECT_FILE
 
 INSTALLS += target
 
-isEmpty(skip_install_targets) {
+isEmpty(skip_multitude_install_targets) {
   $$installFiles(/include/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
   $$installFiles(/src/multitude/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
 }

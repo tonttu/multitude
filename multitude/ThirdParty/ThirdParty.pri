@@ -7,7 +7,7 @@ win32:CONFIG(debug,debug|release) {
   SHARED_LIB_SUFFIX=_d
 }
 
-skip_install_targets = true
+skip_multitude_install_targets = true
 include(../library.pri)
 
 # Create install targets for source code and headers
