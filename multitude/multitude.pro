@@ -10,7 +10,7 @@ SUBDIRS += libqxt
 folly.subdir += ThirdParty/folly
 SUBDIRS += folly
 
-unittestcpp.subdir += ThirdParty/unittest-cpp
+unittestcpp.subdir += ThirdParty/UnitTest++
 unittestcpp.depends += Radiant
 SUBDIRS += unittestcpp
 
