@@ -1,22 +1,26 @@
-TEMPLATE = subdirs
+# Don't use default multitude install rules because we want these files to go
+# under ThirdParty. We override this at the end of this file.
+include(../multitude.pri)
 
+SHARED_LIB_SUFFIX=
+win32:CONFIG(debug,debug|release) {
+  SHARED_LIB_SUFFIX=_d
+}
 
-qjson.subdir += $$PWD/qjson
-unittests.subdir += $$PWD/unittest-cpp
-folly.subdir += $$PWD/FollyFutures
+skip_multitude_install_targets = true
+include(../library.pri)
 
+# Create install targets for source code and headers
+$$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+$$installFiles(/src/multitude/ThirdParty/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
 
-# ADL SDK only has headers, we install them here manually
-adl_headers.path = /src/multitude/ThirdParty/adl_sdk
-adl_headers.files += adl_sdk/adl_defines.h
-adl_headers.files += adl_sdk/adl_functions.h 
-adl_headers.files += adl_sdk/adl_sdk.h
-adl_headers.files += adl_sdk/adl_structures.h
+# Required to build libqxt
+contains(LIBS, -lQxtCore$${SHARED_LIB_SUFFIX}) {
+  LIBS -= -lQxtCore$${SHARED_LIB_SUFFIX}
+  LIBS += -lQxtCore$${CORNERSTONE_LIB_SUFFIX}
+}
 
-# Also install this project file
-third_party_project_file.path = /src/multitude/ThirdParty
-third_party_project_file.files += ThirdParty.pri
-
-#todo should probably install also expected etc..
-
-INSTALLS += adl_headers third_party_project_file
+# Force override DESTDIR (required by libqxt)
+DESTDIR = $$shadowed($$PWD)/../lib
+# Since we changed DESTDIR, we must update DLL installation source
+win32:dlls.files = $${DESTDIR}/$${TARGET}.dll

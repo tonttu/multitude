@@ -1,16 +1,23 @@
+include(qmake_utils.prf)
+
+# This is required for installing source code
+TARGET_WITHOUT_VERSION=$$TARGET
+
 # Common rules to build libraries
 TEMPLATE = lib
 
 # This will disable generation of .so version symlinks on Linux
 unix:CONFIG += plugin
 
-PROJECT_FILE = $$_PRO_FILE_
+# Must strip path from _PRO_FILE since it would duplicate the absolute path
+# when installing the source code target
+PROJECT_FILE = $$basename($$_PRO_FILE_)
 
 # Make sure we don't override this if it has been set already
 isEmpty(DESTDIR):DESTDIR = $$shadowed($$PWD)/lib
 
-isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS
-isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES
+isEmpty(EXPORT_HEADERS):EXPORT_HEADERS = $$HEADERS $$EXTRA_HEADERS
+isEmpty(EXPORT_SOURCES):EXPORT_SOURCES = $$SOURCES $$EXTRA_SOURCES
 contains(EXPORT_SOURCES, nothing) {
   EXPORT_SOURCES=
   PROJECT_FILE=
@@ -20,23 +27,16 @@ contains(EXPORT_SOURCES, nothing) {
 # below)
 target.path = /lib
 
-# Installation target for header files
-includes.path = /include/$$TARGET
-includes.files = $$EXPORT_HEADERS
-
-# Installation target for generated header files (bison, flex)
-extra_inc.path = /include/$$TARGET
-extra_inc.files = $$EXTRA_HEADERS
-extra_inc.CONFIG += no_check_exist
-
-# Installation target for source code
-src_code.path = /src/multitude/$$TARGET
-src_code.files += $$EXPORT_SOURCES $$EXPORT_HEADERS
-src_code.files += $$FLEXSOURCES $$BISONSOURCES
-src_code.files += $$PROJECT_FILE
+# Combine all source code into one variable for easier access outside this file
+ALL_SOURCE_CODE = $$EXPORT_SOURCES $$EXPORT_HEADERS $$LEXSOURCES $$YACCSOURCES
+ALL_SOURCE_CODE += $$PROJECT_FILE
 
 INSTALLS += target
-INSTALLS += includes src_code extra_inc
+
+isEmpty(skip_multitude_install_targets) {
+  $$installFiles(/include/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+  $$installFiles(/src/multitude/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
+}
 
 !no_version_in_target:TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})
 
@@ -77,4 +77,3 @@ macx {
   # Define @rpath install_name for libraries
   QMAKE_LFLAGS += -Wl,-install_name,@rpath/$$join(TARGET, "", "lib", ".dylib")
 }
-
