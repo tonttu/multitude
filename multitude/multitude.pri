@@ -63,14 +63,6 @@ LIBAV=$$(USE_LIBAV)
   DEFINES += USE_LIBAV
 }
 
-# only for linux so far - should test with other platforms
-linux-* {
-  PDFIUM_PATH=$$PWD/ThirdParty/pdfium
-  exists($$PDFIUM_PATH) {
-    CONFIG += enable-pdfium
-  }
-}
-
 # Pulse is enabled by default on Linux, disable it with disable-pulse
 # TODO: Might want to change this in Cornerstone 2.2
 linux* {
