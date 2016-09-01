@@ -202,6 +202,10 @@ enable-pdf {
     LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive
   }
 
+  macx {
+    PKGCONFIG += multitouch-pdfium1
+  }
+
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
 }
