@@ -5,10 +5,6 @@
 #
 defineReplace(installFiles) {
 
-  unset(prefix)
-  unset(files)
-  unset(config)
-
   prefix = $$1
   files = $$2
   config = $$3
@@ -17,15 +13,17 @@ defineReplace(installFiles) {
 
     path = $${prefix}/$${dirname(file)}
 
-    files_$${path}.files += $$file
-    files_$${path}.path = $$path
-    files_$${path}.CONFIG += $$config
+    target_name = $$clean_path($$path)
 
-    INSTALLS *= files_$${path}
+    files_$${target_name}.files += $$file
+    files_$${target_name}.path = $$path
+    files_$${target_name}.CONFIG += $$config
 
-    export(files_$${path}.path)
-    export(files_$${path}.files)
-    export(files_$${path}.CONFIG)
+    INSTALLS *= files_$${target_name}
+
+    export(files_$${target_name}.path)
+    export(files_$${target_name}.files)
+    export(files_$${target_name}.CONFIG)
   }
 
   export(INSTALLS)
