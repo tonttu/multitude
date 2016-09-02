@@ -26,7 +26,7 @@ namespace
 
   boost::expected<QImage>
   renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
-             const Nimble::SizeI& resolution)
+             const Nimble::SizeI& resolution, QRgb color)
   {
     FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), NULL);
     if(!doc) {
@@ -49,8 +49,8 @@ namespace
     Nimble::SizeI pixelSize = targetResolution.cast<int>();
 
     FPDF_BITMAP bitmap = FPDFBitmap_Create(pixelSize.width(), pixelSize.height(), 1);
-    /// @note that in canvus bitmap is first filled with white, now we skip that
-    FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), 0x00FFFFFF);
+    /// Will the bitmap first with the chosen color
+    FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), color);
     FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
 
     const uint8_t* buffer = static_cast<uint8_t*>(FPDFBitmap_GetBuffer(bitmap));
@@ -121,13 +121,14 @@ namespace Luminous
   }
 
   folly::Future<QImage> PDFManager::renderPage(const QString& pdfAbsoluteFilePath,
-                                               int pageNumber, const Nimble::SizeI& resolution)
+                                               int pageNumber, const Nimble::SizeI& resolution,
+                                               QRgb color)
   {
-    auto taskFunc = [pdfAbsoluteFilePath, pageNumber, resolution]()
+    auto taskFunc = [pdfAbsoluteFilePath, pageNumber, resolution, color]()
         -> Punctual::WrappedTaskReturnType<QImage> {
       if(!s_pdfiumMutex.try_lock())
         return Punctual::NotReadyYet();
-      auto image =::renderPage(pdfAbsoluteFilePath, pageNumber, resolution);
+      auto image =::renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color);
       s_pdfiumMutex.unlock();
       return image;
     };
@@ -137,7 +138,8 @@ namespace Luminous
   folly::Future<folly::Unit> PDFManager::renderPageToFile(const QString& pdfAbsoluteFilePath,
                                                           int pageNumber,
                                                           const QString& pageAbsoluteFilePath,
-                                                          const Nimble::SizeI& resolution)
+                                                          const Nimble::SizeI& resolution,
+                                                          QRgb color)
   {    
     auto writeImage = [pageAbsoluteFilePath, pdfAbsoluteFilePath, pageNumber] (QImage im) {
       bool ok = im.save(pageAbsoluteFilePath);
@@ -146,7 +148,7 @@ namespace Luminous
                                  arg(QString::number(pageNumber), pdfAbsoluteFilePath,
                                      pageAbsoluteFilePath).toStdString());
     };
-    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution).then(writeImage);
+    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).then(writeImage);
   }
 
 

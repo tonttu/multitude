@@ -31,7 +31,7 @@ namespace Luminous
     /// @return QImage containing rendered page. If operation failed contains
     ///         std::runtime_exception with error message
     folly::Future<QImage> renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
-                                     const Nimble::SizeI& resolution);
+                                     const Nimble::SizeI& resolution, QRgb color = 0x00FFFFFF);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @param pageNumber page to render
@@ -43,7 +43,8 @@ namespace Luminous
     folly::Future<folly::Unit> renderPageToFile(const QString& pdfAbsoluteFilePath,
                                                 int pageNumber,
                                                 const QString& pageAbsoluteFilePath,
-                                                const Nimble::SizeI& resolution);
+                                                const Nimble::SizeI& resolution,
+                                                QRgb color = 0x00FFFFFF);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @param pageNumber number of pdf-page
