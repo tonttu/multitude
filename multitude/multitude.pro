@@ -43,7 +43,7 @@ VideoDisplay.depends = Resonant Luminous
 
 enable-extras {
   SUBDIRS += Applications
-  Applications.depends = Radiant Nimble Luminous
+  Applications.depends = Radiant Nimble Valuable
 }
 
 # Install some build files to the source package
