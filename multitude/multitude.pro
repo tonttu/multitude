@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 
 include(qmake_utils.prf)
-include(multitude.pri)
+include(../cornerstone.pri)
 
 # 3rd party libraries
 libqxt.subdir += ThirdParty/libqxt
@@ -43,7 +43,7 @@ VideoDisplay.depends = Resonant Luminous
 
 enable-extras {
   SUBDIRS += Applications
-  Applications.depends = Radiant Nimble Luminous
+  Applications.depends = Radiant Nimble Valuable
 }
 
 # Install some build files to the source package

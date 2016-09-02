@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 HEADERS += TempFailureRetry.hpp
 HEADERS += BlockRingBuffer.hpp
@@ -194,11 +194,6 @@ contains(WITH_FTD2XX,yes) {
 
 win32 {
     message(Radiant on Windows)
-    # CMU driver is only 32-bit
-    !win64 {
-       DEFINES += CAMERA_DRIVER_CMU
-       LIBS += 1394camera.lib
-    }
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \
@@ -217,8 +212,7 @@ win32 {
         INCLUDEPATH += $$PTGREY_PATH/include
 
         # 64bit libs have different path
-        win64:QMAKE_LIBDIR += $$PTGREY_PATH/lib64
-        else:QMAKE_LIBDIR += $$PTGREY_PATH/lib
+        QMAKE_LIBDIR += $$PTGREY_PATH/lib64
         LIBS += FlyCapture2.lib
     }
 }

@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 unix: PKGCONFIG += sndfile portaudio-2.0
 

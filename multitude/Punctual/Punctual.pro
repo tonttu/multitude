@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 HEADERS += \
     TaskScheduler.hpp \
