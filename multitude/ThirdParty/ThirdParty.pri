@@ -1,6 +1,6 @@
 # Don't use default multitude install rules because we want these files to go
 # under ThirdParty. We override this at the end of this file.
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 SHARED_LIB_SUFFIX=
 win32:CONFIG(debug,debug|release) {

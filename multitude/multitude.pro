@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 
 include(qmake_utils.prf)
-include(multitude.pri)
+include(../cornerstone.pri)
 
 # 3rd party libraries
 libqxt.subdir += ThirdParty/libqxt

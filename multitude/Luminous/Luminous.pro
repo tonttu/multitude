@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 CONFIG += qt
 QT += gui
@@ -171,8 +171,7 @@ QT += svg
 
 # Platform specific: Microsoft Windows
 win32 {
-  win64:LIBS += -lnvapi64
-  else:LIBS += -lnvapi
+  LIBS += -lnvapi64
   LIBS += -lUser32
 }
 
@@ -197,6 +196,8 @@ linux-* {
 
 enable-pdf {
   linux-* {
+    # Make sure pdfium is available
+    !exists(/opt/multitouch-pdfium1):error(multitouch-libpdfium1-dev is required to build PDF support)
     INCLUDEPATH += /opt/multitouch-pdfium1/include
     QMAKE_LIBDIR += /opt/multitouch-pdfium1/lib
     LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive

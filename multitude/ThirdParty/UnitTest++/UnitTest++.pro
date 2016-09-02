@@ -1,4 +1,4 @@
-include(../../multitude.pri)
+include(../../../cornerstone.pri)
 
 QT += xml
 
@@ -77,6 +77,6 @@ win32 {
 }
 DEFINES += UNITTEST_USE_CUSTOM_STREAMS
 
-EXTRA_SOURCES += unittest-cpp.pro README
+EXTRA_SOURCES += UnitTest++.pro README
 
 include(../ThirdParty.pri)
