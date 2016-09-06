@@ -1,6 +1,8 @@
 #include "Checks.h"
 #include <cstring>
 
+#include <QByteArray>
+
 namespace UnitTest {
 
 namespace {
@@ -19,6 +21,24 @@ void CheckStringsEqual(TestResults& results, char const* expected, char const* a
     }
 }
 
+}
+
+void CheckEqual(TestResults& results, const QByteArray & expected,
+                const QByteArray & actual, TestDetails const& details)
+{
+  CheckStringsEqual(results, expected.constData(), actual.constData(), details);
+}
+
+void CheckEqual(TestResults& results, const char * expected,
+                const QByteArray & actual, TestDetails const& details)
+{
+  CheckStringsEqual(results, expected, actual.constData(), details);
+}
+
+void CheckEqual(TestResults& results, const QByteArray & expected,
+                const char * actual, TestDetails const& details)
+{
+  CheckStringsEqual(results, expected.constData(), actual, details);
 }
 
 

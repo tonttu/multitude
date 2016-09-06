@@ -27,6 +27,15 @@ void CheckEqual(TestResults& results, Expected const& expected, Actual const& ac
     }
 }
 
+UNITTEST_LINKAGE void CheckEqual(TestResults& results, const QByteArray & expected,
+                                 const QByteArray & actual, TestDetails const& details);
+
+UNITTEST_LINKAGE void CheckEqual(TestResults& results, const char * expected,
+                                 const QByteArray & actual, TestDetails const& details);
+
+UNITTEST_LINKAGE void CheckEqual(TestResults& results, const QByteArray & expected,
+                                 const char * actual, TestDetails const& details);
+
 UNITTEST_LINKAGE void CheckEqual(TestResults& results, char const* expected, char const* actual, TestDetails const& details);
 
 UNITTEST_LINKAGE void CheckEqual(TestResults& results, char* expected, char* actual, TestDetails const& details);

@@ -1,5 +1,7 @@
 #include "MemoryOutStream.h"
 
+#include <QByteArray>
+
 #ifdef UNITTEST_MEMORYOUTSTREAM_IS_STD_OSTRINGSTREAM
 
 namespace UnitTest {
@@ -98,6 +100,11 @@ void MemoryOutStream::Clear()
 char const* MemoryOutStream::GetText() const
 {
     return m_buffer;
+}
+
+MemoryOutStream& MemoryOutStream::operator <<(const QByteArray & str)
+{
+  return (*this) << str.constData();
 }
 
 MemoryOutStream& MemoryOutStream::operator <<(char const* txt)
