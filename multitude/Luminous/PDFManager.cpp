@@ -109,7 +109,9 @@ namespace Luminous
 
   folly::Future<size_t> PDFManager::queryPageCount(const QString& pdfAbsoluteFilePath)
   {
-    auto taskFunc = [pdfAbsoluteFilePath] () -> Punctual::WrappedTaskReturnType<size_t>  {
+    Punctual::WrappedTaskFunc<size_t> taskFunc = [pdfAbsoluteFilePath] ()
+      -> Punctual::WrappedTaskReturnType<size_t>
+    {
       if(!s_pdfiumMutex.try_lock()) {
         return Punctual::NotReadyYet();
       }
@@ -124,8 +126,10 @@ namespace Luminous
                                                int pageNumber, const Nimble::SizeI& resolution,
                                                QRgb color)
   {
-    auto taskFunc = [pdfAbsoluteFilePath, pageNumber, resolution, color]()
-        -> Punctual::WrappedTaskReturnType<QImage> {
+    std::function<Punctual::WrappedTaskReturnType<QImage>(void)> taskFunc =
+      [pdfAbsoluteFilePath, pageNumber, resolution, color]()
+        -> Punctual::WrappedTaskReturnType<QImage>
+    {
       if(!s_pdfiumMutex.try_lock())
         return Punctual::NotReadyYet();
       auto image =::renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color);
@@ -155,8 +159,10 @@ namespace Luminous
   folly::Future<Nimble::SizeF>
   PDFManager::getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
   {
-    auto taskFunc = [pdfAbsoluteFilePath, pageNumber]()
-        -> Punctual::WrappedTaskReturnType<Nimble::SizeF> {
+    Punctual::WrappedTaskFunc<Nimble::SizeF> taskFunc =
+      [pdfAbsoluteFilePath, pageNumber]()
+        -> Punctual::WrappedTaskReturnType<Nimble::SizeF>
+    {
       if(!s_pdfiumMutex.try_lock())
         return Punctual::NotReadyYet();
       auto size = ::getPageSize(pdfAbsoluteFilePath, pageNumber);

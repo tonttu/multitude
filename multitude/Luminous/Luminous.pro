@@ -203,8 +203,22 @@ enable-pdf {
     LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive
   }
 
+
   macx {
     PKGCONFIG += multitouch-pdfium1
+  }
+
+  win32 {
+
+    exists($$CORNERSTONE_DEPS_PATH) {
+
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium/include
+      QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium/lib
+      LIBS += multitouch-pdfium1.lib -lgdi32 -ladvapi32
+
+    } else {
+      # TODO: fix pdf for sdk-builds
+    }
   }
 
   HEADERS += PDFManager.hpp
