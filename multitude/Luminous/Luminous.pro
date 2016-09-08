@@ -214,7 +214,13 @@ enable-pdf {
 
       INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium/include
       QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium/lib
-      LIBS += multitouch-pdfium1.lib -lgdi32 -ladvapi32
+      LIBS += -lgdi32 -ladvapi32
+
+      CONFIG(debug,debug|release) {
+        LIBS += multitouch-pdfium1_d.lib
+      } else {
+        LIBS += multitouch-pdfium1.lib
+      }
 
     } else {
       # TODO: fix pdf for sdk-builds
