@@ -37,6 +37,8 @@ SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
 
 enable-pulse {
+  DEFINES += CORNERSTONE_ENABLE_PULSE
+
   HEADERS += PulseAudioSource.hpp
   HEADERS += AudioLoopPulseAudio.hpp
   HEADERS += PulseAudioContext.hpp
