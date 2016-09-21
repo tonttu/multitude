@@ -500,29 +500,34 @@ namespace Valuable
     // Name
     m_name = element.name().toUtf8();
 
+    bool allChildrenOk = true;
     // Children
     for(ArchiveElement::Iterator it = element.children(); it; ++it) {
       ArchiveElement elem = *it;
 
       QByteArray name = elem.name().toUtf8();
 
-      Attribute * vo = attribute(name);
+      Attribute * a = attribute(name);
 
       // If the attribute exists, just deserialize it. Otherwise, pass the element
       // to readElement()
-      bool ok = false;
-      if(vo)
-        ok = vo->deserialize(elem);
-      if(!ok)
-        ok = readElement(elem);
-      if(!ok) {
-        Radiant::error(
-            "Node::deserialize # (%s) don't know how to handle element '%s'", type().data(), name.data());
-        return false;
+      if(a) {
+        if(!a->deserialize(elem)) {
+          Radiant::error("Node::deserialize # (%s) deserialize failed for element '%s'",
+                         typeid(*this).name(), name.data());
+          allChildrenOk = false;
+        }
+      }
+      else {
+        if(!readElement(elem)) {
+          Radiant::error("Node::deserialize # (%s) readElement failed for element '%s'",
+                         typeid(*this).name(), name.data());
+          allChildrenOk = false;
+        }
       }
     }
 
-    return true;
+    return allChildrenOk;
   }
 
   void Node::debugDump() {

@@ -324,6 +324,15 @@ namespace Luminous
     return b;
   }
 
+  bool ColorCorrection::readElement(const Valuable::ArchiveElement &element)
+  {
+    // No warnings for obsolete attributes
+    QByteArray name = element.name().toUtf8();
+    if(name == "red" || name == "green" || name == "blue")
+      return true;
+    return false;
+  }
+
 //  bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)
 //  {
 //    if (element.name() == "offsets") {
