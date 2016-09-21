@@ -1,7 +1,8 @@
 include(../../cornerstone.pri)
 
 HEADERS += Export.hpp \
-    LineIntersection.hpp
+    LineIntersection.hpp \
+    Circle.hpp
 HEADERS += Frame4.hpp
 HEADERS += ClipStack.hpp
 HEADERS += SmoothingFilter.hpp
@@ -29,7 +30,8 @@ HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
 HEADERS += Vector4.hpp
 
-SOURCES += ClipStack.cpp
+SOURCES += ClipStack.cpp \
+    Circle.cpp
 SOURCES += KeyStone.cpp
 SOURCES += LensCorrection.cpp
 SOURCES += Path.cpp

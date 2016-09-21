@@ -3,6 +3,7 @@
 #include "Export.hpp"
 
 #include <Nimble/Rectangle.hpp>
+#include <Nimble/Circle.hpp>
 
 #include <Valuable/Node.hpp>
 
@@ -57,7 +58,7 @@ namespace Luminous {
     /// Erase splines inside area. Hit splines are removed and replaced with new subsplines
     /// for any remaining parts outside the eraser. Supply removedSplines and addedSplines
     /// if the data should be saved for later use (for example to restore previous state)
-    /// @param eraser the area where strokes should be erased
+    /// @param eraser the area where splines should be erased
     /// @param removedSplines list of splines that were removed
     /// @param addedSplines list of splines that were added in case some of the splines
     ///                     needed to be splitted
@@ -65,6 +66,17 @@ namespace Luminous {
     /// @return false if there was an error in erasing, otherwise true
     bool erase(const Nimble::Rectangle & eraser,
                Splines * removedSplines = nullptr, Splines * addedSplines = nullptr,
+               QString * errorText = nullptr);
+
+    /// Similar to the previous method but with a circular area to
+    /// erase, specified by center and radius.
+    /// @param eraser the area where spines should be erased
+    /// @param removedSplines list of splines that were removed
+    /// @param addedSplines list of splines that were added
+    /// @param errorText text describing an error in erasing (if any)
+    /// @return false if there was an error in erasing, otherwise true
+    bool erase(const Nimble::Circle & eraser,
+               Splines * removedSplines, Splines * addedSplines,
                QString * errorText = nullptr);
 
     /// Begins a new spline and returns its id.
@@ -102,7 +114,7 @@ namespace Luminous {
 
     /// Remove a spline with the given id
     /// @param id of the stroke to remove
-    void removeStroke(Valuable::Node::Uuid id);
+    void removeSpline(Valuable::Node::Uuid id);
 
     /// Remove the given splines in a batch. This is faster than removing splines one by one
     /// @param splines splines to remove

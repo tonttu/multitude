@@ -52,6 +52,11 @@ namespace
                                   float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
                                   int depth = 1);
 
+    static void findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
+                                  std::vector<float> & intersections, float t = 0.5f,
+                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
+                                  int depth = 1);
+
     Luminous::SplineManager::Points m_controlPoints;
   };
 
@@ -166,6 +171,31 @@ namespace
     findIntersections(right, rect, intersections, t + std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);
   }
 
+  void BezierCurve::findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
+                                      std::vector<float> & intersections, float t, float tTolerance,
+                                      float sizeTolerance, int depth)
+  {
+    Nimble::Rectf curveBounds = curve.bounds();
+    if (!circle.intersects(curveBounds)) {
+      return;
+    }
+    if (circle.contains(curveBounds)) {
+      return;
+    }
+    if (curve.size() < sizeTolerance || std::pow(0.5f, depth) < tTolerance) {
+      intersections.push_back(t);
+      return;
+    }
+
+    BezierCurve left, right;
+    subdivideCurve(curve, left, right);
+    // track t at the middle point of the section
+    depth++;
+    findIntersections(left, circle, intersections, t - std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);
+    findIntersections(right, circle, intersections, t + std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);
+  }
+
+
   //////////////////////////////////////////////////////////////////
 
   class SplineInternal
@@ -180,6 +210,9 @@ namespace
                       bool fitCurve = true);
 
     bool erase(const Nimble::Rectf & eraser, const Nimble::Matrix3f & transformer,
+               Luminous::SplineManager::Splines & newStrokes);
+
+    bool erase(const Nimble::Circle & eraser,
                Luminous::SplineManager::Splines & newStrokes);
 
     Luminous::SplineManager::SplineData segment(int low, int high = -1) const;
@@ -365,6 +398,97 @@ namespace
 
     return shouldRemove;
   }
+
+  bool SplineInternal::erase(const Nimble::Circle & eraser,
+                             Luminous::SplineManager::Splines & newStrokes)
+  {
+    Nimble::Rect eraserRect = eraser.boundingBox();
+
+    bool shouldRemove = false;
+    int low = -1, high = -1;
+    Luminous::SplineManager::Points extraEnd, extraStartCurrent, extraStartNext;
+    BezierCurve left, right;
+
+    // split the stroke to new strokes where erased
+    for (size_t i = 0; i < m_curves.size(); i++) {
+      BezierCurve curve = m_curves[i];
+      Nimble::Rectf curveBounds = curve.bounds();
+      bool hit = false;
+
+      if (curveBounds.intersects(eraserRect)) {
+        if (eraser.contains(curveBounds)) {
+          extraStartCurrent = extraStartNext;
+          extraStartNext.clear();
+          // remove the segment
+          hit = true;
+        }
+        else {
+          std::vector<float> intersections;
+          BezierCurve::findIntersections(curve, eraser, intersections);
+
+          // split the segment
+          if (intersections.size() > 0) {
+            extraStartCurrent = extraStartNext;
+            extraStartNext.clear();
+
+            hit = true;
+            bool take;
+            BezierCurve original = m_curves[i];
+            BezierCurve::subdivideCurve(original, left, right, intersections[0]);
+
+            // add first segment to current curve if start point is not erased
+            if (eraser.contains(Nimble::Vector2f(curve[0].x,curve[0].y)))
+              take = false;
+            else
+              take = true;
+
+            if (take)
+              extraEnd.append(left.m_controlPoints);
+            take = !take;
+            float part = intersections[0];
+
+            for (size_t index = 1; index < intersections.size(); index++) {
+              // calculate t matching the intersection in the remaining curve
+              float t =  (intersections[index] - part) / (1.f - part);
+              BezierCurve::subdivideCurve(right, left, right, t);
+              part = intersections[index];
+              // make a new stroke for the segment
+              if (take) {
+                saveSegment(-1, -1, newStrokes, &left.m_controlPoints);
+              }
+              take = !take;
+            }
+
+            // add last segment to next curve if end point is not erased
+            if (!eraser.contains(Nimble::Vector2f(curve[m_pointsPerCurve].x,curve[m_pointsPerCurve].y)))
+              extraStartNext.append(right.m_controlPoints);
+          }
+        }
+      }
+      if (hit) {
+        shouldRemove = true;
+        // save the current continuous segment as a new stroke and start a new segment
+        if ((low >= 0 && high >= 0) || !extraEnd.isEmpty() || !extraStartCurrent.isEmpty()) {
+          saveSegment(low, high, newStrokes, &extraStartCurrent, &extraEnd);
+
+          low = -1; high = -1;
+          extraEnd.clear();
+        }
+      }
+      else {
+        if (low < 0)
+          low = i * (m_pointsPerCurve);
+        high = (i + 1) * (m_pointsPerCurve);
+      }
+    }
+    // save the current continuous segment as a new stroke
+    if ((low > 0 && high > 0) || !extraStartNext.isEmpty()) {
+      saveSegment(low, -1, newStrokes, &extraStartNext, &extraEnd);
+    }
+
+    return shouldRemove;
+  }
+
 
   Luminous::SplineManager::SplineData SplineInternal::segment(int low, int high) const
   {
@@ -864,6 +988,48 @@ namespace Luminous
     return true;
   }
 
+  bool SplineManager::erase(const Nimble::Circle & eraser,
+                            Splines * removedStrokes, Splines * addedStrokes,
+                            QString * errorText)
+  {
+    // test for an early exit
+    Nimble::Rect eraserBounds = eraser.boundingBox();
+    if (!boundingBox().intersects(eraserBounds))
+      return true;
+
+    bool recalculate = false;
+    Splines newStrokes;
+
+    for (auto id : m_d->m_strokes.keys()) {
+      SplineInternal & stroke = m_d->m_strokes[id];
+      if (stroke.m_bounds.intersects(eraserBounds)) {
+        // remove or split strokes where erased
+        if (Nimble::Rectangle(eraserBounds).isInside(Nimble::Rectangle(stroke.m_bounds)) ||
+            stroke.erase(eraser, newStrokes)) {
+          if (removedStrokes) {
+            removedStrokes->append(createInfo(id, stroke.m_data));
+          }
+          m_d->removeStroke(id, false);
+          recalculate = true;
+        }
+      }
+    }
+
+    // add the new split strokes
+    for (auto newStroke : newStrokes) {
+      m_d->addStroke(newStroke, false);
+    }
+    if (addedStrokes)
+      addedStrokes->append(newStrokes);
+
+    // if anything was erased, need to recalculate all vertices
+    if (recalculate)
+      m_d->recalculateAll();
+    else if (newStrokes.size() > 0)
+      m_d->recalculate();
+    return true;
+  }
+
   Valuable::Node::Uuid SplineManager::beginSpline(Point p, float splineWidth,
                                                   Radiant::ColorPMA c, float depth)
   {
@@ -911,7 +1077,7 @@ namespace Luminous
     m_d->addStroke(info);
   }
 
-  void SplineManager::removeStroke(Valuable::Node::Uuid id)
+  void SplineManager::removeSpline(Valuable::Node::Uuid id)
   {
     m_d->removeStroke(id);
   }
