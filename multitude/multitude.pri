@@ -17,6 +17,7 @@ equals(QT_MAJOR_VERSION, 5) {
 
 enable-taction {
   CONFIG += enable-deft
+  CONFIG += enable-mushy
 }
 
 enable-deft {
