@@ -72,7 +72,7 @@ namespace Luminous
     /// color-correction.xml (see PictureModule::save())
 //    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
     virtual bool deserialize(const Valuable::ArchiveElement & element);
-//    virtual bool readElement(const Valuable::ArchiveElement &);
+    virtual bool readElement(const Valuable::ArchiveElement & element);
 
     const RGBCube & asRGBCube() const;
 
