@@ -2,6 +2,12 @@
 
 namespace Nimble {
 
+  Circle::Circle()
+    : m_center(Nimble::Vector2f(0.f,0.f))
+    , m_radius(1.f)
+    , m_radiusSquared(1.f)
+  {}
+
   Circle::Circle(const Nimble::Vector2f & center, float radius)
     : m_center(center)
     , m_radius(radius)
@@ -9,7 +15,14 @@ namespace Nimble {
   {
   }
 
-  Nimble::Rect Circle::boundingBox() const {
+  Circle::Circle(const Nimble::Circle & circle)
+  {
+    m_center = circle.center();
+    m_radius = circle.radius();
+    m_radiusSquared = m_radius*m_radius;
+  }
+
+  Nimble::Rectf Circle::boundingBox() const {
     return Nimble::Rectf(m_center.x-m_radius,m_center.y-m_radius, m_center.x+m_radius,m_center.y+m_radius);
   }
 
@@ -23,8 +36,7 @@ namespace Nimble {
     auto corners = rect.computeCorners();
     for (auto c : corners) {
       auto delta = c-m_center;
-      float distanceSquared = std::pow(delta.x,2) + std::pow(delta.y,2);
-      if (distanceSquared > m_radiusSquared) {
+      if (delta.lengthSqr() > m_radiusSquared) {
         result=false;
         break;
       }
@@ -36,28 +48,13 @@ namespace Nimble {
   bool Circle::contains(const Nimble::Vector2f & point) const
   {
     auto delta = point-m_center;
-    float distanceSquared = std::pow(delta.x,2) + std::pow(delta.y,2);
-    return distanceSquared <= m_radiusSquared;
+    return delta.lengthSqr() <= m_radiusSquared;
   }
 
 
   bool Circle::intersects(const Nimble::Rectf & rect) const
   {
-    Nimble::Vector2f rectCenter = rect.center();
-    Nimble::Vector2f circleDistance( fabs(m_center.x - rectCenter.x), fabs(m_center.y - rectCenter.y));
-
-    // Detect easy case where circle bounds are outside rect bounds
-    if (circleDistance.x > (rect.width()/2 + m_radius)) { return false; }
-    if (circleDistance.y > (rect.height()/2 + m_radius)) { return false; }
-
-    // Also easy if the circle center is inside the rect
-    if (circleDistance.x <= (rect.width()/2)) { return true; }
-    if (circleDistance.y <= (rect.height()/2)) { return true; }
-
-    // Check the edge case where the circle is near the corner
-    float cornerDistanceSquared = std::pow(circleDistance.x - rect.width()/2,2) +
-                                  std::pow(circleDistance.y - rect.height()/2,2);
-    return (cornerDistanceSquared <= (m_radiusSquared));
+    return (rect.clamp(m_center) - m_center).lengthSqr() <= m_radiusSquared;
   }
 
 }
