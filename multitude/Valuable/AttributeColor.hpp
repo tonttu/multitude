@@ -94,12 +94,12 @@ namespace Valuable
       return false;
     }
 
-    virtual QString asString(bool * const ok, Layer layer) const OVERRIDE
+    virtual QString asString(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE
     {
       if (ok)
         *ok = true;
       Radiant::ColorPMA c = value(layer);
-      return QString("rgba_pma(%1, %2, %3, %4)").arg(c.r*255, c.g*255, c.b*255, c.a);
+      return QString("rgba_pma(%1, %2, %3, %4)").arg(c.r*255).arg(c.g*255).arg(c.b*255).arg(c.a);
     }
 
     /// Converts the value object to color
