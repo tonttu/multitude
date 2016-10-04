@@ -33,9 +33,8 @@ namespace Valuable
 
 
     AttributeT(Node * host, const QByteArray & name,
-               const Nimble::Vector2T<T> & v = Nimble::Vector2T<T>(0, 0),
-               bool transit = false)
-      : Base(host, name, v, transit)
+               const Nimble::Vector2T<T> & v = Nimble::Vector2T<T>(0, 0))
+      : Base(host, name, v)
     {
     }
 

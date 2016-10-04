@@ -180,8 +180,8 @@ namespace Valuable
     addAttribute("id", &m_id);
   }
 
-  Node::Node(Node * host, const QByteArray & name, bool transit)
-      : Attribute(host, name, transit),
+  Node::Node(Node * host, const QByteArray & name)
+      : Attribute(host, name),
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(nullptr, "id", generateId()),

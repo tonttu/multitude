@@ -30,7 +30,7 @@ namespace Luminous
   class LUMINOUS_API ColorCorrection : public Valuable::Node
   {
   public:
-    ColorCorrection(Node * parent = 0, const QByteArray &name = "", bool transit = false);
+    ColorCorrection(Node * parent = 0, const QByteArray &name = "");
     virtual ~ColorCorrection();
 
     int nearestControlPoint(float x, int channel, bool modifiers, Nimble::Vector2f & controlPointOut) const;

@@ -43,8 +43,8 @@ namespace Valuable
     /// @param heightName name for attribute alias to height of the size
     /// @param size initial value
     /// @param transit (ignored)
-    AttributeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const T & size = T(), bool transit = false)
-      : AttributeTuple<T, AttributeType>(host, name, size, transit)
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & widthName, const QByteArray & heightName, const T & size = T())
+      : AttributeTuple<T, AttributeType>(host, name, size)
     {
       AttributeTuple<T ,AttributeType>::m_values[0]->setName(widthName);
       AttributeTuple<T, AttributeType>::m_values[1]->setName(heightName);

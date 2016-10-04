@@ -25,7 +25,7 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
     /// @param value The value of this object
-    AttributeT(Node * host = nullptr, const QByteArray &name = QByteArray(), bool value = false, bool transit = false);
+    AttributeT(Node * host = nullptr, const QByteArray &name = QByteArray(), bool value = false);
     virtual ~AttributeT();
 
     /// @cond

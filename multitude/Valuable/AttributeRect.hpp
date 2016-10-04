@@ -37,8 +37,8 @@ namespace Valuable
 
     /// @copydoc Attribute::Attribute(Node *, const std::string &, bool transit)
     /// @param r The rectangle to be stored in the AttributeRect
-    AttributeT(Node * host = nullptr, const QByteArray & name = QByteArray(), const RectType & r = RectType(), bool transit = false)
-      : Base(host, name, r, transit) {}
+    AttributeT(Node * host = nullptr, const QByteArray & name = QByteArray(), const RectType & r = RectType())
+      : Base(host, name, r) {}
 
     virtual QString asString(bool * const ok, Attribute::Layer layer) const OVERRIDE
     {
