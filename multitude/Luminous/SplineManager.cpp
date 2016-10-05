@@ -32,33 +32,338 @@ namespace
     return info;
   }
 
-  class BezierCurve // cubic
+
+  //////////////////////////////////////////////////////////////////
+
+  class SplineInternal
   {
   public:
-    Luminous::SplineManager::Point operator[](int pos) const;
+    int size() const;
 
-    void fitCurve(const Luminous::SplineManager::Point & p0, const Luminous::SplineManager::Point & p3, BezierCurve * prev);
-    Nimble::Rectf bounds() const;
+    void addPoint(const Luminous::SplineManager::Point & point, float minimumDistance = 1.f);
 
-    float size() const;
+    void processPoints();
+    void processPoint(const Luminous::SplineManager::Point & point, size_t index, bool newPoint = true,
+                      bool fitCurve = true);
 
-    static void evaluateCurve(const BezierCurve & curve, Luminous::SplineManager::Points & points);
-    static void subdivideCurve(const BezierCurve & curve, BezierCurve & left,
-                               BezierCurve & right, float t = 0.5f);
-    static bool isFlat(const BezierCurve & curve, float tolerance = .05f);
-    static float curveValue(const BezierCurve & curve);
-    static void findIntersections(const BezierCurve & curve, const Nimble::Rectf & rect,
-                                  std::vector<float> & intersections, float t = 0.5f,
-                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
-                                  int depth = 1);
+    bool erase(const Nimble::Rectf & eraser, const Nimble::Matrix3f & transformer,
+               Luminous::SplineManager::Splines & newStrokes);
 
-    static void findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
-                                  std::vector<float> & intersections, float t = 0.5f,
-                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
-                                  int depth = 1);
+    bool erase(const Nimble::Circle & eraser,
+               Luminous::SplineManager::Splines & newStrokes);
 
-    Luminous::SplineManager::Points m_controlPoints;
+    Luminous::SplineManager::SplineData segment(int low, int high = -1) const;
+    void saveSegment(int low, int high, Luminous::SplineManager::Splines & newStrokes,
+                     const Luminous::SplineManager::Points * start = nullptr,
+                     const Luminous::SplineManager::Points * end = nullptr);
+
+    Luminous::SplineManager::SplineData m_data;
+    Nimble::Rectf m_bounds;
+    std::vector<Luminous::BezierCurve> m_curves;
+    bool m_finished = false;
+    int m_pointsPerCurve = 3; // 4 control points for cubic bezier, but start point is the end point of previous curve
+    std::vector<Vertex> m_vertices;
   };
+
+  int SplineInternal::size() const
+  {
+    return m_data.points.size();
+  }
+
+  void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
+  {
+    auto index = m_data.points.size() -1;
+    if (index > 0) {
+      auto offset = index == 1 ? 1 : m_pointsPerCurve;
+      auto prev = m_data.points[index - offset];
+      if ((prev - point).length() < minimumDistance) {
+        m_data.points.pop_back();
+        m_data.points.append(point);
+        processPoint(point, index, false);
+        return;
+      }
+    }
+    m_data.points.append(point);
+    processPoint(point, index + 1);
+    return;
+  }
+
+  void SplineInternal::processPoints()
+  {
+    m_bounds = Nimble::Rectf();
+    m_curves.clear();
+    for (auto i = 0; i < m_data.points.size(); i += m_pointsPerCurve) {
+      processPoint(m_data.points.at(i), i, true, false);
+    }
+  }
+
+  void SplineInternal::processPoint(const Luminous::SplineManager::Point & point, size_t index, bool newPoint, bool fitCurve)
+  {
+    if (index == 0) {
+      // first point, nothing to draw here
+      m_bounds.expand(point);
+      return;
+    }
+    if (newPoint) {
+      Luminous::BezierCurve newCurve;
+      m_curves.push_back(newCurve);
+    }
+    Luminous::BezierCurve & curve = m_curves.back();
+    if (fitCurve) {
+      if (!newPoint) {
+        // We're refitting existing curve, remove previous control points and previous end point
+        for (int i = 0; i < m_pointsPerCurve -1; i++)
+          m_data.points.pop_back();
+      }
+      m_data.points.pop_back();
+      // current curve's start point
+      Luminous::SplineManager::Point start = m_data.points.takeLast();
+
+      if (m_curves.size() > 1) {
+        // fit curve to previous
+        auto prevCurve = &m_curves[m_curves.size() -2];
+        curve.fitCurve(start, point, prevCurve);
+        // previous curve's last control point can change in refitting, so rewrite it
+        m_data.points.pop_back();
+        m_data.points.push_back((*prevCurve)[m_pointsPerCurve -1]);
+      }
+      else
+        curve.fitCurve(start, point, nullptr);
+
+      for (int i = 0; i <= m_pointsPerCurve; i++)
+        m_data.points.push_back(curve[i]);
+    }
+    else {
+      curve.m_controlPoints.clear();
+      for (int i = m_pointsPerCurve; i >= 0; i--) {
+        curve.m_controlPoints.push_back(m_data.points[index - i]);
+      }
+    }
+    // Stroke bounds doesn't include stroke width, only the control points.
+    // @todo: handle width if erasing takes width into account
+    m_bounds.expand(curve.bounds());
+  }
+
+  bool SplineInternal::erase(const Nimble::Rectf & eraser, const Nimble::Matrix3f & transformer,
+                     Luminous::SplineManager::Splines & newStrokes)
+  {
+    bool shouldRemove = false;
+    int low = -1, high = -1;
+    Luminous::SplineManager::Points extraEnd, extraStartCurrent, extraStartNext;
+    Luminous::BezierCurve left, right;
+
+    // split the stroke to new strokes where erased
+    for (size_t i = 0; i < m_curves.size(); i++) {
+      Luminous::BezierCurve curve = m_curves[i];
+      // transform the curve to normalized eraser coordinates for easier calculations
+      for (int j = 0; j < curve.m_controlPoints.size(); j++) {
+        curve.m_controlPoints[j] = transformer.project(curve[j]);
+      }
+      Nimble::Rectf curveBounds = curve.bounds();
+      bool hit = false;
+
+      if (curveBounds.intersects(eraser)) {
+        if (eraser.contains(curveBounds)) {
+          extraStartCurrent = extraStartNext;
+          extraStartNext.clear();
+          // remove the segment
+          hit = true;
+        }
+        else {
+          std::vector<float> intersections;
+          Luminous::BezierCurve::findIntersections(curve, eraser, intersections);
+
+          // split the segment
+          if (intersections.size() > 0) {
+            extraStartCurrent = extraStartNext;
+            extraStartNext.clear();
+
+            hit = true;
+            bool take;
+            Luminous::BezierCurve original = m_curves[i];
+            Luminous::BezierCurve::subdivideCurve(original, left, right, intersections[0]);
+
+            // add first segment to current curve if start point is not erased
+            if (std::abs(curve[0].x) <= 1 && std::abs(curve[0].y) <= 1)
+              take = false;
+            else
+              take = true;
+
+            if (take)
+              extraEnd.append(left.m_controlPoints);
+            take = !take;
+            float part = intersections[0];
+
+            for (size_t index = 1; index < intersections.size(); index++) {
+              // calculate t matching the intersection in the remaining curve
+              float t =  (intersections[index] - part) / (1.f - part);
+              Luminous::BezierCurve::subdivideCurve(right, left, right, t);
+              part = intersections[index];
+              // make a new stroke for the segment
+              if (take) {
+                saveSegment(-1, -1, newStrokes, &left.m_controlPoints);
+              }
+              take = !take;
+            }
+
+            // add last segment to next curve if end point is not erased
+            if (!(std::abs(curve[m_pointsPerCurve].x) <= 1 && std::abs(curve[m_pointsPerCurve].y) <= 1))
+              extraStartNext.append(right.m_controlPoints);
+          }
+        }
+      }
+      if (hit) {
+        shouldRemove = true;
+        // save the current continuous segment as a new stroke and start a new segment
+        if ((low >= 0 && high >= 0) || !extraEnd.isEmpty() || !extraStartCurrent.isEmpty()) {
+          saveSegment(low, high, newStrokes, &extraStartCurrent, &extraEnd);
+
+          low = -1; high = -1;
+          extraEnd.clear();
+        }
+      }
+      else {
+        if (low < 0)
+          low = i * (m_pointsPerCurve);
+        high = (i + 1) * (m_pointsPerCurve);
+      }
+    }
+    // save the current continuous segment as a new stroke
+    if ((low > 0 && high > 0) || !extraStartNext.isEmpty()) {
+      saveSegment(low, -1, newStrokes, &extraStartNext, &extraEnd);
+    }
+
+    return shouldRemove;
+  }
+
+  bool SplineInternal::erase(const Nimble::Circle & eraser,
+                             Luminous::SplineManager::Splines & newStrokes)
+  {
+    Nimble::Rect eraserRect = eraser.boundingBox();
+
+    bool shouldRemove = false;
+    int low = -1, high = -1;
+    Luminous::SplineManager::Points extraEnd, extraStartCurrent, extraStartNext;
+    Luminous::BezierCurve left, right;
+
+    // split the stroke to new strokes where erased
+    for (size_t i = 0; i < m_curves.size(); i++) {
+      Luminous::BezierCurve curve = m_curves[i];
+      Nimble::Rectf curveBounds = curve.bounds();
+      bool hit = false;
+
+      if (curveBounds.intersects(eraserRect)) {
+        if (eraser.contains(curveBounds)) {
+          extraStartCurrent = extraStartNext;
+          extraStartNext.clear();
+          // remove the segment
+          hit = true;
+        }
+        else {
+          std::vector<float> intersections;
+          Luminous::BezierCurve::findIntersections(curve, eraser, intersections);
+
+          // split the segment
+          if (intersections.size() > 0) {
+            extraStartCurrent = extraStartNext;
+            extraStartNext.clear();
+
+            hit = true;
+            bool take;
+            Luminous::BezierCurve original = m_curves[i];
+            Luminous::BezierCurve::subdivideCurve(original, left, right, intersections[0]);
+
+            // add first segment to current curve if start point is not erased
+            if (eraser.contains(Nimble::Vector2f(curve[0].x,curve[0].y)))
+              take = false;
+            else
+              take = true;
+
+            if (take)
+              extraEnd.append(left.m_controlPoints);
+            take = !take;
+            float part = intersections[0];
+
+            for (size_t index = 1; index < intersections.size(); index++) {
+              // calculate t matching the intersection in the remaining curve
+              float t =  (intersections[index] - part) / (1.f - part);
+              Luminous::BezierCurve::subdivideCurve(right, left, right, t);
+              part = intersections[index];
+              // make a new stroke for the segment
+              if (take) {
+                saveSegment(-1, -1, newStrokes, &left.m_controlPoints);
+              }
+              take = !take;
+            }
+
+            // add last segment to next curve if end point is not erased
+            if (!eraser.contains(Nimble::Vector2f(curve[m_pointsPerCurve].x,curve[m_pointsPerCurve].y)))
+              extraStartNext.append(right.m_controlPoints);
+          }
+        }
+      }
+      if (hit) {
+        shouldRemove = true;
+        // save the current continuous segment as a new stroke and start a new segment
+        if ((low >= 0 && high >= 0) || !extraEnd.isEmpty() || !extraStartCurrent.isEmpty()) {
+          saveSegment(low, high, newStrokes, &extraStartCurrent, &extraEnd);
+
+          low = -1; high = -1;
+          extraEnd.clear();
+        }
+      }
+      else {
+        if (low < 0)
+          low = i * (m_pointsPerCurve);
+        high = (i + 1) * (m_pointsPerCurve);
+      }
+    }
+    // save the current continuous segment as a new stroke
+    if ((low > 0 && high > 0) || !extraStartNext.isEmpty()) {
+      saveSegment(low, -1, newStrokes, &extraStartNext, &extraEnd);
+    }
+
+    return shouldRemove;
+  }
+
+
+  Luminous::SplineManager::SplineData SplineInternal::segment(int low, int high) const
+  {
+    Luminous::SplineManager::SplineData newData;
+    newData.color = m_data.color;
+    newData.width = m_data.width;
+    newData.depth = m_data.depth;
+    if (low >= 0)
+      newData.points.append(m_data.points.mid(low, high >= 0 ? (high - low +1): -1));
+    return newData;
+  }
+
+  void SplineInternal::saveSegment(int low, int high, Luminous::SplineManager::Splines & newStrokes,
+                                   const Luminous::SplineManager::Points * start,
+                                   const Luminous::SplineManager::Points * end)
+  {
+    Luminous::SplineManager::SplineInfo info;
+    info.id = Valuable::Node::generateId();
+    info.data = segment(low, high);
+    if (start && !start->isEmpty()) {
+      if (!info.data.points.isEmpty())
+        info.data.points.pop_front();
+      info.data.points = *start + info.data.points;
+    }
+    if (end && !end->isEmpty()) {
+      if (!info.data.points.isEmpty())
+        info.data.points.pop_back();
+      info.data.points.append(*end);
+    }
+    newStrokes.append(info);
+  }
+
+}
+
+  ///////////////////////////////////////////////////////////////////
+
+namespace Luminous
+{
 
   Luminous::SplineManager::Point BezierCurve::operator[](int pos) const
   {
@@ -97,6 +402,22 @@ namespace
     return (bb.high() - bb.low()).length();
   }
 
+  void BezierCurve::evaluateCurve(const BezierCurve &curve, std::vector<std::pair<Nimble::Vector2f, float> > &points,
+                                  float begin, float end)
+  {
+    if(isFlat(curve)) {
+      points.push_back(std::make_pair(curve.m_controlPoints.back(), end));
+      return;
+    }
+
+    BezierCurve left, right;
+    const float t = 0.5f;
+    subdivideCurve(curve, left, right, t);
+    float mid = begin + (end - begin)*t;
+    evaluateCurve(left, points, begin, mid);
+    evaluateCurve(right,points, mid, end);
+  }
+
   void BezierCurve::evaluateCurve(const BezierCurve & curve, Luminous::SplineManager::Points & points)
   {
     if (isFlat(curve)) {
@@ -109,6 +430,7 @@ namespace
     evaluateCurve(left, points);
     evaluateCurve(right,points);
   }
+
 
   void BezierCurve::subdivideCurve(const BezierCurve & curve, BezierCurve & left,
                                    BezierCurve & right, float t)
@@ -195,338 +517,7 @@ namespace
     findIntersections(right, circle, intersections, t + std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);
   }
 
-
-  //////////////////////////////////////////////////////////////////
-
-  class SplineInternal
-  {
-  public:
-    int size() const;
-
-    void addPoint(const Luminous::SplineManager::Point & point, float minimumDistance = 1.f);
-
-    void processPoints();
-    void processPoint(const Luminous::SplineManager::Point & point, size_t index, bool newPoint = true,
-                      bool fitCurve = true);
-
-    bool erase(const Nimble::Rectf & eraser, const Nimble::Matrix3f & transformer,
-               Luminous::SplineManager::Splines & newStrokes);
-
-    bool erase(const Nimble::Circle & eraser,
-               Luminous::SplineManager::Splines & newStrokes);
-
-    Luminous::SplineManager::SplineData segment(int low, int high = -1) const;
-    void saveSegment(int low, int high, Luminous::SplineManager::Splines & newStrokes,
-                     const Luminous::SplineManager::Points * start = nullptr,
-                     const Luminous::SplineManager::Points * end = nullptr);
-
-    Luminous::SplineManager::SplineData m_data;
-    Nimble::Rectf m_bounds;
-    std::vector<BezierCurve> m_curves;
-    bool m_finished = false;
-    int m_pointsPerCurve = 3; // 4 control points for cubic bezier, but start point is the end point of previous curve
-    std::vector<Vertex> m_vertices;
-  };
-
-  int SplineInternal::size() const
-  {
-    return m_data.points.size();
-  }
-
-  void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
-  {
-    auto index = m_data.points.size() -1;
-    if (index > 0) {
-      auto offset = index == 1 ? 1 : m_pointsPerCurve;
-      auto prev = m_data.points[index - offset];
-      if ((prev - point).length() < minimumDistance) {
-        m_data.points.pop_back();
-        m_data.points.append(point);
-        processPoint(point, index, false);
-        return;
-      }
-    }
-    m_data.points.append(point);
-    processPoint(point, index + 1);
-    return;
-  }
-
-  void SplineInternal::processPoints()
-  {
-    m_bounds = Nimble::Rectf();
-    m_curves.clear();
-    for (auto i = 0; i < m_data.points.size(); i += m_pointsPerCurve) {
-      processPoint(m_data.points.at(i), i, true, false);
-    }
-  }
-
-  void SplineInternal::processPoint(const Luminous::SplineManager::Point & point, size_t index, bool newPoint, bool fitCurve)
-  {
-    if (index == 0) {
-      // first point, nothing to draw here
-      m_bounds.expand(point);
-      return;
-    }
-    if (newPoint) {
-      BezierCurve newCurve;
-      m_curves.push_back(newCurve);
-    }
-    BezierCurve & curve = m_curves.back();
-    if (fitCurve) {
-      if (!newPoint) {
-        // We're refitting existing curve, remove previous control points and previous end point
-        for (int i = 0; i < m_pointsPerCurve -1; i++)
-          m_data.points.pop_back();
-      }
-      m_data.points.pop_back();
-      // current curve's start point
-      Luminous::SplineManager::Point start = m_data.points.takeLast();
-
-      if (m_curves.size() > 1) {
-        // fit curve to previous
-        auto prevCurve = &m_curves[m_curves.size() -2];
-        curve.fitCurve(start, point, prevCurve);
-        // previous curve's last control point can change in refitting, so rewrite it
-        m_data.points.pop_back();
-        m_data.points.push_back((*prevCurve)[m_pointsPerCurve -1]);
-      }
-      else
-        curve.fitCurve(start, point, nullptr);
-
-      for (int i = 0; i <= m_pointsPerCurve; i++)
-        m_data.points.push_back(curve[i]);
-    }
-    else {
-      curve.m_controlPoints.clear();
-      for (int i = m_pointsPerCurve; i >= 0; i--) {
-        curve.m_controlPoints.push_back(m_data.points[index - i]);
-      }
-    }
-    // Stroke bounds doesn't include stroke width, only the control points.
-    // @todo: handle width if erasing takes width into account
-    m_bounds.expand(curve.bounds());
-  }
-
-  bool SplineInternal::erase(const Nimble::Rectf & eraser, const Nimble::Matrix3f & transformer,
-                     Luminous::SplineManager::Splines & newStrokes)
-  {
-    bool shouldRemove = false;
-    int low = -1, high = -1;
-    Luminous::SplineManager::Points extraEnd, extraStartCurrent, extraStartNext;
-    BezierCurve left, right;
-
-    // split the stroke to new strokes where erased
-    for (size_t i = 0; i < m_curves.size(); i++) {
-      BezierCurve curve = m_curves[i];
-      // transform the curve to normalized eraser coordinates for easier calculations
-      for (int j = 0; j < curve.m_controlPoints.size(); j++) {
-        curve.m_controlPoints[j] = transformer.project(curve[j]);
-      }
-      Nimble::Rectf curveBounds = curve.bounds();
-      bool hit = false;
-
-      if (curveBounds.intersects(eraser)) {
-        if (eraser.contains(curveBounds)) {
-          extraStartCurrent = extraStartNext;
-          extraStartNext.clear();
-          // remove the segment
-          hit = true;
-        }
-        else {
-          std::vector<float> intersections;
-          BezierCurve::findIntersections(curve, eraser, intersections);
-
-          // split the segment
-          if (intersections.size() > 0) {
-            extraStartCurrent = extraStartNext;
-            extraStartNext.clear();
-
-            hit = true;
-            bool take;
-            BezierCurve original = m_curves[i];
-            BezierCurve::subdivideCurve(original, left, right, intersections[0]);
-
-            // add first segment to current curve if start point is not erased
-            if (std::abs(curve[0].x) <= 1 && std::abs(curve[0].y) <= 1)
-              take = false;
-            else
-              take = true;
-
-            if (take)
-              extraEnd.append(left.m_controlPoints);
-            take = !take;
-            float part = intersections[0];
-
-            for (size_t index = 1; index < intersections.size(); index++) {
-              // calculate t matching the intersection in the remaining curve
-              float t =  (intersections[index] - part) / (1.f - part);
-              BezierCurve::subdivideCurve(right, left, right, t);
-              part = intersections[index];
-              // make a new stroke for the segment
-              if (take) {
-                saveSegment(-1, -1, newStrokes, &left.m_controlPoints);
-              }
-              take = !take;
-            }
-
-            // add last segment to next curve if end point is not erased
-            if (!(std::abs(curve[m_pointsPerCurve].x) <= 1 && std::abs(curve[m_pointsPerCurve].y) <= 1))
-              extraStartNext.append(right.m_controlPoints);
-          }
-        }
-      }
-      if (hit) {
-        shouldRemove = true;
-        // save the current continuous segment as a new stroke and start a new segment
-        if ((low >= 0 && high >= 0) || !extraEnd.isEmpty() || !extraStartCurrent.isEmpty()) {
-          saveSegment(low, high, newStrokes, &extraStartCurrent, &extraEnd);
-
-          low = -1; high = -1;
-          extraEnd.clear();
-        }
-      }
-      else {
-        if (low < 0)
-          low = i * (m_pointsPerCurve);
-        high = (i + 1) * (m_pointsPerCurve);
-      }
-    }
-    // save the current continuous segment as a new stroke
-    if ((low > 0 && high > 0) || !extraStartNext.isEmpty()) {
-      saveSegment(low, -1, newStrokes, &extraStartNext, &extraEnd);
-    }
-
-    return shouldRemove;
-  }
-
-  bool SplineInternal::erase(const Nimble::Circle & eraser,
-                             Luminous::SplineManager::Splines & newStrokes)
-  {
-    Nimble::Rect eraserRect = eraser.boundingBox();
-
-    bool shouldRemove = false;
-    int low = -1, high = -1;
-    Luminous::SplineManager::Points extraEnd, extraStartCurrent, extraStartNext;
-    BezierCurve left, right;
-
-    // split the stroke to new strokes where erased
-    for (size_t i = 0; i < m_curves.size(); i++) {
-      BezierCurve curve = m_curves[i];
-      Nimble::Rectf curveBounds = curve.bounds();
-      bool hit = false;
-
-      if (curveBounds.intersects(eraserRect)) {
-        if (eraser.contains(curveBounds)) {
-          extraStartCurrent = extraStartNext;
-          extraStartNext.clear();
-          // remove the segment
-          hit = true;
-        }
-        else {
-          std::vector<float> intersections;
-          BezierCurve::findIntersections(curve, eraser, intersections);
-
-          // split the segment
-          if (intersections.size() > 0) {
-            extraStartCurrent = extraStartNext;
-            extraStartNext.clear();
-
-            hit = true;
-            bool take;
-            BezierCurve original = m_curves[i];
-            BezierCurve::subdivideCurve(original, left, right, intersections[0]);
-
-            // add first segment to current curve if start point is not erased
-            if (eraser.contains(Nimble::Vector2f(curve[0].x,curve[0].y)))
-              take = false;
-            else
-              take = true;
-
-            if (take)
-              extraEnd.append(left.m_controlPoints);
-            take = !take;
-            float part = intersections[0];
-
-            for (size_t index = 1; index < intersections.size(); index++) {
-              // calculate t matching the intersection in the remaining curve
-              float t =  (intersections[index] - part) / (1.f - part);
-              BezierCurve::subdivideCurve(right, left, right, t);
-              part = intersections[index];
-              // make a new stroke for the segment
-              if (take) {
-                saveSegment(-1, -1, newStrokes, &left.m_controlPoints);
-              }
-              take = !take;
-            }
-
-            // add last segment to next curve if end point is not erased
-            if (!eraser.contains(Nimble::Vector2f(curve[m_pointsPerCurve].x,curve[m_pointsPerCurve].y)))
-              extraStartNext.append(right.m_controlPoints);
-          }
-        }
-      }
-      if (hit) {
-        shouldRemove = true;
-        // save the current continuous segment as a new stroke and start a new segment
-        if ((low >= 0 && high >= 0) || !extraEnd.isEmpty() || !extraStartCurrent.isEmpty()) {
-          saveSegment(low, high, newStrokes, &extraStartCurrent, &extraEnd);
-
-          low = -1; high = -1;
-          extraEnd.clear();
-        }
-      }
-      else {
-        if (low < 0)
-          low = i * (m_pointsPerCurve);
-        high = (i + 1) * (m_pointsPerCurve);
-      }
-    }
-    // save the current continuous segment as a new stroke
-    if ((low > 0 && high > 0) || !extraStartNext.isEmpty()) {
-      saveSegment(low, -1, newStrokes, &extraStartNext, &extraEnd);
-    }
-
-    return shouldRemove;
-  }
-
-
-  Luminous::SplineManager::SplineData SplineInternal::segment(int low, int high) const
-  {
-    Luminous::SplineManager::SplineData newData;
-    newData.color = m_data.color;
-    newData.width = m_data.width;
-    newData.depth = m_data.depth;
-    if (low >= 0)
-      newData.points.append(m_data.points.mid(low, high >= 0 ? (high - low +1): -1));
-    return newData;
-  }
-
-  void SplineInternal::saveSegment(int low, int high, Luminous::SplineManager::Splines & newStrokes,
-                                   const Luminous::SplineManager::Points * start,
-                                   const Luminous::SplineManager::Points * end)
-  {
-    Luminous::SplineManager::SplineInfo info;
-    info.id = Valuable::Node::generateId();
-    info.data = segment(low, high);
-    if (start && !start->isEmpty()) {
-      if (!info.data.points.isEmpty())
-        info.data.points.pop_front();
-      info.data.points = *start + info.data.points;
-    }
-    if (end && !end->isEmpty()) {
-      if (!info.data.points.isEmpty())
-        info.data.points.pop_back();
-      info.data.points.append(*end);
-    }
-    newStrokes.append(info);
-  }
-
-}
-
-  ///////////////////////////////////////////////////////////////////
-
-namespace Luminous
-{
+  ///////////////////////////////////////////////////////////////////////////////////////
 
   class SplineManager::D
   {

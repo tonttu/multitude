@@ -162,4 +162,71 @@ namespace Luminous {
     class D;
     std::unique_ptr<D> m_d;
   };
+
+  // ------------------------------------------------------------------------------------------
+
+  /// Cubic bezier curve
+  class LUMINOUS_API BezierCurve // cubic
+  {
+  public:
+    /// Access to the control points of the curve
+    Luminous::SplineManager::Point operator[](int pos) const;
+
+    void fitCurve(const Luminous::SplineManager::Point & p0, const Luminous::SplineManager::Point & p3, BezierCurve * prev);
+
+    /// Minimal rectangle containing the control points of the curve.
+    Nimble::Rectf bounds() const;
+
+    /// Length of bounding box's diagonal
+    float size() const;
+
+    /// Makes polyline approximation of the curve. Does not include the start point
+    /// @param curve Curve to approximate
+    /// @param points Result is stored into this vector. Second member of the pair is the
+    ///               parametrization of the original curve
+    static void evaluateCurve(const BezierCurve & curve,
+                              std::vector<std::pair<Nimble::Vector2f, float>>& points,
+                              float begin=0.0f, float end=1.0f);
+
+    /// Makes polyline approximation of the curve. Does not include the start point
+    /// @param curve Curve to approximate
+    /// @param points Result is stored into this vector
+    static void evaluateCurve(const BezierCurve & curve, Luminous::SplineManager::Points & points);
+
+    /// Splits curve into two curves at the given parameter
+    /// @param curve Curve to split
+    /// @param left First half of the curve (before t)
+    /// @param right Second half of the curve (after t)
+    /// @param t Where to split the curve
+    static void subdivideCurve(const BezierCurve & curve, BezierCurve & left,
+                               BezierCurve & right, float t = 0.5f);
+
+    /// Checks whether the curve is flat given the tolerance. Compares @ref curveValue to
+    /// the tolerance.
+    static bool isFlat(const BezierCurve & curve, float tolerance = .05f);
+
+    /// Calculates indicator value for the curvedness. 0 means that the curve is completely
+    /// flat. Values greater than 0 means that the curve is not straight
+    static float curveValue(const BezierCurve & curve);
+
+    /// Calculates intersections between the given curve and the given rectangle. Recursively
+    /// subdivides the curve.
+    /// @param curve Curve to inspect
+    /// @param rect Rectangle to inspect
+    /// @param intersections Results of the intersection points are stored into this vector.
+    ///                      Intersection point is represented by the parameter value of the
+    ///                      curve.
+    static void findIntersections(const BezierCurve & curve, const Nimble::Rectf & rect,
+                                  std::vector<float> & intersections, float t = 0.5f,
+                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
+                                  int depth = 1);
+
+    static void findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
+                                  std::vector<float> & intersections, float t = 0.5f,
+                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
+                                  int depth = 1);
+
+    Luminous::SplineManager::Points m_controlPoints;
+  };
+
 }
