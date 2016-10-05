@@ -486,7 +486,7 @@ namespace Luminous
     }
 
     BezierCurve left, right;
-    subdivideCurve(curve, left, right);
+    subdivideCurve(curve, left, right, 0.5f);
     // track t at the middle point of the section
     depth++;
     findIntersections(left, rect, intersections, t - std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);
@@ -510,7 +510,7 @@ namespace Luminous
     }
 
     BezierCurve left, right;
-    subdivideCurve(curve, left, right);
+    subdivideCurve(curve, left, right, 0.5f);
     // track t at the middle point of the section
     depth++;
     findIntersections(left, circle, intersections, t - std::pow(0.5f, depth), tTolerance, sizeTolerance, depth);

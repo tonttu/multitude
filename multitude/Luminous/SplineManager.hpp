@@ -216,11 +216,26 @@ namespace Luminous {
     /// @param intersections Results of the intersection points are stored into this vector.
     ///                      Intersection point is represented by the parameter value of the
     ///                      curve.
+    /// @param t Parameter used in the recursive procedure
+    /// @param tTolerance Error tolerance for the parameterization
+    /// @param sizeTolerance Error tolerance for the curve's @ref size
+    /// @param depth Parameter used in the recursive procedure
     static void findIntersections(const BezierCurve & curve, const Nimble::Rectf & rect,
                                   std::vector<float> & intersections, float t = 0.5f,
                                   float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
                                   int depth = 1);
 
+    /// Calculates intersections between the given curve and the given circle. Recursively
+    /// subdivides the curve.
+    /// @param curve Curve to inspect
+    /// @param circle Circle to inspect
+    /// @param intersections Results of the intersection points are stored into this vector.
+    ///                      Intersection point is represented by the parameter value of the
+    ///                      curve.
+    /// @param t Parameter used in the recursive procedure
+    /// @param tTolerance Error tolerance for the parameterization
+    /// @param sizeTolerance Error tolerance for the curve's @ref size
+    /// @param depth Parameter used in the recursive procedure
     static void findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
                                   std::vector<float> & intersections, float t = 0.5f,
                                   float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
