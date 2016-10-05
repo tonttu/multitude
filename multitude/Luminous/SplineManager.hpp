@@ -16,7 +16,7 @@ namespace Luminous {
   class LUMINOUS_API SplineManager
   {
   public:
-    typedef Nimble::Vector2 Point;
+    typedef Nimble::Vector2f Point;
     typedef QList<Point> Points;
 
     /// Raw representation of the spline. The points are interpreted according the
@@ -165,14 +165,28 @@ namespace Luminous {
 
   // ------------------------------------------------------------------------------------------
 
-  /// Cubic bezier curve
-  class LUMINOUS_API BezierCurve // cubic
+  /// Cubic bezier curve. The curve is defined by four control points. It is guaranteed
+  /// that the curve intersects the first and the last control points. Middle control points
+  /// are not necessarily intersected.
+  class LUMINOUS_API BezierCurve
   {
   public:
-    /// Access to the control points of the curve
-    Luminous::SplineManager::Point operator[](int pos) const;
+    /// Read-access to the control points of the curve
+    Nimble::Vector2f operator[](int pos) const;
 
-    void fitCurve(const Luminous::SplineManager::Point & p0, const Luminous::SplineManager::Point & p3, BezierCurve * prev);
+    /// Read-write access to the control points of the curve
+    Nimble::Vector2f& operator[](int pos);
+
+    /// Sets the end points for the curve and calculates control points
+    /// @param start Start point of the
+    /// @param end
+    void setEndPoints(const Nimble::Vector2f& start, const Nimble::Vector2f& end);
+
+    /// Fits curves so that their concatenated curve is smooth (first and second derivatives
+    /// exist and are continuos)
+    /// @param curve1 First curve to fit. End point and second control point may be modified
+    /// @param curve2 Second curve to fit. First control point may be modified
+    static void fitCurves(BezierCurve& curve1, BezierCurve& curve2);
 
     /// Minimal rectangle containing the control points of the curve.
     Nimble::Rectf bounds() const;
@@ -184,6 +198,8 @@ namespace Luminous {
     /// @param curve Curve to approximate
     /// @param points Result is stored into this vector. Second member of the pair is the
     ///               parametrization of the original curve
+    /// @param begin Parameter used in the recursive procedure.
+    /// @param end Parameter used in the recursive procedure.
     static void evaluateCurve(const BezierCurve & curve,
                               std::vector<std::pair<Nimble::Vector2f, float>>& points,
                               float begin=0.0f, float end=1.0f);
@@ -222,7 +238,7 @@ namespace Luminous {
     /// @param depth Parameter used in the recursive procedure
     static void findIntersections(const BezierCurve & curve, const Nimble::Rectf & rect,
                                   std::vector<float> & intersections, float t = 0.5f,
-                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
+                                  float tTolerance = 0.01f, float sizeTolerance = .3f,
                                   int depth = 1);
 
     /// Calculates intersections between the given curve and the given circle. Recursively
@@ -238,10 +254,10 @@ namespace Luminous {
     /// @param depth Parameter used in the recursive procedure
     static void findIntersections(const BezierCurve & curve, const Nimble::Circle & circle,
                                   std::vector<float> & intersections, float t = 0.5f,
-                                  float tTolerance = 0.01f, float sizeTolerance = .3f, // these values can refined
+                                  float tTolerance = 0.01f, float sizeTolerance = .3f,
                                   int depth = 1);
 
-    Luminous::SplineManager::Points m_controlPoints;
+    std::array<Nimble::Vector2f, 4> m_controlPoints;
   };
 
 }
