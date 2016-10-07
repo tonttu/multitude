@@ -23,4 +23,7 @@ contains(LIBS, -lQxtCore$${SHARED_LIB_SUFFIX}) {
 # Force override DESTDIR (required by libqxt)
 DESTDIR = $$shadowed($$PWD)/../lib
 # Since we changed DESTDIR, we must update DLL installation source
-win32:dlls.files = $${DESTDIR}/$${TARGET}.dll
+win32 {
+  dlls.files = $${DESTDIR}/$${TARGET}.dll
+  QMAKE_INSTALL_FILE=xcopy /y
+}
