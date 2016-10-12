@@ -100,7 +100,9 @@ namespace
         Radiant::warning("%s", msg.toUtf8().data());
       }
     } else {
-      Radiant::error("%s", msg.toUtf8().data());
+      if (!msg.contains("too full or near too full")) {
+        Radiant::error("%s", msg.toUtf8().data());
+      }
     }
   }
 
