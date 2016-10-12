@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_MATH_HPP
@@ -154,6 +154,18 @@ namespace Nimble {
     inline bool fuzzyCompare(const int & a, const int & b)
     {
       return a == b;
+    }
+
+    template<class T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+    bool isNull(T value)
+    {
+      return value == T(0);
+    }
+
+    template<class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+    bool isNull(T value)
+    {
+      return qIsNull(value);
     }
 
     /// Rounds the given number to nearest integer

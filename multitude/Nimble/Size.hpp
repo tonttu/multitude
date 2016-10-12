@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_SIZE_HPP
@@ -21,7 +21,7 @@
 #include <cassert>
 
 namespace Nimble {
-  
+
   /// This class defines the size of a two-dimensional object.
   template<typename T>
   class SizeT
@@ -228,7 +228,7 @@ namespace Nimble {
   template<typename T>
   bool SizeT<T>::isNull() const
   {
-    return m_width == T(0) && m_height == T(0);
+    return Math::isNull(m_width) && Math::isNull(m_height);
   }
 
   template<typename T>
@@ -254,7 +254,11 @@ namespace Nimble {
   {
     assert(mode == Qt::IgnoreAspectRatio || mode == Qt::KeepAspectRatio || Qt::KeepAspectRatioByExpanding);
 
-    if(mode == Qt::IgnoreAspectRatio || m_width == 0 || m_height == 0) {
+    // Resizing an invalid size results in an invalid size
+    if(!isValid())
+      return;
+
+    if(mode == Qt::IgnoreAspectRatio || Math::isNull(m_width) || Math::isNull(m_height)) {
       m_width = size.width();
       m_height = size.height();
     } else {
