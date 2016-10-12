@@ -188,6 +188,9 @@ namespace Luminous {
     /// @param curve2 Second curve to fit. First control point may be modified
     static void fitCurves(BezierCurve& curve1, BezierCurve& curve2);
 
+    /// Calculates derivate in parameter point t
+    Nimble::Vector2f derivate(float t) const;
+
     /// Minimal rectangle containing the control points of the curve.
     Nimble::Rectf bounds() const;
 

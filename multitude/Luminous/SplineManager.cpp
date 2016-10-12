@@ -483,6 +483,17 @@ namespace Luminous
     right.m_controlPoints = { p13, p22, p31, p3 };
   }
 
+  Nimble::Vector2f BezierCurve::derivate(float t) const
+  {
+    float tm = 1-t;
+    auto p0 = m_controlPoints[0];
+    auto p1 = m_controlPoints[1];
+    auto p2 = m_controlPoints[2];
+    auto p3 = m_controlPoints[3];
+
+    return 3*tm*tm*(p1 - p0) + 6*tm*t*(p2 - p1) + 3*t*t*(p3 - p2);
+  }
+
   bool BezierCurve::isFlat(const BezierCurve & curve, float tolerance)
   {
     return curveValue(curve) <= tolerance;
