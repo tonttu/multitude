@@ -241,6 +241,7 @@ namespace VideoDisplay
     double m_loopOffset;
 
     float m_audioGain;
+    bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
 
     /// In some videos, the audio track might be shorter than the video track
@@ -769,6 +770,7 @@ namespace VideoDisplay
 
       m_audioTransfer = audioTransfer;
       audioTransfer->setGain(m_audioGain);
+      audioTransfer->setMinimizeLatency(m_minimiseAudioLatency);
       audioTransfer->setSeekGeneration(m_seekGeneration);
       audioTransfer->setPlayMode(m_options.playMode());
 
@@ -1544,6 +1546,15 @@ namespace VideoDisplay
 
     if (audioTransfer)
       audioTransfer->setGain(gain);
+  }
+
+  void FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
+  {
+    m_d->m_minimiseAudioLatency = minimize;
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if (audioTransfer)
+      audioTransfer->setMinimizeLatency(minimize);
   }
 
   void FfmpegDecoder::audioTransferDeleted()
