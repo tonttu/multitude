@@ -240,7 +240,7 @@ namespace Nimble {
   template<typename T>
   bool SizeT<T>::isEmpty() const
   {
-    return m_width < T(1) && m_height < T(1);
+    return m_width <= T(0) || m_height <= T(0);
   }
 
   template<typename T>
