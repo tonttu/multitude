@@ -51,7 +51,6 @@ namespace Valuable
   Attribute::Attribute()
   : m_host(0),
     m_ownerShorthand(nullptr),
-    // m_transit(false),
     m_listenersId(0)
   {}
 
@@ -88,7 +87,6 @@ namespace Valuable
   const Attribute & Attribute::operator = (const Attribute & o)
   {
     // Do not copy the name or listeners. It will break stuff.
-    // m_transit = o.m_transit;
     return *this;
   }
 
