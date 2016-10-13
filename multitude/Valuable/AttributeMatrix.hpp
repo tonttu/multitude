@@ -46,8 +46,8 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default/original value of the object
     /// @param transit ignored
-    AttributeT(Node * host, const QByteArray & name, const MatrixType & v = MatrixType::IDENTITY, bool transit = false)
-      : Base(host, name, v, transit) {}
+    AttributeT(Node * host, const QByteArray & name, const MatrixType & v = MatrixType::IDENTITY)
+      : Base(host, name, v) {}
 
     AttributeT() : Base() {}
     virtual ~AttributeT() {}

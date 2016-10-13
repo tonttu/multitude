@@ -51,7 +51,7 @@ namespace Valuable {
   {
   public:
     FlagAlias(Node * parent, const QByteArray & name)
-      : Attribute(parent, name, false) {}
+      : Attribute(parent, name) {}
   };
 
   /// This class provides a mechanism to toggle individual flags on and off
@@ -222,8 +222,8 @@ namespace Valuable {
   public:
     typedef typename Flags::Enum T;
     AttributeT(Node * parent, const QByteArray & name, const FlagNames * names,
-               Flags v = Flags(), bool transit = false)
-      : Attribute(parent, name, transit)
+               Flags v = Flags())
+      : Attribute(parent, name)
     {
       m_masks[DEFAULT] = ~Flags();
       m_values[DEFAULT] = v;

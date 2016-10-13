@@ -22,9 +22,9 @@ namespace Luminous {
   using Nimble::Vector4;
 
   GLKeyStone::GLKeyStone(Node * host, const QByteArray & name)
-  : Node(host, name, false),
-  m_selected(0),
-  m_rotations(this, "rotations", false, 0)
+  : Node(host, name),
+    m_selected(0),
+    m_rotations(this, "rotations", 0)
   {
     setVertex(0, 0, 0);
     setVertex(1, 1, 0);

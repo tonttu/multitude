@@ -57,8 +57,8 @@ namespace Luminous
   };
 
 
-  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name, bool transit)
-    : Valuable::Node(parent, name, transit),
+  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name)
+    : Valuable::Node(parent, name),
       m_d(new D(this))
   {
     eventAddOut("changed");

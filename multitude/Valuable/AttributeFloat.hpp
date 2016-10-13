@@ -39,10 +39,10 @@ namespace Valuable
       AttributeT() : Base(), m_src(1)
       {
       }
-      /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+      /// @copydoc Attribute::Attribute(Node *, const QString &)
       /// @param v The numeric value of this object
-      AttributeT(Node * host, const QByteArray & name, T v = T(0), bool transit = false)
-      : AttributeNumericT<T>(host, name, v, transit),
+      AttributeT(Node * host, const QByteArray & name, T v = T(0))
+      : AttributeNumericT<T>(host, name, v),
         m_src(1)
       {
       }

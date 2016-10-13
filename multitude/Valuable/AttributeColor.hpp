@@ -31,22 +31,22 @@ namespace Valuable
     AttributeT() : Base()
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value
-    AttributeT(Node * host, const QByteArray & name, const Radiant::ColorPMA & c, bool transit = false)
-      : Base(host, name, c, transit)
+    AttributeT(Node * host, const QByteArray & name, const Radiant::ColorPMA & c)
+      : Base(host, name, c)
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value as string
-    AttributeT(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
-      : Base(host, name, Radiant::Color(c), transit)
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & c)
+      : Base(host, name, Radiant::Color(c))
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value as string
-    AttributeT(Node * host, const QByteArray & name, const char * c, bool transit = false)
-      : Base(host, name, Radiant::Color(c), transit)
+    AttributeT(Node * host, const QByteArray & name, const char * c)
+      : Base(host, name, Radiant::Color(c))
     {}
 
     ~AttributeT()
@@ -131,22 +131,22 @@ namespace Valuable
     AttributeT() : Base()
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value
-    AttributeT(Node * host, const QByteArray & name, const Radiant::Color & c, bool transit = false)
-      : Base(host, name, c, transit)
+    AttributeT(Node * host, const QByteArray & name, const Radiant::Color & c)
+      : Base(host, name, c)
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value as string
-    AttributeT(Node * host, const QByteArray & name, const QByteArray & c, bool transit = false)
-      : Base(host, name, Radiant::Color(c), transit)
+    AttributeT(Node * host, const QByteArray & name, const QByteArray & c)
+      : Base(host, name, Radiant::Color(c))
     {}
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param c The color value as string
-    AttributeT(Node * host, const QByteArray & name, const char * c, bool transit = false)
-      : Base(host, name, Radiant::Color(c), transit)
+    AttributeT(Node * host, const QByteArray & name, const char * c)
+      : Base(host, name, Radiant::Color(c))
     {}
 
     ~AttributeT()

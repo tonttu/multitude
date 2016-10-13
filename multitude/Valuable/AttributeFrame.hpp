@@ -36,8 +36,8 @@ namespace Valuable
 
 
     AttributeT(Node * host, const QByteArray & name,
-               const Nimble::Frame4f & v = Nimble::Frame4f(), bool transit = false)
-      : AttributeTuple<Nimble::Frame4f, AttributeType>(host, name, v, transit)
+               const Nimble::Frame4f & v = Nimble::Frame4f())
+      : AttributeTuple<Nimble::Frame4f, AttributeType>(host, name, v)
     {
     }
 

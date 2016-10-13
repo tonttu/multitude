@@ -63,11 +63,11 @@ namespace Valuable
       using Base::operator =;
       using Base::value;
 
-      AttributeT() : Base(0, "", VectorType::null(), false) {}
-      /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+      AttributeT() : Base(0, "", VectorType::null()) {}
+      /// @copydoc Attribute::Attribute(Node *, const QString &)
       /// @param v The value of this object
-      AttributeT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null(), bool transit = false)
-        : Base(host, name, v, transit) {}
+      AttributeT(Node * host, const QByteArray & name, const VectorType & v = VectorType::null())
+        : Base(host, name, v) {}
 
       virtual ~AttributeT() {}
 

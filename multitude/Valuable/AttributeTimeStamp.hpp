@@ -31,8 +31,8 @@ namespace Valuable
 
     AttributeT() : Base() {}
 
-    AttributeT(Node * host, const QByteArray & name, Radiant::TimeStamp v = Radiant::TimeStamp(), bool transit = false)
-        : Base(host, name, v, transit)
+    AttributeT(Node * host, const QByteArray & name, Radiant::TimeStamp v = Radiant::TimeStamp())
+        : Base(host, name, v)
     {}
 
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE

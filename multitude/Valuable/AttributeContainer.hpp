@@ -169,7 +169,7 @@ namespace Valuable
     /// @param host host object
     /// @param name name of the value
     AttributeContainerT(Node * host, const QByteArray & name)
-      : Attribute(host, name, false)
+      : Attribute(host, name)
       , m_clearOnDeserialize(true)
     {}
 

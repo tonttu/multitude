@@ -77,7 +77,7 @@ namespace Valuable
       @param name Name of this object.
       @param transit Should the object changes be transmitted.
     */
-    Node(Node * host, const QByteArray &name = "", bool transit = false);
+    Node(Node * host, const QByteArray &name = "");
     virtual ~Node();
 
     /// @cond

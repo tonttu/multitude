@@ -451,7 +451,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::MultiHead()
-      : Node(0, "MultiHead", false),
+      : Node(0, "MultiHead"),
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053f), /* DPI for 55" */
       m_vsync(this, "vsync", true),
