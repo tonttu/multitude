@@ -100,7 +100,9 @@ namespace
         Radiant::warning("%s", msg.toUtf8().data());
       }
     } else {
-      Radiant::error("%s", msg.toUtf8().data());
+      if (!msg.contains("too full or near too full")) {
+        Radiant::error("%s", msg.toUtf8().data());
+      }
     }
   }
 
@@ -506,7 +508,15 @@ namespace VideoDisplay
       }
     }
 #endif
-    /// TODO see if there's similar workaround for dshow
+
+#ifdef RADIANT_WINDOWS
+    /// Detect DirectShow devices automatically
+    if (m_options.format().isEmpty()) {
+      if (src.startsWith("audio=") || src.startsWith("video=")) {
+        m_options.setFormat("dshow");
+      }
+    }
+#endif
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
