@@ -471,7 +471,7 @@ namespace Luminous
     /// The maximum supported linewidth is often quite low so we'll generate a triangle strip instead
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, (linesegments + 1) * 2,
-      program, style.strokeColor(), style.strokeWidth(), style);
+      program, style.strokeColor(), 1.f, style);
 
     float step = (toRadians - fromRadians) / linesegments;
 
@@ -1021,11 +1021,22 @@ namespace Luminous
   //
   void RenderContext::drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style)
   {
-    assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
-    b.vertex[0].location = p1;
-    b.vertex[1].location = p2;
+    if (style.strokeWidth() > 1.f) {
+      // Since the line width is more than one pixel, need to draw the line as triangle strip
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+            Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.strokeColor(), 1.f, style);
+      Nimble::Vector2f n = (p2 - p1).perpendicular().normalized(style.strokeWidth() / 2.f);
+      b.vertex[0].location = p1 + n;
+      b.vertex[1].location = p1 - n;
+      b.vertex[2].location = p2 + n;
+      b.vertex[3].location = p2 - n;
+    } else {
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+            Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
+      b.vertex[0].location = p1;
+      b.vertex[1].location = p2;
+    }
   }
 
 
