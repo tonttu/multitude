@@ -81,9 +81,14 @@ namespace Luminous
     };
 
   public:
-    /// Returns default blend mode
+    /// Returns default blending mode, which expects colors and textures to
+    /// have pre-multiplied alpha
     /// @return BlendMode having default values
     static BlendMode Default() { return BlendMode(); }
+
+    /// Returns a blending mode typically used when not having pre-multiplied
+    /// alpha colors
+    static BlendMode PostMultipliedAlpha() { return BlendMode(ADD, SOURCE_ALPHA, ONE_MINUS_SOURCE_ALPHA); }
 
     /// Returns additive blending mode
     /// @return BlendMode having additive blending
