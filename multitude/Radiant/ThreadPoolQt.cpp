@@ -5,12 +5,11 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #include "ThreadPool.hpp"
 
-#include <QThread>
 #include <QMap>
 
 namespace Radiant {
@@ -177,6 +176,12 @@ namespace Radiant {
   {
     std::lock_guard<std::mutex> g(m_p->m_mutex);
     return m_p->threadCount();
+  }
+
+  bool ThreadPool::contains(QThread* thread) const
+  {
+    std::lock_guard<std::mutex> g(m_p->m_mutex);
+    return m_p->m_threads.contains(thread);
   }
 
   bool ThreadPool::running() const

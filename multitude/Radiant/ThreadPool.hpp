@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef RADIANT_THREADPOOL_HPP
@@ -17,6 +17,8 @@
 
 #include <mutex>
 #include <condition_variable>
+
+#include <QThread>
 
 namespace Radiant {
 
@@ -66,6 +68,11 @@ namespace Radiant {
     /// This function is thread-safe.
     /// @returns the number of running or starting threads
     int threads() const;
+
+    /// Check if the given thread belongs to the thread pool.
+    /// @param thread thread to check
+    /// @returns true if the thread belongs to the thread pool; otherwise false
+    bool contains(QThread* thread) const;
 
   protected:
     /// The actual contents of the threads. You need to override this to add
