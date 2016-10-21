@@ -576,10 +576,14 @@ namespace VideoDisplay
         assert(m_av.videoCodecContext);
         m_av.videoCodecContext->opaque = this;
         m_av.videoCodecContext->refcounted_frames = 1;
-        // Using multi-threaded decoding here would improve decoding speed
-        // on one 4k video on a slow pc, but will slow down everything else
-        // by spawning too many threads.
-        m_av.videoCodecContext->thread_count = 1;
+        if (m_options.videoDecodingThreads() <= 0) {
+          // Select the thread count automatically.
+          // One thread is not enough for 4k videos if you have slow CPU, 4 seems
+          // to be too much if you have lots of small videos playing at the same time.
+          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS) ? 0 : 2;
+        } else {
+          m_av.videoCodecContext->thread_count = m_options.videoDecodingThreads();
+        }
       }
     }
 
