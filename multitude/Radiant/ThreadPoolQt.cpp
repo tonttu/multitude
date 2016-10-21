@@ -178,10 +178,16 @@ namespace Radiant {
     return m_p->threadCount();
   }
 
-  bool ThreadPool::contains(QThread* thread) const
+  bool ThreadPool::contains(const QThread* thread) const
   {
     std::lock_guard<std::mutex> g(m_p->m_mutex);
-    return m_p->m_threads.contains(thread);
+    for(const auto & poolThread : m_p->m_threads.keys()) {
+
+      if(poolThread == thread)
+        return true;
+    }
+
+    return false;
   }
 
   bool ThreadPool::running() const

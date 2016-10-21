@@ -72,7 +72,7 @@ namespace Radiant {
     /// Check if the given thread belongs to the thread pool.
     /// @param thread thread to check
     /// @returns true if the thread belongs to the thread pool; otherwise false
-    bool contains(QThread* thread) const;
+    bool contains(const QThread* thread) const;
 
   protected:
     /// The actual contents of the threads. You need to override this to add
