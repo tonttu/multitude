@@ -25,5 +25,8 @@ DESTDIR = $$shadowed($$PWD)/../lib
 # Since we changed DESTDIR, we must update DLL installation source
 win32 {
   dlls.files = $${DESTDIR}/$${TARGET}.dll
-  QMAKE_INSTALL_FILE=xcopy /y
+
+  # There doesn't seem to be any way copy files on Windows that would work with
+  # spaces and special characters, like + signs. Tried copy, xcopy, robocopy
+  QMAKE_INSTALL_FILE='\"C:\Program Files\Git\usr\bin\install.exe\"'
 }
