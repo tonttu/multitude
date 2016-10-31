@@ -163,7 +163,7 @@ namespace Radiant
 
       int err = FileUtils::runInShell(cmd);
       if(err != 0)
-        Radiant::warning(QString("terminateProcessByName # failed to run '%1'").arg(cmd).toUtf8().data());
+        Radiant::warning("terminateProcessByName # failed to run '%s'", cmd.toUtf8().data());
     }
 
     void setEnv(const QString & name, const QString & value)

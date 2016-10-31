@@ -41,6 +41,8 @@ std::ostream& operator<<(std::ostream& stream, unsigned __int64 const n);
 namespace std {}
 #endif
 
+class QByteArray;
+
 namespace UnitTest
 {
 
@@ -53,6 +55,7 @@ public:
 	void Clear();
     char const* GetText() const;
 
+    MemoryOutStream& operator <<(const QByteArray & str);
     MemoryOutStream& operator <<(char const* txt);
     MemoryOutStream& operator <<(int n);
     MemoryOutStream& operator <<(long n);
