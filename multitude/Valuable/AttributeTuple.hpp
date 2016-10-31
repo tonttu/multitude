@@ -56,7 +56,7 @@ namespace Valuable
     const static int N = Elements<WrappedValue>::value;
 
     AttributeTuple(Node* host, const QByteArray& name,
-                   const WrappedValue& v = WrappedValue(), bool transit=false);
+                   const WrappedValue& v = WrappedValue());
 
     AttributeTuple & operator=(const AttributeTuple& tuple);
     AttributeTuple & operator=(const WrappedValue& tuple);
@@ -192,8 +192,8 @@ namespace Valuable
 
   template <typename T, typename A>
   AttributeTuple<T,A>::AttributeTuple(Node* host, const QByteArray& name,
-                                    const T& v, bool transit)
-    : Attribute(host, name, transit),
+                                    const T& v)
+    : Attribute(host, name),
       m_inChangeTransaction(false),
       m_emitChangedAfterTransaction(false),
       m_animationCallbacksCalled(0),
@@ -201,7 +201,7 @@ namespace Valuable
   {
     for(int i = 0; i < N; ++i) {
       ElementType e = unwrap(v, t2r(i));
-      m_values[i] = new AttributeT<ElementType>(host, elementName(i, name).toUtf8(), e, transit);
+      m_values[i] = new AttributeT<ElementType>(host, elementName(i, name).toUtf8(), e);
     }
 
     for(int i = 0; i < N; ++i) {

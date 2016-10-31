@@ -1220,7 +1220,7 @@ namespace Resonant {
   {
     DSPNetwork::ItemPtr item = DSPNetwork::instance()->findItem("panner");
     if(!item) {
-      Radiant::error("ModuleSamplePlayer::locationToChannel # Failed to find a panner");
+      debugResonant("ModuleSamplePlayer::locationToChannel # Failed to find a panner");
       return 0;
     }
 

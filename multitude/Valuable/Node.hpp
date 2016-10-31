@@ -77,7 +77,7 @@ namespace Valuable
       @param name Name of this object.
       @param transit Should the object changes be transmitted.
     */
-    Node(Node * host, const QByteArray &name = "", bool transit = false);
+    Node(Node * host, const QByteArray &name = "");
     virtual ~Node();
 
     /// @cond
@@ -465,12 +465,6 @@ namespace Valuable
     virtual void setAsDefaults() OVERRIDE;
 
     virtual bool isChanged() const OVERRIDE;
-
-    /// Controls what to do when an event mismatch is detected
-    /// The default behavior is to output a warning to the terminal (haltApplication = false).
-    /// The application can also be stopped by calling Radiant::fatal (haltApplication = true).
-    static void setFatalOnEventMismatch(bool haltApplication);
-
 
     /// Sends an event and bd to all listeners on this eventId
     void eventSend(const QByteArray & eventId, Radiant::BinaryData & bd);

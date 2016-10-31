@@ -25,52 +25,59 @@ namespace Resonant
 {
   bool PulseAudioContext::PaOperation::isRunning() const
   {
-    return m_op && pa_operation_get_state(m_op) == PA_OPERATION_RUNNING;
+    return m_op && !m_finished;
   }
 
   void PulseAudioContext::PaOperation::cancel()
   {
     if (m_op) {
+      Lock lock(m_mainloop);
       pa_operation_cancel(m_op);
       pa_operation_unref(m_op);
       m_op = nullptr;
     }
   }
 
+  void PulseAudioContext::PaOperation::setFinished()
+  {
+    m_finished = true;
+    Radiant::Guard g(m_finishedCondMutex);
+    m_finishedCond.wakeAll();
+  }
+
   void PulseAudioContext::PaOperation::setPaOperation(pa_operation * op)
   {
+    assert(!m_op);
+    assert(op);
     m_op = op;
+
+    Lock lock(m_mainloop);
+    pa_operation_set_state_callback(op, [](pa_operation * op, void * userdata) {
+      pa_operation_state_t state = pa_operation_get_state(op);
+      auto self = static_cast<PaOperation*>(userdata);
+      bool finished = state == PA_OPERATION_DONE || state == PA_OPERATION_CANCELLED;
+      if (finished) {
+        pa_operation_set_state_callback(op, nullptr, nullptr);
+        self->setFinished();
+      }
+    }, this);
   }
 
   bool PulseAudioContext::PaOperation::waitForFinished(double timeoutSecs)
   {
-    if (auto op = m_op) {
-      pa_operation_ref(op);
+    unsigned int ms = std::max<unsigned int>(timeoutSecs > 0 ? 1 : 0, std::round(timeoutSecs * 1000));
 
-      if (pa_operation_get_state(op) != PA_OPERATION_RUNNING) {
-        pa_operation_unref(op);
-        return true;
-      }
-
-      std::pair<Radiant::Mutex, Radiant::Condition> mutexCond;
-
-      pa_operation_set_state_callback(op, [](pa_operation *, void * userdata) {
-        auto p = static_cast<std::pair<Radiant::Mutex, Radiant::Condition>*>(userdata);
-        p->second.wakeAll(p->first);
-      }, &mutexCond);
-
-      unsigned int ms = std::max<unsigned int>(timeoutSecs > 0 ? 1 : 0, std::round(timeoutSecs * 1000));
-
-      Radiant::Guard g(mutexCond.first);
-      while (pa_operation_get_state(op) == PA_OPERATION_RUNNING && ms > 0) {
-        mutexCond.second.wait2(mutexCond.first, ms);
-      }
-
-      pa_operation_set_state_callback(op, nullptr, nullptr);
-
-      pa_operation_unref(op);
+    Radiant::Guard g(m_finishedCondMutex);
+    while (isRunning() && ms > 0) {
+      m_finishedCond.wait2(m_finishedCondMutex, ms);
     }
+
     return !isRunning();
+  }
+
+  PulseAudioContext::PaOperation::PaOperation(pa_threaded_mainloop * loop)
+    : m_mainloop(loop)
+  {
   }
 
   PulseAudioContext::PaOperation::~PaOperation()
@@ -85,8 +92,9 @@ namespace Resonant
   class PaOperationWithCallback : public PulseAudioContext::PaOperation
   {
   public:
-    PaOperationWithCallback(std::function<void(Args...)> callback)
-      : m_callback(callback)
+    PaOperationWithCallback(pa_threaded_mainloop * loop, std::function<void(Args...)> callback)
+      : PaOperation(loop)
+      , m_callback(callback)
     {}
 
     void call(Args... args)
@@ -142,6 +150,11 @@ namespace Resonant
     long m_nextOnReadyId = 1;
     std::map<long, std::function<void()>> m_onReady;
   };
+
+  PulseAudioContext::PaOperation::PaOperation(PulseAudioContext & context)
+    : m_mainloop(context.m_d->m_mainloop)
+  {
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -273,6 +286,12 @@ namespace Resonant
 
   void PulseAudioContext::D::closeConnection()
   {
+    std::vector<PaOperationPtr> operations;
+    {
+      Radiant::Guard g(m_operationsMutex);
+      std::swap(operations, m_operations);
+    }
+    operations.clear();
     pa_threaded_mainloop_stop(m_mainloop);
     pa_context_unref(m_context);
     pa_threaded_mainloop_free(m_mainloop);
@@ -349,12 +368,6 @@ namespace Resonant
 
   void PulseAudioContext::stop()
   {
-    std::vector<PaOperationPtr> operations;
-    {
-      Radiant::Guard g(m_d->m_operationsMutex);
-      std::swap(operations, m_d->m_operations);
-    }
-    operations.clear();
     m_d->changeState(false);
   }
 
@@ -424,8 +437,9 @@ namespace Resonant
       std::function<void (const pa_source_info *, bool)> cb)
   {
     if (m_d->m_context) {
-      auto op = std::make_shared<PaOperationWithCallback<const pa_source_info *, bool>>(cb);
+      auto op = std::make_shared<PaOperationWithCallback<const pa_source_info *, bool>>(m_d->m_mainloop, cb);
       addOperation(op);
+      Lock lock(*this);
       op->setPaOperation(pa_context_get_source_info_list(m_d->m_context, []
             (pa_context *, const pa_source_info * i, int eol, void * ptr) {
         auto op = static_cast<PaOperationWithCallback<const pa_source_info *, bool>*>(ptr);
@@ -436,5 +450,40 @@ namespace Resonant
       return nullptr;
     }
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  PulseAudioContext::Lock::Lock(PulseAudioContext & context)
+    : m_mainloop(context.m_d->m_mainloop)
+  {
+    pa_threaded_mainloop_lock(m_mainloop);
+  }
+
+  PulseAudioContext::Lock::Lock(pa_threaded_mainloop * mainloop)
+    : m_mainloop(mainloop)
+  {
+    pa_threaded_mainloop_lock(m_mainloop);
+  }
+
+  PulseAudioContext::Lock & PulseAudioContext::Lock::operator=(PulseAudioContext::Lock && o)
+  {
+    std::swap(m_mainloop, o.m_mainloop);
+    return *this;
+  }
+
+  PulseAudioContext::Lock::Lock(PulseAudioContext::Lock && o)
+    : m_mainloop(o.m_mainloop)
+  {
+    o.m_mainloop = nullptr;
+  }
+
+  PulseAudioContext::Lock::~Lock()
+  {
+    if (m_mainloop) {
+      pa_threaded_mainloop_unlock(m_mainloop);
+    }
+  }
+
 }
 #endif

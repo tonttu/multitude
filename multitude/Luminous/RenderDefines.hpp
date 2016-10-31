@@ -21,20 +21,20 @@ namespace Luminous
   enum Face
   {
     /// Front-facing primitives
-    FRONT = static_cast<unsigned int>(GL_FRONT),
+    FRONT = GL_FRONT,
     /// Back-facing primitives
-    BACK = static_cast<unsigned int>(GL_BACK),
+    BACK = GL_BACK,
     /// Front and back facing primitives
-    FRONT_AND_BACK = static_cast<unsigned int>(GL_FRONT_AND_BACK)
+    FRONT_AND_BACK = GL_FRONT_AND_BACK
   };
 
   /// Defines the ordering of a rendering primitive
   enum FaceWinding
   {
     /// Counter clock-wise ordering of vertices
-    CCW = static_cast<unsigned int>(GL_CCW),
+    CCW = GL_CCW,
     /// Clock-wise ordering of vertices
-    CW = static_cast<unsigned int>(GL_CW)
+    CW = GL_CW
   };
 
 }

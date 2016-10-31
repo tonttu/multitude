@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 unix: PKGCONFIG += sndfile portaudio-2.0
 
@@ -37,6 +37,8 @@ SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
 
 enable-pulse {
+  DEFINES += CORNERSTONE_ENABLE_PULSE
+
   HEADERS += PulseAudioSource.hpp
   HEADERS += AudioLoopPulseAudio.hpp
   HEADERS += PulseAudioContext.hpp

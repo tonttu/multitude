@@ -25,9 +25,14 @@ namespace Luminous
   /// re-ordered.
   class PipelineCommand
   {
-  public:
-    virtual ~PipelineCommand() {}
-    virtual void execute() = 0;
+    public:
+      PipelineCommand(OpenGLAPI& opengl) : m_opengl(opengl) {}
+
+      virtual ~PipelineCommand() {}
+      virtual void execute() = 0;
+
+    protected:
+      OpenGLAPI& m_opengl;
   };
 
   //////////////////////////////////////////////////////////////////////
@@ -37,7 +42,7 @@ namespace Luminous
   class CommandClearGL : public PipelineCommand
   {
   public:
-    CommandClearGL(Luminous::ClearMask clearMask, const Radiant::ColorPMA & clearColor, float clearDepth, int clearStencil);
+    CommandClearGL(OpenGLAPI& opengl, Luminous::ClearMask clearMask, const Radiant::ColorPMA & clearColor, float clearDepth, int clearStencil);
 
     virtual void execute() OVERRIDE;
 
@@ -55,7 +60,7 @@ namespace Luminous
   class CommandChangeFrameBufferGL : public PipelineCommand
   {
   public:
-    CommandChangeFrameBufferGL(FrameBufferGL & rt);
+    CommandChangeFrameBufferGL(OpenGLAPI& opengl, FrameBufferGL & rt);
 
     virtual void execute() OVERRIDE;
 
@@ -69,7 +74,7 @@ namespace Luminous
   class CommandSetBlendMode : public PipelineCommand
   {
   public:
-    CommandSetBlendMode(const BlendMode & mode);
+    CommandSetBlendMode(OpenGLAPI& opengl, const BlendMode & mode);
 
     virtual void execute() OVERRIDE;
 
@@ -82,7 +87,7 @@ namespace Luminous
   class CommandSetDepthMode : public PipelineCommand
   {
   public:
-    CommandSetDepthMode(const DepthMode & mode);
+    CommandSetDepthMode(OpenGLAPI& opengl, const DepthMode & mode);
 
     virtual void execute() OVERRIDE;
 
@@ -95,7 +100,7 @@ namespace Luminous
   class CommandSetStencilMode : public PipelineCommand
   {
   public:
-    CommandSetStencilMode(const StencilMode & mode);
+    CommandSetStencilMode(OpenGLAPI& opengl, const StencilMode & mode);
 
     virtual void execute() OVERRIDE;
 
@@ -109,7 +114,7 @@ namespace Luminous
   class CommandChangeRenderBuffersGL : public PipelineCommand
   {
   public:
-    CommandChangeRenderBuffersGL(bool colorBuffer, bool depthBuffer, bool stencilBuffer);
+    CommandChangeRenderBuffersGL(OpenGLAPI& opengl, bool colorBuffer, bool depthBuffer, bool stencilBuffer);
 
     virtual void execute() OVERRIDE;
   private:
@@ -124,7 +129,7 @@ namespace Luminous
   class CommandScissorGL : public PipelineCommand
   {
   public:
-    CommandScissorGL(const Nimble::Recti & rect);
+    CommandScissorGL(OpenGLAPI& opengl, const Nimble::Recti & rect);
 
     virtual void execute() OVERRIDE;
 
@@ -139,7 +144,7 @@ namespace Luminous
   class CommandViewportGL : public PipelineCommand
   {
   public:
-    CommandViewportGL(const Nimble::Recti & rect);
+    CommandViewportGL(OpenGLAPI& opengl, const Nimble::Recti & rect);
 
     virtual void execute() OVERRIDE;
 
@@ -155,7 +160,7 @@ namespace Luminous
   class CommandBlitGL : public PipelineCommand
   {
   public:
-    CommandBlitGL(const Nimble::Recti & src, const Nimble::Recti & dst,
+    CommandBlitGL(OpenGLAPI& opengl, const Nimble::Recti & src, const Nimble::Recti & dst,
                   Luminous::ClearMask mask, Luminous::Texture::Filter filter);
 
     virtual void execute() OVERRIDE;
@@ -173,7 +178,7 @@ namespace Luminous
   class CommandCullMode : public PipelineCommand
   {
   public:
-    CommandCullMode(Luminous::CullMode mode);
+    CommandCullMode(OpenGLAPI& opengl, Luminous::CullMode mode);
 
     virtual void execute() OVERRIDE;
 
@@ -187,7 +192,7 @@ namespace Luminous
   class CommandFrontFace : public PipelineCommand
   {
   public:
-    CommandFrontFace(FaceWinding winding);
+    CommandFrontFace(OpenGLAPI& opengl, FaceWinding winding);
 
     virtual void execute() OVERRIDE;
 
@@ -201,7 +206,7 @@ namespace Luminous
   class CommandClipDistance : public PipelineCommand
   {
   public:
-    CommandClipDistance(const QList<int> & planes, bool enable);
+    CommandClipDistance(OpenGLAPI& opengl, const QList<int> & planes, bool enable);
 
     virtual void execute() OVERRIDE;
     
@@ -216,7 +221,7 @@ namespace Luminous
   class CommandDrawBuffers : public PipelineCommand
   {
   public:
-    CommandDrawBuffers(const std::vector<GLenum> & buffers);
+    CommandDrawBuffers(OpenGLAPI& opengl, const std::vector<GLenum> & buffers);
 
     virtual void execute() OVERRIDE;
   private:

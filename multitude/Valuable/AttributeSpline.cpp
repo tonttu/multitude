@@ -53,8 +53,8 @@ namespace
 namespace Valuable
 {
 
-  AttributeSpline::AttributeSpline(Valuable::Node *host, const QByteArray &name, bool transit)
-    : Attribute(host, name, transit)
+  AttributeSpline::AttributeSpline(Valuable::Node *host, const QByteArray &name)
+    : Attribute(host, name)
     , m_isChanged(false)
   {
   }

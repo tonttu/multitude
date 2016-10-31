@@ -1,7 +1,7 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 CONFIG += qt
-QT += gui opengl
+QT += gui
 
 INCLUDEPATH += ../ThirdParty/adl_sdk
 
@@ -38,7 +38,6 @@ HEADERS += ColorCorrection.hpp
 HEADERS += RGBCube.hpp
 HEADERS += ContextArray.hpp
 HEADERS += DistanceFieldGenerator.hpp
-HEADERS += DummyOpenGL.hpp
 HEADERS += Export.hpp
 HEADERS += GLKeyStone.hpp
 HEADERS += Buffer.hpp
@@ -81,9 +80,9 @@ HEADERS += MipMapGenerator.hpp
 HEADERS += SpriteRenderer.hpp
 HEADERS += XRandR.hpp
 HEADERS += Xinerama.hpp
+HEADERS += SplineManager.hpp
 
 SOURCES += ImageCodecDDS.cpp \
-    DummyOpenGL.cpp \
     GPUAssociation.cpp \
     MaskGuard.cpp \
     MipmapRenderer.cpp \
@@ -140,6 +139,7 @@ SOURCES += RenderResource.cpp
 SOURCES += FrameBuffer.cpp
 SOURCES += ScreenDetector.cpp
 SOURCES += Shader.cpp
+SOURCES += StateGL.cpp
 SOURCES += Program.cpp
 SOURCES += Spline.cpp
 SOURCES += Texture.cpp
@@ -150,6 +150,7 @@ SOURCES += VertexArray.cpp
 SOURCES += VertexDescription.cpp
 SOURCES += VM1.cpp
 SOURCES += Window.cpp
+SOURCES += SplineManager.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
@@ -170,8 +171,7 @@ QT += svg
 
 # Platform specific: Microsoft Windows
 win32 {
-  win64:LIBS += -lnvapi64
-  else:LIBS += -lnvapi
+  LIBS += -lnvapi64
   LIBS += -lUser32
 }
 
@@ -194,4 +194,40 @@ linux-* {
   QT += x11extras
 }
 
+enable-pdf {
+  linux-* {
+    # Make sure pdfium is available
+    !exists(/opt/multitouch-pdfium1):error(multitouch-libpdfium1-dev is required to build PDF support)
+    INCLUDEPATH += /opt/multitouch-pdfium1/include
+    QMAKE_LIBDIR += /opt/multitouch-pdfium1/lib
+    LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive
+  }
+
+
+  macx {
+    PKGCONFIG += multitouch-pdfium1
+  }
+
+  win32 {
+
+    exists($$CORNERSTONE_DEPS_PATH) {
+
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium/include
+      QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium/lib
+      LIBS += -lgdi32 -ladvapi32
+
+      CONFIG(debug,debug|release) {
+        LIBS += multitouch-pdfium1_d.lib
+      } else {
+        LIBS += multitouch-pdfium1.lib
+      }
+
+    } else {
+      # TODO: fix pdf for sdk-builds
+    }
+  }
+
+  HEADERS += PDFManager.hpp
+  SOURCES += PDFManager.cpp
+}
 include(../library.pri)

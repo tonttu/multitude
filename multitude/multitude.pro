@@ -1,15 +1,21 @@
 TEMPLATE = subdirs
-include(multitude.pri)
-include(ThirdParty/ThirdParty.pri)
 
-SUBDIRS += glwrapper
+include(qmake_utils.prf)
+include(../cornerstone.pri)
 
-SUBDIRS += qjson
+# 3rd party libraries
+libqxt.subdir += ThirdParty/libqxt
+SUBDIRS += libqxt
 
-SUBDIRS += unittests
-unittests.depends += Radiant
-
+folly.subdir += ThirdParty/folly
 SUBDIRS += folly
+
+unittestcpp.subdir += ThirdParty/UnitTest++
+unittestcpp.depends += Radiant
+SUBDIRS += unittestcpp
+
+include(ThirdParty/adl_sdk/adl_sdk.pri)
+include(ThirdParty/expected/expected.pri)
 
 SUBDIRS += Patterns
 SUBDIRS += Nimble
@@ -27,7 +33,7 @@ Valuable.depends = Radiant Nimble Punctual folly
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
-Luminous.depends = glwrapper Valuable
+Luminous.depends = Valuable Punctual folly Radiant
 
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
@@ -37,16 +43,14 @@ VideoDisplay.depends = Resonant Luminous
 
 enable-extras {
   SUBDIRS += Applications
-  Applications.depends = Radiant Nimble Luminous
+  Applications.depends = Radiant Nimble Valuable
 }
 
-
-
 # Install some build files to the source package
-stuff.path = /src/multitude
-stuff.files = LGPL.txt multitude.pro multitude.pri library.pri
+MISC_FILES += LGPL.txt multitude.pro multitude.pri library.pri qmake_utils.prf
+MISC_FILES += ThirdParty/ThirdParty.pri
 
-INSTALLS += stuff
+$$installFiles(/src/multitude, MISC_FILES)
 
 # Install extra dependencies on Windows
 win*:include(Win64x/Win64x.pri)

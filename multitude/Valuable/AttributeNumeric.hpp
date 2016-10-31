@@ -36,8 +36,8 @@ namespace Valuable
       AttributeNumericT() : Base() {}
       /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
       /// @param v The numeric value of this object.
-      AttributeNumericT(Node * host, const QByteArray & name, T v, bool transit = false)
-      : Base(host, name, v, transit)
+      AttributeNumericT(Node * host, const QByteArray & name, T v)
+      : Base(host, name, v)
       {}
 
     /// Converts the numeric value to float

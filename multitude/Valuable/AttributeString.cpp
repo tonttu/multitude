@@ -16,8 +16,8 @@ namespace Valuable
 {
   AttributeString::AttributeT() {}
   AttributeString::AttributeT(Node * parent, const QByteArray & name,
-                              const QString & v, bool transit)
-    : Base(parent, name, v, transit)
+                              const QString & v)
+    : Base(parent, name, v)
   {}
 
   void AttributeString::eventProcess(const QByteArray & /*id*/, Radiant::BinaryData & data)

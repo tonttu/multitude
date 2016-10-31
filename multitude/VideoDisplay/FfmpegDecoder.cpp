@@ -100,7 +100,9 @@ namespace
         Radiant::warning("%s", msg.toUtf8().data());
       }
     } else {
-      Radiant::error("%s", msg.toUtf8().data());
+      if (!msg.contains("too full or near too full")) {
+        Radiant::error("%s", msg.toUtf8().data());
+      }
     }
   }
 
@@ -241,6 +243,7 @@ namespace VideoDisplay
     double m_loopOffset;
 
     float m_audioGain;
+    bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
 
     /// In some videos, the audio track might be shorter than the video track
@@ -505,7 +508,15 @@ namespace VideoDisplay
       }
     }
 #endif
-    /// TODO see if there's similar workaround for dshow
+
+#ifdef RADIANT_WINDOWS
+    /// Detect DirectShow devices automatically
+    if (m_options.format().isEmpty()) {
+      if (src.startsWith("audio=") || src.startsWith("video=")) {
+        m_options.setFormat("dshow");
+      }
+    }
+#endif
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
@@ -565,10 +576,14 @@ namespace VideoDisplay
         assert(m_av.videoCodecContext);
         m_av.videoCodecContext->opaque = this;
         m_av.videoCodecContext->refcounted_frames = 1;
-        // Using multi-threaded decoding here would improve decoding speed
-        // on one 4k video on a slow pc, but will slow down everything else
-        // by spawning too many threads.
-        m_av.videoCodecContext->thread_count = 1;
+        if (m_options.videoDecodingThreads() <= 0) {
+          // Select the thread count automatically.
+          // One thread is not enough for 4k videos if you have slow CPU, 4 seems
+          // to be too much if you have lots of small videos playing at the same time.
+          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS) ? 0 : 2;
+        } else {
+          m_av.videoCodecContext->thread_count = m_options.videoDecodingThreads();
+        }
       }
     }
 
@@ -769,6 +784,7 @@ namespace VideoDisplay
 
       m_audioTransfer = audioTransfer;
       audioTransfer->setGain(m_audioGain);
+      audioTransfer->setMinimizeLatency(m_minimiseAudioLatency);
       audioTransfer->setSeekGeneration(m_seekGeneration);
       audioTransfer->setPlayMode(m_options.playMode());
 
@@ -1544,6 +1560,15 @@ namespace VideoDisplay
 
     if (audioTransfer)
       audioTransfer->setGain(gain);
+  }
+
+  void FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
+  {
+    m_d->m_minimiseAudioLatency = minimize;
+    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+    if (audioTransfer)
+      audioTransfer->setMinimizeLatency(minimize);
   }
 
   void FfmpegDecoder::audioTransferDeleted()

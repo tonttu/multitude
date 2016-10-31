@@ -19,8 +19,8 @@ namespace Valuable
   }
 
   AttributeStringMap::AttributeT(Node * host, const QByteArray & name,
-                                 const StringMap & v, bool transit)
-    : Base(host, name, v, transit)
+                                 const StringMap & v)
+    : Base(host, name, v)
   {
   }
 

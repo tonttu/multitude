@@ -1,6 +1,13 @@
 # Construct path to dependency package
-CORNERSTONE_VERSION_STR = $$cat(../../VERSION)
-CORNERSTONE_DEPS_PATH=C:/Cornerstone-$${CORNERSTONE_VERSION_STR}-deps
+CORNERSTONE_FULL_VERSION_STR = $$cat(../../VERSION)
+
+CORNERSTONE_VERSION = $$section(CORNERSTONE_FULL_VERSION_STR, "-", 0, 0)
+CORNERSTONE_VERSION_MAJOR = $$section(CORNERSTONE_VERSION, ".", 0, 0)
+CORNERSTONE_VERSION_MINOR = $$section(CORNERSTONE_VERSION, ".", 1, 1)
+CORNERSTONE_VERSION_PATCH = $$section(CORNERSTONE_VERSION, ".", 2, 2)
+CORNERSTONE_SHORT_VERSION_STR = $${CORNERSTONE_VERSION_MAJOR}.$${CORNERSTONE_VERSION_MINOR}
+
+CORNERSTONE_DEPS_PATH=C:/Cornerstone-$${CORNERSTONE_SHORT_VERSION_STR}-deps
 
 # Install Windows 3rd party dlls to bin
 win64_runtime_dlls.path = /bin
@@ -193,5 +200,14 @@ qt_files.files += $$[QMAKE_MKSPECS]
 qt_files.files += $$[QT_INSTALL_HEADERS]
 
 INSTALLS += qt_bin_files qt_lib_files qt_files qt_conf_files
+
+# Install Cef
+win64_cef_dlls.path = /bin
+win64_cef_dlls.files = $$CORNERSTONE_DEPS_PATH/cef/Release/*
+
+win64_cef_resources.path = /Resources
+win64_cef_resources.files = $$CORNERSTONE_DEPS_PATH/cef/Resources/*
+
+INSTALLS += win64_cef_dlls win64_cef_resources
 
 message(Including 64-bit Windows Libraries)

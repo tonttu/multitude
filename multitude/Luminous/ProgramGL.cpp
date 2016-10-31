@@ -23,21 +23,23 @@
 
 namespace Luminous
 {
-  ShaderGL::ShaderGL()
+  ShaderGL::ShaderGL(OpenGLAPI & opengl)
     : m_handle(0)
+    , m_opengl(opengl)
   {
   }
 
   ShaderGL::~ShaderGL() noexcept
   {
     if(m_handle) {
-      glDeleteShader(m_handle);
+      m_opengl.glDeleteShader(m_handle);
       GLERROR("ShaderGL::~ShaderGL # glDeleteShader");
     }
   }
 
   ShaderGL::ShaderGL(ShaderGL && shader) noexcept
     : m_handle(shader.m_handle)
+    , m_opengl(shader.m_opengl)
   {
     shader.m_handle = 0;
   }
@@ -54,28 +56,28 @@ namespace Luminous
       switch (shader.type())
       {
       case Shader::Vertex:
-        m_handle = glCreateShader(GL_VERTEX_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_VERTEX_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_VERTEX_SHADER)");
         break;
       case Shader::Fragment:
-        m_handle = glCreateShader(GL_FRAGMENT_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_FRAGMENT_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_FRAGMENT_SHADER)");
         break;
       case Shader::Geometry:
-        m_handle = glCreateShader(GL_GEOMETRY_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_GEOMETRY_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_GEOMETRY_SHADER)");
         break;
 #if !defined (RADIANT_OSX)
       case Shader::TessControl:
-        m_handle = glCreateShader(GL_TESS_CONTROL_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_TESS_CONTROL_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_TESS_CONTROL_SHADER)");
         break;
       case Shader::TessEval:
-        m_handle = glCreateShader(GL_TESS_EVALUATION_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_TESS_EVALUATION_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_TESS_EVALUATION_SHADER)");
         break;
       case Shader::Compute:
-        m_handle = glCreateShader(GL_COMPUTE_SHADER);
+        m_handle = m_opengl.glCreateShader(GL_COMPUTE_SHADER);
         GLERROR("ShaderGL::compile # glCreateShader(GL_COMPUTE_SHADER)");
         Radiant::warning("ShaderGL::compile # Compute shaders not fully implemented yet");
         break;
@@ -90,22 +92,22 @@ namespace Luminous
     const QByteArray shaderData = shader.text();
     const GLchar * text = shaderData.data();
     const GLint length = shaderData.size();
-    glShaderSource(m_handle, 1, &text, &length);
+    m_opengl.glShaderSource(m_handle, 1, &text, &length);
     GLERROR("ShaderGL::compile # glShaderSource");
-    glCompileShader(m_handle);
+    m_opengl.glCompileShader(m_handle);
     GLERROR("ShaderGL::compile # glCompileShader");
-    GLint compiled = static_cast<GLint>(GL_FALSE);
-    glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled);
+    GLint compiled = GL_FALSE;
+    m_opengl.glGetShaderiv(m_handle, GL_COMPILE_STATUS, &compiled);
     GLERROR("ShaderGL::compile # glGetShaderiv");
-    if (compiled != static_cast<GLint>(GL_TRUE)) {
+    if (compiled != GL_TRUE) {
       Radiant::error("Failed to compile shader %s", shader.filename().toUtf8().data());
 
       // Dump info log
       GLsizei len;
-      glGetShaderiv(m_handle, GL_INFO_LOG_LENGTH, &len);
+      m_opengl.glGetShaderiv(m_handle, GL_INFO_LOG_LENGTH, &len);
       GLERROR("ShaderGL::compile # glGetShaderiv");
       std::vector<GLchar> log(len);
-      glGetShaderInfoLog(m_handle, len, &len, log.data());
+      m_opengl.glGetShaderInfoLog(m_handle, len, &len, log.data());
       GLERROR("ShaderGL::compile # glGetShaderInfoLog");
       Radiant::error("%s", log.data());
       return false;
@@ -122,7 +124,7 @@ namespace Luminous
     , m_sampleShading(0.0f)
     , m_linked(false)
   {
-    m_handle = glCreateProgram();
+    m_handle = m_state.opengl().glCreateProgram();
     GLERROR("ProgramGL::ProgramGL # glCreateProgram");
   }
 
@@ -154,7 +156,7 @@ namespace Luminous
   ProgramGL::~ProgramGL()
   {
     if(m_handle) {
-      glDeleteProgram(m_handle);
+      m_state.opengl().glDeleteProgram(m_handle);
       GLERROR("ProgramGL::~ProgramGL # glDeleteProgram");
     }
   }
@@ -164,15 +166,10 @@ namespace Luminous
     touch();
     // Avoid re-applying the same shader
     if(m_state.setProgram(m_handle)) {
-      glUseProgram(m_handle);
+      m_state.opengl().glUseProgram(m_handle);
       GLERROR("ProgramGL::bind # glUseProgram");
-#ifndef RADIANT_OSX_MOUNTAIN_LION
-      // OpenGL 4.0 feature, so we use the ARB version
-      if (isSampleShadingSupported()) {
-        glMinSampleShadingARB(m_sampleShading);
-        GLERROR("ProgramGL::bind # glMinSampleShadingARB");
-      }
-#endif
+      m_state.opengl().glMinSampleShading(m_sampleShading);
+      GLERROR("ProgramGL::bind # glMinSampleShading");
     }
   }
 
@@ -201,29 +198,29 @@ namespace Luminous
 
     for(std::size_t i = 0; i < program.shaderCount(); ++i) {
       Shader & shader = program.shader(i);
-      m_shaders.emplace_back(new ShaderGL());
+      m_shaders.emplace_back(new ShaderGL(m_state.opengl()));
       std::unique_ptr<ShaderGL> & shadergl = m_shaders.back();
       shadergl->compile(shader);
 
       // Attach to the program
-      glAttachShader(m_handle, shadergl->handle());
+      m_state.opengl().glAttachShader(m_handle, shadergl->handle());
       GLERROR("ProgramGL::link # glAttachShader");
     }
 
-    glLinkProgram(m_handle);
+    m_state.opengl().glLinkProgram(m_handle);
     GLERROR("ProgramGL::link # glLinkProgram");
     // Check for linking errors
     GLint status;
-    glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
+    m_state.opengl().glGetProgramiv(m_handle, GL_LINK_STATUS, &status);
     GLERROR("ProgramGL::link # glGetProgramiv");
 
-    if(status == static_cast<GLint>(GL_FALSE)) {
+    if(status == GL_FALSE) {
       Radiant::error("Failed to link shader program (shaders %s)", program.shaderFilenames().join(", ").toUtf8().data());
       GLsizei len;
-      glGetProgramiv(m_handle, GL_INFO_LOG_LENGTH, &len);
+      m_state.opengl().glGetProgramiv(m_handle, GL_INFO_LOG_LENGTH, &len);
       GLERROR("ProgramGL::link # glGetProgramiv");
       std::vector<GLchar> log(len);
-      glGetProgramInfoLog(m_handle, len, &len, log.data());
+      m_state.opengl().glGetProgramInfoLog(m_handle, len, &len, log.data());
       GLERROR("ProgramGL::link # glGetProgramInfoLog");
       Radiant::error("%s", log.data());
     } else {
@@ -242,31 +239,31 @@ namespace Luminous
 
       // Query all names of the vertex attributes
       /// @todo store size/type data in ShaderVariable
-      glGetProgramiv(m_handle, GL_ACTIVE_ATTRIBUTES, &count);
+      m_state.opengl().glGetProgramiv(m_handle, GL_ACTIVE_ATTRIBUTES, &count);
       GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
-        glGetActiveAttrib(m_handle, i, sizeof(name), &length, &size, &type, name);
+        m_state.opengl().glGetActiveAttrib(m_handle, i, sizeof(name), &length, &size, &type, name);
         GLERROR("ProgramGL::link # glGetActiveAttrib");
-        m_attributes[name] = glGetAttribLocation(m_handle, name);
+        m_attributes[name] = m_state.opengl().glGetAttribLocation(m_handle, name);
       }
 
       // Query all names of the uniform
       /// @todo store size/type data in ShaderVariable
-      glGetProgramiv(m_handle, GL_ACTIVE_UNIFORMS, &count);
+      m_state.opengl().glGetProgramiv(m_handle, GL_ACTIVE_UNIFORMS, &count);
       GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
-        glGetActiveUniform(m_handle, i, sizeof(name), &length, &size, &type, name);
+        m_state.opengl().glGetActiveUniform(m_handle, i, sizeof(name), &length, &size, &type, name);
         GLERROR("ProgramGL::link # glGetActiveUniform");
-        m_uniforms[name] = glGetUniformLocation(m_handle, name);
+        m_uniforms[name] = m_state.opengl().glGetUniformLocation(m_handle, name);
       }
 
       // Query all names of the uniform blocks
-      glGetProgramiv(m_handle, GL_ACTIVE_UNIFORM_BLOCKS, &count);
+      m_state.opengl().glGetProgramiv(m_handle, GL_ACTIVE_UNIFORM_BLOCKS, &count);
       GLERROR("ProgramGL::link # glGetProgramiv");
       for (GLint i = 0; i < count; ++i) {
-        glGetActiveUniformBlockName(m_handle, i, sizeof(name), &length, name);
+        m_state.opengl().glGetActiveUniformBlockName(m_handle, i, sizeof(name), &length, name);
         GLERROR("ProgramGL::link # glGetActiveUniformBlockName");
-        m_uniformBlocks[name] = glGetUniformBlockIndex(m_handle, name);
+        m_uniformBlocks[name] = m_state.opengl().glGetUniformBlockIndex(m_handle, name);
         /// @todo get more info with glGetActiveUniformBlock
       }
     }
@@ -293,7 +290,7 @@ namespace Luminous
     if(it == m_uniforms.end()) {
       /// Uniforms that have an array index / different kind of notation
       /// (foo vs foo[0]) might not be in the m_uniforms-map, yet
-      int loc = glGetUniformLocation(m_handle, name.data());
+      int loc = m_state.opengl().glGetUniformLocation(m_handle, name.data());
       GLERROR("ProgramGL::uniformLocation");
       m_uniforms[name] = loc;
       return loc;

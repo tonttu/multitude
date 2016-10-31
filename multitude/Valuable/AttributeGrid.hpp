@@ -29,8 +29,8 @@ namespace Valuable
     AttributeGrid()
     {}
 
-    AttributeGrid(Node * host, const QByteArray & name, bool transit = false)
-      : Attribute(host, name, transit)
+    AttributeGrid(Node * host, const QByteArray & name)
+      : Attribute(host, name)
     {}
 
     virtual bool deserialize(const Valuable::ArchiveElement&)

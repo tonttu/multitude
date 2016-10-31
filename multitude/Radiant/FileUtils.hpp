@@ -159,6 +159,24 @@ namespace Radiant
     static QString findOverWritable(const QString & filename,
                                     const QString & paths);
 
+    /// Resolves filenames that use Qt search path syntax. For example
+    /// "experience-cfg:foo/bar.cfg" will return an absolute path to a file
+    /// that is inside a directory mapped to "experience-cfg" prefix.
+    ///
+    /// This is similar to QFileInfo::absoluteFilePath, but it works even if
+    /// the file doesn't exist.
+    ///
+    /// If there are multiple directories mapped to the same prefix, the
+    /// first one is used.
+    ///
+    /// See also QDir::searchPaths.
+    ///
+    /// @return Absolute file path to the file if source was a valid name using
+    ///         Qt search path syntax.
+    ///         Returns source if the source doesn't use search path syntax or
+    ///         if the syntax is unknown
+    static QString resolvePath(const QString & source);
+
     /// Opens the given file for writing and creates the directories in the path if they don't exist
     /// @param filePath Full filename with path
     /// @returns A handle to the open filepath or NULL if the file couldn't be created

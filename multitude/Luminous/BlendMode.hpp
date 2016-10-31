@@ -26,15 +26,15 @@ namespace Luminous
     enum Equation
     {
       /// Add colors
-      ADD                       = static_cast<unsigned int>(GL_FUNC_ADD),
+      ADD                       = GL_FUNC_ADD,
       /// Subtract colors
-      SUBTRACT                  = static_cast<unsigned int>(GL_FUNC_SUBTRACT),
+      SUBTRACT                  = GL_FUNC_SUBTRACT,
       /// Subtract colors reversily
-      REVERSE_SUBTRACT          = static_cast<unsigned int>(GL_FUNC_REVERSE_SUBTRACT),
+      REVERSE_SUBTRACT          = GL_FUNC_REVERSE_SUBTRACT,
       /// Minimum of colors
-      MIN                       = static_cast<unsigned int>(GL_MIN),
+      MIN                       = GL_MIN,
       /// Maximum of colors
-      MAX                       = static_cast<unsigned int>(GL_MAX)
+      MAX                       = GL_MAX
     };
 
     /// Defines the pixel arithmetic used during blending. See
@@ -42,37 +42,37 @@ namespace Luminous
     enum Function
     {
       /// Ignore the color
-      ZERO                      = static_cast<unsigned int>(GL_ZERO),
+      ZERO                      = GL_ZERO,
       /// Do not scale color in any way
-      ONE                       = static_cast<unsigned int>(GL_ONE),
+      ONE                       = GL_ONE,
       /// Scale according to source color
-      SOURCE_COLOR               = static_cast<unsigned int>(GL_SRC_COLOR),
+      SOURCE_COLOR               = GL_SRC_COLOR,
       /// Scale according to source alpha
-      SOURCE_ALPHA               = static_cast<unsigned int>(GL_SRC_ALPHA),
+      SOURCE_ALPHA               = GL_SRC_ALPHA,
       /// Scale according to inverse of source color factors
-      ONE_MINUS_SOURCE_COLOR       = static_cast<unsigned int>(GL_ONE_MINUS_SRC_COLOR),
+      ONE_MINUS_SOURCE_COLOR       = GL_ONE_MINUS_SRC_COLOR,
       /// Scale according to inverse of source color alpha
-      ONE_MINUS_SOURCE_ALPHA       = static_cast<unsigned int>(GL_ONE_MINUS_SRC_ALPHA),
+      ONE_MINUS_SOURCE_ALPHA       = GL_ONE_MINUS_SRC_ALPHA,
 
       /// Scale according to destination color
-      DESTINATION_COLOR          = static_cast<unsigned int>(GL_DST_COLOR),
+      DESTINATION_COLOR          = GL_DST_COLOR,
       /// Scale according to destionation alpha
-      DESTINATION_ALPHA          = static_cast<unsigned int>(GL_DST_ALPHA),
+      DESTINATION_ALPHA          = GL_DST_ALPHA,
       /// Scale according to inverse of destination color factors
-      ONE_MINUS_DESTINATION_COLOR  = static_cast<unsigned int>(GL_ONE_MINUS_DST_COLOR),
+      ONE_MINUS_DESTINATION_COLOR  = GL_ONE_MINUS_DST_COLOR,
       /// Scale according to inverse of destination color alpha
-      ONE_MINUS_DESTINATION_ALPHA  = static_cast<unsigned int>(GL_ONE_MINUS_DST_ALPHA),
+      ONE_MINUS_DESTINATION_ALPHA  = GL_ONE_MINUS_DST_ALPHA,
 
       /// Use blend color set by setConstantColor
-      CONSTANT_COLOR             = static_cast<unsigned int>(GL_CONSTANT_COLOR),
+      CONSTANT_COLOR             = GL_CONSTANT_COLOR,
       /// Use blend alpha set by setConstantColor
-      CONSTANT_ALPHA             = static_cast<unsigned int>(GL_CONSTANT_ALPHA),
+      CONSTANT_ALPHA             = GL_CONSTANT_ALPHA,
       /// Use inverse of blend color set by setConstantColor
-      ONE_MINUS_CONSTANT_COLOR     = static_cast<unsigned int>(GL_ONE_MINUS_CONSTANT_COLOR),
+      ONE_MINUS_CONSTANT_COLOR     = GL_ONE_MINUS_CONSTANT_COLOR,
       /// Use inverse of blend alpha set by setConstantColor
-      ONE_MINUS_CONSTANT_ALPHA     = static_cast<unsigned int>(GL_ONE_MINUS_CONSTANT_ALPHA),
+      ONE_MINUS_CONSTANT_ALPHA     = GL_ONE_MINUS_CONSTANT_ALPHA,
       /// Saturate alpha
-      ALPHA_SATURATE             = static_cast<unsigned int>(GL_SRC_ALPHA_SATURATE),
+      ALPHA_SATURATE             = GL_SRC_ALPHA_SATURATE,
 
       // GL_SRC1_COLOR
       // GL_ONE_MINUS_SRC1_COLOR
@@ -81,9 +81,14 @@ namespace Luminous
     };
 
   public:
-    /// Returns default blend mode
+    /// Returns default blending mode, which expects colors and textures to
+    /// have pre-multiplied alpha
     /// @return BlendMode having default values
     static BlendMode Default() { return BlendMode(); }
+
+    /// Returns a blending mode typically used when not having pre-multiplied
+    /// alpha colors
+    static BlendMode PostMultipliedAlpha() { return BlendMode(ADD, SOURCE_ALPHA, ONE_MINUS_SOURCE_ALPHA); }
 
     /// Returns additive blending mode
     /// @return BlendMode having additive blending

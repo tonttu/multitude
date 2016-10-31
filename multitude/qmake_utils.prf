@@ -1,0 +1,32 @@
+# Create install targets given a prefix and list of files. Files may contain
+# sub-folders and they are re-created correctly.
+#
+# Syntax: installFiles(prefix, files, config)
+#
+defineReplace(installFiles) {
+
+  prefix = $$1
+  files = $$2
+  config = $$3
+
+  for(file, $${files}) {
+
+    path = $${prefix}/$${dirname(file)}
+
+    target_name = $$clean_path($$path)
+
+    files_$${target_name}.files += $$file
+    files_$${target_name}.path = $$path
+    files_$${target_name}.CONFIG += $$config
+
+    INSTALLS *= files_$${target_name}
+
+    export(files_$${target_name}.path)
+    export(files_$${target_name}.files)
+    export(files_$${target_name}.CONFIG)
+  }
+
+  export(INSTALLS)
+
+  return($$files)
+}
