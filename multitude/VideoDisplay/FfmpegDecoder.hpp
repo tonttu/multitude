@@ -49,6 +49,8 @@ namespace VideoDisplay
 
     virtual void setAudioGain(float gain) OVERRIDE;
 
+    virtual void setMinimizeAudioLatency(bool minimize) override;
+
     /// @cond
 
     /// Called from AudioTransfer::~AudioTransfer

@@ -92,6 +92,9 @@ namespace VideoDisplay
     void setDecodingFinished(bool finished);
     bool isDecodingFinished() const;
 
+    void setMinimizeLatency(bool minimize);
+    bool minimizeLatency() const;
+
     VIDEODISPLAY_API static uint64_t bufferUnderrun();
 
   private:

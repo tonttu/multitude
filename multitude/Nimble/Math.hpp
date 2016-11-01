@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef NIMBLE_MATH_HPP
@@ -156,6 +156,18 @@ namespace Nimble {
       return a == b;
     }
 
+    template<class T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+    bool isNull(T value)
+    {
+      return value == T(0);
+    }
+
+    template<class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+    bool isNull(T value)
+    {
+      return qIsNull(value);
+    }
+
     /// Rounds the given number to nearest integer
     inline int Round(float x) { return x > 0.0f ? (int) (x + 0.5f) : (int) (x - 0.5f); }
     /// Rounds the given number to nearest integer
@@ -257,7 +269,7 @@ namespace Nimble {
     template<class T>
     T smoothstep(const T & a, const T & b, float t)
     {
-      t = Clamp((t - a) / (b - a), 0.f, 1.f);
+      t = Clamp((t - a) / (b - a), T(0), T(1));
 
       return t * t * t * (t * (t * T(6) - T(15)) + T(10));
     }

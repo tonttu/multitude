@@ -13,7 +13,7 @@
 namespace Valuable
 {
   AttributeAlias::AttributeAlias(Node * host, const QByteArray & name, Attribute * attribute)
-    : Attribute(host, name, false)
+    : Attribute(host, name)
     , m_attribute(nullptr)
     , m_eventDelete(0)
     , m_eventChange(0)

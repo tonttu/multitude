@@ -35,7 +35,7 @@ namespace Valuable
 
     AttributeT();
     AttributeT(Node * host, const QByteArray & name,
-               const StringMap & v = StringMap(), bool transit = false);
+               const StringMap & v = StringMap());
 
     /// Returns the value as string
     virtual QString asString(bool * const ok, Layer layer) const OVERRIDE;

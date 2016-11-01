@@ -99,8 +99,6 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) = 0;
 
-    LUMINOUS_API virtual unsigned long availableGPUMemory(bool* ok=nullptr) const = 0;
-    LUMINOUS_API virtual unsigned long maxGPUMemory() const = 0;
     LUMINOUS_API virtual int64_t uploadLimit() const = 0;
     LUMINOUS_API virtual int64_t uploadMargin() const = 0;
     LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) = 0;
@@ -112,7 +110,7 @@ namespace Luminous
     LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 
     // Driver factory
-    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex);
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex, OpenGLAPI& opengl);
 
     LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
     LUMINOUS_API virtual unsigned int gpuId() const = 0;

@@ -57,8 +57,8 @@ namespace Luminous
   };
 
 
-  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name, bool transit)
-    : Valuable::Node(parent, name, transit),
+  ColorCorrection::ColorCorrection(Node * parent, const QByteArray & name)
+    : Valuable::Node(parent, name),
       m_d(new D(this))
   {
     eventAddOut("changed");
@@ -322,6 +322,15 @@ namespace Luminous
     for (int c = 0; c < 3; ++c)
       m_d->m_splines[c]->fixEdges();
     return b;
+  }
+
+  bool ColorCorrection::readElement(const Valuable::ArchiveElement &element)
+  {
+    // No warnings for obsolete attributes
+    QByteArray name = element.name().toUtf8();
+    if(name == "red" || name == "green" || name == "blue")
+      return true;
+    return false;
   }
 
 //  bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)

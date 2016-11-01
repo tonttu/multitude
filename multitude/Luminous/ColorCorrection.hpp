@@ -30,7 +30,7 @@ namespace Luminous
   class LUMINOUS_API ColorCorrection : public Valuable::Node
   {
   public:
-    ColorCorrection(Node * parent = 0, const QByteArray &name = "", bool transit = false);
+    ColorCorrection(Node * parent = 0, const QByteArray &name = "");
     virtual ~ColorCorrection();
 
     int nearestControlPoint(float x, int channel, bool modifiers, Nimble::Vector2f & controlPointOut) const;
@@ -72,7 +72,7 @@ namespace Luminous
     /// color-correction.xml (see PictureModule::save())
 //    virtual Valuable::ArchiveElement serialize(Valuable::Archive & archive) const;
     virtual bool deserialize(const Valuable::ArchiveElement & element);
-//    virtual bool readElement(const Valuable::ArchiveElement &);
+    virtual bool readElement(const Valuable::ArchiveElement & element);
 
     const RGBCube & asRGBCube() const;
 

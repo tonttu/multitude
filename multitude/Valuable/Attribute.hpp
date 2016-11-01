@@ -188,7 +188,7 @@ namespace Valuable
     is related to future uses, and can be largely ignored at the
     moment.
     */
-    Attribute(Node * host, const QByteArray & name, bool transit = false);
+    Attribute(Node * host, const QByteArray & name);
     virtual ~Attribute();
 
     /// Returns the name of the object.
@@ -416,7 +416,6 @@ namespace Valuable
     Node * m_host;
     Attribute * m_ownerShorthand;
     QByteArray m_name;
-    bool m_transit;
     std::function<void(Attribute*,float)> m_onAnimation;
 
     struct AttributeListener
@@ -455,8 +454,8 @@ namespace Valuable
     /// @param name name of the value
     /// @param v the default value of the object
     /// @param transit ignored
-    AttributeBaseT(Node * host, const QByteArray & name, const T & v = T(), bool transit = false)
-      : Attribute(host, name, transit),
+    AttributeBaseT(Node * host, const QByteArray & name, const T & v = T())
+      : Attribute(host, name),
       m_transition(nullptr),
       m_currentValue(v),
       m_currentLayer(DEFAULT),

@@ -429,6 +429,24 @@ namespace Radiant
     return filename;
   }
 
+  QString FileUtils::resolvePath(const QString & source)
+  {
+    int idx = source.indexOf(':');
+    if (idx < 0) {
+      return source;
+    }
+
+    const QString prefix = source.left(idx);
+    const QString name = source.mid(idx + 1);
+
+    auto lst = QDir::searchPaths(prefix);
+    if (lst.isEmpty()) {
+      return source;
+    }
+
+    return lst[0] + "/" + name;
+  }
+
   FILE * FileUtils::createFilePath(const QString & filePath)
   {
     if(filePath.isEmpty()) return 0;

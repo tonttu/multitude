@@ -1,4 +1,4 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 HEADERS += Archive.hpp \
     AttributeFrame.hpp \
@@ -72,7 +72,8 @@ SOURCES += State.cpp
 SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
 
-LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL $$LIB_FOLLY_FUTURES
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL
+LIBS += $$LIB_FOLLY_FUTURES
 
 DEFINES += VALUABLE_EXPORT
 

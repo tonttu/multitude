@@ -15,12 +15,14 @@
 
 #include <QMap>
 
+#include <cassert>
+
 namespace Luminous
 {
 
   void glErrorToString(const QString & msg, int line)
   {
-    static QMap<GLenum, QString> errors;
+    static QMap<GLuint, QString> errors;
 
     MULTI_ONCE {
 
@@ -36,8 +38,11 @@ namespace Luminous
 
     }
 
+    OpenGLAPI* opengl = QOpenGLContext::currentContext()->versionFunctions<Luminous::OpenGLAPI>();
+    assert(opengl);
+
     GLenum err, err2 = GL_NO_ERROR;
-    while((err = glGetError()) != GL_NO_ERROR) {
+    while((err = opengl->glGetError()) != GL_NO_ERROR) {
       // If glGetError ever returns the same error twice, it's broken somehow.
       // This happens when called without GL context etc.
       if (err == err2) {

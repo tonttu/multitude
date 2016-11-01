@@ -41,8 +41,13 @@ namespace Luminous
 
   void Window::setEventHook(WindowEventHook* hook)
   {
+    if(m_eventHook)
+      m_eventHook->setWindow(nullptr);
+
     m_eventHook = hook;
-    m_eventHook->setWindow(this);
+
+    if(m_eventHook)
+      m_eventHook->setWindow(this);
   }
 
   WindowEventHook*Window::eventHook() const

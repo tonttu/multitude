@@ -1,8 +1,9 @@
-include(../multitude.pri)
+include(../../cornerstone.pri)
 
 HEADERS += \
     TaskScheduler.hpp \
-    Export.hpp
+    Export.hpp \
+    TaskWrapper.hpp
 
 SOURCES += \
     TaskScheduler.cpp

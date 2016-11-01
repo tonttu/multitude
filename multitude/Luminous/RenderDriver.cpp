@@ -16,10 +16,10 @@
 namespace Luminous
 {
   /// Select the correct renderdriver for this particular platform
-  std::shared_ptr<RenderDriver> RenderDriver::createInstance(unsigned int threadIndex)
+  std::shared_ptr<RenderDriver> RenderDriver::createInstance(unsigned int threadIndex, OpenGLAPI& opengl)
   {
 #if defined (RADIANT_WINDOWS) || defined (RADIANT_LINUX) || defined (RADIANT_OSX)
-    return std::make_shared<RenderDriverGL>(threadIndex);
+    return std::make_shared<RenderDriverGL>(threadIndex, opengl);
 #else
 #   error "createRenderDriver: Unsupported platform"
 #endif

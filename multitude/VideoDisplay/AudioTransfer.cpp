@@ -16,6 +16,8 @@
 
 namespace
 {
+  static const int s_sampleRate = 44100;
+
   void zero(float ** dest, int channels, int frames, int offset)
   {
     assert(frames >= 0);
@@ -116,8 +118,20 @@ namespace VideoDisplay
     bool m_decodingFinished;
     /*long samplesProcessed;*/
 
+    // Should we try to minimize the latency by dropping samples. This should
+    // only be used with streaming sources
+    bool m_minimizeLatency = false;
+
+    // Maximum latency (in frames), when m_minimizeLatency is enabled
+    int m_maxLatency = 0.020 * s_sampleRate;
+
+    // Measured minimum latency == extra buffer size
+    int m_minLatency = 0;
+    // How many frames we have gathered latency information
+    int m_latencyFrames = 0;
+
     DecodedAudioBuffer * getReadyBuffer();
-    void bufferConsumed(int samples);
+    void bufferConsumed(int samples, bool buffer);
   };
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
@@ -131,18 +145,22 @@ namespace VideoDisplay
         continue;
       }
       /// @todo shouldn't be hard-coded
-      if(m_seeking && m_samplesInGeneration > 44100.0/24.0)
+      if(m_seeking && m_samplesInGeneration > s_sampleRate/24.0)
         return nullptr;
       return buffer;
     }
     return nullptr;
   }
 
-  void AudioTransfer::D::bufferConsumed(int samples)
+  void AudioTransfer::D::bufferConsumed(int samples, bool buffer)
   {
-    m_readyBuffers.deref();
-    m_samplesInBuffers.fetchAndAddRelaxed(-samples);
-    ++m_buffersReader;
+    if (buffer) {
+      m_readyBuffers.deref();
+      m_samplesInBuffers.fetchAndAddRelaxed(-samples);
+      ++m_buffersReader;
+    } else {
+      m_samplesInBuffers.fetchAndAddRelaxed(-samples);
+    }
   }
 
   AudioTransfer::AudioTransfer(AVDecoder * avff, int channels)
@@ -172,6 +190,45 @@ namespace VideoDisplay
     if (!m_d->m_enabled) {
       zero(out, m_d->m_channels, n, 0);
       return;
+    }
+
+    if (m_d->m_minimizeLatency) {
+      const int latencyCheckSecs = 3;
+
+      if (m_d->m_latencyFrames == 0) {
+        m_d->m_minLatency = m_d->m_samplesInBuffers.load();
+        m_d->m_latencyFrames = n;
+      } else {
+        m_d->m_minLatency = std::min(m_d->m_samplesInBuffers.load(), m_d->m_minLatency);
+        m_d->m_latencyFrames += n;
+      }
+
+      if (m_d->m_latencyFrames >= s_sampleRate * latencyCheckSecs) {
+        m_d->m_latencyFrames = 0;
+
+        if (m_d->m_minLatency > m_d->m_maxLatency) {
+          // Drop frames to reduce latency
+          int framesToDrop = m_d->m_minLatency - m_d->m_maxLatency;
+
+          while (framesToDrop > 0) {
+            if (DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer()) {
+              const int offset = decodedBuffer->offset();
+              const int samples = std::min<int>(framesToDrop, decodedBuffer->samples() - offset);
+
+              framesToDrop -= samples;
+
+              if (offset + samples == decodedBuffer->samples()) {
+                m_d->bufferConsumed(samples, true);
+              } else {
+                m_d->bufferConsumed(samples, false);
+                decodedBuffer->setOffset(offset + samples);
+              }
+            } else {
+              break;
+            }
+          }
+        }
+      }
     }
 
     /**
@@ -207,10 +264,10 @@ namespace VideoDisplay
 
         // Presentation time of the decoded audio buffer, at the time
         // when currently processed audio will be written to audio hardware
-        const double pts = ts.pts() + offset / 44100.0;
+        const double pts = ts.pts() + offset / s_sampleRate;
 
         m_d->m_pts = ts;
-        m_d->m_pts.setPts(pts + samples / 44100.0);
+        m_d->m_pts.setPts(pts + samples / s_sampleRate);
 
         if(first) {
           // We can convert Resonant times to pts with this offset
@@ -240,10 +297,12 @@ namespace VideoDisplay
         processed += samples;
         remaining -= samples;
 
-        if(offset + samples == decodedBuffer->samples())
-          m_d->bufferConsumed(offset + samples);
-        else
+        if(offset + samples == decodedBuffer->samples()) {
+          m_d->bufferConsumed(samples, true);
+        } else {
+          m_d->bufferConsumed(samples, false);
           decodedBuffer->setOffset(offset + samples);
+        }
       }
     }
   }
@@ -262,7 +321,7 @@ namespace VideoDisplay
   float AudioTransfer::bufferStateSeconds() const
   {
     /// @todo shouldn't be hard-coded
-    return m_d->m_samplesInBuffers.load() / 44100.0f;
+    return m_d->m_samplesInBuffers.load() / float(s_sampleRate);
   }
 
   void AudioTransfer::shutdown()
@@ -290,8 +349,8 @@ namespace VideoDisplay
 
   void AudioTransfer::putReadyBuffer(int samples)
   {
-    m_d->m_samplesInBuffers.fetchAndAddRelaxed(samples);
     m_d->m_readyBuffers.ref();
+    m_d->m_samplesInBuffers.fetchAndAddRelaxed(samples);
   }
 
   void AudioTransfer::setPlayMode(AVDecoder::PlayMode playMode)
@@ -306,9 +365,11 @@ namespace VideoDisplay
 
   void AudioTransfer::setSeekGeneration(int seekGeneration)
   {
-    if(m_d->m_seekGeneration != seekGeneration)
+    if (m_d->m_seekGeneration != seekGeneration) {
       m_d->m_samplesInGeneration = 0;
-    m_d->m_seekGeneration = seekGeneration;
+      m_d->m_seekGeneration = seekGeneration;
+      m_d->m_latencyFrames = 0;
+    }
   }
 
   float AudioTransfer::gain() const
@@ -339,6 +400,16 @@ namespace VideoDisplay
   bool AudioTransfer::isDecodingFinished() const
   {
     return m_d->m_decodingFinished;
+  }
+
+  void AudioTransfer::setMinimizeLatency(bool minimize)
+  {
+    m_d->m_minimizeLatency = minimize;
+  }
+
+  bool AudioTransfer::minimizeLatency() const
+  {
+    return m_d->m_minimizeLatency;
   }
 
   uint64_t AudioTransfer::bufferUnderrun()

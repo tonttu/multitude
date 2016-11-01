@@ -22,7 +22,7 @@ namespace Valuable {
   class VALUABLE_API AttributeSpline : public Attribute
   {
   public:
-    AttributeSpline(Valuable::Node* host=nullptr, const QByteArray& name="", bool transit = false);
+    AttributeSpline(Valuable::Node* host=nullptr, const QByteArray& name="");
 
     void clear();
     int insert(float x, float y);

@@ -207,7 +207,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-#if defined (RADIANT_GNUC)
+#if defined (RADIANT_GNUC) || defined (RADIANT_CLANG)
 #  define PUSH_IGNORE_DEPRECATION_WARNINGS _Pragma ("GCC diagnostic push") \
   _Pragma ("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
 #  define POP_IGNORE_DEPRECATION_WARNINGS _Pragma ("GCC diagnostic pop")

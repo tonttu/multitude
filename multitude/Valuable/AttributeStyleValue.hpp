@@ -25,8 +25,8 @@ namespace Valuable
 
     AttributeT() {}
     AttributeT(Node * host, const QByteArray & name,
-                        const StyleValue & v = StyleValue(), bool transit = false)
-      : AttributeBaseT<StyleValue>(host, name, v, transit)
+                        const StyleValue & v = StyleValue())
+      : AttributeBaseT<StyleValue>(host, name, v)
     {}
 
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE

@@ -32,30 +32,12 @@
 
 #include <QString>
 
-#include <glbinding/ContextInfo.h>
-#include <glbinding/Binding.h>
-
 namespace Luminous
 {
   Radiant::Mutex s_glVersionMutex;
   OpenGLVersion s_glVersion;
 
-  bool isSampleShadingSupported()
-  {
-#if defined(RADIANT_OSX_YOSEMITE) || defined(RADIANT_OSX_EL_CAPITAN)
-    return true;
-#elif defined(RADIANT_OSX_MOUNTAIN_LION)
-    return false;
-#else
-    static bool s_supported = glbinding::ContextInfo::extensions().count(GLextension::GL_ARB_sample_shading) > 0;
-    return s_supported;
-#endif
-  }
-
   static bool s_luminousInitialized = false;
-  static Radiant::Mutex s_glbindingMutex;
-  static Radiant::Condition s_glbindingBarrier;
-  static int s_glbindingWaitingThreadCount = -1;
 
   void initLuminous()
   {
@@ -66,72 +48,15 @@ namespace Luminous
     s_luminousInitialized = true;
   }
 
-  bool initOpenGL(int concurrentThreadCount)
-  {
-    // glbinding initialization is not thread-safe, and it's also not safe to
-    // use the newly initialized OpenGL context before all threads have
-    // finished initialization. Use mutex and barrier for initialization. This
-    // needs to be called from all threads using OpenGL.
-    {
-      Radiant::Guard g(s_glbindingMutex);
-      if (concurrentThreadCount > 0) {
-        if (s_glbindingWaitingThreadCount == -1) {
-          // we are the first ones here, initialize the barrier
-          s_glbindingWaitingThreadCount = concurrentThreadCount;
-        }
-      }
-
-      glbinding::Binding::initialize();
-
-      if (concurrentThreadCount > 0) {
-        if (--s_glbindingWaitingThreadCount == 0) {
-          s_glbindingBarrier.wakeAll();
-        }
-        while (s_glbindingWaitingThreadCount > 0) {
-          s_glbindingBarrier.wait(s_glbindingMutex);
-        }
-      }
-    }
-
-    // Check for DXT support
-    bool dxtSupport = isOpenGLExtensionSupported(GLextension::GL_EXT_texture_compression_s3tc);
-    Radiant::info("Hardware DXT texture compression support: %s", dxtSupport ? "yes" : "no");
-
-
-    if (!isOpenGLExtensionSupported(GLextension::GL_ARB_sample_shading)) {
-      Radiant::warning("OpenGL 4.0 or GL_ARB_sample_shading not supported by this computer, "
-                       "some multi-sampling features will be disabled.");
-      // This is only a warning, no need to set s_ok to false
-    }
-
-    const char * glvendor = (const char *) glGetString(GL_VENDOR);
-    const char * glver = (const char *) glGetString(GL_VERSION);
-    const char * glsl = (char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-    const char * renderer = (const char *) glGetString(GL_RENDERER);
-
-        Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
-
-    if (glsl) {
-      Radiant::info("GLSL: %s", glsl);
-    } else {
-      Radiant::error("GLSL not supported");
-      return false;
-    }
-
-    {
-      Radiant::Guard g(s_glVersionMutex);
-      s_glVersion.vendor = glvendor ? QByteArray(glvendor) : QByteArray();
-      s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
-      s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
-      s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
-    }
-
-    return true;
-  }
-
   bool isLuminousInitialized()
   {
     return s_luminousInitialized;
+  }
+
+  OpenGLVersion glVersion()
+  {
+    Radiant::Guard g(s_glVersionMutex);
+    return s_glVersion;
   }
 
   void initDefaultImageCodecs()
@@ -180,15 +105,30 @@ namespace Luminous
     } // MULTI_ONCE
   }
 
-  bool isOpenGLExtensionSupported(GLextension e)
+  bool initOpenGL(OpenGLAPI& opengl)
   {
-    return glbinding::ContextInfo::extensions().count(e) > 0;
+    const char * glvendor = (const char *) opengl.glGetString(GL_VENDOR);
+    const char * glver = (const char *) opengl.glGetString(GL_VERSION);
+    const char * glsl = (char *)opengl.glGetString(GL_SHADING_LANGUAGE_VERSION);
+    const char * renderer = (const char *) opengl.glGetString(GL_RENDERER);
+
+    Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
+
+    // Store the OpenGL information so it can be included in breakpad reports
+    {
+      Radiant::Guard g(s_glVersionMutex);
+      s_glVersion.vendor = glvendor ? QByteArray(glvendor) : QByteArray();
+      s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
+      s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
+      s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
+    }
+
+    return true;
   }
 
-  OpenGLVersion glVersion()
+  std::pair<int, int> requestedOpenGLVersion()
   {
-    Radiant::Guard g(s_glVersionMutex);
-    return s_glVersion;
+    return std::make_pair(4, 1);
   }
 
 }

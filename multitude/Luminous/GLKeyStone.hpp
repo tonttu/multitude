@@ -112,10 +112,6 @@ namespace Luminous {
     @return projected vector*/
     static Nimble::Vector4 projectCorrected(const Nimble::Matrix4 & m,
                         Nimble::Vector2 v);
-    /// Applies the keystone matrix to the current OpenGL context
-    /** This method is typically used as the first step in rendering,
-    before drawing anything on the screen. */
-    void applyGlState() const;
 
     /// Cleans up the exterior after the keystone operations have been carried out.
     void cleanExterior() const;

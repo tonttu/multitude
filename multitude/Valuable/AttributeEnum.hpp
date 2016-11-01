@@ -106,8 +106,8 @@ namespace Valuable
     using Base::value;
 
     AttributeT(Node * host, const QByteArray & name, const EnumNames * names,
-                  const T & v, bool transit = false)
-      : Base(host, name, v, transit),
+                  const T & v)
+      : Base(host, name, v),
         AttributeEnum()
     {
       for (const EnumNames * it = names; it && it->name; ++it) {

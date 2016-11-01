@@ -706,6 +706,11 @@ namespace VideoDisplay
     ///             can be used as well. Default value is 1.
     virtual void setAudioGain(float gain) = 0;
 
+    /// Tries to minimize the audio playback latency by dropping extra samples
+    /// from the buffer. Use this only with streaming sources, otherwise
+    /// the audio playback will break.
+    virtual void setMinimizeAudioLatency(bool minimize) = 0;
+
     /// Creates a new decoder and loads it with given options
     /// @param options options given to load()
     /// @param backend use empty string for automatic backend

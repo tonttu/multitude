@@ -161,8 +161,6 @@ namespace Valuable
   VALUABLE_API std::map<QString, std::set<QString> > s_eventListenNames;
 #endif
 
-  static bool s_fatalOnEventMismatch = false;
-
   inline bool Node::ValuePass::operator == (const ValuePass & that) const
   {
     return (m_listener == that.m_listener) && (m_from == that.m_from) &&
@@ -182,8 +180,8 @@ namespace Valuable
     addAttribute("id", &m_id);
   }
 
-  Node::Node(Node * host, const QByteArray & name, bool transit)
-      : Attribute(host, name, transit),
+  Node::Node(Node * host, const QByteArray & name)
+      : Attribute(host, name),
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(nullptr, "id", generateId()),
@@ -502,29 +500,34 @@ namespace Valuable
     // Name
     m_name = element.name().toUtf8();
 
+    bool allChildrenOk = true;
     // Children
     for(ArchiveElement::Iterator it = element.children(); it; ++it) {
       ArchiveElement elem = *it;
 
       QByteArray name = elem.name().toUtf8();
 
-      Attribute * vo = attribute(name);
+      Attribute * a = attribute(name);
 
       // If the attribute exists, just deserialize it. Otherwise, pass the element
       // to readElement()
-      bool ok = false;
-      if(vo)
-        ok = vo->deserialize(elem);
-      if(!ok)
-        ok = readElement(elem);
-      if(!ok) {
-        Radiant::error(
-            "Node::deserialize # (%s) don't know how to handle element '%s'", type().data(), name.data());
-        return false;
+      if(a) {
+        if(!a->deserialize(elem)) {
+          Radiant::error("Node::deserialize # (%s) deserialize failed for element '%s'",
+                         typeid(*this).name(), name.data());
+          allChildrenOk = false;
+        }
+      }
+      else {
+        if(!readElement(elem)) {
+          Radiant::error("Node::deserialize # (%s) readElement failed for element '%s'",
+                         typeid(*this).name(), name.data());
+          allChildrenOk = false;
+        }
       }
     }
 
-    return true;
+    return allChildrenOk;
   }
 
   void Node::debugDump() {
@@ -571,12 +574,14 @@ namespace Valuable
         */
 
         const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
-        if(s_fatalOnEventMismatch)
+
+#ifdef RADIANT_DEBUG
           Radiant::fatal("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
                            klass.data(), obj->name().data(), obj, to.data());
-        else
+#else
           Radiant::warning("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
                            klass.data(), obj->name().data(), obj, to.data());
+#endif
       }
     }
 
@@ -725,11 +730,6 @@ namespace Valuable
 
   void Node::attributeRemoved(Attribute *)
   {
-  }
-
-  void Node::setFatalOnEventMismatch(bool haltApplication)
-  {
-    s_fatalOnEventMismatch = haltApplication;
   }
 
   void Node::eventAddSource(Valuable::Node * source)
@@ -1072,12 +1072,13 @@ namespace Valuable
         return converted;
       }
 
-      if(s_fatalOnEventMismatch)
+
+#ifdef RADIANT_DEBUG
         Radiant::fatal("Node::validateEvent # event '%s' does not exist for this class", from.data());
-      else
+#else
         Radiant::warning("Node::validateEvent # event '%s' does not exist for this class (%s)",
                          from.data(), Radiant::StringUtils::type(*this).data());
-
+#endif
     }
 
     return from;

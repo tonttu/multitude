@@ -19,8 +19,8 @@ namespace Valuable
   }
 
   AttributeStringList::AttributeT(Node * host, const QByteArray & name,
-                                  const QStringList & v, bool transit)
-    : Base(host, name, v, transit)
+                                  const QStringList & v)
+    : Base(host, name, v)
   {
   }
 

@@ -26,7 +26,7 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadIndex);
+    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, OpenGLAPI& opengl);
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil) OVERRIDE;
@@ -89,7 +89,7 @@ namespace Luminous
     LUMINOUS_API virtual void enableClipDistance(const QList<int> & planes) OVERRIDE;
     LUMINOUS_API virtual void disableClipDistance(const QList<int> & planes) OVERRIDE;
 
-    LUMINOUS_API virtual void setDrawBuffers(const std::vector<GLenum> & buffers) OVERRIDE;
+    LUMINOUS_API virtual void setDrawBuffers(const std::vector<GLenum>& buffers) OVERRIDE;
 
     LUMINOUS_API virtual void setViewport(const Nimble::Recti & rect) OVERRIDE;
     LUMINOUS_API virtual void setScissor(const Nimble::Recti & rect) OVERRIDE;
@@ -97,9 +97,6 @@ namespace Luminous
     LUMINOUS_API virtual void blit(const Nimble::Recti & src, const Nimble::Recti & dst,
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
-
-    LUMINOUS_API virtual unsigned long availableGPUMemory(bool *ok=nullptr) const OVERRIDE;
-    LUMINOUS_API virtual unsigned long maxGPUMemory() const OVERRIDE;
 
     LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
     LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
@@ -116,6 +113,8 @@ namespace Luminous
 
     /// Get the GPU id for the driver
     LUMINOUS_API unsigned int gpuId() const OVERRIDE;
+
+    LUMINOUS_API OpenGLAPI & opengl();
 
   private:
 

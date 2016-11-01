@@ -63,6 +63,8 @@ namespace Luminous
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
         , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
         , m_postProcessFilters(0)
+        , m_supports_GL_NVX_gpu_memory_info(false)
+        , m_supports_GL_ATI_meminfo(false)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -313,6 +315,9 @@ namespace Luminous
     std::stack<float, std::vector<float> > m_opacityStack;
 
     std::stack<const Luminous::FrameBuffer*, std::vector<const Luminous::FrameBuffer*> > m_frameBufferStack;
+
+    bool m_supports_GL_NVX_gpu_memory_info;
+    bool m_supports_GL_ATI_meminfo;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -322,6 +327,9 @@ namespace Luminous
       : Transformer(),
       m_data(new Internal(driver, win, gpuId))
   {
+    // This requires current OpenGL context
+    initializeOpenGLFunctions();
+
     resetTransform();
   }
 
@@ -463,7 +471,7 @@ namespace Luminous
     /// The maximum supported linewidth is often quite low so we'll generate a triangle strip instead
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
     auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, (linesegments + 1) * 2,
-      program, style.strokeColor(), style.strokeWidth(), style);
+      program, style.strokeColor(), 1.f, style);
 
     float step = (toRadians - fromRadians) / linesegments;
 
@@ -1013,11 +1021,22 @@ namespace Luminous
   //
   void RenderContext::drawLine(const Nimble::Vector2f & p1, const Nimble::Vector2f & p2, const Luminous::Style & style)
   {
-    assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
-    b.vertex[0].location = p1;
-    b.vertex[1].location = p2;
+    if (style.strokeWidth() > 1.f) {
+      // Since the line width is more than one pixel, need to draw the line as triangle strip
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+            Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, 4, program, style.strokeColor(), 1.f, style);
+      Nimble::Vector2f n = (p2 - p1).perpendicular().normalized(style.strokeWidth() / 2.f);
+      b.vertex[0].location = p1 + n;
+      b.vertex[1].location = p1 - n;
+      b.vertex[2].location = p2 + n;
+      b.vertex[3].location = p2 - n;
+    } else {
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+            Luminous::PRIMITIVE_LINE, 0, 2, program, style.strokeColor(), style.strokeWidth(), style);
+      b.vertex[0].location = p1;
+      b.vertex[1].location = p2;
+    }
   }
 
 
@@ -1299,6 +1318,62 @@ namespace Luminous
     return m_data->m_driverGL->handle(vao, program);
   }
 
+  bool RenderContext::isOpenGLExtensionSupported(const QByteArray& name)
+  {
+    // Query number of available extensions
+    GLint extensionCount = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionCount);
+
+    // Check if requested extension is available
+    for(int i = 0; i < extensionCount; ++i) {
+      const char* extensionName = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
+
+      if(name == extensionName)
+        return true;
+    }
+
+    return false;
+  }
+
+  GLint RenderContext::availableGPUMemory()
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    if(m_data->m_supports_GL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  GLint RenderContext::maximumGPUMemory()
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    /// @todo this just returns the currently available memory, not total
+    if(m_data->m_supports_GL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
   // 
@@ -1507,6 +1582,27 @@ namespace Luminous
     assert(m_data->m_clipStacks.size() == 1);
 
     popClipStack();
+
+    // Call glFinish if configured to minimize latency at the expense of
+    // throughput.
+    const bool useGLFinish = m_data->m_window->screen()->useGlFinish();
+    if(useGLFinish) {
+      // On AMD / Linux / Multi-GPU setup, this is absolute requirement.
+      // If we wouldn't call glFinish, it seems that calling swapBuffers
+      // just adds just added OpenGL commands to a queue, and actually
+      // executes those when there is enough stuff on the queue. With
+      // really small application, that might mean ~100 frame latency,
+      // on huge applications, maybe 1-2 frames.
+      // On NVIDIA / Linux this makes rendering slower, but also seems
+      // to remove ~1-2 frame latency. This was seen with
+      // Experimental/LatencyTest. It is unknown how this affects the
+      // speed and frame latency in other platforms / setups.
+      //
+      // This also makes Luminous::RenderContext::Internal::BUFFERSETS
+      // useless, there doesn't seem to be any difference in speed when
+      // BUFFERSETS is changed to something else than 1.
+      m_data->m_driverGL->opengl().glFinish();
+    }
   }
 
   void RenderContext::beginArea()
@@ -1644,6 +1740,9 @@ namespace Luminous
   {
     m_data->initialize();
 
+    m_data->m_supports_GL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
+    m_data->m_supports_GL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
+
     return true;
   }
 
@@ -1750,6 +1849,7 @@ namespace Luminous
   {
     std::vector<GLenum> buffers;
     buffers.push_back(GL_BACK);
+
     setDrawBuffers(buffers);
   }
 
@@ -1770,10 +1870,6 @@ namespace Luminous
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(RADIANT_OSX)
-# include <DummyOpenGL.hpp>
-#endif
-
   CustomOpenGL::CustomOpenGL(RenderContext & r, bool reset)
     : m_r(r)
   {
@@ -1781,14 +1877,14 @@ namespace Luminous
     r.flush();
 
     if(reset) {
-      glPointSize(1.f);
-      glLineWidth(1.f);
-      glUseProgram(0);
-      glDisable(GL_DEPTH_TEST);
-      glBindRenderbuffer(GL_RENDERBUFFER, 0);
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+      r.glPointSize(1.f);
+      r.glLineWidth(1.f);
+      r.glUseProgram(0);
+      r.glDisable(GL_DEPTH_TEST);
+      r.glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      r.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      r.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+      r.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }

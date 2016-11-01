@@ -177,12 +177,12 @@ namespace Radiant
 
     bool createHardLink(const QString & from, const QString & to)
     {
-      const char * fromPtr = from.toUtf8().data();
-      const char * toPtr = to.toUtf8().data();
-      int res = link(fromPtr, toPtr);
+      QByteArray fromCp = from.toUtf8();
+      QByteArray toCp = to.toUtf8();
+      int res = link(fromCp.data(), toCp.data());
       if(res < 0) {
         Radiant::error("PlatformUtils::createHardLink # Failed to create hard link from '%s' to '%s': %s",
-                       fromPtr, toPtr, strerror(errno));
+                       fromCp.data(), toCp.data(), strerror(errno));
       }
       return res == 0;
     }

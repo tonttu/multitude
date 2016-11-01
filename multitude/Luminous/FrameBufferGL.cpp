@@ -24,7 +24,7 @@ namespace Luminous
     : ResourceHandleGL(state)
     , m_generation(0)
   {
-    glGenRenderbuffers(1, &m_handle);
+    m_state.opengl().glGenRenderbuffers(1, &m_handle);
     GLERROR("RenderBufferGL::RenderBufferGL # glGenRenderbuffers");
   }
 
@@ -37,13 +37,13 @@ namespace Luminous
   RenderBufferGL::~RenderBufferGL()
   {
     if(m_handle)
-      glDeleteRenderbuffers(1, &m_handle);
+      m_state.opengl().glDeleteRenderbuffers(1, &m_handle);
     GLERROR("RenderBufferGL::~RenderBufferGL # glDeleteRenderbuffers");
   }
 
   void RenderBufferGL::bind()
   {
-    glBindRenderbuffer(GL_RENDERBUFFER, m_handle);
+    m_state.opengl().glBindRenderbuffer(GL_RENDERBUFFER, m_handle);
     GLERROR("RenderBufferGL::bind # glBindRenderbuffer");
 
     touch();
@@ -51,7 +51,7 @@ namespace Luminous
 
   void RenderBufferGL::unbind()
   {
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    m_state.opengl().glBindRenderbuffer(GL_RENDERBUFFER, 0);
     GLERROR("RenderBufferGL::unbind # glBindRenderbuffer");
   }
 
@@ -63,7 +63,7 @@ namespace Luminous
     if(m_generation != buffer.generation()) {
       m_generation = buffer.generation();
 
-      glRenderbufferStorageMultisample(GL_RENDERBUFFER, buffer.samples(), buffer.format(), buffer.size().width(), buffer.size().height());
+      m_state.opengl().glRenderbufferStorageMultisample(GL_RENDERBUFFER, buffer.samples(), buffer.format(), buffer.size().width(), buffer.size().height());
       GLERROR("RenderBufferGL::storageFormat # glRenderbufferStorageMultisample");
     }
   }
@@ -101,7 +101,7 @@ namespace Luminous
     , m_type(FrameBuffer::INVALID)
     , m_bind(FrameBuffer::BIND_DEFAULT)
   {
-    glGenFramebuffers(1, &m_handle);
+    m_state.opengl().glGenFramebuffers(1, &m_handle);
     GLERROR("FrameBufferGL::FrameBufferGL # glGenFramebuffers");
   }
 
@@ -114,7 +114,7 @@ namespace Luminous
 
   FrameBufferGL::~FrameBufferGL()
   {
-    glDeleteFramebuffers(1, &m_handle);
+    m_state.opengl().glDeleteFramebuffers(1, &m_handle);
     GLERROR("FrameBufferGL::~FrameBufferGL # glDeleteFramebuffers");
   }
 
@@ -125,7 +125,7 @@ namespace Luminous
     if(m_type == FrameBuffer::WINDOW)
       unbind();
     else if(m_state.setFramebuffer(bindTarget(m_bind), m_handle)) {
-      glBindFramebuffer(bindTarget(m_bind), m_handle);
+      m_state.opengl().glBindFramebuffer(bindTarget(m_bind), m_handle);
       GLERROR("FrameBufferGL::bind # glBindFramebuffer");
     }
 
@@ -135,13 +135,13 @@ namespace Luminous
   void FrameBufferGL::unbind()
   {
     if(m_state.setFramebuffer(bindTarget(m_bind), 0))
-      glBindFramebuffer(bindTarget(m_bind), 0);
+      m_state.opengl().glBindFramebuffer(bindTarget(m_bind), 0);
     GLERROR("FrameBufferGL::unbind # glBindFramebuffer");
   }
 
   void FrameBufferGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
   {
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
+    m_state.opengl().glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
     GLERROR("FrameBufferGL::attach # glFramebufferRenderbuffer");
   }
 
@@ -152,14 +152,14 @@ namespace Luminous
     texture.bind(0);
     GLERROR("FrameBufferGL::attach # mmoo");
 
-    glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
+    m_state.opengl().glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
     GLERROR("FrameBufferGL::attach # glFramebufferTexture");
   }
 
   void FrameBufferGL::detach(GLenum attachment)
   {
     /// @todo what about textures?
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
+    m_state.opengl().glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
     GLERROR("FrameBufferGL::deattach # glFramebufferRenderbuffer");
   }
 
@@ -167,7 +167,7 @@ namespace Luminous
   {
     // Only do actual checking in debug mode since this apparently slows things down quite a bit (10% in twinkle)
 #if RADIANT_DEBUG
-    static QMap<GLenum, QString> errors;
+    static QMap<GLuint, QString> errors;
 
     MULTI_ONCE {
 
@@ -182,7 +182,7 @@ namespace Luminous
 
     }
 
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GLenum status = m_state.opengl().glCheckFramebufferStatus(GL_FRAMEBUFFER);
     GLERROR("FrameBufferGL::check # glCheckFramebufferStatus");
 
     if(status == GL_FRAMEBUFFER_COMPLETE)
