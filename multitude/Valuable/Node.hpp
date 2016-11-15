@@ -29,6 +29,7 @@
 
 #include <map>
 #include <set>
+#include <atomic>
 
 #include <QString>
 #include <QSet>
@@ -381,9 +382,17 @@ namespace Valuable
     bool eventRemoveListener(long listenerId);
 
     /// Returns the number of event sources
-    unsigned eventSourceCount() const {  return (unsigned) m_eventSources.size(); }
+    unsigned eventSourceCount() const
+    {
+      Radiant::Guard g(m_eventsMutex);
+      return (unsigned) m_eventSources.size();
+    }
     /// Returns the number of event listeners
-    unsigned eventListenerCount() const { return (unsigned) m_elisteners.size(); }
+    unsigned eventListenerCount() const
+    {
+      Radiant::Guard g(m_eventsMutex);
+      return (unsigned) m_elisteners.size();
+    }
 
     /// Control whether events are passed
     void eventPassingEnable(bool enable) { m_eventsEnabled = enable; }
@@ -614,6 +623,11 @@ namespace Valuable
 
     typedef std::map<Valuable::Node *, int> Sources;
     Sources m_eventSources;
+
+    // Mutable so that we can access read-only properties of m_elisteners in const-functions
+    // Protects m_elisteners and m_eventSources
+    mutable Radiant::Mutex m_eventsMutex;
+
     bool m_eventsEnabled;
     bool m_isBeingDestroyed = false;
 
@@ -622,7 +636,7 @@ namespace Valuable
 
     Valuable::AttributeT<Uuid> m_id;
 
-    long m_listenersId;
+    std::atomic<long> m_listenersId;
 
     QSet<QByteArray> m_eventSendNames;
     QSet<QByteArray> m_eventListenNames;

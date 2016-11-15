@@ -216,7 +216,7 @@ namespace Valuable
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_attributeListening(std::move(node.m_attributeListening))
     , m_id(nullptr, "id", node.m_id)
-    , m_listenersId(std::move(node.m_listenersId))
+    , m_listenersId((long)node.m_listenersId)
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
   {
@@ -234,7 +234,7 @@ namespace Valuable
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_attributeListening = std::move(node.m_attributeListening);
-    m_listenersId = std::move(node.m_listenersId);
+    m_listenersId = (long)node.m_listenersId;
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
 
@@ -561,7 +561,6 @@ namespace Valuable
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
-    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -596,13 +595,16 @@ namespace Valuable
     if(defaultData)
       vp.m_defaultData = *defaultData;
 
-    if(std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
-       m_elisteners.end())
-      debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
-            from.data(), to.data(), obj);
-    else {
-      m_elisteners.push_back(vp);
-      obj->eventAddSource(this);
+    {
+      Radiant::Guard g(m_eventsMutex);
+      if (std::find(m_elisteners.begin(), m_elisteners.end(), vp) !=
+         m_elisteners.end()) {
+        debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
+                      from.data(), to.data(), obj);
+      } else {
+        m_elisteners.push_back(vp);
+        obj->eventAddSource(this);
+      }
     }
     return vp.m_listenerId;
   }
@@ -610,7 +612,6 @@ namespace Valuable
   long Node::eventAddListener(const QByteArray & fromIn, ListenerFuncVoid func,
                               ListenerType listenerType)
   {
-    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -621,14 +622,16 @@ namespace Valuable
     vp.m_from = from;
     vp.m_type = listenerType;
 
-    // No duplicate check, since there is no way to compare std::function objects
-    m_elisteners.push_back(vp);
+    {
+      Radiant::Guard g(m_eventsMutex);
+      // No duplicate check, since there is no way to compare std::function objects
+      m_elisteners.push_back(vp);
+    }
     return vp.m_listenerId;
   }
 
   long Node::eventAddListener(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncVoid func, Node::ListenerType listenerType)
   {
-    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -643,13 +646,15 @@ namespace Valuable
     if(dstNode)
       dstNode->eventAddSource(this);
 
-    m_elisteners.push_back(vp);
+    {
+      Radiant::Guard g(m_eventsMutex);
+      m_elisteners.push_back(vp);
+    }
     return vp.m_listenerId;
   }
 
   long Node::eventAddListenerBd(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncBd func, Node::ListenerType listenerType)
   {
-    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -664,14 +669,16 @@ namespace Valuable
     if(dstNode)
       dstNode->eventAddSource(this);
 
-    m_elisteners.push_back(vp);
+    {
+      Radiant::Guard g(m_eventsMutex);
+      m_elisteners.push_back(vp);
+    }
     return vp.m_listenerId;
   }
 
   long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
-    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -682,14 +689,17 @@ namespace Valuable
     vp.m_from = from;
     vp.m_type = listenerType;
 
-    // No duplicate check, since there is no way to compare std::function objects
-    m_elisteners.push_back(vp);
+    {
+      Radiant::Guard g(m_eventsMutex);
+      // No duplicate check, since there is no way to compare std::function objects
+      m_elisteners.push_back(vp);
+    }
     return vp.m_listenerId;
   }
 
   int Node::eventRemoveListener(const QByteArray & from, const QByteArray & to, Valuable::Node * obj)
   {
-    REQUIRE_THREAD(m_ownerThread);
+    Radiant::Guard g(m_eventsMutex);
     int removed = 0;
 
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
@@ -716,7 +726,7 @@ namespace Valuable
 
   bool Node::eventRemoveListener(long listenerId)
   {
-    REQUIRE_THREAD(m_ownerThread);
+    Radiant::Guard g(m_eventsMutex);
     for (auto it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
       if (it->m_listenerId == listenerId) {
         if (it->m_listener)
@@ -746,16 +756,25 @@ namespace Valuable
 
   void Node::eventAddSource(Valuable::Node * source)
   {
-    REQUIRE_THREAD(m_ownerThread);
+    // Do not keep references to self, they are not needed, since the event
+    // listeners are deleted anyway in internalRemoveListeners. This also
+    // removes deadlock when trying to lock m_eventsMutex twice.
+    if (source == this)
+      return;
+
     if (isBeingDestroyed())
       return;
 
+    Radiant::Guard g(m_eventsMutex);
     ++m_eventSources[source];
   }
 
   void Node::eventRemoveSource(Valuable::Node * source)
   {
-    REQUIRE_THREAD(m_ownerThread);
+    if (source == this)
+      return;
+
+    Radiant::Guard g(m_eventsMutex);
     Sources::iterator it = m_eventSources.find(source);
 
     if (it != m_eventSources.end() && --it->second <= 0)
@@ -966,7 +985,11 @@ namespace Valuable
       Radiant::error("Node::eventSend # Sending unknown event '%s'", id.data());
     }
 
-    auto listenerCopy = m_elisteners;
+    Listeners listenerCopy;
+    {
+      Radiant::Guard g(m_eventsMutex);
+      listenerCopy = m_elisteners;
+    }
 
     for(Listeners::iterator it = listenerCopy.begin(); it != listenerCopy.end();) {
       ValuePass & vp = *it;
@@ -1106,16 +1129,22 @@ namespace Valuable
 
   void Node::internalRemoveListeners()
   {
-    while(!m_eventSources.empty()) {
-      /* The eventRemoveListener call will also clear the relevant part from m_eventSources. */
-      m_eventSources.begin()->first->eventRemoveListener(this);
+    Sources sources;
+    {
+      Radiant::Guard g(m_eventsMutex);
+
+      for (auto listener: m_elisteners) {
+        if (listener.m_listener) {
+          listener.m_listener->eventRemoveSource(this);
+        }
+      }
+      sources = m_eventSources;
     }
-
-    for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
-
-      if(it->m_listener)
-        it->m_listener->eventRemoveSource(this);
-
+    for (auto p: sources) {
+      // The eventRemoveListener call will also clear the relevant part from
+      // m_eventSources. Can't hold m_eventsMutex while doing this, otherwise
+      // we will have deadlock in eventRemoveSource.
+      p.first->eventRemoveListener(this);
     }
 
     foreach(Attribute* vo, m_attributeListening) {
