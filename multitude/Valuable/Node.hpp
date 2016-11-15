@@ -595,7 +595,7 @@ namespace Valuable
 
     class ValuePass {
     public:
-      ValuePass(long id) : m_listener(0), m_func(), m_func2(), m_frame(-1), m_type(DIRECT), m_listenerId(id) {}
+      ValuePass(long id) : m_listener(0), m_func(), m_func2(), m_type(DIRECT), m_listenerId(id) {}
 
       inline bool operator == (const ValuePass & that) const;
 
@@ -605,7 +605,6 @@ namespace Valuable
       Radiant::BinaryData   m_defaultData;
       QByteArray m_from;
       QByteArray m_to;
-      int         m_frame;
       ListenerType m_type;
       long m_listenerId;
     };
@@ -622,9 +621,6 @@ namespace Valuable
     QSet<Attribute*> m_attributeListening;
 
     Valuable::AttributeT<Uuid> m_id;
-
-    // For invalidating the too new ValuePass objects
-    int m_frame;
 
     long m_listenersId;
 

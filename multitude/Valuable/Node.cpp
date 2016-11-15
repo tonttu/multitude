@@ -172,7 +172,6 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(nullptr, "id", generateId()),
-      m_frame(0),
       m_listenersId(0)
   {
     eventAddOut("attribute-added");
@@ -185,7 +184,6 @@ namespace Valuable
       m_sender(nullptr),
       m_eventsEnabled(true),
       m_id(nullptr, "id", generateId()),
-      m_frame(0),
       m_listenersId(0)
   {
     eventAddOut("attribute-added");
@@ -218,7 +216,6 @@ namespace Valuable
     , m_eventsEnabled(std::move(node.m_eventsEnabled))
     , m_attributeListening(std::move(node.m_attributeListening))
     , m_id(nullptr, "id", node.m_id)
-    , m_frame(std::move(node.m_frame))
     , m_listenersId(std::move(node.m_listenersId))
     , m_eventSendNames(std::move(node.m_eventSendNames))
     , m_eventListenNames(std::move(node.m_eventListenNames))
@@ -237,7 +234,6 @@ namespace Valuable
     m_eventSources = std::move(node.m_eventSources);
     m_eventsEnabled = std::move(node.m_eventsEnabled);
     m_attributeListening = std::move(node.m_attributeListening);
-    m_frame = std::move(node.m_frame);
     m_listenersId = std::move(node.m_listenersId);
     m_eventSendNames = std::move(node.m_eventSendNames);
     m_eventListenNames = std::move(node.m_eventListenNames);
@@ -575,7 +571,6 @@ namespace Valuable
     vp.m_listener = obj;
     vp.m_from = from;
     vp.m_to = to;
-    vp.m_frame = m_frame;
     vp.m_type = listenerType;
 
     if(!obj->m_eventListenNames.contains(to)) {
@@ -644,7 +639,6 @@ namespace Valuable
     vp.m_from = from;
     vp.m_type = listenerType;
     vp.m_listener = dstNode;
-    vp.m_frame = m_frame;
 
     if(dstNode)
       dstNode->eventAddSource(this);
@@ -666,7 +660,6 @@ namespace Valuable
     vp.m_from = from;
     vp.m_type = listenerType;
     vp.m_listener = dstNode;
-    vp.m_frame = m_frame;
 
     if(dstNode)
       dstNode->eventAddSource(this);
@@ -973,17 +966,12 @@ namespace Valuable
       Radiant::error("Node::eventSend # Sending unknown event '%s'", id.data());
     }
 
-    m_frame++;
-
     auto listenerCopy = m_elisteners;
 
     for(Listeners::iterator it = listenerCopy.begin(); it != listenerCopy.end();) {
       ValuePass & vp = *it;
 
-      if(vp.m_frame == m_frame) {
-        /* The listener was added during this function call. Lets not call it yet. */
-      }
-      else if(vp.m_from == id) {
+      if(vp.m_from == id) {
 
         Radiant::BinaryData & bdsend = vp.m_defaultData.total() ? vp.m_defaultData : bd;
 
