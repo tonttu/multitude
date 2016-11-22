@@ -34,6 +34,7 @@ namespace Luminous
     LUMINOUS_API SimpleTextLayout & operator=(SimpleTextLayout && that);
     LUMINOUS_API virtual ~SimpleTextLayout();
 
+    LUMINOUS_API QString text() const;
     LUMINOUS_API void setText(const QString & text);
 
     LUMINOUS_API QTextOption textOption() const;

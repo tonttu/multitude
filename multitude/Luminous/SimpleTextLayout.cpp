@@ -319,6 +319,11 @@ namespace Luminous
   {
   }
 
+  QString SimpleTextLayout::text() const
+  {
+    return m_d->m_layout.text();
+  }
+
   void SimpleTextLayout::setText(const QString & text)
   {
     QString tmp = text;
