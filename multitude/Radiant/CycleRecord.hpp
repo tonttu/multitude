@@ -12,8 +12,10 @@
 #define RADIANT_CYCLE_RECORD_HPP
 
 #include "Export.hpp"
+#include <cstddef>
 
-#ifdef RADIANT_IOS
+// FIXME: Implement on arm64
+#if defined(RADIANT_IOS) || defined(RADIANT_ARM64)
 // Dummy implementation
 typedef size_t ticks;
 inline ticks getticks() { return 0; }

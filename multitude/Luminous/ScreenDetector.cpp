@@ -17,7 +17,7 @@
 
 #include "ScreenDetectorQt.hpp"
 
-#ifndef RADIANT_OSX
+#if !defined(RADIANT_OSX) && !defined(RADIANT_ARM64)
 # include "ScreenDetectorAMD.hpp"
 # include "ScreenDetectorNV.hpp"
 #endif
@@ -100,7 +100,8 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
   {
     m_results.clear();
 
-#ifdef RADIANT_LINUX
+    // FIXME: Implement on arm64
+#if defined(RADIANT_LINUX) && !defined(RADIANT_ARM64)
     const int screens = XScreenCount(X11Display());
     for(int screen = 0; screen < screens; ++screen) {
       if(ScreenDetectorNV::detect(screen, m_results)) continue;

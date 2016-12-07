@@ -18,7 +18,9 @@
 //////////////////////////////////////////////////////////////////////////
 // Discover the architecture
 //////////////////////////////////////////////////////////////////////////
-#if defined(__amd64__) || defined(_M_X64)
+#if defined (__aarch64__)
+#   define RADIANT_ARM64 1
+#elif defined(__amd64__) || defined(_M_X64)
 #   define RADIANT_AMD64 1
 #elif defined (__i386__) || defined (_M_IX86)
 #   define RADIANT_X86 1
