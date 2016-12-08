@@ -208,6 +208,10 @@ win64_cef_dlls.files = $$CORNERSTONE_DEPS_PATH/cef/Release/*
 win64_cef_resources.path = /Resources
 win64_cef_resources.files = $$CORNERSTONE_DEPS_PATH/cef/Resources/*
 
-INSTALLS += win64_cef_dlls win64_cef_resources
+# Crashpad
+crashpad_files.path = /bin
+crashpad_files.files = $$CORNERSTONE_DEPS_PATH/crashpad/bin/*
+
+INSTALLS += win64_cef_dlls win64_cef_resources crashpad_files
 
 message(Including 64-bit Windows Libraries)
