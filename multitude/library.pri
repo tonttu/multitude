@@ -48,8 +48,6 @@ win32 {
       # Set optimization level
       QMAKE_CFLAGS_DEBUG += -O2
       QMAKE_CXXFLAGS_DEBUG += -O2
-      QMAKE_CXXFLAGS_DEBUG=$$replace(QMAKE_CXXFLAGS_DEBUG,-Zi,)
-      QMAKE_LFLAGS_DEBUG=$$replace(QMAKE_LFLAGS_DEBUG,/DEBUG,)
     }
   }
 
