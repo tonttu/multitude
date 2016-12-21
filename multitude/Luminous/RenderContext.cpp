@@ -1731,7 +1731,7 @@ namespace Luminous
 
     // Push the original frame buffer
     {
-      Luminous::ScissorGuard scissorGuard(*this, viewport);
+      Luminous::FrameBufferGuard bufferGuard(*this, currentFrameBuffer());
       filterCtx->doFilter(*this);
     }
   }
