@@ -264,10 +264,10 @@ namespace VideoDisplay
 
         // Presentation time of the decoded audio buffer, at the time
         // when currently processed audio will be written to audio hardware
-        const double pts = ts.pts() + offset / s_sampleRate;
+        const double pts = ts.pts() + offset / double(s_sampleRate);
 
         m_d->m_pts = ts;
-        m_d->m_pts.setPts(pts + samples / s_sampleRate);
+        m_d->m_pts.setPts(pts + samples / double(s_sampleRate));
 
         if(first) {
           // We can convert Resonant times to pts with this offset
