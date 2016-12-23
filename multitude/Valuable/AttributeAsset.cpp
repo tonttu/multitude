@@ -14,28 +14,38 @@ namespace Valuable
 
     void ensureMonitoring();
 
+    void initWatcher();
+
     AttributeAsset& m_host;
-    Valuable::FileWatcher m_watcher;
-    bool m_monitorFile;
+    std::unique_ptr<Valuable::FileWatcher> m_watcher;
+    bool m_wantToMonitor;
   };
 
   // ------------------------------------------------------------------------
 
   AttributeAsset::D::D(AttributeAsset &host)
     : m_host(host),
-      m_monitorFile(false)
+      m_watcher(nullptr),
+      m_wantToMonitor(false)
   {
-    m_watcher.eventAddListener("file-created", [this] { m_host.emitChange(); });
-    m_watcher.eventAddListener("file-changed", [this] { m_host.emitChange(); });
-    m_watcher.eventAddListener("file-removed", [this] { m_host.emitChange(); });
-
     m_host.addListener([this] { checkFileMonitor(); });
+  }
+
+  void AttributeAsset::D::initWatcher()
+  {
+    assert(!m_watcher);
+
+    m_watcher.reset(new Valuable::FileWatcher());
+
+    m_watcher->eventAddListener("file-created", [this] { m_host.emitChange(); });
+    m_watcher->eventAddListener("file-changed", [this] { m_host.emitChange(); });
+    m_watcher->eventAddListener("file-removed", [this] { m_host.emitChange(); });
   }
 
   void AttributeAsset::D::checkFileMonitor()
   {
-    if(!m_monitorFile) {
-      m_watcher.clear();
+    if(!m_wantToMonitor) {
+      m_watcher.reset();
     } else {
       ensureMonitoring();
     }
@@ -47,13 +57,16 @@ namespace Valuable
     if(path.isEmpty())
       return;
 
-    QStringList files = m_watcher.files();
-    QFileInfo fi(path);
-
-    bool isWatching = files.contains(fi.absoluteFilePath());
-    if(!isWatching) {
-      m_watcher.clear();
-      m_watcher.addPath(path);
+    if(!m_watcher) {
+      initWatcher();
+      m_watcher->addPath(path);
+    } else {
+      QStringList files = m_watcher->files();
+      QFileInfo fi(path);
+      if(!files.contains(fi.absoluteFilePath())) {
+        m_watcher->clear();
+        m_watcher->addPath(path);
+      }
     }
   }
 
@@ -76,12 +89,12 @@ namespace Valuable
 
   bool AttributeAsset::isMonitoringFile() const
   {
-    return m_d->m_monitorFile;
+    return m_d->m_wantToMonitor;
   }
 
   void AttributeAsset::setToMonitorFile(bool monitor)
   {
-    m_d->m_monitorFile = monitor;
+    m_d->m_wantToMonitor = monitor;
     m_d->checkFileMonitor();
   }
 

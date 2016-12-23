@@ -22,9 +22,10 @@ namespace Valuable
     bool operator!=(const QString& that) const;
 
     /// If set to true this will emit change events when the target file has changed.
-    /// Only works for files not directories
-    bool isMonitoringFile() const;
+    /// Only works for files not directories. Also will create the file watcher
+    /// in the thread that calls the function, so need to call this in main thread!
     void setToMonitorFile(bool monitor);
+    bool isMonitoringFile() const;
 
   private:
     class D;
