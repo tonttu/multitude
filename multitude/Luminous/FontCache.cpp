@@ -27,6 +27,8 @@
 #include <QSettings>
 #include <QThread>
 
+#include <cstdlib>
+
 namespace
 {
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
@@ -490,6 +492,9 @@ namespace Luminous
         settings.clear();
         settings.setValue("cache-version", version);
       }
+
+      // Ensure correct deinitialization order
+      atexit(deinitialize);
     }
 
     /// QRawFont doesn't work as a key, since it doesn't have operator== that works as expected.
