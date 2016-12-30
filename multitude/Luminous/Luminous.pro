@@ -175,23 +175,27 @@ win32 {
   LIBS += -lUser32
 }
 
-# Platform specific: Apple OS X
-macx {
-} else {
+!macx:!arm64 {
   HEADERS += ScreenDetectorAMD.hpp
   HEADERS += ScreenDetectorNV.hpp
   SOURCES += ScreenDetectorAMD.cpp
   SOURCES += ScreenDetectorNV.cpp
 }
 
-# Platform specific: GNU Linux
 linux-* {
-  LIBS += -lXNVCtrl -lXrandr -lXext -lX11 -lXinerama
+  LIBS += -lX11
 
-  SOURCES += XRandR.cpp
-  SOURCES += Xinerama.cpp
+  arm64 {
+    message(No screen detectors on ARM64)
+  }
+  else {
+    LIBS += -lXNVCtrl -lXrandr -lXext -lXinerama
 
-  QT += x11extras
+    SOURCES += XRandR.cpp
+    SOURCES += Xinerama.cpp
+
+    QT += x11extras
+  }
 }
 
 enable-pdf {
