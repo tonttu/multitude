@@ -42,14 +42,8 @@ namespace
 
   const int s_distanceFieldPixelSize = 128;
   const float s_padding = 60;
-  // Glyphs are always generated online for MultiTaction devices,
-  // so use smaller sizes to make it faster
-#ifdef MULTITACTION_FIRMWARE
-  const int s_maxHiresSize = 384;
-#else
-  const int s_maxHiresSize = 3072;
-#endif
-
+  int s_maxHiresSize = 3072;
+  bool s_persistGlyphs = true;
 
   // space character etc
   static Luminous::FontCache::Glyph s_emptyGlyph;
@@ -363,11 +357,9 @@ namespace Luminous
     glyph->setLocation(Nimble::Vector2f(br.left() - s_padding,
                                         br.top() - s_padding));
 
-    // Don't persist glyphs on MultiTaction devices since filesystem might be read-only.
-    // Also don't want to pollute the global cache with lower quality glyphs.
-#ifdef MULTITACTION_FIRMWARE
-    return glyph;
-#endif
+    if(!s_persistGlyphs)
+      return glyph;
+
     const QString file = cacheFileName(m_cache.m_rawFontKey, glyphIndex);
 
     if (saveImage(sdf, file)) {
@@ -539,6 +531,16 @@ namespace Luminous
   Radiant::Mutex & FontCache::atlasMutex()
   {
     return s_atlasMutex;
+  }
+
+  void FontCache::setMaximumGlyphHighResSize(int size)
+  {
+    s_maxHiresSize = size;
+  }
+
+  void FontCache::setGlyphPersistenceEnabled(bool enabled)
+  {
+    s_persistGlyphs = enabled;
   }
 
   FontCache::Glyph * FontCache::glyph(const QRawFont & rawFont, quint32 glyph)

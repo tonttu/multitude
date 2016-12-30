@@ -19,6 +19,13 @@ class QRawFont;
 
 namespace Luminous
 {
+  struct FontCacheSettings
+  {
+    bool enabled = true;
+    int padding = 60;
+    int maxHiresSize = 3072;
+  };
+
   class FontCache
   {
   public:
@@ -64,6 +71,19 @@ namespace Luminous
     LUMINOUS_API static TextureAtlasGroup<Glyph> & atlas();
     LUMINOUS_API static Radiant::Mutex & atlasMutex();
 
+
+    /// Set maximum size for rendered glyph bitmaps which are used to generate
+    /// distance fields for actual rendering.
+    ///
+    /// Bigger values mean better quality and slower glyph generation. The
+    /// setting is only taken into account when generating new glyphs, so any
+    /// glyphs in the cache will not be regenerated.
+    ///
+    /// @param size maximum size, sensible range is around 300 - 5000
+    LUMINOUS_API static void setMaximumGlyphHighResSize(int size);
+
+    /// @param enabled should generated glyphs be cached to the filesystem
+    LUMINOUS_API static void setGlyphPersistenceEnabled(bool enabled);
     /// @endcond
 
   private:

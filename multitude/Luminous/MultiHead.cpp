@@ -286,11 +286,7 @@ namespace Luminous
 
   namespace
   {
-#ifdef MULTITACTION_FIRMWARE
-    const int s_default_fsaa_samples = 0;
-#else
     const int s_default_fsaa_samples = 4;
-#endif
   }
   MultiHead::Window::Window(MultiHead * screen)
     : Node(0, "Window"),
