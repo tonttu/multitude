@@ -19,13 +19,6 @@ class QRawFont;
 
 namespace Luminous
 {
-  struct FontCacheSettings
-  {
-    bool enabled = true;
-    int padding = 60;
-    int maxHiresSize = 3072;
-  };
-
   class FontCache
   {
   public:
