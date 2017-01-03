@@ -26,6 +26,10 @@
 #include <Radiant/MemCheck.hpp>
 #include <Radiant/Flags.hpp>
 
+#ifdef ENABLE_THREAD_CHECKS
+#include <Radiant/Thread.hpp>
+#endif
+
 #include <Valuable/Archive.hpp>
 #include <Valuable/Export.hpp>
 #include <Valuable/Serializer.hpp>
@@ -359,6 +363,10 @@ namespace Valuable
     void setOwnerShorthand(Attribute * owner);
     Attribute * ownerShorthand() const;
 
+#ifdef ENABLE_THREAD_CHECKS
+    virtual void setOwnerThread(Radiant::Thread::id_t owner);
+#endif
+
 #ifdef MULTI_DOCUMENTER
     struct Doc
     {
@@ -441,6 +449,11 @@ namespace Valuable
     long m_listenersId;
 
     friend class Node;
+
+#ifdef ENABLE_THREAD_CHECKS
+  public:
+    Radiant::Thread::id_t m_ownerThread = nullptr;
+#endif
   };
 
   /// Every Attribute is some kind of AttributeT<T> object.
