@@ -86,7 +86,7 @@ INSTALLS += win64_libav_headers2
 win64_ghostscript.path = /bin
 win64_ghostscript.files = $$CORNERSTONE_DEPS_PATH/ghostscript/*
 
-!enable-taction:INSTALLS += win64_ghostscript
+INSTALLS += win64_ghostscript
 
 win64_node_dlls1.path = /bin
 win64_node_dlls1.files = $$CORNERSTONE_DEPS_PATH/node/bin/node.exe
@@ -130,35 +130,34 @@ win64_boost_headers1.files = $$CORNERSTONE_DEPS_PATH/boost_1_55_0/boost
 win64_boost_headers2.path = /src/multitude/Win64x/include
 win64_boost_headers2.files = $${win64_boost_headers1.files}
 
-!enable-taction {
-  win64_curl_dlls1.path = /bin
-  win64_curl_dlls1.files = $$CORNERSTONE_DEPS_PATH/curl/dlls/*
+win64_curl_dlls1.path = /bin
+win64_curl_dlls1.files = $$CORNERSTONE_DEPS_PATH/curl/dlls/*
 
-  win64_curl_dlls2.path = /src/multitude/Win64x/bin64
-  win64_curl_dlls2.files = $${win64_curl_dlls1.files}
+win64_curl_dlls2.path = /src/multitude/Win64x/bin64
+win64_curl_dlls2.files = $${win64_curl_dlls1.files}
 
-  win64_curl_libs1.path = /lib
-  win64_curl_libs1.files = $$CORNERSTONE_DEPS_PATH/curl/lib/*
+win64_curl_libs1.path = /lib
+win64_curl_libs1.files = $$CORNERSTONE_DEPS_PATH/curl/lib/*
 
-  win64_curl_libs2.path = /src/multitude/Win64x/lib64
-  win64_curl_libs2.files = $${win64_curl_libs1.files}
+win64_curl_libs2.path = /src/multitude/Win64x/lib64
+win64_curl_libs2.files = $${win64_curl_libs1.files}
 
-  win64_curl_headers1.path = /include
-  win64_curl_headers1.files = $$CORNERSTONE_DEPS_PATH/curl/include/*
+win64_curl_headers1.path = /include
+win64_curl_headers1.files = $$CORNERSTONE_DEPS_PATH/curl/include/*
 
-  win64_curl_headers2.path = /src/multitude/Win64x/include
-  win64_curl_headers2.files = $${win64_curl_headers1.files}
+win64_curl_headers2.path = /src/multitude/Win64x/include
+win64_curl_headers2.files = $${win64_curl_headers1.files}
 
-  INSTALLS += win64_node_dlls1
-  INSTALLS += win64_node_dlls2
-  INSTALLS += win64_node_libs1
-  INSTALLS += win64_node_libs2
-  INSTALLS += win64_node_headers1
-  INSTALLS += win64_node_headers2
-  INSTALLS += win64_ruby
-  INSTALLS += win64_clang_headers
-  INSTALLS += win64_clangxml
-}
+INSTALLS += win64_node_dlls1
+INSTALLS += win64_node_dlls2
+INSTALLS += win64_node_libs1
+INSTALLS += win64_node_libs2
+INSTALLS += win64_node_headers1
+INSTALLS += win64_node_headers2
+INSTALLS += win64_ruby
+INSTALLS += win64_clang_headers
+INSTALLS += win64_clangxml
+
 INSTALLS += win64_argyll
 INSTALLS += win64_runtime_dlls
 INSTALLS += win64_sdk_libs1
@@ -177,15 +176,9 @@ INSTALLS += win64_boost_headers1
 INSTALLS += win64_boost_headers2
 
 # Install Qt
-enable-taction {
-  qt_bin_files.path = /bin
-  qt_bin_files.files = $$files($$[QT_INSTALL_BINS]/*.dll)
-  qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*d4.dll)
-  qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*WebKit*.dll)
-} else {
-  qt_bin_files.path = /
-  qt_bin_files.files = $$[QT_INSTALL_BINS]
-}
+qt_bin_files.path = /
+qt_bin_files.files = $$[QT_INSTALL_BINS]
+
 qt_conf_files.path = /bin
 qt_conf_files.files = $$PWD/qt.conf
 
