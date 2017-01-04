@@ -383,8 +383,13 @@ namespace UnitTest
     }
 
     bool verbose = parser.isSet("v");
+
     if(!verbose)
       Radiant::setMinimumSeverityLevel(Radiant::SILENT);
+    else {
+      Radiant::setMinimumSeverityLevel(Radiant::DEBUG);
+      Radiant::enableVerboseOutput(true);
+    }
 
     const QString single = parser.value("single");
     const QString include = parser.value("match");
