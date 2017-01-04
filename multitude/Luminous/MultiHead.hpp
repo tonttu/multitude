@@ -14,7 +14,6 @@
 
 #include "Export.hpp"
 #include "GLKeyStone.hpp"
-#include "HardwareColorCorrection.hpp"
 #include "ColorCorrection.hpp"
 #include "RGBCube.hpp"
 
