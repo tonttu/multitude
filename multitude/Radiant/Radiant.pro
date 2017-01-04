@@ -1,6 +1,7 @@
 include(../../cornerstone.pri)
 
-HEADERS += TempFailureRetry.hpp
+HEADERS += TempFailureRetry.hpp \
+    ThreadChecks.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
@@ -85,7 +86,8 @@ HEADERS += DeviceMonitor.hpp
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
-    BGThreadExecutor.cpp
+    BGThreadExecutor.cpp \
+    ThreadChecks.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \
