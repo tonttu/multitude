@@ -303,7 +303,7 @@ namespace Valuable
   void Attribute::removeHost()
   {
     if(m_host) {
-      m_host->removeAttribute(this);
+      m_host->removeAttribute(this, false);
       m_host = 0;
       emitHostChange();
     }
