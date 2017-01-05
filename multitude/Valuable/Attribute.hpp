@@ -162,7 +162,8 @@ namespace Valuable
     enum ListenerRole {
       DELETE_ROLE = 1 << 0,
       CHANGE_ROLE = 1 << 1,
-      ALL_ROLES = (CHANGE_ROLE << 1) -1
+      HOST_CHANGE_ROLE = 1 << 2,
+      ALL_ROLES = (HOST_CHANGE_ROLE << 1) -1
     };
 
     Attribute();
@@ -410,6 +411,8 @@ namespace Valuable
 
     /// Invokes the change valueDeleted function of all listeners
     virtual void emitDelete();
+
+    void emitHostChange();
 
   private:
     // The object that holds this object

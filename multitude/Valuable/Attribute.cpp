@@ -277,11 +277,35 @@ namespace Valuable
     m_listeners.clear();
   }
 
+  void Attribute::emitHostChange()
+  {
+    // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
+    // We use foreach here because the callback functions might
+    // remove themselves from the listeners. Since foreach makes a
+    // copy of the containers this doesn't present a problem
+    foreach(const AttributeListener & l, m_listeners) {
+      if(l.role & HOST_CHANGE_ROLE) {
+        if(!l.func) {
+#ifdef CORNERSTONE_JS
+          /// @todo all of these v8 listeners should be implemented non-intrusive way,
+          ///       like with normal event listeners
+          v8::Locker lock;
+          v8::Context::Scope scope(s_defaultV8Context);
+          v8::HandleScope handle_scope;
+          /// @todo what is the correct receiver ("this" in the callback)?
+          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
+#endif
+        } else l.func();
+      }
+    }
+  }
+
   void Attribute::removeHost()
   {
     if(m_host) {
-      m_host->removeAttribute(this);
+      m_host->removeAttribute(this, false);
       m_host = 0;
+      emitHostChange();
     }
   }
 

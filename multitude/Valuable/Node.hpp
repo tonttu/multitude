@@ -127,7 +127,7 @@ namespace Valuable
     }
 
     /// Removes an Attribute from the list of attribute objects.
-    void removeAttribute(Attribute * const attribute);
+    void removeAttribute(Attribute * const attribute, bool emitChange = true);
 
     /// Clears all Attribute values of the given layer
     /// @param layer layer to clear
