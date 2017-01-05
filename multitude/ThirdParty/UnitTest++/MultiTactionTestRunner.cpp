@@ -28,6 +28,23 @@ namespace UnitTest
     static std::mutex s_argumentsMutex;
     static QStringList s_arguments;
 
+    void writeFailureXml(const QString & path, const UnitTest::Test * test, double time, const QString & message)
+    {
+      auto xmlContents = QString("<?xml version=\"1.0\"?>"
+        "<unittest-results tests=\"1\" failedtests=\"1\" failures=\"1\" time=\"%1\">\n"
+          "<test suite=\"%2\" name=\"%3\" time=\"%1\">"
+            "<failure message=\"%4\"/>"
+          "</test>"
+        "</unittest-results>").arg(time).arg(test->m_details.suiteName)
+          .arg(test->m_details.testName).arg(message);
+      QFile file(path);
+      if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream stream(&file);
+        stream << xmlContents;
+        file.close();
+      }
+    }
+
     int mergeXml(QDomDocument & doc, const QString & filename)
     {
       QFile file(filename);
@@ -112,31 +129,25 @@ namespace UnitTest
       printf("%2d/%2d: Running test %s/%s\n",
              index, count, test->m_details.suiteName, test->m_details.testName);
 
-      // If the test crashes, get an estimate of the time used with a timer
+      // If the test crashes or hangs, get an estimate of the time used with a timer
       Radiant::Timer timer;
 
       process.start(procName, newArgs, QProcess::ReadOnly);
       process.waitForStarted();
-      process.waitForFinished(15*60*1000);
+      bool finished = process.waitForFinished(15 * 60 * 1000);
       const double time = timer.time();
+      if (!finished) {
+        printf("Test %s/%s timed out. See %s for details.\n",
+               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+        writeFailureXml(xmlOutput, test, time, "timeout");
+        process.close();
+        return 1;
+      }
 
       if(process.exitStatus() == QProcess::CrashExit) {
-        printf("Test %s crashed. See %s for details.\n",
-               test->m_details.testName, xmlOutput.toUtf8().data());
-        /// xmlOutput will be empty. Just generate fake contents here instead.
-        auto xmlContents = QString("<?xml version=\"1.0\"?>"
-          "<unittest-results tests=\"1\" failedtests=\"1\" failures=\"1\" time=\"%1\">\n"
-            "<test suite=\"%2\" name=\"%3\" time=\"%1\">"
-               "<failure message=\"crashed\"/>"
-            "</test>"
-          "</unittest-results>").arg(time).arg(test->m_details.suiteName)
-            .arg(test->m_details.testName);
-        QFile file(xmlOutput);
-        if(file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-          QTextStream stream(&file);
-          stream << xmlContents;
-          file.close();
-        }
+        printf("Test %s/%s crashed. See %s for details.\n",
+               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+        writeFailureXml(xmlOutput, test, time, "crashed");
         return 1;
       }
 
@@ -145,8 +156,8 @@ namespace UnitTest
 
       int procExitCode = process.exitCode();
       if(procExitCode) {
-        printf("Test %s failed. See %s for details.\n",
-               test->m_details.testName, xmlOutput.toUtf8().data());
+        printf("Test %s/%s failed. See %s for details.\n",
+               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
       }
       return procExitCode;
     }
