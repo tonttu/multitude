@@ -83,6 +83,7 @@ HEADERS += Singleton.hpp
 HEADERS += VideoCamera1394.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
+HEADERS += SymbolRegistry.hpp
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
@@ -143,6 +144,7 @@ SOURCES += LockFileWin32.cpp
 SOURCES += CallStackW32.cpp
 SOURCES += VideoCamera1394.cpp
 SOURCES += IntrusivePtr.cpp
+SOURCES += SymbolRegistry.cpp
 
 linux*:SOURCES += ProcessRunnerPosix.cpp
 win32:SOURCES += ProcessRunnerWin32.cpp
