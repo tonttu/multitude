@@ -195,6 +195,8 @@ namespace Valuable
 
   Node::~Node()
   {
+    REQUIRE_THREAD(m_ownerThread);
+
     // Host of Node class member Attributes must be zeroed to avoid double-delete
     m_id.removeHost();
 
@@ -280,6 +282,7 @@ namespace Valuable
 
   Attribute * Node::attribute(const QByteArray & name) const
   {
+    REQUIRE_THREAD(m_ownerThread);
     const int slashIndex = name.indexOf('/');
 
     if(slashIndex == -1) {
@@ -311,6 +314,7 @@ namespace Valuable
 
   bool Node::addAttribute(const QByteArray & cname, Attribute * const attribute)
   {
+    REQUIRE_THREAD(m_ownerThread);
     // Check attributes
     if(m_attributes.find(cname) != m_attributes.end()) {
       Radiant::error(
@@ -336,6 +340,9 @@ namespace Valuable
     attribute->setName(cname);
 
     m_attributes[attribute->name()] = attribute;
+#ifdef ENABLE_THREAD_CHECKS
+    attribute->setOwnerThread(m_ownerThread);
+#endif
     attribute->m_host  = this;
     eventSend("attribute-added", attribute->name());
     attributeAdded(attribute);
@@ -350,6 +357,9 @@ namespace Valuable
     for (auto it = m_attributes.begin(), end = m_attributes.end(); it != end; ++it) {
       if (it->second == attribute) {
         m_attributes.erase(it);
+#ifdef ENABLE_THREAD_CHECKS
+        attribute->setOwnerThread(nullptr);
+#endif
         attribute->m_host = nullptr;
         eventSend("attribute-removed", attribute->name());
         attributeRemoved(attribute);
@@ -475,6 +485,7 @@ namespace Valuable
 
   ArchiveElement Node::serialize(Archive & archive) const
   {
+    REQUIRE_THREAD(m_ownerThread);
     QString name = m_name.isEmpty() ? "Node" : m_name;
 
     ArchiveElement elem = archive.createElement(name.toUtf8().data());
@@ -503,6 +514,7 @@ namespace Valuable
 
   bool Node::deserialize(const ArchiveElement & element)
   {
+    REQUIRE_THREAD(m_ownerThread);
     // Name
     m_name = element.name().toUtf8();
 
@@ -559,6 +571,7 @@ namespace Valuable
                               ListenerType listenerType,
                               const Radiant::BinaryData * defaultData)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -608,6 +621,7 @@ namespace Valuable
   long Node::eventAddListener(const QByteArray & fromIn, ListenerFuncVoid func,
                               ListenerType listenerType)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -625,6 +639,7 @@ namespace Valuable
 
   long Node::eventAddListener(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncVoid func, Node::ListenerType listenerType)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -646,6 +661,7 @@ namespace Valuable
 
   long Node::eventAddListenerBd(const QByteArray&eventId, Node*dstNode, Node::ListenerFuncBd func, Node::ListenerType listenerType)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -668,6 +684,7 @@ namespace Valuable
   long Node::eventAddListenerBd(const QByteArray & fromIn, ListenerFuncBd func,
                                 ListenerType listenerType)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return -1;
 
@@ -685,6 +702,7 @@ namespace Valuable
 
   int Node::eventRemoveListener(const QByteArray & from, const QByteArray & to, Valuable::Node * obj)
   {
+    REQUIRE_THREAD(m_ownerThread);
     int removed = 0;
 
     for(Listeners::iterator it = m_elisteners.begin(); it != m_elisteners.end(); ) {
@@ -711,6 +729,7 @@ namespace Valuable
 
   bool Node::eventRemoveListener(long listenerId)
   {
+    REQUIRE_THREAD(m_ownerThread);
     for (auto it = m_elisteners.begin(); it != m_elisteners.end(); ++it) {
       if (it->m_listenerId == listenerId) {
         if (it->m_listener)
@@ -740,6 +759,7 @@ namespace Valuable
 
   void Node::eventAddSource(Valuable::Node * source)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (isBeingDestroyed())
       return;
 
@@ -748,6 +768,7 @@ namespace Valuable
 
   void Node::eventRemoveSource(Valuable::Node * source)
   {
+    REQUIRE_THREAD(m_ownerThread);
     Sources::iterator it = m_eventSources.find(source);
 
     if (it != m_eventSources.end() && --it->second <= 0)
@@ -1014,8 +1035,19 @@ namespace Valuable
     eventSend(id, tmp);
   }
 
+#ifdef ENABLE_THREAD_CHECKS
+  void Node::setOwnerThread(Radiant::Thread::id_t owner)
+  {
+    m_ownerThread = owner;
+    for (auto attr: m_attributes) {
+      attr.second->setOwnerThread(owner);
+    }
+  }
+#endif
+
   void Node::attributeRenamed(const QByteArray & was, const QByteArray & now)
   {
+    REQUIRE_THREAD(m_ownerThread);
     // Check that the attribute does not exist already
     iterator it = m_attributes.find(now);
     if(it != m_attributes.end()) {

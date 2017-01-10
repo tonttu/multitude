@@ -287,6 +287,13 @@ namespace Valuable {
         setSerializable(false);
     }
 
+    virtual ~AttributeT()
+    {
+      for (auto & flag: m_flags) {
+        delete flag.alias;
+      }
+    }
+
     AttributeT & operator=(const Flags & b) { setValue(b, USER); return *this; }
 
     bool operator==(const Flags & b) const { return value() == b; }
