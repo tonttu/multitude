@@ -20,6 +20,7 @@
 
 #include <Radiant/Color.hpp>
 #include <Radiant/IntrusivePtr.hpp>
+#include <Radiant/ThreadChecks.hpp>
 #include <Radiant/Trace.hpp>
 
 #ifdef CORNERSTONE_JS
@@ -145,6 +146,7 @@ namespace Valuable
     template<class T>
     bool setValue(const QByteArray & name, const T & v)
     {
+      REQUIRE_THREAD(m_ownerThread);
       int cut = name.indexOf("/");
       QByteArray next, rest;
       if(cut > 0) {
@@ -546,6 +548,10 @@ namespace Valuable
     /// from this might set it. If Node is being destroyed, it won't receive
     /// any events. You also can't set any new event listeners to it.
     bool isBeingDestroyed() const { return m_isBeingDestroyed; }
+
+#ifdef ENABLE_THREAD_CHECKS
+    virtual void setOwnerThread(Radiant::Thread::id_t owner) override;
+#endif
 
   protected:
     /// Sets 'isBeginDestroyed' flag to true and removes all event listeners

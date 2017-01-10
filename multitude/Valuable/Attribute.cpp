@@ -17,6 +17,7 @@
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Mutex.hpp>
+#include <Radiant/ThreadChecks.hpp>
 
 #ifdef MULTI_DOCUMENTER
 std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
@@ -59,7 +60,11 @@ namespace Valuable
       m_ownerShorthand(nullptr),
       m_name(name),
       m_listenersId(0)
+#ifdef ENABLE_THREAD_CHECKS
+    , m_ownerThread(host ? host->m_ownerThread : nullptr)
+#endif
   {
+    REQUIRE_THREAD(m_ownerThread);
 
     if(host == this)
       Radiant::fatal("Attribute::Attribute # host = this! # check your code");
@@ -92,6 +97,7 @@ namespace Valuable
 
   Attribute::~Attribute()
   {
+    REQUIRE_THREAD(m_ownerThread);
     emitDelete();
 
     removeHost();
@@ -196,6 +202,7 @@ namespace Valuable
 
   ArchiveElement Attribute::serialize(Archive & archive) const
   {
+    REQUIRE_THREAD(m_ownerThread);
     Layer layer;
     if (!layerForSerialization(archive, layer))
       return ArchiveElement();
@@ -233,6 +240,7 @@ namespace Valuable
 
   void Attribute::emitChange()
   {
+    REQUIRE_THREAD(m_ownerThread);
     // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
     // We use foreach here because the callback functions might
     // remove themselves from the listeners. Since foreach makes a
@@ -279,6 +287,7 @@ namespace Valuable
 
   void Attribute::removeHost()
   {
+    REQUIRE_THREAD(m_ownerThread);
     if(m_host) {
       m_host->removeAttribute(this);
       m_host = 0;
@@ -292,6 +301,7 @@ namespace Valuable
 
   long Attribute::addListener(Node * listener, ListenerFunc func, int role)
   {
+    REQUIRE_THREAD(m_ownerThread);
     if (listener && listener->isBeingDestroyed()) {
       return -1;
     }
@@ -305,6 +315,7 @@ namespace Valuable
 #ifdef CORNERSTONE_JS
   long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
   {
+    REQUIRE_THREAD(m_ownerThread);
     long id = m_listenersId++;
     m_listeners[id] = AttributeListener(func, role);
     return id;
@@ -317,6 +328,7 @@ namespace Valuable
 
   bool Attribute::removeListener(Node * listener, int role)
   {
+    REQUIRE_THREAD(m_ownerThread);
     bool erasedAnything = false;
 
     QList<Node*> listeners;
@@ -341,6 +353,7 @@ namespace Valuable
 
   bool Attribute::removeListener(long id)
   {
+    REQUIRE_THREAD(m_ownerThread);
     QMap<long, AttributeListener>::iterator it = m_listeners.find(id);
     if(it == m_listeners.end()) return false;
     if(it->listener) it->listener->m_attributeListening.remove(this);
@@ -377,6 +390,13 @@ namespace Valuable
   {
     return m_ownerShorthand;
   }
+
+#ifdef ENABLE_THREAD_CHECKS
+  void Attribute::setOwnerThread(Radiant::Thread::id_t owner)
+  {
+    m_ownerThread = owner;
+  }
+#endif
 
   bool Attribute::set(float, Layer, ValueUnit)
   {
