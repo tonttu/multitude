@@ -149,6 +149,14 @@ namespace Valuable
           // There is a delayed event already, merge the events to single changed event
           delayEvent(filename, ChangeEvent::MODIFY);
         } else {
+
+          // This situation corresponds to the case when we are listening to some file
+          // that is created after it is registered to watcher
+          if(m_userAddedFiles.contains(filename) &&
+             !m_watcher.files().contains(filename)) {
+            m_watcher.addPath(filename);
+          }
+
           m_host.eventSend("file-created", filename);
         }
       }
@@ -253,7 +261,7 @@ namespace Valuable
     if(!fi.isDir()) {
 
       // Don't add paths multiple times to avoid errors from QFileSystemWatcher
-      if(!m_d->m_watcher.directories().contains(absolutePath))
+      if(!m_d->m_watcher.files().contains(absolutePath))
         m_d->m_watcher.addPath(absolutePath);
 
       m_d->m_userAddedFiles.insert(absoluteFilePath);

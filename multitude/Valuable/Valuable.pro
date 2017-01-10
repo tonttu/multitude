@@ -46,6 +46,7 @@ HEADERS += State.hpp
 HEADERS += v8.hpp
 HEADERS += ListenerHolder.hpp
 HEADERS += AttributeSpline.hpp
+HEADERS += AttributeAsset.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
@@ -71,6 +72,7 @@ SOURCES += XMLArchive.cpp
 SOURCES += State.cpp
 SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
+SOURCES += AttributeAsset.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL
 LIBS += $$LIB_FOLLY_FUTURES
