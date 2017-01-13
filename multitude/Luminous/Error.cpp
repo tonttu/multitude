@@ -38,7 +38,11 @@ namespace Luminous
 
     }
 
-    OpenGLAPI* opengl = QOpenGLContext::currentContext()->versionFunctions<Luminous::OpenGLAPI>();
+    auto context = QOpenGLContext::currentContext();
+    if (!context) {
+      return;
+    }
+    OpenGLAPI* opengl = context->versionFunctions<Luminous::OpenGLAPI>();
     assert(opengl);
 
     GLenum err, err2 = GL_NO_ERROR;
