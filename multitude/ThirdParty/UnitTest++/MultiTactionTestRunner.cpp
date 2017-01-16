@@ -320,9 +320,21 @@ namespace UnitTest
       return errorCode;
     }
 
-    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent)
+    template <typename T>
+    T repeat(T vector, int times)
     {
-      std::vector<const UnitTest::Test*> toRun = includeTests(match);
+      auto len = vector.size();
+      for (int i = 1; i < times; ++i) {
+        for (std::size_t j = 0; j < len; ++j) {
+          vector.push_back(vector[j]);
+        }
+      }
+      return vector;
+    }
+
+    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
+    {
+      std::vector<const UnitTest::Test*> toRun = repeat(includeTests(match), times);
 
       if(toRun.empty()) {
         fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
@@ -333,9 +345,9 @@ namespace UnitTest
       return runTests(toRun, xmlOutput, procName, verbose, silent);
     }
 
-    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent)
+    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
     {
-      std::vector<const UnitTest::Test*> toRun = excludeTests(match);
+      std::vector<const UnitTest::Test*> toRun = repeat(excludeTests(match), times);
 
       if(toRun.empty()) {
         fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
@@ -378,7 +390,9 @@ namespace UnitTest
     QCommandLineOption v("v", "Verbose mode.");
     QCommandLineOption s("s", "Silent mode, suppress all console output from Cornerstone");
 
-    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s });
+    QCommandLineOption timesOption("times", "Repeat the tests multiple times, doesn't work with --single", "NUMBER");
+
+    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s, timesOption });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -409,6 +423,7 @@ namespace UnitTest
     const QString single = parser.value("single");
     const QString include = parser.value("match");
     const QString exclude = parser.value("exclude");
+    const int times = parser.value("times").toInt();
 
     delete app;
     if(!single.isEmpty()) {
@@ -439,10 +454,10 @@ namespace UnitTest
         return 1;
       }
 
-      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose, silent);
+      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose, silent, times);
 
     } else {
-      return runTestsInclusive(include, xmlOutput, argv[0], verbose, silent);
+      return runTestsInclusive(include, xmlOutput, argv[0], verbose, silent, times);
     }
 
     // Should never happen
