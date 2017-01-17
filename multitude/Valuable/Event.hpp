@@ -29,7 +29,7 @@ namespace Valuable
 
       ALL_EVENTS        = (uint32_t)-1
     };
-    typedef Radiant::FlagsT<Event::Type> Flags;
+    typedef Radiant::FlagsT<Event::Type> Types;
     typedef uint64_t ListenerId;
 
   public:
@@ -77,12 +77,19 @@ namespace Valuable
 
     /// Adds a new event listener for selected event types. Can be called
     /// from an event listener callback.
-    ListenerId addListener(Event::Flags flags, EventListenerFunc listener);
+    /// @param types event types to listen
+    /// @param listener listener callback which is invoked when any of the events happen
+    /// @returns listener id which can be used to remove the listener with removeListener
+    ListenerId addListener(Event::Types types, EventListenerFunc listener);
 
     /// Remove an event listener. Can be called from an event listener callback
+    /// @param listener Listener id returned by addListener
+    /// @returns true if listener was found and removed
     bool removeListener(ListenerId listener);
 
     /// Sends a new event to listeners. Can be called from an event listener callback
+    /// @param type event type
+    /// @param index see Event::index
     void send(Event::Type type, std::size_t index = 0);
 
   private:
@@ -90,7 +97,7 @@ namespace Valuable
 
     struct EventListener
     {
-      Event::Flags flags;
+      Event::Types types;
       EventListenerFunc func;
     };
 

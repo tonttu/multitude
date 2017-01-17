@@ -4,10 +4,10 @@
 
 namespace Valuable
 {
-  EventListenerList::ListenerId EventListenerList::addListener(Event::Flags flags, EventListenerFunc listener)
+  EventListenerList::ListenerId EventListenerList::addListener(Event::Types types, EventListenerFunc listener)
   {
     auto id = m_nextListenerId++;
-    m_eventListeners[id] = EventListener{flags, listener};
+    m_eventListeners[id] = EventListener{types, listener};
     return id;
   }
 
@@ -40,7 +40,7 @@ namespace Valuable
       // we might be modifying m_eventListeners inside the event handlers
       for (auto it = m_eventListeners.begin(), end = m_eventListeners.end(); it != end; ++it) {
         // Call the event listener if it matches the event type and hasn't been called yet
-        if (it->first < listenerGenerationLimit && (it->second.flags & type) && sent.insert(it->first).second) {
+        if (it->first < listenerGenerationLimit && (it->second.types & type) && sent.insert(it->first).second) {
           // Need to take copy of the function, otherwise calling
           // Event::removeListener inside the lambda will crash the application
           auto func = it->second.func;
