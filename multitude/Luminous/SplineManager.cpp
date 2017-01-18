@@ -588,8 +588,10 @@ namespace Luminous
     // these can be called without immediate recalculation to make processing
     // multiple strokes at a time faster, for example when deserializing or erasing
     // note: respective recalculations must be called eventually
-    void endStroke(Valuable::Node::Uuid id, bool calculate = true);
-    void addStroke(const SplineInfo & info, bool calculate = true);
+    void endStroke(Valuable::Node::Uuid id, bool calculate = true,
+                   bool simplify = false);
+    void addStroke(const SplineInfo & info, bool calculate = true,
+                   bool simplify = false);
     void removeStroke(Valuable::Node::Uuid id, bool calculate = true);
 
     void simplifyStroke(SplineInternal & stroke, float tolerance = 0.2f) const;
@@ -825,27 +827,29 @@ namespace Luminous
 #endif
   }
 
-  void SplineManager::D::endStroke(Valuable::Node::Uuid id, bool calculate)
+  void SplineManager::D::endStroke(Valuable::Node::Uuid id, bool calculate, bool simplify)
   {
     if (m_strokes.contains(id)) {
       SplineInternal & stroke = m_strokes[id];
       stroke.m_finished = true;
-      // scale tolerance depending on the size of the stroke
-      float tolerance = 0.0005f * stroke.m_bounds.size().toVector().length();
-      simplifyStroke(stroke, tolerance);
+      if (simplify) {
+        // scale tolerance depending on the size of the stroke
+        float tolerance = 0.0005f * stroke.m_bounds.size().toVector().length();
+        simplifyStroke(stroke, tolerance);
+      }
       if (calculate)
         bakeStroke(stroke);
     }
   }
 
-  void SplineManager::D::addStroke(const SplineInfo & info, bool calculate)
+  void SplineManager::D::addStroke(const SplineInfo & info, bool calculate, bool simplify)
   {
     SplineInternal newStroke;
     newStroke.m_data = info.data;
     newStroke.processPoints();
     m_strokes[info.id] = newStroke;
     m_depthMap.insertMulti(info.data.depth, info.id);
-    endStroke(info.id, calculate);
+    endStroke(info.id, calculate, simplify);
   }
 
   void SplineManager::D::removeStroke(Valuable::Node::Uuid id, bool calculate)
@@ -1070,9 +1074,10 @@ namespace Luminous
     return beginSpline(data);
   }
 
-  Valuable::Node::Uuid SplineManager::beginSpline(const SplineData & data)
+  Valuable::Node::Uuid SplineManager::beginSpline(const SplineData & data, Valuable::Node::Uuid id)
   {
-    Valuable::Node::Uuid id = Valuable::Node::generateId();
+    if (id < 0)
+      id = Valuable::Node::generateId();
     SplineInternal newStroke;
 
     newStroke.m_data = data;
@@ -1095,7 +1100,7 @@ namespace Luminous
 
   void SplineManager::endSpline(Valuable::Node::Uuid id)
   {
-    m_d->endStroke(id);
+    m_d->endStroke(id, true, true);
   }
 
   Valuable::Node::Uuid SplineManager::addSpline(const SplineData & data)
@@ -1110,17 +1115,36 @@ namespace Luminous
     m_d->addStroke(info);
   }
 
+  void SplineManager::addSplines(const Splines & splines)
+  {
+    if (splines.isEmpty())
+      return;
+    for (const auto & info : splines)
+      m_d->addStroke(info, false);
+    m_d->recalculate();
+  }
+
   void SplineManager::removeSpline(Valuable::Node::Uuid id)
   {
     m_d->removeStroke(id);
   }
 
-  void SplineManager::removeSplines(Splines splines)
+  void SplineManager::removeSplines(const Splines & splines)
   {
     if (splines.isEmpty())
       return;
     for (const auto & stroke : splines)
       m_d->removeStroke(stroke.id, false);
+    m_d->recalculateAll();
+  }
+
+  void SplineManager::addAndRemoveSplines(const SplineManager::Splines & addedSplines,
+                                          const SplineManager::Splines & removedSplines)
+  {
+    for (const auto & info : addedSplines)
+      m_d->addStroke(info, false);
+    for (const auto & info : removedSplines)
+      m_d->removeStroke(info.id, false);
     m_d->recalculateAll();
   }
 
