@@ -139,6 +139,20 @@ namespace Valuable
       return false;
     }
 
+    virtual bool set(const QString & v, Attribute::Layer layer = Attribute::USER,
+                     Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) override
+    {
+      if (unit != Attribute::VU_UNKNOWN)
+        return false;
+
+      auto it = m_enumValues.find(v.toLower());
+      if (it == m_enumValues.end())
+        return false;
+
+      this->setValue(T(*it), layer);
+      return true;
+    }
+
     virtual bool set(const StyleValue & v, Attribute::Layer layer = Attribute::USER) OVERRIDE
     {
       if (v.size() != 1)
