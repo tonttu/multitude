@@ -89,8 +89,10 @@ namespace Luminous {
 
     /// Begin a new spline and return its id. Use the id to continue or end the spline
     /// @param data contains the spline color, width and initial points
+    /// @param id id to set for the new spline. If id is less than zero, a new id is
+    ///           generated automatically. Otherwise the supplied id is used
     /// @return id of the new stroke
-    Valuable::Node::Uuid beginSpline(const SplineData & data);
+    Valuable::Node::Uuid beginSpline(const SplineData & data, Valuable::Node::Uuid id = -1);
 
     /// Continue the spline with the given id
     /// @param id of the spline
@@ -112,13 +114,22 @@ namespace Luminous {
     /// @param info contains the stroke data and id
     void addSpline(const SplineInfo & info);
 
+    /// Add the given splines in a batch. This is faster than adding splines one by one
+    /// @param splines splines to remove
+    void addSplines(const Splines & splines);
+
     /// Remove a spline with the given id
     /// @param id of the stroke to remove
     void removeSpline(Valuable::Node::Uuid id);
 
     /// Remove the given splines in a batch. This is faster than removing splines one by one
     /// @param splines splines to remove
-    void removeSplines(Splines splines);
+    void removeSplines(const Splines & splines);
+
+    /// Add and remove splines in a batch.
+    /// @param addedSplines splines to add
+    /// @param removedSplines splines to remove
+    void addAndRemoveSplines(const Splines & addedSplines, const Splines & removedSplines);
 
     /// Return the data of spline with the given id, if it exists
     /// otherwise returns an empty SplineData
