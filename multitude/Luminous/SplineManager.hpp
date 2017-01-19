@@ -89,6 +89,8 @@ namespace Luminous {
 
     /// Begin a new spline and return its id. Use the id to continue or end the spline
     /// @param data contains the spline color, width and initial points
+    /// @param id id to set for the new spline. If id is less than zero, a new id is
+    ///           generated automatically. Otherwise the supplied id is used
     /// @return id of the new stroke
     Valuable::Node::Uuid beginSpline(const SplineData & data, Valuable::Node::Uuid id = -1);
 
