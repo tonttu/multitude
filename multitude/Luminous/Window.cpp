@@ -183,9 +183,56 @@ namespace Luminous
         if (GetPointerPenInfo(id, &info)) {
           Radiant::PenEvent te;
           te.setId(id);
-          auto point = mapFromGlobal(QPoint(info.pointerInfo.ptPixelLocation.x,
-                                            info.pointerInfo.ptPixelLocation.y));
-          te.setLocation(Nimble::Vector2f(point.x(), point.y()));
+          Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
+                               info.pointerInfo.ptPixelLocation.y);
+          Nimble::Vector2f himetric(info.pointerInfo.ptHimetricLocation.x,
+                                    info.pointerInfo.ptHimetricLocation.y);
+
+          // Unfortunately the pixel location in the event is in ints. To
+          // get subpixel accuracy, we are using himetric units. Those can
+          // be converted to source device pixels if we know the input device
+          // DPI, which is different from OS screen dpi. But even when doing
+          // that convertion, the native input device resolution might not be
+          // the same as the screen resolution.
+          //
+          // Since it's difficult to do correctly, we cheat a bit by just
+          // calculating a conversion factor on-fly. Touching with a pen to
+          // the right bottom part of the display will then make more
+          // accurate calibration.
+          if (loc.x > m_himetricCalibrationMax.x) {
+            m_himetricCalibrationMax.x = loc.x;
+            m_himetricFactor.x = loc.x / himetric.x;
+          }
+
+          if (loc.y > m_himetricCalibrationMax.y) {
+            m_himetricCalibrationMax.y = loc.y;
+            m_himetricFactor.y = loc.y / himetric.y;
+          }
+
+          if (m_himetricFactor.x > 0) {
+            loc.x = himetric.x * m_himetricFactor.x;
+            // If the error is more than one pixel, we calculated something wrong!
+            if (std::abs(loc.x - info.pointerInfo.ptPixelLocation.x) > 1.f) {
+              m_himetricFactor.x = 0;
+              m_himetricCalibrationMax.x = 0;
+              loc.x = info.pointerInfo.ptPixelLocation.x;
+            }
+
+          }
+          if (m_himetricFactor.y > 0) {
+            loc.y = himetric.y * m_himetricFactor.y;
+            if (std::abs(loc.y - info.pointerInfo.ptPixelLocation.y) > 1.f) {
+              m_himetricFactor.y = 0;
+              m_himetricCalibrationMax.y = 0;
+              loc.y = info.pointerInfo.ptPixelLocation.y;
+            }
+          }
+
+          // mapFromGlobal uses only ints, but in our case this is the same thing
+          loc.x -= position().x();
+          loc.y -= position().y();
+          te.setLocation(loc);
+
           Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
           if (info.penMask & PEN_MASK_PRESSURE) {
             flags |= Radiant::PenEvent::FLAG_PRESSURE;
