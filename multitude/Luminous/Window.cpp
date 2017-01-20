@@ -271,6 +271,8 @@ namespace Luminous
             te.setType(Radiant::PenEvent::TYPE_UPDATE);
           }
 
+          te.setSourceDevice(uint64_t(info.pointerInfo.sourceDevice));
+
           if (m_eventHook) {
             m_eventHook->penEvent(te);
             return true;
