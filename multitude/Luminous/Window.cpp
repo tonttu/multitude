@@ -10,6 +10,7 @@
 
 #include "Window.hpp"
 
+#include <Radiant/PenEvent.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QOpenGLContext>
@@ -171,6 +172,67 @@ namespace Luminous
 
   bool Window::nativeEvent(const QByteArray& eventType, void* message, long* result)
   {
+#ifdef RADIANT_WINDOWS
+    if (eventType == "windows_generic_MSG") {
+      MSG * msg = static_cast<MSG*>(message);
+      if (msg->message == WM_POINTERDOWN ||
+          msg->message == WM_POINTERUPDATE ||
+          msg->message == WM_POINTERUP) {
+        auto id = GET_POINTERID_WPARAM(msg->wParam);
+        POINTER_PEN_INFO info;
+        if (GetPointerPenInfo(id, &info)) {
+          Radiant::PenEvent te;
+          te.setId(id);
+          auto point = mapFromGlobal(QPoint(info.pointerInfo.ptPixelLocation.x,
+                                            info.pointerInfo.ptPixelLocation.y));
+          te.setLocation(Nimble::Vector2f(point.x(), point.y()));
+          Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
+          if (info.penMask & PEN_MASK_PRESSURE) {
+            flags |= Radiant::PenEvent::FLAG_PRESSURE;
+            te.setPressure(info.pressure / 1024.f);
+          }
+          if (info.penMask & PEN_MASK_ROTATION) {
+            flags |= Radiant::PenEvent::FLAG_ROTATION;
+            te.setRotation(Nimble::Math::degToRad(info.rotation));
+          }
+          Nimble::Vector2f tilt{0, 0};
+          if (info.penMask & PEN_MASK_TILT_X) {
+            flags |= Radiant::PenEvent::FLAG_TILT_X;
+            tilt.x = Nimble::Math::degToRad(info.tiltX);
+          }
+          if (info.penMask & PEN_MASK_TILT_Y) {
+            flags |= Radiant::PenEvent::FLAG_TILT_Y;
+            tilt.y = Nimble::Math::degToRad(info.tiltY);
+          }
+          if (info.penFlags & PEN_FLAG_BARREL) {
+            flags |= Radiant::PenEvent::FLAG_BARREL;
+          }
+          if (info.penFlags & PEN_FLAG_INVERTED) {
+            flags |= Radiant::PenEvent::FLAG_INVERTED;
+          }
+          if (info.penFlags & PEN_FLAG_ERASER) {
+            flags |= Radiant::PenEvent::FLAG_ERASER;
+          }
+          te.setTilt(tilt);
+          te.setFlags(flags);
+
+          if (msg->message == WM_POINTERDOWN) {
+            te.setType(Radiant::PenEvent::TYPE_DOWN);
+          } else if (msg->message == WM_POINTERUP) {
+            te.setType(Radiant::PenEvent::TYPE_UP);
+          } else {
+            te.setType(Radiant::PenEvent::TYPE_UPDATE);
+          }
+
+          if (m_eventHook) {
+            m_eventHook->penEvent(te);
+            return true;
+          }
+        }
+      }
+    }
+#endif
+
     if(m_eventHook)
       return m_eventHook->nativeEvent(eventType, message, result);
 
@@ -191,8 +253,8 @@ namespace Luminous
 
   void Window::tabletEvent(QTabletEvent* ev)
   {
-    if(m_eventHook)
-      m_eventHook->tabletEvent(ev);
+    if (m_eventHook)
+      m_eventHook->penEvent(*ev);
   }
 
   void Window::touchEvent(QTouchEvent* ev)
