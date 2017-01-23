@@ -36,6 +36,13 @@ namespace Valuable
     typedef AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type> AttributeType;
     typedef typename AttributeTuple<T, AttributeType>::ElementType ElementType;
 
+    AttributeT()
+      : AttributeTuple<T, AttributeType>(nullptr, "foo")
+    {
+      AttributeTuple<T ,AttributeType>::m_values[0]->setName("width");
+      AttributeTuple<T, AttributeType>::m_values[1]->setName("height");
+    }
+
     /// Constructor
     /// @param host host node
     /// @param name name of the size attribute
