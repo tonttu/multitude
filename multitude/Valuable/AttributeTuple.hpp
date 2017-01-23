@@ -63,12 +63,12 @@ namespace Valuable
 
     ~AttributeTuple();
 
-    WrappedValue operator*() const { return value(); }
-    operator WrappedValue () const { return value(); }
-    WrappedValue value() const;
-    WrappedValue value(Layer layer) const;
+    const WrappedValue operator*() const { return value(); }
+    operator const WrappedValue () const { return value(); }
+    const WrappedValue value() const;
+    const WrappedValue value(Layer layer) const;
 
-    WrappedValue defaultValue() const;
+    const WrappedValue defaultValue() const;
     Layer currentLayer() const;
 
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE;
@@ -83,6 +83,8 @@ namespace Valuable
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const StyleValue& value, Layer layer = USER) override;
+
+    inline void setValue(const WrappedValue & t, Layer layer = USER);
 
     virtual bool isChanged() const OVERRIDE;
     virtual void clearValue(Layer layer) OVERRIDE;
@@ -285,7 +287,7 @@ namespace Valuable
   }
 
   template <typename T, typename A>
-  T AttributeTuple<T,A>::defaultValue() const
+  const T AttributeTuple<T,A>::defaultValue() const
   {
     return value(Attribute::DEFAULT);
   }
@@ -302,7 +304,7 @@ namespace Valuable
   }
 
   template <typename T, typename A>
-  T AttributeTuple<T,A>::value() const {
+  const T AttributeTuple<T,A>::value() const {
     T tmp;
     for(int i = 0; i < N; ++i) {
       setWrapped(tmp, i, m_values[i]->value());
@@ -311,7 +313,7 @@ namespace Valuable
   }
 
   template <typename T, typename A>
-  T AttributeTuple<T,A>::value(Attribute::Layer layer) const {
+  const T AttributeTuple<T,A>::value(Attribute::Layer layer) const {
     T tmp;
     for(int i = 0; i < N; ++i)
       setWrapped(tmp, i, m_values[i]->value(layer));
@@ -445,6 +447,18 @@ namespace Valuable
 
     endChangeTransaction();
     return true;
+  }
+
+  template <typename T, typename A>
+  inline void AttributeTuple<T,A>::setValue(const T & tuple, Layer layer)
+  {
+    beginChangeTransaction();
+
+    for(int i = 0; i < N; ++i) {
+      m_values[i]->setValue(unwrap(tuple, t2r(i)), layer);
+    }
+
+    endChangeTransaction();
   }
 
   template <typename T, typename A>
