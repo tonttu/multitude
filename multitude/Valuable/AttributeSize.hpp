@@ -37,7 +37,7 @@ namespace Valuable
     typedef typename AttributeTuple<T, AttributeType>::ElementType ElementType;
 
     AttributeT()
-      : AttributeTuple<T, AttributeType>(nullptr, "foo")
+      : AttributeTuple<T, AttributeType>(nullptr, QByteArray())
     {
       AttributeTuple<T ,AttributeType>::m_values[0]->setName("width");
       AttributeTuple<T, AttributeType>::m_values[1]->setName("height");
