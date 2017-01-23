@@ -221,10 +221,11 @@ namespace Valuable
     beginChangeTransaction();
 
     for(int i = 0; i < N; ++i) {
-      *m_values[i] = *tuple.m_values[i];
+      *m_values[i] = **tuple.m_values[i];
     }
 
     endChangeTransaction();
+    return *this;
   }
 
   template <typename T, typename A>
