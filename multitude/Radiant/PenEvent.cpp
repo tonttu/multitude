@@ -8,32 +8,22 @@
  * 
  */
 
-#include "Radiant/TabletEvent.hpp"
+#include "Radiant/PenEvent.hpp"
+
+#include <QTabletEvent>
 
 namespace Radiant
 {
-  TabletEvent::TabletEvent()
-  {
-  }
-
-  TabletEvent::TabletEvent(QTabletEvent & event)
+  PenEvent::PenEvent(QTabletEvent & event)
   {
     m_location.make(event.hiResGlobalX(), event.hiResGlobalY());
-    m_type = event.type();
-  }
-
-  QEvent::Type TabletEvent::type() const
-  {
-    return m_type;
-  }
-
-  void TabletEvent::setLocation(Nimble::Vector2f location)
-  {
-    m_location = location;
-  }
-
-  const Nimble::Vector2f & TabletEvent::location() const
-  {
-    return m_location;
+    if (event.type() == QEvent::TabletPress) {
+      m_type = TYPE_DOWN;
+    } else if (event.type() == QEvent::TabletMove) {
+      m_type = TYPE_UPDATE;
+    } else if (event.type() == QEvent::TabletRelease) {
+      m_type = TYPE_UP;
+    }
+    m_pressure = event.pressure();
   }
 }

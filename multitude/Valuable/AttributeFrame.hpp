@@ -30,7 +30,9 @@ namespace Valuable
       public AttributeTuple<Nimble::Frame4f, AttributeT<Nimble::Frame4f>>
   {
   public:
-    using AttributeTuple<Nimble::Frame4f, AttributeT<Nimble::Frame4f>>::operator=;
+    typedef AttributeTuple<Nimble::Frame4f, AttributeT<Nimble::Frame4f>> Base;
+    using Base::operator=;
+    using Base::set;
 
     typedef AttributeT<Nimble::Frame4f> AttributeType;
 
