@@ -100,6 +100,11 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
+    /// Unique ID for the source device. This can be used to differentiate
+    /// between multiple pens, if the hardware supports that
+    uint64_t sourceDevice() const { return m_sourceDevice; }
+    void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
+
   private:
     Nimble::Vector2f m_location = {0, 0};
     Type m_type = TYPE_NONE;
@@ -107,10 +112,10 @@ namespace Radiant
     uint32_t m_id = 0;
     float m_pressure = 0;
     float m_rotation = 0;
-    // X and Y tilting between -pi/2 to pi/2
     Nimble::Vector2f m_tilt;
+    uint64_t m_sourceDevice = 0;
   };
-
+  MULTI_FLAGS(PenEvent::Flag)
 }
 
 #endif
