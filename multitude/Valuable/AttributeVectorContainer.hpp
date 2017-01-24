@@ -161,10 +161,11 @@ namespace Valuable
       m_eventListeners.send(Event::Type::ELEMENT_INSERTED, idx);
     }
 
-    void push_back(T && t)
+    template <typename Y>
+    void push_back(Y && y)
     {
       const auto idx = m_vector.size();
-      m_vector.push_back(std::forward<T>(t));
+      m_vector.push_back(std::forward<Y>(y));
       m_eventListeners.send(Event::Type::ELEMENT_INSERTED, idx);
     }
 
@@ -186,10 +187,11 @@ namespace Valuable
       return it;
     }
 
-    iterator insert(const_iterator position, T && t)
+    template <typename Y>
+    iterator insert(const_iterator position, Y && y)
     {
       const auto index = position - begin();
-      auto it = m_vector.insert(m_vector.begin() + index, std::forward<T>(t));
+      auto it = m_vector.insert(m_vector.begin() + index, std::forward<Y>(y));
       m_eventListeners.send(Event::Type::ELEMENT_INSERTED, index);
       return it;
     }
@@ -234,17 +236,19 @@ namespace Valuable
 
     // Element write-access:
 
-    void set(const_iterator position, T && t)
+    template <typename Y>
+    void set(const_iterator position, Y && y)
     {
-      set(position - begin(), std::forward<T>(t));
+      set(position - begin(), std::forward<Y>(y));
     }
 
-    void set(std::size_t index, T && t)
+    template <typename Y>
+    void set(std::size_t index, Y && y)
     {
       T & dest = m_vector[index];
-      if (dest == t) return;
+      if (dest == y) return;
 
-      dest = std::forward<T>(t);
+      dest = std::forward<Y>(y);
       m_eventListeners.send(Event::Type::ELEMENT_CHANGED, index);
     }
 
