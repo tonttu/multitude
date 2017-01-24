@@ -6,6 +6,22 @@
 
 namespace Valuable
 {
+  /// Non-template base class for all AttributeContainers, like AttributeVectorContainer
+  class AttributeContainerBase : public Attribute
+  {
+  public:
+    AttributeContainerBase(Valuable::Node * parent = nullptr,
+                           const QByteArray & name = QByteArray())
+      : Attribute(parent, name)
+    {}
+
+    EventListenerList & eventListenerList() { return m_eventListeners; }
+    const EventListenerList & eventListenerList() const { return m_eventListeners; }
+
+  protected:
+    EventListenerList m_eventListeners;
+  };
+
   /// An attribute vector of immutable objects.
   ///
   /// Changes to the vector can be monitored by adding a new listener with addListener
@@ -15,7 +31,7 @@ namespace Valuable
   ///
   /// @sa MutableAttributeVectorContainer
   template <typename T, typename Allocator = typename std::vector<T>::allocator_type>
-  class AttributeVectorContainer : public Attribute
+  class AttributeVectorContainer : public AttributeContainerBase
   {
   public:
     // types:
@@ -37,7 +53,7 @@ namespace Valuable
 
     AttributeVectorContainer(Valuable::Node * parent = nullptr,
                              const QByteArray & name = QByteArray(), const Allocator & allocator = Allocator())
-      : Attribute(parent, name)
+      : AttributeContainerBase(parent, name)
       , m_vector(allocator)
     {}
 
@@ -318,7 +334,6 @@ namespace Valuable
 
   protected:
     container m_vector;
-    EventListenerList m_eventListeners;
 
   private:
     bool m_clearOnDeserialize = true;
