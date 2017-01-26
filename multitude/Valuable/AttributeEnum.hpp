@@ -125,9 +125,18 @@ namespace Valuable
     virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                             Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
     {
-      if (m_allowIntegers)
+      if (m_allowIntegers) {
         this->setValue(T(v), layer);
-      return m_allowIntegers;
+        return true;
+      } else {
+        for (int enumValue: m_enumValues) {
+          if (enumValue == v) {
+            this->setValue(T(v), layer);
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     virtual bool set(const StyleValue & v, Attribute::Layer layer = Attribute::USER) OVERRIDE

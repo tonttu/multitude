@@ -10,6 +10,7 @@
 
 #include "Window.hpp"
 
+#include <Radiant/PenEvent.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QOpenGLContext>
@@ -171,6 +172,116 @@ namespace Luminous
 
   bool Window::nativeEvent(const QByteArray& eventType, void* message, long* result)
   {
+#ifdef RADIANT_WINDOWS
+    if (eventType == "windows_generic_MSG") {
+      MSG * msg = static_cast<MSG*>(message);
+      if (msg->message == WM_POINTERDOWN ||
+          msg->message == WM_POINTERUPDATE ||
+          msg->message == WM_POINTERUP) {
+        auto id = GET_POINTERID_WPARAM(msg->wParam);
+        POINTER_PEN_INFO info;
+        if (GetPointerPenInfo(id, &info)) {
+          Radiant::PenEvent te;
+          te.setId(id);
+          Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
+                               info.pointerInfo.ptPixelLocation.y);
+          Nimble::Vector2f himetric(info.pointerInfo.ptHimetricLocation.x,
+                                    info.pointerInfo.ptHimetricLocation.y);
+
+          // Unfortunately the pixel location in the event is in ints. To
+          // get subpixel accuracy, we are using himetric units. Those can
+          // be converted to source device pixels if we know the input device
+          // DPI, which is different from OS screen dpi. But even when doing
+          // that convertion, the native input device resolution might not be
+          // the same as the screen resolution.
+          //
+          // Since it's difficult to do correctly, we cheat a bit by just
+          // calculating a conversion factor on-fly. Touching with a pen to
+          // the right bottom part of the display will then make more
+          // accurate calibration.
+          if (loc.x > m_himetricCalibrationMax.x) {
+            m_himetricCalibrationMax.x = loc.x;
+            m_himetricFactor.x = loc.x / himetric.x;
+          }
+
+          if (loc.y > m_himetricCalibrationMax.y) {
+            m_himetricCalibrationMax.y = loc.y;
+            m_himetricFactor.y = loc.y / himetric.y;
+          }
+
+          if (m_himetricFactor.x > 0) {
+            loc.x = himetric.x * m_himetricFactor.x;
+            // If the error is more than one pixel, we calculated something wrong!
+            if (std::abs(loc.x - info.pointerInfo.ptPixelLocation.x) > 1.f) {
+              m_himetricFactor.x = 0;
+              m_himetricCalibrationMax.x = 0;
+              loc.x = info.pointerInfo.ptPixelLocation.x;
+            }
+
+          }
+          if (m_himetricFactor.y > 0) {
+            loc.y = himetric.y * m_himetricFactor.y;
+            if (std::abs(loc.y - info.pointerInfo.ptPixelLocation.y) > 1.f) {
+              m_himetricFactor.y = 0;
+              m_himetricCalibrationMax.y = 0;
+              loc.y = info.pointerInfo.ptPixelLocation.y;
+            }
+          }
+
+          // mapFromGlobal uses only ints, but in our case this is the same thing
+          loc.x -= position().x();
+          loc.y -= position().y();
+          te.setLocation(loc);
+
+          Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
+          if (info.penMask & PEN_MASK_PRESSURE) {
+            flags |= Radiant::PenEvent::FLAG_PRESSURE;
+            te.setPressure(info.pressure / 1024.f);
+          }
+          if (info.penMask & PEN_MASK_ROTATION) {
+            flags |= Radiant::PenEvent::FLAG_ROTATION;
+            te.setRotation(Nimble::Math::degToRad(info.rotation));
+          }
+          Nimble::Vector2f tilt{0, 0};
+          if (info.penMask & PEN_MASK_TILT_X) {
+            flags |= Radiant::PenEvent::FLAG_TILT_X;
+            tilt.x = Nimble::Math::degToRad(info.tiltX);
+          }
+          if (info.penMask & PEN_MASK_TILT_Y) {
+            flags |= Radiant::PenEvent::FLAG_TILT_Y;
+            tilt.y = Nimble::Math::degToRad(info.tiltY);
+          }
+          if (info.penFlags & PEN_FLAG_BARREL) {
+            flags |= Radiant::PenEvent::FLAG_BARREL;
+          }
+          if (info.penFlags & PEN_FLAG_INVERTED) {
+            flags |= Radiant::PenEvent::FLAG_INVERTED;
+          }
+          if (info.penFlags & PEN_FLAG_ERASER) {
+            flags |= Radiant::PenEvent::FLAG_ERASER;
+          }
+          te.setTilt(tilt);
+          te.setFlags(flags);
+
+          if (msg->message == WM_POINTERDOWN) {
+            te.setType(Radiant::PenEvent::TYPE_DOWN);
+          } else if (msg->message == WM_POINTERUP) {
+            te.setType(Radiant::PenEvent::TYPE_UP);
+          } else {
+            te.setType(Radiant::PenEvent::TYPE_UPDATE);
+          }
+
+          te.setSourceDevice(uint64_t(info.pointerInfo.sourceDevice));
+
+          if (m_eventHook) {
+            m_eventHook->penEvent(te);
+            return true;
+          }
+        }
+      }
+    }
+#endif
+
     if(m_eventHook)
       return m_eventHook->nativeEvent(eventType, message, result);
 
@@ -191,8 +302,8 @@ namespace Luminous
 
   void Window::tabletEvent(QTabletEvent* ev)
   {
-    if(m_eventHook)
-      m_eventHook->tabletEvent(ev);
+    if (m_eventHook)
+      m_eventHook->penEvent(*ev);
   }
 
   void Window::touchEvent(QTouchEvent* ev)

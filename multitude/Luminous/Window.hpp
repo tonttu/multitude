@@ -16,6 +16,8 @@
 
 #include <QWindow>
 
+#include <Nimble/Vector2.hpp>
+
 // Only forward declaration to keep OpenGL includes to a minimum to avoid
 // conflicts
 class QOpenGLContext;
@@ -95,6 +97,8 @@ namespace Luminous
     QScreen* m_screen;
     QOpenGLContext* m_openGLContext;
     WindowEventHook* m_eventHook;
+    Nimble::Vector2f m_himetricFactor{0, 0};
+    Nimble::Vector2i m_himetricCalibrationMax{0, 0};
   };
 
 }

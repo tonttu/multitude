@@ -3,6 +3,8 @@
 
 #include "Export.hpp"
 #include "Node.hpp"
+#include "Event.hpp"
+#include "AttributeVectorContainer.hpp"
 
 #include <unordered_map>
 #include <Radiant/Mutex.hpp>
@@ -80,6 +82,30 @@ namespace Valuable
 
     void removeListeners(Attribute * attr);
 
+    /// Add a new listeners to EventListenerList
+    /// @param list Object that we are listening to
+    /// See EventListenerList::addListener for more information about other parameters
+    Event::ListenerId addListener(EventListenerList & list, Event::Types types,
+                                  EventListenerList::EventListenerFunc listener);
+
+    /// Add a new listeners to AttributeContainer
+    /// @param container Container that we are listening to
+    /// See EventListenerList::addListener for more information about other parameters
+    inline Event::ListenerId addListener(AttributeContainerBase & container, Event::Types types,
+                                         EventListenerList::EventListenerFunc listener)
+    {
+      return addListener(container.eventListenerList(), types, std::move(listener));
+    }
+
+    /// Remove a listener from EventListenerList
+    bool removeListener(EventListenerList & list, Event::ListenerId listener);
+
+    /// Remove a listener from AttributeContainer
+    inline bool removeListener(AttributeContainerBase & container, Event::ListenerId listener)
+    {
+      return removeListener(container.eventListenerList(), listener);
+    }
+
   private:
     ListenerHolder(const ListenerHolder&);
     void operator=(const ListenerHolder&);
@@ -91,6 +117,15 @@ namespace Valuable
     std::unordered_map<Attribute*, long> m_deleteListeners;
     std::unordered_multimap<Attribute*, long> m_attributeListeners;
     std::unordered_multimap<Node*, long> m_eventListeners;
+
+    /// All Listeners for one EventListenerList
+    struct ListenerInfo
+    {
+      Event::ListenerId deleteListener = 0;
+      std::set<Event::ListenerId> listeners;
+    };
+
+    std::unordered_map<EventListenerList*, ListenerInfo> m_listeners;
   };
 }
 

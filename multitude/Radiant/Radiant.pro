@@ -15,7 +15,7 @@ HEADERS += ArraySet.hpp
 HEADERS += Flags.hpp
 HEADERS += FutureBool.hpp
 HEADERS += DropEvent.hpp
-HEADERS += TabletEvent.hpp
+HEADERS += PenEvent.hpp
 HEADERS += BGThread.hpp
 HEADERS += MovingAverage.hpp
 HEADERS += Mime.hpp
@@ -93,7 +93,7 @@ SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \
     ProcessRunner.cpp
 SOURCES += DropEvent.cpp
-SOURCES += TabletEvent.cpp
+SOURCES += PenEvent.cpp
 SOURCES += BGThread.cpp
 SOURCES += CameraDriver.cpp
 SOURCES += SocketUtilPosix.cpp
