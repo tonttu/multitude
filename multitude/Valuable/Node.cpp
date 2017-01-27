@@ -323,10 +323,6 @@ namespace Valuable
     // Unlink host if necessary
     Node * host = attribute->host();
     if(host) {
-      Radiant::error(
-          "Node::addAttribute # '%s' already has a host '%s'. "
-          "Unlinking it to set new host.",
-          cname.data(), host->name().data());
       /* Do not call removeHost, since that would call emitHostChange. We call
          emiHostChange anyhow. */
       host->removeAttribute(attribute, false);
