@@ -42,4 +42,6 @@ SOURCES += Splines.cpp
 
 DEFINES += NIMBLE_EXPORT
 
+gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
+
 include(../library.pri)

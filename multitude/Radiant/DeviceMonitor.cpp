@@ -73,6 +73,7 @@ namespace Radiant
     assert(enumerate);
 
     int err = udev_enumerate_add_match_subsystem(enumerate, subsystem.toUtf8().data());
+    (void)err;
     assert(err == 0);
 
     err = udev_enumerate_scan_devices(enumerate);

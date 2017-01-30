@@ -51,6 +51,8 @@ enable-pulse {
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
+gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
+
 include(../library.pri)
 
 DEFINES += RESONANT_EXPORT

@@ -1023,7 +1023,7 @@ namespace Luminous
 
   bool SplineManager::erase(const Nimble::Circle & eraser,
                             Splines * removedStrokes, Splines * addedStrokes,
-                            QString * errorText)
+                            QString * /*errorText*/)
   {
     // test for an early exit
     Nimble::Rect eraserBounds = eraser.boundingBox();

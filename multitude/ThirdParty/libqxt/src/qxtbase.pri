@@ -96,3 +96,5 @@ contains(CONFIG, coverage) {
     genhtml.commands += && xdg-open ../../coverage/\$(QMAKE_TARGET)/index.html
     QMAKE_EXTRA_UNIX_TARGETS *= genhtml
 }
+
+gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror

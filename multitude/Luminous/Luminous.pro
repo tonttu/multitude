@@ -230,4 +230,7 @@ enable-pdf {
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
 }
+
+gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
+
 include(../library.pri)

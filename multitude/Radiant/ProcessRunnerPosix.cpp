@@ -519,6 +519,7 @@ namespace Radiant
           }
           int status = 0;
           pid_t pidRes = waitLoop(pid, &status);
+          (void)pidRes;
           assert(pid == pidRes);
           flushPipesAndSignalEnd(pipes);
           if(timedout) {
@@ -533,12 +534,13 @@ namespace Radiant
     void reportExecFailureAndExit(int execErrPipe, const QString & error)
     {
       const QByteArray & data = error.toUtf8().data();
-      ::write(execErrPipe, data.data(), data.size());
+      auto ret = ::write(execErrPipe, data.data(), data.size());
       // Need this else we're running cleanup from the original process and we don't want to
       // do that since it might block or do any other random things.
       execlp("false", "false", static_cast<char*>(nullptr));
       QByteArray msg = QString("Failed to exec 'false'. Aborting").toUtf8();
-      ::write(execErrPipe, msg.data(), msg.size());
+      ret = ::write(execErrPipe, msg.data(), msg.size());
+      (void)ret;
       ::abort();
     }
 

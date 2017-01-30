@@ -34,4 +34,6 @@ DEFINES += USE_SSE=2
 
 INCLUDEPATH += $$PWD
 
+gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
+
 include(../library.pri)
