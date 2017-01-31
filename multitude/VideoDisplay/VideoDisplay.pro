@@ -23,6 +23,8 @@ LIBS += $$LIB_RESONANT $$LIB_SCREENPLAY $$LIB_LUMINOUS $$LIB_NIMBLE
 LIBS += $$LIB_RADIANT $$LIB_OPENGL $$LIB_RESONANT
 LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_FFMPEG
 
+# TODO: Should update our code that usese deprecated FFMPEG API
+*clang* | *g++*: QMAKE_CXXFLAGS_WARN_ON += -Wno-error=deprecated-declarations
 
 macx {
   LIBS += -framework OpenGL

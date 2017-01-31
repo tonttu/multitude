@@ -79,6 +79,4 @@ DEFINES += UNITTEST_USE_CUSTOM_STREAMS
 
 EXTRA_SOURCES += UnitTest++.pro README
 
-gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
-
 include(../ThirdParty.pri)

@@ -72,6 +72,8 @@ namespace Luminous
 
     id = glXGetContextGPUIDAMD(glxContext);
 
+#else
+    (void)context;
 #endif
 
     return id;
@@ -94,6 +96,9 @@ namespace Luminous
     auto glXGetGPUInfoAMD = (functionPtr)glXGetProcAddress((GLubyte*)"glXGetGPUInfoAMD");
 
     glXGetGPUInfoAMD(gpuId, GLX_GPU_RAM_AMD, GL_UNSIGNED_INT, 1, &totalMemoryInMB);
+
+#else
+    (void)gpuId;
 #endif
 
     return totalMemoryInMB;

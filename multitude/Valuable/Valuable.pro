@@ -80,6 +80,4 @@ DEFINES += VALUABLE_EXPORT
 CONFIG += qt
 QT += xml
 
-gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
-
 include(../library.pri)

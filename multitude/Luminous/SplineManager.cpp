@@ -404,7 +404,7 @@ namespace Luminous
     Nimble::Vector2f p1, p2;
     p1 = start + 1.f / 3.f * (end - start);
     p2 = 0.5f * (end + p1);
-    m_controlPoints = { start, p1, p2, end };
+    m_controlPoints = {{ start, p1, p2, end }};
   }
 
   void BezierCurve::fitCurves(BezierCurve &prev, BezierCurve &next)
@@ -479,8 +479,8 @@ namespace Luminous
     auto p22 = (1.f-t)*p21 + t*p31;
     auto p13 = (1.f-t)*p12 + t*p22;
 
-    left.m_controlPoints = { p0, p11, p12, p13 };
-    right.m_controlPoints = { p13, p22, p31, p3 };
+    left.m_controlPoints = {{ p0, p11, p12, p13 }};
+    right.m_controlPoints = {{ p13, p22, p31, p3 }};
   }
 
   Nimble::Vector2f BezierCurve::derivate(float t) const
@@ -888,7 +888,7 @@ namespace Luminous
       Point next = original.at(i + n);
 
       BezierCurve curve;
-      curve.m_controlPoints = { prev, cur, cur, next };
+      curve.m_controlPoints = {{ prev, cur, cur, next }};
       float diff = BezierCurve::curveValue(curve);
       if (error + diff < tolerance) {
         // skip this one and accumulate some error

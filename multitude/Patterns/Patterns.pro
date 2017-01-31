@@ -8,6 +8,4 @@ SOURCES += NotCopyable.cpp
 
 win32:DEFINES += PATTERNS_EXPORT
 
-gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
-
 include(../library.pri)

@@ -231,6 +231,4 @@ enable-pdf {
   SOURCES += PDFManager.cpp
 }
 
-gcc:QMAKE_CXXFLAGS_WARN_ON += -Werror
-
 include(../library.pri)
