@@ -39,8 +39,6 @@ namespace
   class SplineInternal
   {
   public:
-    int size() const;
-
     void addPoint(const Luminous::SplineManager::Point & point, float minimumDistance = 1.f);
 
     void processPoints();
@@ -68,11 +66,6 @@ namespace
     static const int m_pointsPerCurve = 3; // 4 control points for cubic bezier, but start point is the end point of previous curve
     std::vector<Vertex> m_vertices;
   };
-
-  int SplineInternal::size() const
-  {
-    return m_data.points.size();
-  }
 
   void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
   {

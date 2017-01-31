@@ -450,9 +450,6 @@ namespace UnitTest
     } else {
       return runTestsInclusive(include, xmlOutput, argv[0], verbose, times);
     }
-
-    // Should never happen
-    assert(false);
   }
 
   QStringList getCommandLineArgs()
