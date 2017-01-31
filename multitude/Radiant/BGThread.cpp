@@ -33,7 +33,7 @@ namespace Radiant
 
   BGThread::~BGThread()
   {
-    stop();
+    shutdown();
   }
 
   void BGThread::addTask(std::shared_ptr<Task> task)
@@ -42,7 +42,7 @@ namespace Radiant
     if(!task)
       return;
 
-    if(threads() == 0 || m_isShuttingDown) {
+    if(m_isShuttingDown) {
       task->setCanceled();
       return;
     }
@@ -259,6 +259,10 @@ namespace Radiant
 
       std::unique_lock<std::mutex> lock(m_mutexWait);
 
+      if (!running()) {
+        return nullptr;
+      }
+
       container::iterator nextTask = m_taskQueue.end();
 
       for(container::iterator it = m_taskQueue.begin(); it != m_taskQueue.end(); ++it) {
@@ -336,6 +340,7 @@ namespace Radiant
   void BGThread::wakeAll()
   {
     ThreadPool::wakeAll();
+    std::unique_lock<std::mutex> lock(m_mutexWait);
     m_idleWait.notify_all();
   }
 
@@ -369,10 +374,7 @@ namespace Radiant
     taskQueue.clear();
     reserved.clear();
 
-    /// @todo spin-lock is not very elegant, but we need to wait until all
-    /// running tasks have been cleared.
-    while(m_runningTasksCount > 0)
-      Radiant::Sleep::sleepMs(100);
+    stop();
   }
 }
 
