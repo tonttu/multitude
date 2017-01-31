@@ -31,7 +31,8 @@ namespace Valuable
       : public Valuable::AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>
   {
   public:
-    using AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>>::operator=;
+    typedef AttributeTuple<T, AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type>> Base;
+    using Base::operator=;
 
     typedef AttributeT<T, typename std::enable_if<IsSizeT<T>::value>::type> AttributeType;
     typedef typename AttributeTuple<T, AttributeType>::ElementType ElementType;
@@ -91,10 +92,10 @@ namespace Valuable
       }
     }
 
+    using Base::setValue;
 
-    bool set(const Nimble::SizeF & v, Attribute::Layer layer = Attribute::USER,
-             Attribute::ValueUnit widthUnit = Attribute::VU_PXS,
-             Attribute::ValueUnit heightUnit = Attribute::VU_PXS)
+    bool setValue(const Nimble::SizeF & v, Attribute::Layer layer,
+                  Attribute::ValueUnit widthUnit, Attribute::ValueUnit heightUnit)
     {
       AttributeTuple<T,AttributeType>::beginChangeTransaction();
 
