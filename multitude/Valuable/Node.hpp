@@ -77,7 +77,6 @@ namespace Valuable
     /** Constructs a new Node and adds it under the given host
       @param host Host of this node. Parent in node-hierarchy
       @param name Name of this object.
-      @param transit Should the object changes be transmitted.
     */
     Node(Node * host, const QByteArray &name = "");
     virtual ~Node();
@@ -129,7 +128,7 @@ namespace Valuable
     }
 
     /// Removes an Attribute from the list of attribute objects.
-    void removeAttribute(Attribute * const attribute);
+    void removeAttribute(Attribute * const attribute, bool emitChange = true);
 
     /// Clears all Attribute values of the given layer
     /// @param layer layer to clear

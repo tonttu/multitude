@@ -110,7 +110,7 @@ namespace UnitTest
     }
 
     int runOneTest(int index, int count, const UnitTest::Test* const test, QString xmlOutput,
-                   const char *procName, bool verbose)
+                   const char *procName, bool verbose, bool silent)
     {
       QProcess process;
       process.setProcessChannelMode(QProcess::ForwardedChannels);
@@ -119,8 +119,8 @@ namespace UnitTest
       singleArg += "/";
       singleArg += test->m_details.testName;
 
-      if(verbose)
-        newArgs << "-v";
+      if(silent) newArgs << "-s";
+      if(verbose) newArgs << "-v";
 
       newArgs << "--single" << singleArg << xmlOutput;
       if (QFile::exists(xmlOutput))
@@ -242,7 +242,8 @@ namespace UnitTest
       }
     }
 
-    int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName, bool verbose)
+    int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName,
+                 bool verbose, bool silent)
     {
       int count = toRun.size();
 
@@ -256,7 +257,8 @@ namespace UnitTest
         ++index;
         // run the test in a subprocess. Creating a MultiWidgets::Application after one
         // has been destroyed does not work properly.
-        int procExitCode = runOneTest(index, count, test, xmlOutput, procName, verbose);
+        int procExitCode = runOneTest(index, count, test, xmlOutput, procName,
+                                      verbose, silent);
 
         if(procExitCode != 0)
           exitCode = procExitCode;
@@ -330,7 +332,7 @@ namespace UnitTest
       return vector;
     }
 
-    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose, int times)
+    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
     {
       std::vector<const UnitTest::Test*> toRun = repeat(includeTests(match), times);
 
@@ -340,10 +342,10 @@ namespace UnitTest
         return 1;
       }
 
-      return runTests(toRun, xmlOutput, procName, verbose);
+      return runTests(toRun, xmlOutput, procName, verbose, silent);
     }
 
-    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose, int times)
+    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
     {
       std::vector<const UnitTest::Test*> toRun = repeat(excludeTests(match), times);
 
@@ -353,7 +355,7 @@ namespace UnitTest
         return 1;
       }
 
-      return runTests(toRun, xmlOutput, procName, verbose);
+      return runTests(toRun, xmlOutput, procName, verbose, silent);
     }
 
   }  // unnamed namespace
@@ -385,11 +387,12 @@ namespace UnitTest
 
     QCommandLineOption excludeOption("exclude", "Pattern to exclude tests (not regexp)", "PATTERN");
 
-    QCommandLineOption v("v", "Verbose mode. Otherwise suppresses the printing");
+    QCommandLineOption v("v", "Verbose mode.");
+    QCommandLineOption s("s", "Silent mode, suppress all console output from Cornerstone");
 
     QCommandLineOption timesOption("times", "Repeat the tests multiple times, doesn't work with --single", "NUMBER");
 
-    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, timesOption });
+    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s, timesOption });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -407,9 +410,15 @@ namespace UnitTest
       return listTests();
     }
 
+    bool silent = parser.isSet("s");
     bool verbose = parser.isSet("v");
-    if(!verbose)
+
+    if(silent)
       Radiant::setMinimumSeverityLevel(Radiant::SILENT);
+    else if(verbose) {
+      Radiant::setMinimumSeverityLevel(Radiant::DEBUG);
+      Radiant::enableVerboseOutput(true);
+    }
 
     const QString single = parser.value("single");
     const QString include = parser.value("match");
@@ -445,10 +454,10 @@ namespace UnitTest
         return 1;
       }
 
-      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose, times);
+      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose, silent, times);
 
     } else {
-      return runTestsInclusive(include, xmlOutput, argv[0], verbose, times);
+      return runTestsInclusive(include, xmlOutput, argv[0], verbose, silent, times);
     }
   }
 

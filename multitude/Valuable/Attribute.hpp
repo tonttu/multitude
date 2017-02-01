@@ -166,7 +166,8 @@ namespace Valuable
     enum ListenerRole {
       DELETE_ROLE = 1 << 0,
       CHANGE_ROLE = 1 << 1,
-      ALL_ROLES = (CHANGE_ROLE << 1) -1
+      HOST_CHANGE_ROLE = 1 << 2,
+      ALL_ROLES = (HOST_CHANGE_ROLE << 1) -1
     };
 
     Attribute();
@@ -187,10 +188,6 @@ namespace Valuable
     @param name The name (or id) of this attribute. Names are typically
     human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
-
-    @param transit Should value changes be transmitted forward. This
-    is related to future uses, and can be largely ignored at the
-    moment.
     */
     Attribute(Node * host, const QByteArray & name);
     virtual ~Attribute();
@@ -418,6 +415,8 @@ namespace Valuable
 
     /// Invokes the change valueDeleted function of all listeners
     virtual void emitDelete();
+
+    void emitHostChange();
 
   private:
     // The object that holds this object
