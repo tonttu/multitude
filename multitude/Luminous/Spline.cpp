@@ -157,7 +157,7 @@ namespace Luminous {
     ///       use curve to calculate some immediate points (for erasing)
     m_bounds.expand(p.m_location);
 
-    if(m_active < 0 || m_active >= m_paths.size()) {
+    if(m_active < 0 || m_active >= (int)m_paths.size()) {
       m_paths.resize(m_paths.size()+1);
       m_active = m_paths.size() -1;
     }
@@ -209,9 +209,9 @@ namespace Luminous {
       }
 
       if(validPoints < 2 && m_removePathsWhenErase) {
-        if (m_active == i)
+        if (m_active == (int)i)
           m_active = -1;
-        else if (m_active == m_paths.size() -1)
+        else if (m_active == int(m_paths.size()) -1)
           m_active = i;
         std::swap(m_paths[i], m_paths.back());
         m_paths.resize(m_paths.size()-1);
@@ -641,7 +641,7 @@ namespace Luminous {
 
   size_t Spline::controlPointCount() const
   {
-    if(m_d->m_active < 0 || m_d->m_active >= m_d->m_paths.size())
+    if(m_d->m_active < 0 || m_d->m_active >= (int)m_d->m_paths.size())
       return 0;
     return m_d->m_paths[m_d->m_active].points.size();
   }

@@ -318,6 +318,7 @@ namespace Valuable
       if(refs == 0) {
         m_d->m_watcher.removePath(absolutePath);
         int removeCount = m_d->m_directoryRefCounts.remove(absolutePath);
+        (void)removeCount;
         assert(removeCount == 1);
       }
     }

@@ -89,7 +89,7 @@ namespace Valuable
     *this = o;
   }
 
-  const Attribute & Attribute::operator = (const Attribute & o)
+  const Attribute & Attribute::operator = (const Attribute &)
   {
     // Do not copy the name or listeners. It will break stuff.
     return *this;

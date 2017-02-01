@@ -575,6 +575,9 @@ void QxtLoggerMessageHandler(QtMsgType type, const char *msg)
     case QtDebugMsg:
         QxtLogger::getInstance()->debug(msg, "qdebug");
         break;
+    case QtInfoMsg:
+        QxtLogger::getInstance()->info(msg, "qinfo");
+        break;
     case QtWarningMsg:
         QxtLogger::getInstance()->warning(msg, "qwarning");
         break;

@@ -989,16 +989,11 @@ namespace Luminous
   class CompressedImage::Private
   {
   public:
-    Private(CompressedImage & img) : ptr(0), size(0), m_img(img) {}
-
-    char * ptr;
-    int size;
-
-  private:
-    CompressedImage & m_img;
+    char * ptr = nullptr;
+    int size = 0;
   };
 
-  CompressedImage::CompressedImage() : m_compression(PixelFormat::COMPRESSION_NONE), m_d(new Private(*this))
+  CompressedImage::CompressedImage() : m_compression(PixelFormat::COMPRESSION_NONE), m_d(new Private())
   {
   }
 

@@ -32,6 +32,7 @@ namespace
 
   QString s_xmlFilename;
 
+#ifdef RADIANT_LINUX
   static void alsaError(const char *file, int line, const char *function, int, const char *fmt, ...)
   {
     char buffer[256];
@@ -47,6 +48,7 @@ namespace
 
     Radiant::warning("ALSA %s:%d [%s] %s", file, line, function, buffer);
   }
+#endif
 }
 
 namespace Resonant

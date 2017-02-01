@@ -136,6 +136,7 @@ namespace Radiant
 
     pointer allocate(size_type n, const void* = 0) {
       /// We're a block allocator, we only allocate per block
+      (void)n;
       assert(n == 1);
 
       void * ptr = m_activeChunk->tryAllocate();
@@ -164,6 +165,7 @@ namespace Radiant
     void deallocate(pointer ptr, size_type n)
     {
       /// We're a block allocator, we only deallocate per block
+      (void)n;
       assert(n == 1);
       chunk * c = m_topChunk.get();
       while (c != nullptr) {

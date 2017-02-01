@@ -673,7 +673,7 @@ void QxtRfc2822Parser::parseBody(QxtMailMessagePrivate* msg)
     QString& body = msg->body;
     if (!msg->extraHeaders.contains("content-type")) return;
     QString contentType = msg->extraHeaders["content-type"];
-    if (!contentType.indexOf("multipart",0,Qt::CaseInsensitive) == 0) return;
+    if (contentType.indexOf("multipart",0,Qt::CaseInsensitive) == -1) return;
     // extract the boundary delimiter
     QRegExp boundaryRe("boundary=\"?([^\"]*)\"?(?=;|$)");
     if (boundaryRe.indexIn(contentType) == -1)
