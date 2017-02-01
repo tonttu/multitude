@@ -53,6 +53,14 @@ namespace Valuable
       long id = pair.second;
       node->eventRemoveListener(id);
     }
+    for (const auto & pair: m_listeners) {
+      EventListenerList & list = *pair.first;
+      const ListenerInfo & info = pair.second;
+      list.removeListener(info.deleteListener);
+      for (auto id: info.listeners) {
+        list.removeListener(id);
+      }
+    }
   }
 
   long ListenerHolder::add(Attribute * attr, const Attribute::ListenerFunc & func, int role)
@@ -105,6 +113,43 @@ namespace Valuable
       node->eventRemoveListener(it->second);
     }
     m_eventListeners.erase(node);
+  }
+
+  Event::ListenerId ListenerHolder::addListener(EventListenerList & list, Event::Types types,
+                                                EventListenerList::EventListenerFunc listener)
+  {
+    auto id = list.addListener(types, std::move(listener));
+    auto key = &list;
+
+    Radiant::Guard guard(m_mutex);
+    auto & info = m_listeners[key];
+    info.listeners.insert(id);
+
+    if (info.deleteListener == 0) {
+      info.deleteListener = list.addListener(Event::Type::DELETED, [this, key] (Event) {
+        Radiant::Guard guard(m_mutex);
+        m_listeners.erase(key);
+      });
+    }
+    return id;
+  }
+
+  bool ListenerHolder::removeListener(EventListenerList & list, Event::ListenerId listener)
+  {
+    bool ok = list.removeListener(listener);
+    auto key = &list;
+
+    Radiant::Guard guard(m_mutex);
+    auto & info = m_listeners[key];
+    info.listeners.erase(listener);
+
+    if (info.listeners.empty()) {
+      if (info.deleteListener != 0) {
+        list.removeListener(info.deleteListener);
+      }
+      m_listeners.erase(key);
+    }
+    return ok;
   }
 
   void ListenerHolder::setupRemoveListener(Attribute * attr)
