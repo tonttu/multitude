@@ -39,8 +39,6 @@ namespace
   class SplineInternal
   {
   public:
-    int size() const;
-
     void addPoint(const Luminous::SplineManager::Point & point, float minimumDistance = 1.f);
 
     void processPoints();
@@ -68,11 +66,6 @@ namespace
     static const int m_pointsPerCurve = 3; // 4 control points for cubic bezier, but start point is the end point of previous curve
     std::vector<Vertex> m_vertices;
   };
-
-  int SplineInternal::size() const
-  {
-    return m_data.points.size();
-  }
 
   void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
   {
@@ -404,7 +397,7 @@ namespace Luminous
     Nimble::Vector2f p1, p2;
     p1 = start + 1.f / 3.f * (end - start);
     p2 = 0.5f * (end + p1);
-    m_controlPoints = { start, p1, p2, end };
+    m_controlPoints = {{ start, p1, p2, end }};
   }
 
   void BezierCurve::fitCurves(BezierCurve &prev, BezierCurve &next)
@@ -479,8 +472,8 @@ namespace Luminous
     auto p22 = (1.f-t)*p21 + t*p31;
     auto p13 = (1.f-t)*p12 + t*p22;
 
-    left.m_controlPoints = { p0, p11, p12, p13 };
-    right.m_controlPoints = { p13, p22, p31, p3 };
+    left.m_controlPoints = {{ p0, p11, p12, p13 }};
+    right.m_controlPoints = {{ p13, p22, p31, p3 }};
   }
 
   Nimble::Vector2f BezierCurve::derivate(float t) const
@@ -888,7 +881,7 @@ namespace Luminous
       Point next = original.at(i + n);
 
       BezierCurve curve;
-      curve.m_controlPoints = { prev, cur, cur, next };
+      curve.m_controlPoints = {{ prev, cur, cur, next }};
       float diff = BezierCurve::curveValue(curve);
       if (error + diff < tolerance) {
         // skip this one and accumulate some error
@@ -1023,7 +1016,7 @@ namespace Luminous
 
   bool SplineManager::erase(const Nimble::Circle & eraser,
                             Splines * removedStrokes, Splines * addedStrokes,
-                            QString * errorText)
+                            QString * /*errorText*/)
   {
     // test for an early exit
     Nimble::Rect eraserBounds = eraser.boundingBox();

@@ -230,4 +230,5 @@ enable-pdf {
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
 }
+
 include(../library.pri)

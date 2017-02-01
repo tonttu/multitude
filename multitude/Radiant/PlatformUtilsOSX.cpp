@@ -148,7 +148,7 @@ namespace Radiant
       return result.st_nlink;
     }
 
-    void openFirewallPortTCP(int port, const QString & name)
+    void openFirewallPortTCP(int /*port*/, const QString & /*name*/)
     {
     }
 

@@ -116,22 +116,22 @@ namespace Luminous {
     return false;
   }
 
-  bool SwapGroups::queryMaxSwapGroup(GLuint& maxGroups, GLuint& maxBarriers)
+  bool SwapGroups::queryMaxSwapGroup(GLuint & /*maxGroups*/, GLuint & /*maxBarriers*/)
   {
     return false;
   }
 
-  bool SwapGroups::joinSwapGroup(GLuint group)
+  bool SwapGroups::joinSwapGroup(GLuint /*group*/)
   {
     return false;
   }
 
-  bool SwapGroups::bindSwapBarrier(GLuint group, GLuint barrier)
+  bool SwapGroups::bindSwapBarrier(GLuint /*group*/, GLuint /*barrier*/)
   {
     return false;
   }
 
-  bool SwapGroups::querySwapGroup(GLuint& group, GLuint& barrier)
+  bool SwapGroups::querySwapGroup(GLuint& /*group*/, GLuint& /*barrier*/)
   {
     return false;
   }

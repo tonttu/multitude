@@ -69,7 +69,9 @@ namespace Radiant {
   static bool g_forceColors = false;
   static bool g_enableThreadId = false;
   static std::set<QString> g_verboseModules;
+#ifdef RADIANT_LINUX
   static int s_syslogMinSeverity = -1;
+#endif
   static QByteArray s_syslogIdent;
   static Severity s_minimumSeverityLevel = INFO;
 
