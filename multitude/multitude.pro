@@ -4,8 +4,11 @@ include(qmake_utils.prf)
 include(../cornerstone.pri)
 
 # 3rd party libraries
-libqxt.subdir += ThirdParty/libqxt
-SUBDIRS += libqxt
+
+!arm64 {
+  libqxt.subdir += ThirdParty/libqxt
+  SUBDIRS += libqxt
+}
 
 folly.subdir += ThirdParty/folly
 SUBDIRS += folly
