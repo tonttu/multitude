@@ -228,6 +228,8 @@ namespace VideoDisplay
 
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
+    double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    double m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
     AVDecoder::Options m_options;
     Radiant::TimeStamp m_pauseTimestamp;
@@ -485,6 +487,9 @@ namespace VideoDisplay
     const QFileInfo sourceFileInfo(src);
 
     QByteArray errorMsg("FfmpegDecoder::D::open # " + src.toUtf8() + ":");
+
+    m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
     if(!m_options.demuxerOptions().isEmpty()) {
       for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
@@ -903,6 +908,9 @@ namespace VideoDisplay
   {
     QByteArray errorMsg("FfmpegDecoder::D::seek # " + m_options.source().toUtf8() + ":");
 
+    m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+
     if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
       if(ok)
@@ -926,6 +934,9 @@ namespace VideoDisplay
     if(!seekByBytes) {
       if(m_seekRequest.type() == SEEK_BY_SECONDS) {
         pos = m_seekRequest.value() * AV_TIME_BASE;
+        if (m_seekRequest.flags() & SEEK_FLAG_ACCURATE) {
+          m_exactVideoSeekRequestPts = m_exactAudioSeekRequestPts = m_seekRequest.value();
+        }
       } else {
         assert(m_seekRequest.type() == SEEK_RELATIVE);
         if(m_av.formatContext->duration > 0) {
@@ -969,13 +980,14 @@ namespace VideoDisplay
       }
     }
 
-    int64_t minTs = m_seekRequest.direction() == SEEK_ONLY_FORWARD
-        ? pos : std::numeric_limits<int64_t>::min();
-    int64_t maxTs = m_seekRequest.direction() == SEEK_ONLY_BACKWARD
-        ? pos : std::numeric_limits<int64_t>::max();
-
+    int64_t minTs = 0, maxTs = std::numeric_limits<int64_t>::max();
+    if (m_seekRequest.flags() & SEEK_FLAG_FORWARD) {
+      minTs = pos;
+    } else {
+      maxTs = pos;
+    }
     int err = avformat_seek_file(m_av.formatContext, -1, minTs, pos, maxTs,
-                                 seekByBytes ? AVSEEK_FLAG_BYTE : 0);
+                                 seekByBytes ? AVSEEK_FLAG_BYTE : AVSEEK_FLAG_BACKWARD);
     if(err < 0) {
       Radiant::error("%s Seek failed", errorMsg.data());
       return false;
@@ -1126,15 +1138,33 @@ namespace VideoDisplay
         avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref/av_buffersrc_write_frame failed").
                 arg(m_options.source()), err);
       } else {
+        bool skip = false;
         while (true) {
-
           err = av_buffersink_get_frame(m_videoFilter.bufferSinkFilter, m_av.frame);
-          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF) {
+            if (skip)
+              return false;
             break;
+          }
           if (err < 0) {
             avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersink_read failed").
                     arg(m_options.source()), err);
             break;
+          }
+
+          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
+          /// but some filters just set it always to zero
+          if (m_av.frame->pts != (int64_t) AV_NOPTS_VALUE && m_av.frame->pts != 0) {
+            pts = m_av.frame->pts;
+            dpts = m_av.videoTsToSecs * m_av.frame->pts;
+          }
+
+          if (std::isfinite(m_exactVideoSeekRequestPts)) {
+            if (dpts < m_exactVideoSeekRequestPts) {
+              skip = true;
+              continue;
+            }
+            m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
           }
 
           frame = getFreeFrame(setTimestampToPts, dpts);
@@ -1165,13 +1195,6 @@ namespace VideoDisplay
             }
           }
 
-          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
-          /// but some filters just set it always to zero
-          if(frame->frame->pts != (int64_t) AV_NOPTS_VALUE && frame->frame->pts != 0) {
-            pts = frame->frame->pts;
-            dpts = m_av.videoTsToSecs * frame->frame->pts;
-          }
-
           frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
           frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
 
@@ -1185,13 +1208,20 @@ namespace VideoDisplay
             // this by allowing maximum difference of maxPtsReorderDiff
             /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
             increaseSeekGeneration();
-            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
             setTimestampToPts = false;
           }
           m_decodedVideoFrames.put();
         }
       }
     } else {
+      if (std::isfinite(m_exactVideoSeekRequestPts)) {
+        if (dpts < m_exactVideoSeekRequestPts) {
+          return false;
+        }
+        m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+      }
+
       frame = getFreeFrame(setTimestampToPts, dpts);
       if(!frame)
         return false;
@@ -1272,13 +1302,23 @@ namespace VideoDisplay
       }
 
       if(gotFrame) {
-        gotFrames = true;
         int64_t pts = guessCorrectPts(m_av.frame);
 
         dpts = m_av.audioTsToSecs * pts;
         nextDpts = dpts + double(m_av.frame->nb_samples) / m_av.frame->sample_rate;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
+
+        if (std::isfinite(m_exactAudioSeekRequestPts)) {
+          if (dpts < m_exactAudioSeekRequestPts) {
+            packet.data += consumedBytes;
+            packet.size -= consumedBytes;
+            continue;
+          }
+          m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        gotFrames = true;
 
         if(m_audioFilter.graph) {
 
