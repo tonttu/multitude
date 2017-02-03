@@ -65,6 +65,16 @@ namespace VideoDisplay
             m_pts < ts.m_pts : m_seekGeneration < ts.m_seekGeneration;
     }
 
+    bool operator==(const Timestamp & ts) const
+    {
+      return m_pts == ts.m_pts && m_seekGeneration == ts.m_seekGeneration;
+    }
+
+    bool operator!=(const Timestamp & ts) const
+    {
+      return !operator==(ts);
+    }
+
   private:
     double m_pts;
     int m_seekGeneration;
@@ -217,22 +227,20 @@ namespace VideoDisplay
                          ///  but might cause rendering artifacts
     };
 
-    /// Seeking direction constraint for SeekRequest.
-    /// This eliminates twitching while seeking.
-    enum SeekDirection
-    {
-      SEEK_ANY_DIRECTION = 0, ///< No limitations on the seeking
-      SEEK_ONLY_FORWARD,      ///< Only seek forward in the stream
-      SEEK_ONLY_BACKWARD      ///< Only seek backward in the stream
-    };
-
     /// Seeking flags
-    enum SeekFlags
+    enum SeekFlag
     {
-      SEEK_FLAGS_NONE = 0,    ///< No special seeking flags
-      SEEK_REAL_TIME          ///< Low-latency seeking mode, no buffering, special audio handling
-                              ///  Use this if you want to make continuous seek requests
+      /// No special seeking flags, seeking is done with keyframes. The actual
+      /// video position can be less than equal the requested position.
+      SEEK_FLAG_NONE     = 0,
+      /// Use more accurate and slower seeking mode
+      SEEK_FLAG_ACCURATE = 1 << 0,
+      /// Ask for the video position to be greater or equal to the requested position.
+      /// Toggle this flag depending on the dragging direction to eliminate
+      /// twitching while seeking with a scrub bar.
+      SEEK_FLAG_FORWARD  = 1 << 1
     };
+    typedef Radiant::FlagsT<SeekFlag> SeekFlags;
 
     /// Decoder playing state
     enum PlayMode
@@ -256,8 +264,8 @@ namespace VideoDisplay
       /// @param type unit of the timestamp
       /// @param direction seek direction constraint
       SeekRequest(double value = 0.0, SeekType type = SEEK_NONE,
-                  SeekDirection direction = SEEK_ANY_DIRECTION)
-        : m_value(value), m_type(type), m_direction(direction) {}
+                  SeekFlags flags = SEEK_FLAG_NONE)
+        : m_value(value), m_type(type), m_flags(flags) {}
 
       /// @returns media timestamp, value interpretation depends on selected SeekType
       double value() const { return m_value; }
@@ -269,15 +277,15 @@ namespace VideoDisplay
       /// @param type unit of the timestamp
       void setType(SeekType type) { m_type = type; }
 
-      /// @returns seek direction constraint
-      SeekDirection direction() const { return m_direction; }
-      /// @param direction seek direction constraint
-      void setDirection(SeekDirection direction) { m_direction = direction; }
+      /// @returns seeking flags
+      SeekFlags flags() const { return m_flags; }
+      /// @param flags seeking flags
+      void setFlags(SeekFlags flags) { m_flags = flags; }
 
     private:
       double m_value;
       SeekType m_type;
-      SeekDirection m_direction;
+      SeekFlags m_flags;
     };
 
     /// Video and audio parameters for AVDecoder when opening a new media file.
@@ -636,7 +644,10 @@ namespace VideoDisplay
 
     /// Schedules a seek. If the previous request is still waiting, new request will replace the old one
     /// @param req new seek request
-    virtual void seek(const SeekRequest & req) = 0;
+    /// @returns seek generation which is increased every time a seek request is made.
+    ///          Compare this to VideoDisplay::Timestamp::seekGeneration to deduce when
+    ///          the request has been completed.
+    virtual int seek(const SeekRequest & req) = 0;
     /// Special mode for low-latency seeking without buffering. This should be
     /// used only with certain UI elements, where the seeking target
     /// might change in real-time.
@@ -648,10 +659,12 @@ namespace VideoDisplay
 
     /// Shorthand for making a relative seek request
     /// @param pos relative position, value should be between 0 and 1
-    void seekRelative(double pos) { seek(SeekRequest(pos, SEEK_RELATIVE, SEEK_ANY_DIRECTION)); }
+    int seekRelative(double pos) { return seek(SeekRequest(pos, SEEK_RELATIVE)); }
     /// Shorthand for making absolute seeking request
     /// @param seconds timestamp in seconds
-    void seek(double seconds) { seek(SeekRequest(seconds, SEEK_BY_SECONDS, SEEK_ANY_DIRECTION)); }
+    /// @param accurate use more accurate and slower seeking mode
+    int seek(double seconds, bool accurate = false)
+    { return seek(SeekRequest(seconds, SEEK_BY_SECONDS, accurate ? SEEK_FLAG_ACCURATE : SEEK_FLAG_NONE)); }
 
     /// Decoded video resolution. Will return invalid Nimble::Size if
     /// isHeaderReady returns false, we are not decoding a video stream,

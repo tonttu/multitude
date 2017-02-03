@@ -217,7 +217,7 @@ namespace VideoDisplay
 
 
     FfmpegDecoder * m_host;
-    int m_seekGeneration;
+    int m_activeSeekGeneration;
 
     bool m_running;
 
@@ -228,6 +228,10 @@ namespace VideoDisplay
 
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
+    double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    double m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    // m_activeSeekGeneration will be set to this once the seeking is finished
+    int m_seekRequestGeneration = 0;
 
     AVDecoder::Options m_options;
     Radiant::TimeStamp m_pauseTimestamp;
@@ -265,7 +269,7 @@ namespace VideoDisplay
 
   FfmpegDecoder::D::D(FfmpegDecoder *decoder)
     : m_host(decoder),
-      m_seekGeneration(0),
+      m_activeSeekGeneration(0),
       m_running(true),
       m_av(),
       m_ptsCorrection(),
@@ -485,6 +489,9 @@ namespace VideoDisplay
     const QFileInfo sourceFileInfo(src);
 
     QByteArray errorMsg("FfmpegDecoder::D::open # " + src.toUtf8() + ":");
+
+    m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
     if(!m_options.demuxerOptions().isEmpty()) {
       for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
@@ -785,7 +792,7 @@ namespace VideoDisplay
       m_audioTransfer = audioTransfer;
       audioTransfer->setGain(m_audioGain);
       audioTransfer->setMinimizeLatency(m_minimiseAudioLatency);
-      audioTransfer->setSeekGeneration(m_seekGeneration);
+      audioTransfer->setSeekGeneration(m_activeSeekGeneration);
       audioTransfer->setPlayMode(m_options.playMode());
 
       static QAtomicInt counter;
@@ -890,10 +897,15 @@ namespace VideoDisplay
 
   void FfmpegDecoder::D::increaseSeekGeneration()
   {
-    ++m_seekGeneration;
+    if (m_seekRequestGeneration > m_activeSeekGeneration) {
+      m_activeSeekGeneration = m_seekRequestGeneration;
+    } else {
+      ++m_activeSeekGeneration;
+      m_seekRequestGeneration = m_activeSeekGeneration;
+    }
     AudioTransferPtr audioTransfer(m_audioTransfer);
     if(audioTransfer)
-      audioTransfer->setSeekGeneration(m_seekGeneration);
+      audioTransfer->setSeekGeneration(m_activeSeekGeneration);
     m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
     if(m_options.playMode() == PAUSE)
       m_pauseTimestamp = Radiant::TimeStamp::currentTime();
@@ -902,6 +914,9 @@ namespace VideoDisplay
   bool FfmpegDecoder::D::seek()
   {
     QByteArray errorMsg("FfmpegDecoder::D::seek # " + m_options.source().toUtf8() + ":");
+
+    m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
     if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
@@ -926,6 +941,9 @@ namespace VideoDisplay
     if(!seekByBytes) {
       if(m_seekRequest.type() == SEEK_BY_SECONDS) {
         pos = m_seekRequest.value() * AV_TIME_BASE;
+        if (m_seekRequest.flags() & SEEK_FLAG_ACCURATE) {
+          m_exactVideoSeekRequestPts = m_exactAudioSeekRequestPts = m_seekRequest.value();
+        }
       } else {
         assert(m_seekRequest.type() == SEEK_RELATIVE);
         if(m_av.formatContext->duration > 0) {
@@ -969,13 +987,14 @@ namespace VideoDisplay
       }
     }
 
-    int64_t minTs = m_seekRequest.direction() == SEEK_ONLY_FORWARD
-        ? pos : std::numeric_limits<int64_t>::min();
-    int64_t maxTs = m_seekRequest.direction() == SEEK_ONLY_BACKWARD
-        ? pos : std::numeric_limits<int64_t>::max();
-
+    int64_t minTs = 0, maxTs = std::numeric_limits<int64_t>::max();
+    if (m_seekRequest.flags() & SEEK_FLAG_FORWARD) {
+      minTs = pos;
+    } else {
+      maxTs = pos;
+    }
     int err = avformat_seek_file(m_av.formatContext, -1, minTs, pos, maxTs,
-                                 seekByBytes ? AVSEEK_FLAG_BYTE : 0);
+                                 seekByBytes ? AVSEEK_FLAG_BYTE : AVSEEK_FLAG_BACKWARD);
     if(err < 0) {
       Radiant::error("%s Seek failed", errorMsg.data());
       return false;
@@ -1017,6 +1036,14 @@ namespace VideoDisplay
           m_options.setVideoBufferFrames(m_decodedVideoFrames.size());
           continue;
         }
+      }
+
+      if (m_seekRequest.type() != SEEK_NONE) break;
+
+      // If we are not ready, then nobody is also releasing old decoded video frames
+      if (m_host->state() != STATE_READY) {
+        if (m_host->releaseOldVideoFrames(Timestamp(0, m_activeSeekGeneration)) > 0)
+          continue;
       }
 
       Radiant::Sleep::sleepMs(10);
@@ -1126,15 +1153,33 @@ namespace VideoDisplay
         avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersrc_add_ref/av_buffersrc_write_frame failed").
                 arg(m_options.source()), err);
       } else {
+        bool skip = false;
         while (true) {
-
           err = av_buffersink_get_frame(m_videoFilter.bufferSinkFilter, m_av.frame);
-          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
+          if (err == AVERROR(EAGAIN) || err == AVERROR_EOF) {
+            if (skip)
+              return false;
             break;
+          }
           if (err < 0) {
             avError(QString("FfmpegDecoder::D::decodeVideoPacket # %1: av_buffersink_read failed").
                     arg(m_options.source()), err);
             break;
+          }
+
+          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
+          /// but some filters just set it always to zero
+          if (m_av.frame->pts != (int64_t) AV_NOPTS_VALUE && m_av.frame->pts != 0) {
+            pts = m_av.frame->pts;
+            dpts = m_av.videoTsToSecs * m_av.frame->pts;
+          }
+
+          if (std::isfinite(m_exactVideoSeekRequestPts)) {
+            if (dpts < m_exactVideoSeekRequestPts) {
+              skip = true;
+              continue;
+            }
+            m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
           }
 
           frame = getFreeFrame(setTimestampToPts, dpts);
@@ -1165,15 +1210,8 @@ namespace VideoDisplay
             }
           }
 
-          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
-          /// but some filters just set it always to zero
-          if(frame->frame->pts != (int64_t) AV_NOPTS_VALUE && frame->frame->pts != 0) {
-            pts = frame->frame->pts;
-            dpts = m_av.videoTsToSecs * frame->frame->pts;
-          }
-
           frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
-          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
 
           VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
           if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
@@ -1185,13 +1223,20 @@ namespace VideoDisplay
             // this by allowing maximum difference of maxPtsReorderDiff
             /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
             increaseSeekGeneration();
-            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
             setTimestampToPts = false;
           }
           m_decodedVideoFrames.put();
         }
       }
     } else {
+      if (std::isfinite(m_exactVideoSeekRequestPts)) {
+        if (dpts < m_exactVideoSeekRequestPts) {
+          return false;
+        }
+        m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+      }
+
       frame = getFreeFrame(setTimestampToPts, dpts);
       if(!frame)
         return false;
@@ -1226,13 +1271,13 @@ namespace VideoDisplay
       frame->setImageBuffer(nullptr); /// Use AVFrames for this
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
-      frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+      frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
 
       VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
           lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
         increaseSeekGeneration();
-        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_seekGeneration));
+        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
         setTimestampToPts = false;
       }
       m_decodedVideoFrames.put();
@@ -1272,13 +1317,23 @@ namespace VideoDisplay
       }
 
       if(gotFrame) {
-        gotFrames = true;
         int64_t pts = guessCorrectPts(m_av.frame);
 
         dpts = m_av.audioTsToSecs * pts;
         nextDpts = dpts + double(m_av.frame->nb_samples) / m_av.frame->sample_rate;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
+
+        if (std::isfinite(m_exactAudioSeekRequestPts)) {
+          if (dpts < m_exactAudioSeekRequestPts) {
+            packet.data += consumedBytes;
+            packet.size -= consumedBytes;
+            continue;
+          }
+          m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        gotFrames = true;
 
         if(m_audioFilter.graph) {
 
@@ -1301,6 +1356,9 @@ namespace VideoDisplay
                     m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
               if(decodedAudioBuffer) break;
               if(!m_running) return gotFrames;
+
+              if (m_seekRequest.type() != SEEK_NONE) return false;
+
               Radiant::Sleep::sleepMs(10);
               // Make sure that we don't get stuck with a file that doesn't
               // have video frames in the beginning
@@ -1316,7 +1374,7 @@ namespace VideoDisplay
             }*/
 
             int64_t channel_layout = av_frame_get_channel_layout(m_av.frame);
-            decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_seekGeneration),
+            decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration),
                                          av_get_channel_layout_nb_channels(channel_layout),
                                          m_av.frame->nb_samples, (const float **)(m_av.frame->data));
             audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
@@ -1337,7 +1395,7 @@ namespace VideoDisplay
 
           int samples = m_av.frame->nb_samples;
 
-          decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_seekGeneration),
+          decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration),
                                    m_av.audioCodecContext->channels, samples,
                                    reinterpret_cast<const int16_t *>(m_av.frame->data[0]));
           audioTransfer->putReadyBuffer(samples);
@@ -1412,26 +1470,41 @@ namespace VideoDisplay
   {
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
+    /// If we are doing real-time seeking, we don't have a video frame buffer
+    /// and we don't care about av-sync, just show the latest frame we have decoded
     if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
       VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
       if(frame)
-        return Timestamp(frame->timestamp().pts() + 0.0001, m_d->m_seekGeneration);
+        return Timestamp(frame->timestamp().pts() + 0.0001, frame->timestamp().seekGeneration());
     }
 
+    /// Normally synchronize video to audio
     if(audioTransfer && !m_d->m_audioTrackHasEnded && audioTransfer->isEnabled()) {
       Timestamp t = audioTransfer->toPts(ts);
-      if(t.seekGeneration() < m_d->m_seekGeneration)
-        return Timestamp();
-      return t;
+      if (t.seekGeneration() == m_d->m_activeSeekGeneration)
+        return t;
+    }
+
+    if (m_d->m_options.playMode() == PAUSE) {
+      if (!std::isfinite(m_d->m_radiantTimestampToPts)) {
+        for (int i = 0; ; ++i) {
+          VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.readyItem(i);
+          if (!frame) break;
+
+          if (frame->timestamp().seekGeneration() < m_d->m_activeSeekGeneration)
+            continue;
+
+          return Timestamp(frame->timestamp().pts() + 0.0001, frame->timestamp().seekGeneration());
+        }
+      } else {
+        return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_activeSeekGeneration);
+      }
     }
 
     if(Nimble::Math::isNAN(m_d->m_radiantTimestampToPts))
       return Timestamp();
 
-    if(m_d->m_options.playMode() == PAUSE)
-      return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
-
-    return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_seekGeneration);
+    return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_activeSeekGeneration);
   }
 
   Timestamp FfmpegDecoder::latestDecodedVideoTimestamp() const
@@ -1475,8 +1548,9 @@ namespace VideoDisplay
       if(!frame)
         break;
 
-      if(frame->timestamp().seekGeneration() >= ts.seekGeneration() &&
-         frame->timestamp().pts() > ts.pts())
+      if(frame->timestamp().seekGeneration() > ts.seekGeneration() ||
+         (frame->timestamp().seekGeneration() == ts.seekGeneration() &&
+          frame->timestamp().pts() > ts.pts()))
         break;
     }
 
@@ -1617,9 +1691,11 @@ namespace VideoDisplay
     return m_d->m_av.duration;
   }
 
-  void FfmpegDecoder::seek(const SeekRequest & req)
+  int FfmpegDecoder::seek(const SeekRequest & req)
   {
+    int gen = ++m_d->m_seekRequestGeneration;
     m_d->m_seekRequest = req;
+    return gen;
   }
 
   bool FfmpegDecoder::realTimeSeeking() const
@@ -1646,9 +1722,11 @@ namespace VideoDisplay
 
     ffmpegInit();
 
-    if(!m_d->open()) {
-      state() = STATE_ERROR;
-      return;
+    if (state() != STATE_FINISHED) {
+      if (!m_d->open()) {
+        state() = STATE_ERROR;
+        return;
+      }
     }
     state() = STATE_HEADER_READY;
 
@@ -1688,7 +1766,7 @@ namespace VideoDisplay
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
-        if(frame && frame->timestamp().seekGeneration() == m_d->m_seekGeneration) {
+        if(frame && frame->timestamp().seekGeneration() == m_d->m_activeSeekGeneration) {
           /// frame done, give some break for this thread
           Radiant::Sleep::sleepMs(1);
           continue;
