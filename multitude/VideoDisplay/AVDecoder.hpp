@@ -279,7 +279,7 @@ namespace VideoDisplay
 
       /// @returns seeking flags
       SeekFlags flags() const { return m_flags; }
-      /// @param seeking flags
+      /// @param flags seeking flags
       void setFlags(SeekFlags flags) { m_flags = flags; }
 
     private:
@@ -662,7 +662,7 @@ namespace VideoDisplay
     int seekRelative(double pos) { return seek(SeekRequest(pos, SEEK_RELATIVE)); }
     /// Shorthand for making absolute seeking request
     /// @param seconds timestamp in seconds
-    /// @param use more accurate and slower seeking mode
+    /// @param accurate use more accurate and slower seeking mode
     int seek(double seconds, bool accurate = false)
     { return seek(SeekRequest(seconds, SEEK_BY_SECONDS, accurate ? SEEK_FLAG_ACCURATE : SEEK_FLAG_NONE)); }
 
