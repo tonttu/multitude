@@ -65,6 +65,16 @@ namespace VideoDisplay
             m_pts < ts.m_pts : m_seekGeneration < ts.m_seekGeneration;
     }
 
+    bool operator==(const Timestamp & ts) const
+    {
+      return m_pts == ts.m_pts && m_seekGeneration == ts.m_seekGeneration;
+    }
+
+    bool operator!=(const Timestamp & ts) const
+    {
+      return !operator==(ts);
+    }
+
   private:
     double m_pts;
     int m_seekGeneration;
@@ -634,7 +644,10 @@ namespace VideoDisplay
 
     /// Schedules a seek. If the previous request is still waiting, new request will replace the old one
     /// @param req new seek request
-    virtual void seek(const SeekRequest & req) = 0;
+    /// @returns seek generation which is increased every time a seek request is made.
+    ///          Compare this to VideoDisplay::Timestamp::seekGeneration to deduce when
+    ///          the request has been completed.
+    virtual int seek(const SeekRequest & req) = 0;
     /// Special mode for low-latency seeking without buffering. This should be
     /// used only with certain UI elements, where the seeking target
     /// might change in real-time.
@@ -646,12 +659,12 @@ namespace VideoDisplay
 
     /// Shorthand for making a relative seek request
     /// @param pos relative position, value should be between 0 and 1
-    void seekRelative(double pos) { seek(SeekRequest(pos, SEEK_RELATIVE)); }
+    int seekRelative(double pos) { return seek(SeekRequest(pos, SEEK_RELATIVE)); }
     /// Shorthand for making absolute seeking request
     /// @param seconds timestamp in seconds
     /// @param use more accurate and slower seeking mode
-    void seek(double seconds, bool accurate = false)
-    { seek(SeekRequest(seconds, SEEK_BY_SECONDS, accurate ? SEEK_FLAG_ACCURATE : SEEK_FLAG_NONE)); }
+    int seek(double seconds, bool accurate = false)
+    { return seek(SeekRequest(seconds, SEEK_BY_SECONDS, accurate ? SEEK_FLAG_ACCURATE : SEEK_FLAG_NONE)); }
 
     /// Decoded video resolution. Will return invalid Nimble::Size if
     /// isHeaderReady returns false, we are not decoding a video stream,

@@ -136,7 +136,7 @@ namespace VideoDisplay
 
   DecodedAudioBuffer * AudioTransfer::D::getReadyBuffer()
   {
-    while((m_playMode == AVDecoder::PLAY || m_seeking) && m_readyBuffers.load() > 0) {
+    while (m_readyBuffers.load() > 0) {
       DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
       if(buffer->timestamp().seekGeneration() < m_seekGeneration) {
         m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
@@ -192,7 +192,7 @@ namespace VideoDisplay
       return;
     }
 
-    if (m_d->m_minimizeLatency) {
+    if (m_d->m_minimizeLatency && m_d->m_playMode == AVDecoder::PLAY) {
       const int latencyCheckSecs = 3;
 
       if (m_d->m_latencyFrames == 0) {
@@ -248,15 +248,13 @@ namespace VideoDisplay
 
     while(remaining > 0) {
       DecodedAudioBuffer * decodedBuffer = m_d->getReadyBuffer();
-      if(!decodedBuffer) {
-        zero(out, m_d->m_channels, remaining, processed);
-        if (m_d->m_decodingFinished) {
-          setEnabled(false);
-        } else {
-          s_bufferUnderrun += remaining;
-        }
-        break;
-      } else {
+      if (decodedBuffer && m_d->m_playMode == AVDecoder::PAUSE &&
+          decodedBuffer->timestamp().seekGeneration() == m_d->m_usedSeekGeneration) {
+        // Paused, and decoded buffer seek generation matches used seek generation, nothing to do
+        decodedBuffer = nullptr;
+      }
+
+      if (decodedBuffer) {
         const int offset = decodedBuffer->offset();
         const int samples = std::min<int>(remaining, decodedBuffer->samples() - offset);
 
@@ -276,33 +274,50 @@ namespace VideoDisplay
 
           first = false;
         }
-        m_d->m_samplesInGeneration += samples;
 
-        // We could take the gain into account in the preprocessing stage,
-        // in another thread with more resources, but then changing gain
-        // would have a noticeably latency
-        const float gain = m_d->m_seeking ? m_d->m_gain * 0.35 : m_d->m_gain;
-        if(std::abs(gain - 1.0f) < 1e-5f) {
-          for(int channel = 0; channel < m_d->m_channels; ++channel)
-            memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
-        } else {
-          for(int channel = 0; channel < m_d->m_channels; ++channel) {
-            float * destination = out[channel] + processed;
-            const float * source = decodedBuffer->data(channel) + offset;
-            for(int s = 0; s < samples; ++s)
-              *destination++ = *source++ * gain;
+        if (m_d->m_playMode == AVDecoder::PLAY) {
+          m_d->m_samplesInGeneration += samples;
+
+          // We could take the gain into account in the preprocessing stage,
+          // in another thread with more resources, but then changing gain
+          // would have a noticeably latency
+          const float gain = m_d->m_seeking ? m_d->m_gain * 0.35 : m_d->m_gain;
+          if(std::abs(gain - 1.0f) < 1e-5f) {
+            for(int channel = 0; channel < m_d->m_channels; ++channel)
+              memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
+          } else {
+            for(int channel = 0; channel < m_d->m_channels; ++channel) {
+              float * destination = out[channel] + processed;
+              const float * source = decodedBuffer->data(channel) + offset;
+              for(int s = 0; s < samples; ++s)
+                *destination++ = *source++ * gain;
+            }
           }
-        }
 
-        processed += samples;
-        remaining -= samples;
+          processed += samples;
+          remaining -= samples;
 
-        if(offset + samples == decodedBuffer->samples()) {
-          m_d->bufferConsumed(samples, true);
+          if(offset + samples == decodedBuffer->samples()) {
+            m_d->bufferConsumed(samples, true);
+          } else {
+            m_d->bufferConsumed(samples, false);
+            decodedBuffer->setOffset(offset + samples);
+          }
         } else {
-          m_d->bufferConsumed(samples, false);
-          decodedBuffer->setOffset(offset + samples);
+          // We don't want to write this to the output, we just wanted to
+          // remove old samples with old seek generation from the queue
+          decodedBuffer = nullptr;
         }
+      }
+
+      if (!decodedBuffer) {
+        zero(out, m_d->m_channels, remaining, processed);
+        if (m_d->m_decodingFinished) {
+          setEnabled(false);
+        } else {
+          s_bufferUnderrun += remaining;
+        }
+        break;
       }
     }
   }
