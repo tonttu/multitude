@@ -188,7 +188,7 @@ namespace Luminous
     void initPostProcess(Luminous::PostProcessFilters & filters);
     void postProcess();
 
-    void processFilter(Luminous::PostProcessFilterPtr filter);
+    void processFilter(Luminous::PostProcessFilterPtr filter, Nimble::Rect filterRect);
     /// @endcond
 
     /// Returns transformation from the world coordinates (pixels) to projected eye
