@@ -45,7 +45,6 @@ namespace Valuable
     /// @param host host object
     /// @param name name of the value
     /// @param v the default/original value of the object
-    /// @param transit ignored
     AttributeT(Node * host, const QByteArray & name, const MatrixType & v = MatrixType::IDENTITY)
       : Base(host, name, v) {}
 

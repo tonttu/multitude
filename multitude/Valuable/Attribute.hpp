@@ -183,10 +183,6 @@ namespace Valuable
     @param name The name (or id) of this attribute. Names are typically
     human-readable. The names should not contain white-spaces
     as they may be used in XML files etc.
-
-    @param transit Should value changes be transmitted forward. This
-    is related to future uses, and can be largely ignored at the
-    moment.
     */
     Attribute(Node * host, const QByteArray & name);
     virtual ~Attribute();
@@ -453,7 +449,6 @@ namespace Valuable
     /// @param host host object
     /// @param name name of the value
     /// @param v the default value of the object
-    /// @param transit ignored
     AttributeBaseT(Node * host, const QByteArray & name, const T & v = T())
       : Attribute(host, name),
       m_transition(nullptr),
