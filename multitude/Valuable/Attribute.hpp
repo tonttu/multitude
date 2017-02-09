@@ -168,8 +168,7 @@ namespace Valuable
     Attribute();
 
     /// Create a copy of the given Attribute WITHOUT the link to host,
-    /// listeners, or the attribute name. So only the values and transit
-    /// parameter are copied.
+    /// listeners, or the attribute name. So only the values are copied.
     Attribute(const Attribute & o);
 
     /// @copydoc Attribute(const Attribute & o);
