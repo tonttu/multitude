@@ -34,7 +34,7 @@ namespace Valuable
       using Base::operator =;
 
       AttributeNumericT() : Base() {}
-      /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+      /// @copydoc Attribute::Attribute(Node *, const QString &)
       /// @param v The numeric value of this object.
       AttributeNumericT(Node * host, const QByteArray & name, T v)
       : Base(host, name, v)
