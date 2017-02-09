@@ -1705,16 +1705,6 @@ namespace Luminous
     }
   }
 
-  QByteArray str(Nimble::Recti r)
-  {
-    return QString("+%1+%2 @ %3x%4").arg(r.low().x).arg(r.low().y).arg(r.width()).arg(r.height()).toUtf8();
-  }
-
-  QByteArray str(Nimble::Vector2i v)
-  {
-    return QString("(%1, %2)").arg(v.x).arg(v.y).toUtf8();
-  }
-
   /// @todo handle 90/180 degree MultiHead Area rotations
   void RenderContext::processFilter(Luminous::PostProcessFilterPtr filter, Nimble::Rect filterRect)
   {
