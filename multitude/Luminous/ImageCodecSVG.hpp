@@ -33,8 +33,6 @@ public:
   virtual bool read(Image & image, QFile & file) OVERRIDE;
   /// not supported
   virtual bool write(const Image & image, QFile & file) OVERRIDE;
-private:
-  QSvgRenderer * updateSVG(QFile & file);
 };
 
 } // namespace Luminous
