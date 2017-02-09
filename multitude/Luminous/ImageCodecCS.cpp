@@ -43,6 +43,15 @@ bool ImageCodecCS::ping(ImageInfo & info, QFile & file)
   int offset = 0;
   file.read((char*)&offset, sizeof(offset));
 
+  QByteArray magic = file.peek(4);
+
+  // Hide warning messages from QByteArray constructor and bd.readString by
+  // checking for string marker manually
+  if (magic.size() != 4 || *reinterpret_cast<uint32_t*>(magic.data()) !=
+      Radiant::BinaryData::STRING_MARKER) {
+    return false;
+  }
+
   QByteArray buffer = file.read(offset);
   bd.linkTo(buffer.data(), buffer.size());
   bd.setTotal(buffer.size());

@@ -621,33 +621,35 @@ namespace Luminous
   {
     initDefaultImageCodecs();
 
-    bool result = false;
-
     clear();
 
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly)) {
       Radiant::error("Image::read # failed to open file '%s'", filename.toUtf8().data());
-      // m_ready = true;
       return false;
     }
 
     auto codec = codecs()->getCodec(filename, &file);
     if (codec) {
+      bool ok = false;
       try {
-        result = codec->read(*this, file);
+        ok = codec->read(*this, file);
       } catch (std::bad_alloc & err) {
         Radiant::error("Image::read # %s: %s", filename.toUtf8().data(), err.what());
-        result = false;
+      }
+
+      if (!ok) {
+        // Clean up in case the codec already modified something
+        clear();
+        return false;
       }
     } else {
       Radiant::error("Image::read # no suitable codec found for '%s'", filename.toUtf8().data());
+      return false;
     }
     file.close();
 
     changed();
-
-    // m_ready = true;
 
     if(m_texture)
       m_texture->setData(width(), height(), pixelFormat(), m_data);
@@ -656,7 +658,7 @@ namespace Luminous
       toPreMultipliedAlpha();
     }
 
-    return result;
+    return true;
   }
 
   bool Image::write(const QString & filename) const
