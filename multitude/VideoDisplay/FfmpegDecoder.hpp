@@ -27,7 +27,7 @@ namespace VideoDisplay
     virtual PlayMode playMode() const OVERRIDE;
     virtual void setPlayMode(PlayMode mode) OVERRIDE;
 
-    virtual void seek(const SeekRequest & req) OVERRIDE;
+    virtual int seek(const SeekRequest & req) OVERRIDE;
     virtual bool realTimeSeeking() const OVERRIDE;
     virtual void setRealTimeSeeking(bool value) OVERRIDE;
 
