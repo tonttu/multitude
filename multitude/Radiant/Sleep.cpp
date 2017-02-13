@@ -66,6 +66,17 @@ namespace Radiant {
           break;
         }
 
+        // ::Sleep on windows has typically 15 ms accuracy, and the function
+        // usually sleeps at most 15 ms more than wanted. So if we want to
+        // sleep 1 second, call ::Sleep(985) and use multimedia timers for the
+        // rest. Generally ::Sleep is nicer than multimedia timers, since
+        // multimedia timers might end up doing busy-looping.
+        uint64_t sleepMs = (usecs - elapsed) / 1000;
+        if (sleepMs > 15) {
+          ::Sleep(sleepMs - 15);
+          continue;
+        }
+
         uint64_t sleepUs = std::min<uint64_t>(tc.wPeriodMax * 1000, usecs - elapsed);
         // We can't get under 1 ms accuracy using multimedia timers, use sleep(0)
         // on the computer, but on the other hand, ::Sleep(0) can take significantly
@@ -75,8 +86,15 @@ namespace Radiant {
         } else {
           auto id = timeSetEvent(sleepUs / 1000, 0, (LPTIMECALLBACK)t_event.handle, 0,
                                  TIME_ONESHOT | TIME_CALLBACK_EVENT_SET);
-          WaitForSingleObject(t_event.handle, INFINITE);
-          timeKillEvent(id);
+
+          // There can be at most 16 threads using time events. If this fails, fall
+          // back to ::Sleep
+          if (id == 0) {
+            ::Sleep(sleepMs > 15 ? sleepMs - 15 : 1);
+          } else {
+            WaitForSingleObject(t_event.handle, INFINITE);
+            timeKillEvent(id);
+          }
         }
       }
    }

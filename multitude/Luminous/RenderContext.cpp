@@ -318,6 +318,8 @@ namespace Luminous
 
     bool m_supports_GL_NVX_gpu_memory_info;
     bool m_supports_GL_ATI_meminfo;
+
+    Radiant::TimeStamp m_frameTime;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1374,6 +1376,11 @@ namespace Luminous
     return result[0];
   }
 
+  Radiant::TimeStamp RenderContext::frameTime() const
+  {
+    return m_data->m_frameTime;
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
   // 
@@ -1493,8 +1500,9 @@ namespace Luminous
     return (m_data->m_blockObjectsStack.top() & mask) != 0;
   }
 
-  void RenderContext::beginFrame()
+  void RenderContext::beginFrame(Radiant::TimeStamp frameTime)
   {
+    m_data->m_frameTime = frameTime;
     if(m_data->m_postProcessFilters) {
       m_data->createPostProcessFilters(*this, *m_data->m_postProcessFilters);
       // Reorders the chain is necessary

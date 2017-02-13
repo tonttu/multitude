@@ -173,7 +173,7 @@ namespace Luminous
     bool initialize();
 
     /// Called once for every frame before rendering. For internal implementation.
-    void beginFrame();
+    void beginFrame(Radiant::TimeStamp frameTime);
     /// Called once for every frame after rendering. For internal implementation.
     void endFrame();
 
@@ -614,6 +614,10 @@ namespace Luminous
     /// Returns approximate of total available GPU memory
     /// @return approximate of total GPU memory in kilobytes
     GLint maximumGPUMemory();
+
+    /// Time at the beginning of this frame, typically same as
+    /// MultiWidgets::FrameInfo::currentTime on the same frame
+    Radiant::TimeStamp frameTime() const;
 
   private:
 
