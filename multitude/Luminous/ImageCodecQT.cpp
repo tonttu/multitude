@@ -151,7 +151,16 @@ namespace Luminous
     } else {
       Nimble::Size size;
       PixelFormat pf;
-      ok = checkFormat(r.imageFormat(), r.size(), pf, size);
+      /// Some ImageReader plugins like gif don't support image format scanning
+      /// without actually reading the image
+      if (r.imageFormat() == QImage::Format_Invalid && !r.size().isEmpty()) {
+        QImage img = r.read();
+        if (!img.isNull()) {
+          ok = checkFormat(img.format(), img.size(), pf, size);
+        }
+      } else {
+        ok = checkFormat(r.imageFormat(), r.size(), pf, size);
+      }
       if (ok) {
         info.pf = pf;
         info.width = size.width();
