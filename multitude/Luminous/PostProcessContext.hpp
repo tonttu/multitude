@@ -32,12 +32,16 @@ namespace Luminous
     /// Initializes the filter. By default attaches a color and depth attachments
     /// to the frame buffer and resizes the frame buffer and attachments.
     /// @param rc Context of the current render thread
-    void initialize(Luminous::RenderContext & rc);
+    /// @param size FBO size in pixels
+    void initialize(Luminous::RenderContext & rc, Nimble::Size size);
 
     /// Performs the filtering operation by setting the style values and
     /// calling PostProcessFilter::filter()
     /// @param rc Context of the current render thread
-    void doFilter(Luminous::RenderContext & rc);
+    /// @param textureMatrix Matrix that is assigned to "texMatrix" fill shader uniform.
+    ///                      This is used by the filter shader to map the filter texture
+    ///                      coordinates to FBO texture coordinates.
+    void doFilter(Luminous::RenderContext & rc, Nimble::Matrix3f textureMatrix = Nimble::Matrix3f::IDENTITY);
 
     /// Checks if the filter is enabled, disabled filters will be skipped.
     /// @return true if enabled, false otherwise.

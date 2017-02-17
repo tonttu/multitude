@@ -23,7 +23,7 @@ namespace Valuable
   public:
     using AttributeBaseT<bool>::operator =;
 
-    /// @copydoc Attribute::Attribute(Node *, const QString &, bool transit)
+    /// @copydoc Attribute::Attribute(Node *, const QString &)
     /// @param value The value of this object
     AttributeT(Node * host = nullptr, const QByteArray &name = QByteArray(), bool value = false);
     virtual ~AttributeT();

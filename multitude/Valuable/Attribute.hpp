@@ -173,8 +173,7 @@ namespace Valuable
     Attribute();
 
     /// Create a copy of the given Attribute WITHOUT the link to host,
-    /// listeners, or the attribute name. So only the values and transit
-    /// parameter are copied.
+    /// listeners, or the attribute name. So only the values are copied.
     Attribute(const Attribute & o);
 
     /// @copydoc Attribute(const Attribute & o);
@@ -465,7 +464,6 @@ namespace Valuable
     /// @param host host object
     /// @param name name of the value
     /// @param v the default value of the object
-    /// @param transit ignored
     AttributeBaseT(Node * host, const QByteArray & name, const T & v = T())
       : Attribute(host, name),
       m_transition(nullptr),

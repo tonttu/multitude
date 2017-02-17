@@ -19,15 +19,21 @@
 #include <QXmlStreamReader>
 #include <QPainter>
 
-/* On Mac OS X, with Qt 4.7.0, it seems that QT_NO_SVGRENDERER gets defined by
-   someone. Lets do our best to undefine it.   */
-#ifdef QT_NO_SVGRENDERER
-# undef QT_NO_SVGRENDERER
-#endif
-
 #include <QSvgRenderer>
 
-namespace Luminous {
+namespace Luminous
+{
+  std::unique_ptr<QSvgRenderer> createRenderer(QFile & file)
+  {
+    qint64 old = file.pos();
+    QXmlStreamReader reader(&file);
+    std::unique_ptr<QSvgRenderer> renderer(new QSvgRenderer(&reader));
+    file.seek(old);
+    return renderer;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   ImageCodecSVG::ImageCodecSVG()
   {
@@ -71,10 +77,9 @@ namespace Luminous {
 
   bool ImageCodecSVG::ping(ImageInfo & info, QFile & file)
   {
+    std::unique_ptr<QSvgRenderer> r = createRenderer(file);
 
-    std::unique_ptr<QSvgRenderer> r(updateSVG(file));
-
-    if (!r || !r->isValid()) {
+    if (!r || !r->isValid() || r->defaultSize().isEmpty()) {
       return false;
     }
 
@@ -83,24 +88,32 @@ namespace Luminous {
 
     info.width = r->defaultSize().width();
     info.height = r->defaultSize().height();
+
     return true;
   }
 
   bool ImageCodecSVG::read(Image & image, QFile & file)
   {
-    QSvgRenderer * r = updateSVG(file);
+    std::unique_ptr<QSvgRenderer> r = createRenderer(file);
+
+    if (!r || !r->isValid() || r->defaultSize().isEmpty()) {
+      return false;
+    }
 
     int width = r->defaultSize().width();
     int height = r->defaultSize().height();
-    image.allocate(width, height, PixelFormat::rgbaUByte());
-
     QImage img(width, height, QImage::Format_ARGB32);
+
+    // This might happen if the image size is too big
+    if (img.isNull()) {
+      return false;
+    }
+
+    image.allocate(width, height, PixelFormat::rgbaUByte());
     img.fill(0x00000000);
     QPainter painter(&img);
     r->render(&painter);
     painter.end();
-
-    delete r;
 
     const uint8_t * src = img.bits();
     const uint8_t * last = img.bits() + 4*img.width() * img.height();
@@ -121,15 +134,6 @@ namespace Luminous {
   bool ImageCodecSVG::write(const Image & /*image*/, QFile & /*file*/)
   {
     return false;
-  }
-
-  QSvgRenderer * ImageCodecSVG::updateSVG(QFile & file)
-  {
-    qint64 old = file.pos();
-    QXmlStreamReader reader(&file);
-    QSvgRenderer * renderer = new QSvgRenderer(&reader);
-    file.seek(old);
-    return renderer;
   }
 
 } // namespace Luminous
