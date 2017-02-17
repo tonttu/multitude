@@ -130,6 +130,13 @@ namespace VideoDisplay
   {
   public:
     VideoFrameFfmpeg() : VideoFrame(), frame(nullptr) {}
+    ~VideoFrameFfmpeg()
+    {
+      if (frame) {
+        av_frame_free(&frame);
+      }
+    }
+
     AVFrame* frame;
   };
 
@@ -845,7 +852,7 @@ namespace VideoDisplay
     if(m_av.formatContext)
       avformat_close_input(&m_av.formatContext);
 
-    av_free(m_av.frame);
+    av_frame_free(&m_av.frame);
 
     AudioTransferPtr audioTransfer(m_audioTransfer);
     m_audioTransfer.reset();
