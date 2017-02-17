@@ -23,6 +23,7 @@ namespace Radiant
     RADIANT_API static std::pair<std::size_t, std::size_t> fillAll();
     RADIANT_API static Radiant::TaskPtr createFillTask();
     RADIANT_API static void setAllPoolSizes(std::size_t size);
+    RADIANT_API static void clearAll();
 
   private:
     std::size_t m_poolSize;
