@@ -47,7 +47,7 @@ bool ImageCodecCS::ping(ImageInfo & info, QFile & file)
 
   // Hide warning messages from QByteArray constructor and bd.readString by
   // checking for string marker manually
-  if (magic.size() != 4 || *reinterpret_cast<uint32_t*>(magic.data()) !=
+  if (magic.size() != 4 || *reinterpret_cast<int32_t*>(magic.data()) !=
       Radiant::BinaryData::STRING_MARKER) {
     return false;
   }
