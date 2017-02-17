@@ -165,7 +165,7 @@ namespace Luminous
 
         if(context) {
           // By default resizes new frame buffers to current context size
-          context->initialize(rc);
+          context->initialize(rc, rc.contextSize());
           m_postProcessChain.insert(context);
         }
       }
@@ -1643,7 +1643,7 @@ namespace Luminous
 
           auto context = std::make_shared<Luminous::PostProcessContext>(filter);
 
-          context->initialize(*this);
+          context->initialize(*this, contextSize());
           m_data->m_postProcessChain.insert(context);
         }
       }
@@ -1713,19 +1713,37 @@ namespace Luminous
     }
   }
 
-  void RenderContext::processFilter(Luminous::PostProcessFilterPtr filter)
+  /// @todo handle 90/180 degree MultiHead Area rotations
+  void RenderContext::processFilter(Luminous::PostProcessFilterPtr filter, Nimble::Rect filterRect)
   {
+    // filterRect is the area we are applying this filter. Transform it to gfx coordinates.
+    filterRect.transform(transform3());
+
+    Nimble::Rect areaBounds = area()->graphicsBounds();
+
+    // This is the visible part of filterRect in the current area
+    Nimble::Recti visibleAreaRect = areaBounds.intersection(filterRect).cast<int>();
+
+    // Nothing to do?
+    if (visibleAreaRect.width() <= 0 || visibleAreaRect.height() <= 0)
+      return;
+
+    Nimble::Rect windowBounds = window()->graphicsBounds();
+    Nimble::Recti visibleWindowRect = windowBounds.intersection(filterRect).cast<int>();
+    // In the post processing framework each context (window) has its own FBO
+    // for each filter. Optimize the FBO size by using the visible part
+    // of the window (union of all visible areas).
+    Nimble::Size fboSize = visibleWindowRect.size();
+
     auto filterCtx = m_data->m_postProcessChain.get(filter);
 
     // Create the context for the filter if necessary
     if(!filterCtx) {
       filterCtx = std::make_shared<PostProcessContext>(filter);
-      filterCtx->initialize(*this);
+      filterCtx->initialize(*this, fboSize);
 
       m_data->m_postProcessChain.insert(filterCtx);
     }
-
-    const Nimble::Recti viewport = area()->viewport();
 
     assert(!m_data->m_frameBufferStack.empty());
 
@@ -1733,15 +1751,32 @@ namespace Luminous
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DRAW);
     {
       Luminous::FrameBufferGuard bufferGuard(*this, filterCtx->frameBuffer());
-      blit(viewport, viewport, CLEARMASK_COLOR_DEPTH_STENCIL);
+      Nimble::Recti src(Nimble::Vector2i(visibleAreaRect.low().x - windowBounds.low().x,
+                                         window()->height() + windowBounds.low().y - visibleAreaRect.high().y),
+                        visibleAreaRect.size());
+      Nimble::Recti dest(Nimble::Vector2i(visibleAreaRect.low().x - visibleWindowRect.low().x,
+                                          visibleWindowRect.height() - (visibleAreaRect.high().y - visibleWindowRect.low().y)),
+                         visibleAreaRect.size());
+
+      // dest is in the FBO coordinates (see fboSize), src in window coordinates
+      blit(src, dest, CLEARMASK_COLOR_DEPTH_STENCIL);
     }
+
     filterCtx->frameBuffer().setTargetBind(FrameBuffer::BIND_DEFAULT);
 
-    // Push the original frame buffer
-    {
-      Luminous::FrameBufferGuard bufferGuard(*this, currentFrameBuffer());
-      filterCtx->doFilter(*this);
-    }
+    // Finally calculate a texture matrix that can be used in a fragment shader.
+    // If you render filterRect to screen with normal UV coordinates from 0 to 1,
+    // this matrix can be used to access this area's part of the window FBO texture
+    // correctly
+    auto diff = filterRect.low() - visibleWindowRect.low().cast<float>();
+
+    // (0, 1) translation and scale (1, -1) are flipping the Y axis
+    Nimble::Matrix3f uvm = Nimble::Matrix3f::makeTranslation(0, 1) *
+        Nimble::Matrix3f::makeScale(filterRect.width() / visibleWindowRect.width(),
+                                    -filterRect.height() / visibleWindowRect.height()) *
+        Nimble::Matrix3f::makeTranslation(diff.x/filterRect.width(), diff.y/filterRect.height());
+
+    filterCtx->doFilter(*this, uvm);
   }
 
   bool RenderContext::initialize()

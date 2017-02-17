@@ -44,22 +44,23 @@ namespace Luminous
     delete m_d;
   }
 
-  void PostProcessContext::initialize(RenderContext & rc)
+  void PostProcessContext::initialize(RenderContext & rc, Nimble::Size size)
   {
     m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_texture);
     m_d->m_frameBuffer.attach(GL_DEPTH_STENCIL_ATTACHMENT, m_d->m_depthStencilBuffer);
 
-    m_d->m_frameBuffer.setSize(rc.contextSize());
+    m_d->m_frameBuffer.setSize(size);
 
     m_d->m_filter->initialize(rc, *this);
   }
 
-  void PostProcessContext::doFilter(Luminous::RenderContext & rc)
+  void PostProcessContext::doFilter(Luminous::RenderContext & rc, Nimble::Matrix3f textureMatrix)
   {
     Luminous::Style style;
 
     style.setFillColor(1.0f, 1.0f, 1.0f, 1.0f);
     style.setTexture("tex", texture());
+    style.setFillShaderUniform("texMatrix", textureMatrix);
 
     m_d->m_filter->filter(rc, *this, style);
   }
