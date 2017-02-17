@@ -80,32 +80,6 @@ namespace VideoDisplay
     int m_seekGeneration;
   };
 
-  class DecodedImageBuffer
-  {
-  public:
-    typedef std::vector<uint8_t, Radiant::aligned_allocator<uint8_t, 32>> AlignedData;
-
-  public:
-    DecodedImageBuffer() {}
-
-    void ref() { m_refcount.ref(); }
-    bool deref() { return m_refcount.deref(); }
-
-    QAtomicInt & refcount() { return m_refcount; }
-    const QAtomicInt & refcount() const { return m_refcount; }
-
-    AlignedData & data() { return m_data; }
-    const AlignedData & data() const { return m_data; }
-
-  private:
-    QAtomicInt m_refcount;
-    AlignedData m_data;
-
-  private:
-    DecodedImageBuffer(const DecodedImageBuffer &);
-    DecodedImageBuffer & operator=(DecodedImageBuffer &);
-  };
-
   class VideoFrame
   {
   public:
@@ -123,7 +97,6 @@ namespace VideoDisplay
   public:
     VideoFrame()
       : m_imageSize(0, 0),
-        m_imageBuffer(nullptr),
         m_format(UNKNOWN),
         m_planes(0),
         m_index(-1)
@@ -156,10 +129,6 @@ namespace VideoDisplay
       return m_lineSize[plane] * m_planeSize[plane].y;
     }
 
-    DecodedImageBuffer * imageBuffer() { return m_imageBuffer; }
-    const DecodedImageBuffer * imageBuffer() const { return m_imageBuffer; }
-    void setImageBuffer(DecodedImageBuffer * imageBuffer) { m_imageBuffer = imageBuffer; }
-
     Format format() const { return m_format; }
     void setFormat(Format format) { m_format = format; }
 
@@ -180,8 +149,6 @@ namespace VideoDisplay
     std::array<Nimble::Vector2i, 4> m_planeSize;
     std::array<int, 4> m_lineSize;
     std::array<const uint8_t *, 4> m_data;
-
-    DecodedImageBuffer * m_imageBuffer;
 
     Format m_format;
     int m_planes;

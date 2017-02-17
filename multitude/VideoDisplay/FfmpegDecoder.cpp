@@ -224,8 +224,6 @@ namespace VideoDisplay
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
 
-    Utils::MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
-
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
     double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
@@ -1193,7 +1191,6 @@ namespace VideoDisplay
 
           av_frame_ref(frame->frame, m_av.frame);
 
-          frame->setImageBuffer(nullptr);
           frame->setIndex(m_index++);
 
           auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
@@ -1267,8 +1264,6 @@ namespace VideoDisplay
         frame->setLineSize(i, frame->frame->linesize[i]);
         frame->setData(i, frame->frame->data[i]);
       }
-
-      frame->setImageBuffer(nullptr); /// Use AVFrames for this
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
