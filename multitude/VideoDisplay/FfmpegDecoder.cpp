@@ -841,16 +841,21 @@ namespace VideoDisplay
       avfilter_graph_free(&m_audioFilter.graph);
 
     // Close the codecs
-    if(m_av.audioCodecContext || m_av.videoCodecContext) {
-      if(m_av.audioCodecContext)
-        avcodec_close(m_av.audioCodecContext);
-      if(m_av.videoCodecContext)
-        avcodec_close(m_av.videoCodecContext);
+    if (m_av.audioCodecContext) {
+      avcodec_close(m_av.audioCodecContext);
+      m_av.audioCodecContext = nullptr;
+    }
+    if (m_av.videoCodecContext) {
+      avcodec_close(m_av.videoCodecContext);
+      m_av.videoCodecContext = nullptr;
     }
 
     // Close the video file
     if(m_av.formatContext)
       avformat_close_input(&m_av.formatContext);
+
+    m_av.videoCodec = nullptr;
+    m_av.audioCodec = nullptr;
 
     av_frame_free(&m_av.frame);
 
