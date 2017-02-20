@@ -130,6 +130,13 @@ namespace VideoDisplay
   {
   public:
     VideoFrameFfmpeg() : VideoFrame(), frame(nullptr) {}
+    ~VideoFrameFfmpeg()
+    {
+      if (frame) {
+        av_frame_free(&frame);
+      }
+    }
+
     AVFrame* frame;
   };
 
@@ -223,8 +230,6 @@ namespace VideoDisplay
 
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
-
-    Utils::MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
 
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
@@ -852,8 +857,7 @@ namespace VideoDisplay
     m_av.videoCodec = nullptr;
     m_av.audioCodec = nullptr;
 
-    av_free(m_av.frame);
-    m_av.frame = nullptr;
+    av_frame_free(&m_av.frame);
 
     AudioTransferPtr audioTransfer(m_audioTransfer);
     m_audioTransfer.reset();
@@ -1199,7 +1203,6 @@ namespace VideoDisplay
 
           av_frame_ref(frame->frame, m_av.frame);
 
-          frame->setImageBuffer(nullptr);
           frame->setIndex(m_index++);
 
           auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
@@ -1273,8 +1276,6 @@ namespace VideoDisplay
         frame->setLineSize(i, frame->frame->linesize[i]);
         frame->setData(i, frame->frame->data[i]);
       }
-
-      frame->setImageBuffer(nullptr); /// Use AVFrames for this
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
