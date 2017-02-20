@@ -43,4 +43,10 @@ namespace Radiant
     }
   }
 
+  void ObjectPool::clearAll()
+  {
+    for (auto p: s_pools)
+      p->clear();
+  }
+
 } // namespace Radiant
