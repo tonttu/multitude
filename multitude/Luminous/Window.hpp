@@ -25,7 +25,7 @@ class QOpenGLContext;
 namespace Luminous
 {
 
-  /// Virtual base classes for OpenGL windows
+  /// OpenGL window class
   class LUMINOUS_API Window : public QWindow
   {
     Q_OBJECT
@@ -59,16 +59,13 @@ namespace Luminous
     /// @param thread thread to move the OpenGL context to
     void setOpenGLThreadAffinity(QThread* thread);
 
-    /// Attempt to create an OpenGL context for this window with the given
-    /// surface format.
-    /// @param surfaceFormat surface format for the context
-    /// @return true if context
-    bool createOpenGLContext(const QSurfaceFormat& surfaceFormat);
+    /// Attempt to create an OpenGL context for this window with the window
+    /// surface format
+    /// @return true if context was created successfully
+    bool createOpenGLContext();
 
-    /// Returns the format of the OpenGL context, if the context has been
-    /// created.
-    /// @return OpenGL context format
-    QSurfaceFormat format() const override;
+    /// @return OpenGL context for this window
+    QOpenGLContext * context() const;
 
   signals:
     void closed();

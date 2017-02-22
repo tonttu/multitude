@@ -115,7 +115,7 @@ namespace Luminous
     uint64_t m_frame;             // Current frame number
     double m_fps;                 // Frames per second
 
-    // GPU id (AMD_gpu_association)
+    // GPU id (AMD_gpu_association or other unique way of referring to the GPU)
     unsigned int m_gpuId;
 
     OpenGLAPI& m_opengl;

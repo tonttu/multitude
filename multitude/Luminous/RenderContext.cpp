@@ -45,14 +45,13 @@ namespace Luminous
     /// Optimal value for BUFFERSETS is actually dependent on glFinish
     /// in RenderThread, see comment there.
     enum { MAX_TEXTURES = 64, BUFFERSETS = 1 };
-    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win, unsigned gpuId)
+    Internal(RenderDriver & renderDriver, const Luminous::MultiHead::Window * win)
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_renderCount(0)
         , m_unfinishedRenderCount(0)
         , m_frameCount(0)
         , m_area(0)
         , m_window(win)
-        , m_gpuId(gpuId)
         , m_initialized(false)
         , m_uniformBufferOffsetAlignment(0)
         , m_automaticDepthDiff(-1.0f/100000.0f)
@@ -190,8 +189,6 @@ namespace Luminous
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
 
-    unsigned m_gpuId;
-
     Transformer m_viewTransformer;
 
     bool m_initialized;
@@ -325,9 +322,9 @@ namespace Luminous
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
 
-  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win, unsigned gpuId)
+  RenderContext::RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * win)
       : Transformer(),
-      m_data(new Internal(driver, win, gpuId))
+      m_data(new Internal(driver, win))
   {
     // This requires current OpenGL context
     initializeOpenGLFunctions();
@@ -362,11 +359,6 @@ namespace Luminous
   const Luminous::MultiHead::Area * RenderContext::area() const
   {
     return m_data->m_area;
-  }
-
-  unsigned RenderContext::gpuId() const
-  {
-    return m_data->m_gpuId;
   }
 
   void RenderContext::pushViewTransform(const Nimble::Matrix4 & m)

@@ -146,8 +146,7 @@ namespace Luminous
     /// Constructs a new render context and associates the given resources to it
     /// @param driver render driver to use
     /// @param window window to associate this context with
-    /// @param gpuId Native GPU id this render context is associated with
-    RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0, unsigned gpuId = 0);
+    RenderContext(Luminous::RenderDriver & driver, const Luminous::MultiHead::Window * window = 0);
     /// Closes this render context. Invalidates all GL resources tied to this context.
     /// However note, that CPU equivalents of GL classes are still valid.
     virtual ~RenderContext();
@@ -164,9 +163,6 @@ namespace Luminous
     /// Returns the current area.
     /// @return Pointer to current area
     const Luminous::MultiHead::Area * area() const;
-
-    /// Returns a gpu id associated with this render context
-    unsigned gpuId() const;
 
     /// Initializes the context. Is called automatically by rendering thread.
     /// @return Was the initialization succesful.
