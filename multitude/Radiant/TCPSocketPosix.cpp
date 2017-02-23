@@ -301,7 +301,18 @@ namespace Radiant
     pfd.events = POLLWRNORM;
     int status = SocketWrapper::poll(&pfd, 1, 0);
     if(status == -1) {
-      Radiant::error("TCPSocket::isHungUp %s", SocketWrapper::strerror(SocketWrapper::err()));
+      auto e = SocketWrapper::err();
+      Radiant::debug("TCPSocket::isHungUp %s", SocketWrapper::strerror(e));
+
+      if (e == ENOBUFS || e == ENOMEM || e == EINTR) {
+        // Poll function call failed temporarily. There is no reason to believe
+        // that the socket has been disconnected.
+        return false;
+      }
+
+      // Any other error means that we gave invalid parameters to poll, which
+      // means a bug in this code or the socket has been closed.
+      return true;
     }
 
     return (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
