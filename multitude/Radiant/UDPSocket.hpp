@@ -102,6 +102,9 @@ namespace Radiant
 #ifdef RADIANT_LINUX
     /// @returns timestamp of the last packet read
     Radiant::TimeStamp timestamp() const;
+
+    /// @return file descriptor of the socket, or -1 if invalid
+    int fd() const;
 #endif
 
   private:
