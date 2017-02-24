@@ -251,5 +251,11 @@ namespace Radiant
     tmp |= (int64_t) (tv.tv_usec * (TimeStamp::FRACTIONS_PER_SECOND * 0.000001));
     return TimeStamp(tmp);
   }
+
+  int UDPSocket::fd() const
+  {
+    return m_d->m_fd;
+  }
+
 #endif
 }
