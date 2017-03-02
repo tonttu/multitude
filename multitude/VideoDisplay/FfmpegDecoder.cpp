@@ -1056,7 +1056,7 @@ namespace VideoDisplay
           continue;
       }
 
-      Radiant::Sleep::sleepMs(10);
+      Radiant::Sleep::sleepSome(0.01);
     }
     return nullptr;
   }
@@ -1366,7 +1366,7 @@ namespace VideoDisplay
 
               if (m_seekRequest.type() != SEEK_NONE) return false;
 
-              Radiant::Sleep::sleepMs(10);
+              Radiant::Sleep::sleepSome(0.01);
               // Make sure that we don't get stuck with a file that doesn't
               // have video frames in the beginning
               audioTransfer->setEnabled(true);
@@ -1397,7 +1397,7 @@ namespace VideoDisplay
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!m_running) return gotFrames;
-            Radiant::Sleep::sleepMs(10);
+            Radiant::Sleep::sleepSome(0.01);
           }
 
           int samples = m_av.frame->nb_samples;
@@ -1775,7 +1775,7 @@ namespace VideoDisplay
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
         if(frame && frame->timestamp().seekGeneration() == m_d->m_activeSeekGeneration) {
           /// frame done, give some break for this thread
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
       }
@@ -1789,7 +1789,7 @@ namespace VideoDisplay
         ///
         // With streams we might randomly get EAGAIN, at least on linux
         if(err == AVERROR(EAGAIN)) {
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         } else
         if(err != AVERROR_EOF) {
@@ -1804,7 +1804,7 @@ namespace VideoDisplay
             lastError = err;
           }
           ++consecutiveErrorCount;
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
 
@@ -1827,7 +1827,7 @@ namespace VideoDisplay
         /// @todo refactor eof handling away
 
         if(m_d->m_realTimeSeeking) {
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
         if(m_d->m_options.isLooping()) {
