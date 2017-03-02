@@ -594,7 +594,7 @@ namespace Luminous
 
     // By default render to back buffer
     std::vector<GLenum> buffers;
-    buffers.push_back(GL_BACK);
+    buffers.push_back(GL_BACK_LEFT);
     setDrawBuffers(buffers);
 
     // Enable scissor test
