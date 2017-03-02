@@ -62,7 +62,7 @@ namespace Valuable
       {
         layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
         m_exprs[layer].reset();
-        this->setValue(v, layer);
+        Base::setValue(v, layer);
         return true;
       }
       /// @copydoc set
@@ -74,7 +74,7 @@ namespace Valuable
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
         } else {
-          this->setValue(v, layer);
+          Base::setValue(v, layer);
         }
         return true;
       }
@@ -84,7 +84,7 @@ namespace Valuable
         layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
         if (value.size() == 1 && value.type() == StyleValue::TYPE_EXPR) {
           m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
-          this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
+          Base::setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
           return true;
         } else {
           return Base::set(value, layer);
@@ -98,7 +98,7 @@ namespace Valuable
             l = Attribute::Layer(l + 1)) {
           if(!this->isValueDefinedOnLayer(l)) continue;
           if(m_exprs[l]) {
-            this->setValue(m_exprs[l]->evaluate(&m_src, 1), l);
+            Base::setValue(m_exprs[l]->evaluate(&m_src, 1), l);
           }
         }
       }
@@ -109,7 +109,7 @@ namespace Valuable
         SimpleExpression expr(factor);
         expr.replace(SimpleExpression::OP_MUL, SimpleExpression::Param(0));
         m_exprs[layer].reset(new SimpleExpression(expr));
-        this->setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
+        Base::setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
       }
 
       float percentage(Attribute::Layer layer) const
@@ -118,6 +118,13 @@ namespace Valuable
         if(!m_exprs[layer] || m_exprs[layer]->isConstant())
           return std::numeric_limits<float>::quiet_NaN();
         return m_exprs[layer]->evaluate({1.f});
+      }
+
+      virtual void setValue(const T & v, Attribute::Layer layer = Attribute::USER) override
+      {
+        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        m_exprs[layer].reset();
+        Base::setValue(v, layer);
       }
 
       virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
@@ -142,7 +149,7 @@ namespace Valuable
           return;
         m_exprs[Attribute::DEFAULT] = std::move(m_exprs[Attribute::USER]);
         m_exprs[Attribute::USER].reset();
-        this->setValue(this->value(Attribute::USER), Attribute::DEFAULT);
+        Base::setValue(this->value(Attribute::USER), Attribute::DEFAULT);
         clearValue(Attribute::USER);
       }
 
