@@ -531,7 +531,7 @@ namespace Valuable
     /// trigger all listeners callbacks.
     /// @param t new value for the attribute
     /// @param layer value will be set to this layer
-    inline void setValue(const T & t, Layer layer = USER)
+    virtual void setValue(const T & t, Layer layer = USER)
     {
       layer = layer == CURRENT_LAYER ? currentLayer() : layer;
       bool top = layer >= m_currentLayer;
