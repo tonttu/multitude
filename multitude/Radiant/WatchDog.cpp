@@ -74,7 +74,7 @@ namespace Radiant {
 
       // If paused, just sleep and try again
       if(m_paused) {
-        Radiant::Sleep::sleepS(1);
+        Radiant::Sleep::sleepSome(1);
         continue;
       }
 
