@@ -42,6 +42,11 @@ namespace Luminous
     /// This needs to be integer and 32 bit to fit to atomic int, so 0.1s is a nice
     /// precision.
     LUMINOUS_API static int frameTime();
+    /// Frame time of the previous rendered frame. This value should be used
+    /// to determine if a resource should be expired instead of the value
+    /// returned from frameTime(), since this frame has been finished unlike
+    /// frameTime() which can still be in process.
+    LUMINOUS_API static int lastFrameTime();
     LUMINOUS_API static void updateFrameTime();
 
     LUMINOUS_API static void setThreadIndex(unsigned idx);

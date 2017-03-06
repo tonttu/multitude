@@ -36,6 +36,7 @@ namespace Luminous
     Radiant::Timer s_timer;
     // unit is 0.1 seconds
     int s_frameTime = 0;
+    int s_lastFrameTime = 0;
     std::set<ContextArray*> s_contextArrays;
   }
 
@@ -121,8 +122,14 @@ namespace Luminous
     return s_frameTime;
   }
 
+  int RenderManager::lastFrameTime()
+  {
+    return s_lastFrameTime;
+  }
+
   void RenderManager::updateFrameTime()
   {
+    s_lastFrameTime = s_frameTime;
     s_frameTime = s_timer.time() * 10;
   }
 
