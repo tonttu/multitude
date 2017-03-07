@@ -33,9 +33,11 @@ ALL_SOURCE_CODE += $$PROJECT_FILE
 
 INSTALLS += target
 
-isEmpty(skip_multitude_install_targets) {
-  $$installFiles(/include/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
-  $$installFiles(/src/multitude/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
+CONFIG(release, debug|release) {
+  isEmpty(skip_multitude_install_targets) {
+    $$installFiles(/include/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+    $$installFiles(/src/multitude/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
+  }
 }
 
 !no_version_in_target:TARGET=$$join(TARGET,,,$${CORNERSTONE_LIB_SUFFIX})

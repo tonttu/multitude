@@ -5,4 +5,6 @@ expected_includes.files = ThirdParty/expected
 expected_sources.path = /src/multitude/ThirdParty
 expected_sources.files = ThirdParty/expected
 
-INSTALLS += expected_includes expected_sources
+CONFIG(release, debug|release) {
+  INSTALLS += expected_includes expected_sources
+}

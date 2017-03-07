@@ -10,9 +10,11 @@ win32:CONFIG(debug,debug|release) {
 skip_multitude_install_targets = true
 include(../library.pri)
 
-# Create install targets for source code and headers
-$$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
-$$installFiles(/src/multitude/ThirdParty/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
+# Create install targets for source code and headers in release mode
+CONFIG(release, debug|release) {
+  $$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+  $$installFiles(/src/multitude/ThirdParty/$$TARGET_WITHOUT_VERSION, ALL_SOURCE_CODE)
+}
 
 # Required to build libqxt
 contains(LIBS, -lQxtCore$${SHARED_LIB_SUFFIX}) {

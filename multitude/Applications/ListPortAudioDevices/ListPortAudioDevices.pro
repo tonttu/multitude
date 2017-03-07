@@ -1,5 +1,7 @@
 include(../Applications.pri)
 
+TARGET = ListPortAudioDevices$${CORNERSTONE_APP_SUFFIX}
+
 SOURCES += Main.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE
