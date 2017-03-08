@@ -108,6 +108,8 @@ namespace
 
   /// Cache expiration time in deciseconds (40 seconds)
   static const int s_cacheExpireTime = 400;
+  /// How often to check for expired cached layouts in seconds
+  static const int s_cacheExpirePollingInterval = 41;
 
   Radiant::Mutex s_layoutCacheMutex;
   std::unordered_map<LayoutCacheKey, CachedLayout> s_layoutCache;
@@ -471,9 +473,9 @@ namespace Luminous
       if (!s_cacheReleaseTask) {
         s_cacheReleaseTask = std::make_shared<Radiant::FunctionTask>([] (Radiant::Task & task) {
           clearUnusedLayoutsFromCache();
-          task.scheduleFromNowSecs(41);
+          task.scheduleFromNowSecs(s_cacheExpirePollingInterval);
         });
-        s_cacheReleaseTask->scheduleFromNowSecs(41);
+        s_cacheReleaseTask->scheduleFromNowSecs(s_cacheExpirePollingInterval);
         Radiant::BGThread::instance()->addTask(s_cacheReleaseTask);
       }
 
