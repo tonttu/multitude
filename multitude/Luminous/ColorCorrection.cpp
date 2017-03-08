@@ -321,53 +321,48 @@ namespace Luminous
     bool b = Node::deserialize(element);
     for (int c = 0; c < 3; ++c)
       m_d->m_splines[c]->fixEdges();
+
+    m_d->m_identity = m_d->m_splines[0]->isIdentity() && m_d->m_splines[1]->isIdentity() && m_d->m_splines[2]->isIdentity();
+
+    if (m_d->m_identity) {
+      for (int c = 0; c < 3; ++c) {
+        m_d->m_splines[c]->clear();
+        m_d->m_splines[c]->insert(0, 0);
+        m_d->m_splines[c]->insert(1, 1);
+      }
+    }
+
     return b;
   }
 
-  bool ColorCorrection::readElement(const Valuable::ArchiveElement &element)
+  bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)
   {
-    // No warnings for obsolete attributes
-    QByteArray name = element.name().toUtf8();
-    if(name == "red" || name == "green" || name == "blue")
-      return true;
+    if (element.name() == "offsets") {
+      Valuable::AttributeContainer< std::vector<Nimble::Vector3f> > offsets;
+      if (offsets.deserialize(element)) {
+        if (offsets->size() == 256) {
+          for (int c = 0; c < 3; ++c)
+            m_d->m_splines[c]->clear();
+          for (int i = 0; i < 256; i += 15 /* old DIVISOR value */)
+          {
+            for (int c = 0; c < 3; ++c)
+              addControlPoint(i/255.0f, i/255.0f + offsets->at(i)[c], c, false);
+          }
+        }
+        for (int c = 0; c < 3; ++c)
+          m_d->m_splines[c]->fixEdges();
+        return true;
+      }
+    } else if (element.name() == "red") {
+      return m_d->m_splines[0]->deserialize(element.get().toUtf8());
+    } else if (element.name() == "green") {
+      return m_d->m_splines[1]->deserialize(element.get().toUtf8());
+    } else if (element.name() == "blue") {
+      return m_d->m_splines[2]->deserialize(element.get().toUtf8());
+    }
+
     return false;
   }
-
-//  bool ColorCorrection::readElement(const Valuable::ArchiveElement & element)
-//  {
-//    if (element.name() == "offsets") {
-//      Valuable::AttributeContainer< std::vector<Nimble::Vector3f> > offsets;
-//      if (offsets.deserialize(element)) {
-//        if (offsets->size() == 256) {
-//          for (int c = 0; c < 3; ++c)
-//            m_d->m_splines[c].clear();
-//          for (int i = 0; i < 256; i += 15 /* old DIVISOR value */)
-//          {
-//            for (int c = 0; c < 3; ++c)
-//              addControlPoint(i/255.0f, i/255.0f + offsets->at(i)[c], c, false);
-//          }
-//        }
-//        for (int c = 0; c < 3; ++c)
-//          m_d->m_splines[c].fixEdges();
-//        if (m_d->m_identity) {
-//          for (int c = 0; c < 3; ++c) {
-//            m_d->m_splines[c].clear();
-//            m_d->m_splines[c].insert(0, 0);
-//            m_d->m_splines[c].insert(1, 1);
-//          }
-//        }
-//        return true;
-//      }
-//    } else if (element.name() == "red") {
-//      return m_d->m_splines[0].deserialize(element.get().toUtf8());
-//    } else if (element.name() == "green") {
-//      return m_d->m_splines[1].deserialize(element.get().toUtf8());
-//    } else if (element.name() == "blue") {
-//      return m_d->m_splines[2].deserialize(element.get().toUtf8());
-//    }
-
-//    return false;
-//  }
 
   const RGBCube & ColorCorrection::asRGBCube() const
   {
