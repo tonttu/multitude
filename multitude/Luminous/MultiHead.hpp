@@ -23,6 +23,7 @@
 
 #include <memory>
 
+#include <Valuable/AttributeAlias.hpp>
 #include <Valuable/AttributeString.hpp>
 #include <Valuable/AttributeFloat.hpp>
 #include <Valuable/AttributeBool.hpp>
@@ -288,9 +289,9 @@ namespace Luminous {
       bool fullscreen() const { return m_fullscreen; }
       /// Sets the fullscreen flag
       void setFullscreen(bool f) { m_fullscreen = f; }
-      /// Should the window be resizeable
-      bool resizeable() const { return m_resizeable; }
-      void setResizeable(bool resizeable) { m_resizeable = resizeable; }
+      /// Should the window be resizable
+      bool resizable() const { return m_resizable; }
+      void setResizable(bool resizable) { m_resizable = resizable; }
 
       /// Screen number for the window. Use -1 for default screen.
       int screennumber() const { return m_screennumber; }
@@ -345,7 +346,8 @@ namespace Luminous {
       Valuable::AttributeVector2i   m_size;
       Valuable::AttributeBool       m_frameless;
       Valuable::AttributeBool       m_fullscreen;
-      Valuable::AttributeBool       m_resizeable;
+      Valuable::AttributeBool       m_resizable;
+      Valuable::AttributeAlias      m_resizeable;
       Valuable::AttributeInt        m_fsaaSamplesPerPixel;
       // GPU upload limits
       /// PCIe bandwidth
