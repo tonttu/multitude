@@ -10,7 +10,9 @@
 
 #include "SimpleTextLayout.hpp"
 
+#include <Radiant/BGThread.hpp>
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Task.hpp>
 
 #include <Valuable/StyleValue.hpp>
 #include <Luminous/RenderManager.hpp>
@@ -97,11 +99,40 @@ bool operator==(const QTextOption & o1, const QTextOption & o2)
 
 namespace
 {
+  struct CachedLayout
+  {
+    LayoutPtr layout;
+    /// In deciseconds, see Luminous::RenderManager::frameTime
+    int lastUsed = 0;
+  };
+
+  /// Cache expiration time in deciseconds (40 seconds)
+  static const int s_cacheExpireTime = 400;
+  /// How often to check for expired cached layouts in seconds
+  static const int s_cacheExpirePollingInterval = 41;
+
   Radiant::Mutex s_layoutCacheMutex;
-  std::unordered_map<LayoutCacheKey, LayoutPtr> s_layoutCache;
+  std::unordered_map<LayoutCacheKey, CachedLayout> s_layoutCache;
+  Radiant::TaskPtr s_cacheReleaseTask;
 
   const float s_defaultLineHeight = 1.0f;
   const float s_defaultLetterSpacing = 1.0f;
+
+  static void clearUnusedLayoutsFromCache()
+  {
+    int threshold = Luminous::RenderManager::lastFrameTime() - s_cacheExpireTime;
+    if (threshold <= 0) return;
+
+    Radiant::Guard g(s_layoutCacheMutex);
+    for (auto it = s_layoutCache.cbegin(); it != s_layoutCache.cend();) {
+      const CachedLayout & cache = it->second;
+      if (cache.lastUsed < threshold) {
+        it = s_layoutCache.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
 }
 
 namespace Luminous
@@ -413,6 +444,10 @@ namespace Luminous
 
   void SimpleTextLayout::clearCache()
   {
+    if (s_cacheReleaseTask) {
+      Radiant::BGThread::instance()->removeTask(s_cacheReleaseTask);
+      s_cacheReleaseTask.reset();
+    }
     Radiant::Guard g(s_layoutCacheMutex);
     s_layoutCache.clear();
   }
@@ -432,13 +467,25 @@ namespace Luminous
       const auto & key = std::make_tuple(text, size.cast<int>(), font, option, RenderManager::threadIndex());
 #endif
 
+      const int now = Luminous::RenderManager::frameTime();
       Radiant::Guard g(s_layoutCacheMutex);
-      std::unique_ptr<SimpleTextLayout> & ptr = s_layoutCache[key];
 
-      if (!ptr) {
-        ptr.reset(new SimpleTextLayout(text, size, font, option));
+      if (!s_cacheReleaseTask) {
+        s_cacheReleaseTask = std::make_shared<Radiant::FunctionTask>([] (Radiant::Task & task) {
+          clearUnusedLayoutsFromCache();
+          task.scheduleFromNowSecs(s_cacheExpirePollingInterval);
+        });
+        s_cacheReleaseTask->scheduleFromNowSecs(s_cacheExpirePollingInterval);
+        Radiant::BGThread::instance()->addTask(s_cacheReleaseTask);
       }
-      layout = ptr.get();
+
+      CachedLayout & cache = s_layoutCache[key];
+
+      if (!cache.layout) {
+        cache.layout.reset(new SimpleTextLayout(text, size, font, option));
+      }
+      cache.lastUsed = now;
+      layout = cache.layout.get();
     }
 
     layout->generate();
