@@ -10,7 +10,10 @@
 
 #include "DSPNetwork.hpp"
 #include "Resonant.hpp"
+
+#ifdef CORNERSTONE_ENABLE_PORT_AUDIO
 #include "AudioLoopPortAudio.hpp"
+#endif
 
 #ifdef CORNERSTONE_ENABLE_PULSE
 #include "AudioLoopPulseAudio.hpp"
@@ -25,8 +28,6 @@
 #include <algorithm>
 #include <typeinfo>
 #include <cstdio>
-
-#include <portaudio.h>
 
 namespace Resonant {
 
@@ -158,7 +159,12 @@ namespace Resonant {
       return false;
 #endif
     } else {
+#ifdef CORNERSTONE_ENABLE_PORT_AUDIO
       m_audioLoop.reset(new AudioLoopPortAudio(*this, m_collect));
+#else
+      Radiant::error("DSPNetwork::start # PortAudio backend was requested but it wasn't included in this build");
+      return false;
+#endif
     }
     return m_audioLoop->start(44100, channels);
   }

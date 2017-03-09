@@ -1,12 +1,10 @@
 include(../../cornerstone.pri)
 
-unix: PKGCONFIG += sndfile portaudio-2.0
+unix: PKGCONFIG += sndfile
 
 HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
     ModuleBufferPlayer.hpp \
-    PortAudioSource.hpp \
-    AudioLoopPortAudio.hpp \
     SourceInfo.hpp
 HEADERS += AudioLoop.hpp
 HEADERS += DSPNetwork.hpp
@@ -23,9 +21,7 @@ HEADERS += SoundRectangle.hpp
 
 SOURCES += AudioFileHandler.cpp \
     LimiterAlgorithm.cpp \
-    ModuleBufferPlayer.cpp \
-    PortAudioSource.cpp \
-    AudioLoopPortAudio.cpp
+    ModuleBufferPlayer.cpp
 SOURCES += DSPNetwork.cpp
 SOURCES += Module.cpp
 SOURCES += ModuleFilePlay.cpp
@@ -35,6 +31,23 @@ SOURCES += ModulePanner.cpp
 SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
+
+enable-port-audio {
+  DEFINES += CORNERSTONE_ENABLE_PORT_AUDIO
+
+  HEADERS += PortAudioSource.hpp
+  HEADERS += AudioLoopPortAudio.hpp
+
+  SOURCES += PortAudioSource.cpp
+  SOURCES += AudioLoopPortAudio.cpp
+
+  unix: PKGCONFIG += portaudio-2.0
+
+  win32 {
+    INCLUDEPATH += ..\\Win64x\\include\\portaudio
+    LIBS += -lportaudio_x64
+  }
+}
 
 enable-pulse {
   DEFINES += CORNERSTONE_ENABLE_PULSE
@@ -57,6 +70,5 @@ DEFINES += RESONANT_EXPORT
 
 win* {
   QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-  INCLUDEPATH += ..\\Win64x\\include\\portaudio
-  LIBS += -llibsndfile-1 -lportaudio_x64 -lOle32 -lUser32
+  LIBS += -llibsndfile-1 -lOle32 -lUser32
 }

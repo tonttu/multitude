@@ -3,7 +3,7 @@ TEMPLATE = subdirs
 CONFIG += Qt
 QT += core
 
-!enable-taction:SUBDIRS += ListPortAudioDevices
+enable-port-audio:SUBDIRS += ListPortAudioDevices
 
 CONFIG(release, debug|release) {
   stuff.path = /src/multitude/Applications
