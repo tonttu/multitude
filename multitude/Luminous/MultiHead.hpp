@@ -455,8 +455,6 @@ namespace Luminous {
     /// @return true if glFinish() is called; otherwise false
     bool useGlFinish() const;
 
-    virtual void eventProcess(const QByteArray & messageId, Radiant::BinaryData & data);
-
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
