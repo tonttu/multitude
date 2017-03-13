@@ -40,7 +40,7 @@ namespace Radiant
     FlagsT() : m_value(0) {}
     /// Construct flags
     /// @param t initial values
-    FlagsT(T t) : m_value(Int(t)) {}
+    FlagsT(Enum t) : m_value(Int(t)) {}
     /// Construct a copy
     /// @param f flags to copy
     FlagsT(const FlagsT & f) : m_value(f.m_value) {}
@@ -54,10 +54,13 @@ namespace Radiant
     /// @param b flags to compare
     /// @return true if the flags are equal; otherwise false
     bool operator==(const FlagsT & b) const { return m_value == b.m_value; }
+    friend bool operator==(Enum a, FlagsT b) { return a == b.m_value; }
+
     /// Compare if two flags are inequal
     /// @param b flags to compare
     /// @return true if the flags are inequal; otherwise false
     bool operator!=(const FlagsT & b) const { return m_value != b.m_value; }
+    friend bool operator!=(Enum a, FlagsT b) { return a == b.m_value; }
 
     /// Check if no flags are raised
     /// @return true if all flags are zero; otherwise false
@@ -70,14 +73,17 @@ namespace Radiant
     /// @param b flags to AND
     /// @return combined flags
     FlagsT operator&(const FlagsT & b) const { return m_value & b.m_value; }
+    friend FlagsT operator&(Enum a, const FlagsT & b) { return a & b.m_value; }
     /// Do a bit-wise OR of flags
     /// @param b flags to AND
     /// @return combined flags
     FlagsT operator|(const FlagsT & b) const { return m_value | b.m_value; }
+    friend FlagsT operator|(Enum a, const FlagsT & b) { return a | b.m_value; }
     /// Do a bit-wise XOR of flags
     /// @param b flags to XOR
     /// @return combined flags
     FlagsT operator^(const FlagsT & b) const { return m_value ^ b.m_value; }
+    friend FlagsT operator^(Enum a, const FlagsT & b) { return a ^ b.m_value; }
 
     /// Do a bit-wise AND of flags and assign the result to this
     /// @param b flags to AND
@@ -94,9 +100,12 @@ namespace Radiant
 
     /// @cond
 
-    // best you can do to emulate c++0x explicit boolean conversion operator
-    typedef void (FlagsT<T>::*bool_type)();
-    operator bool_type() const { return m_value ? &FlagsT<T>::clear : 0; }
+    // We are not using explicit boolean conversion operator, since this class
+    // is typically used as a drop-in replacement for some unsigned int type,
+    // and expected to work like "return m_grabFlags & MultiTouch::TYPE_PEN;"
+    // - that wouldn't compile with explicit boolean operator
+    typedef void (FlagsT<Enum>::*bool_type)();
+    operator bool_type() const { return m_value ? &FlagsT<Enum>::clear : nullptr; }
 
     /// @endcond
 
@@ -105,19 +114,19 @@ namespace Radiant
 
     /// Convert the flags to integer
     /// @return flags as integer
-    S asInt() const { return m_value; }
+    Int asInt() const { return m_value; }
 
     /// Converts int to Flags. If you end up using this function,
     /// you better have a real good reason to do so.
     /// @param i integers to convert from
     /// @return converted flags
-    static FlagsT<T> fromInt(Int i) { return FlagsT<T>(i); }
+    static FlagsT<Enum> fromInt(Int i) { return FlagsT<Enum>(i); }
 
-    bool operator<(const FlagsT<T> & t) const { return m_value < t.m_value; }
+    bool operator<(const FlagsT & t) const { return m_value < t.m_value; }
 
   private:
-    FlagsT(S s) : m_value(s) {}
-    S m_value;
+    FlagsT(Int s) : m_value(s) {}
+    Int m_value;
   };
 }
 
