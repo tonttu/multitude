@@ -533,7 +533,7 @@ namespace Valuable
     /// @param layer value will be set to this layer
     virtual void setValue(const T & t, Layer layer = USER)
     {
-      layer = layer == CURRENT_LAYER ? currentLayer() : layer;
+      if (layer >= CURRENT_LAYER) layer = currentLayer();
       bool top = layer >= m_currentLayer;
       bool sendSignal = top && value() != t;
       if(top) m_currentLayer = layer;
@@ -558,16 +558,17 @@ namespace Valuable
 
     /// Unsets the value from a specific layer
     /// @param layer layer to clear, must not be DEFAULT, since DEFAULT layer should always be set
-    virtual void clearValue(Layer layout = USER) OVERRIDE
+    virtual void clearValue(Layer layer = USER) OVERRIDE
     {
-      assert(layout > DEFAULT);
-      m_valueSet[layout] = false;
-      if(m_currentLayer == layout) {
+      assert(layer > DEFAULT);
+      if (layer >= CURRENT_LAYER) layer = currentLayer();
+      m_valueSet[layer] = false;
+      if(m_currentLayer == layer) {
         assert(m_valueSet[DEFAULT]);
-        int l = int(layout) - 1;
+        int l = int(layer) - 1;
         while(!m_valueSet[l]) --l;
         m_currentLayer = Layer(l);
-        if(m_values[l] != m_values[layout])
+        if(m_values[l] != m_values[layer])
           this->emitChange();
       }
     }
@@ -606,6 +607,7 @@ namespace Valuable
     /// @returns true if layer is active
     virtual bool isValueDefinedOnLayer(Layer layer) const FINAL
     {
+      if (layer >= CURRENT_LAYER) return true;
       return m_valueSet[layer];
     }
 

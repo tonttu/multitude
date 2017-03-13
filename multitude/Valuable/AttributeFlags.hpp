@@ -332,6 +332,10 @@ namespace Valuable {
     /// Collects bits between layers topLayer to bottomLayer (inclusive) to bitmask
     Flags value(Layer topLayer, Layer bottomLayer) const
     {
+      if (topLayer >= CURRENT_LAYER || bottomLayer >= CURRENT_LAYER) {
+        return value();
+      }
+
       Flags flags;
       Flags available = ~Flags();
 
@@ -344,30 +348,70 @@ namespace Valuable {
       return flags;
     }
 
-    void setFlags(const Flags & f, bool state, Layer layer = USER)
+    void setFlags(Flags f, bool state, Layer layer = USER)
     {
-      if(state) m_values[layer] |= f;
-      else m_values[layer] &= ~f;
-      m_masks[layer] |= f;
-      updateCache();
+      if (layer >= CURRENT_LAYER) {
+        Radiant::warning("AttributeFlag::setFlags # CURRENT_LAYER / CURRENT_VALUE not supported");
+        return;
+        /// @todo here is one possible way to define this, but most likely
+        /// it doesn't really have any real use cases, so it's commented out.
+        /*
+        Flags mask = f;
+        for (Layer l = STYLE_IMPORTANT; l >= DEFAULT && mask; l = Layer(l - 1)) {
+          if (state) {
+            m_values[l] |= mask & m_masks[l];
+          } else {
+            m_values[l] &= ~(mask & m_masks[l]);
+          }
+
+          mask & ~m_masks[l];
+        }
+        assert(!mask);*/
+      } else {
+        if(state) m_values[layer] |= f;
+        else m_values[layer] &= ~f;
+        m_masks[layer] |= f;
+        updateCache();
+      }
     }
 
     void clearFlags(const Flags & f, Layer layer)
     {
+      if (layer >= CURRENT_LAYER) {
+        Radiant::warning("AttributeFlag::clearFlags # CURRENT_LAYER / CURRENT_VALUE not supported");
+        return;
+      }
       m_masks[layer] &= ~f;
       updateCache();
     }
 
     virtual void setValue(const Flags & flags, Layer layer)
     {
+      if (layer >= CURRENT_LAYER) {
+        Radiant::warning("AttributeFlag::setValue # CURRENT_LAYER / CURRENT_VALUE not supported");
+        return;
+      }
       m_masks[layer] = ~Flags();
       m_values[layer] = flags;
       updateCache();
     }
 
-    virtual void clearValue(Layer layout) OVERRIDE
+    virtual void clearValue(Layer layer) OVERRIDE
     {
-      m_masks[layout].clear();
+      if (layer >= CURRENT_LAYER) {
+        Radiant::warning("AttributeFlag::clearValue # CURRENT_LAYER / CURRENT_VALUE not supported");
+        return;
+        /// See the comment in setFlags
+        Flags clearedBits;
+        for (Layer l = STYLE_IMPORTANT; l > DEFAULT; l = Layer(l - 1)) {
+          Flags mask = m_masks[l];
+          m_masks[l] = clearedBits & mask;
+          clearedBits |= mask;
+        }
+        m_values[DEFAULT] &= clearedBits;
+      } else {
+        m_masks[layer].clear();
+      }
       updateCache();
     }
 
@@ -448,6 +492,9 @@ namespace Valuable {
 
     bool isFlagDefinedOnLayer(Radiant::FlagsT<T> flags, Layer layer) const
     {
+      if (layer >= CURRENT_LAYER) {
+        return true;
+      }
       return (m_masks[layer] & flags) == flags;
     }
 
