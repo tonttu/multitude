@@ -61,13 +61,13 @@ namespace Radiant
     /// @param b flags to compare
     /// @return true if the flags are equal; otherwise false
     bool operator==(const FlagsT & b) const { return m_value == b.m_value; }
-    friend bool operator==(Enum a, FlagsT b) { return a == b.m_value; }
+    friend bool operator==(Enum a, const FlagsT & b) { return a == b.m_value; }
 
     /// Compare if two flags are inequal
     /// @param b flags to compare
     /// @return true if the flags are inequal; otherwise false
     bool operator!=(const FlagsT & b) const { return m_value != b.m_value; }
-    friend bool operator!=(Enum a, FlagsT b) { return a != b.m_value; }
+    friend bool operator!=(Enum a, const FlagsT & b) { return a != b.m_value; }
 
     /// Check if no flags are raised
     /// @return true if all flags are zero; otherwise false
