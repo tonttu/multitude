@@ -50,6 +50,13 @@ namespace Radiant
     /// @return reference to this flags object
     FlagsT & operator=(const FlagsT & b) { m_value = b.m_value; return *this; }
 
+    // These operators are inside the class, since something like
+    // template <typename Enum> FlagsT<Enum> operator|(const FlagsT<Enum> & a, const FlagsT<Enum> & b);
+    // doesn't get called if you write code "flag | enum", apparently since FlagsT
+    // is a template function. So since we want to have some of these as a
+    // member functions, we also define some of the operators as friends so
+    // that we can define them here in the same place.
+
     /// Compare if two flags are equal
     /// @param b flags to compare
     /// @return true if the flags are equal; otherwise false
@@ -60,7 +67,7 @@ namespace Radiant
     /// @param b flags to compare
     /// @return true if the flags are inequal; otherwise false
     bool operator!=(const FlagsT & b) const { return m_value != b.m_value; }
-    friend bool operator!=(Enum a, FlagsT b) { return a == b.m_value; }
+    friend bool operator!=(Enum a, FlagsT b) { return a != b.m_value; }
 
     /// Check if no flags are raised
     /// @return true if all flags are zero; otherwise false
@@ -132,6 +139,8 @@ namespace Radiant
 
 #define MULTI_FLAGS(T) \
   inline Radiant::FlagsT<T> operator|(T a, T b) { return Radiant::FlagsT<T>(a) | b; } \
+  inline Radiant::FlagsT<T> operator&(T a, T b) { return Radiant::FlagsT<T>(a) & b; } \
+  inline Radiant::FlagsT<T> operator^(T a, T b) { return Radiant::FlagsT<T>(a) ^ b; } \
   inline Radiant::FlagsT<T> operator~(T t) { return ~Radiant::FlagsT<T>(t); }
 
 #endif // RADIANT_FLAGS_HPP
