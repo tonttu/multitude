@@ -60,7 +60,7 @@ namespace Valuable
       inline virtual bool set(int v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         m_exprs[layer].reset();
         Base::setValue(v, layer);
         return true;
@@ -69,7 +69,7 @@ namespace Valuable
       inline virtual bool set(float v, Attribute::Layer layer = Attribute::USER,
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         m_exprs[layer].reset();
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
@@ -81,7 +81,7 @@ namespace Valuable
 
       virtual bool set(const StyleValue & value, Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         if (value.size() == 1 && value.type() == StyleValue::TYPE_EXPR) {
           m_exprs[layer].reset(new SimpleExpression(value.asExpr()));
           Base::setValue(m_exprs[layer]->evaluate(&m_src, 1), layer);
@@ -105,7 +105,7 @@ namespace Valuable
 
       void setPercentage(float factor, Attribute::Layer layer = Attribute::USER)
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         SimpleExpression expr(factor);
         expr.replace(SimpleExpression::OP_MUL, SimpleExpression::Param(0));
         m_exprs[layer].reset(new SimpleExpression(expr));
@@ -114,7 +114,7 @@ namespace Valuable
 
       float percentage(Attribute::Layer layer) const
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         if(!m_exprs[layer] || m_exprs[layer]->isConstant())
           return std::numeric_limits<float>::quiet_NaN();
         return m_exprs[layer]->evaluate({1.f});
@@ -129,7 +129,7 @@ namespace Valuable
 
       virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
-        layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
+        if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         m_exprs[layer].reset();
         Base::clearValue(layer);
       }
