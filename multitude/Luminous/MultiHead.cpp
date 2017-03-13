@@ -316,13 +316,16 @@ namespace Luminous
 
   void MultiHead::Window::resizeEvent(Nimble::Size size)
   {
-    m_size = size.toVector();
-
-    if(m_areas.size() == 1 && m_areas[0]->graphicsSize(false).cast<int>() == m_areas[0]->size()) {
-      debugLuminous("MultiHead::Window::resizeEvent");
-      m_areas[0]->setSize(size);
+    // Area resizing is currently only supported if there is only one area
+    // which has the same size as the window. We could be more intelligent here
+    // and support various other cases as well, and even add some layout
+    // parameters to areas (similar to flexbox), but currently this should cover
+    // the typical use case
+    if (m_areas.size() == 1 && m_areas[0]->size() == this->size() &&
+       m_areas[0]->graphicsSize(false).cast<int>() == m_areas[0]->size()) {
       m_areas[0]->setGraphicsSize(size.cast<float>());
     }
+    m_size = size.toVector();
   }
 
   Nimble::Rect MultiHead::Window::graphicsBounds() const
