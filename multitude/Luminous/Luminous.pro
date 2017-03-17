@@ -173,6 +173,9 @@ QT += svg
 win32 {
   LIBS += -lnvapi64
   LIBS += -lUser32
+
+  HEADERS += GPUAffinity.hpp
+  SOURCES += GPUAffinity.cpp
 }
 
 # Platform specific: Apple OS X
