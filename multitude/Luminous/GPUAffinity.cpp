@@ -116,7 +116,7 @@ namespace Luminous
     if (index < m_d->gpus.size()) {
       const D::Gpu & gpu = m_d->gpus[index];
       for (const D::GPU_DEVICE & device: gpu.devices) {
-        if (device.DeviceName[0])
+        if (device.DeviceString[0])
           return device.DeviceString;
       }
     }
