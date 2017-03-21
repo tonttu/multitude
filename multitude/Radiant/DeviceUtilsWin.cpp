@@ -38,7 +38,7 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
 
   if (out.speed == -1) {
     int32_t speed;
-    if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_PciDevice_CurrentLinkSpeed, &type,
+    if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_PciDevice_MaxLinkSpeed, &type,
                                  (PBYTE)&speed, sizeof(speed), nullptr, 0)) {
       if (speed == DevProp_PciExpressDevice_LinkSpeed_TwoAndHalf_Gbps) {
         out.speed = 2500;
