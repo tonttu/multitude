@@ -123,4 +123,17 @@ namespace Luminous
     return QString();
   }
 
+  QStringList GPUAffinity::displayGdiDeviceNames(uint32_t gpuIndex) const
+  {
+    QStringList ret;
+    if (gpuIndex < m_d->gpus.size()) {
+      const D::Gpu & gpu = m_d->gpus[gpuIndex];
+      for (const D::GPU_DEVICE & device: gpu.devices) {
+        if (device.DeviceName[0])
+          ret << device.DeviceName;
+      }
+    }
+    return ret;
+  }
+
 } // namespace Luminous

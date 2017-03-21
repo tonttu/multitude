@@ -197,14 +197,14 @@ contains(WITH_FTD2XX,yes) {
 }
 
 win32 {
-    message(Radiant on Windows)
     LIBS += Ws2_32.lib \
         ShLwApi.lib \
         shell32.lib \
         psapi.lib \
         Advapi32.lib \
         Ole32.lib \
-        Winmm.lib
+        Winmm.lib \
+        Setupapi.lib
     CONFIG += qt
     QT = core network opengl gui
 
@@ -219,6 +219,9 @@ win32 {
         QMAKE_LIBDIR += $$PTGREY_PATH/lib64
         LIBS += FlyCapture2.lib
     }
+
+  HEADERS += DeviceUtilsWin.hpp
+  SOURCES += DeviceUtilsWin.cpp
 }
 
 include(../library.pri)

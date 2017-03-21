@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <QString>
+#include <QStringList>
 #include <QRect>
 
 namespace Luminous
@@ -25,6 +26,7 @@ namespace Luminous
     std::vector<uint32_t> gpusForDesktopArea(QRect desktop) const;
     std::vector<QRect> gpuDesktopAreas() const;
     QString gpuName(uint32_t index) const;
+    QStringList displayGdiDeviceNames(uint32_t gpuIndex) const;
 
   private:
     class D;

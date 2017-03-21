@@ -176,6 +176,9 @@ win32 {
 
   HEADERS += GPUAffinity.hpp
   SOURCES += GPUAffinity.cpp
+
+  HEADERS += DisplayConfigWin.hpp
+  SOURCES += DisplayConfigWin.cpp
 }
 
 # Platform specific: Apple OS X
