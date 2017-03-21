@@ -112,16 +112,20 @@ namespace Luminous
     const char * glsl = (char *)opengl.glGetString(GL_SHADING_LANGUAGE_VERSION);
     const char * renderer = (const char *) opengl.glGetString(GL_RENDERER);
 
-    Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
-
+    bool printVersion = false;
     // Store the OpenGL information so it can be included in breakpad reports
     {
       Radiant::Guard g(s_glVersionMutex);
+      OpenGLVersion oldGlVersion = s_glVersion;
       s_glVersion.vendor = glvendor ? QByteArray(glvendor) : QByteArray();
       s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
       s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
       s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
+      printVersion = oldGlVersion != s_glVersion;
     }
+
+    if (printVersion)
+      Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
 
     return true;
   }
