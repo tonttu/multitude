@@ -166,8 +166,9 @@ enable-taction {
   qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*d4.dll)
   qt_bin_files.files -= $$files($$[QT_INSTALL_BINS]/*WebKit*.dll)
 } else {
-  qt_bin_files.path = /
-  qt_bin_files.files = $$[QT_INSTALL_BINS]
+  qt_bin_files.path = /bin
+  qt_bin_files.files += $$[QT_INSTALL_BINS]/*.exe
+  qt_bin_files.files += $$[QT_INSTALL_BINS]/*.dll
 }
 qt_conf_files.path = /bin
 qt_conf_files.files = $$PWD/qt.conf
@@ -176,13 +177,15 @@ qt_lib_files.path = /qt/lib
 qt_lib_files.files = $$[QT_INSTALL_LIBS]\\*.lib
 
 qt_files.path = /qt
-qt_files.files += $$[QT_INSTALL_PLUGINS]
 qt_files.files += $$[QT_INSTALL_IMPORTS]
 qt_files.files += $$[QT_INSTALL_TRANSLATIONS]
 qt_files.files += $$[QMAKE_MKSPECS]
 qt_files.files += $$[QT_INSTALL_HEADERS]
 
-INSTALLS += qt_bin_files qt_lib_files qt_files qt_conf_files
+qt_plugins.path = /qt
+qt_plugins.extra = $$QMAKE_COPY_DIR $$shell_path($$[QT_INSTALL_PLUGINS]/*.dll) $(INSTALL_ROOT)\qt\plugins
+
+INSTALLS += qt_bin_files qt_lib_files qt_files qt_conf_files qt_plugins
 
 # Install Cef
 win64_cef_dlls.path = /bin
