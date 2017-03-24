@@ -1,3 +1,5 @@
+include(Applications.pri)
+
 TEMPLATE = subdirs
 
 CONFIG += Qt
