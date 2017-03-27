@@ -100,6 +100,12 @@ namespace
     return StateCount + Luminous::RenderManager::frameTime();
   }
 
+  // This frame has already been rendered
+  int lastFrameTime()
+  {
+    return StateCount + Luminous::RenderManager::lastFrameTime();
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -586,7 +592,7 @@ namespace Luminous
   void MipmapReleaseTask::doTask()
   {
     Radiant::Guard g(s_mipmapStoreMutex);
-    const int now = frameTime();
+    const int now = lastFrameTime();
 
     float delay = 10.0;
     for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {

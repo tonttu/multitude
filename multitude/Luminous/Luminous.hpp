@@ -67,6 +67,17 @@ namespace Luminous
     QByteArray version;
     QByteArray glsl;
     QByteArray renderer;
+
+    bool operator==(const OpenGLVersion & b) const
+    {
+      return vendor == b.vendor && version == b.version &&
+          glsl == b.glsl && renderer == b.renderer;
+    }
+
+    bool operator!=(const OpenGLVersion & b) const
+    {
+      return !operator==(b);
+    }
   };
 
   /// Returns OpenGL version of the first OpenGL context that was initialized

@@ -39,6 +39,8 @@ namespace Resonant
   class AudioLoop
   {
   public:
+    virtual ~AudioLoop() {}
+
     /// Start the AudioLoop.
     /// In practice this spans a new thread that is managed by the backend.
     /// @param samplerate Desired samplerate, 44100 is safe choice

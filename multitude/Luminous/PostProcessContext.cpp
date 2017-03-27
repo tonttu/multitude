@@ -21,6 +21,16 @@ namespace Luminous
       : m_filter(filter)
     {
       assert(filter);
+
+      m_defaultShader.loadShader("cornerstone:Luminous/GLSL150/tex.vs", Luminous::Shader::Vertex);
+      m_defaultShader.loadShader("cornerstone:Luminous/GLSL150/post-process.fs", Luminous::Shader::Fragment);
+
+      Luminous::VertexDescription desc;
+
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+
+      m_defaultShader.setVertexDescription(desc);
     }
 
     const Luminous::PostProcessFilterPtr m_filter;
@@ -29,6 +39,8 @@ namespace Luminous
 
     Luminous::Texture m_texture;
     Luminous::RenderBuffer m_depthStencilBuffer;
+
+    Luminous::Program m_defaultShader;
   };
 
   ////////////////////////////////////////////////////////////
@@ -44,22 +56,24 @@ namespace Luminous
     delete m_d;
   }
 
-  void PostProcessContext::initialize(RenderContext & rc)
+  void PostProcessContext::initialize(RenderContext & rc, Nimble::Size size)
   {
     m_d->m_frameBuffer.attach(GL_COLOR_ATTACHMENT0, m_d->m_texture);
     m_d->m_frameBuffer.attach(GL_DEPTH_STENCIL_ATTACHMENT, m_d->m_depthStencilBuffer);
 
-    m_d->m_frameBuffer.setSize(rc.contextSize());
+    m_d->m_frameBuffer.setSize(size);
 
     m_d->m_filter->initialize(rc, *this);
   }
 
-  void PostProcessContext::doFilter(Luminous::RenderContext & rc)
+  void PostProcessContext::doFilter(Luminous::RenderContext & rc, Nimble::Matrix3f textureMatrix)
   {
     Luminous::Style style;
 
     style.setFillColor(1.0f, 1.0f, 1.0f, 1.0f);
     style.setTexture("tex", texture());
+    style.setFillShaderUniform("texMatrix", textureMatrix);
+    style.setFillProgram(m_d->m_defaultShader);
 
     m_d->m_filter->filter(rc, *this, style);
   }

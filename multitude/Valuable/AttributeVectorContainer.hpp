@@ -39,14 +39,12 @@ namespace Valuable
     typedef value_type & reference;
     typedef const value_type & const_reference;
     typedef std::vector<T> container;
-    typedef typename container::iterator iterator;
     typedef typename container::const_iterator const_iterator;
     typedef typename container::size_type size_type;
     typedef typename container::difference_type difference_type;
     typedef Allocator allocator_type;
     typedef typename std::allocator_traits<allocator_type>::pointer pointer;
     typedef typename std::allocator_traits<allocator_type>::const_pointer const_pointer;
-    typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     // Constructors, destructor and copying
@@ -193,18 +191,18 @@ namespace Valuable
     }
 
     template <class... Args>
-    iterator emplace(const_iterator position, Args&&... args)
+    const_iterator emplace(const_iterator position, Args&&... args)
     {
       // libstdc++-4.8 doesn't have modifier functions that take
       // const_iterator like specified in C++11. Work around it.
       const auto index = position - begin();
-      iterator it = m_vector.emplace(m_vector.begin() + index, std::forward<Args>(args)...);
+      const_iterator it = m_vector.emplace(m_vector.begin() + index, std::forward<Args>(args)...);
       m_eventListeners.send(Event::Type::ELEMENT_INSERTED, index);
       return it;
     }
 
     template <typename Y>
-    iterator insert(const_iterator position, Y && y)
+    const_iterator insert(const_iterator position, Y && y)
     {
       const auto index = position - begin();
       auto it = m_vector.insert(m_vector.begin() + index, std::forward<Y>(y));
@@ -349,9 +347,9 @@ namespace Valuable
     typedef AttributeVectorContainer<T, Allocator> Base;
     typedef typename Base::reference reference;
     typedef typename Base::size_type size_type;
-    typedef typename Base::iterator iterator;
+    typedef typename Base::container::iterator iterator;
     typedef typename Base::const_iterator const_iterator;
-    typedef typename Base::reverse_iterator reverse_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
 
 
     // Iterators:

@@ -24,15 +24,14 @@ namespace Luminous
   Window::Window(QScreen* screen)
     : QWindow(screen)
     , m_screen(screen)
-    , m_openGLContext(nullptr)
+    // The parent object for the context must be nullptr so its thread-affinity
+    // can be changed later.
+    , m_openGLContext(new QOpenGLContext(nullptr))
     , m_eventHook(nullptr)
   {
     // This window should be renderable by OpenGL
     setSurfaceType(QSurface::OpenGLSurface);
 
-    // The parent object for the context must be nullptr so its thread-affinity
-    // can be changed later.
-    m_openGLContext = new QOpenGLContext(nullptr);
     m_openGLContext->setScreen(m_screen);
   }
 
@@ -58,38 +57,28 @@ namespace Luminous
 
   void Window::setOpenGLThreadAffinity(QThread* thread)
   {
-    assert(m_openGLContext);
     m_openGLContext->doneCurrent();
     m_openGLContext->moveToThread(thread);
   }
 
-  bool Window::createOpenGLContext(const QSurfaceFormat& surfaceFormat)
+  bool Window::createOpenGLContext()
   {
-    m_openGLContext->setFormat(surfaceFormat);
-
-    bool result = m_openGLContext->create();
-    if(!result) {
-      Radiant::error("Window::createOpenGLContext # failed to create OpenGL context");
-    }
-
-    return result;
+    m_openGLContext->setFormat(format());
+    return m_openGLContext->create();
   }
 
-  QSurfaceFormat Window::format() const
+  QOpenGLContext * Window::context() const
   {
-    assert(m_openGLContext);
-    return m_openGLContext->format();
+    return m_openGLContext;
   }
 
   void Window::doneCurrent()
   {
-    assert(m_openGLContext);
     m_openGLContext->doneCurrent();
   }
 
   bool Window::makeCurrent()
   {
-    assert(m_openGLContext);
     bool ok = m_openGLContext->makeCurrent(this);
 
     if(!ok)
@@ -100,7 +89,6 @@ namespace Luminous
 
   void Window::swapBuffers()
   {
-    assert(m_openGLContext);
     m_openGLContext->swapBuffers(this);
   }
 
@@ -154,6 +142,11 @@ namespace Luminous
 
   void Window::mousePressEvent(QMouseEvent* ev)
   {
+    // Request keyboard focus to this window
+    if (!isActive()) {
+      requestActivate();
+    }
+
     if(m_eventHook)
       m_eventHook->mousePressEvent(ev);
   }

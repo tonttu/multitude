@@ -19,6 +19,10 @@
 
 #include <QStringList>
 
+#ifdef RADIANT_OSX
+#include <crt_externs.h>
+#endif
+
 namespace Valuable
 {
   QStringList CmdParser::parse(int & argc, char * argv[],
@@ -57,6 +61,15 @@ namespace Valuable
       }
     }
     argc = argv_out;
+
+#ifdef RADIANT_OSX
+    /// If we are processing global command line arguments, also update the
+    /// global argc value, see https://redmine.multitouch.fi/issues/11998
+    if (argv == *_NSGetArgv()) {
+      *_NSGetArgc() = argc;
+    }
+#endif
+
     return out;
   }
 

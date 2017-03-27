@@ -169,6 +169,12 @@ QT += svg
 win32 {
   LIBS += -lnvapi64
   LIBS += -lUser32
+
+  HEADERS += GPUAffinity.hpp
+  SOURCES += GPUAffinity.cpp
+
+  HEADERS += DisplayConfigWin.hpp
+  SOURCES += DisplayConfigWin.cpp
 }
 
 !macx:!arm64 {

@@ -115,7 +115,7 @@ namespace Luminous
     uint64_t m_frame;             // Current frame number
     double m_fps;                 // Frames per second
 
-    // GPU id (AMD_gpu_association)
+    // GPU id (AMD_gpu_association or other unique way of referring to the GPU)
     unsigned int m_gpuId;
 
     OpenGLAPI& m_opengl;
@@ -594,7 +594,7 @@ namespace Luminous
 
     // By default render to back buffer
     std::vector<GLenum> buffers;
-    buffers.push_back(GL_BACK);
+    buffers.push_back(GL_BACK_LEFT);
     setDrawBuffers(buffers);
 
     // Enable scissor test

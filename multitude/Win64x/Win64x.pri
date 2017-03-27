@@ -48,33 +48,16 @@ win64_libav_libs2.path = /src/multitude/Win64x/lib64
 win64_libav_headers1.path = /include
 win64_libav_headers2.path = /src/multitude/Win64x/include
 
-TEST=$$(USE_LIBAV)
-isEmpty(TEST) {
+win64_libav_bins.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*dll
+win64_libav_bins.files += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*exe
 
-  win64_libav_bins.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*dll
-  win64_libav_bins.files += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*exe
+win64_libav_libs1.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*lib
+win64_libav_libs2.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*lib
 
-  win64_libav_libs1.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*lib
-  win64_libav_libs2.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/bin/*lib
-
-  win64_libav_headers1.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/include/*
-  win64_libav_headers2.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/include/*
-
-} else {
-
-  win64_libav_bins.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*dll
-  win64_libav_bins.files += $$CORNERSTONE_DEPS_PATH/libav/bin/*exe
-
-  win64_libav_libs1.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*lib
-  win64_libav_libs2.files = $$CORNERSTONE_DEPS_PATH/libav/bin/*lib
-
-  win64_libav_headers1.files = $$CORNERSTONE_DEPS_PATH/libav/include/*
-  win64_libav_headers2.files = $$CORNERSTONE_DEPS_PATH/libav/include/*
-
-}
+win64_libav_headers1.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/include/*
+win64_libav_headers2.files = $$CORNERSTONE_DEPS_PATH/ffmpeg/include/*
 
 win64_libav_bins2.files = $${win64_libav_bins.files}
-
 
 INSTALLS += win64_libav_bins
 INSTALLS += win64_libav_bins2

@@ -38,7 +38,11 @@ namespace Luminous
       m_colorCorrection(this, "colorcorrection"),
       m_rgbCube(this, "rgbcube")
   {
-    eventAddOut("graphics-bounds-changed");
+    auto update = [this] { updateBBox(); };
+    m_graphicsLocation.addListener(update);
+    m_graphicsSize.addListener(update);
+    m_seams.addListener(update);
+    updateBBox();
   }
 
   MultiHead::Area::~Area()
@@ -77,7 +81,6 @@ namespace Luminous
   void MultiHead::Area::setGraphicsLocation(Nimble::Vector2f l)
   {
     m_graphicsLocation = l;
-    updateBBox();
   }
 
   // @getter graphicssize
@@ -105,14 +108,12 @@ namespace Luminous
   {
     m_graphicsLocation = Nimble::Vector2f(x, y);
     m_graphicsSize = Nimble::Vector2f(w, h);
-    updateBBox();
   }
 
   // @setter seams
   void MultiHead::Area::setSeams(Nimble::Vector4f seams)
   {
     m_seams = seams;
-    updateBBox();
   }
 
   Nimble::Vector4f MultiHead::Area::seams() const
@@ -128,8 +129,6 @@ namespace Luminous
   bool MultiHead::Area::deserialize(const Valuable::ArchiveElement & element)
   {
     bool ok = Node::deserialize(element);
-    if(ok)
-      updateBBox();
 
     return ok;
   }
@@ -234,7 +233,6 @@ namespace Luminous
   void MultiHead::Area::swapGraphicsWidthHeight()
   {
     m_graphicsSize = m_graphicsSize.asVector().shuffle();
-    updateBBox();
   }
 
   bool MultiHead::Area::readElement(const Valuable::ArchiveElement & element)
@@ -252,7 +250,11 @@ namespace Luminous
     m_graphicsBounds.high().x += m_seams[1];
     m_graphicsBounds.low().y  -= m_seams[3];
     m_graphicsBounds.high().y += m_seams[2];
-    eventSend("graphics-bounds-changed");
+    if (auto window = dynamic_cast<Window*>(host())) {
+      if (MultiHead * multihead = window->m_screen) {
+        multihead->eventSend("graphics-bounds-changed");
+      }
+    }
   }
 
   RGBCube & MultiHead::Area::rgbCube()
@@ -295,14 +297,14 @@ namespace Luminous
       m_size(this, "size", Nimble::Vector2i(100, 100)),
       m_frameless(this, "frameless", true),
       m_fullscreen(this, "fullscreen", false),
-      m_resizeable(this, "resizeable", false),
+      m_resizable(this, "resizable", false),
+      m_resizeable(this, "resizeable", &m_resizable),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", s_default_fsaa_samples),
       m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4) << 36),
       m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1)
   {
-      eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::Window::~Window()
@@ -310,12 +312,16 @@ namespace Luminous
 
   void MultiHead::Window::resizeEvent(Nimble::Size size)
   {
-    m_size = size.toVector();
-
-    if(m_areas.size() == 1) {
-      debugLuminous("MultiHead::Window::resizeEvent");
-      m_areas[0]->setSize(size);
+    // Area resizing is currently only supported if there is only one area
+    // which has the same size as the window. We could be more intelligent here
+    // and support various other cases as well, and even add some layout
+    // parameters to areas (similar to flexbox), but currently this should cover
+    // the typical use case
+    if (m_areas.size() == 1 && m_areas[0]->size() == this->size() &&
+       m_areas[0]->graphicsSize(false).cast<int>() == m_areas[0]->size()) {
+      m_areas[0]->setGraphicsSize(size.cast<float>());
     }
+    m_size = size.toVector();
   }
 
   Nimble::Rect MultiHead::Window::graphicsBounds() const
@@ -348,11 +354,6 @@ namespace Luminous
 
     addAttribute(a.get());
 
-    if (m_screen) {
-      a->eventAddListener("graphics-bounds-changed", "graphics-bounds-changed", m_screen);
-      Radiant::BinaryData bd;
-      m_screen->eventProcess("graphics-bounds-changed", bd);
-    }
     m_areas.push_back(std::move(a));
   }
 
@@ -395,7 +396,9 @@ namespace Luminous
   void MultiHead::Window::deleteAreas()
   {
     m_areas.clear();
-    eventSend("graphics-bounds-changed");
+    if (MultiHead * multihead = m_screen) {
+      multihead->eventSend("graphics-bounds-changed");
+    }
   }
 
   bool MultiHead::Window::isAreaSoftwareColorCorrected(int areaIndex) const
@@ -432,9 +435,8 @@ namespace Luminous
       addAttribute(name, area.get());
       ok &= area->deserialize(ce);
       m_areas.push_back(std::move(area));
-      if (m_screen) {
-        Radiant::BinaryData bd;
-        m_screen->eventProcess("graphics-bounds-changed", bd);
+      if (MultiHead * multihead = m_screen) {
+        multihead->eventSend("graphics-bounds-changed");
       }
     } else {
       Radiant::warning("MultiHead::Window::readElement # Ignoring unknown element %s", name.data());
@@ -454,7 +456,6 @@ namespace Luminous
       m_glFinish(this, "gl-finish", false),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
-    eventAddIn("graphics-bounds-changed");
     eventAddOut("graphics-bounds-changed");
   }
 
@@ -620,13 +621,6 @@ namespace Luminous
   {
     /// @todo this should remove listeners that refer to Areas within the windows
     m_windows.clear();
-  }
-
-  void MultiHead::eventProcess(const QByteArray & messageId, Radiant::BinaryData & data)
-  {
-    if (messageId == "graphics-bounds-changed") {
-      eventSend("graphics-bounds-changed");
-    } else Node::eventProcess(messageId, data);
   }
 
   void MultiHead::createFullHDConfig()

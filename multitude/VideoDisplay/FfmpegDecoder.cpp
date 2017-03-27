@@ -130,6 +130,13 @@ namespace VideoDisplay
   {
   public:
     VideoFrameFfmpeg() : VideoFrame(), frame(nullptr) {}
+    ~VideoFrameFfmpeg()
+    {
+      if (frame) {
+        av_frame_free(&frame);
+      }
+    }
+
     AVFrame* frame;
   };
 
@@ -223,8 +230,6 @@ namespace VideoDisplay
 
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
-
-    Utils::MemoryPool<DecodedImageBuffer, 80> m_imageBuffers;
 
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
@@ -836,18 +841,23 @@ namespace VideoDisplay
       avfilter_graph_free(&m_audioFilter.graph);
 
     // Close the codecs
-    if(m_av.audioCodecContext || m_av.videoCodecContext) {
-      if(m_av.audioCodecContext)
-        avcodec_close(m_av.audioCodecContext);
-      if(m_av.videoCodecContext)
-        avcodec_close(m_av.videoCodecContext);
+    if (m_av.audioCodecContext) {
+      avcodec_close(m_av.audioCodecContext);
+      m_av.audioCodecContext = nullptr;
+    }
+    if (m_av.videoCodecContext) {
+      avcodec_close(m_av.videoCodecContext);
+      m_av.videoCodecContext = nullptr;
     }
 
     // Close the video file
     if(m_av.formatContext)
       avformat_close_input(&m_av.formatContext);
 
-    av_free(m_av.frame);
+    m_av.videoCodec = nullptr;
+    m_av.audioCodec = nullptr;
+
+    av_frame_free(&m_av.frame);
 
     AudioTransferPtr audioTransfer(m_audioTransfer);
     m_audioTransfer.reset();
@@ -1046,7 +1056,7 @@ namespace VideoDisplay
           continue;
       }
 
-      Radiant::Sleep::sleepMs(10);
+      Radiant::Sleep::sleepSome(0.01);
     }
     return nullptr;
   }
@@ -1193,7 +1203,6 @@ namespace VideoDisplay
 
           av_frame_ref(frame->frame, m_av.frame);
 
-          frame->setImageBuffer(nullptr);
           frame->setIndex(m_index++);
 
           auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
@@ -1267,8 +1276,6 @@ namespace VideoDisplay
         frame->setLineSize(i, frame->frame->linesize[i]);
         frame->setData(i, frame->frame->data[i]);
       }
-
-      frame->setImageBuffer(nullptr); /// Use AVFrames for this
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
@@ -1359,7 +1366,7 @@ namespace VideoDisplay
 
               if (m_seekRequest.type() != SEEK_NONE) return false;
 
-              Radiant::Sleep::sleepMs(10);
+              Radiant::Sleep::sleepSome(0.01);
               // Make sure that we don't get stuck with a file that doesn't
               // have video frames in the beginning
               audioTransfer->setEnabled(true);
@@ -1390,7 +1397,7 @@ namespace VideoDisplay
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!m_running) return gotFrames;
-            Radiant::Sleep::sleepMs(10);
+            Radiant::Sleep::sleepSome(0.01);
           }
 
           int samples = m_av.frame->nb_samples;
@@ -1768,7 +1775,7 @@ namespace VideoDisplay
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
         if(frame && frame->timestamp().seekGeneration() == m_d->m_activeSeekGeneration) {
           /// frame done, give some break for this thread
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
       }
@@ -1782,7 +1789,7 @@ namespace VideoDisplay
         ///
         // With streams we might randomly get EAGAIN, at least on linux
         if(err == AVERROR(EAGAIN)) {
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         } else
         if(err != AVERROR_EOF) {
@@ -1797,7 +1804,7 @@ namespace VideoDisplay
             lastError = err;
           }
           ++consecutiveErrorCount;
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
 
@@ -1820,7 +1827,7 @@ namespace VideoDisplay
         /// @todo refactor eof handling away
 
         if(m_d->m_realTimeSeeking) {
-          Radiant::Sleep::sleepMs(1);
+          Radiant::Sleep::sleepSome(0.001);
           continue;
         }
         if(m_d->m_options.isLooping()) {

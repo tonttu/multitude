@@ -112,7 +112,9 @@ namespace Luminous
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex, OpenGLAPI& opengl);
 
+    /// Set the GPU id for the driver
     LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
+    /// Get the GPU id for the driver, returns -1 if GPU id is not available
     LUMINOUS_API virtual unsigned int gpuId() const = 0;
 
   private:

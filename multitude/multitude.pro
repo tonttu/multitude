@@ -53,7 +53,10 @@ enable-extras {
 MISC_FILES += LGPL.txt multitude.pro multitude.pri library.pri qmake_utils.prf
 MISC_FILES += ThirdParty/ThirdParty.pri
 
-$$installFiles(/src/multitude, MISC_FILES)
+# Install support files in release mode
+CONFIG(release, debug|release) {
+  $$installFiles(/src/multitude, MISC_FILES)
 
-# Install extra dependencies on Windows
-win*:include(Win64x/Win64x.pri)
+  # Install extra dependencies on Windows
+  win*:include(Win64x/Win64x.pri)
+}
