@@ -142,6 +142,11 @@ namespace Luminous
 
   void Window::mousePressEvent(QMouseEvent* ev)
   {
+    // Request keyboard focus to this window
+    if (!isActive()) {
+      requestActivate();
+    }
+
     if(m_eventHook)
       m_eventHook->mousePressEvent(ev);
   }
