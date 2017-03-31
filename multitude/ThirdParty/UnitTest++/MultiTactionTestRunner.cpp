@@ -6,6 +6,7 @@
 #include <Radiant/Trace.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/StringUtils.hpp>
+#include <Radiant/CallStack.hpp>
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -30,7 +31,39 @@
 
 namespace {
 
-  #ifdef RADIANT_WINDOWS
+#ifdef RADIANT_UNIX
+
+  void printStackTrace(int, siginfo_t*, void*)
+  {
+    fprintf(stderr, "CAUGHT UNHANDLED EXCEPTION:\n");
+
+    // This is not a very robust way of getting the stack trace since the class
+    // was not designed to be used when the application has crashed. However, it
+    // usually gives useful output.
+    Radiant::CallStack callStack;
+    callStack.print();
+  }
+
+  int runTestWithCrashReporting(UnitTest::TestRunner& runner, const std::function<bool (const UnitTest::Test *const)>& predicate)
+  {
+    struct sigaction printStackTraceSigAction;
+    memset(&printStackTraceSigAction, 0, sizeof(printStackTraceSigAction));
+
+    printStackTraceSigAction.sa_flags = SA_SIGINFO | SA_RESETHAND;
+    printStackTraceSigAction.sa_sigaction = printStackTrace;
+
+    sigaction(SIGSEGV, &printStackTraceSigAction, NULL);
+    sigaction(SIGABRT, &printStackTraceSigAction, NULL);
+
+    // Run the test(s)
+    int ret = runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
+
+    return ret;
+  }
+
+#endif
+
+#ifdef RADIANT_WINDOWS
   int filterExceptionPrintStackTrace(int exceptionCode, PEXCEPTION_POINTERS exceptionPointers)
   {
     fprintf(stderr, "CAUGHT UNHANDLED EXCEPTION:\n");
@@ -110,29 +143,26 @@ namespace {
 
     return EXCEPTION_EXECUTE_HANDLER;
   }
-#endif
 
   // In order to use structured exception handling (SEH), we can not have have
   // object unwinding (destruction) in the function that has the __try {}
   // __except keywords. This function isolates any destruction from the SEH
   // handler. See https://msdn.microsoft.com/en-us/library/xwtb73ad.aspx
-  int runTestWithoutObjectUnwinding(UnitTest::TestRunner& runner, const std::function<bool (const UnitTest::Test *const)>& predicate)
+  int runTestWithCrashReporting(UnitTest::TestRunner& runner, const std::function<bool (const UnitTest::Test *const)>& predicate)
   {
-#ifdef RADIANT_WINDOWS
     __try {
-#endif
+
       return runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
-#ifdef RADIANT_WINDOWS
+
     } __except(filterExceptionPrintStackTrace(GetExceptionCode(), GetExceptionInformation())) {
     }
+
+    // Just to keep the compiler happy
+    return 0;
+  }
 #endif
 
-    // We'll never get here on Windows
-    return runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
-  }
-
 }
-
 
 namespace UnitTest
 {
@@ -419,7 +449,7 @@ namespace UnitTest
         return found;
       };
 
-      int errorCode = runTestWithoutObjectUnwinding(runner, predicate);
+      int errorCode = runTestWithCrashReporting(runner, predicate);
 
       if(foundCount == 0) {
         fprintf(stderr, "Failed to find test '%s' in suite '%s'\n",
