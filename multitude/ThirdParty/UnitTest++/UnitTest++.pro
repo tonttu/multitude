@@ -69,6 +69,7 @@ win32 {
   HEADERS += Win32/TimeHelpers.h
   SOURCES += Win32/TimeHelpers.cpp
   DEFINES += UNITTEST_WIN32_DLL
+  LIBS += Dbghelp.lib
 } else {
   HEADERS += Posix/TimeHelpers.h
   HEADERS += Posix/SignalTranslator.h

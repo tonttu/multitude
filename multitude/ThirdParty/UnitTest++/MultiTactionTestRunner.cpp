@@ -5,6 +5,7 @@
 
 #include <Radiant/Trace.hpp>
 #include <Radiant/Timer.hpp>
+#include <Radiant/StringUtils.hpp>
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -21,8 +22,121 @@
 #include <memory>
 #include <cassert>
 
+#ifdef RADIANT_WINDOWS
+#include <windows.h>
+#include <excpt.h>
+#include <DbgHelp.h>
+#endif
+
+namespace {
+
+  #ifdef RADIANT_WINDOWS
+  int filterExceptionPrintStackTrace(int exceptionCode, PEXCEPTION_POINTERS exceptionPointers)
+  {
+    fprintf(stderr, "CAUGHT UNHANDLED EXCEPTION:\n");
+    (void)exceptionCode;
+
+    HANDLE currentProcess = GetCurrentProcess();
+
+    // Initialize the symbol handler for current process
+    if(SymInitialize(currentProcess, NULL, TRUE) == FALSE) {
+      fprintf(stderr, "printStackTrace # SymInitialize failed: %s\n", Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
+      return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+    // Define symbol loading options
+    DWORD symbolOptions = SymGetOptions();
+    symbolOptions |= SYMOPT_LOAD_LINES; // Want line numbers
+    SymSetOptions(symbolOptions);
+
+    // Initialize stack frame based on where the exception occurred (only works
+    // on amd64 architecture)
+    STACKFRAME64 stackFrame;
+
+    // Setup instruction pointer
+    stackFrame.AddrPC.Offset = exceptionPointers->ContextRecord->Rip;
+    stackFrame.AddrPC.Mode = AddrModeFlat;
+
+    // Setup stack pointer
+    stackFrame.AddrStack.Offset = exceptionPointers->ContextRecord->Rsp;
+    stackFrame.AddrStack.Mode = AddrModeFlat;
+
+    // Setup frame pointer
+    stackFrame.AddrFrame.Offset = exceptionPointers->ContextRecord->Rbp;
+    stackFrame.AddrFrame.Mode = AddrModeFlat;
+
+    const int maxFrames = 32;
+    int frameNumber = 0;
+
+    while(frameNumber++ < maxFrames) {
+
+      // May fail, in that case we just abort
+      if(!StackWalk64(IMAGE_FILE_MACHINE_AMD64, currentProcess, GetCurrentThread(), &stackFrame, exceptionPointers->ContextRecord, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
+        break;
+
+      // May fail, in that case we just abort
+      if(stackFrame.AddrPC.Offset == 0)
+        break;
+
+      const int maxSymbolNameLen = 1024;
+      const int symbolBytesToAllocate = sizeof(SYMBOL_INFO) + (maxSymbolNameLen - 1) * sizeof(TCHAR);
+
+      // Initialize symbol struct
+      SYMBOL_INFO* symbol = static_cast<SYMBOL_INFO*>(malloc(symbolBytesToAllocate));
+      memset(symbol, 0, symbolBytesToAllocate);
+      symbol->MaxNameLen = maxSymbolNameLen;
+      symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+      // Find the symbol name.
+      // Don't check for errors, we output empty symbol name below if this
+      // fails, but we might be able to still continue traversing the stack
+      DWORD64 symbolDisplacement = 0;
+      SymFromAddr(currentProcess, stackFrame.AddrPC.Offset, &symbolDisplacement, symbol);
+
+      // Find the line number
+      IMAGEHLP_LINE64 line = {};
+      line.SizeOfStruct = sizeof(line);
+      DWORD lineOffset = 0;
+
+      // Don't check for errors, this will always fail for RtlUserThreadStart
+      // and BaseThreadInitThunk. The line numbers for those will just appear
+      // as 0.
+      SymGetLineFromAddr64(currentProcess, stackFrame.AddrPC.Offset, &lineOffset, &line);
+
+      // Output whatever we managed to find out regardless of failures above,
+      // it might still be useful
+      fprintf(stderr, "#%d %s at %s:%d\n", frameNumber, symbol->Name, line.FileName, line.LineNumber);
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+  }
+#endif
+
+  // In order to use structured exception handling (SEH), we can not have have
+  // object unwinding (destruction) in the function that has the __try {}
+  // __except keywords. This function isolates any destruction from the SEH
+  // handler. See https://msdn.microsoft.com/en-us/library/xwtb73ad.aspx
+  int runTestWithoutObjectUnwinding(UnitTest::TestRunner& runner, const std::function<bool (const UnitTest::Test *const)>& predicate)
+  {
+#ifdef RADIANT_WINDOWS
+    __try {
+#endif
+      return runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
+#ifdef RADIANT_WINDOWS
+    } __except(filterExceptionPrintStackTrace(GetExceptionCode(), GetExceptionInformation())) {
+    }
+#endif
+
+    // We'll never get here on Windows
+    return runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
+  }
+
+}
+
+
 namespace UnitTest
 {
+
   namespace
   {
     static std::mutex s_argumentsMutex;
@@ -304,7 +418,9 @@ namespace UnitTest
         }
         return found;
       };
-      int errorCode = runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
+
+      int errorCode = runTestWithoutObjectUnwinding(runner, predicate);
+
       if(foundCount == 0) {
         fprintf(stderr, "Failed to find test '%s' in suite '%s'\n",
                 testName.toUtf8().data(),
@@ -466,4 +582,5 @@ namespace UnitTest
     std::lock_guard<std::mutex> guard(s_argumentsMutex);
     return s_arguments;
   }
+
 }
