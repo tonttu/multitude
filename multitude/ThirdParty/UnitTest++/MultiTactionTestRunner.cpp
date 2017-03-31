@@ -245,7 +245,7 @@ namespace UnitTest
     int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName,
                  bool verbose, bool silent)
     {
-      int count = toRun.size();
+      int count = static_cast<int>(toRun.size());
 
       if (xmlOutput.isEmpty())
         xmlOutput = "TestTemp.xml";
