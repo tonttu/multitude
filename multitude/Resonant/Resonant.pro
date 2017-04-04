@@ -49,7 +49,7 @@ enable-port-audio {
   }
 }
 
-enable-pulse {
+enable-pulse-audio {
   DEFINES += CORNERSTONE_ENABLE_PULSE
 
   HEADERS += PulseAudioSource.hpp
