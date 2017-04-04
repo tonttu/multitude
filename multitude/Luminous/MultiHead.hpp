@@ -285,6 +285,22 @@ namespace Luminous {
       bool frameless() const { return m_frameless; }
       void setFrameless(bool frameless) { m_frameless = frameless; }
 
+      /// Should the window stay on top of other windows. If not defined in
+      /// screen.xml, this defaults to true with frameless windows and false
+      /// otherwise.
+      bool stayOnTop() const { return m_stayOnTop; }
+      void setStayOnTop(bool stayOnTop) { m_stayOnTop = stayOnTop; }
+
+      /// Should the window bypass the window manager on Linux. If true, the
+      /// window is visible on all virtual desktops, stays on top of other
+      /// windows that have "stay on top" flag enabled and steals the keyboard
+      /// focus from the X server so that even window manager keyboard
+      /// shortcuts might not work.
+      /// Use this only if there are any issues keeping the window on top of
+      /// other applications like gnome-panel.
+      bool bypassWindowManager() const { return m_bypassWindowManager; }
+      void setBypassWindowManager(bool bypass) { m_bypassWindowManager = bypass; }
+
       /// Should the window be full-screen
       bool fullscreen() const { return m_fullscreen; }
       /// Sets the fullscreen flag
@@ -345,6 +361,8 @@ namespace Luminous {
       Valuable::AttributeVector2i   m_location;
       Valuable::AttributeVector2i   m_size;
       Valuable::AttributeBool       m_frameless;
+      Valuable::AttributeBool       m_stayOnTop;
+      Valuable::AttributeBool       m_bypassWindowManager;
       Valuable::AttributeBool       m_fullscreen;
       Valuable::AttributeBool       m_resizable;
       Valuable::AttributeAlias      m_resizeable;

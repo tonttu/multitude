@@ -300,6 +300,8 @@ namespace Luminous
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
       m_frameless(this, "frameless", true),
+      m_stayOnTop(this, "stay-on-top", true),
+      m_bypassWindowManager(this, "bypass-window-manager", false),
       m_fullscreen(this, "fullscreen", false),
       m_resizable(this, "resizable", false),
       m_resizeable(this, "resizeable", &m_resizable),
@@ -309,6 +311,10 @@ namespace Luminous
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1)
   {
+    // stay-on-top default value depends on frameless value for backwards compatibility
+    m_frameless.addListener([this] {
+      m_stayOnTop.setValue(m_frameless.value(), DEFAULT);
+    });
   }
 
   MultiHead::Window::~Window()
