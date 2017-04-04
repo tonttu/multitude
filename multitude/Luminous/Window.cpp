@@ -142,8 +142,8 @@ namespace Luminous
 
   void Window::mousePressEvent(QMouseEvent* ev)
   {
-    // Request keyboard focus to this window
-    if (!isActive()) {
+    // Request keyboard focus to this window if the window manager is not handling it
+    if (!isActive() && (flags() & Qt::BypassWindowManagerHint)) {
       requestActivate();
     }
 
