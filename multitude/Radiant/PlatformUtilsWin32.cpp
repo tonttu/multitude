@@ -324,6 +324,29 @@ namespace Radiant
       }
       return QString();
     }
+
+    QStringList getCommandLine()
+    {
+      QStringList result;
+
+      int argc = 0;
+      auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+      if (argv) {
+        for (int i = 0; i < argc; ++i) {
+          result << QString::fromWCharArray(argv[i]);
+        }
+
+        LocalFree(argv);
+      } else {
+        char name[256];
+        GetModuleFileNameA(nullptr, name, sizeof(name));
+        result << QString(name);
+      }
+
+      return result;
+    }
+
   }  // namespace PlatformUtils
 }  // namespace Radiant
 

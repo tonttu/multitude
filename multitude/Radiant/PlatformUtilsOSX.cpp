@@ -19,6 +19,7 @@
 
 #include <dlfcn.h>
 #include <sys/stat.h>
+#include <crt_externs.h>
 
 #include <mach/task.h>
 #include <mach/mach_traps.h>
@@ -162,6 +163,20 @@ namespace Radiant
     {
       Radiant::error("PlatformUtils::shutdown # not implemented on OS X");
       return false;
+    }
+
+    QStringList getCommandLine()
+    {
+      QStringList result;
+
+      int* argc = _NSGetArgc();
+      char*** argv = _NSGetArgv();
+
+      for(int i = 0; i < *argc; ++i) {
+	result << QString((*argv)[i]);
+      }
+
+      return result;
     }
   }
 
