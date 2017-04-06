@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 
 #include <Windows.h>
+#include <Shellapi.h>
 
 #include <stdlib.h>
 #include <vector>
