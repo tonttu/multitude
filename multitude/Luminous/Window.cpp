@@ -92,6 +92,11 @@ namespace Luminous
     m_openGLContext->swapBuffers(this);
   }
 
+  void Window::setKeyboardFocusOnClick(bool value)
+  {
+    m_setKeyboardFocusOnClick = value;
+  }
+
   void Window::exposeEvent(QExposeEvent* ev)
   {
     if(m_eventHook)
@@ -143,7 +148,7 @@ namespace Luminous
   void Window::mousePressEvent(QMouseEvent* ev)
   {
     // Request keyboard focus to this window if the window manager is not handling it
-    if (!isActive() && (flags() & Qt::BypassWindowManagerHint)) {
+    if (m_setKeyboardFocusOnClick && !isActive()) {
       requestActivate();
     }
 

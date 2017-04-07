@@ -67,6 +67,9 @@ namespace Luminous
     /// @return OpenGL context for this window
     QOpenGLContext * context() const;
 
+    /// Set the keyboard focus when the window is clicked
+    void setKeyboardFocusOnClick(bool value);
+
   signals:
     void closed();
 
@@ -96,6 +99,8 @@ namespace Luminous
     WindowEventHook* m_eventHook;
     Nimble::Vector2f m_himetricFactor{0, 0};
     Nimble::Vector2i m_himetricCalibrationMax{0, 0};
+
+    bool m_setKeyboardFocusOnClick = false;
   };
 
 }
