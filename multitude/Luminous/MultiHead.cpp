@@ -296,6 +296,8 @@ namespace Luminous
       m_location(this, "location", Nimble::Vector2i(0, 0)),
       m_size(this, "size", Nimble::Vector2i(100, 100)),
       m_frameless(this, "frameless", true),
+      m_stayOnTop(this, "stay-on-top", true),
+      m_bypassWindowManager(this, "bypass-window-manager", true),
       m_fullscreen(this, "fullscreen", false),
       m_resizable(this, "resizable", false),
       m_resizeable(this, "resizeable", &m_resizable),
@@ -305,6 +307,11 @@ namespace Luminous
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1)
   {
+    // stay-on-top default value depends on frameless value for backwards compatibility
+    m_frameless.addListener([this] {
+      m_stayOnTop.setValue(m_frameless.value(), DEFAULT);
+      m_bypassWindowManager.setValue(m_frameless.value(), DEFAULT);
+    });
   }
 
   MultiHead::Window::~Window()
@@ -452,7 +459,14 @@ namespace Luminous
       : Node(0, "MultiHead"),
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053f), /* DPI for 55" */
-      m_vsync(this, "vsync", true),
+      m_vsync(this, "vsync",
+#ifdef RADIANT_WINDOWS
+              /// Disable vsync by default on Windows because of DWM issues, see #12221
+              false
+#else
+              true
+#endif
+              ),
       m_glFinish(this, "gl-finish", false),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {

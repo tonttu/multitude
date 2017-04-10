@@ -13,10 +13,7 @@ contains(CONVENIENCE, $${CLEAN_TARGET}){
     }
     headers.files += $${QXT_SOURCE_TREE}/include/$${CLEAN_TARGET}/*
 }
-# We add target to INSTALLS in library.pri later, this would generate
-# duplicate entries and qmake warning
-#INSTALLS += target
-win32:INSTALLS += dlltarget
+INSTALLS += target
 
 defineReplace(qxtLibraryTarget) {
    unset(LIBRARY_NAME)
