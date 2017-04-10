@@ -510,14 +510,8 @@ namespace VideoDisplay
 
 #ifdef RADIANT_LINUX
     /// Detect video4linux2 devices automatically
-    if (m_options.format().isEmpty()) {
-      QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
-      if (v4l2m.exactMatch(src)) {
-        m_options.setFormat("video4linux2");
-      } else {
-        if (sourceFileInfo.isSymLink() && v4l2m.exactMatch(sourceFileInfo.symLinkTarget()))
-          m_options.setFormat("video4linux2");
-      }
+    if (m_options.format().isEmpty() && AVDecoder::looksLikeV4L2Device(src)) {
+      m_options.setFormat("video4linux2");
     }
 #endif
 
