@@ -19,8 +19,6 @@
 
 #include <QAtomicInt>
 
-// #define INTRUSIVE_PTR_DEBUG
-
 #ifdef INTRUSIVE_PTR_DEBUG
 
 #include <Valuable/Export.hpp>
