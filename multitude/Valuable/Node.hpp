@@ -74,11 +74,13 @@ namespace Valuable
     };
 
     Node();
-    /** Constructs a new Node and adds it under the given host
+    /** Constructs a new Node and adds it under the given host.
+      This method is "explicit", so that you cannot cast from Node pointer
+      to Node object accidentally.
       @param host Host of this node. Parent in node-hierarchy
       @param name Name of this object.
     */
-    Node(Node * host, const QByteArray &name = "");
+    explicit Node(Node * host, const QByteArray &name = "");
     virtual ~Node();
 
     /// @cond
@@ -95,6 +97,12 @@ namespace Valuable
     /// @param node node to move
     /// @returns reference to this
     Node & operator=(Node && node);
+
+    /// Checks if the node is a descendant from a fiven ancestor
+    /// Node descends from another node if it is a direct child of the
+    /// another node or if there is a direct parent child path between them.
+    /// @param ancestorCandidate The potential ancestor of this ndoe.
+    bool hasAncestor(const Node & ancestorCandidate) const;
 
     /// Adds a new Attribute to the list of attribute objects.
     /// Copies the name of the attribute from the given object.
