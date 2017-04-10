@@ -197,8 +197,25 @@ namespace Radiant
       }
       return result.st_nlink;
     }
-  }
 
+    QStringList getCommandLine()
+    {
+      QFile cmdline("/proc/self/cmdline");
+
+      if(!cmdline.open(QIODevice::ReadOnly)) {
+        Radiant::error("PlatformUtils::getCommandLine # failed to read %s", cmdline.fileName().toUtf8().data());
+        return QStringList();
+      }
+
+      QList<QByteArray> args = cmdline.readAll().split('\0');
+
+      QStringList result;
+      for(const auto & i : args)
+        result << i;
+
+      return result;
+    }
+  }
 }
 
 #endif
