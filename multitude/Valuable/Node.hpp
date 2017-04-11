@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
  * and others.
  *
@@ -98,7 +97,7 @@ namespace Valuable
     /// @returns reference to this
     Node & operator=(Node && node);
 
-    /// Checks if the node is a descendant from a fiven ancestor
+    /// Checks if the node is a descendant from a given ancestor.
     /// Node descends from another node if it is a direct child of the
     /// another node or if there is a direct parent child path between them.
     /// @param ancestorCandidate The potential ancestor of this ndoe.
