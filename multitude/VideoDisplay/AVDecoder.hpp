@@ -296,8 +296,7 @@ namespace VideoDisplay
 
       /// Input format.
       ///
-      /// Specify the input format. Usually this is not needed, but for example
-      /// "video4linux2" isn't automatically detected.
+      /// Specify the input format. Usually this is not needed.
       ///
       /// List all available formats (demuxers): avconv -formats
       ///
@@ -697,6 +696,11 @@ namespace VideoDisplay
     /// @returns new decoder
     static std::shared_ptr<AVDecoder> create(const Options & options,
                                              const QString & backend = "");
+
+    /// Returns true if the device looks like V4L2 device (/dev/video* etc).
+    /// Doesn't actually open the device or use Video4Linux2 API to confirm
+    /// it is a real device.
+    static bool looksLikeV4L2Device(const QString & path);
 
     virtual void audioTransferDeleted() {}
 

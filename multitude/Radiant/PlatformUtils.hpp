@@ -112,6 +112,10 @@ namespace Radiant
     RADIANT_API QString findWindowsServiceLogFile(const QString & serviceName,
                                                   const QString & logName);
 #endif
+
+    /// Get the command-line arguments for the current process
+    /// @return list of command-line arguments including executable name as first argument
+    RADIANT_API QStringList getCommandLine();
   }
 }
 

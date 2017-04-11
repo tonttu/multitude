@@ -356,7 +356,7 @@ namespace VideoDisplay
         Radiant::error("supportedPixFormatsStr # Failed to convert pixel format %d to string", format);
       } else {
         if (!lst.isEmpty())
-          lst += ":";
+          lst += "|";
         lst += str;
       }
     }
@@ -393,7 +393,7 @@ namespace VideoDisplay
 
       QString args;
       if(video) {
-        args.sprintf("%d:%d:%d:%d:%d:%d:%d",
+        args.sprintf("video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
                      m_av.videoCodecContext->width, m_av.videoCodecContext->height,
                      m_av.videoCodecContext->pix_fmt,
                      m_av.videoCodecContext->time_base.num, m_av.videoCodecContext->time_base.den,
@@ -510,14 +510,8 @@ namespace VideoDisplay
 
 #ifdef RADIANT_LINUX
     /// Detect video4linux2 devices automatically
-    if (m_options.format().isEmpty()) {
-      QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
-      if (v4l2m.exactMatch(src)) {
-        m_options.setFormat("video4linux2");
-      } else {
-        if (sourceFileInfo.isSymLink() && v4l2m.exactMatch(sourceFileInfo.symLinkTarget()))
-          m_options.setFormat("video4linux2");
-      }
+    if (m_options.format().isEmpty() && AVDecoder::looksLikeV4L2Device(src)) {
+      m_options.setFormat("video4linux2");
     }
 #endif
 

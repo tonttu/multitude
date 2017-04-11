@@ -17,6 +17,8 @@
 #include "FfmpegDecoder.hpp"
 #endif
 
+#include <QFileInfo>
+
 namespace VideoDisplay
 {
 
@@ -98,5 +100,15 @@ namespace VideoDisplay
 #endif
     decoder->load(options);
     return decoder;
+  }
+
+  bool AVDecoder::looksLikeV4L2Device(const QString & path)
+  {
+    QRegExp v4l2m("/dev/(vtx|video|radio|vbi)\\d+");
+    if (v4l2m.exactMatch(path))
+      return true;
+
+    const QFileInfo pathInfo(path);
+    return pathInfo.isSymLink() && v4l2m.exactMatch(pathInfo.symLinkTarget());
   }
 }
