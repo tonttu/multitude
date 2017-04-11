@@ -248,6 +248,16 @@ namespace Valuable
     return *this;
   }
 
+  bool Node::hasAncestor(const Node &ancestorCandidate) const
+  {
+    const Node * test = host();
+    while(test) {
+      if(test == &ancestorCandidate) return true;
+      test = test->host();
+    }
+    return false;
+  }
+
   void Node::merge(Node && node)
   {
     auto & src = node.m_attributes.vector();
