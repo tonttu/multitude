@@ -157,8 +157,10 @@ namespace {
     } __except(filterExceptionPrintStackTrace(GetExceptionCode(), GetExceptionInformation())) {
     }
 
+    abort();
+
     // Just to keep the compiler happy
-    return 0;
+    return 1;
   }
 #endif
 
