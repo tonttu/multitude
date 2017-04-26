@@ -44,7 +44,7 @@ Resonant.depends = Radiant Nimble Valuable
 SUBDIRS += VideoDisplay
 VideoDisplay.depends = Resonant Luminous
 
-enable-extras {
+enable-applications {
   SUBDIRS += Applications
   Applications.depends = Radiant Nimble Valuable
 }
