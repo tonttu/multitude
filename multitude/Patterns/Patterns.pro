@@ -8,4 +8,4 @@ SOURCES += NotCopyable.cpp
 
 win32:DEFINES += PATTERNS_EXPORT
 
-include(../library.pri)
+include(../../library.pri)

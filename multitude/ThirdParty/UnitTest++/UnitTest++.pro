@@ -1,3 +1,10 @@
+# There doesn't seem to be any way copy files on Windows that would work with
+# spaces and special characters, like + signs. Tried copy, xcopy, robocopy
+win32 {
+  QMAKE_COPY_FILE='\"C:\Program Files\Git\usr\bin\cp.exe\" -f'
+  QMAKE_INSTALL_FILE='\"C:\Program Files\Git\usr\bin\install.exe\"'
+}
+
 include(../../../cornerstone.pri)
 
 QT += xml
@@ -77,7 +84,5 @@ win32 {
   SOURCES += Posix/SignalTranslator.cpp
 }
 DEFINES += UNITTEST_USE_CUSTOM_STREAMS
-
-EXTRA_SOURCES += UnitTest++.pro README
 
 include(../ThirdParty.pri)

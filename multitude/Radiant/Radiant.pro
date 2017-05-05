@@ -224,4 +224,4 @@ win32 {
   SOURCES += DeviceUtilsWin.cpp
 }
 
-include(../library.pri)
+include(../../library.pri)

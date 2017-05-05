@@ -64,7 +64,7 @@ enable-pulse-audio {
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-include(../library.pri)
+include(../../library.pri)
 
 DEFINES += RESONANT_EXPORT
 

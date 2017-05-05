@@ -42,4 +42,4 @@ SOURCES += Splines.cpp
 
 DEFINES += NIMBLE_EXPORT
 
-include(../library.pri)
+include(../../library.pri)

@@ -48,15 +48,3 @@ enable-extras {
   SUBDIRS += Applications
   Applications.depends = Radiant Nimble Valuable
 }
-
-# Install some build files to the source package
-MISC_FILES += LGPL.txt multitude.pro multitude.pri library.pri qmake_utils.prf
-MISC_FILES += ThirdParty/ThirdParty.pri
-
-# Install support files in release mode
-CONFIG(release, debug|release) {
-  $$installFiles(/src/multitude, MISC_FILES)
-
-  # Install extra dependencies on Windows
-  win*:include(Win64x/Win64x.pri)
-}

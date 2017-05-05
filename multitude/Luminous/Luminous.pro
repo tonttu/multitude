@@ -237,4 +237,4 @@ enable-pdf {
   SOURCES += PDFManager.cpp
 }
 
-include(../library.pri)
+include(../../library.pri)

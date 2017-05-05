@@ -2,9 +2,6 @@
 adl_includes.path = /include/ThirdParty
 adl_includes.files = ThirdParty/adl_sdk
 
-adl_sources.path = /src/multitude/ThirdParty
-adl_sources.files = ThirdParty/adl_sdk
-
 CONFIG(release, debug|release) {
-  INSTALLS += adl_includes adl_sources
+  INSTALLS += adl_includes
 }

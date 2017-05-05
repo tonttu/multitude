@@ -36,4 +36,4 @@ macx {
 
 DEFINES += VIDEODISPLAY_EXPORT
 
-include(../library.pri)
+include(../../library.pri)

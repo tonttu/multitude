@@ -85,4 +85,4 @@ DEFINES += VALUABLE_EXPORT
 CONFIG += qt
 QT += xml
 
-include(../library.pri)
+include(../../library.pri)

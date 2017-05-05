@@ -12,4 +12,4 @@ LIBS += $$LIB_FOLLY_FUTURES $$LIB_RADIANT
 
 DEFINES += PUNCTUAL_EXPORT
 
-include(../library.pri)
+include(../../library.pri)

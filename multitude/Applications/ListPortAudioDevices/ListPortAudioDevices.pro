@@ -1,6 +1,4 @@
-include(../Applications.pri)
-
-TARGET = ListPortAudioDevices$${CORNERSTONE_APP_SUFFIX}
+include(../../../Applications/Applications.pri)
 
 SOURCES += Main.cpp
 
@@ -19,4 +17,4 @@ win* {
   LIBS += -llibsndfile-1 -lportaudio_x64 -lole32 -luser32
 }
 
-include(../Applications_end.pri)
+include(../../../Applications/Applications_end.pri)

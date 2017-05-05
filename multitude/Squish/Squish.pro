@@ -34,4 +34,4 @@ DEFINES += USE_SSE=2
 
 INCLUDEPATH += $$PWD
 
-include(../library.pri)
+include(../../library.pri)
