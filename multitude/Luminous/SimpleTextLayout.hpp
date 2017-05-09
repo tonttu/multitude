@@ -43,6 +43,9 @@ namespace Luminous
     LUMINOUS_API QFont font() const;
     LUMINOUS_API void setFont(const QFont & font);
 
+    LUMINOUS_API float fontPixelSize() const;
+    LUMINOUS_API void setFontPixelSize(float pixelSize);
+
     LUMINOUS_API void setLineHeight(const Valuable::StyleValue & height);
     LUMINOUS_API const Valuable::StyleValue & lineHeight() const;
 

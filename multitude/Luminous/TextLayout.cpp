@@ -17,6 +17,8 @@
 #include <QGlyphRun>
 #include <QTextCharFormat>
 
+Q_GUI_EXPORT int qt_defaultDpiY();
+
 bool operator<(QColor a, QColor b)
 {
   if (a.isValid() && b.isValid()) {
@@ -298,6 +300,17 @@ namespace Luminous
     if (glyphRun.glyphIndexes().isEmpty())
       return false;
     return m_d->generate(location, glyphRun, format);
+  }
+
+  float TextLayout::pixelToPointSize(float pixelSize)
+  {
+    // 72 would be the correct value here, but using it would break all existing applications
+    return pixelSize * 96.f / qt_defaultDpiY();
+  }
+
+  float TextLayout::pointToPixelSize(float pointSize)
+  {
+    return pointSize / 96.f * qt_defaultDpiY();
   }
 
   void TextLayout::doGenerateInternal() const

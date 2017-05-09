@@ -393,6 +393,19 @@ namespace Luminous
     invalidate();
   }
 
+  float SimpleTextLayout::fontPixelSize() const
+  {
+    const QFont f = font();
+    return f.pixelSize() < 0 ? pointToPixelSize(f.pointSizeF()) : f.pixelSize();
+  }
+
+  void SimpleTextLayout::setFontPixelSize(float pixelSize)
+  {
+    QFont f = font();
+    f.setPointSizeF(pixelToPointSize(pixelSize));
+    setFont(f);
+  }
+
   void SimpleTextLayout::setLineHeight(const Valuable::StyleValue & height)
   {
     if (m_d->m_lineHeight == height)

@@ -22,6 +22,7 @@
 #include <Luminous/StencilMode.hpp>
 #include <Luminous/Texture.hpp>
 #include <Luminous/ShaderUniform.hpp>
+#include <Luminous/TextLayout.hpp>
 
 #include <QFont>
 #include <QTextOption>
@@ -416,13 +417,17 @@ namespace Luminous
     {}
 
     /// Get the font for the style
+    /// You can modify the returned reference, but typically you should use
+    /// setFontPixelSize to set the font size instead of using QFont directly
     QFont & font() { return m_font; }
     /// @copydoc font
     const QFont & font() const { return m_font; }
     /// Set the font for the style
     void setFont(const QFont & font) { m_font = font; }
-
-    void setPointSize(float size) { m_font.setPointSizeF(size); }
+    /// Set the font size in pixels
+    inline void setFontPixelSize(float sizeInPixels);
+    /// Returns the font size in pixels
+    inline float fontPixelSize() const;
 
     /// Get the text options for the style. The options are used to define things like wrapping and alignment.
     QTextOption & textOption() { return m_textOption; }
@@ -508,6 +513,16 @@ namespace Luminous
       m_textures.reset(new std::map<QByteArray, const Texture *>());
     (*m_textures)[name] = &texture;
     m_translucentTextures = m_translucentTextures || texture.translucent();
+  }
+
+  void TextStyle::setFontPixelSize(float sizeInPixels)
+  {
+    m_font.setPointSizeF(TextLayout::pixelToPointSize(sizeInPixels));
+  }
+
+  float TextStyle::fontPixelSize() const
+  {
+    return m_font.pixelSize() < 0 ? TextLayout::pointToPixelSize(m_font.pointSizeF()) : m_font.pixelSize();
   }
 }
 #endif // LUMINOUS_STYLE_HPP

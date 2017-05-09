@@ -83,6 +83,11 @@ namespace Luminous {
     /// @todo document, maybe rename
     LUMINOUS_API QUrl findUrl(Nimble::Vector2f location) const;
 
+    /// Converts between pixel and point sizes with QFont like Qt does it,
+    /// this doesn't necessarily use the actual DPI of the displays or system.
+    LUMINOUS_API static float pixelToPointSize(float size);
+    LUMINOUS_API static float pointToPixelSize(float size);
+
   protected:
     LUMINOUS_API void setVerticalOffset(float offset);
 
