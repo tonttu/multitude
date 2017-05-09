@@ -1,3 +1,5 @@
+include(../../../../../cornerstone.pri)
+
 # This is for @rpath issues so the library gets the right name
 macx:TARGET           = QxtNetwork
 

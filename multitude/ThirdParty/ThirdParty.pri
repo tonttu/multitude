@@ -1,5 +1,3 @@
-include(../../cornerstone.pri)
-
 # Don't use default multitude install rules because we want these files to go
 # under ThirdParty. We override this at the end of this file.
 skip_install_target = true
