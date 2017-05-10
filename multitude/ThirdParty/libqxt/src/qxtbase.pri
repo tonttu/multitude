@@ -13,7 +13,6 @@ contains(CONVENIENCE, $${CLEAN_TARGET}){
     }
     headers.files += $${QXT_SOURCE_TREE}/include/$${CLEAN_TARGET}/*
 }
-INSTALLS += target
 
 defineReplace(qxtLibraryTarget) {
    unset(LIBRARY_NAME)
