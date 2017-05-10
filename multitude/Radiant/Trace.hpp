@@ -5,50 +5,99 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
-
 
 #ifndef RADIANT_TRACE_HPP
 #define RADIANT_TRACE_HPP
 
-#include <Radiant/Export.hpp>
+#include "Export.hpp"
 
 #include <QString>
 
-#define FNAME static const char * fname = __FUNCTION__
+#include <memory>
+#include <functional>
+#include <map>
 
-namespace Radiant {
-
-  /// Error severity levels
-  enum Severity
+namespace Radiant
+{
+  namespace Trace
   {
-    /// Debug information, that is usually not useful for the end user
-    /** Debug messages are printed out only if verbose output is
-    enabled. */
-    DEBUG,
-    /// Useful information to all users.
-    /** Info messages are printed out always. */
-    INFO,
-    /// Something bad may or may not had happened
-    WARNING,
-    /// An error occurred
-    FAILURE,
-    /// Fatal error, causes application shutdown
-    FATAL,
-    /// Use this only as a parameter for setMinimumSeverityLevel
-    SILENT
-  };
+    /// Error severity levels
+    enum Severity
+    {
+      /// Debug information, that is usually not useful for the end user
+      /** Debug messages are printed out only if verbose output is
+          enabled. */
+      DEBUG,
+      /// Useful information to all users.
+      /** Info messages are printed out always. */
+      INFO,
+      /// Something bad may or may not had happened
+      WARNING,
+      /// An error occurred
+      FAILURE,
+      /// Fatal error, causes application shutdown
+      FATAL,
+    };
 
-#ifdef __GNUC__
-#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK) \
-  __attribute__ ((format (printf, (STR_IDX), (FIRST_TO_CHECK))))
-#else
-#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK)
-#endif
+    struct Message
+    {
+      Severity severity;
+      QByteArray module;
+      QString text;
+    };
 
-  /// Display useful output.
-  /** This function prints out given message, based on current verbosity level.
+    inline bool operator==(const Message & a, const Message & b)
+    {
+      return a.severity == b.severity && a.module == b.module && a.text == b.text;
+    }
+
+    class Filter
+    {
+    public:
+      enum Order
+      {
+        ORDER_BEGIN = 0,
+        ORDER_DEFAULT_FILTERS = 1000,
+        ORDER_OUTPUT = 2000,
+        ORDER_END = 3000,
+      };
+
+    public:
+      Filter(float order = ORDER_OUTPUT) : m_order(order) {}
+      virtual ~Filter() {}
+
+      virtual bool trace(const Message & msg) = 0;
+
+      inline float order() const { return m_order; }
+
+    private:
+      const float m_order;
+    };
+    typedef std::shared_ptr<Filter> FilterPtr;
+
+    typedef std::function<bool(const Message & message)> FilterFunc;
+
+    RADIANT_API void addFilter(const FilterPtr & filter);
+    RADIANT_API FilterPtr addFilter(const FilterFunc & filter, float order = Filter::ORDER_OUTPUT);
+    RADIANT_API bool removeFilter(const FilterPtr & filter);
+    RADIANT_API std::multimap<float, FilterPtr> filters();
+
+    template <typename FilterT, typename ... Args>
+    inline std::shared_ptr<FilterT> findOrCreateFilter(Args && ... args);
+
+    template <typename FilterT>
+    inline std::shared_ptr<FilterT> findFilter();
+
+    template <typename FilterT>
+    inline std::shared_ptr<FilterT> replaceFilter(std::shared_ptr<FilterT> newFilter);
+
+    RADIANT_API void initialize(bool processQueuedMessages, bool initializeDefaultFilters);
+
+
+    /// Display useful output.
+    /** This function prints out given message, based on current verbosity level.
 
       Radiant includes a series of functions to write debug output on the
       terminal.
@@ -68,154 +117,100 @@ namespace Radiant {
 
       @param s severity of the message
       @param msg message format string */
-  RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
+    RADIANT_API void trace(Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(2, 3);
 
-  /// @copydoc trace
-  RADIANT_API void traceMsg(Severity s, const char * msg);
+    /// @copydoc trace
+    /// @param module outputting module from which this message originates
+    RADIANT_API void trace(const char * module, Severity s, const char * msg, ...)
+      RADIANT_PRINTF_CHECK(3, 4);
 
-  /// @returns true if verbose mode is on globally or at least for the given module
-  RADIANT_API bool isVerbose(const char * module);
+    /// Used from JS
+    RADIANT_API void traceMsg(Severity s, const QByteArray & msg);
 
-  /// @copydoc trace
-  /// @param module outputting module from which this message originates
-  RADIANT_API void trace
-  (const char * module, Severity s, const char * msg, ...) RADIANT_PRINTF_CHECK(3, 4);
-
-  /// Display debug output
-  /** This function calls trace to do the final work and it is
+    /// Display debug output
+    /** This function calls trace to do the final work and it is
       effectively the same as calling trace(DEBUG, ...).
 
       @param msg message
       @see trace
   */
-  RADIANT_API void debug(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
-  /// Display information output
-  /** This function calls trace to do the final work and it is
+    RADIANT_API void debug(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+
+    /// Display information output
+    /** This function calls trace to do the final work and it is
       effectively the same as calling trace(INFO, ...).
 
       @param msg message
       @see trace
   */
-  RADIANT_API void info(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
-  /// Display error output
-  /** This function calls trace to do the final work and it is
+    RADIANT_API void info(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+
+    /// Display error output, with a warning message
+    /** This function calls trace to do the final work and it is
+      effectively the same as calling trace(WARNING, ...).
+      @param msg message
+      @see trace
+  */
+    RADIANT_API void warning(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+
+    /// Display error output
+    /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FAILURE, ...).
 
       @param msg message
       @see trace
   */
-  RADIANT_API void error(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+    RADIANT_API void error(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
-  /// Display error output, with a fatal message
-  /** This function calls trace to do the final work and it is
+    /// Display error output, with a fatal message
+    /** This function calls trace to do the final work and it is
       effectively the same as calling trace(FATAL, ...).
       @param msg message
       @see trace
   */
-  RADIANT_API void fatal(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
+    RADIANT_API void fatal(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
-  /// Display error output, with a warning message
-  /** This function calls trace to do the final work and it is
-      effectively the same as calling trace(WARNING, ...).
-      @param msg message
-      @see trace
-  */
-  RADIANT_API void warning(const char * msg, ...) RADIANT_PRINTF_CHECK(1, 2);
 
-  /** Toggle verbose output.
+    template <typename FilterT, typename ... Args>
+    inline std::shared_ptr<FilterT> findOrCreateFilter(Args && ... args)
+    {
+      auto filter = findFilter<FilterT>();
+      if (!filter) {
+        filter = std::make_shared<FilterT>(std::forward<Args>(args)...);
+        addFilter(filter);
+      }
+      return filter;
+    }
 
-      If enabled, messages sent with the #debug function are displayed
-      to the user. Otherwise they are silently ignored
+    template <typename FilterT>
+    inline std::shared_ptr<FilterT> findFilter()
+    {
+      for (auto & p: filters()) {
+        if (auto filter = std::dynamic_pointer_cast<FilterT>(p.second)) {
+          return filter;
+        }
+      }
 
-      @param enable enable or disable messages
-      @param module if given, enables or disables verbose output only for given module.
-  */
-  RADIANT_API void enableVerboseOutput(bool enable, const QString & module = QString());
-  /// Returns true if the @ref debug function output is displayed
-  RADIANT_API bool enabledVerboseOutput();
-  /// Forces ANSI colors to the output even if the output isn't ANSI-capable terminal
-  /// @param enable Are the colors forced.
-  RADIANT_API void forceColors(bool enable = true);
+      return nullptr;
+    }
 
-  /// Set minimum severity level for all printing. If the severity is below
-  /// this, then it is not printed
-  RADIANT_API void setMinimumSeverityLevel(Severity s);
+    template <typename FilterT>
+    inline std::shared_ptr<FilterT> replaceFilter(std::shared_ptr<FilterT> newFilter)
+    {
+      auto filter = findFilter<FilterT>();
+      if (filter) removeFilter(filter);
+      addFilter(newFilter);
+    }
 
-  /// Toggle duplicate filter
-  /// If enabled, duplicate messages will be ignored
-  /// @param enable toggle filtering
-  RADIANT_API void enableDuplicateFilter(bool enable);
+  } // namespace Trace
 
-  /// Returns true if the duplicate filter is enabled
-  /// @return true if filtering is enabled
-  RADIANT_API bool enabledDuplicateFilter();
+  using Trace::trace;
+  using Trace::debug;
+  using Trace::info;
+  using Trace::warning;
+  using Trace::error;
+  using Trace::fatal;
 
-  /// Toggle thread id printing
-  /// If enabled, each log line will include a unique thread id
-  /// @param enable toggle id printing
-  RADIANT_API void enableThreadId(bool enable);
-
-  /// Returns true if the thread id printing is enabled
-  /// @return true if thread id printing is enabled
-  RADIANT_API bool enabledThreadId();
-
-  /** Sets the application name to be used in debug output.
-
-      By default the info/debug/error functions will print out the
-      error message, without further information. You can set the
-      application name with this function, and once this is done each
-      output line will begin with the application name. This is handy
-      if there are several applications throwing output to the same
-      terminal window, and you want to know which application is
-      responsible for which output.
-      @param appname application name
-   */
-  RADIANT_API void setApplicationName(const char * appname);
-
-  /// Uses the given file as the output target for all debug/error output.
-  /// @param filename output filename
-  RADIANT_API void setTraceFile(const char * filename);
-
-#ifdef RADIANT_LINUX
-  /// Enable syslog logging
-  /// @param ident Application name or "ident" in syslog
-  /// @param minSeverity limit syslog logging to messages with severy at least minSeverity
-  RADIANT_API void openSyslog(const QString & ident, Severity minSeverity);
-
-  /// Disable syslog logging
-  RADIANT_API void closeSyslog();
-#endif
-
-  /// This class provides an output stream for debugging information.
-  class Trace
-  {
-  public:
-    /// Constructor
-    /// @param severity severity of messages in this stream
-    inline Trace(Severity severity) : m_severity(severity) {}
-
-    /// Output message to the stream
-    /// @param s message to append
-    /// @return reference to this
-    inline Trace & operator<< (const QString & s) { trace(m_severity, "%s", s.toUtf8().data()); return *this; }
-
-  private:
-    Severity m_severity;
-  };
-
-  /// Obtain debug stream instance
-  /// @return debug stream
-  inline Trace debug() { return Trace(DEBUG); }
-  /// Obtain info stream instance
-  /// @return info stream
-  inline Trace info() { return Trace(INFO); }
-  /// Obtain warning stream instance
-  /// @return warning stream
-  inline Trace warning() { return Trace(WARNING); }
-  /// Obtain error stream instance
-  /// @return error stream
-  inline Trace error() { return Trace(FAILURE); }
-
-}
+} // namespace Radiant
 
 #endif

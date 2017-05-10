@@ -4,6 +4,7 @@
 #include "TestReporterStdout.h"
 
 #include <Radiant/Trace.hpp>
+#include <Radiant/TraceSeverityFilter.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/StringUtils.hpp>
 #include <Radiant/CallStack.hpp>
@@ -561,11 +562,13 @@ namespace UnitTest
     bool silent = parser.isSet("s");
     bool verbose = parser.isSet("v");
 
-    if(silent)
-      Radiant::setMinimumSeverityLevel(Radiant::SILENT);
-    else if(verbose) {
-      Radiant::setMinimumSeverityLevel(Radiant::DEBUG);
-      Radiant::enableVerboseOutput(true);
+    if(silent) {
+      auto dropAllMessages = [] (const Radiant::Trace::Message &) { return true; };
+      Radiant::Trace::addFilter(dropAllMessages, Radiant::Trace::Filter::ORDER_DEFAULT_FILTERS);
+      Radiant::Trace::initialize(false, false);
+    } else if(verbose) {
+      Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
+      Radiant::Trace::initialize(true, true);
     }
 
     const QString single = parser.value("single");

@@ -13,12 +13,10 @@
 
 #include <Radiant/Trace.hpp>
 
-#define debugVideoDisplay(...) (Radiant::trace("VideoDisplay", Radiant::DEBUG, __VA_ARGS__))
+#define debugVideoDisplay(...) (Radiant::trace("VideoDisplay", Radiant::Trace::DEBUG, __VA_ARGS__))
 /// VideoDisplay a C++ library for playing movie files using OpenGL hardware.
 
-/** It is heavily in work-in-progress.
-
-    The audio is sent to the world using the Resonant framework.
+/** The audio is sent to the world using the Resonant framework.
 
     \b Copyright: The Videodisplay library has been developed by Helsinki
     Institute for Information Technology (HIIT, 2006-2007) and

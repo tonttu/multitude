@@ -465,15 +465,13 @@ namespace Resonant
       debugResonant("AudioLoopPortAudio::startReadWrite # Got audio device %d = %s",
                     (int) s.outParams.device, info->name);
 
-      if(Radiant::enabledVerboseOutput()) {
-        int n = Pa_GetDeviceCount();
+      int n = Pa_GetDeviceCount();
 
-        for(int i = 0; i < n; i++) {
-          const PaDeviceInfo * info2 = Pa_GetDeviceInfo(i);
-          const PaHostApiInfo * apiinfo = Pa_GetHostApiInfo(info2->hostApi);
-          debugResonant("AudioLoopPortAudio::startReadWrite # Available %d: %s (API = %s)",
-                        i, info2->name, apiinfo->name);
-        }
+      for(int i = 0; i < n; i++) {
+        const PaDeviceInfo * info2 = Pa_GetDeviceInfo(i);
+        const PaHostApiInfo * apiinfo = Pa_GetHostApiInfo(info2->hostApi);
+        debugResonant("AudioLoopPortAudio::startReadWrite # Available %d: %s (API = %s)",
+                      i, info2->name, apiinfo->name);
       }
 
       debugResonant("AudioLoopPortAudio::startReadWrite # channels = %d limits = %d %d",

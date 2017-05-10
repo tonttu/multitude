@@ -1,7 +1,10 @@
 include(../../cornerstone.pri)
 
 HEADERS += TempFailureRetry.hpp \
-    ThreadChecks.hpp
+    ThreadChecks.hpp \
+    TraceDuplicateFilter.hpp \
+    TraceStdFilter.hpp \
+    TraceSeverityFilter.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
@@ -88,7 +91,10 @@ HEADERS += SymbolRegistry.hpp
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
     BGThreadExecutor.cpp \
-    ThreadChecks.cpp
+    ThreadChecks.cpp \
+    TraceDuplicateFilter.cpp \
+    TraceStdFilter.cpp \
+    TraceSeverityFilter.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \
@@ -163,6 +169,9 @@ LIBS += $$LIB_FOLLY_FUTURES
 linux-* {
   LIBS += -lX11
   PKGCONFIG += libudev
+
+  HEADERS += TraceSyslogFilter.hpp
+  SOURCES += TraceSyslogFilter.cpp
 }
 
 macx:LIBS += -framework CoreFoundation
@@ -222,6 +231,9 @@ win32 {
 
   HEADERS += DeviceUtilsWin.hpp
   SOURCES += DeviceUtilsWin.cpp
+
+  HEADERS += TraceWindowsDebugConsoleFilter.hpp
+  SOURCES += TraceWindowsDebugConsoleFilter.cpp
 }
 
 include(../../library.pri)
