@@ -246,16 +246,22 @@ namespace Radiant {
     os << m_var.toUtf8().data();
   }
 
-  bool Variant::isEmpty() const 
+  bool Variant::isEmpty() const
   {
-    return m_var.size() ? m_var[0] == '\0' : true;
+    if(m_var.isEmpty())
+      return true;
+
+    return (m_var[0] == QChar::Null);
   }
 
-  bool Variant::hasDocumentation() const 
+  bool Variant::hasDocumentation() const
   {
-    return m_doc.size() ? m_doc[0] != '\0' : false;
+    if(m_doc.isEmpty())
+      return false;
+
+    return (m_doc[0] != QChar::Null);
   }
-    
+
   const QString & Variant::documentation() const
   {
     return m_doc;
