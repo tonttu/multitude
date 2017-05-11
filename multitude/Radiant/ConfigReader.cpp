@@ -257,7 +257,7 @@ namespace Radiant {
   bool Variant::hasDocumentation() const
   {
     if(m_doc.isEmpty())
-      return true;
+      return false;
 
     return (m_doc[0] != QChar::Null);
   }
