@@ -94,7 +94,6 @@ namespace Luminous
     bool event(QEvent* ev) override;
 
   private:
-    QScreen* m_screen;
     QOpenGLContext* m_openGLContext;
     WindowEventHook* m_eventHook;
     Nimble::Vector2f m_himetricFactor{0, 0};

@@ -63,9 +63,6 @@ namespace Luminous {
     public:
 
       /// Constructs a new area for the given window
-    public:
-
-      /// Constructs a new area for the given window
       Area();
       virtual ~Area();
       /// Deserializes this area from an archive element

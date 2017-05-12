@@ -23,7 +23,6 @@ namespace Luminous
 
   Window::Window(QScreen* screen)
     : QWindow(screen)
-    , m_screen(screen)
     // The parent object for the context must be nullptr so its thread-affinity
     // can be changed later.
     , m_openGLContext(new QOpenGLContext(nullptr))
@@ -32,7 +31,7 @@ namespace Luminous
     // This window should be renderable by OpenGL
     setSurfaceType(QSurface::OpenGLSurface);
 
-    m_openGLContext->setScreen(m_screen);
+    m_openGLContext->setScreen(screen);
   }
 
   Window::~Window()
