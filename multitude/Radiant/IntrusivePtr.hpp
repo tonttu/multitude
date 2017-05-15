@@ -150,7 +150,7 @@ namespace Radiant
 
     /// Move the given weak pointer
     /// @param wptr weak pointer to move
-    IntrusiveWeakPtr(IntrusiveWeakPtr<T> && wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    IntrusiveWeakPtr(IntrusiveWeakPtr<T> && wptr) noexcept : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
     {
       wptr.m_ptr = nullptr;
       wptr.m_counter = nullptr;
@@ -160,7 +160,7 @@ namespace Radiant
     /// @param wptr weak pointer to move
     /// @tparam Y Type of the object whose pointer is stored in this pointer
     template <typename Y>
-    IntrusiveWeakPtr(IntrusiveWeakPtr<Y> && wptr) : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
+    IntrusiveWeakPtr(IntrusiveWeakPtr<Y> && wptr) noexcept : m_ptr(wptr.m_ptr), m_counter(wptr.m_counter)
     {
       wptr.m_ptr = nullptr;
       wptr.m_counter = nullptr;
@@ -197,7 +197,7 @@ namespace Radiant
     /// Move the given intrusive weak pointer
     /// @param wptr intrusive weak pointer to move
     /// @return reference to this
-    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<T> && wptr)
+    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<T> && wptr) noexcept
     {
       deref();
       m_ptr = wptr.m_ptr;
@@ -212,7 +212,7 @@ namespace Radiant
     /// @return reference to this
     /// @tparam Y Type of the object whose pointer is stored in this pointer
     template <typename Y>
-    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<Y> && wptr)
+    IntrusiveWeakPtr & operator=(IntrusiveWeakPtr<Y> && wptr) noexcept
     {
       deref();
       m_ptr = wptr.m_ptr;
@@ -223,7 +223,7 @@ namespace Radiant
     }
 
     /// Destructor
-    ~IntrusiveWeakPtr()
+    ~IntrusiveWeakPtr() noexcept
     {
       deref();
     }
@@ -362,7 +362,7 @@ namespace Radiant
 
     /// A move constructor for intrusive pointers
     /// @param iptr intrusive pointer to move
-    IntrusivePtr(IntrusivePtr<T> && iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
+    IntrusivePtr(IntrusivePtr<T> && iptr) noexcept : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
@@ -373,7 +373,7 @@ namespace Radiant
     /// @param iptr intrusive pointer to move
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    IntrusivePtr(IntrusivePtr<Y> && iptr) : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
+    IntrusivePtr(IntrusivePtr<Y> && iptr) noexcept : m_ptr(iptr.m_ptr), m_counter(iptr.m_counter)
     {
       iptr.m_ptr = nullptr;
       iptr.m_counter = nullptr;
@@ -399,7 +399,7 @@ namespace Radiant
     }
 
     /// Destructor
-    ~IntrusivePtr()
+    ~IntrusivePtr() noexcept
     {
       deref();
     }
@@ -429,7 +429,7 @@ namespace Radiant
     /// Move an intrusive pointer
     /// @param iptr intrusive pointer to move
     /// @return reference to this
-    IntrusivePtr<T> & operator= (IntrusivePtr<T> && iptr)
+    IntrusivePtr<T> & operator= (IntrusivePtr<T> && iptr) noexcept
     {
       deref();
       m_ptr = iptr.m_ptr;
@@ -445,7 +445,7 @@ namespace Radiant
     /// @return reference to this
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    IntrusivePtr<T> & operator= (IntrusivePtr<Y> && iptr)
+    IntrusivePtr<T> & operator= (IntrusivePtr<Y> && iptr) noexcept
     {
       deref();
       m_ptr = iptr.m_ptr;
