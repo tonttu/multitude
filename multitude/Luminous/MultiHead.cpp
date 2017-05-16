@@ -327,6 +327,7 @@ namespace Luminous
     if (m_areas.size() == 1 && m_areas[0]->size() == this->size() &&
        m_areas[0]->graphicsSize(false).cast<int>() == m_areas[0]->size()) {
       m_areas[0]->setGraphicsSize(size.cast<float>());
+      m_areas[0]->setSize(size);
     }
     m_size = size.toVector();
   }
