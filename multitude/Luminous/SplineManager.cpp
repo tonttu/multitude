@@ -600,6 +600,8 @@ namespace Luminous
     Luminous::VertexArray m_vertexArray;
     size_t m_finishedIndex = 0;
 
+    bool m_hasTranslucentVertices = false;
+
     Luminous::VertexDescription m_descr;
   };
 
@@ -609,6 +611,7 @@ namespace Luminous
     m_bounds = Nimble::Rectf();
     m_strokes.clear();
     m_finishedIndex = 0;
+    m_hasTranslucentVertices = false;
     fillBuffer();
   }
 
@@ -636,6 +639,7 @@ namespace Luminous
   void SplineManager::D::recalculateAll()
   {
     m_vertices.clear();
+    m_hasTranslucentVertices = false;
 
     std::vector<Valuable::Node::Uuid> unfinishedStrokes;
 
@@ -674,6 +678,8 @@ namespace Luminous
     if(stroke.m_curves.size() < 1) {
       return;
     }
+
+    m_hasTranslucentVertices |= stroke.m_data.color.a < 0.999f;
 
     // use cached stroke data if available
     if (stroke.m_finished && !stroke.m_vertices.empty()) {
@@ -787,7 +793,7 @@ namespace Luminous
     if(m_vertices.empty())
       return;
 
-    auto b = r.render<Vertex, Luminous::BasicUniformBlock>(r.splineShader().translucent(),
+    auto b = r.render<Vertex, Luminous::BasicUniformBlock>(m_hasTranslucentVertices || r.opacity() < 0.9999f,
                                                            Luminous::PRIMITIVE_TRIANGLE_STRIP, 0,
                                                            m_vertices.size(),
                                                            1.f, m_vertexArray, r.splineShader());
@@ -930,6 +936,8 @@ namespace Luminous
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_finishedIndex = other.m_d->m_finishedIndex;
     m_d->m_vertices = other.m_d->m_vertices;
+    m_d->m_hasTranslucentVertices = other.m_d->m_hasTranslucentVertices;
+
     m_d->fillBuffer();
   }
 
@@ -940,6 +948,7 @@ namespace Luminous
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_finishedIndex = other.m_d->m_finishedIndex;
     m_d->m_vertices = other.m_d->m_vertices;
+    m_d->m_hasTranslucentVertices = other.m_d->m_hasTranslucentVertices;
     m_d->fillBuffer();
     return *this;
   }

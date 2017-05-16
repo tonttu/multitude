@@ -119,7 +119,6 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector4f>("vertex_color");
       m_splineShader.setVertexDescription(desc);
-      m_splineShader.setTranslucency(true);
 
       // Fetch GPU upload limits from the window configuration
       uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
