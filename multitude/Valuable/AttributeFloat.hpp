@@ -61,7 +61,7 @@ namespace Valuable
                               Attribute::ValueUnit = Attribute::VU_UNKNOWN) OVERRIDE
       {
         if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
-        m_exprs[layer].reset();
+        if (m_exprs[layer]) m_exprs[layer].reset();
         Base::setValue(v, layer);
         return true;
       }
@@ -70,7 +70,7 @@ namespace Valuable
                               Attribute::ValueUnit unit = Attribute::VU_UNKNOWN) OVERRIDE
       {
         if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
-        m_exprs[layer].reset();
+        if (m_exprs[layer]) m_exprs[layer].reset();
         if(unit == Attribute::VU_PERCENTAGE) {
           setPercentage(v, layer);
         } else {
@@ -123,14 +123,14 @@ namespace Valuable
       virtual void setValue(const T & v, Attribute::Layer layer = Attribute::USER) override
       {
         layer = layer == Attribute::CURRENT_LAYER ? Base::currentLayer() : layer;
-        m_exprs[layer].reset();
+        if (m_exprs[layer]) m_exprs[layer].reset();
         Base::setValue(v, layer);
       }
 
       virtual void clearValue(Attribute::Layer layer = Attribute::USER) OVERRIDE
       {
         if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
-        m_exprs[layer].reset();
+        if (m_exprs[layer]) m_exprs[layer].reset();
         Base::clearValue(layer);
       }
 
@@ -148,7 +148,7 @@ namespace Valuable
         if (!this->isValueDefinedOnLayer(Attribute::USER))
           return;
         m_exprs[Attribute::DEFAULT] = std::move(m_exprs[Attribute::USER]);
-        m_exprs[Attribute::USER].reset();
+        if (m_exprs[Attribute::USER]) m_exprs[Attribute::USER].reset();
         Base::setValue(this->value(Attribute::USER), Attribute::DEFAULT);
         clearValue(Attribute::USER);
       }
