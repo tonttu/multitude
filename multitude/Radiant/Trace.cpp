@@ -63,6 +63,18 @@ namespace Radiant
       msg.text.vsprintf(format, ap);
 
       if (!s_initialized) {
+        if (s_queue.empty()) {
+          // If we close the application (or crash) before the system has been
+          // initialized, try to not lose the messages and just print them on
+          // stderr
+          atexit([] {
+            if (!s_initialized) {
+              for (Message & msg: s_queue) {
+                fprintf(stderr, "%s\n", msg.text.toUtf8().data());
+              }
+            }
+          });
+        }
         s_queue.push_back(std::move(msg));
         return;
       }
@@ -70,7 +82,7 @@ namespace Radiant
       processFilters(msg);
     }
 
-    static void quit()
+    static void crash()
     {
       for (Message & msg: s_queue) {
         fprintf(stderr, "%s\n", msg.text.toUtf8().data());
@@ -134,7 +146,7 @@ namespace Radiant
       va_end(args);
 
       if (s == FATAL)
-        quit();
+        crash();
     }
 
     void trace(const char * module, Severity s, const char * msg, ...)
@@ -145,7 +157,7 @@ namespace Radiant
       va_end(args);
 
       if (s == FATAL)
-        quit();
+        crash();
     }
 
     void traceMsg(Severity s, const QByteArray & msg)
@@ -192,7 +204,7 @@ namespace Radiant
       processMessage(FATAL, nullptr, msg, args);
       va_end(args);
 
-      quit();
+      crash();
     }
 
   } // namespace Trace

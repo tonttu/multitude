@@ -41,6 +41,8 @@ namespace Radiant
       FATAL,
     };
 
+    /// @cond
+
     struct Message
     {
       Severity severity;
@@ -53,6 +55,18 @@ namespace Radiant
       return a.severity == b.severity && a.module == b.module && a.text == b.text;
     }
 
+    /// Single filter on a static filter chain. When Radiant::info or any other
+    /// trace function is called, the message is passed to the filter chain by
+    /// calling Filter::trace(msg) to the first filter in the chain. The return
+    /// value determines if the message is passed to the next filter on the
+    /// chain.
+    /// Filters typically either drop messages based on the message parameters
+    /// or content, or output the messages to other systems like stdout/stderr,
+    /// log files, syslog or windows debug console.
+    /// The filters are processed in order based on order (float) parameter.
+    /// Typically filters that drop messages should have order close to
+    /// ORDER_DEFAULT_FILTERS, while filters that just output the message to
+    /// some other systems have order close to ORDER_OUTPUT.
     class Filter
     {
     public:
@@ -68,6 +82,8 @@ namespace Radiant
       Filter(float order = ORDER_OUTPUT) : m_order(order) {}
       virtual ~Filter() {}
 
+      /// @return true to drop the message, false to pass the message to the
+      ///         next filter in the chain
       virtual bool trace(const Message & msg) = 0;
 
       inline float order() const { return m_order; }
@@ -80,6 +96,7 @@ namespace Radiant
     typedef std::function<bool(const Message & message)> FilterFunc;
 
     RADIANT_API void addFilter(const FilterPtr & filter);
+    /// Add a lambda as filter
     RADIANT_API FilterPtr addFilter(const FilterFunc & filter, float order = Filter::ORDER_OUTPUT);
     RADIANT_API bool removeFilter(const FilterPtr & filter);
     RADIANT_API std::multimap<float, FilterPtr> filters();
@@ -93,6 +110,21 @@ namespace Radiant
     template <typename FilterT>
     inline std::shared_ptr<FilterT> replaceFilter(std::shared_ptr<FilterT> newFilter);
 
+    /// @endcond
+
+    /// Initializes the logging system. Before this is called, no messages are
+    /// processed. If you call Radiant::info or other trace functions, the
+    /// messages are stored to a static queue that can be either cleared or
+    /// processed in initialize().
+    /// If the application is closed before initialize is called, all buffered
+    /// messages are printed to stderr.
+    /// This is typically called automatically by MultiWidgets::Application.
+    /// @param process if true, initialize will process all messages that were
+    ///        sent before this function was called. If false, queued messages
+    ///        are just dropped.
+    /// @param initializeDefaultFilters if true, create default filters that
+    ///        limit the messages based on their severity and print the
+    ///        messages to stdout / stderr
     RADIANT_API void initialize(bool processQueuedMessages, bool initializeDefaultFilters);
 
 
