@@ -4,7 +4,8 @@ HEADERS += TempFailureRetry.hpp \
     ThreadChecks.hpp \
     TraceDuplicateFilter.hpp \
     TraceStdFilter.hpp \
-    TraceSeverityFilter.hpp
+    TraceSeverityFilter.hpp \
+    TraceQIODeviceFilter.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
@@ -94,7 +95,8 @@ SOURCES += Mime.cpp \
     ThreadChecks.cpp \
     TraceDuplicateFilter.cpp \
     TraceStdFilter.cpp \
-    TraceSeverityFilter.cpp
+    TraceSeverityFilter.cpp \
+    TraceQIODeviceFilter.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \

@@ -207,5 +207,23 @@ namespace Radiant
       crash();
     }
 
+    QByteArray severityText(Radiant::Trace::Severity severity)
+    {
+      switch (severity) {
+      case DEBUG:
+        return "DEBUG";
+      case INFO:
+        return "INFO";
+      case WARNING:
+        return "WARNING";
+      case FAILURE:
+        return "ERROR";
+      case FATAL:
+        return "FATAL";
+      default:
+        return "UNKNOWN";
+      }
+    }
+
   } // namespace Trace
 } // namespace Radiant

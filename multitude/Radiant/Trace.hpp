@@ -110,6 +110,8 @@ namespace Radiant
     template <typename FilterT>
     inline std::shared_ptr<FilterT> replaceFilter(std::shared_ptr<FilterT> newFilter);
 
+    RADIANT_API QByteArray severityText(Severity severity);
+
     /// @endcond
 
     /// Initializes the logging system. Before this is called, no messages are
