@@ -13,9 +13,9 @@ namespace Radiant
     bool WindowsDebugConsoleFilter::trace(const Message & message)
     {
       if (message.module.isEmpty()) {
-        OutputDebugStringA((message.msg.toUtf8() + "\n").data());
+        OutputDebugStringA((message.text.toUtf8() + "\n").data());
       } else {
-        OutputDebugStringA((message.module + ": " + message.msg.toUtf8() + "\n").data());
+        OutputDebugStringA((message.module + ": " + message.text.toUtf8() + "\n").data());
       }
       return false;
     }

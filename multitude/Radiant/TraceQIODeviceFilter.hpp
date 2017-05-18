@@ -19,7 +19,7 @@ namespace Radiant
     /// @endcode
     /// And then on my-linux-box:
     /// nc -l -u -p 12345
-    class QIODeviceFilter : public Filter
+    class RADIANT_API QIODeviceFilter : public Filter
     {
     public:
       /// @param device already opened QIODevice. This class will take the
