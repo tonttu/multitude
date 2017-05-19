@@ -596,6 +596,9 @@ namespace Valuable
     QByteArray validateEvent(const QByteArray & from);
 
     /// Renamed 'internal' so that it won't be confused with Attribute::removeListeners
+    /// This will remove all listeners from other objects that point to this
+    /// node, since this node is being destructed. Doesn't remove event
+    /// listeners from this object, they are removed in the Node destructor.
     void internalRemoveListeners();
 
   private:

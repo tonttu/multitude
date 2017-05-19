@@ -198,8 +198,18 @@ namespace Valuable
     // Host of Node class member Attributes must be zeroed to avoid double-delete
     m_id.removeHost();
 
-    // Removes event listeners
+    // Removes listeners that point to this object
     setBeingDestroyed();
+
+    // Remove event listeners. No need to lock m_eventsMutex, since you
+    // shouldn't be calling any event functions to this object anyway from
+    // other threads since we are being deleted.
+    for (auto listener: m_elisteners) {
+      if (listener.m_listener) {
+        listener.m_listener->eventRemoveSource(this);
+      }
+    }
+    m_elisteners.clear();
 
     // Release memory for any attributes that are left (should be only
     // heap-allocated at this point)
@@ -1144,12 +1154,6 @@ namespace Valuable
     Sources sources;
     {
       Radiant::Guard g(m_eventsMutex);
-
-      for (auto listener: m_elisteners) {
-        if (listener.m_listener) {
-          listener.m_listener->eventRemoveSource(this);
-        }
-      }
       sources = m_eventSources;
     }
     for (auto p: sources) {
