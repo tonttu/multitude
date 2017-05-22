@@ -286,10 +286,6 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  namespace
-  {
-    const int s_default_fsaa_samples = 4;
-  }
   MultiHead::Window::Window(MultiHead * screen)
     : Node(0, "Window"),
       m_screen(screen),
@@ -301,7 +297,7 @@ namespace Luminous
       m_fullscreen(this, "fullscreen", false),
       m_resizable(this, "resizable", false),
       m_resizeable(this, "resizeable", &m_resizable),
-      m_fsaaSamplesPerPixel(this, "fsaa-samples", s_default_fsaa_samples),
+      m_fsaaSamplesPerPixel(this, "fsaa-samples", -1),
       m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4) << 36),
       m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
