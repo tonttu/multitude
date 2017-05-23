@@ -63,26 +63,19 @@ namespace {
 
     static ULONGLONG realPreciseFileTime()
     {
-        PWINFUNC f = (PWINFUNC) GetProcAddress(
-                GetModuleHandle(TEXT("kernel32.dll")),
-                "GetSystemTimePreciseAsFileTime");
-        if(f)
-        {
-          FILETIME ft;
-          ULONGLONG ullft;
-          f(&ft);
-          ullft = (ULONGLONG)ft.dwHighDateTime<<32|ft.dwLowDateTime;
-          return ullft;
-        }
-        return 0;
+      FILETIME ft;
+      ULONGLONG ullft;
+      s_winFunc(&ft);
+      ullft = (ULONGLONG)ft.dwHighDateTime<<32|ft.dwLowDateTime;
+      return ullft;
     }
 
     static PFUNC preciseFuncPointer()
     {
-        PWINFUNC f = (PWINFUNC) GetProcAddress(
+        s_winFunc = (PWINFUNC) GetProcAddress(
               GetModuleHandle(TEXT("kernel32.dll")),
               "GetSystemTimePreciseAsFileTime");
-        if(f)
+        if (s_winFunc)
         {
         return &PreciseTimeWrapper::realPreciseFileTime;
         }
@@ -92,6 +85,7 @@ namespace {
         }
     }
 
+    static PWINFUNC s_winFunc;
     static ULONGLONG s_base_file_time;
     static LONGLONG s_base_performance_time;
     static LONGLONG s_performance_frequency;
@@ -99,6 +93,7 @@ namespace {
     static PFUNC s_precise_time_func;
   };
 
+  PreciseTimeWrapper::PWINFUNC PreciseTimeWrapper::s_winFunc = nullptr;
   ULONGLONG PreciseTimeWrapper::s_base_file_time = PreciseTimeWrapper::dullFileTime();
   LONGLONG PreciseTimeWrapper::s_base_performance_time = PreciseTimeWrapper::performanceCounter();
   LONGLONG PreciseTimeWrapper::s_performance_frequency = PreciseTimeWrapper::performanceFrequency();
