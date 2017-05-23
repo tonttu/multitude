@@ -308,6 +308,7 @@ namespace Luminous {
       void setScreennumber(int s) { m_screennumber = s; }
 
       /// Number of samples per pixel for full-screen anti-aliasing
+      /// Special value -1 means auto-detect
       int antiAliasingSamples() const { return m_fsaaSamplesPerPixel; }
       void setAntiAliasingSamples(int samplesPerPixel) { m_fsaaSamplesPerPixel = samplesPerPixel; }
 
