@@ -10,8 +10,6 @@
 
 #include "Platform.hpp"
 
-#ifdef RADIANT_LINUX
-
 #include "CallStack.hpp"
 #include "Mutex.hpp"
 #include "Trace.hpp"
@@ -33,6 +31,7 @@
 // Utility function
 QString file_and_line(const QString & file, long ptr)
 {
+#ifdef RADIANT_LINUX
   assert(sizeof(long) == sizeof(void*));
   char buffer[512];
 
@@ -62,6 +61,11 @@ QString file_and_line(const QString & file, long ptr)
 
   if(f) fclose(f);
   return "";
+#else
+  (void)file;
+  (void)ptr;
+  return QString();
+#endif
 }
 
 namespace Radiant
@@ -126,5 +130,3 @@ namespace Radiant
       Radiant::error("%s", str.toUtf8().data());
   }
 }
-
-#endif
