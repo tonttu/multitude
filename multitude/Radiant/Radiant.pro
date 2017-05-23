@@ -117,7 +117,6 @@ SOURCES += ImageConversion.cpp
 SOURCES += KeyEvent.cpp
 SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
-SOURCES += CallStackLinux.cpp
 SOURCES += Sleep.cpp
 SOURCES += SemaphoreQt.cpp
 SOURCES += SHMDuplexPipe.cpp
@@ -170,6 +169,8 @@ macx:LIBS += -framework CoreFoundation
 DEFINES += RADIANT_EXPORT
 
 unix {
+  SOURCES += CallStackUnix.cpp
+
   LIBS += -lpthread $$LIB_RT -ldl
   CONFIG += qt
   QT = core network gui
