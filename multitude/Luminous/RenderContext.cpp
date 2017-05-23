@@ -1770,14 +1770,12 @@ namespace Luminous
     filterCtx->doFilter(*this, uvm);
   }
 
-  bool RenderContext::initialize()
+  void RenderContext::initialize()
   {
     m_data->initialize();
 
     m_data->m_supports_GL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
     m_data->m_supports_GL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
-
-    return true;
   }
 
   void RenderContext::pushOpacity(float opacity)

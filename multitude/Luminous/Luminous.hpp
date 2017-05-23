@@ -51,7 +51,7 @@ namespace Luminous
       initialized, false if something was left missing (for example
       too low OpenGL version).
   */
-  LUMINOUS_API bool initOpenGL(OpenGLAPI& opengl);
+  LUMINOUS_API void initOpenGL(OpenGLAPI& opengl);
   /** Checks if the initLuminous function has been called successfully. */
   LUMINOUS_API bool isLuminousInitialized();
 
