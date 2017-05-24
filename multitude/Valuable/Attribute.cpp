@@ -385,6 +385,25 @@ namespace Valuable
     return true;
   }
 
+  bool Attribute::hasListener(Node * listener, int role) const
+  {
+    REQUIRE_THREAD(m_ownerThread);
+
+    for (const AttributeListener & attrListener: m_listeners) {
+      if ((attrListener.role & role) && (!listener || listener == attrListener.listener)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool Attribute::hasListener(long id) const
+  {
+    REQUIRE_THREAD(m_ownerThread);
+    return m_listeners.find(id) != m_listeners.end();
+  }
+
   bool Attribute::isChanged() const
   {
     return false;

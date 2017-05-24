@@ -331,6 +331,14 @@ namespace Valuable
     /// @returns True if any items from the list were removed, otherwise false
     bool removeListener(long id);
 
+    /// Returns true if the attribute has a matching listener
+    /// @param listener same owner object that was given as a parameter to addListener
+    /// @param role bitmask of ListenerRole enum values
+    bool hasListener(Node * listener, int role) const;
+    /// Returns true if the attribute has a listener with the given id
+    /// @param id listener id, same as the return value in addListener
+    bool hasListener(long id) const;
+
     /// @returns true if the current value of the object is different from
     ///          the default value. Default implementation always returns false
     virtual bool isChanged() const;
