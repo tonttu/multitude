@@ -12,6 +12,7 @@
 #define RADIANT_TRACE_HPP
 
 #include "Export.hpp"
+#include "Flags.hpp"
 
 #include <QString>
 
@@ -40,6 +41,21 @@ namespace Radiant
       /// Fatal error, causes application shutdown
       FATAL,
     };
+
+    enum InitFlags
+    {
+      /// No init flags defined
+      INIT_NO_FLAGS               = 0,
+
+      /// Process all messages that were sent before Trace was initialized.
+      /// If not set, queued messages are just dropped.
+      PROCESS_QUEUED_MESSAGES     = 1 << 0,
+
+      /// Create default filters that limit the messages based on their
+      /// severity and print the messages to stdout / stderr
+      INITIALIZE_DEFAULT_FILTERS  = 1 << 1,
+    };
+    MULTI_FLAGS(InitFlags)
 
     /// @cond
 
@@ -121,13 +137,8 @@ namespace Radiant
     /// If the application is closed before initialize is called, all buffered
     /// messages are printed to stderr.
     /// This is typically called automatically by MultiWidgets::Application.
-    /// @param process if true, initialize will process all messages that were
-    ///        sent before this function was called. If false, queued messages
-    ///        are just dropped.
-    /// @param initializeDefaultFilters if true, create default filters that
-    ///        limit the messages based on their severity and print the
-    ///        messages to stdout / stderr
-    RADIANT_API void initialize(bool processQueuedMessages, bool initializeDefaultFilters);
+    RADIANT_API void initialize(Radiant::FlagsT<InitFlags> flags =
+        PROCESS_QUEUED_MESSAGES | INITIALIZE_DEFAULT_FILTERS);
 
 
     /// Display useful output.

@@ -119,19 +119,19 @@ namespace Radiant
       return s_filters;
     }
 
-    void initialize(bool processQueuedMessages, bool initializeDefaultFilters)
+    void initialize(Radiant::FlagsT<InitFlags> flags)
     {
       decltype(s_queue) queue;
       std::swap(s_queue, queue);
 
-      if (initializeDefaultFilters) {
+      if (flags & INITIALIZE_DEFAULT_FILTERS) {
         findOrCreateFilter<SeverityFilter>();
         findOrCreateFilter<StdFilter>();
       }
 
       s_initialized = true;
 
-      if (processQueuedMessages) {
+      if (flags & PROCESS_QUEUED_MESSAGES) {
         for (Message & msg: queue) {
           processFilters(msg);
         }

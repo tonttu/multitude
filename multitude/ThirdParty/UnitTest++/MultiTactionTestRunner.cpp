@@ -565,10 +565,10 @@ namespace UnitTest
     if(silent) {
       auto dropAllMessages = [] (const Radiant::Trace::Message &) { return true; };
       Radiant::Trace::addFilter(dropAllMessages, Radiant::Trace::Filter::ORDER_DEFAULT_FILTERS);
-      Radiant::Trace::initialize(false, false);
+      Radiant::Trace::initialize(Radiant::Trace::INIT_NO_FLAGS);
     } else if(verbose) {
       Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
-      Radiant::Trace::initialize(true, true);
+      Radiant::Trace::initialize();
     }
 
     const QString single = parser.value("single");

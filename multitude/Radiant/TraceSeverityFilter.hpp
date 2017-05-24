@@ -18,6 +18,7 @@ namespace Radiant
 
       void setMinimumSeverityLevel(Severity s);
       void setVerboseModule(const QByteArray & module, bool verbose);
+      void setVerboseModules(std::set<QByteArray> modules);
 
     private:
       Severity m_minimumSeverityLevel = INFO;

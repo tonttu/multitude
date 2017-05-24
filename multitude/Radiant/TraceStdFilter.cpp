@@ -139,30 +139,5 @@ namespace Radiant
         }
       }
     }
-#if 0
-namespace Radiant
-{
-  void setApplicationName(const char * appname)
-  {
-    g_appname = appname;
-  }
-
-  void setTraceFile(const char * filename)
-  {
-    FILE * tmp = fopen(filename, "w");
-    if(!tmp) {
-    } else {
-      Guard lock(g_mutex);
-      if(__outfile)
-        fclose(__outfile);
-      __outfile = tmp;
-      printf("Trace file set to %s (%p)\n", filename, __outfile);
-      fflush(0);
-    }
-  }
-
-
-
-#endif
-} // namespace Trace
+  } // namespace Trace
 } // namespace Radiant

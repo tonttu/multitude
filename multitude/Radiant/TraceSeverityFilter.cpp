@@ -27,5 +27,10 @@ namespace Radiant
         m_verboseModules.erase(module);
       }
     }
+
+    void SeverityFilter::setVerboseModules(std::set<QByteArray> modules)
+    {
+      m_verboseModules = modules;
+    }
   } // namespace Trace
 } // namespace Radiant
