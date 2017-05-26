@@ -221,4 +221,13 @@
 #  define POP_IGNORE_DEPRECATION_WARNINGS
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+
+#ifdef __GNUC__
+#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK) \
+  __attribute__ ((format (printf, (STR_IDX), (FIRST_TO_CHECK))))
+#else
+#define RADIANT_PRINTF_CHECK(STR_IDX, FIRST_TO_CHECK)
+#endif
+
 #endif

@@ -561,7 +561,7 @@ namespace Valuable
   }
 
   void Node::debugDump() {
-    Radiant::trace(Radiant::DEBUG, "%s {", m_name.data());
+    Radiant::debug("%s {", m_name.data());
 
     for(container::iterator it = m_attributes.begin(); it != m_attributes.end(); ++it) {
       Attribute * vo = it->second;
@@ -570,11 +570,11 @@ namespace Valuable
       if(hv) hv->debugDump();
       else {
         QString s = vo->asString();
-        Radiant::trace(Radiant::DEBUG, "\t%s = %s", vo->name().data(), s.toUtf8().data());
+        Radiant::debug("\t%s = %s", vo->name().data(), s.toUtf8().data());
       }
     }
 
-    Radiant::trace(Radiant::DEBUG, "}");
+    Radiant::debug("}");
   }
 
   long Node::eventAddListener(const QByteArray & fromIn,

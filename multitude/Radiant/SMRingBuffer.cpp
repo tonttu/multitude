@@ -178,7 +178,7 @@ namespace Radiant
       {
         if(shmctl(id, IPC_RMID, 0) != -1)
         {
-          Radiant::trace(Radiant::DEBUG, "%s # Successfully removed existing shared memory area with same key.", fnName);
+          Radiant::debug("%s # Successfully removed existing shared memory area with same key.", fnName);
         }
         else
         {
@@ -196,7 +196,7 @@ namespace Radiant
       if(m_id != -1)
       {
         m_isCreator = true;
-        Radiant::trace(Radiant::DEBUG, "%s # Successfully created new shared memory area.", fnName);
+        Radiant::debug("%s # Successfully created new shared memory area.", fnName);
       }
       else
       {
@@ -210,7 +210,7 @@ namespace Radiant
       m_id = shmget(m_smKey, 0, smDefaultPermissions);
       if(m_id != -1)
       {
-        Radiant::trace(Radiant::DEBUG, "%s # Successfully accessed existing shared memory area.", fnName);
+        Radiant::debug("%s # Successfully accessed existing shared memory area.", fnName);
       }
       else
       {
@@ -224,7 +224,7 @@ namespace Radiant
     char * const  smPtr = (char *)(shmat(m_id, 0, 0));
     if(smPtr != (char *)(-1))
     {
-      Radiant::trace(Radiant::DEBUG, "%s # Successfully obtained pointer to shared memory area.", fnName);
+      Radiant::debug("%s # Successfully obtained pointer to shared memory area.", fnName);
     }
     else
     {
@@ -261,7 +261,7 @@ namespace Radiant
     char * const  smPtr = (char *)(m_startPtr - smHeaderSize);
     if(::UnmapViewOfFile(smPtr))
     {
-      Radiant::trace(Radiant::DEBUG, "%s # Successfully detached shared memory area.", fnName);
+      Radiant::debug("%s # Successfully detached shared memory area.", fnName);
     }
     else
     {
@@ -275,7 +275,7 @@ namespace Radiant
     {
       if(::CloseHandle(m_hMapFile))
       {
-        Radiant::trace(Radiant::DEBUG, "%s # Successfully destroyed shared memory area.", fnName);
+        Radiant::debug("%s # Successfully destroyed shared memory area.", fnName);
       }
       else
       {
@@ -295,7 +295,7 @@ namespace Radiant
     char * const  smPtr = (char *)(m_startPtr - smHeaderSize);
     if(shmdt(smPtr) != -1)
     {
-      Radiant::trace(Radiant::DEBUG, "%s # Successfully detached shared memory area.", fnName);
+      Radiant::debug("%s # Successfully detached shared memory area.", fnName);
     }
     else
     {
@@ -309,7 +309,7 @@ namespace Radiant
     {
       if(shmctl(m_id, IPC_RMID, 0) != -1)
       {
-        Radiant::trace(Radiant::DEBUG, "%s # Successfully destroyed shared memory area.", fnName);
+        Radiant::debug("%s # Successfully destroyed shared memory area.", fnName);
       }
       else
       {

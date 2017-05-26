@@ -131,7 +131,7 @@ namespace Radiant {
   void ImageConversion::YUV411ToRGB
       (const VideoImage *, VideoImage *)
   {
-    Radiant::trace(FATAL, "ImageConversion::YUV411ToRGB");
+    Radiant::fatal("ImageConversion::YUV411ToRGB");
   }
 
   void ImageConversion::YUV411PToRGB
@@ -585,7 +585,7 @@ namespace Radiant {
   void ImageConversion::YUV420ToRGBA
       (const VideoImage *, VideoImage * )
   {
-    Radiant::trace(FATAL, "ImageConversion::YUV420ToRGBA");
+    Radiant::fatal("ImageConversion::YUV420ToRGBA");
   }
 
   void ImageConversion::grayscaleToRGB

@@ -13,16 +13,14 @@
 
 #include <Radiant/Trace.hpp>
 
-#define debugResonant(...) (Radiant::trace("Resonant", Radiant::DEBUG, __VA_ARGS__))
+#define debugResonant(...) (Radiant::trace("Resonant", Radiant::Trace::DEBUG, __VA_ARGS__))
 
 
 
 
 /// Resonant library is a collection of C++ classes for sound processing.
 
-/** It is heavily in work-in-progress.
-    
-    \b Copyright: The Resonant library has been developed by Helsinki
+/** \b Copyright: The Resonant library has been developed by Helsinki
     Institute for Information Technology (HIIT, 2006-2007) and
     MultiTouch Oy (2007).
     

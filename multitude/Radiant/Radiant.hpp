@@ -98,6 +98,6 @@ namespace Radiant {
   class WatchDog;
 }
 
-#define debugRadiant(...) (Radiant::trace("Radiant", Radiant::DEBUG, __VA_ARGS__))
+#define debugRadiant(...) (Radiant::trace("Radiant", Radiant::Trace::DEBUG, __VA_ARGS__))
 
 #endif

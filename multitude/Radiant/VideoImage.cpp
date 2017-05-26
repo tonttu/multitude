@@ -121,7 +121,7 @@ namespace Radiant {
         ls = w * 4;
       }
       else
-        trace(FATAL, "VideoImage::allocateMemory");
+        fatal("VideoImage::allocateMemory");
 
       unsigned char * buf = mtmalloc4(ls * h);
 

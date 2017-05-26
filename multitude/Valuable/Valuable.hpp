@@ -13,7 +13,7 @@
 
 
 
-#define debugValuable(...) (Radiant::trace("Valuable", Radiant::DEBUG, __VA_ARGS__))
+#define debugValuable(...) (Radiant::trace("Valuable", Radiant::Trace::DEBUG, __VA_ARGS__))
 /** A library for automatically saving and loading class member values.
 
     The purpose of this framework is to handle:

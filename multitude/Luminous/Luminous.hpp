@@ -18,7 +18,7 @@
 
 #include <QOpenGLFunctions_4_1_Core>
 
-#define debugLuminous(...) (Radiant::trace("Luminous", Radiant::DEBUG, __VA_ARGS__))
+#define debugLuminous(...) (Radiant::trace("Luminous", Radiant::Trace::DEBUG, __VA_ARGS__))
 
 /// Luminous is a library of C++ classes for computer graphics, using OpenGL.
 /** Copyright: The Luminous library has been developed in Helsinki
