@@ -152,6 +152,7 @@ SOURCES += CallStackW32.cpp
 SOURCES += VideoCamera1394.cpp
 SOURCES += IntrusivePtr.cpp
 SOURCES += SymbolRegistry.cpp
+SOURCES += SetupSearchPaths.cpp
 
 linux*:SOURCES += ProcessRunnerPosix.cpp
 win32:SOURCES += ProcessRunnerWin32.cpp
