@@ -66,6 +66,12 @@ namespace Luminous
     m_d->m_filter->initialize(rc, *this);
   }
 
+  void PostProcessContext::resize(Nimble::Size size)
+  {
+    if (m_d->m_frameBuffer.size() != size)
+      m_d->m_frameBuffer.setSize(size);
+  }
+
   void PostProcessContext::doFilter(Luminous::RenderContext & rc, Nimble::Matrix3f textureMatrix)
   {
     Luminous::Style style;
