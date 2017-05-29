@@ -3,6 +3,9 @@
 #include "Thread.hpp"
 #include "FileUtils.hpp"
 
+#include <QFileInfo>
+#include <QDir>
+
 #ifndef RADIANT_WINDOWS
 #include <unistd.h> // for istty
 #endif
@@ -132,7 +135,12 @@ namespace Radiant
       }
 
       if (!filename.isEmpty()) {
-        m_outFile = fopen(FileUtils::resolvePath(filename).toUtf8().data(), "w");
+        QString target = FileUtils::resolvePath(filename);
+        if (!QDir().mkpath(QFileInfo(target).path())) {
+          error("Radiant::StdFilter::setTraceFile # Failed to create path for %s",
+                filename.toUtf8().data());
+        }
+        m_outFile = fopen(target.toUtf8().data(), "w");
         if (!m_outFile) {
           error("Radiant::StdFilter::setTraceFile # Failed to open %s", filename.toUtf8().data());
           m_traceFile.clear();
