@@ -105,7 +105,7 @@ namespace Luminous
     } // MULTI_ONCE
   }
 
-  bool initOpenGL(OpenGLAPI& opengl)
+  void initOpenGL(OpenGLAPI& opengl)
   {
     const char * glvendor = (const char *) opengl.glGetString(GL_VENDOR);
     const char * glver = (const char *) opengl.glGetString(GL_VERSION);
@@ -126,8 +126,6 @@ namespace Luminous
 
     if (printVersion)
       Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
-
-    return true;
   }
 
   std::pair<int, int> requestedOpenGLVersion()

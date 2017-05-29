@@ -165,8 +165,7 @@ namespace Luminous
     const Luminous::MultiHead::Area * area() const;
 
     /// Initializes the context. Is called automatically by rendering thread.
-    /// @return Was the initialization succesful.
-    bool initialize();
+    void initialize();
 
     /// Called once for every frame before rendering. For internal implementation.
     void beginFrame(Radiant::TimeStamp frameTime);
