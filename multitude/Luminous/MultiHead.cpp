@@ -20,6 +20,9 @@
 #include <Valuable/DOMElement.hpp>
 #include <Valuable/AttributeContainer.hpp>
 
+#include <QApplication>
+#include <QDesktopWidget>
+
 #include <functional>
 
 namespace Luminous
@@ -721,6 +724,75 @@ namespace Luminous
       }
     }
     removeDuplicateAreas();
+  }
+
+  void MultiHead::autoFillValues()
+  {
+    bool changed = false;
+
+    QDesktopWidget * desktop = QApplication::desktop();
+
+    Nimble::Recti boundingRect;
+    for (size_t j = 0; desktop && j < windowCount(); ++j) {
+      Window & w = window(j);
+
+      const bool hasLocation = w.attribute("location")->isValueDefinedOnLayer(USER);
+      const bool hasSize = w.attribute("size")->isValueDefinedOnLayer(USER);
+
+      if (!hasLocation && !hasSize) {
+        /// If there is no size nor location given, place the window on the
+        /// center of the main screen, and make the size to be 80% of the
+        /// size of the main screen.
+        QRect rect = desktop->availableGeometry();
+        Nimble::Vector2i center{rect.center().x(), rect.center().y()};
+        Nimble::Size size{rect.width(), rect.height()};
+        size *= 0.8;
+        w.setLocation(center - size.toVector() / 2.f);
+        w.setSize(size);
+      } else if (hasLocation && !hasSize) {
+        /// If user has given a location and not size, find the available
+        /// geometry on the given screen, and extend the window right and
+        /// bottom edges to be 10% of the screen edges.
+        /// However, if the window location is too close to the edge, make
+        /// the window size at least half of the size of the screen.
+        QRect rect = desktop->availableGeometry(QPoint(w.location().x, w.location().y));
+        Nimble::Size size(std::max<int>(rect.width() / 2, rect.right() - rect.width() * 0.1f - w.location().x),
+                          std::max<int>(rect.height() / 2, rect.bottom() - rect.height() * 0.1f - w.location().y));
+        w.setSize(size);
+      } else if (!hasLocation && hasSize) {
+        /// If user has given a window size but not location, just place the
+        /// window on the center of the main screen. If the window is bigger
+        /// than the main screen, let the window go over the right and bottom
+        /// screen edges.
+        QRect rect = desktop->availableGeometry();
+        Nimble::Vector2i center{rect.center().x(), rect.center().y()};
+        Nimble::Vector2i loc = center - w.size().toVector() / 2.f;
+        w.setLocation({std::max(0, loc.x), std::max(0, loc.y)});
+      }
+
+      boundingRect.expand(w.getRect());
+    }
+
+    /// Make sure all windows have at least one Area
+    for (size_t j = 0; j < windowCount(); ++j) {
+      Window & w = window(j);
+
+      if (w.areaCount() == 0) {
+        auto area = std::unique_ptr<Area>(new Area());
+        area->setName("Area");
+        area->setSize(w.size());
+        area->setGraphicsGeometry(w.location().x - boundingRect.low().x,
+                                  w.location().y - boundingRect.low().y,
+                                  w.width(), w.height());
+
+        w.addArea(std::move(area));
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      eventSend("graphics-bounds-changed");
+    }
   }
 
   void MultiHead::adjustGraphicsToOrigin()
