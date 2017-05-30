@@ -35,6 +35,11 @@ namespace Luminous
     /// @param size FBO size in pixels
     void initialize(Luminous::RenderContext & rc, Nimble::Size size);
 
+    /// Resizes the filter FBO to new size. Doesn't do anything if the FBO
+    /// size already matches the given size
+    /// @param size FBO size in pixels
+    void resize(Nimble::Size size);
+
     /// Performs the filtering operation by setting the style values and
     /// calling PostProcessFilter::filter()
     /// @param rc Context of the current render thread

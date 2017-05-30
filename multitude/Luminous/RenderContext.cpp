@@ -1734,6 +1734,8 @@ namespace Luminous
       filterCtx->initialize(*this, fboSize);
 
       m_data->m_postProcessChain.insert(filterCtx);
+    } else {
+      filterCtx->resize(fboSize);
     }
 
     assert(!m_data->m_frameBufferStack.empty());
