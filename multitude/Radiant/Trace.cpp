@@ -8,6 +8,7 @@
  *
  */
 
+#include "PlatformUtils.hpp"
 #include "Trace.hpp"
 #include "TraceSeverityFilter.hpp"
 #include "TraceStdFilter.hpp"
@@ -68,9 +69,11 @@ namespace Radiant
           // initialized, try to not lose the messages and just print them on
           // stderr
           atexit([] {
-            if (!s_initialized) {
+            if (!s_initialized && !s_queue.empty()) {
+              fprintf(stderr, "%s: application closed before Radiant::Trace was initialized, queued messages:\n",
+                     PlatformUtils::getExecutablePath().toUtf8().data());
               for (Message & msg: s_queue) {
-                fprintf(stderr, "%s\n", msg.text.toUtf8().data());
+                fprintf(stderr, "%s %s\n", severityText(msg.severity).data(), msg.text.toUtf8().data());
               }
             }
           });
