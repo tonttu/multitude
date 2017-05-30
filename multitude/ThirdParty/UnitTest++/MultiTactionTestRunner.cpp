@@ -551,11 +551,13 @@ namespace UnitTest
       positional.removeFirst();
       fprintf(stderr, "Found extra command line arguments: %s\n",
               positional.join(" ").toUtf8().data());
+      Radiant::Trace::initialize();
       return 1;
     }
     QString xmlOutput = positional.empty() ? QString() : positional.front();
 
     if (parser.isSet("list")) {
+      Radiant::Trace::initialize();
       return listTests();
     }
 
@@ -568,6 +570,8 @@ namespace UnitTest
       Radiant::Trace::initialize(Radiant::Trace::INIT_NO_FLAGS);
     } else if(verbose) {
       Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
+      Radiant::Trace::initialize();
+    } else {
       Radiant::Trace::initialize();
     }
 
