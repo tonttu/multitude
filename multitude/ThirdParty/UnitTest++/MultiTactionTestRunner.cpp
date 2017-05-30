@@ -305,6 +305,11 @@ namespace UnitTest
       if(procExitCode) {
         printf("Test %s/%s failed. See %s for details.\n",
                test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+#ifdef RADIANT_UNIX
+        int r = system("uptime");
+        r += system("ps aux");
+        (void)r;
+#endif
       }
       return procExitCode;
     }
