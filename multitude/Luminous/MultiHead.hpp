@@ -474,6 +474,10 @@ namespace Luminous {
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
 
+    /// Detects window size and location automatically, if nothing is set manually.
+    /// Also automatically create missing Areas to windows.
+    void autoFillValues();
+
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
 
