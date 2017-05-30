@@ -140,7 +140,7 @@ namespace Radiant
           error("Radiant::StdFilter::setTraceFile # Failed to create path for %s",
                 filename.toUtf8().data());
         }
-        m_outFile = fopen(target.toUtf8().data(), "w");
+        m_outFile = fopen(target.toUtf8().data(), "a");
         if (!m_outFile) {
           error("Radiant::StdFilter::setTraceFile # Failed to open %s", filename.toUtf8().data());
           m_traceFile.clear();
