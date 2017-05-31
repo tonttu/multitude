@@ -31,6 +31,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <QString>
+#include <QLibrary>
 
 namespace Luminous
 {
@@ -44,6 +45,18 @@ namespace Luminous
     // Only run this function once. First from simpleInit then later from
     // RenderThread if the first run fails.
     initDefaultImageCodecs();
+
+    // Enable nvidia graphics card on systems with both Intel and Nvidia graphics cards.
+    // See: http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
+    // Cleaner way would be to export a symbol NvOptimusEnablement, but that
+    // doesn't work if done from a shared or static library. Another way is to
+    // link to some of the nvidia driver libraries, but in release mode Visual
+    // Studio seems to remove unused libraries. Best option is to dynamically link
+    // to nvapi64.dll.
+    // This will leak and keep the library open until the application exists.
+    // See #12580
+    QLibrary nvapi("nvapi64");
+    nvapi.load();
 
     s_luminousInitialized = true;
   }
