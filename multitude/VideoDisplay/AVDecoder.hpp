@@ -117,6 +117,18 @@ namespace VideoDisplay
     const uint8_t * data(int plane) const { return m_data[plane]; }
     void setData(int plane, uint8_t * data) { m_data[plane] = data; }
 
+    /// Returns the address where the data starts in memory. Typically this
+    /// is the same as data(plane), but with negative lineSize data() actually
+    /// points to the line with the highest memory address while this returns
+    /// the beginning.
+    const uint8_t * dataBegin(int plane) const
+    {
+      if (m_lineSize[plane] < 0) {
+        return m_data[plane] + m_lineSize[plane] * (m_planeSize[plane].y - 1);
+      }
+      return m_data[plane];
+    }
+
     void clear(int plane)
     {
       m_planeSize[plane] = Nimble::Vector2i(0, 0);
