@@ -1202,15 +1202,8 @@ namespace VideoDisplay
           auto fmtDescriptor = av_pix_fmt_desc_get(AVPixelFormat(frame->frame->format));
           setFormat(*frame, *fmtDescriptor, Nimble::Vector2i(frame->frame->width, frame->frame->height));
           for (int i = 0; i < frame->planes(); ++i) {
-            if (frame->frame->linesize[i] < 0) {
-              /// @todo if we have a negative linesize, we should just make a copy of the data,
-              ///       since OpenGL doesn't support negative linesizes (GL_UNPACK_ROW_LENGTH
-              ///       needs to be positive). For now some formats and filters (like vflip)
-              ///       won't work.
-            } else {
-              frame->setLineSize(i, frame->frame->linesize[i]);
-              frame->setData(i, frame->frame->data[i]);
-            }
+            frame->setLineSize(i, frame->frame->linesize[i]);
+            frame->setData(i, frame->frame->data[i]);
           }
 
           frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
