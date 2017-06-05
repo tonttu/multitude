@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Export.hpp"
+
 #include <Valuable/Node.hpp>
 
 #include <Radiant/Task.hpp>
@@ -14,7 +16,7 @@ namespace VideoDisplay
   /// @event[out] source-added(QByteArray device, Nimble::Vector2i resolution)
   /// @event[out] source-removed(QByteArray device)
   /// @event[out] resolution-changed(QByteArray device, Nimble::Vector2i resolution)
-  class VideoCaptureMonitor : public Valuable::Node, public Radiant::Task
+  class VIDEODISPLAY_API VideoCaptureMonitor : public Valuable::Node, public Radiant::Task
   {
   public:
     VideoCaptureMonitor();
