@@ -1,44 +1,52 @@
 #include "VideoCaptureMonitor.hpp"
 
+#if defined(RADIANT_LINUX)
+#include "V4L2Monitor.cpp"
+#elif defined(RADIANT_WINDOWS)
+#include "WindowsVideoMonitor.cpp"
+#else
+#error "This file cannot be compiled on this platform"
+#endif
+
 namespace VideoDisplay
 {
   VideoCaptureMonitor::VideoCaptureMonitor()
+    : m_d(new D(*this))
   {
     eventAddOut("source-added");
     eventAddOut("source-removed");
     eventAddOut("resolution-changed");
   }
 
-  bool VideoCaptureMonitor::init()
+  VideoCaptureMonitor::~VideoCaptureMonitor()
   {
-    return true;
   }
 
   double VideoCaptureMonitor::pollInterval() const
   {
-    return m_pollInterval;
+    return m_d->m_pollInterval;
   }
 
   void VideoCaptureMonitor::setPollInterval(double seconds)
   {
-    m_pollInterval = seconds;
+    m_d->m_pollInterval = seconds;
     if (secondsUntilScheduled() > 0) {
-      scheduleFromNowSecs(m_pollInterval);
+      scheduleFromNowSecs(m_d->m_pollInterval);
     }
   }
 
   void VideoCaptureMonitor::doTask()
   {
-    if (!m_initialized) {
-      m_initialized = true;
-      if (!init()) {
+    if (!m_d->m_initialized) {
+      m_d->m_initialized = true;
+      if (!m_d->init()) {
         setFinished();
         return;
       }
     }
 
-    poll();
-    scheduleFromNowSecs(m_pollInterval);
+    m_d->poll();
+    scheduleFromNowSecs(m_d->m_pollInterval);
   }
 
 }

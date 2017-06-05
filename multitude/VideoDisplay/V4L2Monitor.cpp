@@ -1,4 +1,4 @@
-#include "V4L2Monitor.hpp"
+#include "VideoCaptureMonitor.hpp"
 
 #include <Radiant/Trace.hpp>
 
@@ -40,33 +40,76 @@ namespace VideoDisplay
     }
   }
 
-  V4L2Monitor::V4L2Monitor()
+  struct Source
+  {
+    ~Source();
+
+    QByteArray name;
+    QByteArray device;
+    int fd{-1};
+    int pollCounter{0};
+    bool enabled{false};
+    Nimble::Vector2i resolution{0, 0};
+    bool tag{true}; // used in scanNewSources
+    bool invalid{false};
+    bool openFailed{false};
+    bool queryDeviceFailed{false};
+    bool queryInputFailed{false};
+    bool queryStatusFailed{false};
+  };
+
+  Source::~Source()
+  {
+    if (fd >= 0) {
+      close(fd);
+    }
+  }
+
+  // -----------------------------------------------------------------
+
+  class VideoCaptureMonitor::D
+  {
+  public:
+    D(VideoCaptureMonitor& host) : m_host(host) {}
+    ~D();
+
+    bool init();
+    void poll();
+
+    void scanNewSources();
+    void scanSourceStatuses();
+
+    bool checkIsEnabled(Source & s);
+
+    Radiant::Mutex s_sourcesMutex;
+    std::vector<Source> m_sources;
+
+    VideoCaptureMonitor & m_host;
+
+    bool m_initialized = false;
+    double m_pollInterval = 1.0;
+  };
+
+  // -----------------------------------------------------------------
+
+  VideoCaptureMonitor::D::~D()
   {
   }
 
-  V4L2Monitor::~V4L2Monitor()
+  bool VideoCaptureMonitor::D::init()
   {
+    return true;
   }
 
-  void V4L2Monitor::poll()
+  void VideoCaptureMonitor::D::poll()
   {
     Radiant::Guard g(s_sourcesMutex);
     scanNewSources();
     scanSourceStatuses();
-    scheduleFromNowSecs(1);
+    m_host.scheduleFromNowSecs(1);
   }
 
-  void V4L2Monitor::resetSource(const QByteArray & device)
-  {
-    Radiant::Guard g(s_sourcesMutex);
-    for (auto & s: m_sources) {
-      if (s.device == device) {
-        s.enabled = false;
-      }
-    }
-  }
-
-  void V4L2Monitor::scanNewSources()
+  void VideoCaptureMonitor::D::scanNewSources()
   {
     for (auto & s: m_sources) {
       s.tag = false;
@@ -106,7 +149,7 @@ namespace VideoDisplay
           close(it->fd);
         }
         if (it->enabled) {
-          eventSend("source-removed", it->device);
+          m_host.eventSend("source-removed", it->device);
         }
         it = m_sources.erase(it);
       } else {
@@ -115,7 +158,7 @@ namespace VideoDisplay
     }
   }
 
-  void V4L2Monitor::scanSourceStatuses()
+  void VideoCaptureMonitor::D::scanSourceStatuses()
   {
     for (Source & s: m_sources) {
       bool enabled = true;
@@ -183,9 +226,9 @@ namespace VideoDisplay
 
           if (s.enabled && s.resolution != resolution) {
             Radiant::debug("Source %s (%s) resolution changed from %dx%d to %dx%d",
-                          s.name.data(), s.device.data(),
-                          s.resolution.x, s.resolution.y, resolution.x, resolution.y);
-            eventSend("resolution-changed", s.device, resolution);
+                           s.name.data(), s.device.data(),
+                           s.resolution.x, s.resolution.y, resolution.x, resolution.y);
+            m_host.eventSend("resolution-changed", s.device, resolution);
           }
           s.resolution = resolution;
 
@@ -200,17 +243,17 @@ namespace VideoDisplay
 
         if (enabled) {
           Radiant::debug("Source %s (%s) with resolution %dx%d",
-                        s.name.data(), s.device.data(),
-                        s.resolution.x, s.resolution.y);
-          eventSend("source-added", s.device, s.resolution);
+                         s.name.data(), s.device.data(),
+                         s.resolution.x, s.resolution.y);
+          m_host.eventSend("source-added", s.device, s.resolution);
         } else {
-          eventSend("source-removed", s.device);
+          m_host.eventSend("source-removed", s.device);
         }
       }
     }
   }
 
-  bool V4L2Monitor::checkIsEnabled(V4L2Monitor::Source & s)
+  bool VideoCaptureMonitor::D::checkIsEnabled(Source & s)
   {
     struct v4l2_input input;
     memset(&input, 0, sizeof(input));
@@ -241,10 +284,15 @@ namespace VideoDisplay
     return (input.status & (V4L2_IN_ST_NO_POWER | V4L2_IN_ST_NO_SIGNAL)) == 0;
   }
 
-  V4L2Monitor::Source::~Source()
+  // -----------------------------------------------------------------
+
+  void VideoCaptureMonitor::resetSource(const QByteArray & device)
   {
-    if (fd >= 0) {
-      close(fd);
+    Radiant::Guard g(m_d->s_sourcesMutex);
+    for (auto & source: m_d->m_sources) {
+      if (source.device == device) {
+        source.enabled = false;
+      }
     }
   }
 

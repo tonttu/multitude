@@ -15,9 +15,7 @@ SOURCES += AudioTransfer.cpp AVDecoder.cpp
 HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
 
-linux:HEADERS += V4L2Monitor.hpp
 linux:SOURCES += V4L2Monitor.cpp
-win32:HEADERS += WindowsVideoMonitor.hpp
 win32:SOURCES += WindowsVideoMonitor.cpp
 
 win32 {

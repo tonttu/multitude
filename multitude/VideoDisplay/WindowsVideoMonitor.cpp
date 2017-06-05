@@ -1,4 +1,4 @@
-#include "WindowsVideoMonitor.hpp"
+#include "VideoCaptureMonitor.hpp"
 
 #include <Shlwapi.h>
 #include <windows.h>
@@ -13,7 +13,6 @@
 
 namespace VideoDisplay
 {
-
   // Functions for querying av capture devices
 
   QStringList scanAVInputDevices(GUID guid)
@@ -257,12 +256,13 @@ namespace VideoDisplay
 
   // -----------------------------------------------------------------
 
-  class WindowsVideoMonitor::D
+  class VideoCaptureMonitor::D
   {
   public:
-    D(WindowsVideoMonitor& host) : m_host(host) {}
+    D(VideoCaptureMonitor& host) : m_host(host) {}
     ~D();
 
+    bool init();
     void initExternalLibs();
     void poll();
 
@@ -273,20 +273,28 @@ namespace VideoDisplay
     /// Creates source without external APIs
     Source* createGenericSource(const QString& videoInput, QStringList& audioDevices);
 
-
     /// Mapping from 'FriendlyName' to source
     std::map<QByteArray, std::unique_ptr<Source>> m_sources;
 
-    WindowsVideoMonitor& m_host;
+    VideoCaptureMonitor& m_host;
+
+    bool m_initialized = false;
+    double m_pollInterval = 1.0;
   };
 
   // -----------------------------------------------------------------
 
-  WindowsVideoMonitor::D::~D()
+  VideoCaptureMonitor::D::~D()
   {
   }
 
-  void WindowsVideoMonitor::D::poll()
+  bool VideoCaptureMonitor::D::init()
+  {
+    MULTI_ONCE m_d->initExternalLibs();
+    return true;
+  }
+
+  void VideoCaptureMonitor::D::poll()
   {
     QStringList videoDevices = scanVideoInputDevices();
     QStringList audioDevices = scanAudioInputDevices();
@@ -319,15 +327,15 @@ namespace VideoDisplay
     }
   }
 
-  void WindowsVideoMonitor::D::initExternalLibs()
+  void VideoCaptureMonitor::D::initExternalLibs()
   {
 #ifdef RGBEASY
     initRGBEasy();
 #endif
   }
 
-  Source* WindowsVideoMonitor::D::createGenericSource(const QString &videoInput,
-                                                 QStringList &audioDevices)
+  Source* VideoCaptureMonitor::D::createGenericSource(const QString &videoInput,
+                                                      QStringList &audioDevices)
   {
     Source* src = new Source();
     src->ffmpegName = "video="+videoInput.toUtf8();
@@ -343,8 +351,8 @@ namespace VideoDisplay
     return src;
   }
 
-  Source* WindowsVideoMonitor::D::createSource(const QString &videoInput,
-                                          QStringList &audioDevices)
+  Source* VideoCaptureMonitor::D::createSource(const QString &videoInput,
+                                               QStringList &audioDevices)
   {
 #ifdef RGBEASY
     if(easyrgb.apiHandle != 0) {
@@ -359,7 +367,7 @@ namespace VideoDisplay
   }
 
 
-  void WindowsVideoMonitor::D::updateSource(Source& src, const SourceState& state)
+  void VideoCaptureMonitor::D::updateSource(Source& src, const SourceState& state)
   {
     const SourceState& oldState = src.previousState;
     if (oldState.enabled != state.enabled) {
@@ -377,23 +385,10 @@ namespace VideoDisplay
 
   // -----------------------------------------------------------------
 
-  WindowsVideoMonitor::WindowsVideoMonitor()
-    : m_d(new D(*this))
+  void VideoCaptureMonitor::resetSource(const QByteArray & device)
   {
+    (void) device;
+    assert(false && "Not implemented on this platform");
   }
 
-  WindowsVideoMonitor::~WindowsVideoMonitor()
-  {
-  }
-
-  bool WindowsVideoMonitor::init()
-  {
-    MULTI_ONCE m_d->initExternalLibs();
-    return true;
-  }
-
-  void WindowsVideoMonitor::poll()
-  {
-    m_d->poll();
-  }
 }
