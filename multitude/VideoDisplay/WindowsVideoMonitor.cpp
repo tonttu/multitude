@@ -290,7 +290,7 @@ namespace VideoDisplay
 
   bool VideoCaptureMonitor::D::init()
   {
-    MULTI_ONCE m_d->initExternalLibs();
+    MULTI_ONCE initExternalLibs();
     return true;
   }
 

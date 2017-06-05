@@ -4,10 +4,9 @@
 #include "V4L2Monitor.cpp"
 #elif defined(RADIANT_WINDOWS)
 #include "WindowsVideoMonitor.cpp"
-#else
-#error "This file cannot be compiled on this platform"
 #endif
 
+#if defined(RADIANT_LINUX) || defined(RADIANT_WINDOWS)
 namespace VideoDisplay
 {
   VideoCaptureMonitor::VideoCaptureMonitor()
@@ -50,3 +49,4 @@ namespace VideoDisplay
   }
 
 }
+#endif
