@@ -20,6 +20,10 @@ win32:SOURCES += WindowsVideoMonitor.cpp
 
 win32 {
   QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin
+
+  # RGBEASY (Datapath SDK)
+  INCLUDEPATH += 3rdparty/rgbeasy-sdk-v7.14.1/include
+  DEFINES += RGBEASY
 }
 
 DEFINES += __STDC_CONSTANT_MACROS
