@@ -1,0 +1,251 @@
+#include "V4L2Monitor.hpp"
+
+#include <Radiant/Trace.hpp>
+
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <glob.h>
+
+#include <linux/videodev2.h>
+
+#include <QFile>
+
+namespace VideoDisplay
+{
+  static const int s_failedDevicePollInterval = 5;
+
+  // This is hard-coded in rgb133 driver
+  static const QByteArray s_rgb133CtrlDevice = "/dev/video63";
+
+  bool isRgb133CtrlDevice(const QByteArray & device)
+  {
+    if (device == s_rgb133CtrlDevice) {
+      static bool checked = false;
+      static bool isRgb133 = false;
+
+      // This might be a RGB133 control device. Confirm this by checking that
+      // the device is owned by rgb133 driver.
+      if (!checked) {
+        QFile file("/sys/class/video4linux/" + s_rgb133CtrlDevice.split('/').last() + "/name");
+        if (file.open(QFile::ReadOnly)) {
+          isRgb133 = file.readLine(255).contains("rgb133");
+        }
+        checked = true;
+      }
+      return isRgb133;
+    } else {
+      return false;
+    }
+  }
+
+  V4L2Monitor::V4L2Monitor()
+  {
+  }
+
+  V4L2Monitor::~V4L2Monitor()
+  {
+  }
+
+  void V4L2Monitor::poll()
+  {
+    Radiant::Guard g(s_sourcesMutex);
+    scanNewSources();
+    scanSourceStatuses();
+    scheduleFromNowSecs(1);
+  }
+
+  void V4L2Monitor::resetSource(const QByteArray & device)
+  {
+    Radiant::Guard g(s_sourcesMutex);
+    for (auto & s: m_sources) {
+      if (s.device == device) {
+        s.enabled = false;
+      }
+    }
+  }
+
+  void V4L2Monitor::scanNewSources()
+  {
+    for (auto & s: m_sources) {
+      s.tag = false;
+    }
+
+    glob_t buf;
+    glob("/dev/video*", 0, nullptr, &buf);
+    for (std::size_t i = 0; i < buf.gl_pathc; ++i) {
+      QByteArray dev(buf.gl_pathv[i]);
+
+      // Ignore RGB133 driver control device, since VIDIOC_QUERYCAP ioctl for
+      // it generates a scary kernel warning to dmesg.
+      if (isRgb133CtrlDevice(dev)) {
+        continue;
+      }
+
+      bool found = false;
+      for (auto & s: m_sources) {
+        if (s.device == dev) {
+          found = true;
+          s.tag = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        Source s;
+        s.device = dev;
+        m_sources.push_back(std::move(s));
+      }
+    }
+    globfree(&buf);
+
+    for (auto it = m_sources.begin(); it != m_sources.end(); ) {
+      if (!it->tag) {
+        if (it->fd >= 0) {
+          close(it->fd);
+        }
+        if (it->enabled) {
+          eventSend("source-removed", it->device);
+        }
+        it = m_sources.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
+
+  void V4L2Monitor::scanSourceStatuses()
+  {
+    for (Source & s: m_sources) {
+      bool enabled = true;
+
+      // broken source or not V4L2 device at all
+      if (s.invalid) {
+        enabled = false;
+      }
+
+      // don't poll failed devices every time
+      if (s.pollCounter > 0) {
+        s.pollCounter--;
+        enabled = false;
+      }
+
+      if (enabled && s.fd < 0) {
+        errno = 0;
+        s.fd = open(s.device.data(), O_RDWR);
+        if (s.fd < 0) {
+          if (!s.openFailed) {
+            Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to open %s: %s", s.device.data(), strerror(errno));
+            s.openFailed = true;
+          }
+          s.pollCounter = s_failedDevicePollInterval;
+          enabled = false;
+        } else {
+          // check if the source is a V4L2 device
+          v4l2_capability cap;
+          memset(&cap, 0, sizeof(cap));
+          errno = 0;
+          int err = ioctl(s.fd, VIDIOC_QUERYCAP, &cap);
+          if (err) {
+            if (!s.queryDeviceFailed) {
+              Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to query device %s: %s",
+                             s.device.data(), strerror(errno));
+              s.queryDeviceFailed = true;
+            }
+            close(s.fd);
+            s.fd = -1;
+            s.pollCounter = s_failedDevicePollInterval;
+            enabled = false;
+          }
+
+          // This device doesn't really support anything, it's most likely a control device
+          if (cap.capabilities == 0) {
+            s.invalid = true;
+            close(s.fd);
+            s.fd = -1;
+            enabled = false;
+          }
+        }
+      }
+
+      // poll source status
+      if (enabled) {
+        enabled = checkIsEnabled(s);
+      }
+
+      if (enabled) {
+        struct v4l2_format format;
+        memset(&format, 0, sizeof(format));
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if (ioctl(s.fd, VIDIOC_G_FMT, &format) != -1) {
+          Nimble::Vector2i resolution(format.fmt.pix.width, format.fmt.pix.height);
+
+          if (s.enabled && s.resolution != resolution) {
+            Radiant::debug("Source %s (%s) resolution changed from %dx%d to %dx%d",
+                          s.name.data(), s.device.data(),
+                          s.resolution.x, s.resolution.y, resolution.x, resolution.y);
+            eventSend("resolution-changed", s.device, resolution);
+          }
+          s.resolution = resolution;
+
+          /// With datapath the resolution changes won't get updated if we don't close the device
+          close(s.fd);
+          s.fd = -1;
+        }
+      }
+
+      if (s.enabled != enabled) {
+        s.enabled = enabled;
+
+        if (enabled) {
+          Radiant::debug("Source %s (%s) with resolution %dx%d",
+                        s.name.data(), s.device.data(),
+                        s.resolution.x, s.resolution.y);
+          eventSend("source-added", s.device, s.resolution);
+        } else {
+          eventSend("source-removed", s.device);
+        }
+      }
+    }
+  }
+
+  bool V4L2Monitor::checkIsEnabled(V4L2Monitor::Source & s)
+  {
+    struct v4l2_input input;
+    memset(&input, 0, sizeof(input));
+
+    errno = 0;
+    if (ioctl(s.fd, VIDIOC_G_INPUT, &input.index)) {
+      if (!s.queryInputFailed) {
+        Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to query input %s: %s",
+                       s.device.data(), strerror(errno));
+        s.queryInputFailed = true;
+      }
+      input.index = 0;
+    }
+
+    if (ioctl(s.fd, VIDIOC_ENUMINPUT, &input) == -1) {
+      if (!s.queryStatusFailed) {
+        Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to query input status %s: %s",
+                       s.device.data(), strerror(errno));
+        s.queryStatusFailed = true;
+      }
+      close(s.fd);
+      s.fd = -1;
+      s.pollCounter = s_failedDevicePollInterval;
+      return false;
+    }
+
+    s.name = (const char*)input.name;
+    return (input.status & (V4L2_IN_ST_NO_POWER | V4L2_IN_ST_NO_SIGNAL)) == 0;
+  }
+
+  V4L2Monitor::Source::~Source()
+  {
+    if (fd >= 0) {
+      close(fd);
+    }
+  }
+
+}

@@ -1,17 +1,24 @@
 include(../../cornerstone.pri)
 
-HEADERS += Export.hpp
+HEADERS += Export.hpp \
+    VideoCaptureMonitor.hpp
 
 HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
 
-SOURCES += SubTitles.cpp
+SOURCES += SubTitles.cpp \
+    VideoCaptureMonitor.cpp
 
 HEADERS += AudioTransfer.hpp AVDecoder.hpp Utils.hpp
 SOURCES += AudioTransfer.cpp AVDecoder.cpp
 
 HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
+
+linux:HEADERS += V4L2Monitor.hpp
+linux:SOURCES += V4L2Monitor.cpp
+win32:HEADERS += WindowsVideoMonitor.hpp
+win32:SOURCES += WindowsVideoMonitor.cpp
 
 win32 {
   QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin
