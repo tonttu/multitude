@@ -22,9 +22,6 @@ namespace VideoDisplay
     VideoCaptureMonitor();
     ~VideoCaptureMonitor();
 
-    /// Reset the monitored status of given device
-    void resetSource(const QByteArray & device);
-
     /// Polling interval in seconds
     double pollInterval() const;
     void setPollInterval(double seconds);

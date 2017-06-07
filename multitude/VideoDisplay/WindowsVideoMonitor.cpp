@@ -382,13 +382,4 @@ namespace VideoDisplay
     src.previousState = state;
   }
 
-
-  // -----------------------------------------------------------------
-
-  void VideoCaptureMonitor::resetSource(const QByteArray & device)
-  {
-    (void) device;
-    assert(false && "Not implemented on this platform");
-  }
-
 }
