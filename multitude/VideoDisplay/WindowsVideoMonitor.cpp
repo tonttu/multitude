@@ -376,4 +376,37 @@ namespace VideoDisplay
     src.previousState = state;
   }
 
+  // -----------------------------------------------------------------
+
+  VideoCaptureMonitor::VideoCaptureMonitor()
+    : m_d(new D(*this))
+  {
+    eventAddOut("source-added");
+    eventAddOut("source-removed");
+    eventAddOut("resolution-changed");
+  }
+
+  VideoCaptureMonitor::~VideoCaptureMonitor()
+  {
+  }
+
+  double VideoCaptureMonitor::pollInterval() const
+  {
+    return m_d->m_pollInterval;
+  }
+
+  void VideoCaptureMonitor::setPollInterval(double seconds)
+  {
+    m_d->m_pollInterval = seconds;
+    if (secondsUntilScheduled() > 0) {
+      scheduleFromNowSecs(m_d->m_pollInterval);
+    }
+  }
+
+  void VideoCaptureMonitor::doTask()
+  {
+    m_d->poll();
+    scheduleFromNowSecs(m_d->m_pollInterval);
+  }
+
 }

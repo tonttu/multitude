@@ -6,8 +6,7 @@ HEADERS += Export.hpp \
 HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
 
-SOURCES += SubTitles.cpp \
-    VideoCaptureMonitor.cpp
+SOURCES += SubTitles.cpp
 
 HEADERS += AudioTransfer.hpp AVDecoder.hpp Utils.hpp
 SOURCES += AudioTransfer.cpp AVDecoder.cpp
