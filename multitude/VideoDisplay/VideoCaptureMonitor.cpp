@@ -36,14 +36,6 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::doTask()
   {
-    if (!m_d->m_initialized) {
-      m_d->m_initialized = true;
-      if (!m_d->init()) {
-        setFinished();
-        return;
-      }
-    }
-
     m_d->poll();
     scheduleFromNowSecs(m_d->m_pollInterval);
   }

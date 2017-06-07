@@ -262,7 +262,6 @@ namespace VideoDisplay
     D(VideoCaptureMonitor& host) : m_host(host) {}
     ~D();
 
-    bool init();
     void initExternalLibs();
     void poll();
 
@@ -278,7 +277,6 @@ namespace VideoDisplay
 
     VideoCaptureMonitor& m_host;
 
-    bool m_initialized = false;
     double m_pollInterval = 1.0;
   };
 
@@ -288,14 +286,10 @@ namespace VideoDisplay
   {
   }
 
-  bool VideoCaptureMonitor::D::init()
-  {
-    MULTI_ONCE initExternalLibs();
-    return true;
-  }
-
   void VideoCaptureMonitor::D::poll()
   {
+    MULTI_ONCE initExternalLibs();
+
     QStringList videoDevices = scanVideoInputDevices();
     QStringList audioDevices = scanAudioInputDevices();
 

@@ -85,7 +85,6 @@ namespace VideoDisplay
 
     VideoCaptureMonitor & m_host;
 
-    bool m_initialized = false;
     double m_pollInterval = 1.0;
   };
 
