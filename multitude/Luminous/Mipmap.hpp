@@ -46,7 +46,8 @@ namespace Luminous
 
     /// Gets the best available texture with asked size, shorthand function
     /// for level and other texture-function.
-    LUMINOUS_API Texture * texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize);
+    /// @param maxSize Maximum texture size, usually the same as RenderContext::maxTextureSize
+    LUMINOUS_API Texture * texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize, unsigned int maxSize);
 
     LUMINOUS_API bool isLevelAvailable(unsigned int level) const;
 
@@ -59,8 +60,9 @@ namespace Luminous
 #endif
 
     /// Calculate the ideal mipmap level
+    /// @param maxSize Maximum image or texture size, usually the same as RenderContext::maxTextureSize
     LUMINOUS_API unsigned int level(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize,
-                                    float * trilinearBlending = nullptr) const;
+                                    unsigned int maxSize, float * trilinearBlending = nullptr) const;
     LUMINOUS_API unsigned int level(Nimble::SizeF pixelSize,
                                     float * trilinearBlending = nullptr) const;
 
@@ -101,7 +103,7 @@ namespace Luminous
     LUMINOUS_API void setExpirationTimeDeciSeconds(int deciseconds);
 
     /// Returns the size of the mipmap level
-    LUMINOUS_API Nimble::Size mipmapSize(unsigned int level);
+    LUMINOUS_API Nimble::Size mipmapSize(unsigned int level) const;
 
     /// Returns the absolute filename of the image.
     /// @return filename from which the mipmaps have been created

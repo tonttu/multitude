@@ -6,7 +6,7 @@ namespace Luminous
   bool MipmapRenderer::checkMipmaps(RenderContext & r, const Nimble::Rectf & rect, Mipmap & mipmap)
   {
     float blend;
-    const unsigned int level = mipmap.level(r.transform(), rect.size(), &blend);
+    const unsigned int level = mipmap.level(r.transform(), rect.size(), r.maxTextureSize(), &blend);
     unsigned int level0 = (unsigned int)-1;
     auto tex0 = mipmap.texture(level, &level0);
 
@@ -36,7 +36,7 @@ namespace Luminous
                               const Nimble::Rectf & rect, Mipmap & mipmap)
   {
     float blend;
-    const unsigned int level = mipmap.level(r.transform(), rect.size(), &blend);
+    const unsigned int level = mipmap.level(r.transform(), rect.size(), r.maxTextureSize(), &blend);
     unsigned int level0 = (unsigned int)-1;
     auto tex0 = mipmap.texture(level, &level0);
 

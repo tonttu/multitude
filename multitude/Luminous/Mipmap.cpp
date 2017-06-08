@@ -833,9 +833,9 @@ namespace Luminous
     return level ? level->image.get() : nullptr;
   }
 
-  Texture * Mipmap::texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize)
+  Texture * Mipmap::texture(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize, unsigned int maxSize)
   {
-    int idealLevel = level(transform, pixelSize);
+    int idealLevel = level(transform, pixelSize, maxSize);
     return texture(idealLevel);
   }
 
@@ -851,13 +851,22 @@ namespace Luminous
   }
 
   unsigned int Mipmap::level(const Nimble::Matrix4 & transform, Nimble::SizeF pixelSize,
-                             float * trilinearBlending) const
+                             unsigned int maxSize, float * trilinearBlending) const
   {
     // Assume that the view matrix is ortho projection with no scaling
     // we can ignore Z and just look X/Y vector projections to determine the maximum scaling
     float sx = Nimble::Vector2f(transform[0][0], transform[0][1]).length();
     float sy = Nimble::Vector2f(transform[1][0], transform[1][1]).length();
-    return level(std::max(sx, sy) * pixelSize, trilinearBlending);
+    unsigned int l = level(std::max(sx, sy) * pixelSize, trilinearBlending);
+    for (; maxSize > 0 && l < (unsigned)m_d->m_maxLevel; ++l) {
+      const Nimble::Size size = mipmapSize(l);
+      if (size.maximum() <= (int)maxSize) {
+        break;
+      }
+      if (trilinearBlending)
+        *trilinearBlending = 0;
+    }
+    return l;
   }
 
   unsigned int Mipmap::level(Nimble::SizeF pixelSize, float * trilinearBlending) const
@@ -989,7 +998,7 @@ namespace Luminous
       MipmapReleaseTask::check(0.0f);
   }
 
-  Nimble::Size Mipmap::mipmapSize(unsigned int level)
+  Nimble::Size Mipmap::mipmapSize(unsigned int level) const
   {
     if(level == 0) return m_d->m_nativeSize;
     Nimble::Size size(m_d->m_nativeSize.width() >> level,
