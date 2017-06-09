@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
  * and others.
  *
@@ -143,10 +144,13 @@ namespace Luminous
     const float sx = float(src.width()) / float(w);
     const float sy = float(src.height()) / float(h);
 
+    const int bytesPerLine = lineSize();
+    const int srcBytesPerLine = src.lineSize();
+
     if (hasPreMultipliedAlpha() || !hasAlpha()) {
       if (m_pixelFormat.type() == Luminous::PixelFormat::TYPE_UBYTE && m_pixelFormat.numChannels() == 3) {
         for (int y0 = 0; y0 < h; y0++) {
-          uint8_t * targetPx = line(y0);
+          uint8_t * targetPx = m_data + y0 * bytesPerLine;
 
           // Take 'floor' of the limits in order to avoid floating point accuracy problems
           const int maxY = sy * y0 + sy;
@@ -159,7 +163,7 @@ namespace Luminous
 
             int count = 0;
             for (int j = sy * y0; j < maxY; ++j) {
-              const uint8_t * srcLine = src.line(j);
+              const uint8_t * srcLine = src.m_data + j*srcBytesPerLine;
               for (int i = sx * x0; i < maxX; ++i) {
                 colorSum[0] += srcLine[i * 3];
                 colorSum[1] += srcLine[i * 3 + 1];
@@ -176,7 +180,7 @@ namespace Luminous
         }
       } else if (m_pixelFormat.type() == Luminous::PixelFormat::TYPE_UBYTE && m_pixelFormat.numChannels() == 4) {
         for (int y0 = 0; y0 < h; y0++) {
-          uint8_t * targetPx = line(y0);
+          uint8_t * targetPx = m_data + y0*bytesPerLine;
 
           // Take 'floor' of the limits in order to avoid floating point accuracy problems
           const int maxY = sy * y0 + sy;
@@ -189,7 +193,7 @@ namespace Luminous
 
             int count = 0;
             for (int j = sy * y0; j < maxY; ++j) {
-              const uint8_t * srcLine = src.line(j);
+              const uint8_t * srcLine = src.m_data + j*srcBytesPerLine;
               for (int i = sx * x0; i < maxX; ++i) {
                 colorSum[0] += srcLine[i * 4];
                 colorSum[1] += srcLine[i * 4 + 1];
