@@ -910,6 +910,11 @@ namespace Luminous
     return m_d->m_maxLevel;
   }
 
+  unsigned int Mipmap::maxLevel() const
+  {
+    return m_d->m_maxLevel;
+  }
+
   const Nimble::Size & Mipmap::nativeSize() const
   {
     return m_d->m_nativeSize;

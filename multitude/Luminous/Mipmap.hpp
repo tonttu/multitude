@@ -66,6 +66,10 @@ namespace Luminous
     LUMINOUS_API unsigned int level(Nimble::SizeF pixelSize,
                                     float * trilinearBlending = nullptr) const;
 
+    /// Maximum level defined for this image (the smallest mipmap image)
+    /// Returns valid value only if isHeaderReady() returns true
+    LUMINOUS_API unsigned int maxLevel() const;
+
     /** @return Returns the native size of the image, in pixels. */
     LUMINOUS_API const Nimble::Size & nativeSize() const;
     /// Returns the aspect ratio of the image in its native size (width/height)
