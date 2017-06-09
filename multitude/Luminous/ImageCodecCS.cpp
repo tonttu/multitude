@@ -228,8 +228,13 @@ namespace Luminous
       totalWritten += file.write(data);
       return totalWritten == headerSize + data.size();
     } else if (compression == COMPRESSION_LZ4) {
-      std::unique_ptr<char[]> data(new char[LZ4_compressBound(rawDataSize)]);
+      const int bufferSize = LZ4_compressBound(rawDataSize);
+      std::unique_ptr<char[]> data(new char[bufferSize]);
+#if LZ4_VERSION_MAJOR > 1 || (LZ4_VERSION_MAJOR == 1 && LZ4_VERSION_MINOR >= 7)
+      const int dataSize = LZ4_compress_default((const char*)image.data(), data.get(), rawDataSize, bufferSize);
+#else
       const int dataSize = LZ4_compress((const char*)image.data(), data.get(), rawDataSize);
+#endif
 
       bd.setPos(dataSizePos);
       bd.writeInt32(dataSize);
