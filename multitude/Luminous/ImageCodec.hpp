@@ -69,6 +69,8 @@ namespace Luminous
       /// @return true if the encoding was successful, false otherwise
       virtual bool write(const Image & image, QFile & file) = 0;
 
+      /// Check if you can write images that have premultiplied alpha pixel format
+      virtual bool canWritePremultipliedAlpha() const { return false; }
   };
 
 }
