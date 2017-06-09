@@ -145,8 +145,8 @@ namespace Luminous
     /// @param level Mipmap level, ignored if negative
     /// @param suffix File format of the cache file name, usually png or dds.
     /// @return cache filename
-    LUMINOUS_API static QString cacheFileName(const QString & src, int level = -1,
-                                              const QString & suffix = "png");
+    LUMINOUS_API static QString cacheFileName(const QString & src, int level,
+                                              const QString & suffix);
 
     /// Returns path to dir that contains all cached mipmaps
     LUMINOUS_API static QString imageCachePath();

@@ -143,7 +143,7 @@ namespace Luminous
   {
   public:
     LoadImageTask(Luminous::MipmapPtr mipmap, Radiant::Priority priority,
-                  const QString & filename, int level);
+                  const QString & filename, int level, const QString & cacheFileFormat);
 
   protected:
     virtual void doTask() OVERRIDE;
@@ -159,6 +159,7 @@ namespace Luminous
   protected:
     std::weak_ptr<Luminous::Mipmap> m_mipmap;
     const QString & m_filename;
+    const QString m_cacheFileFormat;
     int m_level;
   };
 
@@ -270,10 +271,11 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   LoadImageTask::LoadImageTask(Luminous::MipmapPtr mipmap, Radiant::Priority priority,
-                               const QString & filename, int level)
+                               const QString & filename, int level, const QString & cacheFileFormat)
     : Task(priority)
     , m_mipmap(mipmap)
     , m_filename(filename)
+    , m_cacheFileFormat(cacheFileFormat)
     , m_level(level)
   {}
 
@@ -382,7 +384,7 @@ namespace Luminous
     }
 
     // Try loading a pre-generated smaller-scale mipmap
-    const QString filename = Mipmap::cacheFileName(m_filename, level);
+    const QString filename = Mipmap::cacheFileName(m_filename, level, m_cacheFileFormat);
 
     const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
     if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
@@ -440,7 +442,7 @@ namespace Luminous
   LoadCompressedImageTask::LoadCompressedImageTask(
       Luminous::MipmapPtr mipmap, MipmapLevel & tex, Radiant::Priority priority,
       const QString & filename, int level)
-    : LoadImageTask(mipmap, priority, filename, level)
+    : LoadImageTask(mipmap, priority, filename, level, "dds")
     , m_tex(tex)
   {}
 
@@ -671,7 +673,7 @@ namespace Luminous
     , m_maxLevel(0)
     , m_useCompressedMipmaps(false)
     , m_loadingPriority(Radiant::Task::PRIORITY_NORMAL)
-    , m_mipmapFormat("png")
+    , m_mipmapFormat("csimg")
     , m_expireDeciSeconds(30)
     , m_state(Valuable::STATE_NEW)
   {
@@ -780,7 +782,7 @@ namespace Luminous
               } else {
                 task = std::make_shared<LoadImageTask>(m_mipmap.shared_from_this(),
                                                        m_loadingPriority + priorityChange,
-                                                       m_filenameAbs, level);
+                                                       m_filenameAbs, level, m_mipmapFormat);
               }
               Radiant::BGThread::instance()->addTask(task);
               imageTex.loadingPriority = task->priority();
