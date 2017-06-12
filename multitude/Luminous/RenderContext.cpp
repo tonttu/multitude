@@ -121,8 +121,8 @@ namespace Luminous
       m_splineShader.setVertexDescription(desc);
 
       // Fetch GPU upload limits from the window configuration
-      uint64_t limit = *(win->attribute<int64_t>("gpu-upload-limit"));
-      uint64_t margin = *(win->attribute<int64_t>("gpu-upload-margin"));
+      uint64_t limit = win->uploadLimit();
+      uint64_t margin = win->uploadMargin();
       renderDriver.setUploadLimits( limit, margin );
     }
 
