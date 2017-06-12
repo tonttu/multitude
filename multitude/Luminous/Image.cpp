@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2007-2013: Multi Touch Oy, Helsinki University of Technology
  * and others.
  *
@@ -143,29 +144,97 @@ namespace Luminous
     const float sx = float(src.width()) / float(w);
     const float sy = float(src.height()) / float(h);
 
+    const int bytesPerLine = lineSize();
+    const int srcBytesPerLine = src.lineSize();
+
     if (hasPreMultipliedAlpha() || !hasAlpha()) {
-      for(int y0 = 0; y0 < h; y0++) {
-
-        for(int x0 = 0; x0 < w; x0++) {
-
-          int count = 0;
-          Nimble::Vector4f colorSum(0.f, 0.f, 0.f, 0.f);
+      if (m_pixelFormat.type() == Luminous::PixelFormat::TYPE_UBYTE && m_pixelFormat.numChannels() == 3) {
+        for (int y0 = 0; y0 < h; y0++) {
+          uint8_t * targetPx = m_data + y0 * bytesPerLine;
 
           // Take 'floor' of the limits in order to avoid floating point accuracy problems
-          int maxY = sy * y0 + sy;
-          int maxX = sx * x0 + sx;
+          const int maxY = sy * y0 + sy;
 
-          for(int j = sy * y0; j < maxY; ++j) {
-            for(int i = sx * x0; i < maxX; ++i) {
-              colorSum += src.pixel(i,j);
-              ++count;
+          for (int x0 = 0; x0 < w; x0++, targetPx += 3) {
+
+            uint32_t colorSum[] = { 0, 0, 0 };
+
+            const int maxX = sx * x0 + sx;
+
+            int count = 0;
+            for (int j = sy * y0; j < maxY; ++j) {
+              const uint8_t * srcLine = src.m_data + j*srcBytesPerLine;
+              for (int i = sx * x0; i < maxX; ++i) {
+                colorSum[0] += srcLine[i * 3];
+                colorSum[1] += srcLine[i * 3 + 1];
+                colorSum[2] += srcLine[i * 3 + 2];
+                ++count;
+              }
             }
+
+            const int round = count / 2;
+            targetPx[0] = (colorSum[0] + round) / count;
+            targetPx[1] = (colorSum[1] + round) / count;
+            targetPx[2] = (colorSum[2] + round) / count;
           }
+        }
+      } else if (m_pixelFormat.type() == Luminous::PixelFormat::TYPE_UBYTE && m_pixelFormat.numChannels() == 4) {
+        for (int y0 = 0; y0 < h; y0++) {
+          uint8_t * targetPx = m_data + y0*bytesPerLine;
 
-          // Round the color (setPixel just makes float -> int conversion wihtout rounding)
-          colorSum += Nimble::Vector4f(1/512.0f, 1/512.0f, 1/512.0f, 1/512.0f);
+          // Take 'floor' of the limits in order to avoid floating point accuracy problems
+          const int maxY = sy * y0 + sy;
 
-          setPixel(x0, y0, colorSum / count);
+          for (int x0 = 0; x0 < w; x0++, targetPx += 4) {
+
+            uint32_t colorSum[] = { 0, 0, 0, 0 };
+
+            const int maxX = sx * x0 + sx;
+
+            int count = 0;
+            for (int j = sy * y0; j < maxY; ++j) {
+              const uint8_t * srcLine = src.m_data + j*srcBytesPerLine;
+              for (int i = sx * x0; i < maxX; ++i) {
+                colorSum[0] += srcLine[i * 4];
+                colorSum[1] += srcLine[i * 4 + 1];
+                colorSum[2] += srcLine[i * 4 + 2];
+                colorSum[3] += srcLine[i * 4 + 3];
+                ++count;
+              }
+            }
+
+            const int round = count / 2;
+            targetPx[0] = (colorSum[0] + round) / count;
+            targetPx[1] = (colorSum[1] + round) / count;
+            targetPx[2] = (colorSum[2] + round) / count;
+            targetPx[3] = (colorSum[3] + round) / count;
+          }
+        }
+      } else {
+
+        for(int y0 = 0; y0 < h; y0++) {
+
+          for(int x0 = 0; x0 < w; x0++) {
+
+            int count = 0;
+            Nimble::Vector4f colorSum(0.f, 0.f, 0.f, 0.f);
+
+            // Take 'floor' of the limits in order to avoid floating point accuracy problems
+            int maxY = sy * y0 + sy;
+            int maxX = sx * x0 + sx;
+
+            for(int j = sy * y0; j < maxY; ++j) {
+              for(int i = sx * x0; i < maxX; ++i) {
+                colorSum += src.pixel(i,j);
+                ++count;
+              }
+            }
+
+            // Round the color (setPixel just makes float -> int conversion wihtout rounding)
+            colorSum += Nimble::Vector4f(1/512.0f, 1/512.0f, 1/512.0f, 1/512.0f);
+
+            setPixel(x0, y0, colorSum / count);
+          }
         }
       }
     } else {
