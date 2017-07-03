@@ -6,7 +6,11 @@ namespace VideoDisplay {
   {};
 
   VideoCaptureMonitor::VideoCaptureMonitor()
-  {}
+  {
+    eventAddOut("source-added");
+    eventAddOut("source-removed");
+    eventAddOut("resolution-changed");
+  }
 
   VideoCaptureMonitor::~VideoCaptureMonitor()
   {}
