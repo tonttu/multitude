@@ -70,6 +70,20 @@ namespace Luminous
     /// Set the keyboard focus when the window is clicked
     void setKeyboardFocusOnClick(bool value);
 
+    /// Current frame number 
+    size_t frame() const { return m_frame; }
+    void setFrame(size_t frame) { m_frame = frame; }
+
+    /// Returns true if we should be currently ignoring all window state change
+    /// events, since they are most likely a result of what we did and not
+    /// something the user did
+    bool ignoreWindowStateChanges() const { return m_frame < m_ignoreWindowStateChangesUntil; }
+    /// Ignore window state change events for the given number of frames
+    void setIgnoreWindowStateChanges(size_t frames)
+    {
+      m_ignoreWindowStateChangesUntil = m_frame + frames;
+    }
+
   signals:
     void closed();
 
@@ -100,6 +114,8 @@ namespace Luminous
     Nimble::Vector2i m_himetricCalibrationMax{0, 0};
 
     bool m_setKeyboardFocusOnClick = false;
+    size_t m_frame = 0;
+    size_t m_ignoreWindowStateChangesUntil = 0;
   };
 
 }
