@@ -17,13 +17,15 @@ namespace VideoDisplay {
 
   double VideoCaptureMonitor::pollInterval() const
   {
-    return 1.0f;
+    return 10.0f;
   }
 
   void VideoCaptureMonitor::setPollInterval(double)
   {}
 
   void VideoCaptureMonitor::doTask()
-  {}
+  {
+    scheduleFromNowSecs(pollInterval());
+  }
 
   }
