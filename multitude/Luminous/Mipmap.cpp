@@ -152,8 +152,9 @@ namespace Luminous
   private:
     bool recursiveLoad(Luminous::Mipmap & mipmap, int level);
     bool recursiveLoad(Luminous::Mipmap & mipmap, MipmapLevel & imageTex, int level);
-    void lock(Luminous::Mipmap & mipmap, int);
-    void unlock(Luminous::Mipmap & mipmap, int);
+    bool tryLock(Luminous::Mipmap & mipmap, int level);
+    void lock(Luminous::Mipmap & mipmap, int level);
+    void unlock(Luminous::Mipmap & mipmap, int level);
 
   protected:
     std::weak_ptr<Luminous::Mipmap> m_mipmap;
@@ -283,7 +284,10 @@ namespace Luminous
       setFinished();
       return;
     }
-    lock(*mipmap, m_level);
+    if (!tryLock(*mipmap, m_level)) {
+      scheduleFromNowSecs(0.005);
+      return;
+    }
     if (recursiveLoad(*mipmap, m_level)) {
       setState(*mipmap, Valuable::STATE_READY);
     } else {
@@ -296,6 +300,13 @@ namespace Luminous
   void LoadImageTask::setState(Luminous::Mipmap & mipmap, Valuable::LoadingEnum state)
   {
     mipmap.m_d->m_state = state;
+  }
+
+  bool LoadImageTask::tryLock(Luminous::Mipmap & mipmap, int level)
+  {
+    MipmapLevel & imageTex = mipmap.m_d->m_levels[level];
+
+    return imageTex.locked.testAndSetOrdered(0, 1);
   }
 
   void LoadImageTask::lock(Luminous::Mipmap & mipmap, int level)
