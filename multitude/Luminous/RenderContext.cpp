@@ -316,6 +316,7 @@ namespace Luminous
     bool m_supports_GL_ATI_meminfo;
 
     Radiant::TimeStamp m_frameTime;
+    unsigned int m_maxTextureSize = 1024;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1372,6 +1373,11 @@ namespace Luminous
     return m_data->m_frameTime;
   }
 
+  unsigned int RenderContext::maxTextureSize() const
+  {
+    return m_data->m_maxTextureSize;
+  }
+
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
   // 
@@ -1778,6 +1784,9 @@ namespace Luminous
 
     m_data->m_supports_GL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
     m_data->m_supports_GL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
+    int maxSize = 1024;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
+    m_data->m_maxTextureSize = maxSize;
   }
 
   void RenderContext::pushOpacity(float opacity)
