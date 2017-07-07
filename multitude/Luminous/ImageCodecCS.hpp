@@ -21,6 +21,16 @@
 namespace Luminous
 {
   /**
+   * Image codec for lossless Cornerstone image format (*.csimg).
+   *
+   * This format is significantly faster to compress and decompress than PNG,
+   * supports more pixel formats than Qt image codecs (for instance floating
+   * point images and more than 8 bit images) and supports images with
+   * premultiplied alpha.
+   *
+   * Files are typically bigger than PNG images. Performance test image set
+   * mipmaps are 14 GB in csimg format and 8.3 GB in PNG format.
+   *
    * File format description:
    * The file is a binary file that has three parts:
    *  - Header size in bytes: int32

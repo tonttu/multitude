@@ -44,7 +44,7 @@ namespace Luminous
     Radiant::BinaryData bd;
     auto originalPos = file.pos();
 
-    int headerSize = 0;
+    int32_t headerSize = 0;
     file.read((char*)&headerSize, sizeof(headerSize));
 
     QByteArray binaryDataMagic = file.peek(4);
@@ -71,14 +71,14 @@ namespace Luminous
 
     bool ok = true;
 
-    int version = bd.readInt32();
+    int32_t version = bd.readInt32();
     Compression compression = (Compression)bd.readInt32();
     if (compression > COMPRESSION_LZ4) return false;
-    int width = bd.readInt32();
-    int height = bd.readInt32();
-    int layout = bd.readInt32();
-    int type = bd.readInt32();
-    int dataSize = bd.readInt32(&ok);
+    int32_t width = bd.readInt32();
+    int32_t height = bd.readInt32();
+    int32_t layout = bd.readInt32();
+    int32_t type = bd.readInt32();
+    int32_t dataSize = bd.readInt32(&ok);
     (void)dataSize;
 
     Luminous::PixelFormat::Compression pfCompression = Luminous::PixelFormat::COMPRESSION_NONE;
@@ -108,7 +108,7 @@ namespace Luminous
   bool ImageCodecCS::read(Image & image, QFile & file)
   {
     Radiant::BinaryData bd;
-    int headerSize = 0;
+    int32_t headerSize = 0;
     file.read((char*)&headerSize, sizeof(headerSize));
 
     QByteArray buffer = file.read(headerSize);
@@ -121,20 +121,20 @@ namespace Luminous
       return false;
     }
 
-    int version = bd.readInt32();
+    int32_t version = bd.readInt32();
     Compression compression = (Compression)bd.readInt32();
-    int width = bd.readInt32();
-    int height = bd.readInt32();
-    int layout = bd.readInt32();
-    int type = bd.readInt32();
-    int dataSize = bd.readInt32();
+    int32_t width = bd.readInt32();
+    int32_t height = bd.readInt32();
+    int32_t layout = bd.readInt32();
+    int32_t type = bd.readInt32();
+    int32_t dataSize = bd.readInt32();
 
     Luminous::PixelFormat::Compression pfCompression = Luminous::PixelFormat::COMPRESSION_NONE;
-    Flags flags = NO_FLAGS;
+    uint32_t flags = NO_FLAGS;
 
     if (version >= 1) {
       pfCompression = (Luminous::PixelFormat::Compression)bd.readInt32();
-      flags = (Flags)bd.readInt32();
+      flags = bd.readInt32();
     }
 
     if (pfCompression != Luminous::PixelFormat::COMPRESSION_NONE) {
@@ -144,8 +144,8 @@ namespace Luminous
                                                           Luminous::PixelFormat::ChannelType(type),
                                                           flags & FLAG_PREMULTIPLIED_ALPHA));
     }
-    const int rawDataSize = image.lineSize() * image.height();
-    const int imageDataOffset = headerSize + sizeof(headerSize);
+    const int32_t rawDataSize = image.lineSize() * image.height();
+    const int32_t imageDataOffset = headerSize + sizeof(headerSize);
 
     if (compression == NO_COMPRESSION) {
       file.seek(imageDataOffset);
@@ -172,7 +172,7 @@ namespace Luminous
       return false;
 #else
       QByteArray compressedData = file.read(dataSize);
-      int r = LZ4_decompress_safe(compressedData.data(), (char*)image.data(), dataSize, rawDataSize);
+      int32_t r = LZ4_decompress_safe(compressedData.data(), (char*)image.data(), dataSize, rawDataSize);
       return r == rawDataSize;
 #endif
     } else {
@@ -183,8 +183,8 @@ namespace Luminous
   bool ImageCodecCS::write(const Image & image, QFile & file)
   {
     /// @todo should be configurable
-    const int compression = COMPRESSION_LZ4;
-    const int fileFormatVersion = 1;
+    const Compression compression = COMPRESSION_LZ4;
+    const int32_t fileFormatVersion = 1;
 
     Radiant::BinaryData bd;
     bd.write(s_magic);
@@ -195,17 +195,17 @@ namespace Luminous
     bd.writeInt32(image.pixelFormat().layout());
     bd.writeInt32(image.pixelFormat().type());
 
-    int dataSizePos = bd.pos();
+    int32_t dataSizePos = bd.pos();
     bd.writeInt32(0); /// placeholder for the data size
 
     bd.writeInt32(image.pixelFormat().compression());
-    uint32_t flags = 0;
+    uint32_t flags = NO_FLAGS;
     if (image.pixelFormat().isPremultipliedAlpha())
       flags |= FLAG_PREMULTIPLIED_ALPHA;
     bd.writeInt32(flags);
 
-    const int headerSize = bd.pos();
-    const int rawDataSize = image.lineSize() * image.height();
+    const int32_t headerSize = bd.pos();
+    const int32_t rawDataSize = image.lineSize() * image.height();
 
     if (compression == NO_COMPRESSION) {
       bd.setPos(dataSizePos);
@@ -231,9 +231,9 @@ namespace Luminous
       const int bufferSize = LZ4_compressBound(rawDataSize);
       std::unique_ptr<char[]> data(new char[bufferSize]);
 #if LZ4_VERSION_MAJOR > 1 || (LZ4_VERSION_MAJOR == 1 && LZ4_VERSION_MINOR >= 7)
-      const int dataSize = LZ4_compress_default((const char*)image.data(), data.get(), rawDataSize, bufferSize);
+      const int32_t dataSize = LZ4_compress_default((const char*)image.data(), data.get(), rawDataSize, bufferSize);
 #else
-      const int dataSize = LZ4_compress((const char*)image.data(), data.get(), rawDataSize);
+      const int32_t dataSize = LZ4_compress((const char*)image.data(), data.get(), rawDataSize);
 #endif
 
       bd.setPos(dataSizePos);
