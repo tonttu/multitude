@@ -720,26 +720,19 @@ namespace Luminous
 
     changed();
 
-    if(m_texture)
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
-
     if (usePreMultipliedAlpha) {
       toPreMultipliedAlpha();
     }
+
+    if(m_texture)
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
 
     return true;
   }
 
   bool Image::write(const QString & filename) const
   {
-    if (hasPreMultipliedAlpha()) {
-      Luminous::Image tmp(*this);
-      tmp.toPostMultipliedAlpha();
-      return tmp.write(filename);
-    }
     initDefaultImageCodecs();
-
-    bool ret = false;
 
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -747,18 +740,25 @@ namespace Luminous
       return false;
     }
 
-    auto codec = codecs()->getCodec(filename);
-    if(codec) {
-      ret = codec->write(*this, file);
-    } else {
+    std::shared_ptr<ImageCodec> codec = codecs()->getCodec(filename);
+    if(!codec) {
       debugLuminous("Image::write # Could not deduce image codec based on filename '%s', using png", filename.toUtf8().data());
 
       codec = codecs()->getCodec(".png");
-      ret = codec->write(*this, file);
     }
 
-    file.close();
-    return ret;
+    if (!codec) {
+      Radiant::error("Image::write # failed to find any image codec");
+      return false;
+    }
+
+    if (hasPreMultipliedAlpha() && !codec->canWritePremultipliedAlpha()) {
+      Luminous::Image tmp(*this);
+      tmp.toPostMultipliedAlpha();
+      return codec->write(tmp, file);
+    } else {
+      return codec->write(*this, file);
+    }
   }
 
   void Image::fromData(const unsigned char * bytes, int width, int height,

@@ -175,6 +175,9 @@ win32 {
 
   HEADERS += DisplayConfigWin.hpp
   SOURCES += DisplayConfigWin.cpp
+
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/lz4/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/lz4/lib
 }
 
 !macx:!arm64 {
@@ -236,5 +239,7 @@ enable-pdf {
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
 }
+
+LIBS += -llz4
 
 include(../../library.pri)
