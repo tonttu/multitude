@@ -22,6 +22,16 @@ namespace Radiant
   /** Small utility functions to help handle platform-specific functions. */
   namespace PlatformUtils
   {
+    /// Information about available and total memory
+    struct MemInfo
+    {
+      /// Total physical memory in kilobytes
+      uint64_t memTotalKb = 0;
+      /// Available physical memory in kilobytes. On Linux this is the value of
+      /// "MemAvailable", not "MemFree", if the kernel is new enough. See
+      /// https://www.kernel.org/doc/Documentation/filesystems/proc.txt
+      uint64_t memAvailableKb = 0;
+    };
 
     /// Return absolute path to the executable that was used to launch the process.
     /// @return Absolute path to the executable used to launch the process
@@ -54,6 +64,10 @@ namespace Radiant
     /// This function is not implemented for all platforms.
     /// @returns Size of memory usage (in bytes)
     RADIANT_API uint64_t processMemoryUsage();
+
+    /// Returns information about available and total memory
+    /// @todo not implemented on OSX
+    RADIANT_API MemInfo memInfo();
 
     /// This function returns the path to a library the running process is
     /// linked against.

@@ -100,6 +100,15 @@ namespace Radiant
 
     }
 
+    MemInfo memInfo()
+    {
+      MemInfo info;
+
+      /// @todo not implemented
+
+      return info;
+    }
+
     QString getLibraryPath(const QString& libraryName)
     {
       auto pid = QCoreApplication::applicationPid();

@@ -173,6 +173,24 @@ namespace Radiant
       return pmc.WorkingSetSize;
     }
 
+    MemInfo memInfo()
+    {
+      MemInfo info;
+
+      MEMORYSTATUSEX status;
+      status.dwLength = sizeof(status);
+
+      if (GlobalMemoryStatusEx(&status)) {
+        info.memTotalKb = status.ullTotalPhys / 1024;
+        info.memAvailableKb = status.ullAvailPhys / 1024;
+      } else {
+        error("PlatformUtils::memInfo # GlobalMemoryStatusEx failed: %s",
+              StringUtils::getLastErrorMessage().toUtf8().data());
+      }
+
+      return info;
+    }
+
     QString getLibraryPath(const QString& libraryName)
     {
       auto wLibraryName = libraryName.toStdWString();
