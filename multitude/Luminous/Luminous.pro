@@ -17,7 +17,8 @@ HEADERS += ProgramGL.hpp \
     MaskGuard.hpp \
     MipmapRenderer.hpp \
     ScreenDetectorQt.hpp \
-    SwapGroups.hpp
+    SwapGroups.hpp \
+    MemoryManager.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -85,7 +86,8 @@ SOURCES += ImageCodecDDS.cpp \
     MaskGuard.cpp \
     MipmapRenderer.cpp \
     ScreenDetectorQt.cpp \
-    SwapGroups.cpp
+    SwapGroups.cpp \
+    MemoryManager.cpp
 SOURCES += ImageCodecCS.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
