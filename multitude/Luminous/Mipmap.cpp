@@ -12,6 +12,7 @@
 
 #include "Luminous/Image.hpp"
 #include "Luminous/Texture.hpp"
+#include "Luminous/MemoryManager.hpp"
 #include "Luminous/MipMapGenerator.hpp"
 #include "Luminous/RenderManager.hpp"
 
@@ -214,7 +215,7 @@ namespace Luminous
   /// doesn't slow down the application if the main thread is creating new
   /// Mipmap instances. The expiration checking is atomic operation without
   /// need to lock anything, so this will have no impact on rendering threads.
-  class MipmapReleaseTask : public Radiant::Task
+  class MipmapReleaseTask : public Radiant::Task, public Valuable::Node
   {
   public:
     MipmapReleaseTask();
@@ -223,6 +224,10 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
+
+  private:
+    MemoryManagerPtr m_memoryManager = MemoryManager::instance();
+    bool m_outOfMemory = false;
   };
   std::weak_ptr<MipmapReleaseTask> s_releaseTask;
 
@@ -603,14 +608,34 @@ namespace Luminous
     : Task(PRIORITY_URGENT)
   {
     scheduleFromNowSecs(10.0f);
+    m_memoryManager->eventAddListener("out-of-memory", this, [this] {
+      if (!m_outOfMemory) {
+        m_outOfMemory = true;
+        check(0);
+      }
+    });
   }
 
   void MipmapReleaseTask::doTask()
   {
+    // This is how much we should try to release memory
+    const uint64_t todoBytes = m_memoryManager->overallocatedBytes();
+
+    // Nothing to do, there is already enough available memory
+    if (todoBytes == 0) {
+      scheduleFromNowSecs(60.0);
+      m_outOfMemory = false;
+      return;
+    }
+
+    float delay = 10;
+
+    // lastUsed => (mipmap, level)
+    std::multimap<int, std::pair<MipmapPtr, int>> queue;
+
     Radiant::Guard g(s_mipmapStoreMutex);
     const int now = lastFrameTime();
 
-    float delay = 10.0;
     for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {
       Luminous::MipmapPtr ptr = it->second.lock();
       if(ptr) {
@@ -624,19 +649,8 @@ namespace Luminous
             if (lastUsed <= Loading)
               continue;
 
-            //Radiant::info("%d > %d + %d = %d", now, lastUsed, expire, lastUsed + expire);
             if(now >= lastUsed + expire) {
-              if(imageTex.locked.testAndSetOrdered(0, 1)) {
-                if(imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
-                  imageTex.texture.reset();
-                  imageTex.cimage.reset();
-                  imageTex.image.reset();
-                  imageTex.lastUsed = New;
-                }
-                imageTex.locked = 0;
-              } else {
-                delay = 0;
-              }
+              queue.emplace(lastUsed, std::make_pair(ptr, level));
             } else {
               delay = std::min(delay, (lastUsed + expire - now) / 10.0f);
             }
@@ -651,16 +665,52 @@ namespace Luminous
       s_mipmapStoreMutex.unlock();
       s_mipmapStoreMutex.lock();
     }
-    delay = std::max(delay, 0.1f);
 
-    scheduleFromNowSecs(delay);
+    uint64_t releasedBytes = 0;
+    for (auto & p: queue) {
+      const int lastUsed = p.first;
+      MipmapPtr & mipmap = p.second.first;
+      const int level = p.second.second;
+
+      MipmapLevel & imageTex = mipmap->m_d->m_levels[level];
+
+      if (imageTex.locked.testAndSetOrdered(0, 1)) {
+        if (imageTex.lastUsed.testAndSetOrdered(lastUsed, Loading)) {
+          imageTex.texture.reset();
+          if (imageTex.cimage) {
+            releasedBytes += imageTex.cimage->datasize() + sizeof(*imageTex.cimage);
+            imageTex.cimage.reset();
+          }
+          if (imageTex.image) {
+            releasedBytes += imageTex.image->width() * imageTex.image->height() * imageTex.image->pixelFormat().bytesPerPixel()
+                + sizeof(*imageTex.image);
+            imageTex.image.reset();
+          }
+          imageTex.lastUsed = New;
+        }
+        imageTex.locked = 0;
+      } else {
+        delay = 0;
+      }
+
+      if (releasedBytes >= todoBytes) {
+        break;
+      }
+    }
+
+    if (releasedBytes >= todoBytes) {
+      m_outOfMemory = false;
+      scheduleFromNowSecs(60);
+    } else {
+      scheduleFromNowSecs(std::max(delay, 0.5f));
+    }
   }
 
   void MipmapReleaseTask::check(float wait)
   {
     auto task = s_releaseTask.lock();
     /// @todo thread safety, task might be running/rescheduling concurrently
-    if (task && (task->secondsUntilScheduled() > wait)) {
+    if (task && task->m_outOfMemory && (task->secondsUntilScheduled() > wait)) {
       task->scheduleFromNowSecs(wait);
       Radiant::BGThread::instance()->reschedule(task);
     }
