@@ -35,7 +35,10 @@ namespace
   MipmapStore s_mipmapStore;
   Radiant::Mutex s_mipmapStoreMutex;
 
-  const unsigned int s_smallestImage = 4;
+  /// The smallest mipmap is always kept in CPU memory, but not on GPU memory.
+  /// However, on GPU the smallest mipmap level uses hardware trilinear mipmaps.
+  /// 1000 128x128 RGBA images will consume total 83 MB GPU memory and 63 MB CPU memory
+  const unsigned int s_smallestImage = 128;
   const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
   /// Update this when there is incompatible change in imagecache
