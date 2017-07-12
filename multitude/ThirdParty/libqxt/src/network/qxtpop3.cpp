@@ -49,7 +49,7 @@
 
 #include <QTcpSocket>
 #include <QNetworkInterface>
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 #    include <QSslSocket>
 #endif
 
@@ -69,7 +69,7 @@ QxtPop3::QxtPop3(QObject* parent) : QObject(parent)
 {
     QXT_INIT_PRIVATE(QxtPop3);
     qxt_d().state = QxtPop3Private::Disconnected;
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     qxt_d().socket = new QSslSocket(this);
     QObject::connect(socket(), SIGNAL(encrypted()), this, SIGNAL(encrypted()));
     QObject::connect(socket(), SIGNAL(encrypted()), &qxt_d(),SLOT(encrypted()));
@@ -171,7 +171,7 @@ void QxtPop3::setStartTlsDisabled(bool disable)
     qxt_d().disableStartTLS = disable;
 }
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 /*!
   Returns a pointer to the SSL socket used for the connection to the server.
   \sa socket()
@@ -199,7 +199,7 @@ void QxtPop3::connectToSecureHost(const QHostAddress& address, quint16 port)
 {
     connectToSecureHost(address.toString(), port);
 }
-#endif // QT_NO_OPENSSL
+#endif // SSL
 
 /*!
   Returns \c true if the client is connected to the server, \c false otherwise.

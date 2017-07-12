@@ -61,13 +61,13 @@
 QxtTcpConnectionManager::QxtTcpConnectionManager(QObject* parent) : QxtAbstractConnectionManager(parent)
 {
     QXT_INIT_PRIVATE(QxtTcpConnectionManager);
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     qxt_d().setAutoEncrypt(false);
 #endif
 }
 
 QxtTcpConnectionManagerPrivate::QxtTcpConnectionManagerPrivate()
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 : QxtSslServer(0)
 #else
 : QTcpServer(0)

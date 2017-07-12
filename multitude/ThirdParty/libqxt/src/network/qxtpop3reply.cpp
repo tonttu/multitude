@@ -37,7 +37,7 @@
 #include "qxtpop3retrreply.h"
 #include "qxtpop3_p.h"
 #include <QTextStream>
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 #    include <QSslSocket>
 #endif
 
@@ -81,7 +81,7 @@ QByteArray QxtPop3AuthReplyImpl::dialog(QByteArray received)
     switch (state)
     {
     case StartState:
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
         if (!startTLSdisabled)
         {
             ret = buildCmd("STLS", "");
@@ -93,7 +93,7 @@ QByteArray QxtPop3AuthReplyImpl::dialog(QByteArray received)
         ret = buildCmd("USER", pop->username);
         state = UserSent;
         break;
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     case STLSSent:
         if (isAnswerOK(received))
         {

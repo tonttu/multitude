@@ -52,7 +52,7 @@
  * \sa QxtSslServer, QxtSslConnectionManager
  */
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 
 /*!
  * Constructs a new QxtSslConnectionManager object with the specified \a parent.

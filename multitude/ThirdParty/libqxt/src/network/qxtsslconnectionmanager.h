@@ -33,7 +33,7 @@
 #define QXTSSLCONNECTIONMANAGER_H
 
 #include <qxttcpconnectionmanager.h>
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 #include <QSslSocket>
 
 class QXT_NETWORK_EXPORT QxtSslConnectionManager : public QxtTcpConnectionManager
