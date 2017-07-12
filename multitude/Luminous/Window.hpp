@@ -81,7 +81,7 @@ namespace Luminous
     /// Ignore window state change events for the given number of frames
     void setIgnoreWindowStateChanges(size_t frames)
     {
-      m_ignoreWindowStateChangesUntil = m_frame + frames;
+      m_ignoreWindowStateChangesUntil = std::max(m_ignoreWindowStateChangesUntil, m_frame + frames);
     }
 
   signals:
