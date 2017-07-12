@@ -118,14 +118,16 @@ namespace Luminous
       QObject::connect(qapp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
                        m_d.get(), SLOT(applicationStateChanged(Qt::ApplicationState)));
 
-      QObject::connect(&m_d->m_timer, SIGNAL(timeout()), m_d.get(), SLOT(check()));
-      m_d->m_timer.start(currentProfileSettings().pollingInterval);
-
       m_d->m_state = qapp->applicationState();
-      m_d->updateProfile();
     } else {
-      throw std::runtime_error("Luminous::MemoryManager needs QGuiApplication instance");
+      // Not a GUI application, so always use "hidden" profile
+      m_d->m_state = Qt::ApplicationHidden;
     }
+
+    QObject::connect(&m_d->m_timer, SIGNAL(timeout()), m_d.get(), SLOT(check()));
+    m_d->m_timer.start(currentProfileSettings().pollingInterval);
+
+    m_d->updateProfile();
   }
 
   MemoryManager::~MemoryManager()
