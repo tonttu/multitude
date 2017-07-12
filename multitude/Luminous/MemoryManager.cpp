@@ -32,7 +32,7 @@ namespace Luminous
     Qt::ApplicationState m_state = Qt::ApplicationActive;
     bool m_isMinimized = false;
 
-    QTimer m_timer;
+    QTimer * m_timer = new QTimer();
 
     uint64_t m_overAllocatedBytes = 0;
   };
@@ -45,7 +45,7 @@ namespace Luminous
   void MemoryManager::D::scheduleCheck()
   {
     QMetaObject::invokeMethod(this, "check", Qt::QueuedConnection);
-    m_timer.start(m_profileSettings[m_currentProfile].pollingInterval);
+    m_timer->start(m_profileSettings[m_currentProfile].pollingInterval);
   }
 
   void MemoryManager::D::updateProfile()
@@ -124,14 +124,17 @@ namespace Luminous
       m_d->m_state = Qt::ApplicationHidden;
     }
 
-    QObject::connect(&m_d->m_timer, SIGNAL(timeout()), m_d.get(), SLOT(check()));
-    m_d->m_timer.start(currentProfileSettings().pollingInterval);
+    QObject::connect(m_d->m_timer, SIGNAL(timeout()), m_d.get(), SLOT(check()));
+    m_d->m_timer->start(currentProfileSettings().pollingInterval);
 
     m_d->updateProfile();
   }
 
   MemoryManager::~MemoryManager()
   {
+    // Allow this class to be deleted from different thread it was created from
+    // by deleting QTimer on its owner thread
+    m_d->m_timer->deleteLater();
   }
 
   uint64_t MemoryManager::overallocatedBytes() const
