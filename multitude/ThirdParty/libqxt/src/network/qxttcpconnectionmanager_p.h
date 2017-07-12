@@ -37,7 +37,7 @@
 #include <QTcpSocket>
 #include <QSignalMapper>
 
-#ifdef QT_NO_OPENSSL
+#if !QT_CONFIG(ssl)
 class QxtTcpConnectionManagerPrivate : public QTcpServer, public QxtPrivate<QxtTcpConnectionManager>
 #else
 #include "qxtsslserver.h"

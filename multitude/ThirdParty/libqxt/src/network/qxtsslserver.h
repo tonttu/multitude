@@ -35,7 +35,7 @@
 #include "qxtglobal.h"
 #include <QTcpServer>
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 #include <QSslSocket>
 
 class QxtSslServerPrivate;
@@ -74,5 +74,5 @@ private:
     QXT_DECLARE_PRIVATE(QxtSslServer)
 };
 
-#endif /* QT_NO_OPENSSL */
+#endif /* SSL */
 #endif

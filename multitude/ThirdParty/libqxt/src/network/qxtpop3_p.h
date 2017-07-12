@@ -58,7 +58,7 @@ public:
     QQueue<QxtPop3Reply*> pending;
     QxtPop3Reply* current;
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     QSslSocket* socket;
 #else
     QTcpSocket* socket;

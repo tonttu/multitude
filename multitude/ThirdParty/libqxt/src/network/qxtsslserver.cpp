@@ -55,7 +55,7 @@
  * QxtSslServer is only available if Qt was compiled with OpenSSL support.
  */
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 #include <QSslKey>
 
 class QxtSslServerPrivate : public QxtPrivate<QxtSslServer>
@@ -242,4 +242,4 @@ void QxtSslServer::incomingConnection(int socketDescriptor)
     }
 }
 
-#endif /* QT_NO_OPENSSL */
+#endif /* SSL */

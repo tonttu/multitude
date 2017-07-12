@@ -39,7 +39,7 @@
 #include "qxtmailmessage.h"
 
 class QTcpSocket;
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
 class QSslSocket;
 #endif
 
@@ -90,7 +90,7 @@ public:
     bool startTlsDisabled() const;
     void setStartTlsDisabled(bool disable);
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     QSslSocket* sslSocket() const;
     void connectToSecureHost(const QString& hostName, quint16 port = 465);
     void connectToSecureHost(const QHostAddress& address, quint16 port = 465);

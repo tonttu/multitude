@@ -78,7 +78,7 @@ public:
     int nextID, rcptNumber, rcptAck;
     bool mailAck;
 
-#ifndef QT_NO_OPENSSL
+#if QT_CONFIG(ssl)
     QSslSocket* socket;
 #else
     QTcpSocket* socket;
