@@ -134,7 +134,7 @@ namespace
     }
     else {
       for (int i = m_pointsPerCurve; i >= 0; i--) {
-        curve.m_controlPoints[m_pointsPerCurve - i] = m_data.points[index - i];
+        curve.set(m_pointsPerCurve - i, m_data.points[index - i]);
       }
     }
     // Stroke bounds doesn't include stroke width, only the control points.
@@ -154,8 +154,8 @@ namespace
     for (size_t i = 0; i < m_curves.size(); i++) {
       Luminous::BezierCurve curve = m_curves[i];
       // transform the curve to normalized eraser coordinates for easier calculations
-      for (size_t j = 0; j < curve.m_controlPoints.size(); j++) {
-        curve.m_controlPoints[j] = transformer.project(curve[j]);
+      for (size_t j = 0; j < curve.count(); j++) {
+        curve.set(j, transformer.project(curve[j]));
       }
       Nimble::Rectf curveBounds = curve.bounds();
       bool hit = false;
@@ -188,8 +188,8 @@ namespace
               take = true;
 
             if (take) {
-              for(size_t ind = 0; ind < left.m_controlPoints.size(); ++ind)
-                extraEnd.append(left.m_controlPoints[ind]);
+              for(size_t ind = 0; ind < left.count(); ++ind)
+                extraEnd.append(left[ind]);
             }
             take = !take;
             float part = intersections[0];
@@ -201,14 +201,15 @@ namespace
               part = intersections[index];
               // make a new stroke for the segment
               if (take) {
-                saveSegment(-1, -1, newStrokes, left.m_controlPoints);
+                auto lpoints = left.points();
+                saveSegment(-1, -1, newStrokes, &lpoints);
               }
               take = !take;
             }
 
             // add last segment to next curve if end point is not erased
             if (!(std::abs(curve[m_pointsPerCurve].x) <= 1 && std::abs(curve[m_pointsPerCurve].y) <= 1))
-              for(size_t ind = 0; ind < right.m_controlPoints.size(); ++ind)
+              for(size_t ind = 0; ind < right.count(); ++ind)
                 extraStartNext.append(right[ind]);
           }
         }
@@ -281,7 +282,7 @@ namespace
               take = true;
 
             if (take) {
-              for(size_t ind = 0; ind < left.m_controlPoints.size(); ++ind)
+              for(size_t ind = 0; ind < left.count(); ++ind)
                 extraEnd.append(left[ind]);
             }
             take = !take;
@@ -294,14 +295,15 @@ namespace
               part = intersections[index];
               // make a new stroke for the segment
               if (take) {
-                saveSegment(-1, -1, newStrokes, left.m_controlPoints);
+                auto lpoints = left.points();
+                saveSegment(-1, -1, newStrokes, &lpoints);
               }
               take = !take;
             }
 
             // add last segment to next curve if end point is not erased
             if (!eraser.contains(Nimble::Vector2f(curve[m_pointsPerCurve].x,curve[m_pointsPerCurve].y)))
-              for(size_t ind = 0; ind < right.m_controlPoints.size(); ++ind)
+              for(size_t ind = 0; ind < right.count(); ++ind)
                 extraStartNext.append(right[ind]);
           }
         }
@@ -382,22 +384,57 @@ namespace
 namespace Luminous
 {
 
+  BezierCurve::BezierCurve()
+  {
+  }
+
+  BezierCurve::BezierCurve(const std::array<Nimble::Vector2f, 4> & points)
+  {
+    setPoints(points);
+  }
+
   Nimble::Vector2f BezierCurve::operator[](int pos) const
   {
     return m_controlPoints.at(pos);
   }
 
-  Nimble::Vector2f& BezierCurve::operator[](int pos)
+  void BezierCurve::set(int pos, const Nimble::Vector2f & point)
   {
-    return m_controlPoints[pos];
+    assert(point.isFinite());
+    if (point.isFinite())
+      m_controlPoints[pos] = point;
+    else
+      Radiant::error("BezierCurve::set # Control point must be finite!");
+  }
+
+  void BezierCurve::setPoints(const std::array<Nimble::Vector2f,4> & points)
+  {
+    for (auto i = 0; i < 4; i++)
+      set(i, points[i]);
+  }
+
+  size_t BezierCurve::count() const
+  {
+    return m_controlPoints.size();
+  }
+
+  SplineManager::Points BezierCurve::points() const
+  {
+    SplineManager::Points points;
+    for (const auto & point : m_controlPoints)
+      points.append(point);
+    return points;
   }
 
   void BezierCurve::setEndPoints(const Nimble::Vector2f &start, const Nimble::Vector2f &end)
   {
+    set(0, start);
+    set(3, end);
     Nimble::Vector2f p1, p2;
-    p1 = start + 1.f / 3.f * (end - start);
-    p2 = 0.5f * (end + p1);
-    m_controlPoints = {{ start, p1, p2, end }};
+    p1 = m_controlPoints[0] + 1.f / 3.f * (m_controlPoints[3] - m_controlPoints[0]);
+    p2 = 0.5f * (m_controlPoints[3] + p1);
+    set(1, p1);
+    set(2, p2);
   }
 
   void BezierCurve::fitCurves(BezierCurve &prev, BezierCurve &next)
@@ -472,8 +509,8 @@ namespace Luminous
     auto p22 = (1.f-t)*p21 + t*p31;
     auto p13 = (1.f-t)*p12 + t*p22;
 
-    left.m_controlPoints = {{ p0, p11, p12, p13 }};
-    right.m_controlPoints = {{ p13, p22, p31, p3 }};
+    left.setPoints({{ p0, p11, p12, p13 }});
+    right.setPoints({{ p13, p22, p31, p3 }});
   }
 
   Nimble::Vector2f BezierCurve::derivate(float t) const
@@ -696,7 +733,7 @@ namespace Luminous
     int offset = m_vertices.size();
 
     // first point
-    points.push_back(stroke.m_curves[0].m_controlPoints[0]);
+    points.push_back(stroke.m_curves[0][0]);
 
     for (size_t i = 0; i < stroke.m_curves.size(); i++) {
       BezierCurve::evaluateCurve(stroke.m_curves[i], points);
@@ -891,7 +928,7 @@ namespace Luminous
       Point next = original.at(i + n);
 
       BezierCurve curve;
-      curve.m_controlPoints = {{ prev, cur, cur, next }};
+      curve.setPoints({{ prev, cur, cur, next }});
       float diff = BezierCurve::curveValue(curve);
       if (error + diff < tolerance) {
         // skip this one and accumulate some error

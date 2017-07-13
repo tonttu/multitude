@@ -182,11 +182,20 @@ namespace Luminous {
   class LUMINOUS_API BezierCurve
   {
   public:
+    BezierCurve();
+    BezierCurve(const std::array<Nimble::Vector2f, 4> & points);
+
     /// Read-access to the control points of the curve
     Nimble::Vector2f operator[](int pos) const;
+    /// Write-access to the control points of the curve
+    void set(int pos, const Nimble::Vector2f & point);
+    void setPoints(const std::array<Nimble::Vector2f, 4> & points);
 
-    /// Read-write access to the control points of the curve
-    Nimble::Vector2f& operator[](int pos);
+    /// Control point count
+    size_t count() const;
+
+    /// Returns all controls points in this curve
+    SplineManager::Points points() const;
 
     /// Sets the end points for the curve and calculates control points
     /// @param start Start point of the
@@ -271,7 +280,11 @@ namespace Luminous {
                                   float tTolerance = 0.01f, float sizeTolerance = .3f,
                                   int depth = 1);
 
-    std::array<Nimble::Vector2f, 4> m_controlPoints;
+  private:
+    std::array<Nimble::Vector2f, 4> m_controlPoints =  {{ Nimble::Vector2f::null(),
+                                                          Nimble::Vector2f::null(),
+                                                          Nimble::Vector2f::null(),
+                                                          Nimble::Vector2f::null() }};
   };
 
 }
