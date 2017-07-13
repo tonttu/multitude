@@ -539,6 +539,17 @@ namespace VideoDisplay
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
 
+    m_av.formatContext = avformat_alloc_context();
+
+    // Interrupt blocking IO
+    AVIOInterruptCB interruptCallback;
+    interruptCallback.callback = [] (void * opaque) -> int {
+      bool running = *static_cast<bool*>(opaque);
+      return running ? 0 : 1;
+    };
+    interruptCallback.opaque = &m_running;
+    m_av.formatContext->interrupt_callback = interruptCallback;
+
     int err = avformat_open_input(&m_av.formatContext, openTarget.toUtf8().data(),
                                   inputFormat, &avoptions);
 
@@ -553,7 +564,10 @@ namespace VideoDisplay
     }
 
     if(err != 0) {
-      avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
+      if (m_running)
+        avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
+      avformat_free_context(m_av.formatContext);
+      m_av.formatContext = nullptr;
       return false;
     }
 
