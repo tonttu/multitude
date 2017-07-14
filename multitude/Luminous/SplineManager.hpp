@@ -195,7 +195,7 @@ namespace Luminous {
     size_t count() const;
 
     /// Returns all controls points in this curve
-    SplineManager::Points points() const;
+    const std::array<Nimble::Vector2f, 4> & points() const;
 
     /// Sets the end points for the curve and calculates control points
     /// @param start Start point of the

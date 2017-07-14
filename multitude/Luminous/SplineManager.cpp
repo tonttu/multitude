@@ -201,8 +201,7 @@ namespace
               part = intersections[index];
               // make a new stroke for the segment
               if (take) {
-                auto lpoints = left.points();
-                saveSegment(-1, -1, newStrokes, &lpoints);
+                saveSegment(-1, -1, newStrokes, left.points());
               }
               take = !take;
             }
@@ -295,8 +294,7 @@ namespace
               part = intersections[index];
               // make a new stroke for the segment
               if (take) {
-                auto lpoints = left.points();
-                saveSegment(-1, -1, newStrokes, &lpoints);
+                saveSegment(-1, -1, newStrokes, left.points());
               }
               take = !take;
             }
@@ -418,12 +416,9 @@ namespace Luminous
     return m_controlPoints.size();
   }
 
-  SplineManager::Points BezierCurve::points() const
+  const std::array<Nimble::Vector2f, 4> & BezierCurve::points() const
   {
-    SplineManager::Points points;
-    for (const auto & point : m_controlPoints)
-      points.append(point);
-    return points;
+    return m_controlPoints;
   }
 
   void BezierCurve::setEndPoints(const Nimble::Vector2f &start, const Nimble::Vector2f &end)
