@@ -110,7 +110,8 @@ namespace Radiant
         return QString();
       }
 
-      const QString cmd = QString("vmmap %2 | grep %1 | awk '{print $7}' | head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
+      /// @todo this is a horrible hack, should do it properly
+      const QString cmd = QString("vmmap %2 | grep %1 | awk '{print $10}' | head -n1 > %3").arg(libraryName).arg(pid).arg(file.fileName());
 
       system(cmd.toUtf8().data());
 
