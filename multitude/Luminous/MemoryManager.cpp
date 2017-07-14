@@ -4,7 +4,8 @@
 
 #include <QGuiApplication>
 #include <QMetaEnum>
-#include <QTimer>
+
+#include <Radiant/BGThread.hpp>
 
 #include <array>
 
@@ -18,34 +19,41 @@ namespace Luminous
     D(MemoryManager & host);
     void scheduleCheck();
     void updateProfile();
+    void check();
 
   public slots:
     void applicationStateChanged(Qt::ApplicationState state);
-    void check();
 
   public:
     MemoryManager & m_host;
 
-    MemoryManager::Profile m_currentProfile = MemoryManager::ProfileNormal;
+    std::atomic<MemoryManager::Profile> m_currentProfile { MemoryManager::ProfileNormal };
+
+    Radiant::Mutex m_profileSettingsMutex;
     std::array<MemoryManager::ProfileSettings, MemoryManager::ProfileCount> m_profileSettings;
 
-    Qt::ApplicationState m_state = Qt::ApplicationActive;
-    bool m_isMinimized = false;
+    std::atomic<Qt::ApplicationState> m_state { Qt::ApplicationActive };
+    std::atomic<bool> m_isMinimized { false };
 
-    QTimer * m_timer = new QTimer();
+    std::atomic<uint64_t> m_overAllocatedBytes { 0 };
 
-    uint64_t m_overAllocatedBytes = 0;
+    std::shared_ptr<Radiant::BGThread> m_bgThread = Radiant::BGThread::instance();
+    Radiant::TaskPtr m_task;
   };
 
   MemoryManager::D::D(MemoryManager & host)
     : m_host(host)
   {
+    m_task = std::make_shared<Radiant::FunctionTask>([this] (Radiant::Task &) { check(); });
+    /// It's really important we run this with high priority.
+    /// This is now one more than Mipmap default ping priority
+    m_task->setPriority(Radiant::Task::PRIORITY_HIGH + 3);
   }
 
   void MemoryManager::D::scheduleCheck()
   {
-    QMetaObject::invokeMethod(this, "check", Qt::QueuedConnection);
-    m_timer->start(m_profileSettings[m_currentProfile].pollingInterval);
+    m_task->scheduleFromNowSecs(0);
+    m_bgThread->reschedule(m_task);
   }
 
   void MemoryManager::D::updateProfile()
@@ -73,7 +81,11 @@ namespace Luminous
   {
     Radiant::PlatformUtils::MemInfo info = Radiant::PlatformUtils::memInfo();
 
-    ProfileSettings settings = m_profileSettings[m_currentProfile];
+    ProfileSettings settings;
+    {
+      Radiant::Guard g(m_profileSettingsMutex);
+      settings = m_profileSettings[m_currentProfile];
+    }
 
     uint64_t overallocatedBytes = 0;
 
@@ -81,10 +93,17 @@ namespace Luminous
       overallocatedBytes = (settings.minAvailableMemoryMB * 1024 - info.memAvailableKb) * 1024;
     }
 
-    const float memoryUsage = 1.0 - double(info.memAvailableKb) / info.memTotalKb;
+    if (info.memTotalKb > 0) {
+      const float memoryUsage = 1.0 - double(info.memAvailableKb) / info.memTotalKb;
 
-    if (memoryUsage > settings.maxMemoryUsage) {
-      overallocatedBytes = uint64_t((memoryUsage - settings.maxMemoryUsage) * info.memTotalKb) * 1024;
+      if (memoryUsage > settings.maxMemoryUsage) {
+        overallocatedBytes = std::max(overallocatedBytes, uint64_t(
+                                        (memoryUsage - settings.maxMemoryUsage) * info.memTotalKb) * 1024);
+      }
+    } else if (settings.maxMemoryUsage < 1.0f) {
+      // If there is no information how much memory this computer has, we need
+      // to play it safe and just release as much as possible
+      overallocatedBytes = std::numeric_limits<uint64_t>::max();
     }
 
     m_overAllocatedBytes = overallocatedBytes;
@@ -92,6 +111,8 @@ namespace Luminous
     if (m_overAllocatedBytes) {
       m_host.eventSend("out-of-memory");
     }
+
+    m_task->scheduleFromNowSecs(settings.pollingIntervalS);
   }
 
   void MemoryManager::D::applicationStateChanged(Qt::ApplicationState state)
@@ -124,17 +145,13 @@ namespace Luminous
       m_d->m_state = Qt::ApplicationHidden;
     }
 
-    QObject::connect(m_d->m_timer, SIGNAL(timeout()), m_d.get(), SLOT(check()));
-    m_d->m_timer->start(currentProfileSettings().pollingInterval);
-
     m_d->updateProfile();
+    m_d->m_bgThread->addTask(m_d->m_task);
   }
 
   MemoryManager::~MemoryManager()
   {
-    // Allow this class to be deleted from different thread it was created from
-    // by deleting QTimer on its owner thread
-    m_d->m_timer->deleteLater();
+    m_d->m_bgThread->removeTask(m_d->m_task, true, true);
   }
 
   uint64_t MemoryManager::overallocatedBytes() const
@@ -144,7 +161,10 @@ namespace Luminous
 
   void MemoryManager::setProfileSettings(MemoryManager::Profile profile, MemoryManager::ProfileSettings settings)
   {
-    m_d->m_profileSettings[profile] = settings;
+    {
+      Radiant::Guard g(m_d->m_profileSettingsMutex);
+      m_d->m_profileSettings[profile] = settings;
+    }
 
     if (profile == currentProfile())
       m_d->scheduleCheck();
@@ -152,6 +172,7 @@ namespace Luminous
 
   MemoryManager::ProfileSettings MemoryManager::profileSettings(MemoryManager::Profile profile) const
   {
+    Radiant::Guard g(m_d->m_profileSettingsMutex);
     return m_d->m_profileSettings[profile];
   }
 
@@ -180,7 +201,6 @@ namespace Luminous
   }
 
   DEFINE_SINGLETON(MemoryManager)
-
 
 } // namespace Luminous
 

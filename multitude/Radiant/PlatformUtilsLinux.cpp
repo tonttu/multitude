@@ -171,6 +171,12 @@ namespace Radiant
         if (!foundMemAvailable) {
           info.memAvailableKb = memFree + cached;
         }
+        if (info.memTotalKb == 0) {
+          Radiant::warning("PlatformUtils::memInfo # Failed to find the total amount of physical RAM");
+        }
+      } else {
+        Radiant::warning("PlatformUtils::memInfo # Failed to open /proc/meminfo: %s",
+                         file.errorString().toUtf8().data());
       }
 
       return info;

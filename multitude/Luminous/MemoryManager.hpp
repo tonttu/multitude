@@ -42,10 +42,10 @@ namespace Luminous
       /// Regardless of other settings, always try to keep at least this amount of
       /// available memory.
       uint64_t minAvailableMemoryMB = 1024;
-      /// Polling interval in milliseconds. Check system memory usage on each
+      /// Polling interval in seconds. Check system memory usage on each
       /// iteration and might send out-of-memory event every time the usage is
       /// more than the profile settings allows.
-      uint32_t pollingInterval = 1000;
+      double pollingIntervalS = 1.0;
     };
 
   public:
