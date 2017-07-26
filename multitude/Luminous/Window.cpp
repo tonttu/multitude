@@ -200,7 +200,7 @@ namespace Luminous
           // the right bottom part of the display will then make more
           // accurate calibration.
           //
-          // NOTE: this only works for single screen setups (see Redmine #13191)
+          // NOTE: this only works for single screen setups (see Redmine #13181)
 
           if (loc.x > m_himetricCalibrationMax.x) {
             m_himetricCalibrationMax.x = loc.x;
@@ -290,7 +290,7 @@ namespace Luminous
 
           // See above for information on himetric adjustment.
           //
-          // NOTE: this only works for single screen setups (see Redmine #13191)
+          // NOTE: this only works for single screen setups (see Redmine #13181)
 
           if (loc.x > m_himetricCalibrationMax.x) {
             m_himetricCalibrationMax.x = loc.x;
