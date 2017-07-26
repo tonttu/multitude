@@ -178,9 +178,11 @@ namespace Luminous
           msg->message == WM_POINTERUPDATE ||
           msg->message == WM_POINTERUP) {
         auto id = GET_POINTERID_WPARAM(msg->wParam);
+        POINTER_INPUT_TYPE type{PT_POINTER};
         POINTER_PEN_INFO info;
         POINTER_TOUCH_INFO touchInfo;
-        if (GetPointerPenInfo(id, &info)) {
+        GetPointerType(id, &type);
+        if (type==PT_PEN && GetPointerPenInfo(id, &info)) {
           Radiant::PenEvent te;
           te.setId(id);
           Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
@@ -280,7 +282,7 @@ namespace Luminous
             return true;
           }
         }
-        else if (GetPointerTouchInfo(id, &touchInfo)) {
+        else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
           QTouchEvent::TouchPoint touchPoint;
           touchPoint.setId(id);
           Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
