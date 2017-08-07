@@ -1,4 +1,5 @@
 #include "SystemCpuTime.hpp"
+#include "Trace.hpp"
 
 #include <QFile>
 #include <QTextStream>
@@ -24,7 +25,7 @@ namespace Radiant
     if (procStat.open(QFile::ReadOnly)) {
       // atEnd doesn't work with /proc/stat
       while (true) {
-        const QString line = QString::fromUtf8(file.readLine().trimmed());
+        QString line = QString::fromUtf8(procStat.readLine().trimmed());
         if (line.isEmpty()) break;
 
         QTextStream stream(&line);
