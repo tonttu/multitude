@@ -136,6 +136,10 @@ namespace Nimble {
     template<typename S>
     Nimble::SizeT<S> cast() const;
 
+    /// Cast the vector to another type and round the values with Nimble::Math::Roundf
+    template<typename S>
+    Nimble::SizeT<S> round() const;
+
   private:
     T m_width;
     T m_height;
@@ -393,6 +397,13 @@ namespace Nimble {
   SizeT<S> SizeT<T>::cast() const
   {
     return SizeT<S>(S(m_width), S(m_height));
+  }
+
+  template<typename T>
+  template<typename S>
+  SizeT<S> SizeT<T>::round() const
+  {
+    return SizeT<S>(S(Nimble::Math::Roundf(m_width)), S(Nimble::Math::Roundf(m_height)));
   }
 
   /// Write a size into a stream
