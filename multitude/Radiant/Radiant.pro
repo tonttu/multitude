@@ -5,7 +5,8 @@ HEADERS += TempFailureRetry.hpp \
     TraceDuplicateFilter.hpp \
     TraceStdFilter.hpp \
     TraceSeverityFilter.hpp \
-    TraceQIODeviceFilter.hpp
+    TraceQIODeviceFilter.hpp \
+    SystemCpuTime.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
@@ -174,9 +175,15 @@ linux-* {
 
   HEADERS += TraceSyslogFilter.hpp
   SOURCES += TraceSyslogFilter.cpp
+
+  SOURCES += SystemCpuTimeLinux.cpp
 }
 
-macx:LIBS += -framework CoreFoundation
+macx {
+  LIBS += -framework CoreFoundation
+
+  SOURCES += SystemCpuTimeOSX.cpp
+}
 
 DEFINES += RADIANT_EXPORT
 
@@ -238,6 +245,8 @@ win32 {
 
   HEADERS += TraceWindowsDebugConsoleFilter.hpp
   SOURCES += TraceWindowsDebugConsoleFilter.cpp
+
+  SOURCES += SystemCpuTimeWin32.cpp
 }
 
 include(../../library.pri)
