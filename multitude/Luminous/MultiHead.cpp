@@ -331,6 +331,11 @@ namespace Luminous
     m_size = size.toVector();
   }
 
+  void MultiHead::Window::moveEvent(Nimble::Vector2i location)
+  {
+    setLocation(location);
+  }
+
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
     if(m_areas.empty())

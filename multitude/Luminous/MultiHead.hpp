@@ -224,6 +224,8 @@ namespace Luminous {
           the area of the window.
       @param size new window size */
       LUMINOUS_API void resizeEvent(Nimble::Size size);
+      /// Move the window to new location
+      LUMINOUS_API void moveEvent(Nimble::Vector2i location);
 
       /// Number of areas that this window holds
       size_t areaCount() const { return m_areas.size(); }
