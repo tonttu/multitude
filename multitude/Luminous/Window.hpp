@@ -115,7 +115,7 @@ namespace Luminous
 
     bool m_setKeyboardFocusOnClick = false;
     size_t m_frame = 0;
-    size_t m_ignoreWindowStateChangesUntil = 0;
+    size_t m_ignoreWindowStateChangesUntil = 1;
   };
 
 }

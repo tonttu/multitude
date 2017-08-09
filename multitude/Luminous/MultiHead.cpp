@@ -331,6 +331,11 @@ namespace Luminous
     m_size = size.toVector();
   }
 
+  void MultiHead::Window::moveEvent(Nimble::Vector2i location)
+  {
+    setLocation(location);
+  }
+
   Nimble::Rect MultiHead::Window::graphicsBounds() const
   {
     if(m_areas.empty())
@@ -738,18 +743,19 @@ namespace Luminous
 
       const bool hasLocation = w.attribute("location")->isValueDefinedOnLayer(USER);
       const bool hasSize = w.attribute("size")->isValueDefinedOnLayer(USER);
+      const bool full = w.fullscreen() || w.frameless();
 
       if (!hasLocation && !hasSize) {
         /// If there is no size nor location given, place the window on the
         /// center of the main screen, and make the size to be 80% of the
         /// size of the main screen in windowed mode, and 100% in frameless mode.
-        QRect rect = w.frameless() ? desktop->screenGeometry() : desktop->availableGeometry();
-        Nimble::Vector2i center{rect.center().x(), rect.center().y()};
-        Nimble::Size size{rect.width(), rect.height()};
-        if (!w.frameless())
-          size *= 0.8;
-        w.setLocation(center - size.toVector() / 2.f);
-        w.setSize(size);
+        QRectF rect = full ? desktop->screenGeometry() : desktop->availableGeometry();
+        Nimble::Vector2T<qreal> center{rect.center().x(), rect.center().y()};
+        Nimble::SizeT<qreal> size{rect.width(), rect.height()};
+        if (!full)
+          size *= qreal(0.8);
+        w.setLocation((center - size.toVector() / qreal(2.0)).round<int>());
+        w.setSize(size.round<int>());
       } else if (hasLocation && !hasSize) {
         /// If user has given a location and not size, find the available
         /// geometry on the given screen, and extend the window right and
@@ -757,8 +763,8 @@ namespace Luminous
         /// However, if the window location is too close to the edge, make
         /// the window size at least half of the size of the screen.
         QPoint p(w.location().x, w.location().y);
-        QRect rect = w.frameless() ? desktop->screenGeometry(p) : desktop->availableGeometry(p);
-        Nimble::Vector2f edge = (w.frameless() ? 0.f : 0.1f) * Nimble::Vector2f(rect.width(), rect.height());
+        QRect rect = full ? desktop->screenGeometry(p) : desktop->availableGeometry(p);
+        Nimble::Vector2f edge = (full ? 0.f : 0.1f) * Nimble::Vector2f(rect.width(), rect.height());
         Nimble::Size size(std::max<int>(rect.width() / 2, rect.right() + 1 - edge.x - w.location().x),
                           std::max<int>(rect.height() / 2, rect.bottom() + 1 - edge.y - w.location().y));
         w.setSize(size);
@@ -767,9 +773,9 @@ namespace Luminous
         /// window on the center of the main screen. If the window is bigger
         /// than the main screen, let the window go over the right and bottom
         /// screen edges.
-        QRect rect = w.frameless() ? desktop->screenGeometry() : desktop->availableGeometry();
-        Nimble::Vector2i center{rect.center().x(), rect.center().y()};
-        Nimble::Vector2i loc = center - w.size().toVector() / 2.f;
+        QRectF rect = full ? desktop->screenGeometry() : desktop->availableGeometry();
+        Nimble::Vector2T<qreal> center{rect.center().x(), rect.center().y()};
+        Nimble::Vector2i loc = (center - w.size().toVector().cast<qreal>() / qreal(2.0)).round<int>();
         w.setLocation({std::max(0, loc.x), std::max(0, loc.y)});
       }
 
