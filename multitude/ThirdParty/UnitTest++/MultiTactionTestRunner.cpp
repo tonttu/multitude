@@ -32,7 +32,7 @@
 
 namespace {
 
-#ifdef RADIANT_UNIX
+#ifdef RADIANT_LINUX
 
   void printStackTrace(int, siginfo_t*, void*)
   {
@@ -62,6 +62,17 @@ namespace {
     return ret;
   }
 
+#endif
+
+#ifdef RADIANT_OSX
+  /// @todo Radiant::CallStack::print seems to be really unreliable in
+  ///       signal handler on OS X, and often calling it will just close
+  ///       the application with return value of zero, which confuses
+  ///       test runner. Disable crash reporting on OS X for now.
+  int runTestWithCrashReporting(UnitTest::TestRunner& runner, const std::function<bool (const UnitTest::Test *const)>& predicate)
+  {
+    return runner.RunTestsIf(UnitTest::Test::GetTestList(), NULL, predicate, 0);
+  }
 #endif
 
 #ifdef RADIANT_WINDOWS
