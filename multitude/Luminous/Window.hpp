@@ -89,10 +89,6 @@ namespace Luminous
     using QWindow::geometry;
     using QWindow::screen;
 
-    /// Makes Luminous::Window to cast to QObject without QWindowLock,
-    /// needed for QObject::connect
-    using QWindow::QObject;
-
     /// Construct an empty window with zero size
     Window(QScreen* screen);
     /// Destructor
@@ -149,6 +145,10 @@ namespace Luminous
     /// Locks the QWindow to the caller until QWindowLock is destroyed. Don't
     /// hold the lock too long, since render thread needs it every frame.
     QWindowLock lock();
+
+    /// Casts this to QObject. This is needed because of private inheritance to QWindow
+    QObject * asQObject() { return this; }
+    const QObject * asQObject() const { return this; }
 
   signals:
     void closed();
