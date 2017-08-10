@@ -96,6 +96,12 @@ namespace Luminous
     m_setKeyboardFocusOnClick = value;
   }
 
+  Window::QWindowLock Window::lock()
+  {
+    Radiant::Guard g(m_windowChangeMutex);
+    return QWindowLock(this, std::move(g));
+  }
+
   void Window::exposeEvent(QExposeEvent* ev)
   {
     if(m_eventHook)
