@@ -41,6 +41,24 @@ namespace
   {
     return Radiant::FileUtils::run(cmd, argv, out, err);
   }
+
+  uint64_t toKB(uint64_t value, const QByteArray & unit)
+  {
+    if (unit == "kb") {
+      return value;
+    } else if (unit == "mb") {
+      return value * 1024;
+    } else if (unit == "gb") {
+      return value * 1024 * 1024;
+    } else if (unit == "tb") {
+      return value * 1024 * 1024 * 1024;
+    } else if (unit.isEmpty()) {
+      return value / 1024;
+    } else {
+      Radiant::error("toKB # Unknown unit '%s'", unit.data());
+      return 0;
+    }
+  }
 }
 
 namespace Radiant
@@ -115,6 +133,53 @@ namespace Radiant
         fclose(f);
       }
       return uint64_t(vmrss) * pagesize;
+    }
+
+    MemInfo memInfo()
+    {
+      MemInfo info;
+
+      QFile file("/proc/meminfo");
+      if (file.open(QFile::ReadOnly)) {
+        QRegExp m("(MemTotal|MemAvailable|MemFree|Cached):\\s*(\\d+) (.*)");
+        bool foundMemAvailable = false;
+        uint64_t memFree = 0;
+        uint64_t cached = 0;
+
+        // atEnd doesn't work with /proc/meminfo, it always returns true
+        while (true) {
+          const QString line = QString::fromUtf8(file.readLine().trimmed());
+          if (line.isEmpty()) break;
+
+          if (m.exactMatch(line)) {
+            if (m.cap(1) == "MemTotal") {
+              info.memTotalKB = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+            } else if (m.cap(1) == "MemAvailable") {
+              info.memAvailableKB = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+              foundMemAvailable = true;
+            } else if (!foundMemAvailable && m.cap(1) == "MemFree") {
+              memFree = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+            } else if (!foundMemAvailable && m.cap(1) == "Cached") {
+              cached = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+            }
+          }
+        }
+
+        // We have too old kernel, estimate the available memory. This is not
+        // correct, but comes pretty close, see
+        // https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
+        if (!foundMemAvailable) {
+          info.memAvailableKB = memFree + cached;
+        }
+        if (info.memTotalKB == 0) {
+          Radiant::warning("PlatformUtils::memInfo # Failed to find the total amount of physical RAM");
+        }
+      } else {
+        Radiant::warning("PlatformUtils::memInfo # Failed to open /proc/meminfo: %s",
+                         file.errorString().toUtf8().data());
+      }
+
+      return info;
     }
 
     QString getLibraryPath(const QString& libraryName)
