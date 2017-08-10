@@ -447,6 +447,32 @@ namespace Radiant
     return lst[0] + "/" + name;
   }
 
+  QString FileUtils::makeFilenameUnique(const QString &filename)
+  {
+    QFileInfo info(filename);
+    QString cleanFilename = info.baseName().simplified();
+    QString suffix = info.suffix();
+    QString path = info.path();
+    // vfat forbidden characters (see vfat_bad_char in fs/fat/namei_vfat.c)
+    QRegExp r("[\\x0001-\\x0019*?<>|\":/\\\\]+");
+    cleanFilename.replace(r, "-");
+    // It's a bit unclear what is the file size limit (in some cases 481?),
+    // but 256 seems like a good practical limit.
+    cleanFilename = cleanFilename.left(256);
+    QFileInfo fi(cleanFilename);
+    if (fi.suffix() != suffix && !suffix.isEmpty()) {
+      cleanFilename += "." + suffix;
+      fi = QFileInfo(cleanFilename);
+    }
+
+    QString file = path + "/" + cleanFilename;
+    for (int i = 1; QFile::exists(file); ++i) {
+      file = QString("%2/%3 (%1).%4").arg(i).arg(path, fi.completeBaseName(), suffix);
+    }
+    return file;
+
+  }
+
   FILE * FileUtils::createFilePath(const QString & filePath)
   {
     if(filePath.isEmpty()) return 0;

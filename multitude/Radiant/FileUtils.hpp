@@ -177,6 +177,24 @@ namespace Radiant
     ///         if the syntax is unknown
     static QString resolvePath(const QString & source);
 
+    /**
+     * @brief Ensures that the filename is unique
+     *
+     * This function will add a serial number in parentheses, to create a unique filename.
+     * For example, if the original filename is /acb/cde.png, but it already exists, then the
+     * filename is changed to /abc/cde(1).png. The number is incremented, until a free name
+     * can be found.
+     *
+     * This function also does other sanity checks/changes to the filename:
+     *
+     * - Duplicate spaces are removed
+     * - Too long filenames are truncated
+     *
+     * @param filename The original filename, including the path
+     * @return Updated filename, including the path.
+     */
+    static QString makeFilenameUnique(const QString & filename);
+
     /// Opens the given file for writing and creates the directories in the path if they don't exist
     /// @param filePath Full filename with path
     /// @returns A handle to the open filepath or NULL if the file couldn't be created
