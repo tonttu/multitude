@@ -89,16 +89,16 @@ namespace Luminous
 
     uint64_t overallocatedBytes = 0;
 
-    if (info.memAvailableKb < settings.minAvailableMemoryMB * 1024) {
-      overallocatedBytes = (settings.minAvailableMemoryMB * 1024 - info.memAvailableKb) * 1024;
+    if (info.memAvailableKB < settings.minAvailableMemoryMB * 1024) {
+      overallocatedBytes = (settings.minAvailableMemoryMB * 1024 - info.memAvailableKB) * 1024;
     }
 
-    if (info.memTotalKb > 0) {
-      const float memoryUsage = 1.0 - double(info.memAvailableKb) / info.memTotalKb;
+    if (info.memTotalKB > 0) {
+      const float memoryUsage = 1.0 - double(info.memAvailableKB) / info.memTotalKB;
 
       if (memoryUsage > settings.maxMemoryUsage) {
         overallocatedBytes = std::max(overallocatedBytes, uint64_t(
-                                        (memoryUsage - settings.maxMemoryUsage) * info.memTotalKb) * 1024);
+                                        (memoryUsage - settings.maxMemoryUsage) * info.memTotalKB) * 1024);
       }
     } else if (settings.maxMemoryUsage < 1.0f) {
       // If there is no information how much memory this computer has, we need

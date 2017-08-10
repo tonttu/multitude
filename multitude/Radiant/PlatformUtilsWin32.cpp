@@ -181,8 +181,8 @@ namespace Radiant
       status.dwLength = sizeof(status);
 
       if (GlobalMemoryStatusEx(&status)) {
-        info.memTotalKb = status.ullTotalPhys / 1024;
-        info.memAvailableKb = status.ullAvailPhys / 1024;
+        info.memTotalKB = status.ullTotalPhys / 1024;
+        info.memAvailableKB = status.ullAvailPhys / 1024;
       } else {
         error("PlatformUtils::memInfo # GlobalMemoryStatusEx failed: %s",
               StringUtils::getLastErrorMessage().toUtf8().data());

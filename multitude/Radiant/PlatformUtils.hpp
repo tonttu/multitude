@@ -26,11 +26,11 @@ namespace Radiant
     struct MemInfo
     {
       /// Total physical memory in kilobytes
-      uint64_t memTotalKb = 0;
+      uint64_t memTotalKB = 0;
       /// Available physical memory in kilobytes. On Linux this is the value of
       /// "MemAvailable", not "MemFree", if the kernel is new enough. See
       /// https://www.kernel.org/doc/Documentation/filesystems/proc.txt
-      uint64_t memAvailableKb = 0;
+      uint64_t memAvailableKB = 0;
     };
 
     /// Return absolute path to the executable that was used to launch the process.

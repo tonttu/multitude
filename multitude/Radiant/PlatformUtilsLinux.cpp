@@ -42,7 +42,7 @@ namespace
     return Radiant::FileUtils::run(cmd, argv, out, err);
   }
 
-  uint64_t toKb(uint64_t value, const QByteArray & unit)
+  uint64_t toKB(uint64_t value, const QByteArray & unit)
   {
     if (unit == "kb") {
       return value;
@@ -55,7 +55,7 @@ namespace
     } else if (unit.isEmpty()) {
       return value / 1024;
     } else {
-      Radiant::error("toKb # Unknown unit '%s'", unit.data());
+      Radiant::error("toKB # Unknown unit '%s'", unit.data());
       return 0;
     }
   }
@@ -153,14 +153,14 @@ namespace Radiant
 
           if (m.exactMatch(line)) {
             if (m.cap(1) == "MemTotal") {
-              info.memTotalKb = toKb(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+              info.memTotalKB = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
             } else if (m.cap(1) == "MemAvailable") {
-              info.memAvailableKb = toKb(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+              info.memAvailableKB = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
               foundMemAvailable = true;
             } else if (!foundMemAvailable && m.cap(1) == "MemFree") {
-              memFree = toKb(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+              memFree = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
             } else if (!foundMemAvailable && m.cap(1) == "Cached") {
-              cached = toKb(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
+              cached = toKB(m.cap(2).toULongLong(), m.cap(3).toLower().toUtf8());
             }
           }
         }
@@ -169,9 +169,9 @@ namespace Radiant
         // correct, but comes pretty close, see
         // https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
         if (!foundMemAvailable) {
-          info.memAvailableKb = memFree + cached;
+          info.memAvailableKB = memFree + cached;
         }
-        if (info.memTotalKb == 0) {
+        if (info.memTotalKB == 0) {
           Radiant::warning("PlatformUtils::memInfo # Failed to find the total amount of physical RAM");
         }
       } else {
