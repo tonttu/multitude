@@ -81,6 +81,7 @@ namespace Luminous
     using QWindow::windowState;
     using QWindow::visibility;
     using QWindow::format;
+    using QWindow::isActive;
     using QWindow::isVisible;
     using QWindow::isExposed;
     using QWindow::flags;
@@ -88,6 +89,8 @@ namespace Luminous
     using QWindow::height;
     using QWindow::geometry;
     using QWindow::screen;
+    using QWindow::size;
+    using QWindow::framePosition;
 
     /// Construct an empty window with zero size
     Window(QScreen* screen);
