@@ -300,12 +300,22 @@ namespace VideoDisplay
     return m_d->m_pollInterval;
   }
 
+  void VideoCaptureMonitor::addHint(const QString& device)
+  {
+    (void) device;
+  }
+
   void VideoCaptureMonitor::setPollInterval(double seconds)
   {
     m_d->m_pollInterval = seconds;
     if (secondsUntilScheduled() > 0) {
       scheduleFromNowSecs(m_d->m_pollInterval);
     }
+  }
+
+  void VideoCaptureMonitor::removeSource(const QString &source)
+  {
+    (void) source;
   }
 
   void VideoCaptureMonitor::doTask()
