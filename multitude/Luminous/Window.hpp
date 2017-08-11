@@ -18,6 +18,8 @@
 
 #include <Nimble/Vector2.hpp>
 
+#include <Radiant/Mutex.hpp>
+
 // Only forward declaration to keep OpenGL includes to a minimum to avoid
 // conflicts
 class QOpenGLContext;
@@ -26,11 +28,67 @@ namespace Luminous
 {
 
   /// OpenGL window class
-  class LUMINOUS_API Window : public QWindow
+  class LUMINOUS_API Window : private QWindow
   {
     Q_OBJECT
 
   public:
+    /// Thread-safe way to access QWindow part of Luminous::Window.
+    /// Window is locked during render collect and exec steps, and only released
+    /// between frames. This is used to synchronize window changes when there
+    /// is no rendering happening.
+    /// Example:
+    /// QWindowLock lock = luminousWindow->lock();
+    /// lock->setGeometry(...);
+    class QWindowLock
+    {
+    public:
+      QWindowLock(QWindow * window, Radiant::Guard && windowChangeGuard)
+        : m_window(window)
+        , m_windowChangeGuard(std::move(windowChangeGuard))
+      {
+      }
+
+      QWindowLock(QWindowLock && lock)
+        : m_window(lock.m_window)
+        , m_windowChangeGuard(std::move(lock.m_windowChangeGuard))
+      {
+        lock.m_window = nullptr;
+      }
+
+      QWindowLock & operator=(QWindowLock && lock)
+      {
+        m_windowChangeGuard = std::move(lock.m_windowChangeGuard);
+        m_window = lock.m_window;
+        lock.m_window = nullptr;
+        return *this;
+      }
+
+      QWindowLock(const QWindowLock &) = delete;
+      QWindowLock & operator=(const QWindowLock & lock) = delete;
+
+      QWindow * operator->() { return m_window; }
+
+    private:
+      QWindow * m_window;
+      Radiant::Guard m_windowChangeGuard;
+    };
+
+  public:
+    /// These are mostly harmless and thread-safe functions that can be used
+    /// without QWindowLock
+    using QWindow::setCursor;
+    using QWindow::windowState;
+    using QWindow::visibility;
+    using QWindow::format;
+    using QWindow::isVisible;
+    using QWindow::isExposed;
+    using QWindow::flags;
+    using QWindow::width;
+    using QWindow::height;
+    using QWindow::geometry;
+    using QWindow::screen;
+
     /// Construct an empty window with zero size
     Window(QScreen* screen);
     /// Destructor
@@ -84,6 +142,14 @@ namespace Luminous
       m_ignoreWindowStateChangesUntil = std::max(m_ignoreWindowStateChangesUntil, m_frame + frames);
     }
 
+    /// Locks the QWindow to the caller until QWindowLock is destroyed. Don't
+    /// hold the lock too long, since render thread needs it every frame.
+    QWindowLock lock();
+
+    /// Casts this to QObject. This is needed because of private inheritance to QWindow
+    QObject * asQObject() { return this; }
+    const QObject * asQObject() const { return this; }
+
   signals:
     void closed();
 
@@ -116,6 +182,9 @@ namespace Luminous
     bool m_setKeyboardFocusOnClick = false;
     size_t m_frame = 0;
     size_t m_ignoreWindowStateChangesUntil = 1;
+
+    /// For QWindowLock
+    Radiant::Mutex m_windowChangeMutex;
   };
 
 }

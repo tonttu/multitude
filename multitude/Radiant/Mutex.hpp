@@ -81,18 +81,32 @@ namespace Radiant {
 
     @see ReleaseGuard
     */
-  class RADIANT_API Guard : public Patterns::NotCopyable
+  class RADIANT_API Guard
   {
   public:
     /// Construct guard.
     /// Locks the given mutex.
     /// @param mutex mutex to guard
-    Guard(Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
+    Guard(Mutex & mutex) : m_mutex(&mutex) { m_mutex->lock(); }
+    /// Moves the guard and lock state
+    Guard(Guard && guard) : m_mutex(guard.m_mutex) { guard.m_mutex = nullptr; }
+    /// Moves the guard and lock state
+    Guard & operator=(Guard && guard)
+    {
+      if (m_mutex) m_mutex->unlock();
+      m_mutex = guard.m_mutex;
+      guard.m_mutex = nullptr;
+      return *this;
+    }
+
     /// Destructor, unlocks the associated mutex.
-    ~Guard() { m_mutex.unlock(); }
+    ~Guard() { if (m_mutex) m_mutex->unlock(); }
+
+    Guard(const Guard &) = delete;
+    Guard & operator=(const Guard &) = delete;
 
   private:
-    Mutex & m_mutex;
+    Mutex * m_mutex;
   };
 
   /// A guard class that can handle locking and unlocking of multiple mutexes.
