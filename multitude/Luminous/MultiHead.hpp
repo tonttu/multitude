@@ -51,6 +51,18 @@ namespace Luminous {
   class LUMINOUS_API MultiHead : public Valuable::Node
   {
   public:
+    /// Result of coordinate system transformation, see MultiHead::graphicsToDesktop
+    struct DesktopPoint
+    {
+      /// X Screen number, or -1. See Window::screennumber
+      int screennumber = -1;
+      /// Location in desktop coordinates
+      Nimble::Vector2f location{0, 0};
+      /// True if the query was inside of any of the windows
+      bool isInside = false;
+    };
+
+  public:
 
     class Window;
 
@@ -476,6 +488,12 @@ namespace Luminous {
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
+
+    /// Converts graphics coordinate to operating system desktop coordinates.
+    /// The same graphics coordinate might be visible in several areas, this
+    /// finds the first of them.
+    /// @sa Area::GraphicsToWindow
+    DesktopPoint graphicsToDesktop(Nimble::Vector2f loc) const;
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
