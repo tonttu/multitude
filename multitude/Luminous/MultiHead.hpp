@@ -341,6 +341,10 @@ namespace Luminous {
       /// Set direct rendering mode
       void setDirectRendering(bool enable) { m_directRendering = enable; }
 
+      /// Windowing system icon resource name, see QWindow::setIcon
+      QString icon() const { return m_icon; }
+      void setIcon(const QString & icon) { m_icon = icon; }
+
       /// Return the screen configuration that this Window belongs to
       const MultiHead * screen() const { return m_screen; }
 
@@ -386,6 +390,8 @@ namespace Luminous {
 
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
+
+      Valuable::AttributeString     m_icon;
 
       std::vector<std::unique_ptr<Area> > m_areas;
     };
