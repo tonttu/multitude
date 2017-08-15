@@ -63,9 +63,9 @@ namespace Valuable
     AttributeType & operator -= (const T & v) { *this = this->value() - v; return *this; }
 
     /// Subtraction operator
-    AttributeType operator - (const T & v) const { return this->value() - v; }
+    T operator - (const T & v) const { return this->value() - v; }
     /// Addition operator
-    AttributeType operator + (const T & v) const { return this->value() + v; }
+    T operator + (const T & v) const { return this->value() + v; }
 
     bool setWidth(ElementType w, Attribute::Layer layer = Attribute::USER,
                   Attribute::ValueUnit unit = Attribute::VU_PXS)
