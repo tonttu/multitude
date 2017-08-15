@@ -11,8 +11,6 @@
 #ifndef NIMBLE_SIZE_HPP
 #define NIMBLE_SIZE_HPP
 
-#include <QSize>
-
 #include <Nimble/Math.hpp>
 #include <Nimble/Vector2.hpp>
 

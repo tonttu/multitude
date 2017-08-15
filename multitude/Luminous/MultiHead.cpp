@@ -804,6 +804,34 @@ namespace Luminous
     }
   }
 
+  MultiHead::DesktopPoint MultiHead::graphicsToDesktop(Nimble::Vector2f loc) const
+  {
+    MultiHead::DesktopPoint p;
+    p.location = loc;
+    bool first = true;
+
+    for (auto & window: m_windows) {
+      for (size_t i = 0, m = window->areaCount(); i != m; ++i) {
+        const Area & area = window->area(i);
+        bool inside = false;
+        Nimble::Vector2f tmp = area.graphicsToWindow(loc, window->height(), inside);
+        tmp += window->location().cast<float>();
+        if (inside) {
+          p.isInside = true;
+          p.location = tmp;
+          p.screennumber = window->screennumber();
+          return p;
+        } else if (first) {
+          p.location = tmp;
+          p.screennumber = window->screennumber();
+          first = false;
+        }
+      }
+    }
+
+    return p;
+  }
+
   void MultiHead::adjustGraphicsToOrigin()
   {
     Nimble::Rect bb = graphicsBounds();
