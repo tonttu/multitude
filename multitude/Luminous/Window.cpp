@@ -15,6 +15,7 @@
 
 #include <QOpenGLContext>
 #include <QDropEvent>
+#include <QTouchEvent>
 
 #include <cassert>
 
@@ -182,8 +183,11 @@ namespace Luminous
           msg->message == WM_POINTERUPDATE ||
           msg->message == WM_POINTERUP) {
         auto id = GET_POINTERID_WPARAM(msg->wParam);
+        POINTER_INPUT_TYPE type{PT_POINTER};
         POINTER_PEN_INFO info;
-        if (GetPointerPenInfo(id, &info)) {
+        POINTER_TOUCH_INFO touchInfo;
+        GetPointerType(id, &type);
+        if (type==PT_PEN && GetPointerPenInfo(id, &info)) {
           Radiant::PenEvent te;
           te.setId(id);
           Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
@@ -202,6 +206,9 @@ namespace Luminous
           // calculating a conversion factor on-fly. Touching with a pen to
           // the right bottom part of the display will then make more
           // accurate calibration.
+          //
+          // NOTE: this only works for single screen setups (see Redmine #13181)
+
           if (loc.x > m_himetricCalibrationMax.x) {
             m_himetricCalibrationMax.x = loc.x;
             m_himetricFactor.x = loc.x / himetric.x;
@@ -220,7 +227,6 @@ namespace Luminous
               m_himetricCalibrationMax.x = 0;
               loc.x = info.pointerInfo.ptPixelLocation.x;
             }
-
           }
           if (m_himetricFactor.y > 0) {
             loc.y = himetric.y * m_himetricFactor.y;
@@ -281,8 +287,73 @@ namespace Luminous
             return true;
           }
         }
+        else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
+          QTouchEvent::TouchPoint touchPoint;
+          touchPoint.setId(id);
+          Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
+                               touchInfo.pointerInfo.ptPixelLocation.y);
+          Nimble::Vector2f himetric(touchInfo.pointerInfo.ptHimetricLocation.x,
+                                    touchInfo.pointerInfo.ptHimetricLocation.y);
+
+          // See above for information on himetric adjustment.
+          //
+          // NOTE: this only works for single screen setups (see Redmine #13181)
+
+          if (loc.x > m_himetricCalibrationMax.x) {
+            m_himetricCalibrationMax.x = loc.x;
+            m_himetricFactor.x = loc.x / himetric.x;
+          }
+
+          if (loc.y > m_himetricCalibrationMax.y) {
+            m_himetricCalibrationMax.y = loc.y;
+            m_himetricFactor.y = loc.y / himetric.y;
+          }
+
+          if (m_himetricFactor.x > 0) {
+            loc.x = himetric.x * m_himetricFactor.x;
+            // If the error is more than one pixel, we calculated something wrong!
+            if (std::abs(loc.x - touchInfo.pointerInfo.ptPixelLocation.x) > 1.f) {
+              m_himetricFactor.x = 0;
+              m_himetricCalibrationMax.x = 0;
+              loc.x = touchInfo.pointerInfo.ptPixelLocation.x;
+            }
+          }
+          if (m_himetricFactor.y > 0) {
+            loc.y = himetric.y * m_himetricFactor.y;
+            if (std::abs(loc.y - touchInfo.pointerInfo.ptPixelLocation.y) > 1.f) {
+              m_himetricFactor.y = 0;
+              m_himetricCalibrationMax.y = 0;
+              loc.y = touchInfo.pointerInfo.ptPixelLocation.y;
+            }
+          }
+
+          // mapFromGlobal uses only ints, but in our case this is the same thing
+          loc.x -= position().x();
+          loc.y -= position().y();
+          touchPoint.setPos(QPoint(loc.x, loc.y));
+          QEvent::Type type;
+
+          if (msg->message == WM_POINTERDOWN) {
+            touchPoint.setState(Qt::TouchPointPressed);
+            type = QEvent::TouchBegin;
+          } else if (msg->message == WM_POINTERUP) {
+            touchPoint.setState(Qt::TouchPointReleased);
+            type = QEvent::TouchEnd;
+          } else {
+            touchPoint.setState(Qt::TouchPointMoved);
+            type = QEvent::TouchUpdate;
+          }
+
+          QTouchEvent event(type, Q_NULLPTR, Qt::NoModifier, Qt::TouchPointStates(), QList<QTouchEvent::TouchPoint>({touchPoint}));
+
+          if (m_eventHook) {
+            m_eventHook->touchEvent(&event);
+            return true;
+          }
+        }
       }
     }
+
 #endif
 
     if(m_eventHook)
