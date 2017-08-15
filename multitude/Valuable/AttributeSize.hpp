@@ -57,6 +57,16 @@ namespace Valuable
       AttributeTuple<T, AttributeType>::m_values[1]->setName(heightName);
     }
 
+    /// Assigns by addition
+    AttributeType & operator += (const T & v) { *this = this->value() + v; return *this; }
+    /// Assigns by subtraction
+    AttributeType & operator -= (const T & v) { *this = this->value() - v; return *this; }
+
+    /// Subtraction operator
+    T operator - (const T & v) const { return this->value() - v; }
+    /// Addition operator
+    T operator + (const T & v) const { return this->value() + v; }
+
     bool setWidth(ElementType w, Attribute::Layer layer = Attribute::USER,
                   Attribute::ValueUnit unit = Attribute::VU_PXS)
     {
@@ -123,6 +133,7 @@ namespace Valuable
   };
 
   typedef AttributeT<Nimble::SizeF> AttributeSizeF;
+  typedef AttributeT<Nimble::SizeI> AttributeSizeI;
   typedef AttributeT<Nimble::Size> AttributeSize;
 
 } // namespace Valuable
