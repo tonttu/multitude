@@ -15,10 +15,16 @@ HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
 
 linux:SOURCES += V4L2Monitor.cpp
-win32:SOURCES += WindowsVideoMonitor.cpp
 macx:SOURCES += VideoCaptureMonitorDummy.cpp
 
 win32 {
+  SOURCES += WindowsVideoMonitor.cpp \
+             WindowsVideoHelpers.cpp \
+             RGBEasy.cpp
+
+  HEADERS += WindowsVideoHelpers.hpp \
+             RGBEasy.hpp
+
   QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin
 
   # RGBEASY (Datapath SDK)

@@ -6,41 +6,55 @@
 #include <propvarutil.h>
 
 #include <QLibrary>
+#include <QRegularExpression>
 
-#ifdef RGBEASY
-#include <RGB.H>
-#endif
+#include <functional>
+
+#include "WindowsVideoHelpers.hpp"
+#include "RGBEasy.hpp"
 
 namespace VideoDisplay
 {
-  // Functions for querying av capture devices
 
-  QStringList scanAVInputDevices(GUID guid)
+  /// scanAudioInputDevices & scanVideoInputDevices are essentially the same
+  /// with some minor differences
+
+  std::vector<AudioInput> scanAudioInputDevices()
   {
     ICreateDevEnum * sysDevEnum = nullptr;
     HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
                                   IID_ICreateDevEnum, (void **)&sysDevEnum);
-    QStringList devices;
+    std::vector<AudioInput> devices;
     if (FAILED(hr))
       return devices;
 
     IEnumMoniker * enumCat = nullptr;
-    if (sysDevEnum->CreateClassEnumerator(guid, &enumCat, 0) == S_OK) {
+    if (sysDevEnum->CreateClassEnumerator(CLSID_AudioInputDeviceCategory, &enumCat, 0) == S_OK) {
       IMoniker * moniker = nullptr;
       while (enumCat->Next(1, &moniker, nullptr) == S_OK) {
-        IPropertyBag * propBag = nullptr;
-        if (SUCCEEDED(moniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&propBag))) {
-          VARIANT varName;
-          VariantInit(&varName);
-          if (SUCCEEDED(propBag->Read(L"FriendlyName", &varName, 0)) && IsVariantString(varName)) {
-            WCHAR name[256];
-            VariantToString(varName, name, sizeof(name));
-            devices << QString::fromWCharArray(name);
-          }
-          VariantClear(&varName);
+        AudioInput source;
 
-          propBag->Release();
+        IPropertyBag * propBag = nullptr;
+        if (!SUCCEEDED(moniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&propBag)))
+          continue;
+
+        VARIANT varName;
+        VariantInit(&varName);
+        if (SUCCEEDED(propBag->Read(L"FriendlyName", &varName, 0)) && IsVariantString(varName)) {
+          WCHAR name[256];
+          VariantToString(varName, name, sizeof(name));
+          source.friendlyName = QString::fromWCharArray(name);
         }
+        VariantClear(&varName);
+
+        if (SUCCEEDED(propBag->Read(L"WaveInID", &varName, 0))) {
+          source.waveInId = varName.lVal;
+        }
+        VariantClear(&varName);
+
+        propBag->Release();
+
+        devices.emplace_back(source);
       }
       moniker->Release();
     }
@@ -50,232 +64,126 @@ namespace VideoDisplay
     return devices;
   }
 
-  QStringList scanAudioInputDevices()
-  {
-    return scanAVInputDevices(CLSID_AudioInputDeviceCategory);
-  }
+  // -----------------------------------------------------------------
 
-  QStringList scanVideoInputDevices()
+  std::vector<VideoInput> scanVideoInputDevices()
   {
-    return scanAVInputDevices(CLSID_VideoInputDeviceCategory);
+    ICreateDevEnum * sysDevEnum = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+                                  IID_ICreateDevEnum, (void **)&sysDevEnum);
+    std::vector<VideoInput> devices;
+    if (FAILED(hr))
+      return devices;
+
+    IEnumMoniker * enumCat = nullptr;
+    if (sysDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &enumCat, 0) == S_OK) {
+      IMoniker * moniker = nullptr;
+      while (enumCat->Next(1, &moniker, nullptr) == S_OK) {
+        IPropertyBag * propBag = nullptr;
+        if (!SUCCEEDED(moniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&propBag)))
+          continue;
+
+        VARIANT varName;
+        VariantInit(&varName);
+        VideoInput source;
+
+        if (SUCCEEDED(propBag->Read(L"FriendlyName", &varName, 0)) && IsVariantString(varName)) {
+          WCHAR name[256];
+          VariantToString(varName, name, sizeof(name));
+          source.friendlyName = QString::fromWCharArray(name);
+        }
+        VariantClear(&varName);
+
+        if (SUCCEEDED(propBag->Read(L"DevicePath", &varName, 0)) && IsVariantString(varName)) {
+          WCHAR path[256];
+          VariantToString(varName, path, sizeof(path));
+          source.devicePath = QString::fromWCharArray(path);
+        }
+        VariantClear(&varName);
+
+        /// Mangle device path for ffmpeg form
+        if(!source.devicePath.isEmpty() && source.devicePath.contains("usb#vid"))
+          source.devicePath = QString("%1%2").arg("@device_pnp_", source.devicePath);
+
+        devices.emplace_back(source);
+
+        propBag->Release();
+      }
+      moniker->Release();
+    }
+    if(enumCat)
+      enumCat->Release();
+    sysDevEnum->Release();
+    return devices;
   }
 
   // -----------------------------------------------------------------
 
-  /// Snapshot of the state of single AV input source
-  struct SourceState
+  template <typename T>
+  struct CompareUnderlyingObjects
   {
-    Nimble::Size resolution{0, 0};
-    bool enabled = false;
-    /// if the source is dead it can be removed
-    bool isDead = false;
+    bool operator()(const std::unique_ptr<T>& p1, const std::unique_ptr<T>& p2) const
+    {
+      return *p1.get() < *p2.get();
+    }
   };
-
-  /// Single AV source
-  struct Source
-  {
-    virtual SourceState update();
-
-    SourceState previousState;
-    QByteArray ffmpegName;
-  };
-
-
-  // Below is the bindings to RGBEasy-library
-#ifdef RGBEASY
-  struct RGBEasyAPI
-  {
-    // The RGBEasy library comes with a file RGBAPI.H which just have invokations
-    // to API-macro, which is undefined by default. The file has lines like this:
-    //
-    //   API ( unsigned long, RGBAPI, RGBGetNumberOfInputs, ( unsigned long  *pNumberOfInputs )
-    //
-    // It's up to whoever #includes that file to define that API-macro.
-    //
-    // Here we will declare function pointers with correct type and name,
-    // and define the default value for those pointers to null.
-    //
-    // For example, it will expand the previous example to this:
-    //
-    //   unsigned long (RGBAPI *RGBGetNumberOfInputs) ( unsigned long  *pNumberOfInputs ) = nullptr;
-    //
-    // This API-struct will neatly contain all functions that the RGB API defines.
-    // This is needed since we are loading the library dynamically.
-    #define API(TYPE, CONV, NAME, ARGS) TYPE (CONV * NAME) ARGS = nullptr;
-    #include <RGBAPI.H>
-  };
-
-  struct RGBEasySource : public Source
-  {
-    virtual SourceState update() override;
-
-    unsigned long rgbIndex;
-    bool failed = false;
-  };
-
-  struct RGBEasyLib
-  {
-    ~RGBEasyLib();
-    QLibrary rgbDll{"rgbeasy"};
-    HRGBDLL apiHandle = 0;
-    RGBEasyAPI api;
-
-    RGBEasySource* createEasyRGBSource(const QString& videoInput,
-                                       QStringList &audioDevices);
-
-  } easyrgb;
-
-  SourceState RGBEasySource::update()
-  {
-    SIGNALTYPE signalType = RGB_SIGNALTYPE_NOSIGNAL;
-    unsigned long w = 0, h = 0, rate = 0;
-
-    SourceState state;
-    state.enabled = false;
-
-    if (easyrgb.api.RGBGetInputSignalType(rgbIndex, &signalType, &w, &h, &rate) != 0) {
-      if(!failed) {
-        Radiant::warning("RGBEasyMonitor # RGBGetInputSignalType failed");
-        failed = true;
-      }
-    } else {
-      failed = false;
-      state.resolution.make(w, h);
-      state.enabled = signalType != RGB_SIGNALTYPE_NOSIGNAL && signalType != RGB_SIGNALTYPE_OUTOFRANGE;
-    }
-    return state;
-  }
-
-  RGBEasyLib::~RGBEasyLib()
-  {
-    if (apiHandle) {
-      api.RGBFree(apiHandle);
-    }
-
-    if (rgbDll.isLoaded()) {
-      rgbDll.unload();
-    }
-  }
-
-  void initRGBEasy()
-  {
-    // Don't fail even if RGB wouldn't be available
-    if(!easyrgb.rgbDll.load()) {
-      Radiant::error("RGBEasyMonitor # %s", easyrgb.rgbDll.errorString().toUtf8().data());
-      return;
-    }
-
-    // See also the comment in the API-struct.
-    //
-    // Here we will assign a proper function pointers to that struct. This
-    // functions-array will contain pairs, the function pointer inside our
-    // struct, and the name of that function. For instance:
-    //
-    //  { (QFunctionPointer*) &easyrgb.api.RGBGetNumberOfInputs, "RGBGetNumberOfInputs" }
-    //
-    // Now when we know the name of the function and the target function
-    // pointer, we can dynamically load the symbol from the library and assign
-    // it to the function pointer.
-    std::pair<QFunctionPointer*, const char*> functions[] = {
-#define API(TYPE, CONV, NAME, ARGS) { (QFunctionPointer*)&easyrgb.api.NAME, #NAME },
-#include <RGBAPI.H>
-    };
-
-    for (auto p: functions) {
-      *p.first = easyrgb.rgbDll.resolve(p.second);
-      if (!*p.first) {
-        Radiant::error("RGBEasyMonitor # Failed to resolve %s: %s", p.second,
-                       easyrgb.rgbDll.errorString().toUtf8().data());
-        return;
-      }
-    }
-
-    // RGBAPI functions will typically return an error code, 0 meaning success
-
-    if (easyrgb.api.RGBLoad(&easyrgb.apiHandle) != 0) {
-      easyrgb.apiHandle = 0;
-      Radiant::error("RGBEasyMonitor # Failed to initialize RGB driver");
-      return;
-    }
-  }
-
-  RGBEasySource* RGBEasyLib::createEasyRGBSource(const QString &videoInput,
-                                                 QStringList &audioDevices)
-  {
-    static unsigned long numberOfInputs = 0;
-    MULTI_ONCE {
-      if (easyrgb.api.RGBGetNumberOfInputs(&numberOfInputs) != 0) {
-        Radiant::error("RGBEasyMonitor # Failed to get the number of inputs");
-      }
-    }
-    if(numberOfInputs == 0)
-      return nullptr;
-
-    QRegExp numberRe("\\b0*(\\d+)\\b");
-    int pos = numberRe.indexIn(videoInput);
-    if(pos < 0) {
-      return nullptr;
-    }
-    int rgbIndex = numberRe.cap(1).toInt()-1;
-
-    RGBINPUTINFOA info;
-    memset(&info, 0, sizeof(info));
-    info.Size = sizeof(info);
-    if (easyrgb.api.RGBGetInputInfoA(rgbIndex, &info) != 0) {
-      return nullptr;
-    }
-    QString deviceName = info.DeviceName;
-    if(!videoInput.contains(deviceName)) {
-      return nullptr;
-    }
-
-    RGBEasySource* src = new RGBEasySource();
-    src->rgbIndex = rgbIndex;
-    src->ffmpegName = "video="+videoInput.toUtf8();
-
-    QRegExp thisNumberRe(QString("\\b0*%1\\b").arg(rgbIndex + 1));
-    for(auto it = audioDevices.begin(); it != audioDevices.end(); ++it) {
-      const QString& audioInput = *it;
-      if(audioInput.contains(deviceName) && thisNumberRe.indexIn(audioInput) >= 0) {
-        src->ffmpegName += ":audio=" + audioInput;
-        audioDevices.erase(it);
-        break;
-      }
-    }
-    return src;
-  }
-
-#endif
-
-  SourceState Source::update()
-  {
-    SourceState state;
-    state.enabled = true;
-    return state;
-  }
 
   // -----------------------------------------------------------------
 
   class VideoCaptureMonitor::D
   {
   public:
+    typedef std::vector<std::vector<float>> Scores;
+
     D(VideoCaptureMonitor& host) : m_host(host) {}
     ~D();
 
     void initExternalLibs();
     void poll();
 
-    void updateSource(Source& src, const SourceState& state);
+    Source parseSource(const QString& device) const;
+    void updateSource(SourcePtr& src);
 
-    /// Creates source using the given videoInput
-    Source* createSource(const QString& videoInput, QStringList& audioDevices);
-    /// Creates source without external APIs
-    Source* createGenericSource(const QString& videoInput, QStringList& audioDevices);
+    /// Check if we have source formed of these inputs
+    bool contains(const VideoInput& vi, const AudioInput& ai) const;
+    bool isHinted(const VideoInput& vi, const AudioInput& ai) const;
 
-    /// Mapping from 'FriendlyName' to source
-    std::map<QByteArray, std::unique_ptr<Source>> m_sources;
+    Scores scores(const std::vector<VideoInput>& videos,
+                  const std::vector<AudioInput>& audios) const;
+
+    std::vector<float>
+    scores(const VideoInput& video, const std::vector<AudioInput>& audios) const;
+
+    /// This assumes that there is no additional information about the video or audio
+    /// @see scores-function that calculates scores for single row
+    float score(const VideoInput& audio, const AudioInput& video) const;
+
+    std::map<int, int> formPairsGreedily(const Scores& scores);
+
+    void initInput(AudioInput& ai) const;
+    void initInput(VideoInput& vi) const;
+
+    SourcePtr createSource(const VideoInput &videoInput, const AudioInput& audioInput);
+    SourcePtr createSource(const VideoInput &videoInput);
+
+    void removeSource(const SourcePtr& s);
+    void addSource(const SourcePtr& s, Nimble::Size resolution);
+    void resolutionChanged(const SourcePtr& s, Nimble::Size resolution);
+
+    void updateSources(std::vector<SourcePtr>& currentSources);
+
+
+    /// Current sources
+    std::vector<SourcePtr> m_sources;
 
     VideoCaptureMonitor& m_host;
+
+    Radiant::Mutex m_removedSourcesMutex;
+    std::vector<Source> m_removedSources;
+
+    // Contains sources that are suggested to be pairs by the application
+    mutable Radiant::Mutex m_hintMutex;
+    std::set<Source> m_hintedSources;
 
     double m_pollInterval = 1.0;
   };
@@ -286,94 +194,335 @@ namespace VideoDisplay
   {
   }
 
+  bool VideoCaptureMonitor::D::contains(const VideoInput &vi, const AudioInput &ai) const
+  {
+    for(const SourcePtr& s : m_sources) {
+      if(s->video == vi && s->audio == ai) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool VideoCaptureMonitor::D::isHinted(const VideoInput &vi, const AudioInput &ai) const
+  {
+    Source s(vi, ai);
+    Radiant::Guard g(m_hintMutex);
+    for(const Source& hint : m_hintedSources) {
+      if(s.ffmpegName() == hint.ffmpegName())
+        return true;
+    }
+    return false;
+  }
+
+  float VideoCaptureMonitor::D::score(const VideoInput& video, const AudioInput& audio) const
+  {
+    /// Pretty random heuristics follow. By investigating usb paths we could (???)
+    /// achieve more precise guesses
+
+    float score = 0;
+    if(audio.friendlyName.contains(video.friendlyName))
+      score += 10;
+    else if(video.friendlyName == "QCMEVB" && audio.friendlyName.contains("Surface Hub"))
+      score += 10;
+
+    /// If this pair already existed we may be adding USB cameras sequentially
+    /// into the system. In that case give some extra scores if the pair
+    /// already existed
+    if(contains(video, audio))
+      score += 2;
+
+    /// Hint trumps the existing detection
+    if(isHinted(video, audio))
+      score += 3;
+
+    return score;
+  }
+
+  std::vector<float>
+  VideoCaptureMonitor::D::scores(const VideoInput& video,
+                                 const std::vector<AudioInput>& audios) const
+  {
+    using namespace std::placeholders; /// for _1 & _2
+
+    std::function<float(const VideoInput&, const AudioInput&)> scoreFunc =
+        std::bind(&VideoCaptureMonitor::D::score, this, _1, _2);
+
+#ifdef RGBEASY
+    if(video.rgbIndex >= 0) {
+      scoreFunc = std::bind(&RGBEasyLib::score, &easyrgb, _1, _2);
+    }
+#endif
+
+    std::vector<float> row;
+    for(size_t i = 0; i < audios.size(); ++i) {
+      row.emplace_back(scoreFunc(video, audios[i]));
+    }
+    return row;
+  }
+
+  VideoCaptureMonitor::D::Scores
+  VideoCaptureMonitor::D::scores(const std::vector<VideoInput>& videos,
+                                 const std::vector<AudioInput>& audios) const
+  {
+    std::vector<std::vector<float>> scoreMatrix;
+    for(size_t i = 0; i < videos.size(); ++i) {
+      scoreMatrix.emplace_back(scores(videos[i], audios));
+    }
+    return scoreMatrix;
+  }
+
+  void VideoCaptureMonitor::D::initInput(AudioInput& ai) const
+  {
+    (void) ai; // no special procedures... yet
+  }
+
+  void VideoCaptureMonitor::D::initInput(VideoInput& vi) const
+  {
+#ifdef RGBEASY
+    easyrgb.initInput(vi);
+#else
+    (void) vi;
+#endif
+  }
+
+  std::map<int, int>
+  VideoCaptureMonitor::D::formPairsGreedily(const Scores& scores)
+  {
+    std::vector<std::tuple<float, int, int>> tmp;
+    for(size_t video = 0; video < scores.size(); ++video) {
+      for(size_t audio = 0; audio < scores[video].size(); ++audio) {
+        float score = -scores[video][audio]; // lazy way to set up comparisons..
+        tmp.push_back(std::make_tuple(score, video, audio));
+      }
+    }
+
+    std::sort(tmp.begin(), tmp.end());
+
+    std::set<int> usedAudios;
+
+    std::map<int, int> results;
+    int added = 0, toAdd = int(scores.size());
+    for(const std::tuple<float, int, int>& t : tmp) {
+      float score;
+      int video, audio;
+      std::tie(score, video, audio) = t;
+
+      if(results.find(video) != results.end())
+        continue;
+      if(usedAudios.find(audio) != usedAudios.end())
+        continue;
+
+      results[video] = score < 0 ? audio : -1; // note inverted scores
+      usedAudios.insert(audio);
+      if(++added == toAdd)
+        break;
+    }
+    return results;
+  }
+
+
   void VideoCaptureMonitor::D::poll()
   {
     MULTI_ONCE initExternalLibs();
 
-    QStringList videoDevices = scanVideoInputDevices();
-    QStringList audioDevices = scanAudioInputDevices();
+    {
+      Radiant::Guard g(m_removedSourcesMutex);
+      for(const Source& s : m_removedSources) {
 
-    for(const QString& videoInput : videoDevices) {
-      /// Check new devices
-      if(m_sources.find(videoInput.toUtf8()) != m_sources.end())
-        continue; // present and handled below
+        for(auto it = m_sources.begin(); it != m_sources.end(); ++it) {
+          if(s == *it->get()) {
+            m_sources.erase(it);
+            break;
+          }
+        }
 
-      std::unique_ptr<Source> src(createSource(videoInput, audioDevices));
-      if(src.get()) {
-        m_sources[videoInput.toUtf8()] = std::move(src);
+      }
+      m_removedSources.clear();
+    }
+
+
+    /// Polling logic is following:
+    /// 1) Query all audio and video capture devices
+    /// 2) Calculate heuristic score for each (video,audio) pairs
+    /// 3) Based on the heuristical scores, pick the pairs greedily
+    ///    and consider these as available sources
+
+    std::vector<VideoInput> videoDevices = scanVideoInputDevices();
+    std::vector<AudioInput> audioDevices = scanAudioInputDevices();
+
+    for(VideoInput& vi : videoDevices) initInput(vi);
+    for(AudioInput& ai : audioDevices) initInput(ai);
+
+    /// Calculate scores for each (Video, Audio) -pair
+    /// This will create N vectors of length M, where
+    ///   N = number of video inputs
+    ///   M = number of audio inputs
+
+    Scores scoreSheet = scores(videoDevices, audioDevices);
+
+    // remove hints, there is a slight change that hint is added but
+    // never used. That is unlikely to occur
+    {
+      Radiant::Guard g(m_hintMutex);
+      m_hintedSources.clear();
+    }
+
+    /// Create N Sources (video, audio)-pairs with or without audio device.
+    /// Use each scanned device at most once and only form pairs that
+    /// have positive scores.
+
+    std::map<int, int> pairs = formPairsGreedily(scoreSheet);
+
+    std::vector<SourcePtr> currentSources;
+    for(const std::pair<int, int>& p : pairs) {
+      int video = p.first,
+          audio = p.second;
+
+      if(audio >= 0)
+        currentSources.emplace_back(createSource(videoDevices[video], audioDevices[audio]));
+      else
+        currentSources.emplace_back(createSource(videoDevices[video]));
+    }
+
+    updateSources(currentSources);
+  }
+
+  void VideoCaptureMonitor::D::updateSources(std::vector<SourcePtr> &currentSources)
+  {
+    std::sort(currentSources.begin(), currentSources.end(),
+              CompareUnderlyingObjects<Source>());
+
+    /// Partition the union of current and old video sources to the
+    /// following sets
+    std::vector<SourcePtr> sourcesToRemove;
+    std::vector<SourcePtr> updatedSources;
+
+    auto currentIt  = currentSources.begin();
+    auto currentEnd = currentSources.end();
+    auto oldIt      = m_sources.begin();
+    auto oldEnd     = m_sources.end();
+
+    for( ; currentIt != currentEnd && oldIt != oldEnd; ) {
+      SourcePtr& current = *currentIt;
+      SourcePtr& old     = *oldIt;
+      if(*current < *old) {
+        updatedSources.emplace_back(std::move(current));
+        ++currentIt;
+      } else if(*old < *current) {
+        sourcesToRemove.emplace_back(std::move(old));
+        ++oldIt;
+      } else {
+        assert(*current == *old);
+        /// Note that we need to use Source from existing vector, as it has
+        /// some additional state stored into it
+        updatedSources.emplace_back(std::move(old));
+        ++oldIt;
+        ++currentIt;
       }
     }
 
-    for(auto it = m_sources.begin(); it != m_sources.end(); ) {
-      std::unique_ptr<Source>& src = it->second;
-      SourceState state = src->update();
-      bool remove = state.isDead || !videoDevices.contains(it->first);
-      if(remove)
-        state.enabled = false;
+    while(currentIt != currentEnd) {
+      updatedSources.emplace_back(std::move(*currentIt));
+      ++currentIt;
+    }
+    while(oldIt != oldEnd) {
+      sourcesToRemove.emplace_back(std::move(*oldIt));
+      ++oldIt;
+    }
 
-      updateSource(*src.get(), state);
+    m_sources = std::move(updatedSources);
 
-      if(remove) {
-        it = m_sources.erase(it);
-      } else {
-        ++it;
-      }
+    /// We can immediately remove all sources that are not present
+    for(const SourcePtr& s : sourcesToRemove) {
+      removeSource(s);
+    }
+
+    for(SourcePtr& s : m_sources) {
+      updateSource(s);
     }
   }
 
   void VideoCaptureMonitor::D::initExternalLibs()
   {
 #ifdef RGBEASY
-    initRGBEasy();
+    easyrgb.loadDll();
 #endif
   }
 
-  Source* VideoCaptureMonitor::D::createGenericSource(const QString &videoInput,
-                                                      QStringList &audioDevices)
+  SourcePtr VideoCaptureMonitor::D::createSource(const VideoInput& videoInput,
+                                                 const AudioInput& audioInput)
   {
-    Source* src = new Source();
-    src->ffmpegName = "video="+videoInput.toUtf8();
-    for(auto it = audioDevices.begin(); it != audioDevices.end(); ++it) {
-      /// The following logic is based on small sample size while testing different
-      /// devices
-      if(it->contains(videoInput)) {
-        src->ffmpegName += ":audio=" + *it;
-        audioDevices.erase(it);
-        break;
-      }
+#ifdef RGBEASY
+    if(videoInput.rgbIndex >= 0) {
+      /// Check if this device is accessable with EasyRGB-device
+      return easyrgb.createEasyRGBSource(videoInput, audioInput);
     }
+#endif
+
+    std::unique_ptr<Source> src;
+    src.reset(new Source(videoInput, audioInput));
     return src;
   }
 
-  Source* VideoCaptureMonitor::D::createSource(const QString &videoInput,
-                                               QStringList &audioDevices)
+  SourcePtr VideoCaptureMonitor::D::createSource(const VideoInput& videoInput)
   {
-#ifdef RGBEASY
-    if(easyrgb.apiHandle != 0) {
-      /// Check if this device is accessable with EasyRGB-device
-      Source* res = easyrgb.createEasyRGBSource(videoInput, audioDevices);
-      if(res)
-        return res;
-    }
-#endif
-
-    return createGenericSource(videoInput, audioDevices);
+    std::unique_ptr<Source> src;
+    src.reset(new Source());
+    src->video = videoInput;
+    return src;
   }
 
-
-  void VideoCaptureMonitor::D::updateSource(Source& src, const SourceState& state)
+  void VideoCaptureMonitor::D::addSource(const SourcePtr &s, Nimble::Size resolution)
   {
-    const SourceState& oldState = src.previousState;
+    m_host.eventSend("source-added", s->ffmpegName(), resolution.toVector());
+  }
+
+  void VideoCaptureMonitor::D::removeSource(const SourcePtr &s)
+  {
+    m_host.eventSend("source-removed", s->ffmpegName());
+  }
+
+  void VideoCaptureMonitor::D::resolutionChanged(const SourcePtr &s, Nimble::Size resolution)
+  {
+    m_host.eventSend("resolution-changed", s->ffmpegName(), resolution.toVector());
+  }
+
+  void VideoCaptureMonitor::D::updateSource(SourcePtr& src)
+  {
+    const SourceState& oldState = src->previousState;
+    SourceState state = src->update();
     if (oldState.enabled != state.enabled) {
       if (state.enabled) {
-        m_host.eventSend("source-added", src.ffmpegName, state.resolution.toVector());
+        addSource(src, state.resolution);
       } else {
-        m_host.eventSend("source-removed", src.ffmpegName);
+        removeSource(src);
       }
     } else if (state.enabled && oldState.resolution != state.resolution) {
-      m_host.eventSend("resolution-changed", src.ffmpegName, state.resolution.toVector());
+      resolutionChanged(src, state.resolution);
     }
-    src.previousState = state;
+    src->previousState = state;
+  }
+
+  Source VideoCaptureMonitor::D::parseSource(const QString& device) const
+  {
+    static QRegularExpression re("^video=([^:]*)(:audio=(.*))?$",
+                                 QRegularExpression::OptimizeOnFirstUsageOption);
+
+    Source s;
+
+    QRegularExpressionMatch m = re.match(device);
+    if(m.hasMatch() && m.lastCapturedIndex() >= 3) {
+      VideoInput vi;
+      vi.friendlyName = m.captured(1);
+      s.video = vi;
+
+      AudioInput ai;
+      ai.friendlyName = m.captured(3);
+      s.audio = ai;
+    }
+
+    return s;
   }
 
   // -----------------------------------------------------------------
@@ -400,6 +549,24 @@ namespace VideoDisplay
     m_d->m_pollInterval = seconds;
     if (secondsUntilScheduled() > 0) {
       scheduleFromNowSecs(m_d->m_pollInterval);
+    }
+  }
+
+  void VideoCaptureMonitor::addHint(const QString& device)
+  {
+    Source s = m_d->parseSource(device);
+    if(s.isValid()) {
+      Radiant::Guard g(m_d->m_hintMutex);
+      m_d->m_hintedSources.insert(s);
+    }
+  }
+
+  void VideoCaptureMonitor::removeSource(const QString &source)
+  {
+    Source src = m_d->parseSource(source);
+    if(src.isValid()) {
+      Radiant::Guard g(m_d->m_removedSourcesMutex);
+      m_d->m_removedSources.emplace_back(src);
     }
   }
 

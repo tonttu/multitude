@@ -26,6 +26,18 @@ namespace VideoDisplay
     double pollInterval() const;
     void setPollInterval(double seconds);
 
+    /// If the application has some additional information before the
+    /// scanning task is started it can add hints. Only values that matter
+    /// are values sent in source-* -events.
+    /// @note this is only used on Windows at the moment
+    void addHint(const QString& device);
+
+    /// Sometimes client may have failed to open source. In this case
+    /// it would like to have event if the source is still relevant. For example
+    /// in Windows it seems that there is some latency for device to be able to
+    /// used after it has been released by some other entity
+    void removeSource(const QString& source);
+
   private:
     virtual void doTask() override;
 
