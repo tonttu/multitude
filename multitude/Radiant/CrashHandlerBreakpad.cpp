@@ -143,14 +143,6 @@ namespace Radiant
     void init(const QString & application, const QString & version,
               const QString & url, const QString & db)
     {
-#ifdef RADIANT_LINUX
-      QString linuxInfo = QSysInfo::prettyProductName();
-      if(linuxInfo.contains("Ubuntu") && linuxInfo.contains("16.04")) {
-        Radiant::warning("CrashHandler does not work on Ubuntu 16.04 yet");
-        return;
-      }
-#endif
-
       s_uploadCmd[2] = application.toUtf8();
       s_uploadCmd[4] = version.toUtf8();
 
