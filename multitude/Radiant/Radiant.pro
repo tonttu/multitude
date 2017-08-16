@@ -89,6 +89,7 @@ HEADERS += VideoCamera1394.hpp
 HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 HEADERS += SymbolRegistry.hpp
+HEADERS += CrashHandler.hpp
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
@@ -177,12 +178,18 @@ linux-* {
   SOURCES += TraceSyslogFilter.cpp
 
   SOURCES += SystemCpuTimeLinux.cpp
+
+  # CrashHandler requirements
+  PKGCONFIG += breakpad-client
+  SOURCES += CrashHandlerBreakpad.cpp
 }
 
 macx {
   LIBS += -framework CoreFoundation
 
   SOURCES += SystemCpuTimeOSX.cpp
+
+  SOURCES += CrashHandlerDummy.cpp
 }
 
 DEFINES += RADIANT_EXPORT
@@ -247,6 +254,20 @@ win32 {
   SOURCES += TraceWindowsDebugConsoleFilter.cpp
 
   SOURCES += SystemCpuTimeWin32.cpp
+
+  # CrashHandler requirements
+  SOURCES += CrashHandlerCrashpad.cpp
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include/third_party/mini_chromium/mini_chromium
+  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/crashpad/lib
+
+  CONFIG(release, debug|release) {
+    LIBS += -lcrashpad
+  } else {
+    LIBS += -lcrashpadd
+  }
+
+  LIBS += -lAdvapi32 -lRpcrt4 -lShell32
 }
 
 include(../../library.pri)
