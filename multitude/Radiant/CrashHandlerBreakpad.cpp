@@ -7,7 +7,6 @@
 
 #include <QDir>
 #include <QMap>
-#include <QSysInfo>
 
 #include <arpa/inet.h>
 
