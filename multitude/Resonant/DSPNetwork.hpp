@@ -293,6 +293,8 @@ DSPNetwork::instance().send(control);
     /// Returns the panner module or NULL
     std::shared_ptr<ModulePanner> panner() { return m_panner; }
 
+    std::shared_ptr<ModuleOutCollect> collect() const { return m_collect; }
+
     std::size_t itemCount() const { Radiant::Guard g(m_itemMutex); return m_items.size(); }
 
     AudioLoop * audioLoop() { return m_audioLoop.get(); }
