@@ -619,6 +619,12 @@ namespace Luminous
     /// Maximum texture size supported by this context, same as GL_MAX_TEXTURE_SIZE
     unsigned int maxTextureSize() const;
 
+    /// Should objects rendered with this context have their audio routed
+    /// through the active widget path. Typically ViewWidgets might change this.
+    /// @see MultiWidgets::ViewWidget::isAudioPanningEnabled
+    bool isAudioPanningEnabled() const;
+    void setAudioPanningEnabled(bool enabled);
+
   private:
 
 /// @cond
@@ -1147,6 +1153,28 @@ namespace Luminous
 
   private:
     Luminous::RenderContext * m_rc;
+  };
+
+  /// Simple guard for setting and restoring audio panning mode
+  /// @see RenderContext::isAudioPanningEnabled
+  class AudioPanningGuard
+  {
+  public:
+    AudioPanningGuard(Luminous::RenderContext & r, bool audioPanningEnabled)
+      : m_rc(r)
+      , m_wasAudioPanningEnabled(r.isAudioPanningEnabled())
+    {
+      r.setAudioPanningEnabled(audioPanningEnabled);
+    }
+
+    ~AudioPanningGuard()
+    {
+      m_rc.setAudioPanningEnabled(m_wasAudioPanningEnabled);
+    }
+
+  private:
+    Luminous::RenderContext & m_rc;
+    const bool m_wasAudioPanningEnabled;
   };
 }
 
