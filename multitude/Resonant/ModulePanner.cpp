@@ -122,7 +122,7 @@ namespace Resonant {
 
         Pipe & p = s.m_pipes[j];
 
-        if(p.done())
+        if(p.isDone())
           continue;
 
         const float * src = in[i];
@@ -300,7 +300,7 @@ namespace Resonant {
               debugResonant("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
             }
             Pipe & p = s->m_pipes[j];
-            if(p.done()) {
+            if(p.isDone()) {
               debugResonant("ModulePanner::setSourceLocation # "
                     "Starting %u towards %u", j, i);
               p.m_to = i;
