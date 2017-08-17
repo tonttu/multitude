@@ -147,6 +147,9 @@ namespace Resonant {
     // m_continue = true;
 
     int channels = 2;
+    if (m_panner)
+      channels = std::max<int>(channels, m_panner->speakers().size());
+
     if (auto outchannels = getenv("RESONANT_OUTCHANNELS")) {
       channels = atoi(outchannels);
     }
@@ -174,6 +177,10 @@ namespace Resonant {
     debugResonant("DSPNetwork::addModule # %p", this);
 
     Radiant::Guard g( m_newMutex);
+
+    if (auto panner = std::dynamic_pointer_cast<ModulePanner>(item->m_module)) {
+      m_panner = panner;
+    }
 
     m_newItems.push_back(item);
   }
@@ -388,7 +395,7 @@ namespace Resonant {
         int tchan  = item->m_targetChannel;
         size_t outchans = m_collect->channels(); // hardware output channels
 
-        if(m_panner && item->usePanner()) {
+        if(m_panner && item->usePanner() && m_panner != item->m_module) {
           //info("Adding %d inputs to the panner", mchans);
 
           ItemPtr oi = findItemUnsafe(m_panner->id());
@@ -410,13 +417,6 @@ namespace Resonant {
 
           continue;
         }
-
-        std::shared_ptr<ModulePanner> panner = std::dynamic_pointer_cast<ModulePanner>(item->m_module);
-
-        if(panner) {
-          m_panner = panner;
-        }
-
 
         ItemPtr oi = findItemUnsafe(m_collect->id());
 
