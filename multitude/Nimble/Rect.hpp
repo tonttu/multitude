@@ -321,7 +321,7 @@ namespace Nimble {
   template <class T>
       Vector2T<T> RectT<T>::topCenter() const
   {
-    return Vector2T<T>((m_low.x + m_high.x) * T(0.5), m_high.y);
+    return Vector2T<T>((m_low.x + m_high.x) * T(0.5), m_low.y);
   }
 
   template <class T>
