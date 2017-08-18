@@ -810,7 +810,13 @@ namespace VideoDisplay
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
-      audioTransfer->setId(QString("VideoDisplay.AudioTransfer.%1").arg(value).toUtf8());
+      QString id;
+      if (src.size() > 50) {
+        id = "..." + src.right(47);
+      } else {
+        id = src;
+      }
+      audioTransfer->setId(QString("%2 %1").arg(value).arg(id).toUtf8());
 
       auto item = std::make_shared<Resonant::DSPNetwork::Item>();
       item->setModule(audioTransfer);

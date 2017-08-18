@@ -40,6 +40,53 @@ namespace Resonant {
   class RESONANT_API ModulePanner : public Module
   {
   public:
+
+    /// @cond
+
+    class Pipe
+    {
+    public:
+      Pipe()
+      {
+        m_ramp.reset(0.0);
+      }
+
+      bool isDone() const { return (m_ramp.left() == 0) && (m_ramp.value() < 1.0e-4f);}
+
+      Nimble::Rampf m_ramp;
+
+      unsigned m_to = 0;
+    };
+
+    class Source
+    {
+    public:
+      Nimble::Vector2 m_location{0, 0};
+      QByteArray  m_id;
+      long m_generation = 0; /// @see ModulePanner::m_generation
+
+      std::vector<Pipe> m_pipes;
+    };
+
+    class LoudSpeaker : public Valuable::Node
+    {
+    public:
+      LoudSpeaker()
+        : m_location(this, "location", Nimble::Vector2(1111111,0))
+      {
+        setName("speaker");
+      }
+
+      Valuable::AttributeVector2f m_location; // PixelLocation.
+    };
+
+    typedef std::vector<Radiant::RefObj<Source>> Sources;
+    typedef std::vector<SoundRectangle*> Rectangles;
+    typedef std::vector<std::shared_ptr<LoudSpeaker>> LoudSpeakers;
+
+    /// @endcond
+
+  public:
     /// Panning mode
     enum Mode {
       /// Radial mode, where the panning is based on the distance of loudspeaker and
@@ -96,6 +143,14 @@ namespace Resonant {
     /// @return Current panner mode
     Mode getMode() const;
 
+    /// @cond
+
+    const Rectangles & rectangles() const { return *m_rectangles; }
+    const Sources & sources() const { return m_sources; }
+    const LoudSpeakers & speakers() const { return *m_speakers; }
+
+    /// @endcond
+
   private:
 
     friend class ModuleRectPanner;
@@ -107,46 +162,7 @@ namespace Resonant {
     void addSoundRectangleSpeakers(SoundRectangle * r);
 
     /// @cond
-    class LoudSpeaker : public Valuable::Node
-    {
-    public:
-      LoudSpeaker()
-        : m_location(this, "location", Nimble::Vector2(1111111,0))
-      {
-        setName("speaker");
-      }
 
-      Valuable::AttributeVector2f m_location; // PixelLocation.
-    };
-
-    class Pipe
-    {
-    public:
-      Pipe()
-    : m_to(0)
-      {
-    m_ramp.reset(0.0);
-      }
-
-      bool done() {return (m_ramp.left() == 0) && (m_ramp.value() < 1.0e-4f);}
-
-      Nimble::Rampf m_ramp;
-
-      unsigned m_to;
-    };
-
-    class Source
-    {
-    public:
-      Source() : m_location(0, 0), m_updates(0), m_generation(0), m_pipes(6) {}
-
-      Nimble::Vector2 m_location;
-      bool  m_updates;
-      QByteArray  m_id;
-      long m_generation; /// @see ModulePanner::m_generation
-
-      std::vector<Pipe> m_pipes;
-    };
 
     const SoundRectangle * getContainingRectangle(const LoudSpeaker * ls) const;
     /// Computes the gain for the given speaker based on sound source location
@@ -154,13 +170,6 @@ namespace Resonant {
 
     float computeGainRadial(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
     float computeGainRectangle(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
-
-    typedef std::vector<Radiant::RefObj<Source> > Sources;
-    typedef std::vector<std::shared_ptr<LoudSpeaker> > LoudSpeakers;
-
-
-    typedef std::vector<SoundRectangle*> Rectangles;
-
 
     Sources      m_sources;
     Valuable::AttributeContainer<LoudSpeakers> m_speakers;

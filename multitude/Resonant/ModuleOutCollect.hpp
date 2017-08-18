@@ -56,6 +56,9 @@ namespace Resonant {
     /// Returns the number of channels that are collected by this module
     size_t channels() const { return m_channels; }
 
+    /// Latest sample values for all channels
+    const std::vector<float> lastSample() const { return m_lastSample; }
+
   private:
 
     size_t m_channels;
@@ -71,6 +74,8 @@ namespace Resonant {
     typedef std::vector<Move> container;
     typedef container::iterator iterator;
     container m_map;
+
+    std::vector<float> m_lastSample;
   };
 
   /// @cond

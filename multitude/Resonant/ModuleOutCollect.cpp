@@ -64,6 +64,7 @@ namespace Resonant {
 
     m_internalInterleavedBuffer.resize(m_channels * MAX_CYCLE);
     m_interleaved = m_internalInterleavedBuffer.data();
+    m_lastSample.resize(m_channels);
 
     debugResonant("ModuleOutCollect::prepare # %d", (int) m_channels);
 
@@ -193,6 +194,9 @@ namespace Resonant {
         }
       }
     }
+
+    const float * lastSrc = m_interleaved + (n-1) * chans;
+    memcpy(m_lastSample.data(), lastSrc, sizeof(float) * chans);
   }
 
 }

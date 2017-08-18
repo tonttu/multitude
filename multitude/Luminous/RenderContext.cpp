@@ -317,6 +317,8 @@ namespace Luminous
 
     Radiant::TimeStamp m_frameTime;
     unsigned int m_maxTextureSize = 1024;
+
+    bool m_audioPanningEnabled = true;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1376,6 +1378,16 @@ namespace Luminous
   unsigned int RenderContext::maxTextureSize() const
   {
     return m_data->m_maxTextureSize;
+  }
+
+  bool RenderContext::isAudioPanningEnabled() const
+  {
+    return m_data->m_audioPanningEnabled;
+  }
+
+  void RenderContext::setAudioPanningEnabled(bool enabled)
+  {
+    m_data->m_audioPanningEnabled = enabled;
   }
 
   //////////////////////////////////////////////////////////////////////////
