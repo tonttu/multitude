@@ -7,7 +7,6 @@
 #include <QLibrary>
 #include <windows.h>
 
-#ifdef RGBEASY
 #include <RGB.H>
 
 namespace VideoDisplay
@@ -76,7 +75,5 @@ namespace VideoDisplay
 
 
 } // namespace VideoDisplay
-
-#endif // RGBEASY
 
 #endif // RGBEASY_HPP

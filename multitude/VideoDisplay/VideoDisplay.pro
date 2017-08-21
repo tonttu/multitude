@@ -29,7 +29,6 @@ win32 {
 
   # RGBEASY (Datapath SDK)
   INCLUDEPATH += rgbeasy-sdk-v7.14.1/include
-  DEFINES += RGBEASY
   LIBS += -lStrmiids -lOle32 -lOleAut32 -lPropsys
 }
 

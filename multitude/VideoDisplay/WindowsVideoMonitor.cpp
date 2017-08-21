@@ -248,11 +248,9 @@ namespace VideoDisplay
     std::function<float(const VideoInput&, const AudioInput&)> scoreFunc =
         std::bind(&VideoCaptureMonitor::D::score, this, _1, _2);
 
-#ifdef RGBEASY
     if(video.rgbIndex >= 0) {
       scoreFunc = std::bind(&RGBEasyLib::score, &easyrgb, _1, _2);
     }
-#endif
 
     std::vector<float> row;
     for(size_t i = 0; i < audios.size(); ++i) {
@@ -279,11 +277,7 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::initInput(VideoInput& vi) const
   {
-#ifdef RGBEASY
     easyrgb.initInput(vi);
-#else
-    (void) vi;
-#endif
   }
 
   std::map<int, int>
@@ -445,20 +439,16 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::initExternalLibs()
   {
-#ifdef RGBEASY
     easyrgb.loadDll();
-#endif
   }
 
   SourcePtr VideoCaptureMonitor::D::createSource(const VideoInput& videoInput,
                                                  const AudioInput& audioInput)
   {
-#ifdef RGBEASY
     if(videoInput.rgbIndex >= 0) {
       /// Check if this device is accessable with EasyRGB-device
       return easyrgb.createEasyRGBSource(videoInput, audioInput);
     }
-#endif
 
     std::unique_ptr<Source> src;
     src.reset(new Source(videoInput, audioInput));

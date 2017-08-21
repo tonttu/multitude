@@ -5,8 +5,6 @@
 #include <QtGlobal>
 #include <QRegularExpression>
 
-#ifdef RGBEASY
-
 namespace VideoDisplay
 {
 
@@ -133,7 +131,7 @@ namespace VideoDisplay
   {
     static unsigned long numberOfInputs = 0;
     MULTI_ONCE {
-      if (api.RGBGetNumberOfInputs(&numberOfInputs) != 0) {
+      if (apiHandle && api.RGBGetNumberOfInputs(&numberOfInputs) != 0) {
         Radiant::error("RGBEasyMonitor # Failed to get the number of inputs");
       }
     }
@@ -162,5 +160,3 @@ namespace VideoDisplay
   }
 
 }
-
-#endif /// RGBEASY
