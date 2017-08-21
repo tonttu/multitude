@@ -157,13 +157,19 @@ namespace Valuable
             m_watcher.addPath(filename);
           }
 
-          m_host.eventSend("file-created", filename);
+          if (m_userAddedFiles.contains(filename) ||
+              m_userAddedDirectories.contains(QFileInfo(filename).absolutePath())) {
+            m_host.eventSend("file-created", filename);
+          }
         }
       }
 
       // Always delay removal (we might be able to merge events)
       foreach(QString filename, rm) {
-        delayEvent(filename, ChangeEvent::DELETE);
+        if (m_userAddedFiles.contains(filename) ||
+            m_userAddedDirectories.contains(QFileInfo(filename).absolutePath())) {
+          delayEvent(filename, ChangeEvent::DELETE);
+        }
       }
     }
 
