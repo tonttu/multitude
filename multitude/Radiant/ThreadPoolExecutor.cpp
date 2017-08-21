@@ -78,7 +78,7 @@ namespace Radiant
     QThreadPool & pool();
 
     std::shared_ptr<QThreadPool> m_threadPool;
-    std::atomic<JobId> m_jobId;
+    std::atomic<JobId> m_jobId{0};
     std::shared_ptr<Funcs> m_funcs;
   };
 
