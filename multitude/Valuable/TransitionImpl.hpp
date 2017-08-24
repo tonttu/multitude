@@ -161,9 +161,11 @@ namespace Valuable
     assert(!isNull());
 
     m_pos += dt * m_speed;
-    if (m_pos >= 1.f) {
+    if (m_speed < 0 && m_pos <= 0.f) {
+      m_attr->setAnimatedValue(m_src);
+    } else if (m_speed > 0 && m_pos >= 1.f) {
       m_attr->setAnimatedValue(m_target);
-    } else if (m_pos >= 0.f) {
+    } else if (m_pos >= 0.f && m_pos <= 1.f) {
       float y = m_params.timingFunction.y(m_pos);
       T val = TransitionInterpolator<T>::interpolate(m_src, m_target, y);
       m_attr->setAnimatedValue(val);

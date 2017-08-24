@@ -109,7 +109,7 @@ namespace Valuable
     {
       assert(params.isValid());
       m_params = params;
-      m_speed = 1.0f / params.duration;
+      m_speed = (m_speed >= 0 ? 1.0f : -1.0f) / params.duration;
     }
 
     inline T target() const
@@ -119,7 +119,7 @@ namespace Valuable
 
     inline bool isActive() const
     {
-      return m_pos < 1.f && !isNull();
+      return ((m_speed > 0 && m_pos < 1.f) || (m_speed < 0 && m_pos > 0.f)) && !isNull();
     }
 
     inline void setNull()
@@ -135,6 +135,15 @@ namespace Valuable
 
     inline void setTarget(T src, T target)
     {
+      if (isActive()) {
+        if (m_speed > 0 && target == m_src) {
+          m_speed = -1.0f / m_params.duration;
+          return;
+        } else if (m_speed < 0 && target == m_target) {
+          m_speed = 1.0f / m_params.duration;
+          return;
+        }
+      }
       m_src = src;
       m_target = target;
       m_speed = 1.0f / m_params.duration;
