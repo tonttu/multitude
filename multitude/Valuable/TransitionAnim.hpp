@@ -2,11 +2,66 @@
 #define VALUABLE_TRANSITION_ANIM_HPP
 
 #include <cassert>
+#include <array>
+
+#include <Nimble/Vector2.hpp>
 
 namespace Valuable
 {
+  /// Bezier curve that has hard-coded first point at (0, 0) and last point
+  /// at (1, 1).
+  /// See https://drafts.csswg.org/css-timing-1/#cubic-bezier-timing-functions
+  class BezierTimingFunction
+  {
+  public:
+    float y(float x) const
+    {
+      const float t = solveT(x);
+      return evalY(t);
+    }
+
+    float evalY(float t) const
+    {
+      const float n = 1.f - t;
+      return 3.f*n*n*t*m_points[0].y + 3.f*n*t*t*m_points[1].y + t*t*t;
+    }
+
+    float evalX(float t) const
+    {
+      const float n = 1.f - t;
+      return 3.f*n*n*t*m_points[0].x + 3.f*n*t*t*m_points[1].x + t*t*t;
+    }
+
+    float derivateX(float t) const
+    {
+      return -3.0f * (- m_points[0].x * (3.f*t*t - 4.f*t + 1.f) + t * (3.f*m_points[1].x*t - 2.f*m_points[1].x - t));
+    }
+
+    float solveT(float x) const
+    {
+      float t = x;
+
+      for (int i = 0; i < 5; ++i) {
+        const float v = evalX(t);
+        const float error = x - v;
+        if (std::abs(error) < 0.0001f)
+          break;
+        const float d = derivateX(t);
+        t = Nimble::Math::Clamp(t + 0.9f * error / d, 0.f, 1.f);
+      }
+
+      return t;
+    }
+
+    BezierTimingFunction(Nimble::Vector2f p1, Nimble::Vector2f p2)
+      : m_points{p1, p2} {}
+
+  private:
+    std::array<Nimble::Vector2f, 2> m_points;
+  };
+
   /// Simple class to store parameters of the transition curve, such as
-  /// duration, delay and timing function?
+  /// duration, delay and timing function
   class TransitionParameters
   {
   public:
@@ -20,6 +75,8 @@ namespace Valuable
     // Both are in seconds
     float duration;
     float delay;
+
+    BezierTimingFunction timingFunction{ {0, 0}, {1, 1} };
   };
 
   // ------------------------------------------------------------------------

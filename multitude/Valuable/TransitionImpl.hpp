@@ -164,7 +164,8 @@ namespace Valuable
     if (m_pos >= 1.f) {
       m_attr->setAnimatedValue(m_target);
     } else if (m_pos >= 0.f) {
-      T val = TransitionInterpolator<T>::interpolate(m_src, m_target, m_pos);
+      float y = m_params.timingFunction.y(m_pos);
+      T val = TransitionInterpolator<T>::interpolate(m_src, m_target, y);
       m_attr->setAnimatedValue(val);
     }
   }
