@@ -7,10 +7,10 @@ namespace Valuable
 {
   /// Simple class to store parameters of the transition curve, such as
   /// duration, delay and timing function?
-  class TransitionCurve
+  class TransitionParameters
   {
   public:
-    TransitionCurve(float durationSeconds=-1.f, float delaySeconds=0.f)
+    TransitionParameters(float durationSeconds=-1.f, float delaySeconds=0.f)
       : duration(durationSeconds),
         delay(delaySeconds)
     {}
@@ -20,38 +20,6 @@ namespace Valuable
     // Both are in seconds
     float duration;
     float delay;
-
-    /// @todo timing function
-  };
-
-  // ---------------------------------------------------------------------------
-
-  template <typename T> class AttributeBaseT;
-
-  class TransitionTypeData
-  {
-  public:
-    TransitionTypeData()
-      : transitionUpdated(false),
-        deleted(false)
-    {}
-
-    bool transitionUpdated;
-    bool deleted;
-  };
-
-  template <typename T>
-  class TransitionTypeDataT : public TransitionTypeData
-  {
-  public:
-    TransitionTypeDataT()
-      : TransitionTypeData(),
-        attr(nullptr)
-    {}
-
-    T src;
-    T target;
-    AttributeBaseT<T>* attr;
   };
 
   // ------------------------------------------------------------------------
@@ -59,83 +27,61 @@ namespace Valuable
   class TransitionManager;
   template <typename T> class TransitionManagerT;
 
+  template <typename T> class AttributeBaseT;
 
   /// Defines attribute transition animation and its state
-  class TransitionAnim
+  template <typename T>
+  class TransitionAnimT
   {
   public:
     /// Creates new transition animation
-    /// @param t attribute that this object animates, or null if this a null animation
-    inline TransitionAnim(TransitionManager* manager=nullptr)
-      : m_pos(1.f),
-        m_delaySeconds(0),
-        m_speed(1),
-        m_typeData(nullptr),
-        m_manager(manager)
-    {}
+    /// @param attr attribute that this object animates
+    inline TransitionAnimT(AttributeBaseT<T> * attr);
+
+    TransitionAnimT(const TransitionAnimT<T> &) = delete;
+    TransitionAnimT<T> & operator=(const TransitionAnimT<T> &) = delete;
+
+    inline TransitionAnimT(TransitionAnimT<T> && anim);
+
+    inline TransitionAnimT<T> & operator=(TransitionAnimT<T> && anim);
 
     /// This should only be deleted from TransitionManager
-    inline ~TransitionAnim()
+    inline ~TransitionAnimT();
+
+    inline void setParameters(TransitionParameters params)
     {
+      assert(params.isValid());
+      m_params = params;
+      m_speed = 1.0f / params.duration;
     }
 
-    inline void setParameters(TransitionCurve curve)
+    inline T target() const
     {
-      if(curve.duration <= 0.f) {
-        m_typeData->deleted = true;
-      } else {
-        setDuration(curve.duration);
-        setDelay(curve.delay);
-      }
-
+      return m_target;
     }
 
-    inline void setDuration(float durationSeconds)
+    inline bool isActive() const
     {
-      assert(durationSeconds > 0.f);
-      m_speed = 1.0f / durationSeconds;
+      return m_pos < 1.f && !isNull();
     }
 
-    inline void setDelay(float delaySeconds)
-    {
-      m_delaySeconds = delaySeconds;
-    }
-
-    inline float normalizedPos() const
-    {
-      return m_pos;
-    }
-
-    inline void updatePosition(float dt)
-    {
-      m_pos += dt * m_speed;
-    }
-
-    inline void updateTargetAttributePointer();
-
-    inline void remove();
-
-    /// Checks if this animation is deleted
-    inline bool isNull() const { return m_typeData == nullptr; }
-
-    /// Makes this animation null
     inline void setNull()
     {
-      delete m_typeData;
-      m_typeData = nullptr;
+      m_attr = nullptr;
     }
 
-    inline TransitionTypeData* typeData()
+    /// Checks if this animation is deleted
+    inline bool isNull() const
     {
-      return m_typeData;
+      return m_attr == nullptr;
     }
 
-    inline void setTypeData(TransitionTypeData* data)
+    inline void setTarget(T src, T target)
     {
-      if(m_typeData) {
-        delete m_typeData;
-      }
-      m_typeData = data;
+      m_src = src;
+      m_target = target;
+      m_speed = 1.0f / m_params.duration;
+      m_pos = -m_params.delay * m_speed;
     }
 
     /// Update the animation, update the value to m_attr
@@ -143,25 +89,22 @@ namespace Valuable
     inline void update(float dt);
 
   private:
+    AttributeBaseT<T> * m_attr = nullptr;
+
     /// Transition position, 0 == beginning, 1 == at the end.
     /// Note that the value itself isn't clamped
     float m_pos;
 
-    /// Transition delay, in seconds
-    float m_delaySeconds;
+    TransitionParameters m_params;
 
-    /// Transition timing function
-    /* m_func */
+    T m_src;
+    T m_target;
 
     /// Transition speed (1 / duration)
     float m_speed;
 
-    TransitionTypeData * m_typeData;
-
-    TransitionManager * m_manager;
-
     friend class TransitionManager;
-    template <typename T> friend class TransitionManagerT;
+    template <typename Y> friend class TransitionManagerT;
   };
 
   // ------------------------------------------------------------------------

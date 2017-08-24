@@ -90,7 +90,7 @@ namespace Valuable
     virtual void clearValue(Layer layer) OVERRIDE;
     virtual void setAsDefaults() OVERRIDE;
 
-    virtual void setTransitionAnim(float durationSeconds, float delaySeconds) OVERRIDE;
+    virtual void setTransitionParameters(TransitionParameters params) OVERRIDE;
 
     template<typename T> void setSrc(T src);
     template<typename T> void setSrc(const Nimble::Vector2T<T>& v);
@@ -559,10 +559,10 @@ namespace Valuable
   }
 
   template <typename T, typename A>
-  void AttributeTuple<T,A>::setTransitionAnim(float durationSeconds, float delaySeconds)
+  void AttributeTuple<T,A>::setTransitionParameters(TransitionParameters params)
   {
     for(int i = 0; i < N; ++i) {
-      m_values[i]->setTransitionAnim(durationSeconds, delaySeconds);
+      m_values[i]->setTransitionParameters(params);
     }
   }
 

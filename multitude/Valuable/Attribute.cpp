@@ -219,9 +219,9 @@ namespace Valuable
     return nullptr;
   }
 
-  void Attribute::setTransitionAnim(float, float)
+  void Attribute::setTransitionParameters(TransitionParameters)
   {
-    Radiant::warning("Attribute::setTransitionAnim # Class %s (%s) doesn't support transition animations",
+    Radiant::warning("Attribute::setTransitionParameters # Class %s (%s) doesn't support transition animations",
                      Radiant::StringUtils::demangle(typeid(*this).name()).data(), name().data());
   }
 

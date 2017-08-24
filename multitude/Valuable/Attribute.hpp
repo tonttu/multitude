@@ -407,7 +407,7 @@ namespace Valuable
       return true;
     }
 
-    virtual void setTransitionAnim(float durationSeconds, float delaySeconds);
+    virtual void setTransitionParameters(TransitionParameters params);
 
     /// Invokes the change valueChanged function of all listeners
     virtual void emitChange();
@@ -505,7 +505,7 @@ namespace Valuable
 
     virtual ~AttributeBaseT() {
       if (m_transition)
-        m_transition->remove();
+        m_transition->setNull();
     }
 
     /// Access the wrapped object with the dereference operator
@@ -619,20 +619,25 @@ namespace Valuable
       return m_valueSet[layer];
     }
 
-    virtual void setTransitionAnim(float durationSeconds, float delaySeconds) FINAL
+    virtual void setTransitionParameters(TransitionParameters params) FINAL
     {
-      m_transitionCurve.duration = durationSeconds;
-      m_transitionCurve.delay = delaySeconds;
-      if(m_transition) {
-        m_transition->setParameters(m_transitionCurve);
+      if (params.isValid()) {
+        if (m_transition) {
+          m_transition->setParameters(params);
+        } else {
+          m_transition = TransitionManagerT<T>::create(this, params);
+        }
+      } else if (m_transition) {
+        m_transition->setNull();
+        m_transition = nullptr;
       }
     }
 
-    void setAnimatedValue(T t, float dt)
+    void setAnimatedValue(T t)
     {
       if (m_currentValue != t) {
         m_currentValue = t;
-        Attribute::animatedValueSet(dt);
+        Attribute::emitChange();
       }
     }
 
@@ -642,31 +647,16 @@ namespace Valuable
       setValue(val, to);
     }
 
-    inline void updateTransitionPointer(TransitionAnim* ptr)
+    inline void updateTransitionPointer(TransitionAnimT<T> * ptr)
     {
       m_transition = ptr;
-    }
-
-    bool hasActiveAnimation(float dt) const
-    {
-      if(!m_transition)
-        return false;
-      auto *tData = m_transition->typeData();
-      if(!tData)
-        return false;
-      return m_transition->normalizedPos() + dt >= 0.f && !tData->deleted;
     }
 
   protected:
     virtual void emitChange() FINAL
     {
-      if(m_transitionCurve.isValid()) {
-
-        if(!m_transition) {
-          m_transition = TransitionManagerT<T>::create(this, m_transitionCurve);
-        }
-        TransitionManagerT<T>::setTarget(m_transition, m_values[m_currentLayer]);
-
+      if (m_transition) {
+        m_transition->setTarget(value(), m_values[m_currentLayer]);
       } else {
         m_currentValue = m_values[m_currentLayer];
         Attribute::emitChange();
@@ -674,8 +664,7 @@ namespace Valuable
     }
 
   private:
-    TransitionAnim* m_transition;
-    TransitionCurve m_transitionCurve;
+    TransitionAnimT<T> * m_transition;
     T m_currentValue;
     Layer m_currentLayer;
     T m_values[LAYER_COUNT];
