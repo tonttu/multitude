@@ -1,6 +1,11 @@
 #ifndef RADIANT_REENTRANTVECTOR_HPP
 #define RADIANT_REENTRANTVECTOR_HPP
 
+#include <vector>
+#include <cstddef>
+#include <cassert>
+#include <algorithm>
+
 namespace Radiant
 {
   /// Vector that can be modified while iterating it. Iterators for this vector
@@ -28,6 +33,12 @@ namespace Radiant
     class ConstIterator
     {
     public:
+      typedef typename ReentrantVector<T, Allocator>::value_type value_type;
+      typedef typename ReentrantVector<T, Allocator>::difference_type difference_type;
+      typedef typename ReentrantVector<T, Allocator>::reference reference;
+      typedef typename ReentrantVector<T, Allocator>::pointer pointer;
+
+    public:
       /// Construct a valid iterator. Use ReentrantVector::begin and end instead of this.
       inline ConstIterator(const ReentrantVector<T, Allocator> * container, size_t idx);
 
@@ -44,8 +55,8 @@ namespace Radiant
       /// Random access iterator operations
       inline ConstIterator & operator++() noexcept;
       inline ConstIterator & operator--() noexcept;
-      inline ConstIterator & operator+=(ssize_t n) noexcept;
-      inline ConstIterator & operator-=(ssize_t n) noexcept;
+      inline ConstIterator & operator+=(difference_type n) noexcept;
+      inline ConstIterator & operator-=(difference_type n) noexcept;
 
       /// Compares iterator locations. Operators need to point to the same vector
       inline bool operator==(ConstIterator & other) const noexcept;
@@ -56,17 +67,18 @@ namespace Radiant
 
       /// Returns the element where the iterator points to
       inline const T & operator*() const noexcept;
+      inline const T * operator->() const noexcept;
 
       /// Returns true if the item where the iterator points to was deleted
       /// after the iterator was last changed
       inline bool wasCurrentItemDeleted() const noexcept;
 
     private:
-      /// This iterator is not movable
+      /// This iterator is not copyable
       ConstIterator(const ConstIterator &) = delete;
       ConstIterator & operator=(const ConstIterator &) = delete;
 
-    private:
+    protected:
       friend class ReentrantVector<T, Allocator>;
 
       const ReentrantVector<T, Allocator> * m_vector = nullptr;
@@ -83,12 +95,14 @@ namespace Radiant
 
       /// Returns mutable reference to the object the iterator points to
       inline T & operator*() noexcept;
+      inline T * operator->() noexcept;
     };
 
   public:
     /// Types
     typedef std::vector<T, Allocator> Base;
-    typedef ConstIterator iterator;
+    typedef Iterator iterator;
+    typedef ConstIterator const_iterator;
     using Base::reference;
     using Base::const_reference;
     using Base::size_type;
@@ -232,7 +246,7 @@ namespace Radiant
   }
 
   template <typename T, typename Allocator>
-  typename ReentrantVector<T, Allocator>::ConstIterator & ReentrantVector<T, Allocator>::ConstIterator::operator+=(ssize_t n) noexcept
+  typename ReentrantVector<T, Allocator>::ConstIterator & ReentrantVector<T, Allocator>::ConstIterator::operator+=(difference_type n) noexcept
   {
     if (n > 0 && m_currentItemDeleted) {
       m_currentItemDeleted = false;
@@ -244,7 +258,7 @@ namespace Radiant
   }
 
   template <typename T, typename Allocator>
-  typename ReentrantVector<T, Allocator>::ConstIterator & ReentrantVector<T, Allocator>::ConstIterator::operator-=(ssize_t n) noexcept
+  typename ReentrantVector<T, Allocator>::ConstIterator & ReentrantVector<T, Allocator>::ConstIterator::operator-=(difference_type n) noexcept
   {
     return operator+=(-n);
   }
@@ -277,6 +291,13 @@ namespace Radiant
   }
 
   template <typename T, typename Allocator>
+  const T * ReentrantVector<T, Allocator>::ConstIterator::operator->() const noexcept
+  {
+    assert(!m_currentItemDeleted);
+    return &(*m_vector)[m_idx];
+  }
+
+  template <typename T, typename Allocator>
   bool ReentrantVector<T, Allocator>::ConstIterator::wasCurrentItemDeleted() const noexcept
   {
     return m_currentItemDeleted;
@@ -291,6 +312,13 @@ namespace Radiant
   {
     assert(!this->m_currentItemDeleted);
     return const_cast<ReentrantVector<T, Allocator>&>(*this->m_vector)[this->m_idx];
+  }
+
+  template <typename T, typename Allocator>
+  T * ReentrantVector<T, Allocator>::Iterator::operator->() noexcept
+  {
+    assert(!this->m_currentItemDeleted);
+    return &const_cast<ReentrantVector<T, Allocator>&>(*this->m_vector)[this->m_idx];
   }
 
 
