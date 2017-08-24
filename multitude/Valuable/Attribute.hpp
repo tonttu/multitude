@@ -412,12 +412,6 @@ namespace Valuable
     /// Invokes the change valueChanged function of all listeners
     virtual void emitChange();
 
-    /// Invoked when animated value is set. Can dynamically be adjusted by setting
-    /// callback using "onAnimatedValueSet". Meant to use with attributes that are
-    /// created by composition from multiple attributes
-    void animatedValueSet(float dt);
-    void onAnimatedValueSet(const std::function<void(Attribute*, float)> &f);
-
   protected:
 
     /// Invokes the change valueDeleted function of all listeners
@@ -430,7 +424,6 @@ namespace Valuable
     Node * m_host;
     Attribute * m_ownerShorthand;
     QByteArray m_name;
-    std::function<void(Attribute*,float)> m_onAnimation;
 
     struct AttributeListener
     {
