@@ -103,14 +103,14 @@ namespace Radiant
     typedef std::vector<T, Allocator> Base;
     typedef Iterator iterator;
     typedef ConstIterator const_iterator;
-    using Base::reference;
-    using Base::const_reference;
-    using Base::size_type;
-    using Base::difference_type;
-    using Base::value_type;
-    using Base::allocator_type;
-    using Base::pointer;
-    using Base::const_pointer;
+    using typename Base::reference;
+    using typename Base::const_reference;
+    using typename Base::size_type;
+    using typename Base::difference_type;
+    using typename Base::value_type;
+    using typename Base::allocator_type;
+    using typename Base::pointer;
+    using typename Base::const_pointer;
 
     /// Construct/copy/destroy
     using Base::vector;
