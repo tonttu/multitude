@@ -621,6 +621,7 @@ namespace Valuable
           m_transition = TransitionManagerT<T>::create(this, params);
         }
       } else if (m_transition) {
+        setAnimatedValue(m_transition->target());
         m_transition->setNull();
         m_transition = nullptr;
       }
