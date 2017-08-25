@@ -6,7 +6,8 @@ HEADERS += TempFailureRetry.hpp \
     TraceStdFilter.hpp \
     TraceSeverityFilter.hpp \
     TraceQIODeviceFilter.hpp \
-    SystemCpuTime.hpp
+    SystemCpuTime.hpp \
+    ReentrantVector.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
