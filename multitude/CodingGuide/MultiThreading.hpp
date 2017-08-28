@@ -1,5 +1,5 @@
 /** Part ofthe coding guide for the Multitude library collection. */
-   
+
 /*! \page threadingguide Multithreading Guide
 
 Multithreading poses some caveats that one should take into account,
@@ -16,7 +16,7 @@ Memory management functions, such as malloc/free and new/delete need
 to use a global memory buffer, that is used for the allocations. The
 memory allocation routines need to synchronize their access to the
 area so that multipel threads are not working on the same area
-simultaneously. 
+simultaneously.
 
 In practice this means that there is global mutex that protects the
 memory area. If the application has several threads that use memory in
@@ -62,7 +62,7 @@ A practical example when there are performance problems like this is
 when one wants to use a quad-core Intel CPUs. The Intel Core Quad
 architecture is fact two dual-core CPUs side-by-side. When an
 application needs more than two cores its performance usually drops
-dramatically. 
+dramatically.
 
 A real-world example is found in the MoviePlayer application (that is
 part of Multitude). When decoding a simple test video (motion jpeg,

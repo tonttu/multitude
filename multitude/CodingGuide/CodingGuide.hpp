@@ -6,7 +6,7 @@
 
     The first line of the notice
  looks like the line above. This is
-    because then we can replace them atomatically. 
+    because then we can replace them atomatically.
 
     NOTE: Anything written into this space may get lost during the
     automatic update.
@@ -30,7 +30,7 @@
 
     A library or application of name Xyz has a header Xyz.hpp that
     contains overall documentation of the project.
-    
+
     This way there is standard place for this documentation and it
     always moves with the library. The documentation is above a
     namespace-block so that Doxygen can connect this documentation to
@@ -43,7 +43,7 @@
     same name (including capitalization).
 
     We avoid static/global variables as much as possible.
-    
+
     There are at most 80 characters per line. This way you can fit 2
     (or even 3) code-editors side by side :-)
 
@@ -61,7 +61,8 @@
     @author Tommi Ilmonen
 */
 
-namespace CodingGuide {
+namespace CodingGuide
+{
 
   /** There is no need to have any real definitions here, this file is
       only for documentation. For the sake of the example, we will put
@@ -70,7 +71,7 @@ namespace CodingGuide {
   void initCodingGuide();
 
   /// Global variables are prefixed with g_
-  int g_globalVariable;  
+  int g_globalVariable;
 }
 
 
