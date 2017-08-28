@@ -54,7 +54,7 @@ namespace Valuable
     }
 
     BezierTimingFunction(Nimble::Vector2f p1, Nimble::Vector2f p2)
-      : m_points{p1, p2} {}
+      : m_points{{p1, p2}} {}
 
   private:
     std::array<Nimble::Vector2f, 2> m_points;
