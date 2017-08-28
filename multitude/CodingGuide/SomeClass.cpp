@@ -6,7 +6,7 @@
 
     The first line of the notice looks like the line above. This is
     because then we can replace them atomatically. Anything written
-    into this space may get 
+    into this space may get
 
     Basic license crap is present in this secion.
 
@@ -29,9 +29,9 @@
 namespace CodingGuide {
 
   SomeClass::Item::Item(ProjectX::DreamTime * dreamTime)
-    : m_location(0, 0),
-      m_velocity(0, 0),
-      m_dreamTime(dreamTime)
+    : m_location(0, 0)
+    , m_velocity(0, 0)
+    , m_dreamTime(dreamTime)
   {}
 
   SomeClass::Item::~Item()
@@ -79,14 +79,14 @@ namespace CodingGuide {
     if(!m_items.size()) {
       /* Error reporting can be done with Radiant::error.
 
-	 The output functions (trace, error, fatal), are in principle
-	 thin wrappers around printf, with the extra feature that they
-	 prevent garbled output when many threads produce
-	 output. Likewise they add the newline at the end of the text
-	 so you do not need to type it manually. Finally we turn off
-	 all console output if we want at some later stage. */
+         The output functions (trace, error, fatal), are in principle
+         thin wrappers around printf, with the extra feature that they
+         prevent garbled output when many threads produce
+         output. Likewise they add the newline at the end of the text
+         so you do not need to type it manually. Finally we turn off
+         all console output if we want at some later stage. */
       if(s_debug)
-	Radiant::error("%s # No items", fname);
+        Radiant::error("%s # No items", fname);
       return 0;
     }
 
@@ -99,15 +99,15 @@ namespace CodingGuide {
 
       float dist = (location - tmp->location()).length();
       if(bestDist > dist) {
-	bestDist = dist;
-	res = tmp;
+        bestDist = dist;
+        res = tmp;
       }
     }
 
     /* If you want to do debug output this is the usual way: */
     if(s_debug)
       Radiant::trace("%s # Got %p at [%f %f]", fname, res,
-		     res->location().x, res->location().y);
+                     res->location().x, res->location().y);
 
     return res;
   }
@@ -118,14 +118,14 @@ namespace CodingGuide {
        feels like it). Usually assert is a bit too aggressive -
        especially in libraries you do not the application to die, just
        because there was bad argument.  */
-    assert(item.ptr() != 0);
+    assert(item.ptr() != nullptr);
 
     m_items.push_back(item);
   }
 
   void SomeClass::addItem(std::shared_ptr<Item> &, bool tofront)
   {
-    assert(item.ptr() != 0);
+    assert(item.ptr() != nullptr);
 
     if(tofront)
       m_items.push_front(item);

@@ -6,7 +6,7 @@
 
     The first line of the notice looks like the line above. This is
     because then we can replace them atomatically. Anything written
-    into this space may get 
+    into this space may get
 
     Basic license crap is present in this secion.
 
@@ -34,12 +34,13 @@
 /* Sometimes we cannot keep this include order, in those cases it is
    good to document, why there is a non-standard order. */
 
-namespace CodingGuide {
+namespace CodingGuide
+{
 
   /* Here we introduce an anonymous pointer that helps us limit the
      include-chains (include the relevant declaration only in the cpp
      file.*/
-  
+
   class DreamTime;
 
   /// Example class
@@ -47,7 +48,7 @@ namespace CodingGuide {
   class SomeClass
   {
   public:
-    
+
     /* Friend class come first. We try to avoid "friends", but
        sometimes there really is no choice. */
     friend class FooBar1;
@@ -59,24 +60,24 @@ namespace CodingGuide {
     public:
       Item(DreamTime *);
       ~Item();
-      
+
       /* To access members, we write usually one-liners. */
       const Nimble::Vector2f & location() { return m_location; }
       const Nimble::Vector2f & velocity() { return m_velocity; }
 
       /** If you expose a typedef in the API, use class-like naming convention */
       typedef std::list<Nimble::Vector2> VectorList;
-      
+
     private:
       /* Member variables begin with "m_". */
-      
+
       /** Location is named "location", not "position", "loc" or
-	  anything else.
-	 
-	  Also note that we resist the temptation to put "using
-	  Nimble" inside the header. This way another programmer (and
-	  Doxygen!!) can more easily deduce where the data types come
-	  from. In the source (i.e. cpp) files we can be more relaxed.
+          anything else.
+
+          Also note that we resist the temptation to put "using
+          Nimble" inside the header. This way another programmer (and
+          Doxygen!!) can more easily deduce where the data types come
+          from. In the source (i.e. cpp) files we can be more relaxed.
       */
       Nimble::Vector2f m_location;
       /* Velocity is "velocity" and nothing else. */
@@ -84,9 +85,9 @@ namespace CodingGuide {
 
       DreamTime * m_dreamTime;
     };
-    
+
     /** Class-specific constants are easily presented as enums (where
-	possible). */
+        possible). */
     enum Style {
       /// The enum names are fully capitalized
       STYLE_SIMPLE,
@@ -95,18 +96,18 @@ namespace CodingGuide {
 
     /** Typedefs for short-hand notation come here.
 
-	Below is a handy way to avoid writing the long typenames (for
-	iterators etc) in the member functions. The use of
-	std::shared_ptr etc reduce the need for manual resource
-	deallocation - which is the most dangerous part of C++. 
-	
-	BTW: We avoid the GNU-style typedef mania (where every single
-	type is typedeffed). Instead, we use types as they come unless
-	there is some reason not to. Remember that "stdint.h" has a
-	number of useful mappings when you need to specify some
-	bit-depth for a number etc.
+        Below is a handy way to avoid writing the long typenames (for
+        iterators etc) in the member functions. The use of
+        std::shared_ptr etc reduce the need for manual resource
+        deallocation - which is the most dangerous part of C++.
+
+        BTW: We avoid the GNU-style typedef mania (where every single
+        type is typedeffed). Instead, we use types as they come unless
+        there is some reason not to. Remember that "stdint.h" has a
+        number of useful mappings when you need to specify some
+        bit-depth for a number etc.
     */
-    typedef std::list<std::shared_ptr<Item> > container;
+    typedef std::list<std::shared_ptr<Item>> container;
     typedef container::iterator iterator;
 
     /* Then the constructors and destructor. */
@@ -115,14 +116,14 @@ namespace CodingGuide {
     ~SomeClass();
 
     /* Then come all kinds of member functions. */
-    
+
     /** Here is a typical function. By returning a pointer we imply
-	that the return value may be zero (aka NULL, but we never write
+        that the return value may be zero (aka NULL, but we never write
         "NULL").
 
-	BTW: We could return also std::shared_ptr<Item> which would
-	better support reference counting (if the caller would use
-	that information).
+        BTW: We could return also std::shared_ptr<Item> which would
+        better support reference counting (if the caller would use
+        that information).
 
         Q: Why is the argument type not "const Nimble::Vector2 &",
         that would be faster or not ?
@@ -137,7 +138,7 @@ namespace CodingGuide {
         are better handled with this aproach.
      */
     Item * findNearest(Nimble::Vector2f location);
-    
+
     /// Ad an item to the internal storage.
     /* Here we use the std::shared_ptr so that we can share the object
        counters between this object, and other objects.  */
@@ -145,7 +146,7 @@ namespace CodingGuide {
     /* We use function overloading. This is may be not the most
        relevant example, btu still... */
     void addItem(std::shared_ptr<Item> &, bool tofront);
-    
+
     /* After the public stuff, comes the section of protected
        functions and after that the private members. The words
        "public", "protected" and "private" should be present only once
