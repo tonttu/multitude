@@ -385,6 +385,33 @@ namespace Valuable
                    attribute->name().data(), m_name.data());
   }
 
+  static Valuable::Node *findDescendantNodeInternal(Valuable::Node &n, const QByteArray& name,
+                                                    std::set<Valuable::Node::Uuid>& visited)
+  {
+    if(visited.find(n.id()) != visited.end())
+      return nullptr;
+    else if (n.name() == name)
+      return dynamic_cast<Valuable::Node*>(&n);
+    else {
+      visited.insert(n.id());
+      const Valuable::Node::container& attributes = n.attributes();
+      for(const auto& p : attributes) {
+        auto node = dynamic_cast<Valuable::Node*>(p.second);
+        if(!node)
+          continue;
+        auto res = findDescendantNodeInternal(*node, name, visited);
+        if(res) return res;
+      }
+      return nullptr;
+    }
+  }
+
+  Node *Node::findDescendantNode(const QByteArray& name)
+  {
+    std::set<Valuable::Node::Uuid> tmp;
+    return findDescendantNodeInternal(*this, name, tmp);
+  }
+
 #ifdef CORNERSTONE_JS
 
   bool Node::setValue(const QByteArray & name, v8::Handle<v8::Value> v)
