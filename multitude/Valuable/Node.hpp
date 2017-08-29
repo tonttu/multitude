@@ -137,6 +137,20 @@ namespace Valuable
     /// Removes an Attribute from the list of attribute objects.
     void removeAttribute(Attribute * const attribute, bool emitChange = true);
 
+    /**
+     * @brief Find the first descendant node with the given name, recursively
+     *
+     * This node is also included in the search.
+     *
+     * The traversal order of the hierarchy is not guaranteed. If there are
+     * multiple matches, random one will be returned. To avoid this, you
+     * should guarantee that the namesof the nodes in the hierarchy are unique.
+     *
+     * @param name The name of the object
+     * @return Node with matching name, or null
+     */
+    Valuable::Node *findDescendantNode(const QByteArray &name);
+
     /// Clears all Attribute values of the given layer
     /// @param layer layer to clear
     void clearValues(Layer layer);
