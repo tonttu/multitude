@@ -25,7 +25,7 @@ namespace Radiant
     };
 
     /// Construct a new TouchEvent
-    TouchEvent(int id, Type type, Nimble::Vector2f location)
+    TouchEvent(int id = -1, Type type = TOUCH_BEGIN, Nimble::Vector2f location = {0, 0})
       : m_id(id)
       , m_type(type)
       , m_location(location)

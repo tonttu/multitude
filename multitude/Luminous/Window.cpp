@@ -284,6 +284,11 @@ namespace Luminous
           }
         }
         else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
+          // We don't care about hover events
+          if (msg->message == WM_POINTERUPDATE &&
+              (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+            return true;
+
           Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
                                touchInfo.pointerInfo.ptPixelLocation.y);
           Nimble::Vector2f himetric(touchInfo.pointerInfo.ptHimetricLocation.x,
