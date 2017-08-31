@@ -26,6 +26,11 @@ namespace Radiant
     *m_d = *e.m_d;
   }
 
+  TouchEvent::TouchEvent(TouchEvent && e)
+    : m_d(std::move(e.m_d))
+  {
+  }
+
   TouchEvent::TouchEvent(const QTouchEvent & e)
     : m_d(new D())
   {
@@ -41,9 +46,15 @@ namespace Radiant
       Radiant::error("TouchEvent::TouchEvent(const QTouchEvent & e) # Unknown type");
   }
 
+  TouchEvent::TouchEvent(TouchEvent::Type type, const TouchEvent::TouchPointList & points)
+    : m_d(new D())
+  {
+    m_d->m_type = type;
+    m_d->m_points = points;
+  }
+
   TouchEvent::~TouchEvent()
   {
-    delete m_d;
   }
 
   const TouchEvent::TouchPointList &TouchEvent::touchPoints() const

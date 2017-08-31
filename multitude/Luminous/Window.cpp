@@ -11,6 +11,7 @@
 #include "Window.hpp"
 
 #include <Radiant/PenEvent.hpp>
+#include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QOpenGLContext>
@@ -326,23 +327,22 @@ namespace Luminous
           loc.x -= position().x();
           loc.y -= position().y();
           touchPoint.setPos(QPoint(loc.x, loc.y));
-          QEvent::Type type;
+          Radiant::TouchEvent::Type type;
 
           if (msg->message == WM_POINTERDOWN) {
             touchPoint.setState(Qt::TouchPointPressed);
-            type = QEvent::TouchBegin;
+            type = Radiant::TouchEvent::TOUCH_BEGIN;
           } else if (msg->message == WM_POINTERUP) {
             touchPoint.setState(Qt::TouchPointReleased);
-            type = QEvent::TouchEnd;
+            type = Radiant::TouchEvent::TOUCH_END;
           } else {
             touchPoint.setState(Qt::TouchPointMoved);
-            type = QEvent::TouchUpdate;
+            type = Radiant::TouchEvent::TOUCH_UPDATE;
           }
 
-          QTouchEvent event(type, Q_NULLPTR, Qt::NoModifier, Qt::TouchPointStates(), QList<QTouchEvent::TouchPoint>({touchPoint}));
-
           if (m_eventHook) {
-            m_eventHook->touchEvent(&event);
+            Radiant::TouchEvent event(type, QList<QTouchEvent::TouchPoint>({touchPoint}));
+            m_eventHook->touchEvent(event);
             return true;
           }
         }
@@ -377,8 +377,10 @@ namespace Luminous
 
   void Window::touchEvent(QTouchEvent* ev)
   {
-    if(m_eventHook)
-      m_eventHook->touchEvent(ev);
+    if(m_eventHook) {
+      Radiant::TouchEvent touch(*ev);
+      m_eventHook->touchEvent(touch);
+    }
   }
 
   void Window::wheelEvent(QWheelEvent* ev)

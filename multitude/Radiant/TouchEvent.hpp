@@ -5,6 +5,8 @@
 
 #include <QTouchEvent>
 
+#include <memory>
+
 namespace Radiant
 {
   /** Window system touch event. These are not Cornerstone touch events,
@@ -30,9 +32,14 @@ namespace Radiant
     /// Copy constructor
     /// @param te TouchEvent to copy
     TouchEvent(const TouchEvent &te);
+    /// Move constructor
+    /// @param te TouchEvent to move, will be invalid after moving
+    TouchEvent(TouchEvent && te);
     /// Construct TouchEvent from QTouchEvent
     /// @param qte TouchEvent to duplicate
     TouchEvent(const QTouchEvent &qte);
+    /// Construct a new TouchEvent
+    TouchEvent(Type type, const TouchPointList & list);
 
     /// Destructor
     virtual ~TouchEvent();
@@ -48,7 +55,7 @@ namespace Radiant
 
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 
 }
