@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 
-#include <QTouchEvent>
+#include <Nimble/Vector2.hpp>
 
 #include <memory>
 
@@ -24,38 +24,32 @@ namespace Radiant
       TOUCH_END ///< End of touch
     };
 
-    /// List of touchpoints
-    typedef QList<QTouchEvent::TouchPoint> TouchPointList;
+    /// Construct a new TouchEvent
+    TouchEvent(int id, Type type, Nimble::Vector2f location)
+      : m_id(id)
+      , m_type(type)
+      , m_location(location)
+    {}
 
-    /// Constructor. Type of the event is set as @ref TOUCH_BEGIN
-    TouchEvent();
     /// Copy constructor
     /// @param te TouchEvent to copy
-    TouchEvent(const TouchEvent &te);
-    /// Move constructor
-    /// @param te TouchEvent to move, will be invalid after moving
-    TouchEvent(TouchEvent && te);
-    /// Construct TouchEvent from QTouchEvent
-    /// @param qte TouchEvent to duplicate
-    TouchEvent(const QTouchEvent &qte);
-    /// Construct a new TouchEvent
-    TouchEvent(Type type, const TouchPointList & list);
+    TouchEvent(const TouchEvent & te) = default;
 
-    /// Destructor
-    virtual ~TouchEvent();
+    /// Touch event id
+    int id() const { return m_id; }
 
-    /// Single event can contain multiple touch points attached to it.
-    /// @return The list of touch points contained in the touch event.
-    const TouchPointList & touchPoints() const;
-    /// @copydoc touchPoints
-    TouchPointList & touchPoints();
     /// Returns the event type.
     /// @return Type of the event.
-    Type type() const;
+    Type type() const { return m_type; }
+
+    /// Touch point location in desktop coordinates
+    Nimble::Vector2f location() const { return m_location; }
+    void setLocation(Nimble::Vector2f location) { m_location = location; }
 
   private:
-    class D;
-    std::unique_ptr<D> m_d;
+    int m_id;
+    Type m_type;
+    Nimble::Vector2f m_location;
   };
 
 }

@@ -284,8 +284,6 @@ namespace Luminous
           }
         }
         else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
-          QTouchEvent::TouchPoint touchPoint;
-          touchPoint.setId(id);
           Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
                                touchInfo.pointerInfo.ptPixelLocation.y);
           Nimble::Vector2f himetric(touchInfo.pointerInfo.ptHimetricLocation.x,
@@ -326,22 +324,16 @@ namespace Luminous
           // mapFromGlobal uses only ints, but in our case this is the same thing
           loc.x -= position().x();
           loc.y -= position().y();
-          touchPoint.setPos(QPoint(loc.x, loc.y));
-          Radiant::TouchEvent::Type type;
+          Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
 
           if (msg->message == WM_POINTERDOWN) {
-            touchPoint.setState(Qt::TouchPointPressed);
             type = Radiant::TouchEvent::TOUCH_BEGIN;
           } else if (msg->message == WM_POINTERUP) {
-            touchPoint.setState(Qt::TouchPointReleased);
             type = Radiant::TouchEvent::TOUCH_END;
-          } else {
-            touchPoint.setState(Qt::TouchPointMoved);
-            type = Radiant::TouchEvent::TOUCH_UPDATE;
           }
 
           if (m_eventHook) {
-            Radiant::TouchEvent event(type, QList<QTouchEvent::TouchPoint>({touchPoint}));
+            Radiant::TouchEvent event(id, type, loc);
             m_eventHook->touchEvent(event);
             return true;
           }
@@ -378,8 +370,15 @@ namespace Luminous
   void Window::touchEvent(QTouchEvent* ev)
   {
     if(m_eventHook) {
-      Radiant::TouchEvent touch(*ev);
-      m_eventHook->touchEvent(touch);
+      for (auto & p: ev->touchPoints()) {
+        Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
+        if (p.state() == Qt::TouchPointPressed)
+          type = Radiant::TouchEvent::TOUCH_BEGIN;
+        else if (p.state() == Qt::TouchPointReleased)
+          type = Radiant::TouchEvent::TOUCH_END;
+        Radiant::TouchEvent touch(p.id(), type, Nimble::Vector2f(p.pos().x(), p.pos().y()));
+        m_eventHook->touchEvent(touch);
+      }
     }
   }
 
