@@ -103,6 +103,12 @@ namespace Luminous
   {
     if(m_eventHook)
       m_eventHook->exposeEvent(ev);
+#ifdef RADIANT_WINDOWS
+    // Disable native touch feedback
+    BOOL value = false;
+    for (int i = FEEDBACK_TOUCH_CONTACTVISUALIZATION; i <= FEEDBACK_GESTURE_PRESSANDTAP; ++i)
+      SetWindowFeedbackSetting((HWND)winId(), FEEDBACK_TYPE(i), 0, sizeof(BOOL), &value);
+#endif
   }
 
   void Window::focusInEvent(QFocusEvent* ev)
