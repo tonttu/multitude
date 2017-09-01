@@ -100,6 +100,9 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
+    Nimble::Vector2f rawLocation() const { return m_rawLocation; }
+    void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
+
     /// Unique ID for the source device. This can be used to differentiate
     /// between multiple pens, if the hardware supports that
     uint64_t sourceDevice() const { return m_sourceDevice; }
@@ -107,6 +110,7 @@ namespace Radiant
 
   private:
     Nimble::Vector2f m_location = {0, 0};
+    Nimble::Vector2f m_rawLocation = {0, 0};
     Type m_type = TYPE_NONE;
     Flags m_flags = FLAG_NONE;
     uint32_t m_id = 0;

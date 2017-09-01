@@ -14,7 +14,7 @@ namespace Radiant
 
   @ref MultiWidgets::Application listens to these events and uses them.
   */
-  class RADIANT_API TouchEvent
+  class TouchEvent
   {
   public:
     /// Possible touch event types
@@ -46,10 +46,19 @@ namespace Radiant
     Nimble::Vector2f location() const { return m_location; }
     void setLocation(Nimble::Vector2f location) { m_location = location; }
 
+    Nimble::Vector2f rawLocation() const { return m_rawLocation; }
+    void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
+
+    /// Unique ID for the source device.
+    uint64_t sourceDevice() const { return m_sourceDevice; }
+    void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
+
   private:
     int m_id;
     Type m_type;
     Nimble::Vector2f m_location;
+    Nimble::Vector2f m_rawLocation{-1, -1};
+    uint64_t m_sourceDevice = 0;
   };
 
 }

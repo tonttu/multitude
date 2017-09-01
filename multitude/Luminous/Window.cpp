@@ -184,6 +184,11 @@ namespace Luminous
         POINTER_TOUCH_INFO touchInfo;
         GetPointerType(id, &type);
         if (type==PT_PEN && GetPointerPenInfo(id, &info)) {
+          // We don't care about hover events
+          if (msg->message == WM_POINTERUPDATE &&
+              (info.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+            return true;
+
           Radiant::PenEvent te;
           te.setId(id);
           Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
@@ -284,7 +289,6 @@ namespace Luminous
           }
         }
         else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
-          // We don't care about hover events
           if (msg->message == WM_POINTERUPDATE &&
               (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
             return true;
@@ -339,6 +343,8 @@ namespace Luminous
 
           if (m_eventHook) {
             Radiant::TouchEvent event(id, type, loc);
+            event.setRawLocation(himetric);
+            event.setSourceDevice(uint64_t(touchInfo.pointerInfo.sourceDevice));
             m_eventHook->touchEvent(event);
             return true;
           }
