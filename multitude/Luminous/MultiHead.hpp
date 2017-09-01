@@ -62,6 +62,15 @@ namespace Luminous {
       bool isInside = false;
     };
 
+    /// Result of coordinate system transformation, see MultiHead::desktopToGraphics
+    struct GraphicsPoint
+    {
+      /// Location in graphics coordinates
+      Nimble::Vector2f location{0, 0};
+      /// True if the query was inside of any of the windows
+      bool isInside = false;
+    };
+
   public:
 
     class Window;
@@ -293,6 +302,9 @@ namespace Luminous {
       /// @copydoc windowToGraphics
       LUMINOUS_API QPointF windowToGraphics(QPointF loc, bool & convOk) const;
 
+      /// Converts desktop coordinate system to window coordinate system and calls windowToGraphics
+      LUMINOUS_API Nimble::Vector2f desktopToGraphics(Nimble::Vector2f loc, bool & convOk) const;
+
       /// Should the window be frameless
       bool frameless() const { return m_frameless; }
       void setFrameless(bool frameless) { m_frameless = frameless; }
@@ -494,6 +506,9 @@ namespace Luminous {
     /// finds the first of them.
     /// @sa Area::GraphicsToWindow
     DesktopPoint graphicsToDesktop(Nimble::Vector2f loc) const;
+
+    /// Converts operating system desktop coordinates to graphics coordinates.
+    GraphicsPoint desktopToGraphics(Nimble::Vector2f loc, int screenNumber = -1) const;
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);

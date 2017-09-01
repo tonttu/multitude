@@ -69,7 +69,7 @@ namespace Radiant
     uint32_t id() const { return m_id; }
     void setId(uint32_t id) { m_id = id; }
 
-    /// Get location of the event
+    /// Get location of the event in desktop coordinate system
     /// @return Location os event
     const Nimble::Vector2f & location() const { return m_location; }
     /// Sets event's location
@@ -100,11 +100,13 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
+    /// Raw event location in device coordinates. In windows this is in himetric units
     Nimble::Vector2f rawLocation() const { return m_rawLocation; }
     void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
 
     /// Unique ID for the source device. This can be used to differentiate
-    /// between multiple pens, if the hardware supports that
+    /// between multiple pens, if the hardware supports that. This can be
+    /// typecasted to device HWND in Windows.
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 

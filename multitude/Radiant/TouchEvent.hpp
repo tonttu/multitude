@@ -46,10 +46,12 @@ namespace Radiant
     Nimble::Vector2f location() const { return m_location; }
     void setLocation(Nimble::Vector2f location) { m_location = location; }
 
+    /// Raw event location in device coordinates. In windows this is in himetric units
     Nimble::Vector2f rawLocation() const { return m_rawLocation; }
     void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
 
-    /// Unique ID for the source device.
+    /// Unique ID for the source device. This can be typecasted to device
+    /// HWND in Windows.
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 

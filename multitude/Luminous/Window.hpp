@@ -97,8 +97,6 @@ namespace Luminous
     QScreen* m_screen;
     QOpenGLContext* m_openGLContext;
     WindowEventHook* m_eventHook;
-    Nimble::Vector2f m_himetricFactor{0, 0};
-    Nimble::Vector2i m_himetricCalibrationMax{0, 0};
 
     bool m_setKeyboardFocusOnClick = false;
   };
