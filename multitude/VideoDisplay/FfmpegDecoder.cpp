@@ -592,8 +592,11 @@ namespace VideoDisplay
                          errorMsg.data(), m_av.videoStreamIndex);
         }
       } else {
-        m_av.videoCodecContext = m_av.formatContext->streams[m_av.videoStreamIndex]->codec;
+        m_av.videoCodecContext = avcodec_alloc_context3(nullptr);
         assert(m_av.videoCodecContext);
+        avcodec_parameters_to_context(m_av.videoCodecContext, m_av.formatContext->streams[m_av.videoStreamIndex]->codecpar);
+        av_codec_set_pkt_timebase(m_av.videoCodecContext, m_av.formatContext->streams[m_av.videoStreamIndex]->time_base);
+        m_av.videoCodecContext->codec_id = m_av.videoCodec->id;
         m_av.videoCodecContext->opaque = this;
         m_av.videoCodecContext->refcounted_frames = 1;
         if (m_options.videoDecodingThreads() <= 0) {
@@ -621,8 +624,11 @@ namespace VideoDisplay
                          errorMsg.data(), m_av.audioStreamIndex);
         }
       } else {
-        m_av.audioCodecContext = m_av.formatContext->streams[m_av.audioStreamIndex]->codec;
+        m_av.audioCodecContext = avcodec_alloc_context3(nullptr);
         assert(m_av.audioCodecContext);
+        avcodec_parameters_to_context(m_av.audioCodecContext, m_av.formatContext->streams[m_av.audioStreamIndex]->codecpar);
+        av_codec_set_pkt_timebase(m_av.audioCodecContext, m_av.formatContext->streams[m_av.audioStreamIndex]->time_base);
+        m_av.audioCodecContext->codec_id = m_av.audioCodec->id;
         m_av.audioCodecContext->opaque = this;
         m_av.audioCodecContext->thread_count = 1;
         m_av.audioCodecContext->refcounted_frames = 1;
@@ -855,14 +861,10 @@ namespace VideoDisplay
       avfilter_graph_free(&m_audioFilter.graph);
 
     // Close the codecs
-    if (m_av.audioCodecContext) {
-      avcodec_close(m_av.audioCodecContext);
-      m_av.audioCodecContext = nullptr;
-    }
-    if (m_av.videoCodecContext) {
-      avcodec_close(m_av.videoCodecContext);
-      m_av.videoCodecContext = nullptr;
-    }
+    if (m_av.audioCodecContext)
+      avcodec_free_context(&m_av.audioCodecContext);
+    if (m_av.videoCodecContext)
+      avcodec_free_context(&m_av.videoCodecContext);
 
     // Close the video file
     if(m_av.formatContext)
