@@ -100,10 +100,6 @@ static QByteArray keyName(DEVPROPKEY key)
   DEVPKEY_TEST(DEVPKEY_Device_FirmwareDate);
   DEVPKEY_TEST(DEVPKEY_Device_FirmwareVersion);
   DEVPKEY_TEST(DEVPKEY_Device_FirmwareRevision);
-  DEVPKEY_TEST(DEVPKEY_Device_DependencyProviders);
-  DEVPKEY_TEST(DEVPKEY_Device_DependencyDependents);
-  DEVPKEY_TEST(DEVPKEY_Device_SoftRestartSupported);
-  DEVPKEY_TEST(DEVPKEY_Device_ExtendedAddress);
   DEVPKEY_TEST(DEVPKEY_Device_SessionId);
   DEVPKEY_TEST(DEVPKEY_Device_InstallDate);
   DEVPKEY_TEST(DEVPKEY_Device_FirstInstallDate);
@@ -159,7 +155,6 @@ static QByteArray keyName(DEVPROPKEY key)
   DEVPKEY_TEST(DEVPKEY_DeviceInterface_ClassGuid);
   DEVPKEY_TEST(DEVPKEY_DeviceInterface_ReferenceString);
   DEVPKEY_TEST(DEVPKEY_DeviceInterface_Restricted);
-  DEVPKEY_TEST(DEVPKEY_DeviceInterface_UnrestrictedAppCapabilities);
   DEVPKEY_TEST(DEVPKEY_DeviceInterfaceClass_DefaultInterface);
   DEVPKEY_TEST(DEVPKEY_DeviceInterfaceClass_Name);
   DEVPKEY_TEST(DEVPKEY_DeviceContainer_Address);
@@ -212,7 +207,15 @@ static QByteArray keyName(DEVPROPKEY key)
   DEVPKEY_TEST(DEVPKEY_DeviceContainer_ModelName);
   DEVPKEY_TEST(DEVPKEY_DeviceContainer_ModelNumber);
   DEVPKEY_TEST(DEVPKEY_DeviceContainer_InstallInProgress);
+  // These require newer windows sdk
+#if 0
+  DEVPKEY_TEST(DEVPKEY_Device_DependencyProviders);
+  DEVPKEY_TEST(DEVPKEY_Device_DependencyDependents);
+  DEVPKEY_TEST(DEVPKEY_Device_SoftRestartSupported);
+  DEVPKEY_TEST(DEVPKEY_Device_ExtendedAddress);
+  DEVPKEY_TEST(DEVPKEY_DeviceInterface_UnrestrictedAppCapabilities);
   DEVPKEY_TEST(DEVPKEY_DevQuery_ObjectType);
+#endif
   return "Unknown DEVPKEY";
 }
 

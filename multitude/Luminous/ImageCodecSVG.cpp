@@ -54,7 +54,7 @@ namespace Luminous
     do {
       token = reader.readNext();
       if (token == QXmlStreamReader::StartElement) {
-        if (reader.name().compare("svg", Qt::CaseInsensitive) == 0) {
+        if (reader.name().compare(QByteArray("svg"), Qt::CaseInsensitive) == 0) {
           seems_valid = true;
           break;
         }
