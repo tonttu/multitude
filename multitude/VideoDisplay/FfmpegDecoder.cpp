@@ -789,21 +789,6 @@ namespace VideoDisplay
       return false;
     }
 
-    if (!m_av.seekByBytes && m_av.seekingSupported && m_av.videoCodec && m_av.audioCodec) {
-      const int64_t start = m_av.formatContext->streams[m_av.audioStreamIndex]->start_time;
-      if (start != int64_t(AV_NOPTS_VALUE)) {
-        int err = avformat_seek_file(m_av.formatContext, m_av.audioStreamIndex,
-                                     start, start, start, 0);
-        if (err < 0) {
-          Radiant::error("%s Broken audio track, disabling it", errorMsg.data());
-          avformat_seek_file(m_av.formatContext, -1, 0, 0, 0, 0);
-          avcodec_close(m_av.audioCodecContext);
-          m_av.audioCodecContext = nullptr;
-          m_av.audioCodec = nullptr;
-        }
-      }
-    }
-
     if(m_av.audioCodec) {
       int channelLayout = av_get_channel_layout(m_options.channelLayout());
       AudioTransferPtr audioTransfer = std::make_shared<AudioTransfer>(m_host, av_get_channel_layout_nb_channels(channelLayout));
