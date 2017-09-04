@@ -612,7 +612,7 @@ namespace VideoDisplay
 
     if(m_options.isAudioEnabled()) {
       m_av.audioStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_AUDIO,
-                                                  m_options.audioStreamIndex(), -1,
+                                                  m_options.audioStreamIndex(), m_av.videoStreamIndex,
                                                   &m_av.audioCodec, 0);
       if(m_av.audioStreamIndex < 0) {
         if(m_av.audioStreamIndex == AVERROR_STREAM_NOT_FOUND) {
