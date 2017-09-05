@@ -18,8 +18,9 @@ namespace VideoDisplay
   /// @event[out] resolution-changed(QByteArray device, Nimble::Vector2i resolution)
   class VIDEODISPLAY_API VideoCaptureMonitor : public Valuable::Node, public Radiant::Task
   {
+    DECLARE_SINGLETON(VideoCaptureMonitor);
+
   public:
-    VideoCaptureMonitor();
     ~VideoCaptureMonitor();
 
     /// Polling interval in seconds
@@ -39,6 +40,7 @@ namespace VideoDisplay
     void removeSource(const QString& source);
 
   private:
+    VideoCaptureMonitor();
     virtual void doTask() override;
 
     class D;
