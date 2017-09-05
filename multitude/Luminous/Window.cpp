@@ -10,6 +10,7 @@
 
 #include "Window.hpp"
 
+#include <Radiant/Mutex.hpp>
 #include <Radiant/PenEvent.hpp>
 #include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
@@ -19,6 +20,10 @@
 #include <QTouchEvent>
 
 #include <cassert>
+
+#ifdef RADIANT_WINDOWS
+static int64_t performanceCounterFrequency = 0;
+#endif
 
 namespace Luminous
 {
@@ -35,6 +40,14 @@ namespace Luminous
     setSurfaceType(QSurface::OpenGLSurface);
 
     m_openGLContext->setScreen(m_screen);
+
+#ifdef RADIANT_WINDOWS
+    MULTI_ONCE {
+      LARGE_INTEGER tmp;
+      if (QueryPerformanceFrequency(&tmp))
+        performanceCounterFrequency = tmp.QuadPart;
+    }
+#endif
   }
 
   Window::~Window()
@@ -190,91 +203,126 @@ namespace Luminous
         POINTER_TOUCH_INFO touchInfo;
         GetPointerType(id, &type);
         if (type==PT_PEN && GetPointerPenInfo(id, &info)) {
-          // We don't care about hover events
-          if (msg->message == WM_POINTERUPDATE &&
-              (info.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
-            return true;
-
-          Radiant::PenEvent te;
-          te.setId(id);
-          Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
-                               info.pointerInfo.ptPixelLocation.y);
-          Nimble::Vector2f himetric(info.pointerInfo.ptHimetricLocationRaw.x,
-                                    info.pointerInfo.ptHimetricLocationRaw.y);
-
-          te.setLocation(loc);
-
-          Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
-          if (info.penMask & PEN_MASK_PRESSURE) {
-            flags |= Radiant::PenEvent::FLAG_PRESSURE;
-            te.setPressure(info.pressure / 1024.f);
-          }
-          if (info.penMask & PEN_MASK_ROTATION) {
-            flags |= Radiant::PenEvent::FLAG_ROTATION;
-            te.setRotation(Nimble::Math::degToRad(info.rotation));
-          }
-          Nimble::Vector2f tilt{0, 0};
-          if (info.penMask & PEN_MASK_TILT_X) {
-            flags |= Radiant::PenEvent::FLAG_TILT_X;
-            tilt.x = Nimble::Math::degToRad(info.tiltX);
-          }
-          if (info.penMask & PEN_MASK_TILT_Y) {
-            flags |= Radiant::PenEvent::FLAG_TILT_Y;
-            tilt.y = Nimble::Math::degToRad(info.tiltY);
-          }
-          if (info.penFlags & PEN_FLAG_BARREL) {
-            flags |= Radiant::PenEvent::FLAG_BARREL;
-          }
-          if (info.penFlags & PEN_FLAG_INVERTED) {
-            flags |= Radiant::PenEvent::FLAG_INVERTED;
-          }
-          if (info.penFlags & PEN_FLAG_ERASER) {
-            flags |= Radiant::PenEvent::FLAG_ERASER;
-          }
-          te.setTilt(tilt);
-          te.setFlags(flags);
-
-          if (msg->message == WM_POINTERDOWN) {
-            te.setType(Radiant::PenEvent::TYPE_DOWN);
-          } else if (msg->message == WM_POINTERUP) {
-            te.setType(Radiant::PenEvent::TYPE_UP);
+          m_pointerInfo.resize(info.pointerInfo.historyCount);
+          if (info.pointerInfo.historyCount > 1) {
+            uint32_t count = info.pointerInfo.historyCount;
+            if (GetPointerInfoHistory(id, &count, m_pointerInfo.data())) {
+              m_pointerInfo.resize(count);
+            } else {
+              m_pointerInfo.resize(1);
+              m_pointerInfo[0] = info.pointerInfo;
+            }
           } else {
-            te.setType(Radiant::PenEvent::TYPE_UPDATE);
+            m_pointerInfo[0] = info.pointerInfo;
           }
 
-          te.setSourceDevice(uint64_t(info.pointerInfo.sourceDevice));
-          te.setRawLocation(himetric);
+          for (int i = (int)m_pointerInfo.size() - 1; i >= 0; --i) {
+            POINTER_INFO & ptr = m_pointerInfo[i];
 
-          if (m_eventHook) {
-            m_eventHook->penEvent(te);
-            return true;
+            // We don't care about hover events
+            if (msg->message == WM_POINTERUPDATE &&
+                (ptr.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+              return true;
+
+            Radiant::PenEvent te;
+            te.setId(id);
+            Nimble::Vector2f loc(ptr.ptPixelLocation.x,
+                                 ptr.ptPixelLocation.y);
+            Nimble::Vector2f himetric(ptr.ptHimetricLocationRaw.x,
+                                      ptr.ptHimetricLocationRaw.y);
+
+            te.setLocation(loc);
+
+            Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
+            if (info.penMask & PEN_MASK_PRESSURE) {
+              flags |= Radiant::PenEvent::FLAG_PRESSURE;
+              te.setPressure(info.pressure / 1024.f);
+            }
+            if (info.penMask & PEN_MASK_ROTATION) {
+              flags |= Radiant::PenEvent::FLAG_ROTATION;
+              te.setRotation(Nimble::Math::degToRad(info.rotation));
+            }
+            Nimble::Vector2f tilt{0, 0};
+            if (info.penMask & PEN_MASK_TILT_X) {
+              flags |= Radiant::PenEvent::FLAG_TILT_X;
+              tilt.x = Nimble::Math::degToRad(info.tiltX);
+            }
+            if (info.penMask & PEN_MASK_TILT_Y) {
+              flags |= Radiant::PenEvent::FLAG_TILT_Y;
+              tilt.y = Nimble::Math::degToRad(info.tiltY);
+            }
+            if (info.penFlags & PEN_FLAG_BARREL) {
+              flags |= Radiant::PenEvent::FLAG_BARREL;
+            }
+            if (info.penFlags & PEN_FLAG_INVERTED) {
+              flags |= Radiant::PenEvent::FLAG_INVERTED;
+            }
+            if (info.penFlags & PEN_FLAG_ERASER) {
+              flags |= Radiant::PenEvent::FLAG_ERASER;
+            }
+            te.setTilt(tilt);
+            te.setFlags(flags);
+
+            if (msg->message == WM_POINTERDOWN) {
+              te.setType(Radiant::PenEvent::TYPE_DOWN);
+            } else if (msg->message == WM_POINTERUP) {
+              te.setType(Radiant::PenEvent::TYPE_UP);
+            } else {
+              te.setType(Radiant::PenEvent::TYPE_UPDATE);
+            }
+
+            te.setSourceDevice(uint64_t(ptr.sourceDevice));
+            te.setRawLocation(himetric);
+            te.setTime(double(ptr.PerformanceCount) / performanceCounterFrequency);
+
+            if (m_eventHook) {
+              m_eventHook->penEvent(te);
+            }
           }
+          return true;
         }
         else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
-          if (msg->message == WM_POINTERUPDATE &&
-              (touchInfo.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
-            return true;
-
-          Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
-                               touchInfo.pointerInfo.ptPixelLocation.y);
-          Nimble::Vector2f himetric(touchInfo.pointerInfo.ptHimetricLocationRaw.x,
-                                    touchInfo.pointerInfo.ptHimetricLocationRaw.y);
-
-          Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
-
-          if (msg->message == WM_POINTERDOWN) {
-            type = Radiant::TouchEvent::TOUCH_BEGIN;
-          } else if (msg->message == WM_POINTERUP) {
-            type = Radiant::TouchEvent::TOUCH_END;
+          m_pointerInfo.resize(touchInfo.pointerInfo.historyCount);
+          if (touchInfo.pointerInfo.historyCount > 1) {
+            uint32_t count = touchInfo.pointerInfo.historyCount;
+            if (GetPointerInfoHistory(id, &count, m_pointerInfo.data())) {
+              m_pointerInfo.resize(count);
+            } else {
+              m_pointerInfo.resize(1);
+              m_pointerInfo[0] = touchInfo.pointerInfo;
+            }
+          } else {
+            m_pointerInfo[0] = touchInfo.pointerInfo;
           }
 
-          if (m_eventHook) {
-            Radiant::TouchEvent event(id, type, loc);
-            event.setRawLocation(himetric);
-            event.setSourceDevice(uint64_t(touchInfo.pointerInfo.sourceDevice));
-            m_eventHook->touchEvent(event);
-            return true;
+          for (int i = (int)m_pointerInfo.size() - 1; i >= 0; --i) {
+            POINTER_INFO & ptr = m_pointerInfo[i];
+            if (msg->message == WM_POINTERUPDATE &&
+                (ptr.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+              continue;
+
+            Nimble::Vector2f loc(ptr.ptPixelLocation.x,
+                                 ptr.ptPixelLocation.y);
+            Nimble::Vector2f himetric(ptr.ptHimetricLocationRaw.x,
+                                      ptr.ptHimetricLocationRaw.y);
+
+            Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
+
+            if (msg->message == WM_POINTERDOWN) {
+              type = Radiant::TouchEvent::TOUCH_BEGIN;
+            } else if (msg->message == WM_POINTERUP) {
+              type = Radiant::TouchEvent::TOUCH_END;
+            }
+
+            if (m_eventHook) {
+              Radiant::TouchEvent event(id, type, loc);
+              event.setRawLocation(himetric);
+              event.setSourceDevice(uint64_t(ptr.sourceDevice));
+              event.setTime(double(ptr.PerformanceCount) / performanceCounterFrequency);
+              m_eventHook->touchEvent(event);
+            }
           }
+          return true;
         }
       }
     }

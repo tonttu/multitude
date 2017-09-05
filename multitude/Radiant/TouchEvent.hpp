@@ -55,12 +55,18 @@ namespace Radiant
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 
+    /// Event time in seconds from arbitrary base time. In Windows this is
+    /// performance counter value converted to seconds.
+    double time() const { return m_time; }
+    void setTime(double t) { m_time = t; }
+
   private:
     int m_id;
     Type m_type;
     Nimble::Vector2f m_location;
     Nimble::Vector2f m_rawLocation{-1, -1};
     uint64_t m_sourceDevice = 0;
+    double m_time = 0;
   };
 
 }

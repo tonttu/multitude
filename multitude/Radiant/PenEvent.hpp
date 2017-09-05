@@ -110,6 +110,11 @@ namespace Radiant
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 
+    /// Event time in seconds from arbitrary base time. In Windows this is
+    /// performance counter value converted to seconds.
+    double time() const { return m_time; }
+    void setTime(double t) { m_time = t; }
+
   private:
     Nimble::Vector2f m_location = {0, 0};
     Nimble::Vector2f m_rawLocation = {0, 0};
@@ -120,6 +125,7 @@ namespace Radiant
     float m_rotation = 0;
     Nimble::Vector2f m_tilt;
     uint64_t m_sourceDevice = 0;
+    double m_time = 0;
   };
   MULTI_FLAGS(PenEvent::Flag)
 }

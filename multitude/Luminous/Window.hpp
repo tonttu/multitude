@@ -14,6 +14,10 @@
 #include "Export.hpp"
 #include "WindowEventHook.hpp"
 
+#ifdef RADIANT_WINDOWS
+#include <Windows.h>
+#endif
+
 #include <QWindow>
 
 #include <Nimble/Vector2.hpp>
@@ -99,6 +103,10 @@ namespace Luminous
     WindowEventHook* m_eventHook;
 
     bool m_setKeyboardFocusOnClick = false;
+
+#ifdef RADIANT_WINDOWS
+    std::vector<POINTER_INFO> m_pointerInfo;
+#endif
   };
 
 }
