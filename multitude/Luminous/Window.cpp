@@ -362,7 +362,7 @@ namespace Luminous
           type = Radiant::TouchEvent::TOUCH_BEGIN;
         else if (p.state() == Qt::TouchPointReleased)
           type = Radiant::TouchEvent::TOUCH_END;
-        Radiant::TouchEvent touch(p.id(), type, Nimble::Vector2f(p.pos().x(), p.pos().y()));
+        Radiant::TouchEvent touch(p.id(), type, Nimble::Vector2f(p.screenPos().x(), p.screenPos().y()));
         m_eventHook->touchEvent(touch);
       }
     }
