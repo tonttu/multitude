@@ -42,7 +42,7 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_FFMPEG
 *clang* | *g++*: QMAKE_CXXFLAGS_WARN_ON += -Wno-error=deprecated-declarations
 
 # TODO: Should handle errors
-*g++*: QMAKE_CXXFLAGS_WARN_ON += -Wno-error=unused-result
+*clang* | *g++*: QMAKE_CXXFLAGS_WARN_ON += -Wno-error=unused-result
 
 macx {
   LIBS += -framework OpenGL
