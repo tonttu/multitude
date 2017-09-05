@@ -14,6 +14,10 @@
 #include "Export.hpp"
 #include "WindowEventHook.hpp"
 
+#ifdef RADIANT_WINDOWS
+#include <Windows.h>
+#endif
+
 #include <QWindow>
 
 #include <Nimble/Vector2.hpp>
@@ -97,10 +101,12 @@ namespace Luminous
     QScreen* m_screen;
     QOpenGLContext* m_openGLContext;
     WindowEventHook* m_eventHook;
-    Nimble::Vector2f m_himetricFactor{0, 0};
-    Nimble::Vector2i m_himetricCalibrationMax{0, 0};
 
     bool m_setKeyboardFocusOnClick = false;
+
+#ifdef RADIANT_WINDOWS
+    std::vector<POINTER_INFO> m_pointerInfo;
+#endif
   };
 
 }

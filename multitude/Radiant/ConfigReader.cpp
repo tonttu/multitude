@@ -248,12 +248,12 @@ namespace Radiant {
 
   bool Variant::isEmpty() const 
   {
-    return m_var.size() ? m_var[0] == '\0' : true;
+    return m_var.isEmpty();
   }
 
   bool Variant::hasDocumentation() const 
   {
-    return m_doc.size() ? m_doc[0] != '\0' : false;
+    return !m_doc.isEmpty();
   }
     
   const QString & Variant::documentation() const

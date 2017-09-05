@@ -10,7 +10,9 @@
 
 #include "Window.hpp"
 
+#include <Radiant/Mutex.hpp>
 #include <Radiant/PenEvent.hpp>
+#include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <QOpenGLContext>
@@ -18,6 +20,10 @@
 #include <QTouchEvent>
 
 #include <cassert>
+
+#ifdef RADIANT_WINDOWS
+static int64_t performanceCounterFrequency = 0;
+#endif
 
 namespace Luminous
 {
@@ -34,6 +40,14 @@ namespace Luminous
     setSurfaceType(QSurface::OpenGLSurface);
 
     m_openGLContext->setScreen(m_screen);
+
+#ifdef RADIANT_WINDOWS
+    MULTI_ONCE {
+      LARGE_INTEGER tmp;
+      if (QueryPerformanceFrequency(&tmp))
+        performanceCounterFrequency = tmp.QuadPart;
+    }
+#endif
   }
 
   Window::~Window()
@@ -102,6 +116,12 @@ namespace Luminous
   {
     if(m_eventHook)
       m_eventHook->exposeEvent(ev);
+#ifdef RADIANT_WINDOWS
+    // Disable native touch feedback
+    BOOL value = false;
+    for (int i = FEEDBACK_TOUCH_CONTACTVISUALIZATION; i <= FEEDBACK_GESTURE_PRESSANDTAP; ++i)
+      SetWindowFeedbackSetting((HWND)winId(), FEEDBACK_TYPE(i), 0, sizeof(BOOL), &value);
+#endif
   }
 
   void Window::focusInEvent(QFocusEvent* ev)
@@ -183,168 +203,126 @@ namespace Luminous
         POINTER_TOUCH_INFO touchInfo;
         GetPointerType(id, &type);
         if (type==PT_PEN && GetPointerPenInfo(id, &info)) {
-          Radiant::PenEvent te;
-          te.setId(id);
-          Nimble::Vector2f loc(info.pointerInfo.ptPixelLocation.x,
-                               info.pointerInfo.ptPixelLocation.y);
-          Nimble::Vector2f himetric(info.pointerInfo.ptHimetricLocation.x,
-                                    info.pointerInfo.ptHimetricLocation.y);
-
-          // Unfortunately the pixel location in the event is in ints. To
-          // get subpixel accuracy, we are using himetric units. Those can
-          // be converted to source device pixels if we know the input device
-          // DPI, which is different from OS screen dpi. But even when doing
-          // that convertion, the native input device resolution might not be
-          // the same as the screen resolution.
-          //
-          // Since it's difficult to do correctly, we cheat a bit by just
-          // calculating a conversion factor on-fly. Touching with a pen to
-          // the right bottom part of the display will then make more
-          // accurate calibration.
-          //
-          // NOTE: this only works for single screen setups (see Redmine #13181)
-
-          if (loc.x > m_himetricCalibrationMax.x) {
-            m_himetricCalibrationMax.x = loc.x;
-            m_himetricFactor.x = loc.x / himetric.x;
-          }
-
-          if (loc.y > m_himetricCalibrationMax.y) {
-            m_himetricCalibrationMax.y = loc.y;
-            m_himetricFactor.y = loc.y / himetric.y;
-          }
-
-          if (m_himetricFactor.x > 0) {
-            loc.x = himetric.x * m_himetricFactor.x;
-            // If the error is more than one pixel, we calculated something wrong!
-            if (std::abs(loc.x - info.pointerInfo.ptPixelLocation.x) > 1.f) {
-              m_himetricFactor.x = 0;
-              m_himetricCalibrationMax.x = 0;
-              loc.x = info.pointerInfo.ptPixelLocation.x;
+          m_pointerInfo.resize(info.pointerInfo.historyCount);
+          if (info.pointerInfo.historyCount > 1) {
+            uint32_t count = info.pointerInfo.historyCount;
+            if (GetPointerInfoHistory(id, &count, m_pointerInfo.data())) {
+              m_pointerInfo.resize(count);
+            } else {
+              m_pointerInfo.resize(1);
+              m_pointerInfo[0] = info.pointerInfo;
             }
-          }
-          if (m_himetricFactor.y > 0) {
-            loc.y = himetric.y * m_himetricFactor.y;
-            if (std::abs(loc.y - info.pointerInfo.ptPixelLocation.y) > 1.f) {
-              m_himetricFactor.y = 0;
-              m_himetricCalibrationMax.y = 0;
-              loc.y = info.pointerInfo.ptPixelLocation.y;
-            }
-          }
-
-          // mapFromGlobal uses only ints, but in our case this is the same thing
-          loc.x -= position().x();
-          loc.y -= position().y();
-          te.setLocation(loc);
-
-          Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
-          if (info.penMask & PEN_MASK_PRESSURE) {
-            flags |= Radiant::PenEvent::FLAG_PRESSURE;
-            te.setPressure(info.pressure / 1024.f);
-          }
-          if (info.penMask & PEN_MASK_ROTATION) {
-            flags |= Radiant::PenEvent::FLAG_ROTATION;
-            te.setRotation(Nimble::Math::degToRad(info.rotation));
-          }
-          Nimble::Vector2f tilt{0, 0};
-          if (info.penMask & PEN_MASK_TILT_X) {
-            flags |= Radiant::PenEvent::FLAG_TILT_X;
-            tilt.x = Nimble::Math::degToRad(info.tiltX);
-          }
-          if (info.penMask & PEN_MASK_TILT_Y) {
-            flags |= Radiant::PenEvent::FLAG_TILT_Y;
-            tilt.y = Nimble::Math::degToRad(info.tiltY);
-          }
-          if (info.penFlags & PEN_FLAG_BARREL) {
-            flags |= Radiant::PenEvent::FLAG_BARREL;
-          }
-          if (info.penFlags & PEN_FLAG_INVERTED) {
-            flags |= Radiant::PenEvent::FLAG_INVERTED;
-          }
-          if (info.penFlags & PEN_FLAG_ERASER) {
-            flags |= Radiant::PenEvent::FLAG_ERASER;
-          }
-          te.setTilt(tilt);
-          te.setFlags(flags);
-
-          if (msg->message == WM_POINTERDOWN) {
-            te.setType(Radiant::PenEvent::TYPE_DOWN);
-          } else if (msg->message == WM_POINTERUP) {
-            te.setType(Radiant::PenEvent::TYPE_UP);
           } else {
-            te.setType(Radiant::PenEvent::TYPE_UPDATE);
+            m_pointerInfo[0] = info.pointerInfo;
           }
 
-          te.setSourceDevice(uint64_t(info.pointerInfo.sourceDevice));
+          for (int i = (int)m_pointerInfo.size() - 1; i >= 0; --i) {
+            POINTER_INFO & ptr = m_pointerInfo[i];
 
-          if (m_eventHook) {
-            m_eventHook->penEvent(te);
-            return true;
+            // We don't care about hover events
+            if (msg->message == WM_POINTERUPDATE &&
+                (ptr.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+              return true;
+
+            Radiant::PenEvent te;
+            te.setId(id);
+            Nimble::Vector2f loc(ptr.ptPixelLocation.x,
+                                 ptr.ptPixelLocation.y);
+            Nimble::Vector2f himetric(ptr.ptHimetricLocationRaw.x,
+                                      ptr.ptHimetricLocationRaw.y);
+
+            te.setLocation(loc);
+
+            Radiant::PenEvent::Flags flags = Radiant::PenEvent::FLAG_NONE;
+            if (info.penMask & PEN_MASK_PRESSURE) {
+              flags |= Radiant::PenEvent::FLAG_PRESSURE;
+              te.setPressure(info.pressure / 1024.f);
+            }
+            if (info.penMask & PEN_MASK_ROTATION) {
+              flags |= Radiant::PenEvent::FLAG_ROTATION;
+              te.setRotation(Nimble::Math::degToRad(info.rotation));
+            }
+            Nimble::Vector2f tilt{0, 0};
+            if (info.penMask & PEN_MASK_TILT_X) {
+              flags |= Radiant::PenEvent::FLAG_TILT_X;
+              tilt.x = Nimble::Math::degToRad(info.tiltX);
+            }
+            if (info.penMask & PEN_MASK_TILT_Y) {
+              flags |= Radiant::PenEvent::FLAG_TILT_Y;
+              tilt.y = Nimble::Math::degToRad(info.tiltY);
+            }
+            if (info.penFlags & PEN_FLAG_BARREL) {
+              flags |= Radiant::PenEvent::FLAG_BARREL;
+            }
+            if (info.penFlags & PEN_FLAG_INVERTED) {
+              flags |= Radiant::PenEvent::FLAG_INVERTED;
+            }
+            if (info.penFlags & PEN_FLAG_ERASER) {
+              flags |= Radiant::PenEvent::FLAG_ERASER;
+            }
+            te.setTilt(tilt);
+            te.setFlags(flags);
+
+            if (msg->message == WM_POINTERDOWN) {
+              te.setType(Radiant::PenEvent::TYPE_DOWN);
+            } else if (msg->message == WM_POINTERUP) {
+              te.setType(Radiant::PenEvent::TYPE_UP);
+            } else {
+              te.setType(Radiant::PenEvent::TYPE_UPDATE);
+            }
+
+            te.setSourceDevice(uint64_t(ptr.sourceDevice));
+            te.setRawLocation(himetric);
+            te.setTime(double(ptr.PerformanceCount) / performanceCounterFrequency);
+
+            if (m_eventHook) {
+              m_eventHook->penEvent(te);
+            }
           }
+          return true;
         }
         else if (type==PT_TOUCH && GetPointerTouchInfo(id, &touchInfo)) {
-          QTouchEvent::TouchPoint touchPoint;
-          touchPoint.setId(id);
-          Nimble::Vector2f loc(touchInfo.pointerInfo.ptPixelLocation.x,
-                               touchInfo.pointerInfo.ptPixelLocation.y);
-          Nimble::Vector2f himetric(touchInfo.pointerInfo.ptHimetricLocation.x,
-                                    touchInfo.pointerInfo.ptHimetricLocation.y);
-
-          // See above for information on himetric adjustment.
-          //
-          // NOTE: this only works for single screen setups (see Redmine #13181)
-
-          if (loc.x > m_himetricCalibrationMax.x) {
-            m_himetricCalibrationMax.x = loc.x;
-            m_himetricFactor.x = loc.x / himetric.x;
-          }
-
-          if (loc.y > m_himetricCalibrationMax.y) {
-            m_himetricCalibrationMax.y = loc.y;
-            m_himetricFactor.y = loc.y / himetric.y;
-          }
-
-          if (m_himetricFactor.x > 0) {
-            loc.x = himetric.x * m_himetricFactor.x;
-            // If the error is more than one pixel, we calculated something wrong!
-            if (std::abs(loc.x - touchInfo.pointerInfo.ptPixelLocation.x) > 1.f) {
-              m_himetricFactor.x = 0;
-              m_himetricCalibrationMax.x = 0;
-              loc.x = touchInfo.pointerInfo.ptPixelLocation.x;
+          m_pointerInfo.resize(touchInfo.pointerInfo.historyCount);
+          if (touchInfo.pointerInfo.historyCount > 1) {
+            uint32_t count = touchInfo.pointerInfo.historyCount;
+            if (GetPointerInfoHistory(id, &count, m_pointerInfo.data())) {
+              m_pointerInfo.resize(count);
+            } else {
+              m_pointerInfo.resize(1);
+              m_pointerInfo[0] = touchInfo.pointerInfo;
             }
-          }
-          if (m_himetricFactor.y > 0) {
-            loc.y = himetric.y * m_himetricFactor.y;
-            if (std::abs(loc.y - touchInfo.pointerInfo.ptPixelLocation.y) > 1.f) {
-              m_himetricFactor.y = 0;
-              m_himetricCalibrationMax.y = 0;
-              loc.y = touchInfo.pointerInfo.ptPixelLocation.y;
-            }
-          }
-
-          // mapFromGlobal uses only ints, but in our case this is the same thing
-          loc.x -= position().x();
-          loc.y -= position().y();
-          touchPoint.setPos(QPoint(loc.x, loc.y));
-          QEvent::Type type;
-
-          if (msg->message == WM_POINTERDOWN) {
-            touchPoint.setState(Qt::TouchPointPressed);
-            type = QEvent::TouchBegin;
-          } else if (msg->message == WM_POINTERUP) {
-            touchPoint.setState(Qt::TouchPointReleased);
-            type = QEvent::TouchEnd;
           } else {
-            touchPoint.setState(Qt::TouchPointMoved);
-            type = QEvent::TouchUpdate;
+            m_pointerInfo[0] = touchInfo.pointerInfo;
           }
 
-          QTouchEvent event(type, Q_NULLPTR, Qt::NoModifier, Qt::TouchPointStates(), QList<QTouchEvent::TouchPoint>({touchPoint}));
+          for (int i = (int)m_pointerInfo.size() - 1; i >= 0; --i) {
+            POINTER_INFO & ptr = m_pointerInfo[i];
+            if (msg->message == WM_POINTERUPDATE &&
+                (ptr.pointerFlags & POINTER_FLAG_INCONTACT) == 0)
+              continue;
 
-          if (m_eventHook) {
-            m_eventHook->touchEvent(&event);
-            return true;
+            Nimble::Vector2f loc(ptr.ptPixelLocation.x,
+                                 ptr.ptPixelLocation.y);
+            Nimble::Vector2f himetric(ptr.ptHimetricLocationRaw.x,
+                                      ptr.ptHimetricLocationRaw.y);
+
+            Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
+
+            if (msg->message == WM_POINTERDOWN) {
+              type = Radiant::TouchEvent::TOUCH_BEGIN;
+            } else if (msg->message == WM_POINTERUP) {
+              type = Radiant::TouchEvent::TOUCH_END;
+            }
+
+            if (m_eventHook) {
+              Radiant::TouchEvent event(id, type, loc);
+              event.setRawLocation(himetric);
+              event.setSourceDevice(uint64_t(ptr.sourceDevice));
+              event.setTime(double(ptr.PerformanceCount) / performanceCounterFrequency);
+              m_eventHook->touchEvent(event);
+            }
           }
+          return true;
         }
       }
     }
@@ -377,8 +355,17 @@ namespace Luminous
 
   void Window::touchEvent(QTouchEvent* ev)
   {
-    if(m_eventHook)
-      m_eventHook->touchEvent(ev);
+    if(m_eventHook) {
+      for (auto & p: ev->touchPoints()) {
+        Radiant::TouchEvent::Type type = Radiant::TouchEvent::TOUCH_UPDATE;
+        if (p.state() == Qt::TouchPointPressed)
+          type = Radiant::TouchEvent::TOUCH_BEGIN;
+        else if (p.state() == Qt::TouchPointReleased)
+          type = Radiant::TouchEvent::TOUCH_END;
+        Radiant::TouchEvent touch(p.id(), type, Nimble::Vector2f(p.screenPos().x(), p.screenPos().y()));
+        m_eventHook->touchEvent(touch);
+      }
+    }
   }
 
   void Window::wheelEvent(QWheelEvent* ev)

@@ -69,7 +69,7 @@ namespace Radiant
     uint32_t id() const { return m_id; }
     void setId(uint32_t id) { m_id = id; }
 
-    /// Get location of the event
+    /// Get location of the event in desktop coordinate system
     /// @return Location os event
     const Nimble::Vector2f & location() const { return m_location; }
     /// Sets event's location
@@ -100,13 +100,24 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
+    /// Raw event location in device coordinates. In windows this is in himetric units
+    Nimble::Vector2f rawLocation() const { return m_rawLocation; }
+    void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
+
     /// Unique ID for the source device. This can be used to differentiate
-    /// between multiple pens, if the hardware supports that
+    /// between multiple pens, if the hardware supports that. This can be
+    /// typecasted to device HWND in Windows.
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 
+    /// Event time in seconds from arbitrary base time. In Windows this is
+    /// performance counter value converted to seconds.
+    double time() const { return m_time; }
+    void setTime(double t) { m_time = t; }
+
   private:
     Nimble::Vector2f m_location = {0, 0};
+    Nimble::Vector2f m_rawLocation = {0, 0};
     Type m_type = TYPE_NONE;
     Flags m_flags = FLAG_NONE;
     uint32_t m_id = 0;
@@ -114,6 +125,7 @@ namespace Radiant
     float m_rotation = 0;
     Nimble::Vector2f m_tilt;
     uint64_t m_sourceDevice = 0;
+    double m_time = 0;
   };
   MULTI_FLAGS(PenEvent::Flag)
 }
