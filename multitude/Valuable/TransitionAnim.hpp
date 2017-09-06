@@ -56,6 +56,8 @@ namespace Valuable
     BezierTimingFunction(Nimble::Vector2f p1, Nimble::Vector2f p2)
       : m_points{{p1, p2}} {}
 
+    const std::array<Nimble::Vector2f, 2> & points() const { return m_points; }
+
   private:
     std::array<Nimble::Vector2f, 2> m_points;
   };
@@ -110,6 +112,11 @@ namespace Valuable
       assert(params.isValid());
       m_params = params;
       m_speed = (m_speed >= 0 ? 1.0f : -1.0f) / params.duration;
+    }
+
+    inline const TransitionParameters & parameters() const
+    {
+      return m_params;
     }
 
     inline T target() const

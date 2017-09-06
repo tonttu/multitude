@@ -646,6 +646,16 @@ namespace Valuable
       m_transition = ptr;
     }
 
+    inline const TransitionAnimT<T> * transition() const
+    {
+      return m_transition;
+    }
+
+    inline TransitionAnimT<T> * transition()
+    {
+      return m_transition;
+    }
+
   protected:
     virtual void emitChange() FINAL
     {
