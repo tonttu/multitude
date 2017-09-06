@@ -178,9 +178,17 @@ namespace {
 
 }
 
+enum class OutputFlag
+{
+  VERBOSE              = 1 << 0,
+  SILENT               = 1 << 1,
+  PRINT_ONLY_FAILURES  = 1 << 2,
+};
+MULTI_FLAGS(OutputFlag)
+typedef Radiant::FlagsT<OutputFlag> OutputFlags;
+
 namespace UnitTest
 {
-
   namespace
   {
     static std::mutex s_argumentsMutex;
@@ -268,23 +276,27 @@ namespace UnitTest
     }
 
     int runOneTest(int index, int count, const UnitTest::Test* const test, QString xmlOutput,
-                   const char *procName, bool verbose, bool silent)
+                   const char *procName, OutputFlags flags)
     {
       QProcess process;
-      process.setProcessChannelMode(QProcess::ForwardedChannels);
+      if (flags & OutputFlag::PRINT_ONLY_FAILURES) {
+        process.setProcessChannelMode(QProcess::MergedChannels);
+      } else {
+        process.setProcessChannelMode(QProcess::ForwardedChannels);
+      }
       QStringList newArgs;
       QString singleArg = test->m_details.suiteName;
       singleArg += "/";
       singleArg += test->m_details.testName;
 
-      if(silent) newArgs << "-s";
-      if(verbose) newArgs << "-v";
+      if (flags & OutputFlag::SILENT) newArgs << "-s";
+      if (flags & OutputFlag::VERBOSE) newArgs << "-v";
 
       newArgs << "--single" << singleArg << xmlOutput;
       if (QFile::exists(xmlOutput))
         QFile::remove(xmlOutput);
 
-      printf("%2d/%2d: Running test %s/%s\n",
+      printf("%d/%d: Running test %s/%s\n",
              index, count, test->m_details.suiteName, test->m_details.testName);
 
       // If the test crashes or hangs, get an estimate of the time used with a timer
@@ -294,30 +306,47 @@ namespace UnitTest
       process.waitForStarted();
       bool finished = process.waitForFinished(15 * 60 * 1000);
       const double time = timer.time();
+
+      QString error, errorDetails;
+      int exitCode = 0;
+
       if (!finished) {
-        printf("Test %s/%s timed out. See %s for details.\n",
-               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+        error = "timed out";
         writeFailureXml(xmlOutput, test, time, "timeout");
-        process.close();
-        return 1;
-      }
-
-      if(process.exitStatus() == QProcess::CrashExit) {
-        printf("Test %s/%s crashed. See %s for details.\n",
-               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+        exitCode = 1;
+      } else if (process.exitStatus() == QProcess::CrashExit) {
+        error = "crashed";
         writeFailureXml(xmlOutput, test, time, "crashed");
-        return 1;
+        exitCode = 1;
+      } else {
+        // exitCode() is only valid on normal process exit
+        assert(process.exitStatus() == QProcess::NormalExit);
+        exitCode = process.exitCode();
+
+        if (exitCode) {
+          QDomDocument doc;
+          mergeXml(doc, xmlOutput);
+          QDomNodeList failures = doc.documentElement().firstChild().childNodes();
+          for (int i = 0; i < failures.length(); ++i) {
+            const QString msg = failures.at(i).toElement().attribute("message");
+            if (!msg.isEmpty())
+              errorDetails += "  " + msg + "\n";
+          }
+          error = "failed";
+        }
       }
 
-      // exitCode() is only valid on normal process exit
-      assert(process.exitStatus() == QProcess::NormalExit);
+      if (exitCode) {
+        printf("\nTest %s/%s %s after %.2lfs%s%s\n",
+               test->m_details.suiteName, test->m_details.testName, error.toUtf8().data(),
+               time, errorDetails.isEmpty() ? "" : ":\n", errorDetails.toUtf8().data());
 
-      int procExitCode = process.exitCode();
-      if(procExitCode) {
-        printf("Test %s/%s failed. See %s for details.\n",
-               test->m_details.suiteName, test->m_details.testName, xmlOutput.toUtf8().data());
+        if (flags & OutputFlag::PRINT_ONLY_FAILURES)
+          printf("Application output:\n%s\n", process.readAll().data());
       }
-      return procExitCode;
+      process.close();
+      fflush(stdout);
+      return exitCode;
     }
 
     std::vector<const UnitTest::Test*> includeTests(QString match)
@@ -401,7 +430,7 @@ namespace UnitTest
     }
 
     int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName,
-                 bool verbose, bool silent)
+                 OutputFlags flags)
     {
       int count = static_cast<int>(toRun.size());
 
@@ -415,8 +444,7 @@ namespace UnitTest
         ++index;
         // run the test in a subprocess. Creating a MultiWidgets::Application after one
         // has been destroyed does not work properly.
-        int procExitCode = runOneTest(index, count, test, xmlOutput, procName,
-                                      verbose, silent);
+        int procExitCode = runOneTest(index, count, test, xmlOutput, procName, flags);
 
         if(procExitCode != 0)
           exitCode = procExitCode;
@@ -492,7 +520,7 @@ namespace UnitTest
       return vector;
     }
 
-    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
+    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, OutputFlags flags, int times)
     {
       std::vector<const UnitTest::Test*> toRun = repeat(includeTests(match), times);
 
@@ -502,10 +530,10 @@ namespace UnitTest
         return 1;
       }
 
-      return runTests(toRun, xmlOutput, procName, verbose, silent);
+      return runTests(toRun, xmlOutput, procName, flags);
     }
 
-    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, bool verbose, bool silent, int times)
+    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, OutputFlags flags, int times)
     {
       std::vector<const UnitTest::Test*> toRun = repeat(excludeTests(match), times);
 
@@ -515,7 +543,7 @@ namespace UnitTest
         return 1;
       }
 
-      return runTests(toRun, xmlOutput, procName, verbose, silent);
+      return runTests(toRun, xmlOutput, procName, flags);
     }
 
   }  // unnamed namespace
@@ -547,12 +575,14 @@ namespace UnitTest
 
     QCommandLineOption excludeOption("exclude", "Pattern to exclude tests (not regexp)", "PATTERN");
 
-    QCommandLineOption v("v", "Verbose mode.");
-    QCommandLineOption s("s", "Silent mode, suppress all console output from Cornerstone");
+    QCommandLineOption v("v", "Run individual tests in verbose mode.");
+    QCommandLineOption s("s", "Run individual tests in silent mode, suppress all console output from Cornerstone");
+    QCommandLineOption printOnlyFailuresOptions("print-only-failures",
+                                                "Print individual test output only if the test fails");
 
     QCommandLineOption timesOption("times", "Repeat the tests multiple times, doesn't work with --single", "NUMBER");
 
-    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s, timesOption });
+    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s, printOnlyFailuresOptions, timesOption });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.addHelpOption();
     parser.process(cmdLineArgs);
@@ -572,14 +602,19 @@ namespace UnitTest
       return listTests();
     }
 
-    bool silent = parser.isSet("s");
-    bool verbose = parser.isSet("v");
+    OutputFlags flags;
+    if (parser.isSet(s))
+      flags |= OutputFlag::SILENT;
+    if (parser.isSet(v))
+      flags |= OutputFlag::VERBOSE;
+    if (parser.isSet(printOnlyFailuresOptions))
+      flags |= OutputFlag::PRINT_ONLY_FAILURES;
 
-    if(silent) {
+    if (flags & OutputFlag::SILENT) {
       auto dropAllMessages = [] (const Radiant::Trace::Message &) { return true; };
       Radiant::Trace::addFilter(dropAllMessages, Radiant::Trace::Filter::ORDER_DEFAULT_FILTERS);
       Radiant::Trace::initialize(Radiant::Trace::INIT_NO_FLAGS);
-    } else if(verbose) {
+    } else if (flags & OutputFlag::VERBOSE) {
       Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
       Radiant::Trace::initialize();
     } else {
@@ -620,10 +655,10 @@ namespace UnitTest
         return 1;
       }
 
-      return runTestsExclusive(exclude, xmlOutput, argv[0], verbose, silent, times);
+      return runTestsExclusive(exclude, xmlOutput, argv[0], flags, times);
 
     } else {
-      return runTestsInclusive(include, xmlOutput, argv[0], verbose, silent, times);
+      return runTestsInclusive(include, xmlOutput, argv[0], flags, times);
     }
   }
 
