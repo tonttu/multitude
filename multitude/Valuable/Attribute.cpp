@@ -219,23 +219,10 @@ namespace Valuable
     return nullptr;
   }
 
-  void Attribute::setTransitionAnim(float, float)
+  void Attribute::setTransitionParameters(TransitionParameters)
   {
-    Radiant::warning("Attribute::setTransitionAnim # Class %s (%s) doesn't support transition animations",
+    Radiant::warning("Attribute::setTransitionParameters # Class %s (%s) doesn't support transition animations",
                      Radiant::StringUtils::demangle(typeid(*this).name()).data(), name().data());
-  }
-
-  void Attribute::onAnimatedValueSet(const std::function<void(Attribute *, float)>& f)
-  {
-    m_onAnimation = f;
-  }
-
-  void Attribute::animatedValueSet(float dt)
-  {
-    if(!m_onAnimation)
-      Valuable::Attribute::emitChange();
-    else
-      m_onAnimation(this, dt);
   }
 
   void Attribute::emitChange()

@@ -2,11 +2,9 @@
 #define VALUABLE_TRANSITION_MANAGER_HPP
 
 #include "Export.hpp"
-
-#include <list>
-#include <vector>
-
 #include "TransitionAnim.hpp"
+
+#include <Radiant/ReentrantVector.hpp>
 
 namespace Valuable
 {
@@ -19,15 +17,13 @@ namespace Valuable
     virtual ~TransitionManager();
 
     static void updateAll(float dt);
-
-    virtual void update(TransitionAnim& anim, float dt) const = 0;
-    virtual void remove(TransitionAnim * anim) = 0;
-    virtual void updateTargetAttributePointer(TransitionAnim* anim) = 0;
-
     static std::size_t activeTransitions();
 
-  protected:
-    static TransitionAnim* createAnim(TransitionManager* manager);
+    static const std::vector<TransitionManager*> & instances();
+
+  private:
+    virtual void update(float dt) = 0;
+    virtual std::size_t countActiveTransitions() const = 0;
   };
 
   /// Type-specific transition animation manager
@@ -39,16 +35,16 @@ namespace Valuable
   public:
     /// Creates a new animation for given attribute
     /// @param attr attribute that the transition animation controls
-    static TransitionAnim * create(AttributeBaseT<T> * attr, TransitionCurve curve);
-    /// @param anim Transition animation to remove
-    virtual void remove(TransitionAnim * anim) OVERRIDE;
+    static TransitionAnimT<T> * create(AttributeBaseT<T> * attr, TransitionParameters curve);
 
-    static void setTarget(TransitionAnim*, T target);
-
-    virtual void updateTargetAttributePointer(TransitionAnim* anim) override;
+    static TransitionManagerT<T> & instance();
 
   private:
-    virtual void update(TransitionAnim& anim, float dt) const FINAL;
+    void update(float dt) override;
+    std::size_t countActiveTransitions() const override;
+
+  private:
+    Radiant::ReentrantVector<TransitionAnimT<T>> m_transitions;
   };
 
 } // namespace Valuable

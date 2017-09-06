@@ -518,12 +518,22 @@ namespace Valuable
 
   QString StyleValue::stringify() const
   {
-    QStringList out;
+    QString out;
 
     for(int i = 0, s = m_components.size(); i < s; ++i) {
       const auto & v = m_components[i];
       const int unit = v.unit();
-      const Separator separator = v.separator();
+      if (i > 0) {
+        const Separator separator = v.separator();
+        if (separator == SEPARATOR_COMMA) {
+          out += ", ";
+        } else if (separator == SEPARATOR_SLASH) {
+          out += " / ";
+        } else {
+          out += " ";
+        }
+      }
+
 
       QString unitstr;
       if(unit == Attribute::VU_PXS)
@@ -535,35 +545,30 @@ namespace Valuable
 
       auto t = v.type();
       if(unit == Attribute::VU_PERCENTAGE) {
-        out << QString("%1%").arg(v.asFloat() * 100.0);
+        out += QString("%1%").arg(v.asFloat() * 100.0);
       } else if(t == TYPE_INT || t == TYPE_FLOAT) {
-        out << QString::number(v.asFloat()) + unitstr;
+        out += QString::number(v.asFloat()) + unitstr;
       } else if(t == TYPE_KEYWORD) {
-        out << v.asKeyword();
+        out += v.asKeyword();
       } else if(t == TYPE_STRING) {
-        out << "\"" + v.asString() + "\"";
+        out += "\"" + v.asString() + "\"";
       } else if(t == TYPE_COLOR) {
         /// @todo we lose information here
         auto c = v.asColor().toQColor();
-        out << QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
+        out += QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
                arg(c.green(), 2, 16, QLatin1Char('0')).
                arg(c.blue(), 2, 16, QLatin1Char('0')).
                arg(c.alpha(), 2, 16, QLatin1Char('0'));
       } else if(t == TYPE_COLOR_PMA) {
-        out << QString("%1 %2 %3 %4").arg(v.asColorPMA().r).arg(v.asColorPMA().g).
+        out += QString("%1 %2 %3 %4").arg(v.asColorPMA().r).arg(v.asColorPMA().g).
                arg(v.asColorPMA().b).arg(v.asColorPMA().a);
       } else {
         Radiant::error("StyleValue::stringify # Unknown component type %d (%s)", t, v.typeName());
         continue;
       }
-      if (separator == SEPARATOR_COMMA) {
-        out << ",";
-      } else if (separator == SEPARATOR_SLASH) {
-        out << "/";
-      }
     }
 
-    return out.join(" ");
+    return out;
   }
 
   bool StyleValue::isNumber(int idx) const
