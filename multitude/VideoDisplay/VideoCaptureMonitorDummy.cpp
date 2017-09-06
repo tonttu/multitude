@@ -28,4 +28,5 @@ namespace VideoDisplay {
     scheduleFromNowSecs(pollInterval());
   }
 
-  }
+  DEFINE_SINGLETON(VideoCaptureMonitor);
+}
