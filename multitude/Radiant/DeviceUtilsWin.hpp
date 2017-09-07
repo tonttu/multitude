@@ -4,6 +4,7 @@
 #include "Export.hpp"
 
 #include <QByteArray>
+#include <QMap>
 
 #include <guiddef.h>
 
@@ -24,10 +25,19 @@ namespace Radiant
       int numaNode = -1;
     };
 
+    struct Device
+    {
+      QMap<QByteArray, QString> keys;
+      std::vector<Device> children;
+    };
+
     RADIANT_API DeviceInfo deviceInfo(const QString & deviceInstanceId,
                                       const GUID * deviceClassGuid);
     RADIANT_API DeviceInfo displayDeviceInfo(const QString & deviceInstanceId);
     RADIANT_API std::vector<int> cpuList(int numaNode);
+
+    RADIANT_API std::vector<Device> allDevices();
+    RADIANT_API void dump();
   }
 } // namespace Radiant
 

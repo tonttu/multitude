@@ -248,18 +248,12 @@ namespace Radiant {
 
   bool Variant::isEmpty() const
   {
-    if(m_var.isEmpty())
-      return true;
-
-    return (m_var[0] == QChar::Null);
+    return m_var.isEmpty();
   }
 
   bool Variant::hasDocumentation() const
   {
-    if(m_doc.isEmpty())
-      return false;
-
-    return (m_doc[0] != QChar::Null);
+    return !m_doc.isEmpty();
   }
 
   const QString & Variant::documentation() const
