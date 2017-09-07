@@ -28,5 +28,11 @@ namespace VideoDisplay {
     scheduleFromNowSecs(pollInterval());
   }
 
+  void VideoCaptureMonitor::addHint(const QString&)
+  {}
+
+  void VideoCaptureMonitor::removeSource(const QString&)
+  {}
+
   DEFINE_SINGLETON(VideoCaptureMonitor);
 }
