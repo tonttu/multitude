@@ -289,17 +289,32 @@ namespace Resonant {
     bool more;
 
     int chans = m_sample->channels();
+    int sampleChannel = chans == 1 ? 0 : m_sampleChannel;
+    float onePerChans = 1.f / chans;
 
     if(avail == 0) {
       more = false;
     }
     else if(pitch == 1.0f && !pitch.left()) {
-      const float * src = m_sample->buf(m_position) + m_sampleChannel;
+      // downmix all channels to mono
+      if (sampleChannel == -1) {
+        const float * src = m_sample->buf(m_position);
 
-      for(unsigned i = 0; i < avail; i++) {
-        *b1++ += *src * gain;
-        src += chans;
-        gain.update();
+        for (unsigned i = 0; i < avail; i++) {
+          float mix = 0;
+          for (const float * end = src + chans; src < end; ++src)
+            mix += *src;
+          *b1++ += mix * onePerChans * gain;
+          gain.update();
+        }
+      } else {
+        const float * src = m_sample->buf(m_position) + sampleChannel;
+
+        for(unsigned i = 0; i < avail; i++) {
+          *b1++ += *src * gain;
+          src += chans;
+          gain.update();
+        }
       }
 
       m_position += avail;
@@ -311,17 +326,38 @@ namespace Resonant {
       double dpos = m_dpos;
       double dmax = m_sample->frames() - 1;
 
-      const float * src = m_sample->buf(0) + m_sampleChannel;
+      if (sampleChannel == -1) {
+        const float * src = m_sample->buf(0);
 
-      for(int i = 0 ; i < n && dpos < dmax; i++) {
+        for (int i = 0 ; i < n && dpos < dmax; i++) {
+          int base = (int) dpos;
+          double w2 = dpos - (double) base;
 
-        int base = (int) dpos;
-        double w2 = dpos - (double) base;
-        *b1++ += gain *
-            float((src[base * chans] * (1.0 - w2) + src[(base+1) * chans] * w2));
-        dpos += pitch;
-        gain.update();
-        pitch.update();
+          float mixa = 0.f, mixb = 0.f;
+          for (int ch = 0; ch < chans; ++ch) {
+            mixa += src[base * chans + ch];
+            mixb += src[(base+1) * chans + ch];
+          }
+
+          *b1++ += gain * onePerChans *
+              float((mixa * (1.0 - w2) + mixb * w2));
+          dpos += pitch;
+          gain.update();
+          pitch.update();
+        }
+      } else {
+        const float * src = m_sample->buf(0) + sampleChannel;
+
+        for(int i = 0 ; i < n && dpos < dmax; i++) {
+
+          int base = (int) dpos;
+          double w2 = dpos - (double) base;
+          *b1++ += gain *
+              float((src[base * chans] * (1.0 - w2) + src[(base+1) * chans] * w2));
+          dpos += pitch;
+          gain.update();
+          pitch.update();
+        }
       }
 
       m_dpos = dpos;

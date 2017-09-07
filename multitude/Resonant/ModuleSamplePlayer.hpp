@@ -153,6 +153,7 @@ namespace Resonant {
       void setTargetChannel(int targetChannel);
 
       /// Returns the channel of the source file that should be used as the source.
+      /// Value -1 means downmixing all channels to one mono output.
       int sampleChannel() const;
       /// Sets the channel of the source file that should be used as the source.
       void setSampleChannel(int sampleChannel);
@@ -242,7 +243,7 @@ namespace Resonant {
         to seven.
 
         @param sampleChannel Select the channel of the source file that should be used as the
-        source.
+        source. Value -1 means downmixing all channels to one mono output.
 
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
@@ -285,7 +286,7 @@ namespace Resonant {
         specific audio out channel. The sound is then played out on that channel.
 
         @param sampleChannel Select the channel of the source file that should be used as the
-        source.
+        source. Value -1 means downmixing all channels to one mono output.
 
         @param loop Turns on looping if necessary. With looping the sample will play
         back for-ever.
@@ -418,6 +419,7 @@ namespace Resonant {
       int m_noteId;
       int m_finishCounter;
 
+      // -1 means downmix all channels to mono
       size_t m_sampleChannel;
       size_t m_targetChannel;
       bool     m_loop;
