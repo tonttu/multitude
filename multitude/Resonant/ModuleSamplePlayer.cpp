@@ -303,8 +303,8 @@ namespace Resonant {
         for (unsigned i = 0; i < avail; i++) {
           float mix = 0;
           for (const float * end = src + chans; src < end; ++src)
-            mix += *src * gain;
-          *b1++ += mix * onePerChans;
+            mix += *src;
+          *b1++ += mix * onePerChans * gain;
           gain.update();
         }
       } else {
