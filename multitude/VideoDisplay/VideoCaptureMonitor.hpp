@@ -6,6 +6,8 @@
 
 #include <Radiant/Task.hpp>
 
+#include <QList>
+
 #include <memory>
 
 namespace VideoDisplay
@@ -19,6 +21,12 @@ namespace VideoDisplay
   class VIDEODISPLAY_API VideoCaptureMonitor : public Valuable::Node, public Radiant::Task
   {
     DECLARE_SINGLETON(VideoCaptureMonitor);
+
+    struct VideoSource
+    {
+      QByteArray device;
+      Nimble::Vector2i resolution;
+    };
 
   public:
     ~VideoCaptureMonitor();
@@ -38,6 +46,9 @@ namespace VideoDisplay
     /// in Windows it seems that there is some latency for device to be able to
     /// used after it has been released by some other entity
     void removeSource(const QString& source);
+
+    /// Returns currently active video sources
+    QList<VideoSource> sources() const;
 
   private:
     VideoCaptureMonitor();

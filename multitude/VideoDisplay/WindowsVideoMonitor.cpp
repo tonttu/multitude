@@ -174,6 +174,7 @@ namespace VideoDisplay
 
 
     /// Current sources
+    Radiant::Mutex m_sourcesMutex;
     std::vector<SourcePtr> m_sources;
 
     VideoCaptureMonitor& m_host;
@@ -319,6 +320,8 @@ namespace VideoDisplay
   void VideoCaptureMonitor::D::poll()
   {
     MULTI_ONCE initExternalLibs();
+
+    Radiant::Guard g(m_sourcesMutex);
 
     {
       Radiant::Guard g(m_removedSourcesMutex);
@@ -560,11 +563,27 @@ namespace VideoDisplay
     }
   }
 
+  QList<VideoCaptureMonitor::VideoSource> VideoCaptureMonitor::sources() const
+  {
+    QList<VideoSource> ret;
+    Radiant::Guard g(m_d->m_sourcesMutex);
+    for (auto & ptr: m_d->m_sources) {
+      Source & s = *ptr;
+      if (s.previousState.enabled) {
+        VideoSource vs;
+        vs.device = s.ffmpegName().toUtf8();
+        vs.resolution = s.previousState.resolution.toVector();
+        ret << vs;
+      }
+    }
+    return ret;
+  }
+
   void VideoCaptureMonitor::doTask()
   {
     m_d->poll();
     scheduleFromNowSecs(m_d->m_pollInterval);
   }
 
-  DEFINE_SINGLETON(VideoCaptureMonitor);
+  DEFINE_SINGLETON(VideoCaptureMonitor)
 }

@@ -81,6 +81,7 @@ namespace VideoDisplay
 
     bool checkIsEnabled(Source & s);
 
+    Radiant::Mutex m_sourcesMutex;
     std::vector<Source> m_sources;
 
     VideoCaptureMonitor & m_host;
@@ -101,9 +102,9 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::poll()
   {
+    Radiant::Guard g(m_sourcesMutex);
     scanNewSources();
     scanSourceStatuses();
-    m_host.scheduleFromNowSecs(1);
   }
 
   void VideoCaptureMonitor::D::scanNewSources()
@@ -316,6 +317,21 @@ namespace VideoDisplay
   void VideoCaptureMonitor::removeSource(const QString &source)
   {
     (void) source;
+  }
+
+  QList<VideoCaptureMonitor::VideoSource> VideoCaptureMonitor::sources() const
+  {
+    QList<VideoSource> ret;
+    Radiant::Guard g(m_d->m_sourcesMutex);
+    for (auto & s: m_d->m_sources) {
+      if (s.enabled) {
+        VideoSource vs;
+        vs.device = s.device;
+        vs.resolution = s.resolution;
+        ret << vs;
+      }
+    }
+    return ret;
   }
 
   void VideoCaptureMonitor::doTask()

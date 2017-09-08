@@ -34,5 +34,10 @@ namespace VideoDisplay {
   void VideoCaptureMonitor::removeSource(const QString&)
   {}
 
-  DEFINE_SINGLETON(VideoCaptureMonitor);
+  QList<VideoCaptureMonitor::VideoSource> VideoCaptureMonitor::sources() const
+  {
+    return QList<VideoSource>();
+  }
+
+  DEFINE_SINGLETON(VideoCaptureMonitor)
 }
