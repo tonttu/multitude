@@ -135,7 +135,6 @@ SOURCES += SHMPipe.cpp
 SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
 SOURCES += TimeStamp.cpp
-SOURCES += TouchEvent.cpp
 SOURCES += Trace.cpp
 SOURCES += VideoImage.cpp
 SOURCES += VideoInput.cpp

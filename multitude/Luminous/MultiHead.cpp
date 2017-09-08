@@ -406,6 +406,11 @@ namespace Luminous
     return QPointF(nloc.x, nloc.y);
   }
 
+  Nimble::Vector2f MultiHead::Window::desktopToGraphics(Nimble::Vector2f loc, bool & convOk) const
+  {
+    return windowToGraphics(loc - location().cast<float>(), convOk);
+  }
+
   void MultiHead::Window::deleteAreas()
   {
     m_areas.clear();
@@ -830,6 +835,35 @@ namespace Luminous
       }
     }
 
+    return p;
+  }
+
+  MultiHead::GraphicsPoint MultiHead::desktopToGraphics(Nimble::Vector2f loc, int screenNumber) const
+  {
+    GraphicsPoint p;
+    p.location = loc;
+
+    Window * closest = nullptr;
+    float distance = 0;
+
+    for (const std::unique_ptr<Window> & window: m_windows) {
+      if (std::max(0, window->screennumber()) == std::max(0, screenNumber)) {
+        Nimble::Rectf r = window->getRect().cast<float>();
+        if (r.contains(loc)) {
+          closest = window.get();
+          break;
+        }
+        float dist = r.distance(loc);
+        if (!closest || dist < distance) {
+          closest = window.get();
+          distance = dist;
+        }
+      }
+    }
+
+    if (closest) {
+      p.location = closest->windowToGraphics(loc, p.isInside);
+    }
     return p;
   }
 

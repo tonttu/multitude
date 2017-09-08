@@ -16,6 +16,7 @@
 namespace Radiant
 {
   class PenEvent;
+  class TouchEvent;
 }
 
 class QExposeEvent;
@@ -26,7 +27,6 @@ class QMouseEvent;
 class QResizeEvent;
 class QShowEvent;
 class QTabletEvent;
-class QTouchEvent;
 class QWheelEvent;
 class QMoveEvent;
 class QDropEvent;
@@ -66,7 +66,7 @@ namespace Luminous
     virtual void resizeEvent(QResizeEvent* ev) { Q_UNUSED(ev); }
     virtual void showEvent(QShowEvent* ev) { Q_UNUSED(ev); }
     virtual void penEvent(const Radiant::PenEvent & ev) { Q_UNUSED(ev); }
-    virtual void touchEvent(QTouchEvent* ev) { Q_UNUSED(ev); }
+    virtual void touchEvent(const Radiant::TouchEvent & ev) { Q_UNUSED(ev); }
     virtual void wheelEvent(QWheelEvent* ev) { Q_UNUSED(ev); }
     virtual void dropEvent(QDropEvent* ev) { Q_UNUSED(ev); }
     virtual bool event(QEvent* ev) { Q_UNUSED(ev); return false; }
