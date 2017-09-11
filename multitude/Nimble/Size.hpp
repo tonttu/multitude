@@ -98,6 +98,11 @@ namespace Nimble {
     /// This method does not check that the argument value is valid
     inline T operator [] (int index) const { return ((T*) this)[index]; }
 
+    /// Returns a pointer to the first element
+    inline  T * data() { return &m_width; }
+    /// Returns a pointer to the first element
+    inline const T * data() const { return &m_width; }
+
     /// Add the given size to this size
     /// @param s size to add
     /// @return reference to this size
