@@ -393,10 +393,11 @@ namespace VideoDisplay
 
       QString args;
       if(video) {
+        AVRational timeBase = av_codec_get_pkt_timebase(m_av.videoCodecContext);
         args.sprintf("video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
                      m_av.videoCodecContext->width, m_av.videoCodecContext->height,
                      m_av.videoCodecContext->pix_fmt,
-                     m_av.videoCodecContext->time_base.num, m_av.videoCodecContext->time_base.den,
+                     timeBase.num, timeBase.den,
                      m_av.videoCodecContext->sample_aspect_ratio.num,
                      m_av.videoCodecContext->sample_aspect_ratio.den);
         int err = avfilter_graph_create_filter(&filterGraph.bufferSourceFilter, buffersrc,
@@ -420,9 +421,9 @@ namespace VideoDisplay
         av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
                                      m_av.audioCodecContext->channels, m_av.audioCodecContext->channel_layout);
 
+        AVRational timeBase = av_codec_get_pkt_timebase(m_av.audioCodecContext);
         args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
-                     m_av.audioCodecContext->time_base.num,
-                     m_av.audioCodecContext->time_base.den,
+                     timeBase.num, timeBase.den,
                      m_av.audioCodecContext->sample_rate,
                      av_get_sample_fmt_name(m_av.audioCodecContext->sample_fmt),
                      channelLayoutName.data());
