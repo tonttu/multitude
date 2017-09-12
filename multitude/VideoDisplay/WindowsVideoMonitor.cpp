@@ -187,6 +187,8 @@ namespace VideoDisplay
     std::set<Source> m_hintedSources;
 
     double m_pollInterval = 1.0;
+
+    RGBEasyLibPtr m_rgbEasy = RGBEasyLib::instance();
   };
 
   // -----------------------------------------------------------------
@@ -250,7 +252,7 @@ namespace VideoDisplay
         std::bind(&VideoCaptureMonitor::D::score, this, _1, _2);
 
     if(video.rgbIndex >= 0) {
-      scoreFunc = std::bind(&RGBEasyLib::score, &easyrgb, _1, _2);
+      scoreFunc = std::bind(&RGBEasyLib::score, m_rgbEasy.get(), _1, _2);
     }
 
     std::vector<float> row;
@@ -278,7 +280,7 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::initInput(VideoInput& vi) const
   {
-    easyrgb.initInput(vi);
+    m_rgbEasy->initInput(vi);
   }
 
   std::map<int, int>
@@ -442,7 +444,7 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::initExternalLibs()
   {
-    easyrgb.loadDll();
+    m_rgbEasy->loadDll();
   }
 
   SourcePtr VideoCaptureMonitor::D::createSource(const VideoInput& videoInput,
@@ -450,7 +452,7 @@ namespace VideoDisplay
   {
     if(videoInput.rgbIndex >= 0) {
       /// Check if this device is accessable with EasyRGB-device
-      return easyrgb.createEasyRGBSource(videoInput, audioInput);
+      return m_rgbEasy->createEasyRGBSource(videoInput, audioInput);
     }
 
     std::unique_ptr<Source> src;
