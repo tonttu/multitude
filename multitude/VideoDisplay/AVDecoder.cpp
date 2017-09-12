@@ -21,6 +21,7 @@
 
 namespace VideoDisplay
 {
+  static Radiant::Mutex s_decodersMutex;
   static std::vector<std::weak_ptr<AVDecoder>> s_decoders;
 
   void init()
@@ -93,6 +94,7 @@ namespace VideoDisplay
 
   void AVDecoder::shutdown()
   {
+    Radiant::Guard g(s_decodersMutex);
     for (auto weak: s_decoders) {
       if (auto decoder = weak.lock()) {
         decoder->close();
@@ -113,14 +115,17 @@ namespace VideoDisplay
 #else
     std::shared_ptr<AVDecoder> decoder(new FfmpegDecoder());
 #endif
-    for (auto it = s_decoders.begin(); it != s_decoders.end();) {
-      if (it->lock()) {
-        ++it;
-      } else {
-        it = s_decoders.erase(it);
+    {
+      Radiant::Guard g(s_decodersMutex);
+      for (auto it = s_decoders.begin(); it != s_decoders.end();) {
+        if (it->lock()) {
+          ++it;
+        } else {
+          it = s_decoders.erase(it);
+        }
       }
+      s_decoders.push_back(decoder);
     }
-    s_decoders.push_back(decoder);
 
     decoder->load(options);
     return decoder;
