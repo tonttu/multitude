@@ -1723,7 +1723,7 @@ namespace VideoDisplay
 
     ffmpegInit();
 
-    if (state() != STATE_FINISHED) {
+    if (state() != STATE_FINISHED || !m_d->m_av.videoSize.isValid()) {
       if (!m_d->open()) {
         state() = STATE_ERROR;
         return;
@@ -1946,6 +1946,15 @@ namespace VideoDisplay
       // video frames to audio anymore after that.
       audioTransfer->setDecodingFinished(true);
     }
+
+    // If m_running is false, someone called AVDecoder::close(), so we can
+    // close the decoder here in the decoder thread. Otherwise ~FfmpegDecoder()
+    // would need to do it, which might block longer than the user expects.
+    // Also this way we can close all decoders in parallel on application
+    // shutdown, saving a lot of time, especially with Datapath video sources
+    // (those can take 1-2 seconds to close).
+    if (!m_d->m_running)
+      m_d->close();
   }
 
   void ffmpegInit()
