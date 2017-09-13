@@ -24,6 +24,8 @@ namespace VideoDisplay
   struct AudioInput
   {
     QString friendlyName;
+    QString devicePath;
+
     int waveInId = -1; // invalid==-1
 
     bool isValid() const;

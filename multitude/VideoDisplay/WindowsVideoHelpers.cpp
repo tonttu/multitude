@@ -34,33 +34,43 @@ namespace VideoDisplay
 
   bool AudioInput::isValid() const
   {
-    // our audio is always referred with friendly name
-    return !friendlyName.isEmpty();
+    return !devicePath.isEmpty();
   }
 
   QString AudioInput::asString() const
   {
-    // if we happen to change this
-    return friendlyName;
+    return !devicePath.isEmpty() ? devicePath : friendlyName;
   }
 
   bool AudioInput::operator==(const AudioInput& other) const
   {
+    if(!devicePath.isEmpty() || !other.devicePath.isEmpty())
+      return devicePath == other.devicePath;
     return waveInId == other.waveInId && friendlyName == other.friendlyName;
   }
 
   bool AudioInput::operator<(const AudioInput& other) const
   {
-    const bool hasWave1 = waveInId != -1;
-    const bool hasWave2 = other.waveInId != -1;
-    if(!hasWave1 && !hasWave2) {
-      return friendlyName < other.friendlyName;
-    } else if(!hasWave2) {
+    const bool hasDev1 = !devicePath.isEmpty();
+    const bool hasDev2 = !other.devicePath.isEmpty();
+    if(!hasDev1 && !hasDev2) {
+      const bool hasWave1 = waveInId != -1;
+      const bool hasWave2 = other.waveInId != -1;
+      if(!hasWave1 && !hasWave2) {
+        return friendlyName < other.friendlyName;
+      } else if(!hasWave2) {
+        return true;
+      } else if(!hasWave1) {
+        return false;
+      } else {
+        return waveInId < other.waveInId;
+      }
+    } else if(!hasDev2) {
       return true;
-    } else if(!hasWave1) {
+    } else if(!hasDev1){
       return false;
     } else {
-      return waveInId < other.waveInId;
+      return devicePath < other.devicePath;
     }
   }
 
@@ -68,9 +78,10 @@ namespace VideoDisplay
 
   QString Source::ffmpegName() const
   {
-    QString result = "video="+video.asString();
+    // ':' is reserved for separating sources in ffmpeg
+    QString result = "video="+video.asString().replace(':', '_');
     if(audio.isValid())
-      result += ":audio=" + audio.asString();
+      result += ":audio=" + audio.asString().replace(':', '_');
     return result;
   }
 

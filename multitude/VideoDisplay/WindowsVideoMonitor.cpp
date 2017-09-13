@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <dshow.h>
 #include <propvarutil.h>
+#include <ObjIdl.h>
 
 #include <QLibrary>
 #include <QRegularExpression>
@@ -27,6 +28,12 @@ namespace VideoDisplay
     std::vector<AudioInput> devices;
     if (FAILED(hr))
       return devices;
+
+    IBindCtx * bindContext = nullptr;
+    CreateBindCtx(0, &bindContext);
+
+    IMalloc * coMalloc = nullptr;
+    CoGetMalloc(1, &coMalloc);
 
     IEnumMoniker * enumCat = nullptr;
     if (sysDevEnum->CreateClassEnumerator(CLSID_AudioInputDeviceCategory, &enumCat, 0) == S_OK) {
@@ -52,6 +59,15 @@ namespace VideoDisplay
         }
         VariantClear(&varName);
 
+        if (bindContext) {
+          LPOLESTR displayName = nullptr;
+          if (moniker->GetDisplayName(bindContext, nullptr, &displayName) == S_OK) {
+            source.devicePath = QString::fromWCharArray(displayName);
+            if (coMalloc)
+              coMalloc->Free(displayName);
+          }
+        }
+
         propBag->Release();
 
         devices.emplace_back(source);
@@ -60,6 +76,8 @@ namespace VideoDisplay
     }
     if(enumCat)
       enumCat->Release();
+    if(bindContext)
+      bindContext->Release();
     sysDevEnum->Release();
     return devices;
   }
@@ -74,6 +92,12 @@ namespace VideoDisplay
     std::vector<VideoInput> devices;
     if (FAILED(hr))
       return devices;
+
+    IBindCtx * bindContext = nullptr;
+    CreateBindCtx(0, &bindContext);
+
+    IMalloc * coMalloc = nullptr;
+    CoGetMalloc(1, &coMalloc);
 
     IEnumMoniker * enumCat = nullptr;
     if (sysDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &enumCat, 0) == S_OK) {
@@ -101,9 +125,14 @@ namespace VideoDisplay
         }
         VariantClear(&varName);
 
-        /// Mangle device path for ffmpeg form
-        if(!source.devicePath.isEmpty() && source.devicePath.contains("usb#vid"))
-          source.devicePath = QString("%1%2").arg("@device_pnp_", source.devicePath);
+        if (bindContext) {
+          LPOLESTR displayName = nullptr;
+          if (moniker->GetDisplayName(bindContext, nullptr, &displayName) == S_OK) {
+            source.devicePath = QString::fromWCharArray(displayName);
+            if (coMalloc)
+              coMalloc->Free(displayName);
+          }
+        }
 
         devices.emplace_back(source);
 
@@ -113,6 +142,8 @@ namespace VideoDisplay
     }
     if(enumCat)
       enumCat->Release();
+    if(bindContext)
+      bindContext->Release();
     sysDevEnum->Release();
     return devices;
   }
