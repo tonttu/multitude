@@ -16,6 +16,8 @@ namespace VideoDisplay
     QString rgbDeviceName;
     int rgbIndex = -1;
 
+    QString instanceId;
+
     QString asString() const;
     bool operator==(const VideoInput& other) const;
     bool operator<(const VideoInput& other) const;
@@ -24,6 +26,8 @@ namespace VideoDisplay
   struct AudioInput
   {
     QString friendlyName;
+    QString devicePath;
+
     int waveInId = -1; // invalid==-1
 
     bool isValid() const;
