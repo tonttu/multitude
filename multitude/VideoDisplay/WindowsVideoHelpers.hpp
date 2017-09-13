@@ -16,6 +16,8 @@ namespace VideoDisplay
     QString rgbDeviceName;
     int rgbIndex = -1;
 
+    QString instanceId;
+
     QString asString() const;
     bool operator==(const VideoInput& other) const;
     bool operator<(const VideoInput& other) const;

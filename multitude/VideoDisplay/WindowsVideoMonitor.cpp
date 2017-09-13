@@ -11,11 +11,26 @@
 
 #include <functional>
 
+#include <Radiant/DeviceUtilsWin.hpp>
+
 #include "WindowsVideoHelpers.hpp"
 #include "RGBEasy.hpp"
 
 namespace VideoDisplay
 {
+  /// @device_pnp_\\?\pci#ven_1cd7&dev_0010&subsys_00000001&rev_01#6&8a7228e&0&000800e4#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\video
+  /// to
+  /// pci\ven_1cd7&dev_0010&subsys_00000001&rev_01\6&8a7228e&0&000800e4
+  QString devicePathToInstanceId(QString devicePath)
+  {
+    int idx = devicePath.indexOf("#{");
+    if (idx > 0)
+      devicePath = devicePath.left(idx);
+    idx = devicePath.indexOf("\\\\?\\");
+    if (idx >= 0)
+      devicePath = devicePath.mid(idx + 4);
+    return devicePath.replace('#', '\\');
+  }
 
   /// scanAudioInputDevices & scanVideoInputDevices are essentially the same
   /// with some minor differences
@@ -134,6 +149,7 @@ namespace VideoDisplay
           }
         }
 
+        source.instanceId = devicePathToInstanceId(source.devicePath);
         devices.emplace_back(source);
 
         propBag->Release();
@@ -180,14 +196,14 @@ namespace VideoDisplay
     bool isHinted(const VideoInput& vi, const AudioInput& ai) const;
 
     Scores scores(const std::vector<VideoInput>& videos,
-                  const std::vector<AudioInput>& audios) const;
+                  const std::vector<AudioInput>& audios);
 
     std::vector<float>
-    scores(const VideoInput& video, const std::vector<AudioInput>& audios) const;
+    scores(const VideoInput& video, const std::vector<AudioInput>& audios);
 
     /// This assumes that there is no additional information about the video or audio
     /// @see scores-function that calculates scores for single row
-    float score(const VideoInput& audio, const AudioInput& video) const;
+    float score(const VideoInput& audio, const AudioInput& video);
 
     std::map<int, int> formPairsGreedily(const Scores& scores);
 
@@ -216,6 +232,9 @@ namespace VideoDisplay
     // Contains sources that are suggested to be pairs by the application
     mutable Radiant::Mutex m_hintMutex;
     std::set<Source> m_hintedSources;
+
+    QRegularExpression m_uuidRe{"\\{[0-9A-F-]{36}\\}"};
+    std::map<QString, QStringList> m_busRelations;
 
     double m_pollInterval = 1.0;
 
@@ -249,12 +268,36 @@ namespace VideoDisplay
     return false;
   }
 
-  float VideoCaptureMonitor::D::score(const VideoInput& video, const AudioInput& audio) const
+  float VideoCaptureMonitor::D::score(const VideoInput& video, const AudioInput& audio)
   {
     /// Pretty random heuristics follow. By investigating usb paths we could (???)
     /// achieve more precise guesses
 
     float score = 0;
+
+    if (!video.instanceId.isEmpty()) {
+      auto it = m_busRelations.find(video.instanceId);
+      if (it == m_busRelations.end()) {
+        QStringList tmp = Radiant::DeviceUtils::busRelations(video.instanceId);
+        for (QString & r: tmp)
+          r = r.toUpper();
+        it = m_busRelations.emplace(video.instanceId, tmp).first;
+      }
+      const QStringList & relations = it->second;
+
+      /// Example values with Magewell Pro Capture cards:
+      ///  video instance ID: pci\ven_1cd7&dev_0010&subsys_00010001&rev_01\6&38f76327&0&002800e4
+      ///  only bus relation (child device): SWD\MMDEVAPI\{0.0.1.00000000}.{4078FD80-B509-4AE7-AAE1-0ECBF640631C}
+      ///  audio device path: @device:cm:{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave:{4078FD80-B509-4AE7-AAE1-0ECBF640631C}
+      /// We are comparing the UUID in the end to make matches
+      for (QString str: relations) {
+        auto match = m_uuidRe.match(str);
+        if (match.hasMatch() && audio.devicePath.contains(match.captured())) {
+          score += relations.size() == 1 ? 20 : 10;
+        }
+      }
+    }
+
     if(audio.friendlyName.contains(video.friendlyName))
       score += 10;
     else if(video.friendlyName == "QCMEVB" && audio.friendlyName.contains("Surface Hub"))
@@ -275,7 +318,7 @@ namespace VideoDisplay
 
   std::vector<float>
   VideoCaptureMonitor::D::scores(const VideoInput& video,
-                                 const std::vector<AudioInput>& audios) const
+                                 const std::vector<AudioInput>& audios)
   {
     using namespace std::placeholders; /// for _1 & _2
 
@@ -295,7 +338,7 @@ namespace VideoDisplay
 
   VideoCaptureMonitor::D::Scores
   VideoCaptureMonitor::D::scores(const std::vector<VideoInput>& videos,
-                                 const std::vector<AudioInput>& audios) const
+                                 const std::vector<AudioInput>& audios)
   {
     std::vector<std::vector<float>> scoreMatrix;
     for(size_t i = 0; i < videos.size(); ++i) {
