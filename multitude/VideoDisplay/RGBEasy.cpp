@@ -7,24 +7,27 @@
 
 namespace VideoDisplay
 {
-
-  RGBEasyLib easyrgb;
-
   SourceState RGBEasySource::update()
   {
     SourceState state;
     state.enabled = false;
 
+    auto lib = m_lib.lock();
+    if (!lib) {
+      m_failed = true;
+      return state;
+    }
+
     SIGNALTYPE signalType = RGB_SIGNALTYPE_NOSIGNAL;
     unsigned long w = 0, h = 0, rate = 0;
 
-    if (easyrgb.api.RGBGetInputSignalType(video.rgbIndex, &signalType, &w, &h, &rate) != 0) {
-      if(!failed) {
+    if (lib->api.RGBGetInputSignalType(video.rgbIndex, &signalType, &w, &h, &rate) != 0) {
+      if(!m_failed) {
         Radiant::warning("RGBEasyMonitor # RGBGetInputSignalType failed");
-        failed = true;
+        m_failed = true;
       }
     } else {
-      failed = false;
+      m_failed = false;
       state.resolution.make(w, h);
       state.enabled = signalType != RGB_SIGNALTYPE_NOSIGNAL &&
                       signalType != RGB_SIGNALTYPE_OUTOFRANGE;
@@ -65,13 +68,13 @@ namespace VideoDisplay
     // functions-array will contain pairs, the function pointer inside our
     // struct, and the name of that function. For instance:
     //
-    //  { (QFunctionPointer*) &easyrgb.api.RGBGetNumberOfInputs, "RGBGetNumberOfInputs" }
+    //  { (QFunctionPointer*) &api.RGBGetNumberOfInputs, "RGBGetNumberOfInputs" }
     //
     // Now when we know the name of the function and the target function
     // pointer, we can dynamically load the symbol from the library and assign
     // it to the function pointer.
     std::pair<QFunctionPointer*, const char*> functions[] = {
-#define API(TYPE, CONV, NAME, ARGS) { (QFunctionPointer*)&easyrgb.api.NAME, #NAME },
+#define API(TYPE, CONV, NAME, ARGS) { (QFunctionPointer*)&api.NAME, #NAME },
 #include <RGBAPI.H>
     };
 
@@ -86,7 +89,7 @@ namespace VideoDisplay
 
     // RGBAPI functions will typically return an error code, 0 meaning success
 
-    if (api.RGBLoad(&easyrgb.apiHandle) != 0) {
+    if (api.RGBLoad(&apiHandle) != 0) {
       apiHandle = 0;
       Radiant::error("RGBEasyMonitor # Failed to initialize RGB driver");
       return;
@@ -155,8 +158,9 @@ namespace VideoDisplay
   {
     /// Basically this is only needed to override update-logic
     std::unique_ptr<RGBEasySource> src;
-    src.reset(new RGBEasySource(videoInput, audioInput));
+    src.reset(new RGBEasySource(m_weak, videoInput, audioInput));
     return src;
   }
 
+  DEFINE_SINGLETON2(RGBEasyLib, , p->m_weak = p;)
 }
