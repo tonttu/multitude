@@ -22,6 +22,8 @@
 #include <cassert>
 
 #ifdef RADIANT_WINDOWS
+#include <Dwmapi.h>
+
 static int64_t performanceCounterFrequency = 0;
 #endif
 
@@ -104,6 +106,14 @@ namespace Luminous
   void Window::swapBuffers()
   {
     m_openGLContext->swapBuffers(this);
+
+#ifdef RADIANT_WINDOWS
+    if (!m_uncloak) {
+      m_uncloak = true;
+      auto v = FALSE;
+      DwmSetWindowAttribute((HWND)winId(), DWMWA_CLOAK, &v, sizeof(v));
+    }
+#endif
   }
 
   void Window::setKeyboardFocusOnClick(bool value)
@@ -126,6 +136,11 @@ namespace Luminous
     BOOL value = false;
     for (int i = FEEDBACK_TOUCH_CONTACTVISUALIZATION; i <= FEEDBACK_GESTURE_PRESSANDTAP; ++i)
       SetWindowFeedbackSetting((HWND)winId(), FEEDBACK_TYPE(i), 0, sizeof(BOOL), &value);
+
+    if (!m_uncloak) {
+      auto v = TRUE;
+      DwmSetWindowAttribute((HWND)winId(), DWMWA_CLOAK, &v, sizeof(v));
+    }
 #endif
   }
 

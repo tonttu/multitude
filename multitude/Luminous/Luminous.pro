@@ -171,6 +171,7 @@ QT += svg
 win32 {
   LIBS += -lnvapi64
   LIBS += -lUser32
+  LIBS += -lDwmapi
 
   HEADERS += GPUAffinity.hpp
   SOURCES += GPUAffinity.cpp
