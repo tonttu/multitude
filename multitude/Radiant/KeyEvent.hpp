@@ -129,9 +129,6 @@ namespace Radiant
 
     /// @cond
 
-    MULTI_ATTR_DEPRECATED("Use location() instead", int x() const ) { return location().x; }
-    MULTI_ATTR_DEPRECATED("Use location() instead", int y() const ) { return location().y; }
-
     QString toString() const;
 
     /// @endcond
@@ -142,6 +139,10 @@ namespace Radiant
     /// Set the location of the mouse cursor at the time of the event
     /// @param location location to set
     void setLocation(const Nimble::Vector2f & location);
+
+    /// Event location in receiving widget coordinates, if the receiver is a widget
+    Nimble::Vector2f widgetLocation() const;
+    void setWidgetLocation(const Nimble::Vector2f & widgetLocation);
 
     /// Return the distance the mouse wheel is rotated, in eights of a degree.
     /// @return distance the wheel is rotated

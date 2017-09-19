@@ -89,6 +89,7 @@ namespace Radiant
   public:
     QEvent::Type type;
     Nimble::Vector2f location;
+    Nimble::Vector2f widgetLocation{0, 0};
     Qt::MouseButton button;
     Qt::MouseButtons buttons;
     Qt::KeyboardModifiers modifiers;
@@ -156,6 +157,16 @@ namespace Radiant
   void MouseEvent::setLocation(const Nimble::Vector2f & location)
   {
     m_d->location = location;
+  }
+
+  Nimble::Vector2f MouseEvent::widgetLocation() const
+  {
+    return m_d->widgetLocation;
+  }
+
+  void MouseEvent::setWidgetLocation(const Nimble::Vector2f & widgetLocation)
+  {
+    m_d->widgetLocation = widgetLocation;
   }
 
   int MouseEvent::delta() const
