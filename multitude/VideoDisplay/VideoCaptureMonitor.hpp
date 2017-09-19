@@ -20,6 +20,7 @@ namespace VideoDisplay
   {
     DECLARE_SINGLETON(VideoCaptureMonitor);
 
+    MEMCHECKED
   public:
     ~VideoCaptureMonitor();
 

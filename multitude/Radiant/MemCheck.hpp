@@ -25,7 +25,7 @@ namespace Radiant {
 
       <pre>
       make clean;
-      qmake MEMCHECK=yes -r && make -j5
+      qmake -config enable-memcheck -r && make -j5
       </pre>
 
       When you quit the application it will print out information on any non-deleted pointers.
@@ -42,17 +42,41 @@ namespace Radiant {
   {
     DECLARE_SINGLETON(MemChecker);
 
-/// @cond
-
   public:
 
     MemChecker();
     ~MemChecker();
 
+    /// Return the number of allocated pointers
+    size_t allocationCount() const { return m_allocations.size(); }
+
+    /**
+     * @brief Control whether we should assert on errors or not
+     *
+     * In general, it is useful to assert on errors, so that memory issues are detected
+     * immadiately. How-ever, in some test-cases it is useful to first allocate initial
+     * resources, then turn on the memchcker and later on check that none of the new
+     * allocations have leaked. For these test cases, you can manually clear existing allocations
+     * and set the assertion to false.
+     *
+     * @param assertOnFreeErrors
+     */
+    void setAssertOnFreeErrors(bool assertOnFreeErrors) { m_assertOnFreeErrors = assertOnFreeErrors; }
+    /**
+     * @brief Clear existing allocation information.
+     *
+     * If you use this function, you would generally also use setAssertOnFreeErrors
+     */
+    void clearAllocations();
+    /**
+     * @brief Print the currently allocated pointer information to the terminal.
+     */
+    void printAllocations();
+
+    /// @cond
     void * malloc(size_t s);
     void free(void * ptr);
     inline size_t allocated() const { return m_allocated; }
-
   private:
     struct Allocation
     {
@@ -67,7 +91,7 @@ namespace Radiant {
     AllocationMap m_allocations;
     Radiant::Mutex m_mutex;
     size_t m_allocated;
-
+    bool   m_assertOnFreeErrors = true;
   };
 
 #if MULTI_MEMCHECK

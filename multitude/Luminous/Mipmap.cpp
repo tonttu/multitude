@@ -217,6 +217,7 @@ namespace Luminous
   /// need to lock anything, so this will have no impact on rendering threads.
   class MipmapReleaseTask : public Radiant::Task, public Valuable::Node
   {
+    MEMCHECKED
   public:
     MipmapReleaseTask();
 

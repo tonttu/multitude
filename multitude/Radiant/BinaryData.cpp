@@ -959,7 +959,7 @@ namespace Radiant {
   {
     /*if(!__verbose)
       return;*/
-    Radiant::error("%s # Not enough data available (at %u/%u)",
+    Radiant::fatal("%s # Not enough data available (at %u/%u)",
                    func, m_current, m_total);
   }
 
