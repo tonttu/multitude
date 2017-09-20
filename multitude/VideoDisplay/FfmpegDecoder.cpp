@@ -1432,6 +1432,25 @@ namespace VideoDisplay
     : m_d(new D(this))
   {
     Thread::setName("FfmpegDecoder");
+
+    audioLocationAttribute().addListener([this] {
+      AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+
+      if (audioTransfer) {
+        char buf[128];
+
+        Radiant::BinaryData control;
+
+        control.writeString("panner/setsourcelocation");
+
+        snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
+
+        control.writeString(buf);
+        control.writeVector2Float32(audioLocationAttribute()); // sound source location
+
+        Resonant::DSPNetwork::instance()->send(control);
+      }
+    });
   }
 
   FfmpegDecoder::~FfmpegDecoder()
@@ -1607,26 +1626,6 @@ namespace VideoDisplay
         a, c[1], c[2], -b*a - 0.5f * (c[2]+c[1]),
         a, c[3],    0, -b*a - 0.5f * c[3],
           0,    0,    0, 1);
-  }
-
-  void FfmpegDecoder::panAudioTo(Nimble::Vector2f location) const
-  {
-    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
-
-    if (audioTransfer) {
-      char buf[128];
-
-      Radiant::BinaryData control;
-
-      control.writeString("panner/setsourcelocation");
-
-      snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
-
-      control.writeString(buf);
-      control.writeVector2Float32(location); // sound source location
-
-      Resonant::DSPNetwork::instance()->send(control);
-    }
   }
 
   void FfmpegDecoder::setAudioGain(float gain)
