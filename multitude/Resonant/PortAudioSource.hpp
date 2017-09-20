@@ -24,7 +24,8 @@ namespace Resonant
     };
 
   public:
-    PortAudioSource();
+    /// @param name Resonant::Module name prefix
+    PortAudioSource(const QString & name);
     /// Calls close if the player wasn't closed already
     ~PortAudioSource();
 

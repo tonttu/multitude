@@ -13,7 +13,8 @@ namespace Resonant
   class RESONANT_API PulseAudioSource
   {
   public:
-    PulseAudioSource();
+    /// @param name Resonant::Module name prefix
+    PulseAudioSource(const QString & name);
     ~PulseAudioSource();
 
     PulseAudioSource(PulseAudioSource && src);

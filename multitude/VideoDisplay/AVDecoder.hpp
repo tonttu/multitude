@@ -12,6 +12,7 @@
 #include <Radiant/Thread.hpp>
 #include <Radiant/Flags.hpp>
 
+#include <Valuable/AttributeVector.hpp>
 #include <Valuable/Node.hpp>
 #include <Valuable/State.hpp>
 
@@ -688,9 +689,8 @@ namespace VideoDisplay
     /// @returns YUV to RGB conversion matrix
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
-    /// Sets audio panning to specific location
-    /// @param location 2D location of the audio
-    virtual void panAudioTo(Nimble::Vector2f location) const = 0;
+    /// Positional audio parameter. Modify and read freely.
+    Valuable::AttributeVector2f & audioLocationAttribute();
 
     /// Controls the gain (volume) of the video sound-track.
     /// @param gain new audio gain, typical range is 0-1, although larger values
@@ -739,6 +739,7 @@ namespace VideoDisplay
   };
   /// Smart pointer to AVDecoder
   typedef std::shared_ptr<AVDecoder> AVDecoderPtr;
+  typedef std::weak_ptr<AVDecoder> AVDecoderWeakPtr;
 }
 
 #endif // VIDEODISPLAY_AVDECODER_HPP

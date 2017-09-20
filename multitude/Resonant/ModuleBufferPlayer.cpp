@@ -28,11 +28,11 @@ namespace Resonant
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ModuleBufferPlayer::ModuleBufferPlayer()
+  ModuleBufferPlayer::ModuleBufferPlayer(const QString & name)
     : m_d(new D())
   {
     static std::atomic<int> counter {0};
-    setId(QString("ModuleBufferPlayer.%1").arg(counter++).toUtf8());
+    setId(QString("%2.%1").arg(counter++).arg(name).toUtf8());
   }
 
   ModuleBufferPlayer::~ModuleBufferPlayer()
