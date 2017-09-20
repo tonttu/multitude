@@ -51,7 +51,7 @@ namespace Radiant
     void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
 
     /// Unique ID for the source device. This can be typecasted to device
-    /// HWND in Windows.
+    /// HANDLE in Windows.
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 
