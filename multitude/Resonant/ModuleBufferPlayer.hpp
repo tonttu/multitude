@@ -13,7 +13,8 @@ namespace Resonant
   {
   public:
     /// Constructs an inactive module
-    ModuleBufferPlayer();
+    /// @param name prefix for the Resonant::Module id
+    ModuleBufferPlayer(const QString & name);
     virtual ~ModuleBufferPlayer();
 
     void setChannelCount(int channelCount);

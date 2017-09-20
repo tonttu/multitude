@@ -11,6 +11,10 @@ namespace Resonant
   class PulseAudioSource::D
   {
   public:
+    D(const QString & name)
+      : m_module(std::make_shared<ModuleBufferPlayer>(name))
+    {}
+
     void capture(const float * data, std::size_t totalSamples);
 
     bool prepareContext(QString * errorMsg, double timeoutSecs);
@@ -19,7 +23,7 @@ namespace Resonant
     PulseAudioContextPtr m_context;
     pa_stream * m_stream = nullptr;
 
-    ModuleBufferPlayerPtr m_module = std::make_shared<ModuleBufferPlayer>();
+    ModuleBufferPlayerPtr m_module;
   };
 
   void PulseAudioSource::D::capture(const float * data, std::size_t totalSamples)
@@ -71,8 +75,8 @@ namespace Resonant
   }
 
 
-  PulseAudioSource::PulseAudioSource()
-    : m_d(new D())
+  PulseAudioSource::PulseAudioSource(const QString & name)
+    : m_d(new D(name))
   {
   }
 

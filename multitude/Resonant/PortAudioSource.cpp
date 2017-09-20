@@ -23,6 +23,10 @@ namespace Resonant
   class PortAudioSource::D
   {
   public:
+    D(const QString & name)
+      : m_module(std::make_shared<ModuleBufferPlayer>(name))
+    {}
+
     PaStreamCallbackResult capture(const float * const * input, unsigned long frameCount,
                                    const PaStreamCallbackTimeInfo * timeInfo, PaStreamCallbackFlags statusFlags);
     bool initialize(QString * error);
@@ -31,7 +35,7 @@ namespace Resonant
     bool m_initialized = false;
     PaStream * m_stream = nullptr;
 
-    ModuleBufferPlayerPtr m_module = std::make_shared<ModuleBufferPlayer>();
+    ModuleBufferPlayerPtr m_module;
   };
 
   PaStreamCallbackResult PortAudioSource::D::capture(const float * const * input, unsigned long frameCount,
@@ -72,8 +76,8 @@ namespace Resonant
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  PortAudioSource::PortAudioSource()
-    : m_d(new D())
+  PortAudioSource::PortAudioSource(const QString & name)
+    : m_d(new D(name))
   {
   }
 
