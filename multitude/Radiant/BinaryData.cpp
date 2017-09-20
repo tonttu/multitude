@@ -957,9 +957,7 @@ namespace Radiant {
 
   void BinaryData::unavailable(const char * func) const
   {
-    /*if(!__verbose)
-      return;*/
-    Radiant::fatal("%s # Not enough data available (at %u/%u)",
+    Radiant::error("%s # Not enough data available (at %u/%u)",
                    func, m_current, m_total);
   }
 
