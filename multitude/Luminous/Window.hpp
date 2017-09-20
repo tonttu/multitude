@@ -193,6 +193,11 @@ namespace Luminous
 
 #ifdef RADIANT_WINDOWS
     std::vector<POINTER_INFO> m_pointerInfo;
+
+    /// We cloak the window during startup to make sure we don't show ugly
+    /// white flashing window. We uncloak the window after rendering the first
+    /// frame in swapBuffers
+    bool m_uncloak = false;
 #endif
   };
 

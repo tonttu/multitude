@@ -702,6 +702,9 @@ namespace VideoDisplay
     /// the audio playback will break.
     virtual void setMinimizeAudioLatency(bool minimize) = 0;
 
+    /// Close all AVDecoders
+    static void shutdown();
+
     /// Creates a new decoder and loads it with given options
     /// @param options options given to load()
     /// @param backend use empty string for automatic backend

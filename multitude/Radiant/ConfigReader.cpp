@@ -607,7 +607,7 @@ namespace Radiant {
 
     // @todo collect global variables from stack.top()
     Chunk & ch = chunk;
-    for (auto it = ch.chunks()->begin(); it != ch.chunks()->end(); ++it) {
+    for (auto it = ch.chunks().begin(); it != ch.chunks().end(); ++it) {
       c->set(it->first, it->second);
     }
 

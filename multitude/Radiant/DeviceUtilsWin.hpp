@@ -36,6 +36,7 @@ namespace Radiant
     RADIANT_API DeviceInfo displayDeviceInfo(const QString & deviceInstanceId);
     RADIANT_API std::vector<int> cpuList(int numaNode);
 
+    RADIANT_API QStringList busRelations(const QString & deviceId);
     RADIANT_API std::vector<Device> allDevices();
     RADIANT_API void dump();
   }

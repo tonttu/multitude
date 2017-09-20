@@ -329,7 +329,7 @@ namespace Radiant {
 
     /// Get the map of chunks
     /// @return Chunks stored in this chunk
-    const std::multimap<QString, ChunkT<T> > * chunks() const { return m_chunks; }
+    const std::multimap<QString, ChunkT<T> > & chunks() const { return *m_chunks; }
 
     /// Gets the data element from an iterator
     /// @param it Iterator to inspect

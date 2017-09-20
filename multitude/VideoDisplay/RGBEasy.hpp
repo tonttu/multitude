@@ -3,6 +3,8 @@
 
 #include "WindowsVideoHelpers.hpp"
 
+#include <Radiant/Singleton.hpp>
+
 #include <atomic>
 #include <QLibrary>
 #include <windows.h>
@@ -32,24 +34,35 @@ namespace VideoDisplay
     // This is needed since we are loading the library dynamically.
     #define API(TYPE, CONV, NAME, ARGS) TYPE (CONV * NAME) ARGS = nullptr;
     #include <RGBAPI.H>
- };
+  };
 
-  struct RGBEasySource : public Source
+  class RGBEasyLib;
+  typedef std::shared_ptr<RGBEasyLib> RGBEasyLibPtr;
+  typedef std::weak_ptr<RGBEasyLib> RGBEasyLibWeakPtr;
+
+  class RGBEasySource : public Source
   {
-    RGBEasySource(const VideoInput& vi, const AudioInput& ai)
+  public:
+    RGBEasySource(RGBEasyLibWeakPtr lib, const VideoInput& vi, const AudioInput& ai)
       : Source(vi,ai)
+      , m_lib(lib)
     {
       assert(vi.rgbIndex >= 0);
     }
 
     virtual SourceState update() override;
 
-    bool failed = false;
+  private:
+    bool m_failed = false;
+    RGBEasyLibWeakPtr m_lib;
   };
 
-  extern struct RGBEasyLib
+  class RGBEasyLib
   {
+    DECLARE_SINGLETON(RGBEasyLib);
     RGBEasyLib();
+
+  public:
     ~RGBEasyLib();
 
     void loadDll();
@@ -71,8 +84,9 @@ namespace VideoDisplay
 
     float score(const VideoInput& vi, const AudioInput& ai);
 
-  } easyrgb;
-
+  private:
+    RGBEasyLibWeakPtr m_weak;
+  };
 
 } // namespace VideoDisplay
 

@@ -10,6 +10,7 @@
 #include <Devpkey.h>
 #include <objbase.h>
 #include <pciprop.h>
+#include <Cfgmgr32.h>
 
 #include <QStringList>
 #include <QSet>
@@ -17,6 +18,7 @@
 #include <QMap>
 
 #include <array>
+#include <cassert>
 
 static QByteArray keyName(DEVPROPKEY key)
 {
@@ -374,6 +376,48 @@ namespace Radiant
     {
       for (Device & dev: allDevices())
         dumpDev(dev);
+    }
+
+    std::vector<std::wstring> idList(const wchar_t * filter, unsigned long flags)
+    {
+      std::vector<std::wstring> ret;
+      unsigned long size = 0;
+      CONFIGRET err = CM_Get_Device_ID_List_Size(&size, filter, flags);
+      if (err == CR_SUCCESS) {
+        std::wstring buffer(size, L'\0');
+        if (CM_Get_Device_ID_List(filter, const_cast<wchar_t*>(buffer.data()), (unsigned long)buffer.size(), flags) == CR_SUCCESS) {
+          std::wstring::size_type pos = 0;
+          auto end = buffer.find(L"\0", 0, 2);
+          assert(end != std::wstring::npos);
+
+          while (pos < end) {
+            auto tmp = buffer.find(L'\0', pos);
+            if (tmp != std::wstring::npos) {
+              ret.push_back(buffer.substr(pos, tmp-pos));
+              pos = tmp + 1;
+            } else {
+              break;
+            }
+          }
+        } else {
+          Radiant::error("CM_Get_Device_ID_List: %s",
+                         Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
+        }
+      } else if (err != CR_NO_SUCH_VALUE) {
+        Radiant::error("CM_Get_Device_ID_List_Size: %s",
+                       Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
+      }
+
+      return ret;
+    }
+
+    QStringList busRelations(const QString & deviceId)
+    {
+      QStringList ret;
+      for (auto relation: idList(deviceId.toStdWString().c_str(),
+                                 CM_GETIDLIST_FILTER_PRESENT | CM_GETIDLIST_FILTER_BUSRELATIONS))
+        ret << QString::fromStdWString(relation);
+      return ret;
     }
 
     std::vector<Device> allDevices()
