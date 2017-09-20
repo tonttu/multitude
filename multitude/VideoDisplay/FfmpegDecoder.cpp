@@ -221,6 +221,8 @@ namespace VideoDisplay
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
 
+    // Sets the audio location from m_host->audioLocationAttribute to Resonant audio panner
+    void syncAudioLocation();
 
 
     FfmpegDecoder * m_host;
@@ -254,6 +256,9 @@ namespace VideoDisplay
     float m_audioGain;
     bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
+
+    /// Change listener ID for m_host->audioLocationAttribute
+    long m_audioLocationListener = -1;
 
     /// In some videos, the audio track might be shorter than the video track
     /// We have some heuristic to determine when the audio track has actually ended,
@@ -1100,6 +1105,25 @@ namespace VideoDisplay
       frame.clear(i);
   }
 
+  void FfmpegDecoder::D::syncAudioLocation()
+  {
+    AudioTransferPtr audioTransfer(m_audioTransfer);
+    if (audioTransfer) {
+      char buf[128];
+
+      Radiant::BinaryData control;
+
+      control.writeString("panner/setsourcelocation");
+
+      snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
+
+      control.writeString(buf);
+      control.writeVector2Float32(m_host->audioLocationAttribute()); // sound source location
+
+      Resonant::DSPNetwork::instance()->send(control);
+    }
+  }
+
   int64_t FfmpegDecoder::D::guessCorrectPts(AVFrame* frame)
   {
     int64_t reordered_pts = frame->pkt_pts;
@@ -1433,36 +1457,17 @@ namespace VideoDisplay
   {
     Thread::setName("FfmpegDecoder");
 
-    audioLocationAttribute().addListener([this] {
-      AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
-
-      if (audioTransfer) {
-        char buf[128];
-
-        Radiant::BinaryData control;
-
-        control.writeString("panner/setsourcelocation");
-
-        snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
-
-        control.writeString(buf);
-        control.writeVector2Float32(audioLocationAttribute()); // sound source location
-
-        Resonant::DSPNetwork::instance()->send(control);
-      }
-    });
-  }
+    auto sync = [this] { m_d->syncAudioLocation(); };
+    m_d->m_audioLocationListener = audioLocationAttribute().addListener(sync);
+ }
 
   FfmpegDecoder::~FfmpegDecoder()
   {
     close();
+    audioLocationAttribute().removeListener(m_d->m_audioLocationListener);
     if(isRunning())
       waitEnd();
-    while(true) {
-      break;
-      /// TODO go through consumed buffers and release them
-
-    }
+    /// TODO go through consumed buffers and release them
     m_d->close();
   }
 
