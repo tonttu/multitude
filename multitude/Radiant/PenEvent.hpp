@@ -106,7 +106,7 @@ namespace Radiant
 
     /// Unique ID for the source device. This can be used to differentiate
     /// between multiple pens, if the hardware supports that. This can be
-    /// typecasted to device HWND in Windows.
+    /// typecasted to device HANDLE in Windows.
     uint64_t sourceDevice() const { return m_sourceDevice; }
     void setSourceDevice(uint64_t device) { m_sourceDevice = device; }
 
