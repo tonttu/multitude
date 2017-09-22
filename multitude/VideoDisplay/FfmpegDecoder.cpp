@@ -499,16 +499,6 @@ namespace VideoDisplay
     m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
-    if(!m_options.demuxerOptions().isEmpty()) {
-      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
-        int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
-        if(err < 0) {
-          Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
-                           it.key().toUtf8().data(), it.value().toUtf8().data(), err);
-        }
-      }
-    }
-
 #ifdef RADIANT_LINUX
     /// Detect video4linux2 devices automatically
     if (m_options.format().isEmpty() && AVDecoder::looksLikeV4L2Device(src)) {
@@ -523,7 +513,24 @@ namespace VideoDisplay
         m_options.setFormat("dshow");
       }
     }
+
+    /// Set audio buffer to 50 ms in DirectShow instead of the default 500 ms.
+    /// This will also reduce audio latency by 450 ms, which is important when
+    /// using low-latency streaming-mode.
+    if (m_options.format() == "dshow" &&
+        !m_options.demuxerOptions().contains("audio_buffer_size"))
+      m_options.setDemuxerOption("audio_buffer_size", "50");
 #endif
+
+    if(!m_options.demuxerOptions().isEmpty()) {
+      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
+        int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
+        if(err < 0) {
+          Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
+                           it.key().toUtf8().data(), it.value().toUtf8().data(), err);
+        }
+      }
+    }
 
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
