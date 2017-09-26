@@ -363,9 +363,12 @@ namespace VideoDisplay
     std::vector<std::tuple<float, int, int>> tmp;
     for(size_t video = 0; video < scores.size(); ++video) {
       for(size_t audio = 0; audio < scores[video].size(); ++audio) {
-        float score = -scores[video][audio]; // lazy way to set up comparisons..
-        tmp.push_back(std::make_tuple(score, video, audio));
+        float negativeScore = -scores[video][audio]; // lazy way to set up comparisons..
+        tmp.push_back(std::make_tuple(negativeScore, video, negativeScore > 0 ? audio : -1));
       }
+      // Maybe the video source doesn't have any audio source, add that
+      // option there as well.
+      tmp.push_back(std::make_tuple(0, video, -1));
     }
 
     std::sort(tmp.begin(), tmp.end());
@@ -373,22 +376,21 @@ namespace VideoDisplay
     std::set<int> usedAudios;
 
     std::map<int, int> results;
-    int added = 0, toAdd = int(scores.size());
     for(const std::tuple<float, int, int>& t : tmp) {
-      float score;
+      float negativeScore;
       int video, audio;
-      std::tie(score, video, audio) = t;
+      std::tie(negativeScore, video, audio) = t;
 
       if(results.find(video) != results.end())
         continue;
       if(usedAudios.find(audio) != usedAudios.end())
         continue;
 
-      results[video] = score < 0 ? audio : -1; // note inverted scores
-      usedAudios.insert(audio);
-      if(++added == toAdd)
-        break;
+      results[video] = audio;
+      if (audio >= 0)
+        usedAudios.insert(audio);
     }
+
     return results;
   }
 
