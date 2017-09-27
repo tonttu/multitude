@@ -290,8 +290,8 @@ namespace VideoDisplay
     // with certain hardware (Magewell Pro Capture Quad HDMI on Linux)
     // calling unref blocks until a next frame is available. In this case we
     // unreference old used frame at the same time we are referencing a new
-    // one. This work-around fixes playback but consumes more memory, so it
-    // is not enabled by default.
+    // one. This work-around fixes playback but consumes more memory
+    // (one 4k video could consume up to 475MB), so it is not enabled by default.
     bool m_frameUnrefMightBlock = false;
 
     int m_index;
