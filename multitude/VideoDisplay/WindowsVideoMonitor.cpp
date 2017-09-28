@@ -363,8 +363,11 @@ namespace VideoDisplay
     std::vector<std::tuple<float, int, int>> tmp;
     for(size_t video = 0; video < scores.size(); ++video) {
       for(size_t audio = 0; audio < scores[video].size(); ++audio) {
-        float negativeScore = -scores[video][audio]; // lazy way to set up comparisons..
-        tmp.push_back(std::make_tuple(negativeScore, video, negativeScore > 0 ? audio : -1));
+        float score = scores[video][audio];
+        // Only consider video+audio pairs with positive score. Use negative
+        // scores in tmp as a lazy way to set up comparisons..
+        if (score > 0)
+          tmp.push_back(std::make_tuple(-score, video, audio));
       }
       // Maybe the video source doesn't have any audio source, add that
       // option there as well.
