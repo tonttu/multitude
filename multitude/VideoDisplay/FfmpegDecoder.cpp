@@ -17,6 +17,7 @@
 #include <Valuable/AttributeBool.hpp>
 #include <Valuable/State.hpp>
 
+#include <QRegularExpression>
 #include <QSet>
 #include <QString>
 #include <QThread>
@@ -46,6 +47,15 @@ extern "C" {
 
 # include <libswscale/swscale.h>
 }
+
+#ifdef RADIANT_LINUX
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <linux/videodev2.h>
+#endif
 
 namespace
 {
@@ -129,15 +139,19 @@ namespace VideoDisplay
   class VideoFrameFfmpeg : public VideoFrame
   {
   public:
-    VideoFrameFfmpeg() : VideoFrame(), frame(nullptr) {}
     ~VideoFrameFfmpeg()
     {
       if (frame) {
+        if (referenced)
+          av_frame_unref(frame);
         av_frame_free(&frame);
+        frame = nullptr;
       }
+      referenced = false;
     }
 
-    AVFrame* frame;
+    bool referenced = false;
+    AVFrame* frame = nullptr;
   };
 
   struct MyAV
@@ -269,7 +283,16 @@ namespace VideoDisplay
     double m_lastDecodedAudioPts;
     double m_lastDecodedVideoPts;
 
-    Utils::LockFreeQueue<VideoFrameFfmpeg, 40> m_decodedVideoFrames;
+    typedef Utils::LockFreeQueue<VideoFrameFfmpeg, 40> DecodedVideoFrames;
+    std::unique_ptr<DecodedVideoFrames> m_decodedVideoFrames;
+
+    // Typically we release video frames in releaseOldVideoFrames call, but
+    // with certain hardware (Magewell Pro Capture Quad HDMI on Linux)
+    // calling unref blocks until a next frame is available. In this case we
+    // unreference old used frame at the same time we are referencing a new
+    // one. This work-around fixes playback but consumes more memory
+    // (one 4k video could consume up to 475MB), so it is not enabled by default.
+    bool m_frameUnrefMightBlock = false;
 
     int m_index;
   };
@@ -508,6 +531,31 @@ namespace VideoDisplay
     /// Detect video4linux2 devices automatically
     if (m_options.format().isEmpty() && AVDecoder::looksLikeV4L2Device(src)) {
       m_options.setFormat("video4linux2");
+    }
+
+    m_frameUnrefMightBlock = false;
+    if (m_options.format() == "v4l2" || m_options.format() == "video4linux2") {
+      // We are just detecting parameters for this device, we don't care about
+      // reporting errors, proper error reporting is handled by ffmpeg
+      int fd = ::open(src.toUtf8().data(), O_RDWR);
+      if (fd >= 0) {
+        v4l2_capability cap;
+        memset(&cap, 0, sizeof(cap));
+        if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == 0) {
+          QByteArray card = (const char*)cap.card;
+
+          // With Magewell Pro Capture Quad (HDMI) cards we ask higher framerate
+          // than the normal 25 and also use work-around for issue in av_frame_unref.
+          // See also comments for m_frameUnrefMightBlock
+          if (card.contains("Pro Capture Quad")) {
+            if (!m_options.demuxerOptions().contains("framerate")) {
+              m_options.setDemuxerOption("framerate", "60");
+            }
+            m_frameUnrefMightBlock = true;
+          }
+        }
+        ::close(fd);
+      }
     }
 #endif
 
@@ -843,6 +891,8 @@ namespace VideoDisplay
     m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
     m_av.start = std::numeric_limits<double>::quiet_NaN();
 
+    m_decodedVideoFrames.reset(new DecodedVideoFrames());
+
     return true;
   }
 
@@ -864,14 +914,15 @@ namespace VideoDisplay
     if (m_av.videoCodecContext)
       avcodec_free_context(&m_av.videoCodecContext);
 
+    m_decodedVideoFrames.reset();
+    av_frame_free(&m_av.frame);
+
     // Close the video file
     if(m_av.formatContext)
       avformat_close_input(&m_av.formatContext);
 
     m_av.videoCodec = nullptr;
     m_av.audioCodec = nullptr;
-
-    av_frame_free(&m_av.frame);
 
     AudioTransferPtr audioTransfer(m_audioTransfer);
     m_audioTransfer.reset();
@@ -1040,8 +1091,8 @@ namespace VideoDisplay
   {
     AudioTransferPtr audioTransfer(m_audioTransfer);
 
-    while(m_running) {
-      VideoFrameFfmpeg * frame = m_decodedVideoFrames.takeFree();
+    while(m_running && m_decodedVideoFrames) {
+      VideoFrameFfmpeg * frame = m_decodedVideoFrames->takeFree();
       if(frame) return frame;
       // Set this here, because another frame might be waiting for us
       // However, if we have a filter that changes pts, this might not be right.
@@ -1056,8 +1107,8 @@ namespace VideoDisplay
       // Growing the video buffer is safe, as long as the buffer size
       // doesn't grow over the hard-limit (setSize checks that)
       if(audioTransfer && audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f) {
-        if(m_decodedVideoFrames.setSize(m_decodedVideoFrames.size() + 1)) {
-          m_options.setVideoBufferFrames(m_decodedVideoFrames.size());
+        if(m_decodedVideoFrames->setSize(m_decodedVideoFrames->size() + 1)) {
+          m_options.setVideoBufferFrames(m_decodedVideoFrames->size());
           continue;
         }
       }
@@ -1232,9 +1283,12 @@ namespace VideoDisplay
 
           if(!frame->frame) {
             frame->frame = av_frame_alloc();
+          } else if (frame->referenced) {
+            av_frame_unref(frame->frame);
           }
 
           av_frame_ref(frame->frame, m_av.frame);
+          frame->referenced = true;
 
           frame->setIndex(m_index++);
 
@@ -1248,7 +1302,7 @@ namespace VideoDisplay
           frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
           frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
 
-          VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
+          VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames->lastReadyItem();
           if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
               lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
             // There was a problem with the stream, previous frame had larger timestamp than this
@@ -1261,7 +1315,7 @@ namespace VideoDisplay
             frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
             setTimestampToPts = false;
           }
-          m_decodedVideoFrames.put();
+          m_decodedVideoFrames->put();
         }
       }
     } else {
@@ -1278,10 +1332,14 @@ namespace VideoDisplay
 
       if(!frame->frame) {
         frame->frame = av_frame_alloc();
+      } else if (frame->referenced) {
+        av_frame_unref(frame->frame);
       }
+
       frame->setIndex(m_index++);
 
       av_frame_ref(frame->frame, m_av.frame);
+      frame->referenced = true;
 
       /// Copy properties to VideoFrame, that acts as a proxy to AVFrame
 
@@ -1306,14 +1364,14 @@ namespace VideoDisplay
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
       frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
 
-      VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames.lastReadyItem();
+      VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames->lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
           lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
         increaseSeekGeneration();
         frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
         setTimestampToPts = false;
       }
-      m_decodedVideoFrames.put();
+      m_decodedVideoFrames->put();
     }
 
     // Normally av.packet.duration can't be trusted
@@ -1474,7 +1532,6 @@ namespace VideoDisplay
     audioLocationAttribute().removeListener(m_d->m_audioLocationListener);
     if(isRunning())
       waitEnd();
-    /// TODO go through consumed buffers and release them
     m_d->close();
   }
 
@@ -1505,8 +1562,8 @@ namespace VideoDisplay
 
     /// If we are doing real-time seeking, we don't have a video frame buffer
     /// and we don't care about av-sync, just show the latest frame we have decoded
-    if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec) {
-      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
+    if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec && m_d->m_decodedVideoFrames) {
+      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
       if(frame)
         return Timestamp(frame->timestamp().pts() + 0.0001, frame->timestamp().seekGeneration());
     }
@@ -1518,10 +1575,10 @@ namespace VideoDisplay
         return t;
     }
 
-    if (m_d->m_options.playMode() == PAUSE) {
+    if (m_d->m_options.playMode() == PAUSE && m_d->m_decodedVideoFrames) {
       if (!std::isfinite(m_d->m_radiantTimestampToPts)) {
         for (int i = 0; ; ++i) {
-          VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.readyItem(i);
+          VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->readyItem(i);
           if (!frame) break;
 
           if (frame->timestamp().seekGeneration() < m_d->m_activeSeekGeneration)
@@ -1542,7 +1599,10 @@ namespace VideoDisplay
 
   Timestamp FfmpegDecoder::latestDecodedVideoTimestamp() const
   {
-    VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
+    if (!m_d->m_decodedVideoFrames)
+      return Timestamp();
+
+    VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
     if(frame) {
       return frame->timestamp();
     } else {
@@ -1553,8 +1613,8 @@ namespace VideoDisplay
   VideoFrame* FfmpegDecoder::getFrame(const Timestamp &ts, ErrorFlags &errors) const
   {
     VideoFrameFfmpeg * ret = nullptr;
-    for(int i = 0; ; ++i) {
-      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.readyItem(i);
+    for(int i = 0; m_d->m_decodedVideoFrames; ++i) {
+      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->readyItem(i);
       if(!frame) break;
 
       if(frame->timestamp().seekGeneration() < ts.seekGeneration())
@@ -1575,9 +1635,12 @@ namespace VideoDisplay
 
   int FfmpegDecoder::releaseOldVideoFrames(const Timestamp &ts, bool *eof)
   {
+    if (!m_d->m_decodedVideoFrames)
+      return 0;
+
     int frameIndex = 0;
     for(;; ++frameIndex) {
-      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames.readyItem(frameIndex);
+      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->readyItem(frameIndex);
       if(!frame)
         break;
 
@@ -1591,21 +1654,22 @@ namespace VideoDisplay
     --frameIndex;
 
     for(int i = 0; i < frameIndex; ++i) {
-      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames.readyItem();
+      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->readyItem();
       assert(frame);
 
-      if(frame->frame) {
+      if (frame && frame->referenced && !m_d->m_frameUnrefMightBlock) {
         av_frame_unref(frame->frame);
+        frame->referenced = false;
       }
 
-      m_d->m_decodedVideoFrames.next();
+      m_d->m_decodedVideoFrames->next();
     }
 
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     if(eof) {
       *eof = finished() && (!audioTransfer|| audioTransfer->bufferStateSeconds() <= 0.0f)
-          && m_d->m_decodedVideoFrames.itemCount() <= 1;
+          && m_d->m_decodedVideoFrames->itemCount() <= 1;
     }
 
     return frameIndex;
@@ -1770,7 +1834,7 @@ namespace VideoDisplay
     int maxConsecutiveErrors = 50;
 
     while(m_d->m_running) {
-      m_d->m_decodedVideoFrames.setSize(m_d->m_options.videoBufferFrames());
+      m_d->m_decodedVideoFrames->setSize(m_d->m_options.videoBufferFrames());
 
       int err = 0;
 
@@ -1778,7 +1842,7 @@ namespace VideoDisplay
         m_d->checkSeek(nextVideoDpts, videoDpts, nextAudioDpts);
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
-        VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames.lastReadyItem();
+        VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
         if(frame && frame->timestamp().seekGeneration() == m_d->m_activeSeekGeneration) {
           /// frame done, give some break for this thread
           Radiant::Sleep::sleepSome(0.001);
