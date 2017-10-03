@@ -237,7 +237,7 @@ namespace Resonant
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
       }
-    } else if (streamnum == 0) {
+    } else {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
       if (time.currentTime == 0) {
         latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
@@ -249,19 +249,21 @@ namespace Resonant
         latency = time.outputBufferDacTime - time.currentTime;
       }
 
-      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
-         outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
-            Radiant::TimeStamp::createSeconds(latency);
-        m_syncinfo.framesProcessed = 0;
-      }
+      if (streamnum == 0) {
+        if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
+           outputError) {
+          m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
+              Radiant::TimeStamp::createSeconds(latency);
+          m_syncinfo.framesProcessed = 0;
+        }
 
-      outputTime = m_syncinfo.baseTime +
-          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
-      m_syncinfo.framesProcessed += framesPerBuffer;
-    } else {
-      outputTime = m_syncinfo.baseTime +
-          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+        outputTime = m_syncinfo.baseTime +
+            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+        m_syncinfo.framesProcessed += framesPerBuffer;
+      } else {
+        outputTime = m_syncinfo.baseTime +
+            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+      }
     }
 
     /// Here we assume that every stream (== audio device) is running in its
