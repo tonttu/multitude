@@ -803,6 +803,24 @@ namespace Luminous
         w.addArea(std::move(area));
         changed = true;
       }
+
+      /// Autofill missing area values
+      for (size_t a = 0; a < w.areaCount(); ++a) {
+        Area & area = w.area(a);
+
+        if (!area.attribute("size")->isValueDefinedOnLayer(USER)) {
+          area.setSize(w.size());
+        }
+        if (!area.attribute("graphicssize")->isValueDefinedOnLayer(USER)) {
+          area.setGraphicsSize(area.size().cast<float>());
+        }
+
+        /// @todo graphicslocation with multiple X screens
+        /// @todo use area location here as well
+        if (!area.attribute("graphicslocation")->isValueDefinedOnLayer(USER)) {
+          area.setGraphicsLocation(w.location().cast<float>());
+        }
+      }
     }
 
     if (changed) {
