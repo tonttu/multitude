@@ -195,6 +195,7 @@ namespace Resonant {
     float bestd = 1000000.0f;
     int i = 0;
     for(auto it = m_speakers->begin(); it != m_speakers->end(); it++, i++) {
+      if (!*it) continue;
       const LoudSpeaker & l = **it;
       const float dist = (l.m_location - location).length();
       if(dist < bestd || best == -1) {
