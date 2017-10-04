@@ -228,9 +228,7 @@ namespace Resonant
     // anything like that.
     if(time.outputBufferDacTime < 1.0) {
       latency = 0.030;
-      /// @todo shouldn't hardcode 44100
-      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) /*|| m_syncinfo.framesProcessed > 44100 * 5*/ ||
-         outputError) {
+      if(streamnum == 0 && (m_syncinfo.baseTime == Radiant::TimeStamp(0) || outputError)) {
         m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
             Radiant::TimeStamp::createSeconds(latency);
         outputTime = m_syncinfo.baseTime;
@@ -239,7 +237,7 @@ namespace Resonant
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
       }
-    } else if(streams <= 1 || streamnum == 0) {
+    } else {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
       if (time.currentTime == 0) {
         latency = time.outputBufferDacTime - Radiant::TimeStamp::currentTime().secondsD();
@@ -251,17 +249,22 @@ namespace Resonant
         latency = time.outputBufferDacTime - time.currentTime;
       }
 
-      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
-         outputError) {
-        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
-            Radiant::TimeStamp::createSeconds(latency);
-        m_syncinfo.framesProcessed = 0;
-      }
+      if (streamnum == 0) {
+        if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
+           outputError) {
+          m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
+              Radiant::TimeStamp::createSeconds(latency);
+          m_syncinfo.framesProcessed = 0;
+        }
 
-      outputTime = m_syncinfo.baseTime +
-          Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+        outputTime = m_syncinfo.baseTime +
+            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+        m_syncinfo.framesProcessed += framesPerBuffer;
+      } else {
+        outputTime = m_syncinfo.baseTime +
+            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+      }
     }
-    m_syncinfo.framesProcessed += framesPerBuffer;
 
     /// Here we assume that every stream (== audio device) is running in its
     /// own separate thread, that is, this callback is called from multiple
@@ -287,7 +290,7 @@ namespace Resonant
     int outChannels = m_streams[streamnum].outParams.channelCount;
 
     const float * res = m_collect->interleaved();
-    if(res != 0) {
+    if(res != nullptr) {
       for (Channels::iterator it = m_channels.begin(); it != m_channels.end(); ++it) {
         if (streamnum != it->second.device) continue;
         int from = it->first;
@@ -313,10 +316,11 @@ namespace Resonant
     }
     if(streams > 1) m_sem.release();
 
-    m_frames += framesPerBuffer;
-
-    if(m_frames < 40000) {
-      debugResonant("DSPNetwork::callback # %lu", framesPerBuffer);
+    if (streamnum == 0) {
+      m_frames += framesPerBuffer;
+      if(m_frames < 40000) {
+        debugResonant("DSPNetwork::callback # %lu", framesPerBuffer);
+      }
     }
 
     return paContinue;
@@ -457,10 +461,16 @@ namespace Resonant
     for (size_t streamnum = 0, streams = m_d->m_streams.size(); streamnum < streams; ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
       /// @todo m_barrier isn't released ever
-      s.m_barrier = streams == 1 ? 0 : new Radiant::Semaphore(0);
+      s.m_barrier = streams == 1 ? nullptr : new Radiant::Semaphore(0);
       channels = devices[streamnum].second;
 
       const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);
+
+      if (!info) {
+        Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_GetDeviceInfo(%d) failed",
+                       s.outParams.device);
+        return false;
+      }
 
       debugResonant("AudioLoopPortAudio::startReadWrite # Got audio device %d = %s",
                     (int) s.outParams.device, info->name);
@@ -482,7 +492,7 @@ namespace Resonant
       s.outParams.sampleFormat = paFloat32;
       // Use 30ms minimum latency
       s.outParams.suggestedLatency =
-          std::max(0.03, Pa_GetDeviceInfo( s.outParams.device )->defaultLowOutputLatency);
+          std::max(0.03, info->defaultLowOutputLatency);
       s.outParams.hostApiSpecificStreamInfo = 0;
 
       s.inParams = s.outParams;
@@ -544,6 +554,7 @@ namespace Resonant
       return true;
 
     m_d->m_isRunning = false;
+    m_d->m_sem.release(m_d->m_streams.size());
 
     {
       /* Hack to get the audio closed in all cases (mostly for Linux). */
