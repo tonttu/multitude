@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#define debugVideoCapture(...) (Radiant::trace("VideoCapture", Radiant::Trace::DEBUG, __VA_ARGS__))
+
 namespace VideoDisplay
 {
   /// This class monitors capture devices connected to the machine, and sends

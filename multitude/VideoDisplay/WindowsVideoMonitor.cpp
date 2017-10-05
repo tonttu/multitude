@@ -549,7 +549,17 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::addSource(const SourcePtr &s, Nimble::Size resolution)
   {
-    m_host.eventSend("source-added", s->ffmpegName(), resolution.toVector());
+    QString ffmpeg = s->ffmpegName();
+    debugVideoCapture("VideoCaptureMonitor # addSource %s %dx%d",
+                      ffmpeg.toUtf8().data(), resolution.width(), resolution.height());
+    debugVideoCapture("  VIDEO  name: %s, device path: %s, rgb device name: %s, rgb idex: %d, instance id: %s",
+                      s->video.friendlyName.toUtf8().data(), s->video.devicePath.toUtf8().data(),
+                      s->video.rgbDeviceName.toUtf8().data(), s->video.rgbIndex,
+                      s->video.instanceId.toUtf8().data());
+    debugVideoCapture("  AUDIO  name: %s, device path: %s, wave id: %d",
+                      s->audio.friendlyName.toUtf8().data(), s->audio.devicePath.toUtf8().data(),
+                      s->audio.waveInId);
+    m_host.eventSend("source-added", ffmpeg, resolution.toVector());
   }
 
   void VideoCaptureMonitor::D::removeSource(const SourcePtr &s)
