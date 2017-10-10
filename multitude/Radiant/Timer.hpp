@@ -46,10 +46,11 @@ namespace Radiant
     /// Construct a new Timer and @ref start it
     inline Timer();
 
-    /// Start the timer
+    /// Start the timer and return elapsed time
     /// Starts the timer by resetting its clock to the current time offset with fromNowSeconds
     /// @param fromNow offset for the start time, for example -1.0 is 1 second ago
-    inline void start(double fromNowSeconds=0.0);
+    /// @return elapsed time in seconds since the timer was previously started
+    inline double start(double fromNowSeconds=0.0);
     /// Get start time
     /// Returns the time of the last @ref start call.
     /// @return start time in seconds since an arbitrary (but fixed) time point in the past.
@@ -73,11 +74,17 @@ namespace Radiant
   }
 
 #ifdef RADIANT_TIMER_USE_CHRONO
-  void Timer::start(double fromNowSeconds)
+  double Timer::start(double fromNowSeconds)
   {
-    m_startTime = std::chrono::steady_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+    double elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(
+        now - m_startTime).count();
+
+    m_startTime = now;
     if(fromNowSeconds != 0.0)
       m_startTime += std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(fromNowSeconds));
+
+    return elapsed;
   }
 
   double Timer::startTime() const
@@ -92,10 +99,14 @@ namespace Radiant
   }
 #undef RADIANT_TIMER_USE_CHRONO
 #else
-  void Timer::start(double fromNowSeconds)
+  double Timer::start(double fromNowSeconds)
   {
     // ignoring error checking on purpose, we should just use std::chrono in the future
-    clock_gettime(CLOCK_MONOTONIC, &m_startTime);
+    timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    double elapsed = now.tv_sec - m_startTime.tv_sec + (now.tv_nsec - m_startTime.tv_nsec) / 1e9;
+    m_startTime = now;
+
     if(fromNowSeconds != 0.0) {
       // std::round is not available on gcc 4.7
       time_t secs = round(fromNowSeconds);
@@ -106,6 +117,8 @@ namespace Radiant
       // it doesn't matter for the other functions.
       m_startTime.tv_nsec += nsecs;
     }
+
+    return elapsed;
   }
 
   double Timer::startTime() const
