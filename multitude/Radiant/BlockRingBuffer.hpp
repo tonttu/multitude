@@ -7,10 +7,10 @@
 
 namespace Radiant
 {
-  /// Lock-free and thread-safe ring buffer with one producer and one consumer.
+  /// Lock-free and thread-safe fixed-size ring buffer with one producer and one consumer.
   /// The API is optimized for storing bigger blocks (like float arrays)
   /// to the buffer, but it works with all elements that can be copied
-  /// and default-constructed.
+  /// and default-constructed. Elements are not destroyed when they are consumed.
   template <typename T>
   class BlockRingBuffer
   {

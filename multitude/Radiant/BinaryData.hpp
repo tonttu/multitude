@@ -27,8 +27,6 @@
 namespace Radiant {
   class BinaryStream;
 }
-#if 0
-#endif
 namespace Radiant {
 
   /// OSC-like binary data storage
