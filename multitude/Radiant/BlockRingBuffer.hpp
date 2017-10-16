@@ -38,6 +38,16 @@ namespace Radiant
 
       Reader(const Reader & r) = delete;
 
+      Reader & operator=(Reader && r)
+      {
+        if (&m_buffer != &r.m_buffer)
+          throw std::invalid_argument("BlockRingBufferReader buffers doesn't match");
+        m_data = r.m_data;
+        m_size = r.m_size;
+        r.m_size = 0;
+        return *this;
+      }
+
       ~Reader()
       {
         if (m_size) m_buffer.consume(m_size);
