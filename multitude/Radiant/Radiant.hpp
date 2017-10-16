@@ -92,7 +92,6 @@ namespace Radiant {
   class VideoCamera;
   class VideoCamera1394;
   class VideoCameraCMU;
-  class VideoCameraPTGrey;
   class VideoImage;
   class VideoInput;
   class WatchDog;

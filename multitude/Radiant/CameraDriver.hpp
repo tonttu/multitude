@@ -76,7 +76,7 @@ namespace Radiant
     void registerDriver(CameraDriver * driver);
 
     /// Specify the preferred order of using drivers
-    /// @param pref driver names separated by comma, e.g. "libdc,ptgrey,cmu"
+    /// @param pref driver names separated by comma, e.g. "libdc,cmu"
     void setDriverPreference(const QString & pref);
 
   private:

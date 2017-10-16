@@ -20,10 +20,6 @@
 #	include <Radiant/VideoCameraCMU.hpp>
 #endif
 
-#ifdef CAMERA_DRIVER_PGR
-#	include <Radiant/VideoCameraPTGrey.hpp>
-#endif
-
 #ifdef CAMERA_DRIVER_1394
 #	include <Radiant/VideoCamera1394.hpp>
 #endif
@@ -74,10 +70,6 @@ namespace Radiant
       registerDriver(new CameraDriverCMU());
 #endif
 
-#ifdef CAMERA_DRIVER_PGR
-      registerDriver(new CameraDriverPTGrey());
-#endif
-
 #ifdef CAMERA_DRIVER_1394
       registerDriver(new CameraDriver1394());
 #endif
@@ -95,10 +87,10 @@ namespace Radiant
     // If no preferences are set, use defaults
 #ifdef WIN32
     if(m_preferredDrivers.empty())
-      setDriverPreference("ptgrey,cmu");
+      setDriverPreference("cmu");
 #else
     if(m_preferredDrivers.empty())
-      setDriverPreference("libdc,cmu,ptgrey");
+      setDriverPreference("libdc,cmu");
 #endif
 
     std::vector<VideoCamera::CameraInfo> cameras;

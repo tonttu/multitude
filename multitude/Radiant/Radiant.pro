@@ -235,18 +235,6 @@ win32 {
     CONFIG += qt
     QT = core network opengl gui
 
-    PTGREY_PATH = "C:\\Program Files\\Point Grey Research\\FlyCapture2"
-    !exists($$PTGREY_PATH/include):message("PTGrey driver not installed, not building CameraDriverPTGrey")
-    exists($$PTGREY_PATH/include) {
-        DEFINES += CAMERA_DRIVER_PGR
-        message(Using PTGrey camera drivers)
-        INCLUDEPATH += $$PTGREY_PATH/include
-
-        # 64bit libs have different path
-        QMAKE_LIBDIR += $$PTGREY_PATH/lib64
-        LIBS += FlyCapture2.lib
-    }
-
   HEADERS += DeviceUtilsWin.hpp
   SOURCES += DeviceUtilsWin.cpp
 
