@@ -10,11 +10,13 @@ QT += core network xml
 unix: PKGCONFIG += portaudio-2.0
 
 win* {
-	INCLUDEPATH += ../../Win64x/include/portaudio
-	INCLUDEPATH += ../../Win64x/include/libsndfile
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/portaudio/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/portaudio/lib -lportaudio_x64
 
-  QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-  LIBS += -llibsndfile-1 -lportaudio_x64 -lole32 -luser32
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libsndfile/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/libsndfile/lib -llibsndfile-1
+
+  LIBS += -lole32 -luser32
 }
 
 include(../../../Applications/Applications_end.pri)

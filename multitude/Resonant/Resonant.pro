@@ -44,8 +44,8 @@ enable-port-audio {
   unix: PKGCONFIG += portaudio-2.0
 
   win32 {
-    INCLUDEPATH += ..\\Win64x\\include\\portaudio
-    LIBS += -lportaudio_x64
+    INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/portaudio/include
+    LIBS += -L$$CORNERSTONE_DEPS_PATH/portaudio/lib -lportaudio_x64
   }
 }
 
@@ -69,6 +69,8 @@ include(../../library.pri)
 DEFINES += RESONANT_EXPORT
 
 win* {
-  QMAKE_LIBDIR += $$DDK_PATH\\lib\\win7\\amd64
-  LIBS += -llibsndfile-1 -lOle32 -lUser32
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libsndfile/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/libsndfile/lib -llibsndfile-1
+
+  LIBS += -lOle32 -lUser32
 }
