@@ -169,7 +169,9 @@ QT += svg
 
 # Platform specific: Microsoft Windows
 win32 {
-  LIBS += -lnvapi64
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/nvapi/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/nvapi/lib -lnvapi64
+
   LIBS += -lUser32
   LIBS += -lDwmapi
 
