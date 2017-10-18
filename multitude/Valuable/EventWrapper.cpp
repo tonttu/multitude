@@ -14,7 +14,7 @@ namespace Valuable
   folly::Future<Radiant::BinaryData>
   wrapBdEvent(Valuable::Node* node, const QByteArray &event)
   {
-    return wrapBdEvent(node, event, [] (Radiant::BinaryData){ return true; });
+    return wrapBdEvent(node, event, [] (Radiant::BinaryData&){ return true; });
   }
 
 
@@ -41,11 +41,11 @@ namespace Valuable
 
   folly::Future<Radiant::BinaryData>
   wrapBdEvent(Valuable::Node* node, const QByteArray &event,
-              std::function<bool(Radiant::BinaryData)> test)
+              std::function<bool(Radiant::BinaryData &)> test)
   {
     struct Context
     {
-      std::function<bool(Radiant::BinaryData)> test;
+      std::function<bool(Radiant::BinaryData&)> test;
       folly::Promise<Radiant::BinaryData> promise;
     };
     std::shared_ptr<Context> ctx = std::make_shared<Context>();
@@ -53,11 +53,13 @@ namespace Valuable
     folly::MoveWrapper<Valuable::ListenerHolder> holder;
 
     holder->addBd(node, event, [ctx] (Radiant::BinaryData& bd) {
-      if(ctx->test(bd))
-        ctx->promise.setValue(bd);
+      if(ctx->test(bd)) {
+        bd.rewind();
+        ctx->promise.setValue(bd); // This copies data into promise
+      }
     });
 
     return ctx->promise.getFuture()
-        .then([holder](Radiant::BinaryData bd) { return bd; });
+        .then([holder](Radiant::BinaryData& bd) { return std::move(bd); });
   }
 }

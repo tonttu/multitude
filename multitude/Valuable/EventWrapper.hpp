@@ -55,7 +55,7 @@ namespace Valuable
   /// into future. The returned future is fulfilled with the event data
   /// when the target node emits the event next time and the test function
   /// returns true. The test-function is executed every time with the event
-  /// data when the event is sent. Note thatfuture can be fulfilled and the
+  /// data when the event is sent. Note that future can be fulfilled and the
   /// test can pass only once.
   ///
   /// @param node Node whose event is wrapped
@@ -65,7 +65,7 @@ namespace Valuable
   ///         that is accepted by the test function
   VALUABLE_API folly::Future<Radiant::BinaryData>
   wrapBdEvent(Valuable::Node* node, const QByteArray& event,
-              std::function<bool(Radiant::BinaryData)> test);
+              std::function<bool(Radiant::BinaryData&)> test);
 
 }
 
