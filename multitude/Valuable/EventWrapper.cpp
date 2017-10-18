@@ -29,14 +29,16 @@ namespace Valuable
     };
     std::shared_ptr<Context> ctx = std::make_shared<Context>();
     ctx->test = std::move(test);
-    folly::MoveWrapper<Valuable::ListenerHolder> holder;
 
-    holder->add(node, event, [ctx] () {
+    long listenerId = node->eventAddListener(event, [ctx] () {
       if(ctx->test())
         ctx->promise.setValue();
     });
 
-    return ctx->promise.getFuture().then([holder] {/* Remove listener */});
+    return ctx->promise.getFuture()
+      .then([node, listenerId] {
+        node->eventRemoveListener(listenerId);
+      });
   }
 
   folly::Future<Radiant::BinaryData>
@@ -50,9 +52,8 @@ namespace Valuable
     };
     std::shared_ptr<Context> ctx = std::make_shared<Context>();
     ctx->test = std::move(test);
-    folly::MoveWrapper<Valuable::ListenerHolder> holder;
 
-    holder->addBd(node, event, [ctx] (Radiant::BinaryData& bd) {
+    long listenerId = node->eventAddListenerBd(event, [ctx] (Radiant::BinaryData& bd) {
       if(ctx->test(bd)) {
         bd.rewind();
         ctx->promise.setValue(bd); // This copies data into promise
@@ -60,6 +61,9 @@ namespace Valuable
     });
 
     return ctx->promise.getFuture()
-        .then([holder](Radiant::BinaryData& bd) { return std::move(bd); });
+      .then([node,listenerId](Radiant::BinaryData& bd) {
+        node->eventRemoveListener(listenerId);
+        return std::move(bd);
+      });
   }
 }
