@@ -106,6 +106,8 @@ namespace Valuable
   TransitionAnimT<T>::TransitionAnimT(AttributeBaseT<T> * attr)
     : m_attr(attr),
       m_pos(1.f),
+      m_src(attr->value()),
+      m_target(attr->value()),
       m_speed(1)
   {
     if (m_attr)
