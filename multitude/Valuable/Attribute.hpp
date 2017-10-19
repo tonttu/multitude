@@ -536,7 +536,7 @@ namespace Valuable
     {
       if (layer >= CURRENT_LAYER) layer = currentLayer();
       bool top = layer >= m_currentLayer;
-      bool sendSignal = top && value() != t;
+      bool sendSignal = top && (m_currentValue != t || m_values[m_currentLayer] != t);
       if(top) m_currentLayer = layer;
       m_values[layer] = t;
       m_valueSet[layer] = true;
@@ -621,7 +621,7 @@ namespace Valuable
           m_transition = TransitionManagerT<T>::create(this, params);
         }
       } else if (m_transition) {
-        setAnimatedValue(m_transition->target());
+        setAnimatedValue(value(CURRENT_LAYER));
         m_transition->setNull();
         m_transition = nullptr;
       }
