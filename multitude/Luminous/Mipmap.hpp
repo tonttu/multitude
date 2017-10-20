@@ -151,6 +151,10 @@ namespace Luminous
     /// Returns path to dir that contains all cached mipmaps
     LUMINOUS_API static QString imageCachePath();
 
+    /// Sets the image cache path. If the directory doesn't exist, it will be created
+    /// @returns false if the cache directory can't be created
+    LUMINOUS_API static bool setImageCachePath(const QString & path);
+
   private:
     Mipmap(const QString & filenameAbs);
 
