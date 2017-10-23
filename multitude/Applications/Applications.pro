@@ -1,5 +1,5 @@
 # Include is needed for enable-port-audio-check
-include(Applications.pri)
+include(../../Applications/Applications.pri)
 
 TEMPLATE = subdirs
 

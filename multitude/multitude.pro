@@ -41,8 +41,10 @@ Luminous.depends = Valuable Punctual folly Radiant
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
 
-SUBDIRS += VideoDisplay
-VideoDisplay.depends = Resonant Luminous
+enable-video-display {
+  SUBDIRS += VideoDisplay
+  VideoDisplay.depends = Resonant Luminous
+}
 
 enable-applications {
   SUBDIRS += Applications

@@ -1226,17 +1226,29 @@ namespace Luminous
   static QString s_basePath;
   QString Mipmap::imageCachePath()
   {
-    MULTI_ONCE {
-      QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
-            Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
-      if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
-        basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
-        QDir().mkpath(basePath);
+    if (s_basePath.isEmpty()) {
+      MULTI_ONCE {
+        QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
+              Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
+        if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
+          basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
+          QDir().mkpath(basePath);
+        }
+        s_basePath = basePath;
       }
-      s_basePath = basePath;
     }
 
     return s_basePath;
+  }
+
+  bool Mipmap::setImageCachePath(const QString & path)
+  {
+    if (QDir().mkpath(path)) {
+      s_basePath = path;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void Mipmap::startLoading(bool compressedMipmaps)

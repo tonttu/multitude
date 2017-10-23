@@ -22,7 +22,7 @@
 #  include <X11/Xlib.h>
 #  include <NVCtrl/NVCtrlLib.h>
 #elif defined (RADIANT_WINDOWS)
-#  include <NVAPI/nvapi.h>
+#  include <nvapi.h>
 #endif
 
 #include <map>
