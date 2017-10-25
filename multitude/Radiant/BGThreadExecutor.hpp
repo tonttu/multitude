@@ -19,6 +19,7 @@ namespace Radiant
     typedef folly::JobId JobId;
 
     /// Will use the given BGThread instance or the global singleton one if nullptr
+    /// BGThreadExecutor won't start BGThread automatically
     explicit BGThreadExecutor(const std::shared_ptr<BGThread> & bgThread = nullptr);
     ~BGThreadExecutor();
 
