@@ -27,7 +27,7 @@ namespace Radiant
       QIODeviceFilter(QIODevice * device);
       virtual ~QIODeviceFilter();
 
-      bool trace(const Message & msg) override;
+      bool trace(Message & msg) override;
 
     private:
       QIODevice * m_device;

@@ -13,7 +13,7 @@ namespace Radiant
       m_minimumSeverityLevel = s;
     }
 
-    bool SeverityFilter::trace(const Message & msg)
+    bool SeverityFilter::trace(Message & msg)
     {
       return msg.severity < m_minimumSeverityLevel &&
           (msg.module.isEmpty() || m_verboseModules.count(msg.module) == 0);

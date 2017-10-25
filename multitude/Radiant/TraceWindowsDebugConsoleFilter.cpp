@@ -10,7 +10,7 @@ namespace Radiant
       : Filter(ORDER_OUTPUT)
     {}
 
-    bool WindowsDebugConsoleFilter::trace(const Message & message)
+    bool WindowsDebugConsoleFilter::trace(Message & message)
     {
       if (message.module.isEmpty()) {
         OutputDebugStringA((message.text.toUtf8() + "\n").data());

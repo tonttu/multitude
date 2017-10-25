@@ -13,7 +13,7 @@ namespace Radiant
       SyslogFilter(const QByteArray & ident, Severity minSeverity);
       virtual ~SyslogFilter();
 
-      bool trace(const Message & message) override;
+      bool trace(Message & message) override;
 
     private:
       QByteArray m_ident;

@@ -36,7 +36,7 @@ namespace Radiant
         , m_func(func)
       {}
 
-      bool trace(const Message & msg) override
+      bool trace(Message & msg) override
       {
         return m_func(msg);
       }
@@ -46,7 +46,7 @@ namespace Radiant
 
     ///////////////////////////////////////////////////////////////////////////
 
-    static void processFilters(const Message & msg)
+    static void processFilters(Message & msg)
     {
       for (auto & p: s_filters) {
         Filter & filter = *p.second;

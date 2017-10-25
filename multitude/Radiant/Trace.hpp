@@ -100,7 +100,7 @@ namespace Radiant
 
       /// @return true to drop the message, false to pass the message to the
       ///         next filter in the chain
-      virtual bool trace(const Message & msg) = 0;
+      virtual bool trace(Message & msg) = 0;
 
       inline float order() const { return m_order; }
 
@@ -109,7 +109,7 @@ namespace Radiant
     };
     typedef std::shared_ptr<Filter> FilterPtr;
 
-    typedef std::function<bool(const Message & message)> FilterFunc;
+    typedef std::function<bool(Message & message)> FilterFunc;
 
     RADIANT_API void addFilter(const FilterPtr & filter);
     /// Add a lambda as filter
