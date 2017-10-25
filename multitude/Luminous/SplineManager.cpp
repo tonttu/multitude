@@ -1182,6 +1182,17 @@ namespace Luminous
     m_d->recalculateAll();
   }
 
+  void SplineManager::
+  addAndRemoveSplines(const SplineManager::Splines & addedSplines,
+                      const std::vector<Valuable::Node::Uuid> & removedSplines)
+  {
+    for (const auto & info : addedSplines)
+      m_d->addStroke(info, false);
+    for (const auto & id : removedSplines)
+      m_d->removeStroke(id, false);
+    m_d->recalculateAll();
+  }
+
   SplineManager::SplineData SplineManager::spline(Valuable::Node::Uuid id) const
   {
     if (m_d->m_strokes.contains(id))
