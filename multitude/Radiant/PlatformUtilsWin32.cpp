@@ -19,6 +19,7 @@
 #include <QSettings>
 #include <QProcess>
 #include <QDir>
+#include <QStandardPaths>
 
 #include <assert.h>
 
@@ -121,7 +122,7 @@ namespace Radiant
 
     QString getUserDocumentsPath()
     {
-      return getUserHomePath() + "\\My Documents";
+      return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     }
 
     QString getModuleUserDataPath(const char * module, bool isapplication)
