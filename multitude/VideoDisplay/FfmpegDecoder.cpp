@@ -172,7 +172,6 @@ namespace VideoDisplay
     int audioStreamIndex;
 
     double videoTsToSecs;
-    double audioTsToSecs;
     int decodedAudioBufferSamples;
     bool needFlushAtEof;
     bool seekByBytes;
@@ -181,6 +180,12 @@ namespace VideoDisplay
     double duration;
     double start;
     Nimble::Size videoSize;
+
+    int64_t startPts;
+    AVRational startPtsTb;
+
+    int64_t nextPts;
+    AVRational nextPtsTb;
   };
 
   struct PtsCorrectionContext
@@ -223,9 +228,6 @@ namespace VideoDisplay
 
     // Partially borrowed from libav / ffplay
     int64_t guessCorrectPts(AVFrame * frame);
-
-    //int64_t videoDpts(AVFrame * frame);
-    //int64_t audioDpts(AVFrame * frame);
 
     bool decodeVideoPacket(double & dpts, double & nextDpts);
     bool decodeAudioPacket(double & dpts, double & nextDpts);
@@ -323,6 +325,8 @@ namespace VideoDisplay
     m_av.videoStreamIndex = -1;
     m_av.audioStreamIndex = -1;
     m_av.videoSize = Nimble::Size();
+    m_av.startPts = AV_NOPTS_VALUE;
+    m_av.nextPts = AV_NOPTS_VALUE;
   }
 
   FfmpegDecoder::D::~D()
@@ -449,9 +453,8 @@ namespace VideoDisplay
         av_get_channel_layout_string(channelLayoutName.data(), channelLayoutName.size(),
                                      m_av.audioCodecContext->channels, m_av.audioCodecContext->channel_layout);
 
-        AVRational timeBase = av_codec_get_pkt_timebase(m_av.audioCodecContext);
         args.sprintf("time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=%s",
-                     timeBase.num, timeBase.den,
+                     1, m_av.audioCodecContext->sample_rate,
                      m_av.audioCodecContext->sample_rate,
                      av_get_sample_fmt_name(m_av.audioCodecContext->sample_fmt),
                      channelLayoutName.data());
@@ -819,9 +822,12 @@ namespace VideoDisplay
     }
 
     if(m_av.audioCodecContext) {
-      const auto & time_base = m_av.formatContext->streams[m_av.audioStreamIndex]->time_base;
-      m_av.audioTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(m_av.audioCodecContext->framerate);
+      auto & as = m_av.formatContext->streams[m_av.audioStreamIndex];
+      if ((m_av.formatContext->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
+          !m_av.formatContext->iformat->read_seek) {
+        m_av.startPts = as->start_time;
+        m_av.startPtsTb = as->time_base;
+      }
     }
 
     // Size of the decoded audio buffer, in samples (~44100 samples means one second buffer)
@@ -960,6 +966,8 @@ namespace VideoDisplay
         m_audioTrackHasEnded = false;
         m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
         m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
+        m_av.nextPts = m_av.startPts;
+        m_av.nextPtsTb = m_av.startPtsTb;
       }
     } else {
       // If we want to loop, but there is no way to seek, we just close
@@ -1083,6 +1091,8 @@ namespace VideoDisplay
     m_audioTrackHasEnded = false;
     m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
     m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
+    m_av.nextPts = m_av.startPts;
+    m_av.nextPtsTb = m_av.startPtsTb;
 
     return true;
   }
@@ -1408,10 +1418,22 @@ namespace VideoDisplay
       }
 
       if(gotFrame) {
-        int64_t pts = guessCorrectPts(m_av.frame);
+        AVRational tb {1, m_av.frame->sample_rate};
+        if (m_av.frame->pts != AV_NOPTS_VALUE) {
+          m_av.frame->pts = av_rescale_q(m_av.frame->pts, m_av.audioCodecContext->time_base, tb);
+        } else if (m_av.frame->pkt_pts != AV_NOPTS_VALUE) {
+          m_av.frame->pts = av_rescale_q(m_av.frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
+        } else if (m_av.nextPts != AV_NOPTS_VALUE) {
+          m_av.frame->pts = av_rescale_q(m_av.nextPts, m_av.nextPtsTb, tb);
+        }
 
-        dpts = m_av.audioTsToSecs * pts;
-        nextDpts = dpts + double(m_av.frame->nb_samples) / m_av.frame->sample_rate;
+        if (m_av.frame->pts != AV_NOPTS_VALUE) {
+          m_av.nextPts = m_av.frame->pts + m_av.frame->nb_samples;
+          m_av.nextPtsTb = tb;
+        }
+
+        dpts = av_q2d(tb) * m_av.frame->pts;
+        nextDpts = av_q2d(tb) * m_av.nextPts;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
 
@@ -1435,6 +1457,10 @@ namespace VideoDisplay
             if (err == AVERROR(EAGAIN) || err == AVERROR_EOF)
               break;
 
+            tb = m_audioFilter.bufferSinkFilter->inputs[0]->time_base;
+            dpts = av_q2d(tb) * m_av.frame->pts;
+            nextDpts = av_q2d(tb) * m_av.nextPts;
+
             if (err < 0) {
               avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
                       arg(m_options.source()), err);
@@ -1455,14 +1481,6 @@ namespace VideoDisplay
               // have video frames in the beginning
               audioTransfer->setEnabled(true);
             }
-
-            /// This used to work in ffmpeg, in libav this pts has some weird values after seeking
-            /// @todo should we care?
-            /*if(output->pts != (int64_t) AV_NOPTS_VALUE) {
-              pts = output->pts;
-              dpts = av.audioTsToSecs * output->pts;
-              nextDpts = dpts + double(output->audio->nb_samples) / output->audio->sample_rate;
-            }*/
 
             int64_t channel_layout = av_frame_get_channel_layout(m_av.frame);
             decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration),
@@ -1496,6 +1514,9 @@ namespace VideoDisplay
       }
       packet.data += consumedBytes;
       packet.size -= consumedBytes;
+      // Clearing packet pts and dts since they shouldn't be used for
+      // second time calling decoder with the same packet
+      packet.dts = packet.pts = AV_NOPTS_VALUE;
     }
     return gotFrames;
   }
