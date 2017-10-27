@@ -87,7 +87,6 @@ HEADERS += VideoCamera.hpp
 HEADERS += SocketWrapper.hpp
 HEADERS += Singleton.hpp
 HEADERS += VideoCamera1394.hpp
-HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 HEADERS += SymbolRegistry.hpp
 HEADERS += CrashHandler.hpp
