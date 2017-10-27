@@ -69,11 +69,17 @@ namespace Radiant
           // initialized, try to not lose the messages and just print them on
           // stderr
           atexit([] {
-            if (!s_initialized && !s_queue.empty()) {
-              fprintf(stderr, "%s: application closed before Radiant::Trace was initialized, queued messages:\n",
-                     PlatformUtils::getExecutablePath().toUtf8().data());
+            if (!s_initialized) {
+              bool headerPrinted = false;
               for (Message & msg: s_queue) {
-                fprintf(stderr, "%s %s\n", severityText(msg.severity).data(), msg.text.toUtf8().data());
+                if (msg.severity > DEBUG) {
+                  if (!headerPrinted) {
+                    fprintf(stderr, "%s: application closed before Radiant::Trace was initialized, queued messages:\n",
+                            PlatformUtils::getExecutablePath().toUtf8().data());
+                    headerPrinted = true;
+                  }
+                  fprintf(stderr, "%s %s\n", severityText(msg.severity).data(), msg.text.toUtf8().data());
+                }
               }
             }
           });
