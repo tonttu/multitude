@@ -71,10 +71,6 @@ namespace Radiant
         std::lock_guard<std::mutex> g(m_tasks->mutex);
         m_tasks->tasks.emplace(key, taskPtr);
       }
-      if(!m_bgThread->isRunning()) {
-        int threads = std::max(1, QThread::idealThreadCount() - 1);
-        m_bgThread->run(threads);
-      }
       m_bgThread->addTask(taskPtr);
       return key;
     }

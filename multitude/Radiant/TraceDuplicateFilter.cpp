@@ -8,7 +8,7 @@ namespace Radiant
       : Filter(ORDER_DEFAULT_FILTERS + 1.0f)
     {}
 
-    bool DuplicateFilter::trace(const Message & message)
+    bool DuplicateFilter::trace(Message & message)
     {
       Guard g(m_msgMutex);
       if (m_prevMessage == message) {

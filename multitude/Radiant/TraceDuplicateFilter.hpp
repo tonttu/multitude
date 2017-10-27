@@ -16,7 +16,7 @@ namespace Radiant
       /// this filter is executed after the other default filters
       DuplicateFilter();
 
-      bool trace(const Message & message) override;
+      bool trace(Message & message) override;
 
     private:
       Message m_prevMessage;

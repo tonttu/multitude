@@ -48,7 +48,7 @@ namespace Radiant
       }
     }
 
-    bool StdFilter::trace(const Message & msg)
+    bool StdFilter::trace(Message & msg)
     {
       FILE * out = msg.severity > WARNING ? stderr : stdout;
 

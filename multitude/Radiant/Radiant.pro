@@ -7,7 +7,8 @@ HEADERS += TempFailureRetry.hpp \
     TraceSeverityFilter.hpp \
     TraceQIODeviceFilter.hpp \
     SystemCpuTime.hpp \
-    ReentrantVector.hpp
+    ReentrantVector.hpp \
+    TemporaryDir.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
 HEADERS += ThreadPoolExecutor.hpp
@@ -98,7 +99,8 @@ SOURCES += Mime.cpp \
     TraceDuplicateFilter.cpp \
     TraceStdFilter.cpp \
     TraceSeverityFilter.cpp \
-    TraceQIODeviceFilter.cpp
+    TraceQIODeviceFilter.cpp \
+    TemporaryDir.cpp
 SOURCES += ObjectPool.cpp
 SOURCES += CommandLineArguments.cpp
 SOURCES += SynchronizedMultiQueue.cpp \

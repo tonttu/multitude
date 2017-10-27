@@ -5,11 +5,6 @@ include(../cornerstone.pri)
 
 # 3rd party libraries
 
-!arm64 {
-  libqxt.subdir += ThirdParty/libqxt
-  SUBDIRS += libqxt
-}
-
 folly.subdir += ThirdParty/folly
 SUBDIRS += folly
 

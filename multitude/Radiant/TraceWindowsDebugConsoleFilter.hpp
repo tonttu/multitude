@@ -12,7 +12,7 @@ namespace Radiant
     public:
       WindowsDebugConsoleFilter();
 
-      bool trace(const Message & message) override;
+      bool trace(Message & message) override;
     };
 
   } // namespace Trace

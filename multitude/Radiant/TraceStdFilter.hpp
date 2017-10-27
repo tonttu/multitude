@@ -16,7 +16,7 @@ namespace Radiant
       virtual ~StdFilter();
 
       /// Prints message to the output, always returns false
-      bool trace(const Message & msg) override;
+      bool trace(Message & msg) override;
 
       /// Forces ANSI colors to the output even if the output isn't ANSI-capable terminal
       /// @param force Are the colors forced.

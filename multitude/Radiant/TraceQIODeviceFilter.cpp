@@ -18,7 +18,7 @@ namespace Radiant
         delete m_device;
     }
 
-    bool QIODeviceFilter::trace(const Message & msg)
+    bool QIODeviceFilter::trace(Message & msg)
     {
       if (m_device && m_device->isOpen()) {
         if (msg.module.isEmpty()) {

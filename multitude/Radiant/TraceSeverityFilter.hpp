@@ -14,7 +14,7 @@ namespace Radiant
     {
     public:
       SeverityFilter();
-      bool trace(const Message & msg) override;
+      bool trace(Message & msg) override;
 
       void setMinimumSeverityLevel(Severity s);
       void setVerboseModule(const QByteArray & module, bool verbose);

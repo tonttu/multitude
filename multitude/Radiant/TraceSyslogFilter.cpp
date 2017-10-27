@@ -37,7 +37,7 @@ namespace Radiant
       closelog();
     }
 
-    bool SyslogFilter::trace(const Message & message)
+    bool SyslogFilter::trace(Message & message)
     {
       if (message.severity >= m_minSeverity) {
         if (message.module.isEmpty()) {
