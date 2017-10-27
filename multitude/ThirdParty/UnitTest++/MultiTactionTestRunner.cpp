@@ -5,6 +5,7 @@
 
 #include <Radiant/BGThread.hpp>
 #include <Radiant/Semaphore.hpp>
+#include <Radiant/TemporaryDir.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/TraceSeverityFilter.hpp>
 #include <Radiant/Timer.hpp>
@@ -17,7 +18,6 @@
 #include <QDomDocument>
 #include <QFile>
 #include <QMap>
-#include <QTemporaryDir>
 #include <QTextStream>
 
 #include <fstream>
@@ -442,7 +442,7 @@ namespace UnitTest
         xmlOutput = "TestTemp.xml";
 
       QDomDocument dom;
-      QTemporaryDir tmp;
+      Radiant::TemporaryDir tmp;
       int index = 0;
       int exitCode = 0;
 

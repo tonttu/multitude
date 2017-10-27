@@ -131,6 +131,11 @@ namespace Luminous {
     /// @param removedSplines splines to remove
     void addAndRemoveSplines(const Splines & addedSplines, const Splines & removedSplines);
 
+    /// Add and remove splines in a batch.
+    /// @param addedSplines splines to add
+    /// @param removedSplines spline ids to remove
+    void addAndRemoveSplines(const Splines & addedSplines,  const std::vector<Valuable::Node::Uuid> & removedSplines);
+
     /// Return the data of spline with the given id, if it exists
     /// otherwise returns an empty SplineData
     /// @param id of the spline
