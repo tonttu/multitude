@@ -330,7 +330,7 @@ namespace VideoDisplay
     AudioTransferPtr tmp(m_audioTransfer);
     if(tmp) {
       if(!tmp->isShutdown())
-        Radiant::error("LibavDecover::D::~D # Audio transfer is still active!");
+        Radiant::error("FfmpegDecoder::D::~D # Audio transfer is still active!");
     }
   }
 
@@ -949,7 +949,7 @@ namespace VideoDisplay
                                  std::numeric_limits<int64_t>::max(), 0);
       }
       if(err < 0) {
-        avError(QString("LibavDecoder::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.source()), err);
+        avError(QString("FfmpegDecoder::D::seekToBeginning # %1: Seek error, re-opening the stream").arg(m_options.source()), err);
         close();
         return open();
       } else {
@@ -1402,7 +1402,7 @@ namespace VideoDisplay
       const int consumedBytes = avcodec_decode_audio4(m_av.audioCodecContext, m_av.frame,
                                                 &gotFrame, &packet);
       if(consumedBytes < 0) {
-        avError(QString("LibavDecoder::D::decodeAudioPacket # %1: Audio decoding error").
+        avError(QString("FfmpegDecoder::D::decodeAudioPacket # %1: Audio decoding error").
                 arg(m_options.source()), consumedBytes);
         break;
       }
@@ -1436,7 +1436,7 @@ namespace VideoDisplay
               break;
 
             if (err < 0) {
-              avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
+              avError(QString("FfmpegDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
                       arg(m_options.source()), err);
               break;
             }
@@ -1791,7 +1791,7 @@ namespace VideoDisplay
 
   void FfmpegDecoder::runDecoder()
   {
-    QByteArray errorMsg("LibavDecoder::D::runDecoder # " + m_d->m_options.source().toUtf8() + ":");
+    QByteArray errorMsg("FfmpegDecoder::D::runDecoder # " + m_d->m_options.source().toUtf8() + ":");
     QThread::currentThread()->setPriority(QThread::LowPriority);
 
     QByteArray src = m_d->m_options.source().toUtf8();
@@ -2045,7 +2045,7 @@ namespace VideoDisplay
 
       int err = av_lockmgr_register(libavLock);
       if(err != 0)
-        Radiant::error("libavInit # Failed to register new Libav lock manager");
+        Radiant::error("libavInit # Failed to register new Ffmpeg lock manager");
     }
   }
 }
