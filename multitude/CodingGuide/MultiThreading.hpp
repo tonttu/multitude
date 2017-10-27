@@ -26,7 +26,7 @@ To overcme this problem, it is best to (if possible) use big chunks of
 memory, rather than small units, for example vectors instead of
 lists. Further, it is better to keep memory allocated than to
 repeatedly alloce/free the memory. This is one of the cases where
-Radiant::VectorStorage is a handy utility.
+std::vector is a handy utility.
 
 \subsection threadingpageaccess Avoid Page Access Conflicts
 

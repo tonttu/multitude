@@ -79,7 +79,6 @@ HEADERS += TimeStamp.hpp
 HEADERS += Trace.hpp
 HEADERS += Types.hpp
 HEADERS += TouchEvent.hpp
-HEADERS += VectorStorage.hpp
 HEADERS += VideoImage.hpp
 HEADERS += VideoInput.hpp
 HEADERS += WatchDog.hpp
