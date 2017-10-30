@@ -11,11 +11,7 @@
 #include "AVDecoder.hpp"
 
 /// @todo this include is just for create(), should be removed
-#ifdef USE_LIBAV
-#include "LibavDecoder.hpp"
-#else
 #include "FfmpegDecoder.hpp"
-#endif
 
 #include <QFileInfo>
 
@@ -26,11 +22,7 @@ namespace VideoDisplay
 
   void init()
   {
-#ifdef USE_LIBAV
-    libavInit();
-#else
     ffmpegInit();
-#endif
   }
 
   class AVDecoder::D
@@ -116,11 +108,7 @@ namespace VideoDisplay
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
   {
     /// @todo add some great factory registry thing here
-#ifdef USE_LIBAV
-    std::shared_ptr<AVDecoder> decoder(new LibavDecoder());
-#else
     std::shared_ptr<AVDecoder> decoder(new FfmpegDecoder());
-#endif
     {
       Radiant::Guard g(s_decodersMutex);
       for (auto it = s_decoders.begin(); it != s_decoders.end();) {
