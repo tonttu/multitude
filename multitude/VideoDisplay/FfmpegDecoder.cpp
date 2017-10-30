@@ -171,7 +171,6 @@ namespace VideoDisplay
     int videoStreamIndex;
     int audioStreamIndex;
 
-    double videoTsToSecs;
     int decodedAudioBufferSamples;
     bool needFlushAtEof;
     bool seekByBytes;
@@ -226,13 +225,10 @@ namespace VideoDisplay
     QByteArray supportedPixFormatsStr();
     void updateSupportedPixFormats();
 
-    // Partially borrowed from libav / ffplay
-    int64_t guessCorrectPts(AVFrame * frame);
-
-    bool decodeVideoPacket(double & dpts, double & nextDpts);
-    bool decodeAudioPacket(double & dpts, double & nextDpts);
+    bool decodeVideoPacket(double & dpts);
+    bool decodeAudioPacket(double & dpts);
     VideoFrameFfmpeg * getFreeFrame(bool & setTimestampToPts, double & dpts);
-    void checkSeek(double & nextVideoDpts, double & videoDpts, double & nextAudioDpts);
+    bool checkSeek();
 
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
@@ -814,13 +810,6 @@ namespace VideoDisplay
         initFilters(m_audioFilter, m_options.audioFilters(), false);
     }
 
-    // pts/dts x video/audioTsToSecs == timestamp in seconds
-    if(m_av.videoCodecContext) {
-      const auto & time_base = m_av.formatContext->streams[m_av.videoStreamIndex]->time_base;
-      m_av.videoTsToSecs = time_base.den != 0 ? av_q2d(time_base) :
-                                              av_q2d(m_av.videoCodecContext->framerate);
-    }
-
     if(m_av.audioCodecContext) {
       auto & as = m_av.formatContext->streams[m_av.audioStreamIndex];
       if ((m_av.formatContext->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
@@ -1192,40 +1181,9 @@ namespace VideoDisplay
     }
   }
 
-  int64_t FfmpegDecoder::D::guessCorrectPts(AVFrame* frame)
-  {
-    int64_t reordered_pts = frame->pkt_pts;
-    int64_t dts = frame->pkt_dts;
-    int64_t pts = AV_NOPTS_VALUE;
-
-
-    if (dts != (int64_t) AV_NOPTS_VALUE) {
-      m_ptsCorrection.num_faulty_dts += dts <= m_ptsCorrection.last_dts;
-      m_ptsCorrection.last_dts = dts;
-    }
-    if (reordered_pts != (int64_t) AV_NOPTS_VALUE) {
-      m_ptsCorrection.num_faulty_pts += reordered_pts <= m_ptsCorrection.last_pts;
-      m_ptsCorrection.last_pts = reordered_pts;
-    }
-    if ((m_ptsCorrection.num_faulty_pts<=m_ptsCorrection.num_faulty_dts || dts == (int64_t) AV_NOPTS_VALUE)
-        && reordered_pts != (int64_t) AV_NOPTS_VALUE)
-      pts = reordered_pts;
-    else
-      pts = dts;
-
-    if (pts == (int64_t) AV_NOPTS_VALUE)
-      pts = frame->pts;
-
-    if (pts == (int64_t) AV_NOPTS_VALUE)
-      pts = frame->pkt_pts;
-
-    return pts;
-  }
-
-  bool FfmpegDecoder::D::decodeVideoPacket(double &dpts, double &nextDpts)
+  bool FfmpegDecoder::D::decodeVideoPacket(double &dpts)
   {
     const double maxPtsReorderDiff = 0.1;
-    const double prevDpts = dpts;
     dpts = std::numeric_limits<double>::quiet_NaN();
 
     int gotPicture = 0;
@@ -1240,11 +1198,11 @@ namespace VideoDisplay
     if(!gotPicture)
       return false;
 
-    int64_t pts = guessCorrectPts(m_av.frame);
+    m_av.frame->pts = av_frame_get_best_effort_timestamp(m_av.frame);
 
-    /// Some mpeg2 streams don't give valid pts value for the last frame,
-    /// guess the value from the previous frame.
-    dpts = pts == AV_NOPTS_VALUE ? nextDpts : m_av.videoTsToSecs * pts;
+    AVRational tb = m_av.formatContext->streams[m_av.videoStreamIndex]->time_base;
+
+    dpts = av_q2d(tb) * m_av.frame->pts;
 
     bool setTimestampToPts = false;
 
@@ -1271,12 +1229,8 @@ namespace VideoDisplay
             break;
           }
 
-          /// AVFrame->pts should be AV_NOPTS_VALUE if not defined,
-          /// but some filters just set it always to zero
-          if (m_av.frame->pts != (int64_t) AV_NOPTS_VALUE && m_av.frame->pts != 0) {
-            pts = m_av.frame->pts;
-            dpts = m_av.videoTsToSecs * m_av.frame->pts;
-          }
+          tb = m_videoFilter.bufferSinkFilter->inputs[0]->time_base;
+          dpts = av_q2d(tb) * m_av.frame->pts;
 
           if (std::isfinite(m_exactVideoSeekRequestPts)) {
             if (dpts < m_exactVideoSeekRequestPts) {
@@ -1384,13 +1338,6 @@ namespace VideoDisplay
       m_decodedVideoFrames->put();
     }
 
-    // Normally av.packet.duration can't be trusted
-    if(Nimble::Math::isNAN(prevDpts)) {
-      nextDpts = m_av.videoTsToSecs * (m_av.packet.duration + pts);
-    } else {
-      nextDpts = dpts + (dpts - prevDpts);
-    }
-
     if(Nimble::Math::isNAN(m_radiantTimestampToPts) || setTimestampToPts) {
       const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
       m_radiantTimestampToPts = dpts + m_loopOffset - now.secondsD() + 4.0/60.0;
@@ -1399,7 +1346,7 @@ namespace VideoDisplay
     return true;
   }
 
-  bool FfmpegDecoder::D::decodeAudioPacket(double &dpts, double &nextDpts)
+  bool FfmpegDecoder::D::decodeAudioPacket(double &dpts)
   {
     AVPacket packet = m_av.packet;
     bool gotFrames = false;
@@ -1430,14 +1377,12 @@ namespace VideoDisplay
         if (m_av.frame->pts != AV_NOPTS_VALUE) {
           m_av.nextPts = m_av.frame->pts + m_av.frame->nb_samples;
           m_av.nextPtsTb = tb;
+          dpts = av_q2d(tb) * m_av.frame->pts;
         }
-
-        dpts = av_q2d(tb) * m_av.frame->pts;
-        nextDpts = av_q2d(tb) * m_av.nextPts;
 
         DecodedAudioBuffer * decodedAudioBuffer = nullptr;
 
-        if (std::isfinite(m_exactAudioSeekRequestPts)) {
+        if (std::isfinite(m_exactAudioSeekRequestPts) && std::isfinite(dpts)) {
           if (dpts < m_exactAudioSeekRequestPts) {
             packet.data += consumedBytes;
             packet.size -= consumedBytes;
@@ -1458,8 +1403,8 @@ namespace VideoDisplay
               break;
 
             tb = m_audioFilter.bufferSinkFilter->inputs[0]->time_base;
-            dpts = av_q2d(tb) * m_av.frame->pts;
-            nextDpts = av_q2d(tb) * m_av.nextPts;
+            if (m_av.frame->pts != AV_NOPTS_VALUE)
+              dpts = av_q2d(tb) * m_av.frame->pts;
 
             if (err < 0) {
               avError(QString("LibavDecoder::D::decodeAudioPacket # %1: av_buffersink_read failed").
@@ -1521,17 +1466,17 @@ namespace VideoDisplay
     return gotFrames;
   }
 
-  void FfmpegDecoder::D::checkSeek(double &nextVideoDpts, double &videoDpts, double &nextAudioDpts)
+  bool FfmpegDecoder::D::checkSeek()
   {
+    bool didSeek = false;
     if((m_seekRequest.type() != SEEK_NONE)) {
       if(seek()) {
         m_loopOffset = 0;
-        nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
-        nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
-        videoDpts = std::numeric_limits<double>::quiet_NaN();
+        didSeek = true;
       }
       m_seekRequest.setType(SEEK_NONE);
     }
+    return didSeek;
   }
 
 
@@ -1834,9 +1779,8 @@ namespace VideoDisplay
       Eof
     } eof = EofState::Normal;
 
-    double nextVideoDpts = std::numeric_limits<double>::quiet_NaN();
-    double nextAudioDpts = std::numeric_limits<double>::quiet_NaN();
     double videoDpts = std::numeric_limits<double>::quiet_NaN();
+    double audioDpts = std::numeric_limits<double>::quiet_NaN();
 
     auto & av = m_d->m_av;
 
@@ -1859,8 +1803,12 @@ namespace VideoDisplay
 
       int err = 0;
 
-      if(!waitingFrame || !m_d->m_realTimeSeeking)
-        m_d->checkSeek(nextVideoDpts, videoDpts, nextAudioDpts);
+      if(!waitingFrame || !m_d->m_realTimeSeeking) {
+        if (m_d->checkSeek()) {
+          videoDpts = std::numeric_limits<double>::quiet_NaN();
+          audioDpts = std::numeric_limits<double>::quiet_NaN();
+        }
+      }
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
@@ -1925,18 +1873,6 @@ namespace VideoDisplay
           m_d->seekToBeginning();
           eof = EofState::Normal;
 
-          if(!Nimble::Math::isNAN(av.start)) {
-            // might be NaN
-            // no need to check because the comparision will just be false
-            double newDuration = nextVideoDpts - av.start;
-            if(newDuration > m_d->m_av.duration) {
-              m_d->m_av.duration = newDuration;
-            }
-            newDuration = nextAudioDpts - av.start;
-            if(newDuration > m_d->m_av.duration)
-              m_d->m_av.duration = newDuration;
-          }
-
           m_d->m_loopOffset += m_d->m_av.duration;
           continue;
         } else {
@@ -1948,7 +1884,6 @@ namespace VideoDisplay
       av.frame->opaque = nullptr;
       bool gotVideoFrame = false;
       bool gotAudioFrame = false;
-      double audioDpts = std::numeric_limits<double>::quiet_NaN();
 
       /// todo come up with descriptive name
       bool videoCodec = av.videoCodec;
@@ -1962,9 +1897,18 @@ namespace VideoDisplay
           av.packet.size = 0;
           av.packet.stream_index = av.videoStreamIndex;
         }
-        gotVideoFrame = m_d->decodeVideoPacket(videoDpts, nextVideoDpts);
+        double prevVideoDpts = videoDpts;
+        gotVideoFrame = m_d->decodeVideoPacket(videoDpts);
         if(gotVideoFrame && audioTransfer)
           audioTransfer->setEnabled(true);
+
+        if (gotVideoFrame && std::isfinite(av.start) && std::isfinite(videoDpts) &&
+            std::isfinite(prevVideoDpts) && videoDpts > prevVideoDpts) {
+          double newDuration = videoDpts + (videoDpts - prevVideoDpts) - av.start;
+          if (newDuration > m_d->m_av.duration) {
+            m_d->m_av.duration = newDuration;
+          }
+        }
       }
 
       av.frame->opaque = nullptr;
@@ -1980,7 +1924,16 @@ namespace VideoDisplay
           av.packet.data = 0;
           av.packet.stream_index = av.audioStreamIndex;
         }
-        gotAudioFrame = m_d->decodeAudioPacket(audioDpts, nextAudioDpts);
+        double prevAudioDpts = audioDpts;
+        gotAudioFrame = m_d->decodeAudioPacket(audioDpts);
+
+        if (gotAudioFrame && std::isfinite(av.start) && std::isfinite(audioDpts) &&
+            std::isfinite(prevAudioDpts) && audioDpts > prevAudioDpts) {
+          double newDuration = audioDpts + (audioDpts - prevAudioDpts) - av.start;
+          if (newDuration > m_d->m_av.duration) {
+            m_d->m_av.duration = newDuration;
+          }
+        }
       }
 
       const bool gotFrames = gotAudioFrame || gotVideoFrame;
@@ -1989,13 +1942,14 @@ namespace VideoDisplay
       if(eof == EofState::Flush && !gotFrames)
         eof = EofState::Eof;
 
-      if(Nimble::Math::isNAN(av.start) && gotFrames) {
-        if(Nimble::Math::isNAN(videoDpts))
-          av.start = audioDpts;
-        else if(Nimble::Math::isNAN(audioDpts))
-          av.start = videoDpts;
-        else
+      if (!std::isfinite(av.start) && gotFrames) {
+        if (std::isfinite(videoDpts) && std::isfinite(audioDpts)) {
           av.start = std::min(videoDpts, audioDpts);
+        } else if (std::isfinite(videoDpts)) {
+          av.start = videoDpts;
+        } else if (std::isfinite(audioDpts)) {
+          av.start = audioDpts;
+        }
       }
 
       waitingFrame = m_d->m_realTimeSeeking && av.videoCodec && !gotFrames;
