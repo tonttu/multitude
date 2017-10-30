@@ -11,8 +11,6 @@
 #ifndef PATTERNS_NOTCOPYABLE_HPP
 #define PATTERNS_NOTCOPYABLE_HPP
 
-#include <Patterns/Export.hpp>
-
 namespace Patterns
 {
   /// Base class for classes that cannot be copied. By inheriting this

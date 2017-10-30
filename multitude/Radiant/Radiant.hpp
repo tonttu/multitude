@@ -61,7 +61,6 @@ namespace Radiant {
   class Directory;
   class DropEvent;
   class DropListener;
-  class FT2xxStream;
   class FileUtils;
   class FileWriter;
   class FunctionTask;

@@ -3,10 +3,7 @@ include(../../cornerstone.pri)
 HEADERS += Export.hpp \
     VideoCaptureMonitor.hpp
 
-HEADERS += SubTitles.hpp
 HEADERS += VideoDisplay.hpp
-
-SOURCES += SubTitles.cpp
 
 HEADERS += AudioTransfer.hpp AVDecoder.hpp Utils.hpp
 SOURCES += AudioTransfer.cpp AVDecoder.cpp
