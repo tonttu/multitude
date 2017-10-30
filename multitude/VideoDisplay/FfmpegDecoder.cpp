@@ -1202,7 +1202,8 @@ namespace VideoDisplay
 
     AVRational tb = m_av.formatContext->streams[m_av.videoStreamIndex]->time_base;
 
-    dpts = av_q2d(tb) * m_av.frame->pts;
+    if (m_av.frame->pts != AV_NOPTS_VALUE)
+      dpts = av_q2d(tb) * m_av.frame->pts;
 
     bool setTimestampToPts = false;
 
@@ -1805,8 +1806,7 @@ namespace VideoDisplay
 
       if(!waitingFrame || !m_d->m_realTimeSeeking) {
         if (m_d->checkSeek()) {
-          videoDpts = std::numeric_limits<double>::quiet_NaN();
-          audioDpts = std::numeric_limits<double>::quiet_NaN();
+          videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
         }
       }
 
@@ -1870,7 +1870,8 @@ namespace VideoDisplay
           continue;
         }
         if(m_d->m_options.isLooping()) {
-          m_d->seekToBeginning();
+          if (m_d->seekToBeginning())
+            videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
           eof = EofState::Normal;
 
           m_d->m_loopOffset += m_d->m_av.duration;
