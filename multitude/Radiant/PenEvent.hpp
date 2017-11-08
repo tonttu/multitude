@@ -41,6 +41,10 @@ namespace Radiant
       FLAG_INVERTED   = 1 << 5,
       /// The eraser button is pressed
       FLAG_ERASER     = 1 << 6,
+
+      /// Event originates from a RawInputHandler. Event raw location uses
+      /// a relative units and has value of 0..1 instead of himetric units
+      FLAG_RAW        = 1 << 7,
     };
     typedef Radiant::FlagsT<Flag> Flags;
 
@@ -100,7 +104,8 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
-    /// Raw event location in device coordinates. In windows this is in himetric units
+    /// Raw event location in device coordinates. In windows this is in
+    /// himetric units or relative units from 0..1 depending on FLAG_RAW
     Nimble::Vector2f rawLocation() const { return m_rawLocation; }
     void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
 
