@@ -880,7 +880,7 @@ namespace Luminous
     }
 
     if (closest) {
-      p.location = closest->windowToGraphics(loc, p.isInside);
+      p.location = closest->desktopToGraphics(loc, p.isInside);
     }
     return p;
   }
