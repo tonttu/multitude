@@ -25,13 +25,13 @@ namespace VideoDisplay
     DECLARE_SINGLETON(VideoCaptureMonitor);
     MEMCHECKED
 
+  public:
     struct VideoSource
     {
       QByteArray device;
       Nimble::Vector2i resolution;
     };
 
-  public:
     ~VideoCaptureMonitor();
 
     /// Polling interval in seconds
