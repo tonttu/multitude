@@ -477,6 +477,14 @@ namespace Radiant
         if(res == pid) {
           // done, read all data from pipes and return
           flushPipesAndSignalEnd(pipes);
+          // We might have received the execError on flushPipes after the
+          // previous time we called pollPipes
+          if (!execError.isEmpty()) {
+            Radiant::error("ProcessRunner # Got an error from the child process while trying to run '%s': %s",
+                           path.toUtf8().data(),
+                           execError.data());
+            return { ProcessRunner::Status::FailedToStart, -1 };
+          }
           return computeExitStatus(status);
         } else if(res == -1) {
           Radiant::error("ProcessRunner # waitpid failed: %s", strerror(errno));
