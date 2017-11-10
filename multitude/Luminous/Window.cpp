@@ -58,10 +58,6 @@ namespace Luminous
     , m_openGLContext(new QOpenGLContext(nullptr))
     , m_eventHook(nullptr)
   {
-#ifdef RADIANT_WINDOWS
-    SetTouchDisableProperty((HWND)winId(), true);
-#endif
-
     // This window should be renderable by OpenGL
     setSurfaceType(QSurface::OpenGLSurface);
 
@@ -162,7 +158,12 @@ namespace Luminous
     for (int i = FEEDBACK_TOUCH_CONTACTVISUALIZATION; i <= FEEDBACK_GESTURE_PRESSANDTAP; ++i)
       SetWindowFeedbackSetting((HWND)winId(), FEEDBACK_TYPE(i), 0, sizeof(BOOL), &value);
 
-    if (!m_uncloak) {
+    SetTouchDisableProperty((HWND)winId(), true);
+
+    // Cloak the window if we are in frameless mode to eliminate ugly "restore"
+    // animation. It looks bad especially when launching the application from
+    // mt launcher
+    if (!m_uncloak && (flags() & Qt::FramelessWindowHint)) {
       auto v = TRUE;
       DwmSetWindowAttribute((HWND)winId(), DWMWA_CLOAK, &v, sizeof(v));
     }
