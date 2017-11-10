@@ -94,6 +94,11 @@ namespace VideoDisplay
       Radiant::error("RGBEasyMonitor # Failed to initialize RGB driver");
       return;
     }
+
+    if (api.RGBGetNumberOfInputs(&numberOfInputs) != 0) {
+      Radiant::error("RGBEasyMonitor # Failed to get the number of inputs");
+      numberOfInputs = 0;
+    }
   }
 
   int RGBEasyLib::getRGBIndex(const VideoInput& vi)
@@ -132,12 +137,6 @@ namespace VideoDisplay
 
   int RGBEasyLib::possibleInputs()
   {
-    static unsigned long numberOfInputs = 0;
-    MULTI_ONCE {
-      if (apiHandle && api.RGBGetNumberOfInputs(&numberOfInputs) != 0) {
-        Radiant::error("RGBEasyMonitor # Failed to get the number of inputs");
-      }
-    }
     return numberOfInputs;
   }
 
