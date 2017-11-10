@@ -23,12 +23,33 @@
 
 #ifdef RADIANT_WINDOWS
 #include <Dwmapi.h>
+#include <shellapi.h>
+#include <shobjidl.h>
+#include <propvarutil.h>
+#include <InitGuid.h>
+#include <propkey.h>
 
 static int64_t performanceCounterFrequency = 0;
 #endif
 
 namespace Luminous
 {
+
+#ifdef RADIANT_WINDOWS
+  HRESULT SetTouchDisableProperty(HWND hwnd, BOOL fDisableTouch)
+  {
+    IPropertyStore* pPropStore;
+    HRESULT hrReturnValue = SHGetPropertyStoreForWindow(hwnd, IID_PPV_ARGS(&pPropStore));
+    if (SUCCEEDED(hrReturnValue)) {
+      PROPVARIANT var;
+      var.vt = VT_BOOL;
+      var.boolVal = fDisableTouch ? VARIANT_TRUE : VARIANT_FALSE;
+      hrReturnValue = pPropStore->SetValue(PKEY_EdgeGesture_DisableTouchWhenFullscreen, var);
+      pPropStore->Release();
+    }
+    return hrReturnValue;
+  }
+#endif
 
   Window::Window(QScreen* screen)
     : QWindow(screen)
@@ -37,6 +58,10 @@ namespace Luminous
     , m_openGLContext(new QOpenGLContext(nullptr))
     , m_eventHook(nullptr)
   {
+#ifdef RADIANT_WINDOWS
+    SetTouchDisableProperty((HWND)winId(), true);
+#endif
+
     // This window should be renderable by OpenGL
     setSurfaceType(QSurface::OpenGLSurface);
 

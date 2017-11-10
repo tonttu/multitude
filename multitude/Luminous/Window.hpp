@@ -157,11 +157,6 @@ namespace Luminous
     QObject * asQObject() { return this; }
     const QObject * asQObject() const { return this; }
 
-#ifdef RADIANT_WINDOWS
-    /// Returns the HWND of the window
-    HWND windowHandle() { return (HWND)winId(); }
-#endif
-
   signals:
     void closed();
 
