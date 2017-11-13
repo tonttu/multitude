@@ -14,19 +14,19 @@ namespace Radiant
   ///       "1.2.3" < "1.2.3-update1" or "1.2.3" < "1.2.3-halloween-mega-edition"
   class RADIANT_API VersionString
   {
-    public:
-      VersionString(const QString & str = "");
+  public:
+    VersionString(const QString & str = "");
 
-      bool operator<(const VersionString & other) const;
-      bool operator<=(const VersionString & other) const;
-      bool operator>(const VersionString & other) const;
-      bool operator>=(const VersionString & other) const;
-      bool operator==(const VersionString & other) const;
-      bool operator!=(const VersionString & other) const;
-      const QString& str() const;
+    bool operator<(const VersionString & other) const;
+    bool operator<=(const VersionString & other) const;
+    bool operator>(const VersionString & other) const;
+    bool operator>=(const VersionString & other) const;
+    bool operator==(const VersionString & other) const;
+    bool operator!=(const VersionString & other) const;
+    const QString& str() const;
 
-    private:
-      QString m_str;
+  private:
+    QString m_str;
   };
 
 }
