@@ -92,6 +92,7 @@ HEADERS += WinTypes.h
 HEADERS += DeviceMonitor.hpp
 HEADERS += SymbolRegistry.hpp
 HEADERS += CrashHandler.hpp
+HEADERS += VersionString.hpp
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
@@ -157,6 +158,7 @@ SOURCES += VideoCamera1394.cpp
 SOURCES += IntrusivePtr.cpp
 SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
+SOURCES += VersionString.cpp
 
 linux*:SOURCES += ProcessRunnerPosix.cpp
 win32:SOURCES += ProcessRunnerWin32.cpp
