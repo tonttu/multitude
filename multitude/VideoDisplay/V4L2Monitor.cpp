@@ -328,6 +328,7 @@ namespace VideoDisplay
         VideoSource vs;
         vs.device = s.device;
         vs.resolution = s.resolution;
+        vs.friendlyName = s.name;
         ret << vs;
       }
     }
