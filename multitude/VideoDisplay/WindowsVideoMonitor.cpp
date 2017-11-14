@@ -676,6 +676,7 @@ namespace VideoDisplay
         VideoSource vs;
         vs.device = s.ffmpegName().toUtf8();
         vs.resolution = s.previousState.resolution.toVector();
+        vs.friendlyName = s.friendlyName();
         ret << vs;
       }
     }

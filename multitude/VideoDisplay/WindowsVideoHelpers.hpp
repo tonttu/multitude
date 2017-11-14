@@ -54,6 +54,7 @@ namespace VideoDisplay
 
     virtual SourceState update();
     QString ffmpegName() const;
+    QString friendlyName() const;
     bool isValid() const;
     bool operator<(const Source& other) const;
     bool operator==(const Source& other) const;
