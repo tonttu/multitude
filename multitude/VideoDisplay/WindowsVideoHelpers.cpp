@@ -89,9 +89,10 @@ namespace VideoDisplay
   {
     // ':' is reserved for separating sources in ffmpeg
     QString result = QString("video=%1").arg(video.friendlyName).replace(':', '_');
-    result += ":";
-    if(audio.isValid())
+    if(audio.isValid()) {
+      result += ":";
       result += QString("audio=%1").arg(audio.friendlyName).replace(':', '_');
+    }
     return result;
   }
 
