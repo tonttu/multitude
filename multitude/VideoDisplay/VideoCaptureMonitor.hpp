@@ -29,7 +29,7 @@ namespace VideoDisplay
     struct VideoSource
     {
       QByteArray device;
-      QByteArray friendlyName;
+      QString friendlyName;
       Nimble::Vector2i resolution;
     };
 
