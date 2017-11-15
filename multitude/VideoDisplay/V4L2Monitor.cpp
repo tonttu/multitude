@@ -44,7 +44,7 @@ namespace VideoDisplay
   {
     ~Source();
 
-    QByteArray name;
+    QString name;
     QByteArray device;
     int fd{-1};
     int pollCounter{0};
@@ -224,7 +224,7 @@ namespace VideoDisplay
 
           if (s.enabled && s.resolution != resolution) {
             Radiant::debug("Source %s (%s) resolution changed from %dx%d to %dx%d",
-                           s.name.data(), s.device.data(),
+                           s.name.toUtf8().data(), s.device.data(),
                            s.resolution.x, s.resolution.y, resolution.x, resolution.y);
             m_host.eventSend("resolution-changed", s.device, resolution);
           }
@@ -241,7 +241,7 @@ namespace VideoDisplay
 
         if (enabled) {
           Radiant::debug("Source %s (%s) with resolution %dx%d",
-                         s.name.data(), s.device.data(),
+                         s.name.toUtf8().data(), s.device.data(),
                          s.resolution.x, s.resolution.y);
           m_host.eventSend("source-added", s.device, s.resolution);
         } else {
@@ -278,7 +278,7 @@ namespace VideoDisplay
       return false;
     }
 
-    s.name = (const char*)input.name;
+    s.name = QString((const char*)input.name);
     return (input.status & (V4L2_IN_ST_NO_POWER | V4L2_IN_ST_NO_SIGNAL)) == 0;
   }
 
@@ -328,6 +328,7 @@ namespace VideoDisplay
         VideoSource vs;
         vs.device = s.device;
         vs.resolution = s.resolution;
+        vs.friendlyName = s.name;
         ret << vs;
       }
     }
