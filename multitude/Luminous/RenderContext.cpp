@@ -318,7 +318,10 @@ namespace Luminous
     Radiant::TimeStamp m_frameTime;
     unsigned int m_maxTextureSize = 1024;
 
-    bool m_audioPanningEnabled = true;
+    Nimble::Rect m_audioPanningArea{std::numeric_limits<float>::lowest(),
+                                    std::numeric_limits<float>::lowest(),
+                                    std::numeric_limits<float>::max(),
+                                    std::numeric_limits<float>::max()};
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1380,14 +1383,14 @@ namespace Luminous
     return m_data->m_maxTextureSize;
   }
 
-  bool RenderContext::isAudioPanningEnabled() const
+  const Nimble::Rectf & RenderContext::audioPanningArea() const
   {
-    return m_data->m_audioPanningEnabled;
+    return m_data->m_audioPanningArea;
   }
 
-  void RenderContext::setAudioPanningEnabled(bool enabled)
+  void RenderContext::setAudioPanningArea(const Nimble::Rect & area)
   {
-    m_data->m_audioPanningEnabled = enabled;
+    m_data->m_audioPanningArea = area;
   }
 
   //////////////////////////////////////////////////////////////////////////

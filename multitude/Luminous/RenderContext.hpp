@@ -619,11 +619,11 @@ namespace Luminous
     /// Maximum texture size supported by this context, same as GL_MAX_TEXTURE_SIZE
     unsigned int maxTextureSize() const;
 
-    /// Should objects rendered with this context have their audio routed
-    /// through the active widget path. Typically ViewWidgets might change this.
+    /// The area in graphics coordinates that the audio panning should be limited to.
+    /// Typically ViewWidgets might change this.
     /// @see MultiWidgets::ViewWidget::isAudioPanningEnabled
-    bool isAudioPanningEnabled() const;
-    void setAudioPanningEnabled(bool enabled);
+    const Nimble::Rect & audioPanningArea() const;
+    void setAudioPanningArea(const Nimble::Rect & area);
 
   private:
 
@@ -1155,26 +1155,26 @@ namespace Luminous
     Luminous::RenderContext * m_rc;
   };
 
-  /// Simple guard for setting and restoring audio panning mode
-  /// @see RenderContext::isAudioPanningEnabled
+  /// Simple guard for setting and restoring audio panning area
+  /// @see RenderContext::audioPanningArea
   class AudioPanningGuard
   {
   public:
-    AudioPanningGuard(Luminous::RenderContext & r, bool audioPanningEnabled)
+    AudioPanningGuard(Luminous::RenderContext & r, const Nimble::Rect & area)
       : m_rc(r)
-      , m_wasAudioPanningEnabled(r.isAudioPanningEnabled())
+      , m_oldArea(r.audioPanningArea())
     {
-      r.setAudioPanningEnabled(audioPanningEnabled);
+      r.setAudioPanningArea(area);
     }
 
     ~AudioPanningGuard()
     {
-      m_rc.setAudioPanningEnabled(m_wasAudioPanningEnabled);
+      m_rc.setAudioPanningArea(m_oldArea);
     }
 
   private:
     Luminous::RenderContext & m_rc;
-    const bool m_wasAudioPanningEnabled;
+    const Nimble::Rectf m_oldArea;
   };
 }
 
