@@ -287,8 +287,6 @@ namespace Resonant {
         return;
       }
     }
-    Radiant::error("ModulePanner::clearSourceLocation # id \"%s\" is not known",
-                   id.data());
   }
 
   void ModulePanner::syncSource(ModulePanner::Source & src)
