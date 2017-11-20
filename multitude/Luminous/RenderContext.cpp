@@ -8,6 +8,10 @@
  * 
  */
 
+// For PRIx64
+#define __STDC_FORMAT_MACROS
+#include <cinttypes>
+
 #include "RenderContext.hpp"
 
 #include "Error.hpp"
