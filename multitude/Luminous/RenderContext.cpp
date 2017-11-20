@@ -181,6 +181,9 @@ namespace Luminous
 
     std::stack<Nimble::ClipStack> m_clipStacks;
  
+    std::vector<Valuable::Node::Uuid> m_viewWidgetPath;
+    QByteArray m_viewWidgetPathId;
+
     unsigned long m_renderCount;
     unsigned long m_unfinishedRenderCount;
     unsigned long m_frameCount;
@@ -458,7 +461,32 @@ namespace Luminous
 
     return m_data->m_clipStacks.top().isVisible(area);
   }
-  
+
+  void RenderContext::pushViewWidget(Valuable::Node::Uuid id)
+  {
+    m_data->m_viewWidgetPath.push_back(id);
+
+    char buffer[17];
+    snprintf(buffer, sizeof(buffer), "%016" PRIx64, id);
+    m_data->m_viewWidgetPathId.append(buffer, 16);
+  }
+
+  void RenderContext::popViewWidget()
+  {
+    m_data->m_viewWidgetPath.pop_back();
+    m_data->m_viewWidgetPathId.chop(16);
+  }
+
+  const std::vector<Valuable::Node::Uuid> & RenderContext::viewWidgetPath() const
+  {
+    return m_data->m_viewWidgetPath;
+  }
+
+  const QByteArray & RenderContext::viewWidgetPathId() const
+  {
+    return m_data->m_viewWidgetPathId;
+  }
+
   void RenderContext::drawArc(const Nimble::Vector2f & center, float radius,
                               float fromRadians, float toRadians, const Luminous::Style & style, unsigned int linesegments)
   {

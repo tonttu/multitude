@@ -245,6 +245,21 @@ namespace Luminous
     /// @return Was the area visible
     bool isVisible(const Nimble::Rectangle & area);
 
+    /// Called by ViewWidget::renderContent before rendering the view scene.
+    /// Can be called from other view-type widgets that render a widget
+    /// hierarchy manually. This updates viewWidgetPath and viewWidgetPathId.
+    /// Every call to pushViewWidget needs matching popViewWidget call.
+    /// @param id Widget id
+    void pushViewWidget(Valuable::Node::Uuid id);
+    /// Pops last view widget from viewWidgetPath / viewWidgetPathId
+    void popViewWidget();
+    /// When called from a widget rendering functions, this returns the list of
+    /// view widgets that are currently rendering this widget. Returns an empty
+    /// vector if the widget is not inside a view.
+    const std::vector<Valuable::Node::Uuid> & viewWidgetPath() const;
+    /// String representation of viewWidgetPath that can be used as a key or id.
+    const QByteArray & viewWidgetPathId() const;
+
     // Render utility functions:
 
     /// Draw an arc defined as a segment of circle
