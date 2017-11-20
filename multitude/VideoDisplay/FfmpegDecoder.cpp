@@ -233,9 +233,6 @@ namespace VideoDisplay
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
 
-    // Sets the audio location from m_host->audioLocationAttribute to Resonant audio panner
-    void syncAudioLocation();
-
 
     FfmpegDecoder * m_host;
     int m_activeSeekGeneration;
@@ -268,9 +265,6 @@ namespace VideoDisplay
     float m_audioGain;
     bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
-
-    /// Change listener ID for m_host->audioLocationAttribute
-    long m_audioLocationListener = -1;
 
     /// In some videos, the audio track might be shorter than the video track
     /// We have some heuristic to determine when the audio track has actually ended,
@@ -1162,25 +1156,6 @@ namespace VideoDisplay
       frame.clear(i);
   }
 
-  void FfmpegDecoder::D::syncAudioLocation()
-  {
-    AudioTransferPtr audioTransfer(m_audioTransfer);
-    if (audioTransfer) {
-      char buf[128];
-
-      Radiant::BinaryData control;
-
-      control.writeString("panner/setsourcelocation");
-
-      snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
-
-      control.writeString(buf);
-      control.writeVector2Float32(m_host->audioLocationAttribute()); // sound source location
-
-      Resonant::DSPNetwork::instance()->send(control);
-    }
-  }
-
   bool FfmpegDecoder::D::decodeVideoPacket(double &dpts)
   {
     const double maxPtsReorderDiff = 0.1;
@@ -1488,15 +1463,11 @@ namespace VideoDisplay
     : m_d(new D(this))
   {
     Thread::setName("FfmpegDecoder");
-
-    auto sync = [this] { m_d->syncAudioLocation(); };
-    m_d->m_audioLocationListener = audioLocationAttribute().addListener(sync);
  }
 
   FfmpegDecoder::~FfmpegDecoder()
   {
     close();
-    audioLocationAttribute().removeListener(m_d->m_audioLocationListener);
     if(isRunning())
       waitEnd();
     m_d->close();
@@ -1668,7 +1639,15 @@ namespace VideoDisplay
         a, 0.0f, c[0], -b*a - 0.5f * c[0],
         a, c[1], c[2], -b*a - 0.5f * (c[2]+c[1]),
         a, c[3],    0, -b*a - 0.5f * c[3],
-          0,    0,    0, 1);
+        0,    0,    0, 1);
+  }
+
+  QByteArray FfmpegDecoder::audioPannerSourceId() const
+  {
+    if (auto audioTransfer = m_d->m_audioTransfer) {
+      return audioTransfer->id() + "-0";
+    }
+    return QByteArray();
   }
 
   void FfmpegDecoder::setAudioGain(float gain)
