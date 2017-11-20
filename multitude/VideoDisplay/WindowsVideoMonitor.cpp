@@ -101,12 +101,20 @@ namespace VideoDisplay
 
   std::vector<VideoInput> scanVideoInputDevices()
   {
-    ICreateDevEnum * sysDevEnum = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
-                                  IID_ICreateDevEnum, (void **)&sysDevEnum);
     std::vector<VideoInput> devices;
-    if (FAILED(hr))
-      return devices;
+
+    ICreateDevEnum * sysDevEnum = nullptr;
+    for (int i = 0; i < 2; ++i) {
+      HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+                                    IID_ICreateDevEnum, (void **)&sysDevEnum);
+      if (hr == CO_E_NOTINITIALIZED) {
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+      } else if (FAILED(hr)) {
+        return devices;
+      } else {
+        break;
+      }
+    }
 
     IBindCtx * bindContext = nullptr;
     CreateBindCtx(0, &bindContext);
@@ -238,6 +246,7 @@ namespace VideoDisplay
 
     double m_pollInterval = 1.0;
 
+    bool m_externalLibsInitialized = false;
     RGBEasyLibPtr m_rgbEasy = RGBEasyLib::instance();
   };
 
@@ -400,7 +409,10 @@ namespace VideoDisplay
 
   void VideoCaptureMonitor::D::poll()
   {
-    MULTI_ONCE initExternalLibs();
+    if (!m_externalLibsInitialized) {
+      initExternalLibs();
+      m_externalLibsInitialized = true;
+    }
 
     Radiant::Guard g(m_sourcesMutex);
 
@@ -664,6 +676,7 @@ namespace VideoDisplay
         VideoSource vs;
         vs.device = s.ffmpegName().toUtf8();
         vs.resolution = s.previousState.resolution.toVector();
+        vs.friendlyName = s.friendlyName();
         ret << vs;
       }
     }

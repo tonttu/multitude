@@ -139,7 +139,7 @@ namespace VideoDisplay
     while (m_readyBuffers.load() > 0) {
       DecodedAudioBuffer * buffer = & m_decodedBuffers[m_buffersReader % s_decodedBufferCount];
       if(buffer->timestamp().seekGeneration() < m_seekGeneration) {
-        m_samplesInBuffers.fetchAndAddRelaxed(-buffer->samples());
+        m_samplesInBuffers.fetchAndAddRelaxed(-(buffer->samples() - buffer->offset()));
         m_readyBuffers.deref();
         ++m_buffersReader;
         continue;

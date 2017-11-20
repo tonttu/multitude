@@ -32,5 +32,16 @@ namespace Radiant
     {
       m_verboseModules = modules;
     }
+
+    const std::set<QByteArray> & SeverityFilter::verboseModules() const
+    {
+      return m_verboseModules;
+    }
+
+    bool SeverityFilter::isVerbose(const QByteArray & module) const
+    {
+      return m_minimumSeverityLevel == DEBUG || module.isEmpty() ||
+          m_verboseModules.count(module) > 0;
+    }
   } // namespace Trace
 } // namespace Radiant

@@ -67,6 +67,7 @@ namespace VideoDisplay
 
     void loadDll();
 
+    unsigned long numberOfInputs = 0;
     HRGBDLL apiHandle = 0;
     RGBEasyAPI api;
 
