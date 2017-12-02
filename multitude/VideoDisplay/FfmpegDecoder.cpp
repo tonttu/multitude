@@ -1617,16 +1617,16 @@ namespace VideoDisplay
   {
     if(!m_d->m_av.videoCodecContext)
       return Nimble::Matrix4f::IDENTITY;
-    /// @todo why does everything look so wrong when using the correct colorspace?
-    ///       for now we just force ITU-R BT601-6 (same as SMPTE170M)
-    // this should be m_d->av.videoCodecContext->colorspace
-    const int colorspace = SWS_CS_SMPTE170M;
+
+    const AVColorSpace colorspace = m_d->m_av.videoCodecContext->colorspace;
     const int * coeffs = sws_getCoefficients(colorspace);
     int l = 16, h = 235;
-    if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
+
+    // See the discussion here: https://redmine.multitouch.fi/issues/14426
+    /*if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
       l = 0;
       h = 255;
-    }
+    }*/
     // a and b scale the y value from [l, h] -> [0, 1]
     const float a = 255.0f/(h-l);
     const float b = l/255.0;
