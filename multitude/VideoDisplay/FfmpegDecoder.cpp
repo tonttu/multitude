@@ -103,15 +103,19 @@ namespace
 
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
-    if(level > AV_LOG_WARNING) {
-      Radiant::info("%s", msg.toUtf8().data());
-    } else if(level > AV_LOG_ERROR) {
+    if(level >= AV_LOG_DEBUG) {
+      Radiant::debug("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_INFO) {
+      Radiant::info("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_WARNING) {
+      Radiant::warning("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_ERROR) {
       if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
-        Radiant::warning("%s", msg.toUtf8().data());
+        Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     } else {
       if (!msg.contains("too full or near too full")) {
-        Radiant::error("%s", msg.toUtf8().data());
+        Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     }
   }
