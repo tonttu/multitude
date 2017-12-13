@@ -1,0 +1,128 @@
+#include "CrashHandler.hpp"
+#include "Trace.hpp"
+
+#include <QFile>
+#include <QFileInfo>
+
+namespace Radiant
+{
+  namespace CrashHandler
+  {
+    static std::map<QByteArray, QByteArray> s_attachments;
+    static size_t s_attachmentMaxSize = 128*1024;
+
+    bool setAttachmentFile(const QByteArray & key, const QString & filename,
+                           AttachmentFlags flags)
+    {
+      QFile file(filename);
+      if (file.open(QFile::ReadOnly)) {
+        QByteArray data;
+        if (flags & ATTACHMENT_TAIL) {
+          const qint64 fileSize = file.size();
+          const qint64 maxSize = attachmentMaxSize();
+          if (fileSize > maxSize) {
+            file.seek(fileSize - maxSize);
+          }
+        }
+        data = file.read(attachmentMaxSize());
+        AttachmentMetadata metadata;
+        metadata.filename = QFileInfo(filename).absoluteFilePath();
+        metadata.flags = flags;
+        setAttachmentData(key, data, metadata);
+        return true;
+      } else {
+        Radiant::error("CrashHandler::setAttachmentFile # Failed to open '%s': %s",
+                       file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
+        return false;
+      }
+    }
+
+    void setAttachmentData(const QByteArray & key, const QByteArray & data,
+                           AttachmentMetadata metadata)
+    {
+      QByteArray & persistent = s_attachments[key];
+      const qint64 maxSize = attachmentMaxSize();
+      if (data.size() > maxSize) {
+        if (metadata.flags & ATTACHMENT_TAIL) {
+          persistent = data.mid(data.size() - maxSize, maxSize);
+        } else {
+          persistent = data;
+          persistent.truncate(maxSize);
+        }
+      } else {
+        persistent = data;
+      }
+
+      setAttachmentPtr(key, persistent.data(), persistent.size(), metadata);
+    }
+
+    void setAttachmentBuffer(const QByteArray & key, AttachmentRingBuffer & buffer)
+    {
+      AttachmentMetadata metadata;
+      metadata.flags |= ATTACHMENT_RING_BUFFER;
+      setAttachmentPtr(key, buffer.data(), buffer.bufferSize(), metadata);
+    }
+
+    void setAttachmentMaxSize(size_t bytes)
+    {
+      s_attachmentMaxSize = bytes;
+    }
+
+    size_t attachmentMaxSize()
+    {
+      return s_attachmentMaxSize;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    AttachmentRingBuffer::AttachmentRingBuffer(size_t size)
+      : m_buffer(size)
+    {
+    }
+
+    void * AttachmentRingBuffer::data()
+    {
+      return m_buffer.data();
+    }
+
+    size_t AttachmentRingBuffer::bufferSize() const
+    {
+      return m_buffer.size();
+    }
+
+    size_t AttachmentRingBuffer::maxDataSize() const
+    {
+      return m_buffer.size() - sizeof(uint64_t);
+    }
+
+    void AttachmentRingBuffer::write(char * newData, uint32_t len)
+    {
+      if (len == 0)
+        return;
+
+      uint64_t * header = reinterpret_cast<uint64_t*>(m_buffer.data());
+      uint8_t * data = reinterpret_cast<uint8_t*>(header + 1);
+      const uint32_t dataSize = maxDataSize();
+
+      if (len > dataSize) {
+        newData += (len - dataSize);
+        len = dataSize;
+      }
+
+      uint32_t base;
+      {
+        Guard g(m_headerMutex);
+        base = *header % dataSize;
+        *header += len;
+      }
+
+      int copy = std::min<int>(len, dataSize - base);
+      memcpy(data + base, newData, copy);
+
+      if ((int)len > copy)
+        memcpy(data, newData + copy, len - copy);
+    }
+  }
+}
+

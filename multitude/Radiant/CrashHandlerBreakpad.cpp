@@ -1,4 +1,5 @@
 #include "CrashHandler.hpp"
+#include "TraceCrashHandlerFilter.hpp"
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -16,6 +17,7 @@ namespace Radiant
   {
     static std::unique_ptr<google_breakpad::ExceptionHandler> s_exceptionHandler;
     static QMap<QByteArray, QByteArray> s_annotations;
+    static std::map<QByteArray, std::pair<void*, size_t>> s_attachments;
 
     // minidump_upload -p application -v version minidump url nullptr
     static QByteArray s_uploadCmd[7];
@@ -116,6 +118,12 @@ namespace Radiant
       auto p = new google_breakpad::ExceptionHandler(
             google_breakpad::MinidumpDescriptor(path), nullptr, crashCallback, nullptr, true, -1);
       p->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+
+      for (auto & pair: s_attachments) {
+        auto data = pair.second;
+        p->RegisterAppMemory(data.first, data.second);
+      }
+
       return std::unique_ptr<google_breakpad::ExceptionHandler>(p);
     }
 
@@ -142,6 +150,8 @@ namespace Radiant
     void init(const QString & application, const QString & version,
               const QString & url, const QString & db)
     {
+      Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
+
       s_uploadCmd[2] = application.toUtf8();
       s_uploadCmd[4] = version.toUtf8();
 
@@ -168,7 +178,31 @@ namespace Radiant
         return;
 
       s_annotations[key] = value;
-      reloadSignalHandlers();
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(s_extraData.data());
+        s_extraData = encodeExtraData(s_annotations);
+        s_exceptionHandler->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+      }
+    }
+
+    void setAttachmentPtr(const QByteArray & key, void * data, size_t len,
+                          AttachmentMetadata metadata)
+    {
+      if (!metadata.filename.isEmpty())
+        setAnnotation("attachment-filename:" + key, metadata.filename.toUtf8());
+      if (metadata.flags)
+        setAnnotation("attachment-flags:" + key, QString::number(metadata.flags.asInt(), 16).toUtf8());
+      setAnnotation("attachment-addr:" + key, QString::number(uint64_t(data), 16).toUtf8());
+
+      auto it = s_attachments.find(key);
+      if (it != s_attachments.end()) {
+        s_exceptionHandler->UnregisterAppMemory(it->second.first);
+      }
+
+      s_attachments[key] = std::make_pair(data, len);
+      if (s_exceptionHandler && len > 0) {
+        s_exceptionHandler->RegisterAppMemory(data, len);
+      }
     }
 
     QString defaultMinidumpPath()

@@ -102,7 +102,7 @@ namespace Radiant
       }
       if(ret > 0) size -= ret, buffer += ret;
 
-      const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
+      const Radiant::TimeStamp now = msg.timestamp();
 
       time_t t = now.value() >> 24;
       /// localtime is not thread-safe on unix, and localtime_r isn't defined in windows
