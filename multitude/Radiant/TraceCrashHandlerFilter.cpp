@@ -2,6 +2,8 @@
 #include "CrashHandler.hpp"
 #include "TimeStamp.hpp"
 
+#include <ctime>
+
 namespace Radiant
 {
   namespace Trace

@@ -185,15 +185,8 @@ namespace Radiant
       }
     }
 
-    void setAttachmentPtr(const QByteArray & key, void * data, size_t len,
-                          AttachmentMetadata metadata)
+    void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
     {
-      if (!metadata.filename.isEmpty())
-        setAnnotation("attachment-filename:" + key, metadata.filename.toUtf8());
-      if (metadata.flags)
-        setAnnotation("attachment-flags:" + key, QString::number(metadata.flags.asInt(), 16).toUtf8());
-      setAnnotation("attachment-addr:" + key, QString::number(uint64_t(data), 16).toUtf8());
-
       auto it = s_attachments.find(key);
       if (it != s_attachments.end()) {
         s_exceptionHandler->UnregisterAppMemory(it->second.first);

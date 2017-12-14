@@ -11,6 +11,8 @@ namespace Radiant
     static std::map<QByteArray, QByteArray> s_attachments;
     static size_t s_attachmentMaxSize = 128*1024;
 
+    void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len);
+
     bool setAttachmentFile(const QByteArray & key, const QString & filename,
                            AttachmentFlags flags)
     {
@@ -123,6 +125,19 @@ namespace Radiant
       if ((int)len > copy)
         memcpy(data, newData + copy, len - copy);
     }
+
+    void setAttachmentPtr(const QByteArray & key, void * data, size_t len,
+                          AttachmentMetadata metadata)
+    {
+      if (!metadata.filename.isEmpty())
+        setAnnotation("attachment-filename:" + key, metadata.filename.toUtf8());
+      if (metadata.flags)
+        setAnnotation("attachment-flags:" + key, QString::number(metadata.flags.asInt(), 16).toUtf8());
+      setAnnotation("attachment-addr:" + key, QString::number(uint64_t(data), 16).toUtf8());
+
+      setAttachmentPtrImpl(key, data, len);
+    }
+
   }
 }
 
