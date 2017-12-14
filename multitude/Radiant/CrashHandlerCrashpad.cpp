@@ -17,16 +17,26 @@
 #include <QStandardPaths>
 
 #include <memory>
+#include <set>
 
 #ifndef RADIANT_WINDOWS
 #include <dlfcn.h>
 #endif
+
+namespace crashpad
+{
+  inline bool operator<(const UUID & a, const UUID & b)
+  {
+    return memcmp(&a, &b, sizeof(UUID)) < 0;
+  }
+}
 
 namespace Radiant
 {
   namespace CrashHandler
   {
     std::unique_ptr<crashpad::SimpleStringDictionary> s_simpleAnnotations;
+    std::unique_ptr<crashpad::SimpleAddressRangeBag> s_extraMemoryRanges;
     std::unique_ptr<crashpad::CrashReportDatabase> s_database;
     std::unique_ptr<crashpad::CrashpadClient> s_client;
     static std::map<QByteArray, std::pair<void*, size_t>> s_attachments;
@@ -113,13 +123,36 @@ namespace Radiant
       return path + "/CrashDumps";
     }
 
-    bool makeDump()
+    QString makeDump()
     {
       if (s_client) {
+        std::set<crashpad::UUID> all;
+        std::vector<crashpad::CrashReportDatabase::Report> tmp;
+        s_database->GetPendingReports(&tmp);
+        for (auto & r: tmp)
+          all.insert(r.uuid);
+
+        tmp.clear();
+        s_database->GetCompletedReports(&tmp);
+        for (auto & r: tmp)
+          all.insert(r.uuid);
+
+        crashpad::Settings * settings = s_database->GetSettings();
+        settings->SetUploadsEnabled(false);
         CRASHPAD_SIMULATE_CRASH();
-        return true;
+        settings->SetUploadsEnabled(true);
+
+        tmp.clear();
+        s_database->GetCompletedReports(&tmp);
+        for (crashpad::CrashReportDatabase::Report & r: tmp) {
+          // If this report wasn't in the database before simulating crash,
+          // then it must be our new report
+          if (all.count(r.uuid) == 0) {
+            return QString::fromStdWString(r.file_path.value());
+          }
+        }
       }
-      return false;
+      return QString();
     }
 
     void reloadSignalHandlers()

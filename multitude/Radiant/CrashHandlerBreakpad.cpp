@@ -33,6 +33,12 @@ namespace Radiant
     static QByteArray s_extraData;
     static const char * s_extraDataMagic = "\xb0\x2d\x68\xa6";
 
+    // This value is set to SIMULATING_CRASH when we are simulating crash using makeDump.
+    // This is not just a boolean so that in case of memory corruption during actual crash
+    // we won't read invalid value here.
+    static uint64_t s_simulatingCrash = 0;
+    static const uint64_t SIMULATING_CRASH = 0x49f4a35d0bad52a8ll;
+
     static QByteArray extraDataFieldHeader(uint32_t keyLength, uint32_t valueLength)
     {
       struct Hdr
@@ -82,6 +88,11 @@ namespace Radiant
 
     static bool crashCallback(const google_breakpad::MinidumpDescriptor & descriptor, void *, bool succeeded)
     {
+      if (s_simulatingCrash == SIMULATING_CRASH) {
+        // We are not really crashing, do nothing here
+        return true;
+      }
+
       Radiant::error("CRASHING - Wrote minidump to %s", descriptor.path());
 
       if (s_uploadCmd[0].isEmpty()) {
@@ -127,12 +138,16 @@ namespace Radiant
       return std::unique_ptr<google_breakpad::ExceptionHandler>(p);
     }
 
-    bool makeDump()
+    QString makeDump()
     {
       if (s_exceptionHandler) {
-        return s_exceptionHandler->WriteMinidump();
+        s_simulatingCrash = SIMULATING_CRASH;
+        bool ok = s_exceptionHandler->WriteMinidump();
+        s_simulatingCrash = 0;
+        if (ok)
+          return s_exceptionHandler->minidump_descriptor().path();
       }
-      return false;
+      return QString();
     }
 
     void reloadSignalHandlers()

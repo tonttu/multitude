@@ -7,7 +7,7 @@ namespace Radiant
     void init(const QString &, const QString &, const QString &, const QString &) {}
     void setAnnotation(const QByteArray &, const QByteArray &) {}
     void setAttachmentPtrImpl(const QByteArray &, void *, size_t) {}
-    bool makeDump() { return false; }
+    QString makeDump() { return QString(); }
     void reloadSignalHandlers() {}
     QString defaultMinidumpPath() { return QString(); }
   }
