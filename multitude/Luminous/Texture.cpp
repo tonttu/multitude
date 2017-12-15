@@ -31,7 +31,7 @@ namespace Luminous
       , internalFormat()
       , data()
       , translucent()
-      , lineSizePixels()
+      , lineSizeBytes()
       , dirtyRegions()
       , m_minFilter(FILTER_LINEAR)
       , m_magFilter(FILTER_LINEAR)
@@ -55,7 +55,7 @@ namespace Luminous
     const void * data;
     bool translucent;
 
-    unsigned int lineSizePixels;
+    unsigned int lineSizeBytes;
 
     ContextArrayT<QRegion> dirtyRegions;
     Filter m_minFilter, m_magFilter;
@@ -175,7 +175,7 @@ namespace Luminous
   {
     auto comp = m_d->dataFormat.compression();
     if(comp == PixelFormat::COMPRESSION_NONE)
-      return m_d->dataFormat.bytesPerPixel() * lineSizePixels() * height() * depth();
+      return lineSizeBytes() * height() * depth();
 
     // align to 4 for compressed DXT textures
     int w = width(), h = height();
@@ -198,17 +198,17 @@ namespace Luminous
     }
   }
 
-  void Texture::setLineSizePixels(std::size_t size)
+  void Texture::setLineSizeBytes(std::size_t size)
   {
-    if(m_d->lineSizePixels == size)
+    if(m_d->lineSizeBytes == size)
       return;
-    m_d->lineSizePixels = size;
+    m_d->lineSizeBytes = size;
     invalidate();
   }
 
-  unsigned int Texture::lineSizePixels() const
+  unsigned int Texture::lineSizeBytes() const
   {
-    return m_d->lineSizePixels == 0 ? m_d->width : m_d->lineSizePixels;
+    return m_d->lineSizeBytes == 0 ? m_d->width * m_d->dataFormat.bytesPerPixel() : m_d->lineSizeBytes;
   }
 
   bool Texture::isValid() const

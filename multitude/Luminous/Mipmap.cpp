@@ -357,7 +357,7 @@ namespace Luminous
       /// @todo use Image::texture
       imageTex.texture.setData(imageTex.image->width(), imageTex.image->height(),
                                imageTex.image->pixelFormat(), imageTex.image->data());
-      imageTex.texture.setLineSizePixels(0);
+      imageTex.texture.setLineSizeBytes(0);
       int now = frameTime();
       if (m_level == level) {
         imageTex.lastUsed = now;
