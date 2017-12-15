@@ -24,7 +24,7 @@ namespace Radiant
 
     CrashHandlerFilter::~CrashHandlerFilter()
     {
-      CrashHandler::setAttachmentPtr("Application log", m_buffer.data(), 0);
+      CrashHandler::removeAttachment("Application log");
     }
 
     bool CrashHandlerFilter::trace(const Message & msg)

@@ -36,11 +36,13 @@ namespace Radiant
 {
   namespace CrashHandler
   {
-    std::unique_ptr<crashpad::SimpleStringDictionary> s_simpleAnnotations;
-    std::unique_ptr<crashpad::SimpleAddressRangeBag> s_extraMemoryRanges;
+    // These are pointers and never released, otherwise we'll have issues with
+    // deletion order on shutdown when static objects are being released
+    crashpad::SimpleStringDictionary * s_simpleAnnotations = nullptr;
+    crashpad::SimpleAddressRangeBag * s_extraMemoryRanges = nullptr;
     std::unique_ptr<crashpad::CrashReportDatabase> s_database;
     std::unique_ptr<crashpad::CrashpadClient> s_client;
-    std::unique_ptr<std::map<QByteArray, std::pair<void*, size_t>>> s_attachments;
+    std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
 
 #ifdef RADIANT_WINDOWS
     static QString libraryPath()
@@ -201,14 +203,14 @@ namespace Radiant
 #endif
 
       if (!s_simpleAnnotations) {
-        s_simpleAnnotations.reset(new crashpad::SimpleStringDictionary());
+        s_simpleAnnotations = new crashpad::SimpleStringDictionary();
       }
-      info->set_simple_annotations(s_simpleAnnotations.get());
+      info->set_simple_annotations(s_simpleAnnotations);
 
       if (!s_extraMemoryRanges) {
-        s_extraMemoryRanges.reset(new crashpad::SimpleAddressRangeBag());
+        s_extraMemoryRanges = new crashpad::SimpleAddressRangeBag();
       }
-      info->set_extra_memory_ranges(s_extraMemoryRanges.get());
+      info->set_extra_memory_ranges(s_extraMemoryRanges);
 
       s_database = crashpad::CrashReportDatabase::Initialize(dbPath);
 
@@ -219,7 +221,7 @@ namespace Radiant
     void setAnnotation(const QByteArray & key, const QByteArray & value)
     {
       if (!s_simpleAnnotations) {
-        s_simpleAnnotations.reset(new crashpad::SimpleStringDictionary());
+        s_simpleAnnotations = new crashpad::SimpleStringDictionary();
       }
       s_simpleAnnotations->SetKeyValue(key.data(), value.data());
     }
@@ -235,7 +237,7 @@ namespace Radiant
     void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
     {
       if (!s_extraMemoryRanges)
-        s_extraMemoryRanges.reset(new crashpad::SimpleAddressRangeBag());
+        s_extraMemoryRanges = new crashpad::SimpleAddressRangeBag();
 
       if (!s_attachments)
         s_attachments = new std::map<QByteArray, std::pair<void*, size_t>>();
@@ -262,7 +264,7 @@ namespace Radiant
 
       auto pair = it->second;
       s_extraMemoryRanges->Remove(pair.first, pair.second);
-      s_attachments.erase(it);
+      s_attachments->erase(it);
     }
   }
 }
