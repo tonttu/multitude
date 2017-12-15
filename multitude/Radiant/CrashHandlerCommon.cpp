@@ -131,13 +131,21 @@ namespace Radiant
     {
       if (!metadata.filename.isEmpty())
         setAnnotation("attachment-filename:" + key, metadata.filename.toUtf8());
+      else
+        removeAnnotation("attachment-filename:" + key);
+
       if (metadata.flags)
         setAnnotation("attachment-flags:" + key, QString::number(metadata.flags.asInt(), 16).toUtf8());
-      setAnnotation("attachment-addr:" + key, QString::number(uint64_t(data), 16).toUtf8());
+      else
+        removeAnnotation("attachment-flags:" + key);
+
+      if (len)
+        setAnnotation("attachment-addr:" + key, QString::number(uint64_t(data), 16).toUtf8());
+      else
+        removeAnnotation("attachment-addr:" + key);
 
       setAttachmentPtrImpl(key, data, len);
     }
-
   }
 }
 

@@ -41,6 +41,9 @@ namespace Radiant
     /// max 64 entries.
     RADIANT_API void setAnnotation(const QByteArray & key, const QByteArray & value);
 
+    /// Removes an annotation
+    RADIANT_API void removeAnnotation(const QByteArray & key);
+
     /// Set attachment with a unique key to the crash report. File will be truncated to
     /// attachmentMaxSize() bytes. The file be read immediately.
     /// The function can be called several times with the same key, any old attachment
@@ -61,15 +64,17 @@ namespace Radiant
 
     /// Like setAttachentData, but instead of using QByteArray and making a copy of
     /// the data, this function passes the data pointer directly to breakpad / crashpad.
-    /// Attachment can be removed by using zero length.
     /// @param data Data pointer that contains the attachment data. This will not be copied,
     ///        so the pointer needs to stay valid until the attachment is removed. The data
     ///        is also not truncated like with other functions.
     RADIANT_API void setAttachmentPtr(const QByteArray & key, void * data, size_t len,
                                       AttachmentMetadata metadata = AttachmentMetadata());
 
-    /// Lie setAttachmentPtr, but with a ring buffer object
+    /// Like setAttachmentPtr, but with a ring buffer object
     RADIANT_API void setAttachmentBuffer(const QByteArray & key, AttachmentRingBuffer & buffer);
+
+    /// Removes an attachment
+    RADIANT_API void removeAttachment(const QByteArray & key);
 
     /// Set maximum size of attachments in bytes. This won't affect attachments that
     /// have already been registered.

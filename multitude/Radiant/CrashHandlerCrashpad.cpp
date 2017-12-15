@@ -40,7 +40,7 @@ namespace Radiant
     std::unique_ptr<crashpad::SimpleAddressRangeBag> s_extraMemoryRanges;
     std::unique_ptr<crashpad::CrashReportDatabase> s_database;
     std::unique_ptr<crashpad::CrashpadClient> s_client;
-    static std::map<QByteArray, std::pair<void*, size_t>> s_attachments;
+    std::unique_ptr<std::map<QByteArray, std::pair<void*, size_t>>> s_attachments;
 
 #ifdef RADIANT_WINDOWS
     static QString libraryPath()
@@ -224,20 +224,45 @@ namespace Radiant
       s_simpleAnnotations->SetKeyValue(key.data(), value.data());
     }
 
+    void removeAnnotation(const QByteArray & key)
+    {
+      if (!s_simpleAnnotations)
+        return;
+
+      s_simpleAnnotations->RemoveKey(key.data());
+    }
+
     void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
     {
       if (!s_extraMemoryRanges)
         s_extraMemoryRanges.reset(new crashpad::SimpleAddressRangeBag());
 
-      auto it = s_attachments.find(key);
-      if (it != s_attachments.end()) {
+      if (!s_attachments)
+        s_attachments = new std::map<QByteArray, std::pair<void*, size_t>>();
+
+      auto it = s_attachments->find(key);
+      if (it != s_attachments->end()) {
         auto pair = it->second;
         s_extraMemoryRanges->Remove(pair.first, pair.second);
       }
 
-      s_attachments[key] = std::make_pair(data, len);
+      (*s_attachments)[key] = std::make_pair(data, len);
       if (len > 0)
         s_extraMemoryRanges->Insert(data, len);
+    }
+
+    void removeAttachment(const QByteArray & key)
+    {
+      if (!s_extraMemoryRanges || !s_attachments)
+        return;
+
+      auto it = s_attachments->find(key);
+      if (it == s_attachments->end())
+        return;
+
+      auto pair = it->second;
+      s_extraMemoryRanges->Remove(pair.first, pair.second);
+      s_attachments.erase(it);
     }
   }
 }

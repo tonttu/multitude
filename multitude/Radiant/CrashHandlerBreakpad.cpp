@@ -16,8 +16,11 @@ namespace Radiant
   namespace CrashHandler
   {
     static std::unique_ptr<google_breakpad::ExceptionHandler> s_exceptionHandler;
-    static QMap<QByteArray, QByteArray> s_annotations;
-    static std::map<QByteArray, std::pair<void*, size_t>> s_attachments;
+
+    // These are pointers and never released, otherwise we'll have issues with
+    // deletion order on shutdown when static objects are being released
+    static QMap<QByteArray, QByteArray> * s_annotations = nullptr;
+    static std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
 
     // minidump_upload -p application -v version minidump url nullptr
     static QByteArray s_uploadCmd[7];
@@ -124,15 +127,18 @@ namespace Radiant
     static std::unique_ptr<google_breakpad::ExceptionHandler> createExceptionHandler(
         const std::string & path)
     {
-      s_extraData = encodeExtraData(s_annotations);
+      if (s_annotations)
+        s_extraData = encodeExtraData(*s_annotations);
 
       auto p = new google_breakpad::ExceptionHandler(
             google_breakpad::MinidumpDescriptor(path), nullptr, crashCallback, nullptr, true, -1);
       p->RegisterAppMemory(s_extraData.data(), s_extraData.size());
 
-      for (auto & pair: s_attachments) {
-        auto data = pair.second;
-        p->RegisterAppMemory(data.first, data.second);
+      if (s_attachments) {
+        for (auto & pair: *s_attachments) {
+          auto data = pair.second;
+          p->RegisterAppMemory(data.first, data.second);
+        }
       }
 
       return std::unique_ptr<google_breakpad::ExceptionHandler>(p);
@@ -170,9 +176,12 @@ namespace Radiant
       s_uploadCmd[2] = application.toUtf8();
       s_uploadCmd[4] = version.toUtf8();
 
-      s_annotations["prod"] = application.toUtf8();
-      s_annotations["ver"] = version.toUtf8();
-      s_annotations["hostname"] = hostname();
+      if (!s_annotations)
+        s_annotations = new QMap<QByteArray, QByteArray>();
+
+      (*s_annotations)["prod"] = application.toUtf8();
+      (*s_annotations)["ver"] = version.toUtf8();
+      (*s_annotations)["hostname"] = hostname();
 
       QString tmp = db;
       tmp.replace("~/", Radiant::PlatformUtils::getUserHomePath() + "/");
@@ -189,28 +198,67 @@ namespace Radiant
 
     void setAnnotation(const QByteArray & key, const QByteArray & value)
     {
-      if (s_annotations.contains(key) && s_annotations[key] == value)
+      if (!s_annotations)
+        s_annotations = new QMap<QByteArray, QByteArray>();
+
+      if (s_annotations->contains(key) && (*s_annotations)[key] == value)
         return;
 
-      s_annotations[key] = value;
+      (*s_annotations)[key] = value;
       if (s_exceptionHandler) {
         s_exceptionHandler->UnregisterAppMemory(s_extraData.data());
-        s_extraData = encodeExtraData(s_annotations);
+        s_extraData = encodeExtraData(*s_annotations);
+        s_exceptionHandler->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+      }
+    }
+
+    void removeAnnotation(const QByteArray & key)
+    {
+      if (!s_annotations)
+        return;
+
+      auto it = s_annotations->find(key);
+      if (it == s_annotations->end())
+        return;
+
+      s_annotations->erase(it);
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(s_extraData.data());
+        s_extraData = encodeExtraData(*s_annotations);
         s_exceptionHandler->RegisterAppMemory(s_extraData.data(), s_extraData.size());
       }
     }
 
     void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
     {
-      auto it = s_attachments.find(key);
-      if (it != s_attachments.end()) {
+      if (!s_attachments)
+        s_attachments = new std::map<QByteArray, std::pair<void*, size_t>>();
+
+      auto it = s_attachments->find(key);
+      if (it != s_attachments->end() && s_exceptionHandler) {
         s_exceptionHandler->UnregisterAppMemory(it->second.first);
       }
 
-      s_attachments[key] = std::make_pair(data, len);
+      (*s_attachments)[key] = std::make_pair(data, len);
       if (s_exceptionHandler && len > 0) {
         s_exceptionHandler->RegisterAppMemory(data, len);
       }
+    }
+
+    void removeAttachment(const QByteArray & key)
+    {
+      if (!s_attachments)
+        return;
+
+      auto it = s_attachments->find(key);
+      if (it == s_attachments->end())
+        return;
+
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(it->second.first);
+      }
+
+      s_attachments->erase(it);
     }
 
     QString defaultMinidumpPath()
