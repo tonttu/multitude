@@ -1,4 +1,5 @@
 #include "CrashHandler.hpp"
+#include "TraceCrashHandlerFilter.hpp"
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -166,6 +167,8 @@ namespace Radiant
         Radiant::error("Radiant::CrashHandler::init # Tried to reinitialize crash handler");
         return;
       }
+
+      Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
 
       base::FilePath handlerPath(crashpadHandler().toStdWString());
       base::FilePath dbPath(db.toStdWString());
