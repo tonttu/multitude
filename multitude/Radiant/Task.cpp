@@ -18,6 +18,7 @@
 
 namespace
 {
+  static float s_slowTaskDebuggingThresholdS = 0;
   static Radiant::Mutex s_sharedMutexMutex;
 
   std::map<void *, std::weak_ptr<Radiant::Mutex> > s_sharedMutexStore;
@@ -54,7 +55,8 @@ namespace Radiant
     : m_state(WAITING),
       m_canceled(false),
       m_priority(p),
-      m_host(0)
+      m_host(0),
+      m_createStack(s_slowTaskDebuggingThresholdS > 0 ? new CallStack() : nullptr)
   {}
 
   void Task::runNow(bool finish)
@@ -89,6 +91,21 @@ namespace Radiant
       if (!finish)
         break;
     }
+  }
+
+  void Task::setSlowTaskDebuggingThreshold(float timeS)
+  {
+    if (timeS > 0) {
+      Radiant::info("Enabling slow task debugging (threshold %.3f seconds)", timeS);
+    } else {
+      Radiant::info("Disabling slow task debugging");
+    }
+    s_slowTaskDebuggingThresholdS = timeS;
+  }
+
+  float Task::slowTaskDebuggingThreshold()
+  {
+    return s_slowTaskDebuggingThresholdS;
   }
 
   Task::~Task()

@@ -1,4 +1,5 @@
 #include "CrashHandler.hpp"
+#include "TraceCrashHandlerFilter.hpp"
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -17,18 +18,31 @@
 #include <QStandardPaths>
 
 #include <memory>
+#include <set>
 
 #ifndef RADIANT_WINDOWS
 #include <dlfcn.h>
 #endif
 
+namespace crashpad
+{
+  inline bool operator<(const UUID & a, const UUID & b)
+  {
+    return memcmp(&a, &b, sizeof(UUID)) < 0;
+  }
+}
+
 namespace Radiant
 {
   namespace CrashHandler
   {
-    std::unique_ptr<crashpad::SimpleStringDictionary> s_simpleAnnotations;
+    // These are pointers and never released, otherwise we'll have issues with
+    // deletion order on shutdown when static objects are being released
+    crashpad::SimpleStringDictionary * s_simpleAnnotations = nullptr;
+    crashpad::SimpleAddressRangeBag * s_extraMemoryRanges = nullptr;
     std::unique_ptr<crashpad::CrashReportDatabase> s_database;
     std::unique_ptr<crashpad::CrashpadClient> s_client;
+    std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
 
 #ifdef RADIANT_WINDOWS
     static QString libraryPath()
@@ -112,13 +126,36 @@ namespace Radiant
       return path + "/CrashDumps";
     }
 
-    bool makeDump()
+    QString makeDump()
     {
       if (s_client) {
+        std::set<crashpad::UUID> all;
+        std::vector<crashpad::CrashReportDatabase::Report> tmp;
+        s_database->GetPendingReports(&tmp);
+        for (auto & r: tmp)
+          all.insert(r.uuid);
+
+        tmp.clear();
+        s_database->GetCompletedReports(&tmp);
+        for (auto & r: tmp)
+          all.insert(r.uuid);
+
+        crashpad::Settings * settings = s_database->GetSettings();
+        settings->SetUploadsEnabled(false);
         CRASHPAD_SIMULATE_CRASH();
-        return true;
+        settings->SetUploadsEnabled(true);
+
+        tmp.clear();
+        s_database->GetCompletedReports(&tmp);
+        for (crashpad::CrashReportDatabase::Report & r: tmp) {
+          // If this report wasn't in the database before simulating crash,
+          // then it must be our new report
+          if (all.count(r.uuid) == 0) {
+            return QString::fromStdWString(r.file_path.value());
+          }
+        }
       }
-      return false;
+      return QString();
     }
 
     void reloadSignalHandlers()
@@ -132,6 +169,8 @@ namespace Radiant
         Radiant::error("Radiant::CrashHandler::init # Tried to reinitialize crash handler");
         return;
       }
+
+      Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
 
       base::FilePath handlerPath(crashpadHandler().toStdWString());
       base::FilePath dbPath(db.toStdWString());
@@ -164,9 +203,14 @@ namespace Radiant
 #endif
 
       if (!s_simpleAnnotations) {
-        s_simpleAnnotations.reset(new crashpad::SimpleStringDictionary());
+        s_simpleAnnotations = new crashpad::SimpleStringDictionary();
       }
-      info->set_simple_annotations(s_simpleAnnotations.get());
+      info->set_simple_annotations(s_simpleAnnotations);
+
+      if (!s_extraMemoryRanges) {
+        s_extraMemoryRanges = new crashpad::SimpleAddressRangeBag();
+      }
+      info->set_extra_memory_ranges(s_extraMemoryRanges);
 
       s_database = crashpad::CrashReportDatabase::Initialize(dbPath);
 
@@ -177,10 +221,50 @@ namespace Radiant
     void setAnnotation(const QByteArray & key, const QByteArray & value)
     {
       if (!s_simpleAnnotations) {
-        s_simpleAnnotations.reset(new crashpad::SimpleStringDictionary());
+        s_simpleAnnotations = new crashpad::SimpleStringDictionary();
       }
       s_simpleAnnotations->SetKeyValue(key.data(), value.data());
     }
 
+    void removeAnnotation(const QByteArray & key)
+    {
+      if (!s_simpleAnnotations)
+        return;
+
+      s_simpleAnnotations->RemoveKey(key.data());
+    }
+
+    void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
+    {
+      if (!s_extraMemoryRanges)
+        s_extraMemoryRanges = new crashpad::SimpleAddressRangeBag();
+
+      if (!s_attachments)
+        s_attachments = new std::map<QByteArray, std::pair<void*, size_t>>();
+
+      auto it = s_attachments->find(key);
+      if (it != s_attachments->end()) {
+        auto pair = it->second;
+        s_extraMemoryRanges->Remove(pair.first, pair.second);
+      }
+
+      (*s_attachments)[key] = std::make_pair(data, len);
+      if (len > 0)
+        s_extraMemoryRanges->Insert(data, len);
+    }
+
+    void removeAttachment(const QByteArray & key)
+    {
+      if (!s_extraMemoryRanges || !s_attachments)
+        return;
+
+      auto it = s_attachments->find(key);
+      if (it == s_attachments->end())
+        return;
+
+      auto pair = it->second;
+      s_extraMemoryRanges->Remove(pair.first, pair.second);
+      s_attachments->erase(it);
+    }
   }
 }

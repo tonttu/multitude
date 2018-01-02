@@ -326,9 +326,12 @@ namespace Radiant
     struct pollfd pfd;
     memset( & pfd, 0, sizeof(pfd));
 
+    int waitMs = waitMicroSeconds / 1000;
+    if (waitMs == 0 && waitMicroSeconds > 0) waitMs = 1;
+
     pfd.fd = m_d->m_fd;
     pfd.events = POLLRDNORM;
-    int status = SocketWrapper::poll(&pfd, 1, waitMicroSeconds / 1000);
+    int status = SocketWrapper::poll(&pfd, 1, waitMs);
     if(status == -1) {
       Radiant::error("TCPSocket::isPendingInput %s", SocketWrapper::strerror(SocketWrapper::err()));
     }

@@ -689,8 +689,9 @@ namespace VideoDisplay
     /// @returns YUV to RGB conversion matrix
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
-    /// Positional audio parameter. Modify and read freely.
-    Valuable::AttributeVector2f & audioLocationAttribute();
+    /// If the decoder has a Resonant::Module playing audio, this is the
+    /// Resonant::ModulePanner source id for that module.
+    virtual QByteArray audioPannerSourceId() const = 0;
 
     /// Controls the gain (volume) of the video sound-track.
     /// @param gain new audio gain, typical range is 0-1, although larger values

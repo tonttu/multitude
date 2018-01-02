@@ -174,6 +174,7 @@ win32 {
 
   LIBS += -lUser32
   LIBS += -lDwmapi
+  LIBS += -lshell32
 
   HEADERS += GPUAffinity.hpp
   SOURCES += GPUAffinity.cpp

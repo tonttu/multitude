@@ -1,4 +1,5 @@
 #include "CrashHandler.hpp"
+#include "TraceCrashHandlerFilter.hpp"
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
@@ -15,7 +16,11 @@ namespace Radiant
   namespace CrashHandler
   {
     static std::unique_ptr<google_breakpad::ExceptionHandler> s_exceptionHandler;
-    static QMap<QByteArray, QByteArray> s_annotations;
+
+    // These are pointers and never released, otherwise we'll have issues with
+    // deletion order on shutdown when static objects are being released
+    static QMap<QByteArray, QByteArray> * s_annotations = nullptr;
+    static std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
 
     // minidump_upload -p application -v version minidump url nullptr
     static QByteArray s_uploadCmd[7];
@@ -30,6 +35,12 @@ namespace Radiant
 
     static QByteArray s_extraData;
     static const char * s_extraDataMagic = "\xb0\x2d\x68\xa6";
+
+    // This value is set to SIMULATING_CRASH when we are simulating crash using makeDump.
+    // This is not just a boolean so that in case of memory corruption during actual crash
+    // we won't read invalid value here.
+    static uint64_t s_simulatingCrash = 0;
+    static const uint64_t SIMULATING_CRASH = 0x49f4a35d0bad52a8ll;
 
     static QByteArray extraDataFieldHeader(uint32_t keyLength, uint32_t valueLength)
     {
@@ -80,6 +91,11 @@ namespace Radiant
 
     static bool crashCallback(const google_breakpad::MinidumpDescriptor & descriptor, void *, bool succeeded)
     {
+      if (s_simulatingCrash == SIMULATING_CRASH) {
+        // We are not really crashing, do nothing here
+        return true;
+      }
+
       Radiant::error("CRASHING - Wrote minidump to %s", descriptor.path());
 
       if (s_uploadCmd[0].isEmpty()) {
@@ -111,20 +127,33 @@ namespace Radiant
     static std::unique_ptr<google_breakpad::ExceptionHandler> createExceptionHandler(
         const std::string & path)
     {
-      s_extraData = encodeExtraData(s_annotations);
+      if (s_annotations)
+        s_extraData = encodeExtraData(*s_annotations);
 
       auto p = new google_breakpad::ExceptionHandler(
             google_breakpad::MinidumpDescriptor(path), nullptr, crashCallback, nullptr, true, -1);
       p->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+
+      if (s_attachments) {
+        for (auto & pair: *s_attachments) {
+          auto data = pair.second;
+          p->RegisterAppMemory(data.first, data.second);
+        }
+      }
+
       return std::unique_ptr<google_breakpad::ExceptionHandler>(p);
     }
 
-    bool makeDump()
+    QString makeDump()
     {
       if (s_exceptionHandler) {
-        return s_exceptionHandler->WriteMinidump();
+        s_simulatingCrash = SIMULATING_CRASH;
+        bool ok = s_exceptionHandler->WriteMinidump();
+        s_simulatingCrash = 0;
+        if (ok)
+          return s_exceptionHandler->minidump_descriptor().path();
       }
-      return false;
+      return QString();
     }
 
     void reloadSignalHandlers()
@@ -142,12 +171,17 @@ namespace Radiant
     void init(const QString & application, const QString & version,
               const QString & url, const QString & db)
     {
+      Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
+
       s_uploadCmd[2] = application.toUtf8();
       s_uploadCmd[4] = version.toUtf8();
 
-      s_annotations["prod"] = application.toUtf8();
-      s_annotations["ver"] = version.toUtf8();
-      s_annotations["hostname"] = hostname();
+      if (!s_annotations)
+        s_annotations = new QMap<QByteArray, QByteArray>();
+
+      (*s_annotations)["prod"] = application.toUtf8();
+      (*s_annotations)["ver"] = version.toUtf8();
+      (*s_annotations)["hostname"] = hostname();
 
       QString tmp = db;
       tmp.replace("~/", Radiant::PlatformUtils::getUserHomePath() + "/");
@@ -164,11 +198,67 @@ namespace Radiant
 
     void setAnnotation(const QByteArray & key, const QByteArray & value)
     {
-      if (s_annotations.contains(key) && s_annotations[key] == value)
+      if (!s_annotations)
+        s_annotations = new QMap<QByteArray, QByteArray>();
+
+      if (s_annotations->contains(key) && (*s_annotations)[key] == value)
         return;
 
-      s_annotations[key] = value;
-      reloadSignalHandlers();
+      (*s_annotations)[key] = value;
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(s_extraData.data());
+        s_extraData = encodeExtraData(*s_annotations);
+        s_exceptionHandler->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+      }
+    }
+
+    void removeAnnotation(const QByteArray & key)
+    {
+      if (!s_annotations)
+        return;
+
+      auto it = s_annotations->find(key);
+      if (it == s_annotations->end())
+        return;
+
+      s_annotations->erase(it);
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(s_extraData.data());
+        s_extraData = encodeExtraData(*s_annotations);
+        s_exceptionHandler->RegisterAppMemory(s_extraData.data(), s_extraData.size());
+      }
+    }
+
+    void setAttachmentPtrImpl(const QByteArray & key, void * data, size_t len)
+    {
+      if (!s_attachments)
+        s_attachments = new std::map<QByteArray, std::pair<void*, size_t>>();
+
+      auto it = s_attachments->find(key);
+      if (it != s_attachments->end() && s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(it->second.first);
+      }
+
+      (*s_attachments)[key] = std::make_pair(data, len);
+      if (s_exceptionHandler && len > 0) {
+        s_exceptionHandler->RegisterAppMemory(data, len);
+      }
+    }
+
+    void removeAttachment(const QByteArray & key)
+    {
+      if (!s_attachments)
+        return;
+
+      auto it = s_attachments->find(key);
+      if (it == s_attachments->end())
+        return;
+
+      if (s_exceptionHandler) {
+        s_exceptionHandler->UnregisterAppMemory(it->second.first);
+      }
+
+      s_attachments->erase(it);
     }
 
     QString defaultMinidumpPath()
