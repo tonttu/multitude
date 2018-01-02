@@ -27,7 +27,7 @@ namespace Radiant
       CrashHandler::removeAttachment("Application log");
     }
 
-    bool CrashHandlerFilter::trace(const Message & msg)
+    bool CrashHandlerFilter::trace(Message & msg)
     {
       const TimeStamp now = msg.timestamp();
 

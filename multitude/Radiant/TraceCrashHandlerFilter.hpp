@@ -17,7 +17,7 @@ namespace Radiant
     public:
       CrashHandlerFilter();
       virtual ~CrashHandlerFilter();
-      bool trace(const Message & msg) override;
+      bool trace(Message & msg) override;
 
     private:
       CrashHandler::AttachmentRingBuffer m_buffer;
