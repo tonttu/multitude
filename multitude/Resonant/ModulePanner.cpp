@@ -88,16 +88,27 @@ namespace Resonant {
       removeSource(id);
     }
     else if(id == "setsourcelocation") {
-      QByteArray id;
-      data.readString(id);
+      QByteArray id = data.read<QByteArray>();
+      QByteArray path = data.read<QByteArray>();
       Nimble::Vector2 loc = data.readVector2Float32( & ok);
 
       if(ok) {
-        setSourceLocation(id, loc);
+        setSourceLocation(id, path, loc);
       }
       else {
         Radiant::error("ModulePanner::control # %s # Could not read source location",
               id.data());
+      }
+    }
+    else if(id == "clearsourcelocation") {
+      QByteArray id = data.read<QByteArray>();
+      QByteArray path = data.read<QByteArray>(&ok);
+
+      if (ok) {
+        clearSourceLocation(id, path);
+      } else {
+        Radiant::error("ModulePanner::control # %s # Could not parse command clearsourcelocation",
+                       id.data());
       }
     }
     else {
@@ -227,6 +238,7 @@ namespace Resonant {
   }
 
   void ModulePanner::setSourceLocation(const QByteArray & id,
+                                       const QByteArray & path,
                                        Nimble::Vector2 location)
   {
     debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", id.data(),
@@ -247,12 +259,38 @@ namespace Resonant {
       return;
     }
 
-    if(s->m_location == location && s->m_generation == m_generation)
+    auto it = s->m_locations.find(path);
+    if (it == s->m_locations.end()) {
+      s->m_locations.insert(std::make_pair(path, location));
+    } else if (s->m_generation == m_generation && it->second == location) {
       return;
+    } else {
+      it->second = location;
+    }
 
     s->m_generation = m_generation;
-    s->m_location = location;
+    syncSource(*s);
+  }
 
+  void ModulePanner::clearSourceLocation(const QByteArray & id, const QByteArray & path)
+  {
+    for (auto & ptr: m_sources) {
+      Source & s = *ptr;
+      if (s.m_id == id) {
+        auto it = s.m_locations.find(path);
+        if (it == s.m_locations.end())
+          return;
+
+        s.m_locations.erase(it);
+        s.m_generation = m_generation;
+        syncSource(s);
+        return;
+      }
+    }
+  }
+
+  void ModulePanner::syncSource(ModulePanner::Source & src)
+  {
     int interpSamples = 2000;
 
     for(unsigned i = 0; i < m_speakers->size(); i++) {
@@ -261,16 +299,22 @@ namespace Resonant {
       if(!ls)
         continue;
 
-      float gain = computeGain(ls, location);
+      float gain = 0;
+      /// If the audio source is played from in several different locations at
+      /// the same time, always the the maximum gain for each speaker.
+      /// Alternatively we could add up the gains, but then things like
+      /// recursive ViewWidget would have very loud audio.
+      for (auto & p: src.m_locations)
+        gain = std::max(gain, computeGain(ls, p.second));
 
       if(gain <= 0.0000001f) {
 
         // Silence that output:
-        for(unsigned j = 0; j < s->m_pipes.size(); j++) {
-          Pipe & p = s->m_pipes[j];
+        for(unsigned j = 0; j < src.m_pipes.size(); j++) {
+          Pipe & p = src.m_pipes[j];
           if(p.m_to == i && p.m_ramp.target() >= 0.0001f) {
             p.m_ramp.setTarget(0.0f, interpSamples);
-            debugResonant("ModulePanner::setSourceLocation # Silencing %u", i);
+            debugResonant("ModulePanner::syncSource # Silencing %u", i);
 
           }
         }
@@ -279,14 +323,14 @@ namespace Resonant {
         bool found = false;
 
         // Find existing pipe:
-        for(unsigned j = 0; j < s->m_pipes.size() && !found; j++) {
-          Pipe & p = s->m_pipes[j];
+        for(unsigned j = 0; j < src.m_pipes.size() && !found; j++) {
+          Pipe & p = src.m_pipes[j];
 
           debugResonant("Checking %u: %u %f -> %f", j, p.m_to,
                 p.m_ramp.value(), p.m_ramp.target());
 
           if(p.m_to == i) {
-            debugResonant("ModulePanner::setSourceLocation # Adjusting %u", j);
+            debugResonant("ModulePanner::syncSource # Adjusting %u", j);
             p.m_ramp.setTarget(gain, interpSamples);
             found = true;
           }
@@ -295,14 +339,14 @@ namespace Resonant {
         if(!found) {
 
           // Pick up a new pipe:
-          for(unsigned j = 0; j <= s->m_pipes.size() && !found; j++) {
-            if(j == s->m_pipes.size()) {
-              s->m_pipes.resize(j+1);
-              debugResonant("ModulePanner::setSourceLocation # pipes resize to %d", j+1);
+          for(unsigned j = 0; j <= src.m_pipes.size() && !found; j++) {
+            if(j == src.m_pipes.size()) {
+              src.m_pipes.resize(j+1);
+              debugResonant("ModulePanner::syncSource # pipes resize to %d", j+1);
             }
-            Pipe & p = s->m_pipes[j];
+            Pipe & p = src.m_pipes[j];
             if(p.isDone()) {
-              debugResonant("ModulePanner::setSourceLocation # "
+              debugResonant("ModulePanner::syncSource # "
                     "Starting %u towards %u", j, i);
               p.m_to = i;
               p.m_ramp.setTarget(gain, interpSamples);

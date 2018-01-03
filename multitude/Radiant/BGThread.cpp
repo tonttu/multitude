@@ -23,6 +23,16 @@
 
 namespace Radiant
 {
+  static void logSlowThreshold(double time, Radiant::Task & task, CallStack * callStack)
+  {
+    if (callStack) {
+      Radiant::warning("Slow task: %s [%.3f s]:\n%s", StringUtils::type(task).data(),
+                       time, callStack->toStringList().join("\n").toUtf8().data());
+    } else {
+      Radiant::warning("Slow task: %s [%.3f s] - no callstack available",
+                       StringUtils::type(task).data(), time);
+    }
+  }
 
   BGThread::BGThread()
     : m_idle(0)
@@ -214,8 +224,19 @@ namespace Radiant
         task->setState(Task::RUNNING);
       }
 
-      if(task->state() == Task::RUNNING && !task->isCanceled())
-        task->doTask();
+      if(task->state() == Task::RUNNING && !task->isCanceled()) {
+        float slowThreshold = Task::slowTaskDebuggingThreshold();
+        if (slowThreshold > 0.f) {
+          Radiant::Timer timer;
+          task->doTask();
+          double time = timer.time();
+          if (time >= slowThreshold) {
+            logSlowThreshold(time, *task, task->m_createStack.get());
+          }
+        } else {
+          task->doTask();
+        }
+      }
 
       bool done = (task->state() == Task::DONE || task->isCanceled());
       if (done) {

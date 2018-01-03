@@ -33,7 +33,6 @@ namespace VideoDisplay
   public:
     AVDecoder::DecoderState m_state;
     AVDecoderPtr m_previousDecoder;
-    Valuable::AttributeVector2f m_audioLocation;
   };
 
   AVDecoder::D::D()
@@ -78,11 +77,6 @@ namespace VideoDisplay
   bool AVDecoder::hasError() const
   {
     return m_d->m_state == STATE_ERROR;
-  }
-
-  Valuable::AttributeVector2f & AVDecoder::audioLocationAttribute()
-  {
-    return m_d->m_audioLocation;
   }
 
   void AVDecoder::setPreviousDecoder(AVDecoderPtr decoder)

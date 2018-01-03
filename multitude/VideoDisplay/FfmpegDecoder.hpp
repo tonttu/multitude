@@ -45,6 +45,7 @@ namespace VideoDisplay
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
+    virtual QByteArray audioPannerSourceId() const override;
     virtual void setAudioGain(float gain) OVERRIDE;
 
     virtual void setMinimizeAudioLatency(bool minimize) override;
