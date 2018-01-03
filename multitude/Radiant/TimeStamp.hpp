@@ -302,7 +302,7 @@ namespace Radiant {
     /// Time is always in UTC timezone and milliseconds are included
     QString asStringISO8601() const;
 
-    /// Converts the time-stamp to QDateTime object
+    /// Converts the time-stamp to QDateTime object, with Qt::UTC timespec
     QDateTime asQDateTime() const;
 
     /// @cond
