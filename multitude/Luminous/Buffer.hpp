@@ -87,7 +87,8 @@ namespace Luminous
       UNKNOWN  = 0,
       VERTEX   = GL_ARRAY_BUFFER,
       INDEX    = GL_ELEMENT_ARRAY_BUFFER,
-      UNIFORM  = GL_UNIFORM_BUFFER
+      UNIFORM  = GL_UNIFORM_BUFFER,
+      UNPACK   = GL_PIXEL_UNPACK_BUFFER,
     };
 
   public:

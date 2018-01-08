@@ -16,6 +16,7 @@
 #include "GLKeyStone.hpp"
 #include "ColorCorrection.hpp"
 #include "RGBCube.hpp"
+#include "TextureGL.hpp"
 
 #include <Nimble/Rect.hpp>
 #include <Nimble/Vector4.hpp>
@@ -26,6 +27,7 @@
 #include <Valuable/AttributeString.hpp>
 #include <Valuable/AttributeFloat.hpp>
 #include <Valuable/AttributeBool.hpp>
+#include <Valuable/AttributeEnum.hpp>
 
 #include <vector>
 
@@ -502,6 +504,17 @@ namespace Luminous {
     /// @return true if glFinish() is called; otherwise false
     bool useGlFinish() const;
 
+    /// How to upload texture data from host memory to GPU.
+    /// Typically the default (METHOD_TEXTURE) is fine, but with multi-gpu
+    /// dual-cpu setups with Quadro cards METHOD_BUFFER_MAP might be
+    /// significantly faster.
+    TextureGL::UploadMethod textureUploadMethod() const;
+    /// Changes the texture upload method. Notice that calling this function
+    /// doesn't do anything to the active application if the graphics system
+    /// has already bee initialized. In this case call
+    /// TextureGL::setDefaultUploadMethod instead.
+    void setTextureUploadMethod(TextureGL::UploadMethod method);
+
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
@@ -527,6 +540,7 @@ namespace Luminous {
     Valuable::AttributeFloat m_dpi;
     Valuable::AttributeBool m_vsync;
     Valuable::AttributeBool m_glFinish;
+    Valuable::AttributeT<TextureGL::UploadMethod> m_textureUploadMethod;
     Valuable::AttributeVector2i m_layerSize;
 
     bool m_edited = false;

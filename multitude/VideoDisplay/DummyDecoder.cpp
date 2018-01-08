@@ -38,7 +38,7 @@ namespace VideoDisplay
     v.setData(1, f.data.data() + ry.x * ry.y);
     v.setData(2, f.data.data() + ry.x * ry.y + ruv.x * ruv.y);
 
-    std::mt19937 gen((unsigned int)f.data.data());
+    std::mt19937 gen((unsigned int)(uintptr_t)f.data.data());
     std::uniform_int_distribution<> dis(0, 255);
     for (auto & v: f.data)
       v = dis(gen);

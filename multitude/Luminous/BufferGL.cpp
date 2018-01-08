@@ -26,6 +26,17 @@ namespace Luminous
     m_state.opengl().glGenBuffers(1, &m_handle);
   }
 
+  BufferGL::BufferGL(StateGL & state, Buffer::Usage usage)
+    : ResourceHandleGL(state)
+    , m_usage(usage)
+    , m_size(0)
+    , m_allocatedSize(0)
+    , m_uploaded(0)
+    , m_generation(0)
+  {
+    m_state.opengl().glGenBuffers(1, &m_handle);
+  }
+
   BufferGL::~BufferGL()
   {
     if(m_handle)
@@ -113,6 +124,8 @@ namespace Luminous
       bind(type);
     }
 
+    if (length + offset > m_size)
+      m_size = length + offset;
     if(m_allocatedSize < m_size)
       allocate(type);
 
