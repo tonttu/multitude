@@ -1654,22 +1654,26 @@ namespace VideoDisplay
     return QByteArray();
   }
 
-  void FfmpegDecoder::setAudioGain(float gain)
+  bool FfmpegDecoder::setAudioGain(float gain)
   {
     m_d->m_audioGain = gain;
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     if (audioTransfer)
       audioTransfer->setGain(gain);
+
+    return true;
   }
 
-  void FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
+  bool FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
   {
     m_d->m_minimiseAudioLatency = minimize;
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     if (audioTransfer)
       audioTransfer->setMinimizeLatency(minimize);
+
+    return true;
   }
 
   void FfmpegDecoder::audioTransferDeleted()
@@ -1708,9 +1712,10 @@ namespace VideoDisplay
     return m_d->m_options.isLooping();
   }
 
-  void FfmpegDecoder::setLooping(bool doLoop)
+  bool FfmpegDecoder::setLooping(bool doLoop)
   {
     m_d->m_options.setLooping(doLoop);
+    return true;
   }
 
   double FfmpegDecoder::duration() const
@@ -1730,13 +1735,15 @@ namespace VideoDisplay
     return m_d->m_realTimeSeeking;
   }
 
-  void FfmpegDecoder::setRealTimeSeeking(bool value)
+  bool FfmpegDecoder::setRealTimeSeeking(bool value)
   {
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     m_d->m_realTimeSeeking = value;
     if(audioTransfer)
       audioTransfer->setSeeking(value);
+
+    return true;
   }
 
   void FfmpegDecoder::runDecoder()
