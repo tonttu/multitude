@@ -113,7 +113,7 @@ namespace Resonant {
     class RESONANT_API NoteParameters
     {
     public:
-      NoteParameters(const QString & filename = QString::null)
+      NoteParameters(const QString & filename = QString())
         : m_fileName(filename)
         , m_gain(1.0f)
         , m_relativePitch(1.0f)
