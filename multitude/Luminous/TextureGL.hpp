@@ -13,7 +13,9 @@
 
 #include "ResourceHandleGL.hpp"
 #include "Texture.hpp"
+#include "BufferGL.hpp"
 
+#include <Nimble/Rect.hpp>
 #include <Nimble/Vector3.hpp>
 
 #include <QRegion>
@@ -24,6 +26,18 @@ namespace Luminous
   /// This class represents a Texture object in GPU memory.
   class TextureGL : public ResourceHandleGL
   {
+  public:
+    /// How is the texture data uploaded to the GPU
+    enum UploadMethod
+    {
+      /// Simple synchronous method using glTexSubImage2D. This is the default.
+      METHOD_TEXTURE,
+      /// Use an UNPACK buffer with synchronous BufferGL::upload (glBufferSubData)
+      METHOD_BUFFER_UPLOAD,
+      /// Use an UNPACK buffer, use synchronous BufferGL::map and memcpy
+      METHOD_BUFFER_MAP,
+    };
+
   public:
     /// Constructor
     /// @param state OpenGL state
@@ -54,10 +68,15 @@ namespace Luminous
     /// @param textureUnit texture unit to bind to
     inline void bind(int textureUnit);
 
+    LUMINOUS_API static UploadMethod defaultUploadMethod();
+    LUMINOUS_API static void setDefaultUploadMethod(UploadMethod method);
+
   private:
     void upload1D(const Texture & texture, int textureUnit, bool forceBind);
     void upload2D(const Texture & texture, int textureUnit, bool forceBind);
     void upload3D(const Texture & texture, int textureUnit, bool forceBind);
+    void uploadData(const Texture & texture, const char * data, unsigned int destOffset,
+                    const QRect & destRect, unsigned int bytes);
     bool updateParams(const Texture & texture);
 
   private:
@@ -72,6 +91,8 @@ namespace Luminous
     Texture::Filter m_minFilter, m_magFilter;
     Texture::Wrap m_wrap[3];
     Radiant::ColorPMA m_borderColor;
+
+    std::unique_ptr<BufferGL> m_uploadBuffer;
   };
 
   /////////////////////////////////////////////////////////////////////////////

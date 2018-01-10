@@ -26,6 +26,7 @@ namespace Luminous
     /// @param state OpenGL state
     /// @param buffer buffer object in CPU memory
     LUMINOUS_API BufferGL(StateGL & state, const Buffer & buffer);
+    LUMINOUS_API BufferGL(StateGL & state, Buffer::Usage usage);
     /// Destructor
     LUMINOUS_API ~BufferGL();
 

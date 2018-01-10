@@ -17,7 +17,7 @@ namespace VideoDisplay
   /// This class monitors capture devices connected to the machine, and sends
   /// events when devices are added, removed or changed.
   ///
-  /// @event[out] source-added(QByteArray device, Nimble::Vector2i resolution)
+  /// @event[out] source-added(QByteArray device, Nimble::Vector2i resolution, QString humanReadableName)
   /// @event[out] source-removed(QByteArray device)
   /// @event[out] resolution-changed(QByteArray device, Nimble::Vector2i resolution)
   class VIDEODISPLAY_API VideoCaptureMonitor : public Valuable::Node, public Radiant::Task
