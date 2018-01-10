@@ -511,7 +511,7 @@ namespace Luminous {
     TextureGL::UploadMethod textureUploadMethod() const;
     /// Changes the texture upload method. Notice that calling this function
     /// doesn't do anything to the active application if the graphics system
-    /// has already bee initialized. In this case call
+    /// has already been initialized. In this case call
     /// TextureGL::setDefaultUploadMethod instead.
     void setTextureUploadMethod(TextureGL::UploadMethod method);
 
