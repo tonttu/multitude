@@ -18,8 +18,7 @@ HEADERS += ProgramGL.hpp \
     MipmapRenderer.hpp \
     ScreenDetectorQt.hpp \
     SwapGroups.hpp \
-    MemoryManager.hpp \
-    DxInterop.hpp
+    MemoryManager.hpp
 HEADERS += RenderDriverGL.hpp
 HEADERS += ResourceHandleGL.hpp
 HEADERS += StateGL.hpp
@@ -88,8 +87,7 @@ SOURCES += ImageCodecDDS.cpp \
     MipmapRenderer.cpp \
     ScreenDetectorQt.cpp \
     SwapGroups.cpp \
-    MemoryManager.cpp \
-    DxInterop.cpp
+    MemoryManager.cpp
 SOURCES += ImageCodecCS.cpp
 SOURCES += ImageCodecTGA.cpp
 SOURCES += MipMapGenerator.cpp
@@ -182,6 +180,9 @@ win32 {
 
   HEADERS += DisplayConfigWin.hpp
   SOURCES += DisplayConfigWin.cpp
+
+  HEADERS += DxInterop.hpp
+  SOURCES += DxInterop.cpp
 
   INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/lz4/include
   LIBS += -L$$CORNERSTONE_DEPS_PATH/lz4/lib
