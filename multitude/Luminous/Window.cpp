@@ -74,6 +74,7 @@ namespace Luminous
 
   Window::~Window()
   {
+    delete m_openGLContext;
   }
 
   void Window::setEventHook(WindowEventHook* hook)
