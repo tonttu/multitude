@@ -106,6 +106,7 @@ namespace Radiant {
       /// @param type Type of the plane
       void set(unsigned char * data, int linesize, PlaneType type)
       { m_data = data; m_linesize = linesize; m_type = type; }
+      void allocateMemory(int width, int height, PlaneType type, size_t align);
 
       /// Frees the memory associated with the plane
       void freeMemory();
@@ -207,15 +208,17 @@ namespace Radiant {
     /// @param fmt Image format
     /// @param w image width
     /// @param h image height
+    /// @param alignment Alignment for memory allocation and line size
     /// @returns true if allocation was successful
-    bool allocateMemory(ImageFormat fmt, int w, int h);
+    bool allocateMemory(ImageFormat fmt, int w, int h, size_t alignment);
     /// Allocates memory and sets the image format, based on another image
     /** This function can be used when preparing to copy contents from
     from another image.
     @param that VideoImage used as template for the new width, height and format settings
+    @param alignment Alignment for memory allocation and line size
     @returns true if allocation was successful */
-    bool allocateMemory(const VideoImage & that)
-    { return allocateMemory(that.m_format, that.width(), that.height()); }
+    bool allocateMemory(const VideoImage & that, size_t alignment)
+    { return allocateMemory(that.m_format, that.width(), that.height(), alignment); }
 
     /// Copies the image data.
     /** The image format, image size and data

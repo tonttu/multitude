@@ -11,6 +11,7 @@
 
 #include "VideoImage.hpp"
 #include "MemCheck.hpp"
+#include "Memory.hpp"
 
 #include "Trace.hpp"
 #include "Types.hpp"
@@ -18,24 +19,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace {
-  // always allocate memory rounded to the next number dividable by four
-  // to make some optimization code possible
-  unsigned char * mtmalloc4(int size)
-  {
-    while(size & 0x3) ++size;
-    return new unsigned char[size];
-  }
-}
-
 namespace Radiant {
+
+  void VideoImage::Plane::allocateMemory(int width, int height, PlaneType type,
+                                         size_t align)
+  {
+    m_type = type;
+
+    while((width % align) != 0)
+      width++;
+
+    m_linesize = width;
+    m_data = (uint8_t *) alignedMalloc(m_linesize * height, align);
+  }
 
   void VideoImage::Plane::freeMemory()
   {
-    delete[] m_data;
+    alignedFree(m_data);
     m_data = 0;
   }
-
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -76,7 +78,7 @@ namespace Radiant {
   }
 
 
-  bool VideoImage::allocateMemory(ImageFormat fmt, int w, int h)
+  bool VideoImage::allocateMemory(ImageFormat fmt, int w, int h, size_t alignment)
   {
     if(w == m_width && h == m_height && fmt == m_format)
       return true;
@@ -86,8 +88,6 @@ namespace Radiant {
 
     m_width = w;
     m_height = h;
-
-    unsigned pixels = w * h;
 
     if(fmt == IMAGE_RGB ||
        fmt == IMAGE_BGR ||
@@ -123,29 +123,23 @@ namespace Radiant {
       else
         fatal("VideoImage::allocateMemory");
 
-      unsigned char * buf = mtmalloc4(ls * h);
-
-      m_planes[0].set(buf, ls, pt);
+      m_planes[0].allocateMemory(ls, h, pt, alignment);
     }
     else if(fmt == IMAGE_YUV_420P) {
 
       m_format = IMAGE_YUV_420P;
 
-      int pixels4 = pixels >> 2;
-
-      m_planes[0].set(mtmalloc4(pixels),  w, PLANE_Y);
-      m_planes[1].set(mtmalloc4(pixels4), w / 2, PLANE_U);
-      m_planes[2].set(mtmalloc4(pixels4), w / 2, PLANE_V);
+      m_planes[0].allocateMemory(w, h, PLANE_Y, alignment);
+      m_planes[1].allocateMemory(w / 2, h / 2, PLANE_Y, alignment);
+      m_planes[2].allocateMemory(w / 2, h / 2, PLANE_V, alignment);
     }
     else if(fmt == IMAGE_YUV_422P) {
 
       m_format = IMAGE_YUV_422P;
 
-      int pixels2 = pixels >> 1;
-
-      m_planes[0].set(mtmalloc4(pixels), w, PLANE_Y);
-      m_planes[1].set(mtmalloc4(pixels2), w / 2, PLANE_U);
-      m_planes[2].set(mtmalloc4(pixels2), w / 2, PLANE_V);
+      m_planes[0].allocateMemory(w, h, PLANE_Y, alignment);
+      m_planes[1].allocateMemory(w / 2, h, PLANE_Y, alignment);
+      m_planes[2].allocateMemory(w / 2, h, PLANE_V, alignment);
     }
     else
       return false;
