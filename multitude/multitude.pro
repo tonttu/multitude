@@ -5,6 +5,9 @@ include(../cornerstone.pri)
 
 # 3rd party libraries
 
+smtpclient.subdir += ThirdParty/SMTPEmail
+SUBDIRS += smtpclient
+
 folly.subdir += ThirdParty/folly
 SUBDIRS += folly
 
