@@ -1,0 +1,11 @@
+Remote origin: https://github.com/bluetiger9/SmtpClient-for-Qt
+Checkout hash: ca43f9d6422e251017b679f2cd26f6b20c17816c
+
+SMTPEmail.pro patched:
+$ diff SMTPEmail.pro original/SMTPEmail.pro 
+1,2d0
+< include(../../../cornerstone.pri)
+< 
+56,57d53
+< 
+< include(../ThirdParty.pri)

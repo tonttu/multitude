@@ -1,3 +1,5 @@
+include(../../../cornerstone.pri)
+
 #-------------------------------------------------
 #
 # Project created by QtCreator 2011-08-11T20:59:25
@@ -51,3 +53,5 @@ OTHER_FILES += \
     README.md
 
 FORMS +=
+
+include(../ThirdParty.pri)
