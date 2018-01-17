@@ -32,6 +32,9 @@ Punctual.depends = folly Radiant
 SUBDIRS += Valuable
 Valuable.depends = Radiant Nimble Punctual folly
 
+SUBDIRS += EmailSending
+EmailSending.depends += Valuable folly smtpclient Radiant
+
 SUBDIRS += Squish
 SUBDIRS += Luminous
 Luminous.depends = Valuable Punctual folly Radiant
