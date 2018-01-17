@@ -12,6 +12,8 @@ SOURCES += Email.cpp \
     Sender.cpp \
     SendImplementation.cpp
 
+DEFINES += EMAIL_EXPORT
+
 LIBS += $$LIB_VALUABLE $$LIB_FOLLY_FUTURES $$LIB_RADIANT $$LIB_SMTP_CLIENT
 
 include(../../library.pri)
