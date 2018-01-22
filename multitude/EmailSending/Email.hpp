@@ -94,6 +94,7 @@ namespace Email
     /// @param data data to attach
     /// @param contentType content type for the attachment
     void addAttachment(const QString& filename, std::unique_ptr<QIODevice> data, const QString& contentType = "application/octet-stream");
+    void addAttachment(Attachment&& attachment);
 
     const std::list<Attachment>& attachments() const { return m_attachments; }
 

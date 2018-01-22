@@ -91,7 +91,11 @@ namespace Email
     attachment.filename = filename;
     attachment.device = std::move(data);
     attachment.contentType = contentType;
+    addAttachment(std::move(attachment));
+  }
 
+  void Message::addAttachment(Attachment &&attachment)
+  {
     m_attachments.push_back(std::move(attachment));
   }
 
