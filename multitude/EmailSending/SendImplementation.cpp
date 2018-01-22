@@ -45,13 +45,15 @@ namespace Email
     // Include attachments
     const auto & list = message.attachments();
     for(auto & attachment : list) {
+      if(attachment.device->open(QIODevice::ReadOnly)) {
+        QByteArray payload = attachment.device->readAll();
 
-      QByteArray payload = attachment.device->readAll();
+        auto a = new MimeAttachment(payload, attachment.filename);
+        a->setContentType(attachment.contentType);
 
-      auto a = new MimeAttachment(payload, attachment.filename);
-      a->setContentType(attachment.contentType);
-
-      mimeMessage->addPart(a);
+        mimeMessage->addPart(a);
+        attachment.device->close();
+      }
     }
 
     return mimeMessage;
@@ -188,7 +190,9 @@ namespace Email
 
   SendImplementation::SendImplementation()
     : workerThread(*this)
-  {}
+  {
+    workerThread.start();
+  }
 
   SendImplementation::~SendImplementation()
   {
