@@ -8,38 +8,14 @@ namespace Email
   Attachment::Attachment()
   {}
 
-  Attachment::Attachment(Attachment&& o)
-  {
-    filename = std::move(o.filename);
-    device = std::move(o.device);
-    contentType = std::move(o.contentType);
-  }
-
   // ----------------------------------------------------------------------
 
   Message::Message()
   {
   }
 
-  Message::Message(Message && other)
-  {
-    *this = std::move(other);
-  }
-
   Message::~Message()
   {
-  }
-
-  Message& Message::operator=(Message&& other)
-  {
-    m_sender = std::move(other.m_sender);
-    m_subject = std::move(other.m_subject);
-    m_content = std::move(other.m_content);
-    m_recipientsTo = std::move(other.m_recipientsTo);
-    m_recipientsCc = std::move(other.m_recipientsCc);
-    m_recipientsBcc = std::move(other.m_recipientsBcc);
-    m_attachments = std::move(other.m_attachments);
-    return *this;
   }
 
   void Message::setSender(const Address& address)
