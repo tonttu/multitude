@@ -314,7 +314,7 @@ namespace Luminous
       } else {
         for(const QRect & rect : m_dirtyRegion2D.rects()) {
           const int bytesPerRectScanline = rect.width() * bytesPerPixel;
-          const int lineSizeBytes = texture.lineSizePixels() * bytesPerPixel;
+          const int lineSizeBytes = texture.lineSizeBytes();
 
           const int scanlinesToUpload = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerRectScanline, 1, rect.height());
 
