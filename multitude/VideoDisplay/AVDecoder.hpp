@@ -737,6 +737,9 @@ namespace VideoDisplay
     /// @returns new decoder
     static std::shared_ptr<AVDecoder> create(const Options & options);
 
+    static void addDecoderBackend(const QString& backendName,
+                                  std::function<std::shared_ptr<AVDecoder>()> factoryFunc);
+
     /// Returns true if the device looks like V4L2 device (/dev/video* etc).
     /// Doesn't actually open the device or use Video4Linux2 API to confirm
     /// it is a real device.

@@ -18,6 +18,9 @@
 
 namespace VideoDisplay
 {
+  /// Mapping from backend name to decoder creator
+  static std::map<QString, std::function<std::shared_ptr<AVDecoder>()>> s_decoderFactories;
+
   static Radiant::Mutex s_decodersMutex;
   static std::vector<std::weak_ptr<AVDecoder>> s_decoders;
 
@@ -142,9 +145,12 @@ namespace VideoDisplay
 
   std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options)
   {
-    /// @todo add some great factory registry thing here
     std::shared_ptr<AVDecoder> decoder;
-    if (options.decoderBackend() == "dummy")
+
+    auto it = s_decoderFactories.find(options.decoderBackend());
+    if(it != s_decoderFactories.end())
+      decoder = it->second();
+    else if (options.decoderBackend() == "dummy")
       decoder.reset(new DummyDecoder());
     else
       decoder.reset(new FfmpegDecoder());
@@ -163,6 +169,12 @@ namespace VideoDisplay
 
     decoder->load(options);
     return decoder;
+  }
+
+  void AVDecoder::addDecoderBackend
+  (const QString& backendName, std::function<std::shared_ptr<AVDecoder>()> factoryFunc)
+  {
+    s_decoderFactories[backendName] = factoryFunc;
   }
 
   bool AVDecoder::looksLikeV4L2Device(const QString & path)
