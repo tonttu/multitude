@@ -571,7 +571,7 @@ namespace VideoDisplay
     debugVideoCapture("  AUDIO  name: %s, device path: %s, wave id: %d",
                       s->audio.friendlyName.toUtf8().data(), s->audio.devicePath.toUtf8().data(),
                       s->audio.waveInId);
-    m_host.eventSend("source-added", ffmpeg, resolution.toVector());
+    m_host.eventSend("source-added", ffmpeg, resolution.toVector(), s->friendlyName());
   }
 
   void VideoCaptureMonitor::D::removeSource(const SourcePtr &s)

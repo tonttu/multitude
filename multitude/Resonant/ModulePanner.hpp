@@ -61,7 +61,7 @@ namespace Resonant {
     class Source
     {
     public:
-      Nimble::Vector2 m_location{0, 0};
+      std::map<QByteArray, Nimble::Vector2f> m_locations;
       QByteArray  m_id;
       long m_generation = 0; /// @see ModulePanner::m_generation
 
@@ -157,7 +157,17 @@ namespace Resonant {
     friend class ModuleSamplePlayer;
 
     int locationToChannel(Nimble::Vector2) const;
-    void setSourceLocation(const QByteArray &, Nimble::Vector2 location);
+    /// Adds or update a source location
+    /// @param id Source id
+    /// @param path Location name. One source can have several locations. When
+    ///             used with widgets, this is typically
+    ///             Luminous::RenderContext::viewWidgetPathId. This can be also
+    ///             an empty string.
+    /// @param location source location
+    void setSourceLocation(const QByteArray & id, const QByteArray & path, Nimble::Vector2 location);
+    /// Removes a single location from a source
+    void clearSourceLocation(const QByteArray & id, const QByteArray & path);
+    void syncSource(Source & src);
     void removeSource(const QByteArray &);
     void addSoundRectangleSpeakers(SoundRectangle * r);
 

@@ -103,15 +103,19 @@ namespace
 
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
-    if(level > AV_LOG_WARNING) {
-      Radiant::info("%s", msg.toUtf8().data());
-    } else if(level > AV_LOG_ERROR) {
+    if(level >= AV_LOG_DEBUG) {
+      Radiant::debug("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_INFO) {
+      Radiant::info("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_WARNING) {
+      Radiant::warning("Video decoder: %s", msg.toUtf8().data());
+    } else if(level >= AV_LOG_ERROR) {
       if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
-        Radiant::warning("%s", msg.toUtf8().data());
+        Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     } else {
       if (!msg.contains("too full or near too full")) {
-        Radiant::error("%s", msg.toUtf8().data());
+        Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     }
   }
@@ -233,9 +237,6 @@ namespace VideoDisplay
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
 
-    // Sets the audio location from m_host->audioLocationAttribute to Resonant audio panner
-    void syncAudioLocation();
-
 
     FfmpegDecoder * m_host;
     int m_activeSeekGeneration;
@@ -268,9 +269,6 @@ namespace VideoDisplay
     float m_audioGain;
     bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
-
-    /// Change listener ID for m_host->audioLocationAttribute
-    long m_audioLocationListener = -1;
 
     /// In some videos, the audio track might be shorter than the video track
     /// We have some heuristic to determine when the audio track has actually ended,
@@ -1162,25 +1160,6 @@ namespace VideoDisplay
       frame.clear(i);
   }
 
-  void FfmpegDecoder::D::syncAudioLocation()
-  {
-    AudioTransferPtr audioTransfer(m_audioTransfer);
-    if (audioTransfer) {
-      char buf[128];
-
-      Radiant::BinaryData control;
-
-      control.writeString("panner/setsourcelocation");
-
-      snprintf(buf, sizeof(buf), "%s-%d", audioTransfer->id().data(), (int) 0);
-
-      control.writeString(buf);
-      control.writeVector2Float32(m_host->audioLocationAttribute()); // sound source location
-
-      Resonant::DSPNetwork::instance()->send(control);
-    }
-  }
-
   bool FfmpegDecoder::D::decodeVideoPacket(double &dpts)
   {
     const double maxPtsReorderDiff = 0.1;
@@ -1488,15 +1467,11 @@ namespace VideoDisplay
     : m_d(new D(this))
   {
     Thread::setName("FfmpegDecoder");
-
-    auto sync = [this] { m_d->syncAudioLocation(); };
-    m_d->m_audioLocationListener = audioLocationAttribute().addListener(sync);
  }
 
   FfmpegDecoder::~FfmpegDecoder()
   {
     close();
-    audioLocationAttribute().removeListener(m_d->m_audioLocationListener);
     if(isRunning())
       waitEnd();
     m_d->close();
@@ -1646,16 +1621,16 @@ namespace VideoDisplay
   {
     if(!m_d->m_av.videoCodecContext)
       return Nimble::Matrix4f::IDENTITY;
-    /// @todo why does everything look so wrong when using the correct colorspace?
-    ///       for now we just force ITU-R BT601-6 (same as SMPTE170M)
-    // this should be m_d->av.videoCodecContext->colorspace
-    const int colorspace = SWS_CS_SMPTE170M;
+
+    const AVColorSpace colorspace = m_d->m_av.videoCodecContext->colorspace;
     const int * coeffs = sws_getCoefficients(colorspace);
     int l = 16, h = 235;
-    if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
+
+    // See the discussion here: https://redmine.multitouch.fi/issues/14426
+    /*if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
       l = 0;
       h = 255;
-    }
+    }*/
     // a and b scale the y value from [l, h] -> [0, 1]
     const float a = 255.0f/(h-l);
     const float b = l/255.0;
@@ -1668,25 +1643,37 @@ namespace VideoDisplay
         a, 0.0f, c[0], -b*a - 0.5f * c[0],
         a, c[1], c[2], -b*a - 0.5f * (c[2]+c[1]),
         a, c[3],    0, -b*a - 0.5f * c[3],
-          0,    0,    0, 1);
+        0,    0,    0, 1);
   }
 
-  void FfmpegDecoder::setAudioGain(float gain)
+  QByteArray FfmpegDecoder::audioPannerSourceId() const
+  {
+    if (auto audioTransfer = m_d->m_audioTransfer) {
+      return audioTransfer->id() + "-0";
+    }
+    return QByteArray();
+  }
+
+  bool FfmpegDecoder::setAudioGain(float gain)
   {
     m_d->m_audioGain = gain;
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     if (audioTransfer)
       audioTransfer->setGain(gain);
+
+    return true;
   }
 
-  void FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
+  bool FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
   {
     m_d->m_minimiseAudioLatency = minimize;
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     if (audioTransfer)
       audioTransfer->setMinimizeLatency(minimize);
+
+    return true;
   }
 
   void FfmpegDecoder::audioTransferDeleted()
@@ -1725,9 +1712,10 @@ namespace VideoDisplay
     return m_d->m_options.isLooping();
   }
 
-  void FfmpegDecoder::setLooping(bool doLoop)
+  bool FfmpegDecoder::setLooping(bool doLoop)
   {
     m_d->m_options.setLooping(doLoop);
+    return true;
   }
 
   double FfmpegDecoder::duration() const
@@ -1747,13 +1735,15 @@ namespace VideoDisplay
     return m_d->m_realTimeSeeking;
   }
 
-  void FfmpegDecoder::setRealTimeSeeking(bool value)
+  bool FfmpegDecoder::setRealTimeSeeking(bool value)
   {
     AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
 
     m_d->m_realTimeSeeking = value;
     if(audioTransfer)
       audioTransfer->setSeeking(value);
+
+    return true;
   }
 
   void FfmpegDecoder::runDecoder()

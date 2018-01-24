@@ -12,6 +12,7 @@
 
 /// @todo this include is just for create(), should be removed
 #include "FfmpegDecoder.hpp"
+#include "DummyDecoder.hpp"
 
 #include <QFileInfo>
 
@@ -33,7 +34,6 @@ namespace VideoDisplay
   public:
     AVDecoder::DecoderState m_state;
     AVDecoderPtr m_previousDecoder;
-    Valuable::AttributeVector2f m_audioLocation;
   };
 
   AVDecoder::D::D()
@@ -80,9 +80,44 @@ namespace VideoDisplay
     return m_d->m_state == STATE_ERROR;
   }
 
-  Valuable::AttributeVector2f & AVDecoder::audioLocationAttribute()
+  bool AVDecoder::realTimeSeeking() const
   {
-    return m_d->m_audioLocation;
+    return false;
+  }
+
+  bool AVDecoder::setRealTimeSeeking(bool)
+  {
+    return false;
+  }
+
+  bool AVDecoder::isLooping() const
+  {
+    return false;
+  }
+
+  bool AVDecoder::setLooping(bool)
+  {
+    return false;
+  }
+
+  double AVDecoder::duration() const
+  {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+
+  QByteArray AVDecoder::audioPannerSourceId() const
+  {
+    return QByteArray();
+  }
+
+  bool AVDecoder::setAudioGain(float)
+  {
+    return false;
+  }
+
+  bool AVDecoder::setMinimizeAudioLatency(bool)
+  {
+    return false;
   }
 
   void AVDecoder::setPreviousDecoder(AVDecoderPtr decoder)
@@ -105,10 +140,15 @@ namespace VideoDisplay
     }
   }
 
-  std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options, const QString & /*backend*/)
+  std::shared_ptr<AVDecoder> AVDecoder::create(const Options & options)
   {
     /// @todo add some great factory registry thing here
-    std::shared_ptr<AVDecoder> decoder(new FfmpegDecoder());
+    std::shared_ptr<AVDecoder> decoder;
+    if (options.decoderBackend() == "dummy")
+      decoder.reset(new DummyDecoder());
+    else
+      decoder.reset(new FfmpegDecoder());
+
     {
       Radiant::Guard g(s_decodersMutex);
       for (auto it = s_decoders.begin(); it != s_decoders.end();) {

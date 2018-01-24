@@ -29,12 +29,12 @@ namespace VideoDisplay
 
     virtual int seek(const SeekRequest & req) OVERRIDE;
     virtual bool realTimeSeeking() const OVERRIDE;
-    virtual void setRealTimeSeeking(bool value) OVERRIDE;
+    virtual bool setRealTimeSeeking(bool value) OVERRIDE;
 
     virtual Nimble::Size videoSize() const OVERRIDE;
 
     virtual bool isLooping() const OVERRIDE;
-    virtual void setLooping(bool doLoop) OVERRIDE;
+    virtual bool setLooping(bool doLoop) OVERRIDE;
 
     virtual double duration() const OVERRIDE;
 
@@ -45,9 +45,10 @@ namespace VideoDisplay
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
-    virtual void setAudioGain(float gain) OVERRIDE;
+    virtual QByteArray audioPannerSourceId() const override;
+    virtual bool setAudioGain(float gain) OVERRIDE;
 
-    virtual void setMinimizeAudioLatency(bool minimize) override;
+    virtual bool setMinimizeAudioLatency(bool minimize) override;
 
     /// @cond
 

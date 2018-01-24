@@ -243,7 +243,7 @@ namespace VideoDisplay
           Radiant::debug("Source %s (%s) with resolution %dx%d",
                          s.name.toUtf8().data(), s.device.data(),
                          s.resolution.x, s.resolution.y);
-          m_host.eventSend("source-added", s.device, s.resolution);
+          m_host.eventSend("source-added", s.device, s.resolution, s.name);
         } else {
           m_host.eventSend("source-removed", s.device);
         }

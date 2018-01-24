@@ -13,6 +13,7 @@
 
 #include "Export.hpp"
 #include "Flags.hpp"
+#include "TimeStamp.hpp"
 
 #include <QString>
 
@@ -64,6 +65,16 @@ namespace Radiant
       Severity severity;
       QByteArray module;
       QString text;
+
+      inline TimeStamp timestamp() const
+      {
+        if (m_timestamp.value() == 0)
+          m_timestamp = TimeStamp::currentTime();
+        return m_timestamp;
+      }
+
+    private:
+      mutable TimeStamp m_timestamp;
     };
 
     inline bool operator==(const Message & a, const Message & b)

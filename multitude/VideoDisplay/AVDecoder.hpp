@@ -66,6 +66,22 @@ namespace VideoDisplay
             m_pts < ts.m_pts : m_seekGeneration < ts.m_seekGeneration;
     }
 
+    bool operator<=(const Timestamp & ts) const
+    {
+      return m_seekGeneration == ts.m_seekGeneration ?
+            m_pts <= ts.m_pts : m_seekGeneration < ts.m_seekGeneration;
+    }
+
+    bool operator>(const Timestamp & ts) const
+    {
+      return !operator<=(ts);
+    }
+
+    bool operator>=(const Timestamp & ts) const
+    {
+      return !operator<(ts);
+    }
+
     bool operator==(const Timestamp & ts) const
     {
       return m_pts == ts.m_pts && m_seekGeneration == ts.m_seekGeneration;
@@ -563,6 +579,10 @@ namespace VideoDisplay
       int videoDecodingThreads() const { return m_videoDecodingThreads; }
       void setVideoDecodingThreads(int t) { m_videoDecodingThreads = t; }
 
+      /// Name of the video decoder backend. Leave empty for automatic selection
+      QString decoderBackend() const { return m_decoderBackend; }
+      void setDecoderBackend(const QString & backendName) { m_decoderBackend = backendName; }
+
     private:
       QString m_source;
       QString m_format;
@@ -583,6 +603,7 @@ namespace VideoDisplay
       int m_videoBufferFrames;
       VideoFrame::Format m_pixelFormat;
       int m_videoDecodingThreads;
+      QString m_decoderBackend;
     };
 
   public:
@@ -631,10 +652,11 @@ namespace VideoDisplay
     /// used only with certain UI elements, where the seeking target
     /// might change in real-time.
     /// When in real-time seeking mode, the video acts like it's paused
-    virtual bool realTimeSeeking() const = 0;
+    virtual bool realTimeSeeking() const;
     /// @sa realTimeSeeking
     /// @param value true if real-time seeking is asked
-    virtual void setRealTimeSeeking(bool value) = 0;
+    /// @returns false if real time seeking is not supported
+    virtual bool setRealTimeSeeking(bool value);
 
     /// Shorthand for making a relative seek request
     /// @param pos relative position, value should be between 0 and 1
@@ -652,14 +674,16 @@ namespace VideoDisplay
     virtual Nimble::Size videoSize() const = 0;
 
     /// @returns looping mode
-    virtual bool isLooping() const = 0;
+    virtual bool isLooping() const;
     /// @param doLoop new looping mode
-    virtual void setLooping(bool doLoop) = 0;
+    /// @returns false if looping is not supported
+    virtual bool setLooping(bool doLoop);
 
     /// First this value is based on stream headers, but might be fine-tuned
     /// after the stream reaches to the end / maybe starts a new loop cycle.
+    /// Returns NaN if the duration is unknown or not supported
     /// @returns media duration in seconds.
-    virtual double duration() const = 0;
+    virtual double duration() const;
 
     /// Based on the current playback and audio state, converts an absolute
     /// wall-clock timestamp to video timestamp. This is most useful for
@@ -689,28 +713,29 @@ namespace VideoDisplay
     /// @returns YUV to RGB conversion matrix
     virtual Nimble::Matrix4f yuvMatrix() const = 0;
 
-    /// Positional audio parameter. Modify and read freely.
-    Valuable::AttributeVector2f & audioLocationAttribute();
+    /// If the decoder has a Resonant::Module playing audio, this is the
+    /// Resonant::ModulePanner source id for that module.
+    virtual QByteArray audioPannerSourceId() const;
 
     /// Controls the gain (volume) of the video sound-track.
     /// @param gain new audio gain, typical range is 0-1, although larger values
     ///             can be used as well. Default value is 1.
-    virtual void setAudioGain(float gain) = 0;
+    /// @return false if the decoder doesn't support audio
+    virtual bool setAudioGain(float gain);
 
     /// Tries to minimize the audio playback latency by dropping extra samples
     /// from the buffer. Use this only with streaming sources, otherwise
     /// the audio playback will break.
-    virtual void setMinimizeAudioLatency(bool minimize) = 0;
+    /// @returns false if the feature is not supported
+    virtual bool setMinimizeAudioLatency(bool minimize);
 
     /// Close all AVDecoders
     static void shutdown();
 
     /// Creates a new decoder and loads it with given options
     /// @param options options given to load()
-    /// @param backend use empty string for automatic backend
     /// @returns new decoder
-    static std::shared_ptr<AVDecoder> create(const Options & options,
-                                             const QString & backend = "");
+    static std::shared_ptr<AVDecoder> create(const Options & options);
 
     /// Returns true if the device looks like V4L2 device (/dev/video* etc).
     /// Doesn't actually open the device or use Video4Linux2 API to confirm

@@ -27,6 +27,12 @@
 
 namespace Luminous
 {
+  Valuable::EnumNames s_uploadMethods[] = {
+    {"texture", Luminous::TextureGL::METHOD_TEXTURE},
+    {"buffer-upload", Luminous::TextureGL::METHOD_BUFFER_UPLOAD},
+    {"buffer-map", Luminous::TextureGL::METHOD_BUFFER_MAP},
+    {0,0}
+  };
 
   MultiHead::Area::Area()
       : Node(0, "Area"),
@@ -479,6 +485,7 @@ namespace Luminous
 #endif
               ),
       m_glFinish(this, "gl-finish", false),
+      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
     eventAddOut("graphics-bounds-changed");
@@ -620,6 +627,16 @@ namespace Luminous
   bool MultiHead::useGlFinish() const
   {
     return m_glFinish;
+  }
+
+  TextureGL::UploadMethod MultiHead::textureUploadMethod() const
+  {
+    return m_textureUploadMethod;
+  }
+
+  void MultiHead::setTextureUploadMethod(TextureGL::UploadMethod method)
+  {
+    m_textureUploadMethod = method;
   }
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)

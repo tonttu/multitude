@@ -91,6 +91,7 @@ HEADERS += DeviceMonitor.hpp
 HEADERS += SymbolRegistry.hpp
 HEADERS += CrashHandler.hpp
 HEADERS += VersionString.hpp
+HEADERS += TraceCrashHandlerFilter.hpp
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
@@ -157,6 +158,8 @@ SOURCES += IntrusivePtr.cpp
 SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
 SOURCES += VersionString.cpp
+SOURCES += CrashHandlerCommon.cpp
+SOURCES += TraceCrashHandlerFilter.cpp
 
 linux*:SOURCES += ProcessRunnerPosix.cpp
 win32:SOURCES += ProcessRunnerWin32.cpp

@@ -288,7 +288,7 @@ namespace Radiant {
 
   QDateTime TimeStamp::asQDateTime() const
   {
-    return QDateTime::fromTime_t(m_val / ticksPerSecond().value());
+    return QDateTime::fromMSecsSinceEpoch(m_val / (ticksPerSecond().value() / 1000.0), Qt::UTC);
   }
 
   std::ostream & operator<<(std::ostream & os, const TimeStamp & ts)

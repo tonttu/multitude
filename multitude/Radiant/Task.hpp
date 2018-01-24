@@ -134,6 +134,16 @@ namespace Radiant
     ///               just run the task once.
     void runNow(bool finish);
 
+    /// Enables or disables slow task debugging. Setting this to a positive value
+    /// enables the feature and sets the threshold for slow tasks to the given
+    /// time in seconds. For instance setSlowTaskDebuggingThreshold(0.050)
+    /// logs all tasks that take 50 ms or longer to run. Setting this to zero or
+    /// negative value disables the feature.
+    static void setSlowTaskDebuggingThreshold(float timeS);
+
+    /// @see setSlowTaskDebuggingThreshold
+    static float slowTaskDebuggingThreshold();
+
   protected:
      /// Initialize the task. Called by BGThread before the task is processed
     virtual void initialize();
@@ -165,6 +175,10 @@ namespace Radiant
 
     /// The background thread where this task is executed
     BGThread * m_host;
+
+    /// Callstack of the task creation, for debugging, only enabled if
+    /// slowTaskDebuggingThreshold is enabled.
+    std::unique_ptr<CallStack> m_createStack;
 
     friend class BGThread;
   };

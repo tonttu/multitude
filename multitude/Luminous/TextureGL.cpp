@@ -18,7 +18,7 @@
 namespace
 {
   /// Specify the internal format (number of channels or explicitly requested format)
-  GLenum internalFormat(const Luminous::Texture & texture)
+  static GLenum internalFormat(const Luminous::Texture & texture)
   {
     // Check for compressed formats
     if (texture.dataFormat().compression() != Luminous::PixelFormat::COMPRESSION_NONE)
@@ -46,7 +46,7 @@ namespace
     return intFormat;
   }
 
-  GLenum getWrapMode(Luminous::Texture::Wrap wrapMode)
+  static GLenum getWrapMode(Luminous::Texture::Wrap wrapMode)
   {
     switch (wrapMode)
     {
@@ -63,6 +63,8 @@ namespace
 
 namespace Luminous
 {
+  static TextureGL::UploadMethod s_defaultUploadMethod = TextureGL::METHOD_TEXTURE;
+
   TextureGL::TextureGL(StateGL & state)
     : ResourceHandleGL(state)
     , m_generation(0)
@@ -93,6 +95,7 @@ namespace Luminous
     , m_dirtyRegion2D(t.m_dirtyRegion2D)
     , m_size(0, 0, 0)
     , m_samples(t.m_samples)
+    , m_uploadBuffer(std::move(t.m_uploadBuffer))
   {
   }
 
@@ -106,6 +109,7 @@ namespace Luminous
     m_dirtyRegion2D = t.m_dirtyRegion2D;
     m_size = t.m_size;
     m_samples = t.m_samples;
+    m_uploadBuffer = std::move(t.m_uploadBuffer);
     return *this;
   }
 
@@ -310,15 +314,18 @@ namespace Luminous
       } else {
         for(const QRect & rect : m_dirtyRegion2D.rects()) {
           const int bytesPerRectScanline = rect.width() * bytesPerPixel;
+          const int lineSizeBytes = texture.lineSizePixels() * bytesPerPixel;
 
           const int scanlinesToUpload = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerRectScanline, 1, rect.height());
 
-          auto data = static_cast<const char *>(texture.data()) +
-              rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
+          auto offset = rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
+          auto data = static_cast<const char *>(texture.data()) + offset;
 
-          // Upload data
-          m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left(), rect.top(), rect.width(), scanlinesToUpload,
-                                           texture.dataFormat().layout(), texture.dataFormat().type(), data);
+          QRect destRect = rect;
+          destRect.setHeight(scanlinesToUpload);
+          uploadData(texture, data, offset, destRect,
+                     scanlinesToUpload * lineSizeBytes);
+
           GLERROR("TextureGL::upload # glTexSubImage2D");
           uploaded += bytesPerRectScanline * scanlinesToUpload;
           bytesFree -= bytesPerRectScanline * scanlinesToUpload;
@@ -455,6 +462,37 @@ namespace Luminous
     }
   }
 
+  void TextureGL::uploadData(const Texture & texture, const char * data, unsigned int destOffset,
+                             const QRect & destRect, unsigned int bytes)
+  {
+    if (s_defaultUploadMethod == METHOD_TEXTURE) {
+      m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, destRect.left(), destRect.top(),
+                                       destRect.width(), destRect.height(),
+                                       texture.dataFormat().layout(), texture.dataFormat().type(), data);
+    } else {
+      if (!m_uploadBuffer)
+        m_uploadBuffer.reset(new BufferGL(m_state, Buffer::DYNAMIC_DRAW));
+
+      if (s_defaultUploadMethod == METHOD_BUFFER_UPLOAD) {
+        m_uploadBuffer->upload(Buffer::UNPACK, destOffset, bytes, data);
+      } else if (s_defaultUploadMethod == METHOD_BUFFER_MAP) {
+        void * target = m_uploadBuffer->map(Buffer::UNPACK, destOffset, bytes,
+                                            Buffer::MAP_WRITE | Buffer::MAP_INVALIDATE_BUFFER);
+        memcpy(target, data, bytes);
+        m_uploadBuffer->unmap(Buffer::UNPACK, destOffset, bytes);
+      } else {
+        Radiant::error("TextureGL::uploadData # Unknown upload method %d", s_defaultUploadMethod);
+        return;
+      }
+
+      m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, destRect.left(), destRect.top(),
+                                       destRect.width(), destRect.height(),
+                                       texture.dataFormat().layout(), texture.dataFormat().type(),
+                                       (const void *)(uintptr_t)destOffset);
+      m_state.opengl().glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    }
+  }
+
   bool TextureGL::updateParams(const Texture & texture)
   {
     const bool paramsDirty = m_paramsGeneration != texture.paramsGeneration();
@@ -483,6 +521,16 @@ namespace Luminous
       Radiant::error("TextureGL::upload # Error: unknown number of dimensions (%d) while trying to upload texture", texture.dimensions());
       assert(false);
     }
+  }
+
+  TextureGL::UploadMethod TextureGL::defaultUploadMethod()
+  {
+    return s_defaultUploadMethod;
+  }
+
+  void TextureGL::setDefaultUploadMethod(TextureGL::UploadMethod method)
+  {
+    s_defaultUploadMethod = method;
   }
 
   void TextureGL::setTexParameters() const

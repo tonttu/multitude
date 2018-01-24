@@ -129,13 +129,11 @@ namespace Radiant
     Radiant::Guard lock(s_dbgHelpMutex);
 
     // Need to initialize DbgHelp symbols
-    static bool initialized = false;
-    if (!initialized)
-    {
+    MULTI_ONCE {
       DWORD Options = SymGetOptions();
-      ::SymSetOptions( Options | SYMOPT_DEBUG | SYMOPT_LOAD_LINES );
-      ::SymInitialize (GetCurrentProcess(), NULL, TRUE);
-      initialized = true;
+      ::SymSetOptions(Options | SYMOPT_DEBUG | SYMOPT_LOAD_LINES |
+                      SYMOPT_FAIL_CRITICAL_ERRORS | SYMOPT_NO_PROMPTS);
+      ::SymInitialize(GetCurrentProcess(), NULL, TRUE);
     }
 
     m_frameCount = backtrace(m_frames, MAX_FRAMES);
@@ -166,15 +164,13 @@ namespace Radiant
     pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     pSymbol->MaxNameLen = MAX_SYM_NAME;
 
-    std::stringstream s;
-
     for (size_t i = 0; i < size(); ++i)
     {
       DWORD64 ptr = m_frames[i];
 
       // Retrieve symbol name
       if (!SymFromAddr(handle, ptr, &offset, pSymbol))
-        Radiant::warning("Unable to get symbol information: err %d\n", GetLastError());
+        Radiant::debug("Unable to get symbol information: err %d\n", GetLastError());
 
       // Retrieve filename and linenumber
       DWORD displacement = 0;
@@ -184,7 +180,7 @@ namespace Radiant
       {
         // TODO: Not sure why this sometimes fails with INVALID_ADDRESS
         if (GetLastError() != ERROR_INVALID_ADDRESS)
-          Radiant::warning("Unable to get symbol line information: err %d\n", GetLastError());
+          Radiant::debug("Unable to get symbol line information: err %d\n", GetLastError());
       }
       tmp << QString("#%1 %3 at %4:%2").arg(i, -2).arg(sym_line.LineNumber).arg(pSymbol->Name, sym_line.FileName);
     }
