@@ -5,6 +5,9 @@ include(../cornerstone.pri)
 
 # 3rd party libraries
 
+smtpclient.subdir += ThirdParty/SMTPEmail
+SUBDIRS += smtpclient
+
 folly.subdir += ThirdParty/folly
 SUBDIRS += folly
 
@@ -28,6 +31,9 @@ Punctual.depends = folly Radiant
 
 SUBDIRS += Valuable
 Valuable.depends = Radiant Nimble Punctual folly
+
+SUBDIRS += EmailSending
+EmailSending.depends += Valuable folly smtpclient Radiant
 
 SUBDIRS += Squish
 SUBDIRS += Luminous
