@@ -182,6 +182,9 @@ win32 {
   HEADERS += DisplayConfigWin.hpp
   SOURCES += DisplayConfigWin.cpp
 
+  HEADERS += DxInterop.hpp
+  SOURCES += DxInterop.cpp
+
   INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/lz4/include
   LIBS += -L$$CORNERSTONE_DEPS_PATH/lz4/lib
 }

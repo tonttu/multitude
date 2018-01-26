@@ -113,12 +113,13 @@ namespace Luminous
     /// @return texture size in bytes
     LUMINOUS_API std::size_t dataSize() const;
 
-    /// Set the texture line size in pixels. Use 0 to use width of the texture.
-    /// @param size size of one line in pixels
-    LUMINOUS_API void setLineSizePixels(std::size_t size);
-    /// Get the texture line size in pixels
-    /// @return line size in pixels
-    LUMINOUS_API unsigned int lineSizePixels() const;
+    /// Set the texture line size in bytes. Zero means that the rows are
+    /// contiguous in memory.
+    /// @param size size of one line in bytes
+    LUMINOUS_API void setLineSizeBytes(std::size_t size);
+    /// Get the texture line size in bytes
+    /// @return line size in bytes
+    LUMINOUS_API unsigned int lineSizeBytes() const;
 
     /// Check if the texture is valid. Texture is considered valid, if its dimension has been defined.
     /// @return true if the texture is valid; otherwise false
