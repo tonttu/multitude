@@ -161,5 +161,17 @@ namespace Radiant
 
     return 0;
   }
+
+  int TCPServerSocket::takeSocket()
+  {
+    int fd = m_d->m_fd;
+    m_d->m_fd = -1;
+    return fd;
+  }
+
+  int TCPServerSocket::socket() const
+  {
+    return m_d->m_fd;
+  }
 }
 
