@@ -65,6 +65,14 @@ namespace Radiant {
     /// @return connected socket or null in case of error
     TCPSocket * accept();
 
+    /// Moves the wrapped TCP socket and its ownership to the caller. After
+    /// calling this, TCPServerSocket::isOpen will return false.
+    /// Returns -1 if the socket is not open
+    int takeSocket();
+
+    /// Returns the TCP socket, or -1 if the socket is not open
+    int socket() const;
+
   private:
     class D;
     D * m_d;
