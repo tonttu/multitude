@@ -61,7 +61,7 @@ namespace Radiant
     task->m_host = this;
 
     std::lock_guard<std::mutex> g(m_mutexWait);
-    m_taskQueue.insert(contained(task->priority(), task));
+    m_taskQueue.insert(contained(task->priority(), std::move(task)));
     wakeThread();
   }
 
