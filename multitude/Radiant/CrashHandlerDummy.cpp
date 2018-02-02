@@ -4,7 +4,7 @@ namespace Radiant
 {
   namespace CrashHandler
   {
-    void init(const QString &, const QString &, const QString &, const QString &) {}
+    void init(const QString &, const QString &, const QString &) {}
     void setAnnotation(const QByteArray &, const QByteArray &) {}
     void removeAnnotation(const QByteArray &) {}
     void setAttachmentPtrImpl(const QByteArray &, void *, size_t) {}

@@ -33,7 +33,7 @@ namespace Radiant
       AttachmentFlags flags = ATTACHMENT_NO_FLAGS;
     };
 
-    RADIANT_API void init(const QString & application, const QString & cornerstoneVersion,
+    RADIANT_API void init(const QString & application,
                           const QString & url, const QString & db = QString());
 
     /// Add a single key-value -pair annotation to the crash report. Key and

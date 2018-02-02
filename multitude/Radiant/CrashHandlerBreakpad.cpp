@@ -3,6 +3,7 @@
 
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
+#include <Radiant/Version.hpp>
 
 #include <client/linux/handler/exception_handler.h>
 
@@ -168,10 +169,12 @@ namespace Radiant
       }
     }
 
-    void init(const QString & application, const QString & version,
+    void init(const QString & application,
               const QString & url, const QString & db)
     {
       Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
+
+      const auto version = Radiant::cornerstoneVersionString();
 
       s_uploadCmd[2] = application.toUtf8();
       s_uploadCmd[4] = version.toUtf8();

@@ -90,6 +90,8 @@ HEADERS += VideoCamera1394.hpp
 HEADERS += DeviceMonitor.hpp
 HEADERS += SymbolRegistry.hpp
 HEADERS += CrashHandler.hpp
+HEADERS += Version.hpp
+HEADERS += VersionGenerated.hpp
 HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
 
@@ -157,6 +159,7 @@ SOURCES += VideoCamera1394.cpp
 SOURCES += IntrusivePtr.cpp
 SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
+SOURCES += Version.cpp
 SOURCES += VersionString.cpp
 SOURCES += CrashHandlerCommon.cpp
 SOURCES += TraceCrashHandlerFilter.cpp
