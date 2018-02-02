@@ -4,7 +4,7 @@
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
 
-#include <MultiTouch/Version.hpp>
+#include <Radiant/Version.hpp>
 
 #include <client/crashpad_client.h>
 #include <client/simulate_crash_win.h>
@@ -162,7 +162,7 @@ namespace Radiant
     {
     }
 
-    void init(const QString & application, const QString & version,
+    void init(const QString & application,
               const QString & url, const QString & db)
     {
       if (s_client) {
@@ -171,6 +171,8 @@ namespace Radiant
       }
 
       Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
+
+      const auto version = Radiant::cornerstoneVersionString();
 
       base::FilePath handlerPath(crashpadHandler().toStdWString());
       base::FilePath dbPath(db.toStdWString());
