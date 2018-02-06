@@ -28,6 +28,7 @@
 #include <propvarutil.h>
 #include <InitGuid.h>
 #include <propkey.h>
+#include <VersionHelpers.h>
 
 static int64_t performanceCounterFrequency = 0;
 #endif
@@ -129,7 +130,7 @@ namespace Luminous
     m_openGLContext->swapBuffers(this);
 
 #ifdef RADIANT_WINDOWS
-    if (!m_uncloak) {
+    if (!m_uncloak && IsWindows8OrGreater()) {
       m_uncloak = true;
       auto v = FALSE;
       DwmSetWindowAttribute((HWND)winId(), DWMWA_CLOAK, &v, sizeof(v));
@@ -152,7 +153,7 @@ namespace Luminous
   {
     if(m_eventHook)
       m_eventHook->exposeEvent(ev);
-#ifdef RADIANT_WINDOWS
+#if defined(RADIANT_WINDOWS) && !defined(ENABLE_WIN7)
     // Disable native touch feedback
     BOOL value = false;
     for (int i = FEEDBACK_TOUCH_CONTACTVISUALIZATION; i <= FEEDBACK_GESTURE_PRESSANDTAP; ++i)
@@ -237,7 +238,7 @@ namespace Luminous
 
   bool Window::nativeEvent(const QByteArray& eventType, void* message, long* result)
   {
-#ifdef RADIANT_WINDOWS
+#if defined(RADIANT_WINDOWS) && !defined(ENABLE_WIN7)
     if (eventType == "windows_generic_MSG") {
       MSG * msg = static_cast<MSG*>(message);
       if (msg->message == WM_POINTERDOWN ||
