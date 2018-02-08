@@ -180,6 +180,7 @@ namespace VideoDisplay
     bool seekByBytes;
     bool seekingSupported;
 
+    bool hasReliableDuration;
     double duration;
     double start;
     Nimble::Size videoSize;
@@ -881,7 +882,17 @@ namespace VideoDisplay
     } else {
       m_av.videoSize = Nimble::Size();
     }
-    m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
+    if (m_av.formatContext->duration != AV_NOPTS_VALUE) {
+      m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
+      m_av.hasReliableDuration = true;
+    } else {
+      /// m_av.duration will be updated every time we decode a frame, since it
+      /// might be needed for looping. However, since we set hasReliableDuration
+      /// to false, it makes sure we don't return possible incorrect number
+      /// from FfmpegDecoder::duration().
+      m_av.duration = 0;
+      m_av.hasReliableDuration = false;
+    }
     m_av.start = std::numeric_limits<double>::quiet_NaN();
 
     m_decodedVideoFrames.reset(new DecodedVideoFrames());
@@ -894,6 +905,7 @@ namespace VideoDisplay
   void FfmpegDecoder::D::close()
   {
     m_av.duration = 0;
+    m_av.hasReliableDuration = false;
     m_av.videoSize = Nimble::Size();
 
     if (m_videoFilter.graph)
@@ -1715,7 +1727,7 @@ namespace VideoDisplay
 
   double FfmpegDecoder::duration() const
   {
-    return m_d->m_av.duration;
+    return m_d->m_av.hasReliableDuration ? m_d->m_av.duration : 0;
   }
 
   int FfmpegDecoder::seek(const SeekRequest & req)
