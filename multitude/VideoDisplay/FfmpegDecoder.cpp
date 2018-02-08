@@ -87,6 +87,8 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
+  RADIANT_TLS(std::function<bool(int, const char*)>) s_logHandler;
+
   void libavLog(void *, int level, const char * fmt, va_list vl)
   {
     if(level > AV_LOG_INFO) return;
@@ -100,6 +102,9 @@ namespace
       else
         break;
     }
+
+    if (s_logHandler && s_logHandler(level, buffer))
+      return;
 
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
@@ -139,6 +144,32 @@ namespace
 
 namespace VideoDisplay
 {
+  struct VideoInputFormat
+  {
+    enum FormatCategory
+    {
+      /// Unrecognized or unsupported format
+      FORMAT_UNKNOWN,
+      /// Raw RGB stream, best quality and biggest bandwidth
+      FORMAT_RGB,
+      /// Raw YUV stream, great quality but typically only half of the
+      /// bandwidth compared to RGB
+      FORMAT_YUV,
+      /// MJPEG or other compressed format, sometimes low quality
+      FORMAT_COMPRESSED,
+    };
+
+    FormatCategory category = FORMAT_UNKNOWN;
+    /// Input source pin, for instance a capture card might have one pin for
+    /// each connector.
+    QString pin;
+    /// If this is a compressed format, then this is something like "mjpeg"
+    QString vcodec;
+    /// If this is raw format, this is the pixel format, for example "yuv420p"
+    QString pixelFormat;
+    Nimble::SizeI resolution;
+    float fps = 0;
+  };
 
   class VideoFrameFfmpeg : public VideoFrame
   {
@@ -295,6 +326,250 @@ namespace VideoDisplay
 
 
   // -------------------------------------------------------------------------
+
+  static void setMapOptions(const QMap<QString, QString> & input, AVDictionary ** output,
+                            const QByteArray & errorMsg)
+  {
+    for (auto it = input.begin(); it != input.end(); ++it) {
+      int err = av_dict_set(output, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
+      if (err < 0 && !errorMsg.isNull()) {
+        Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
+                         it.key().toUtf8().data(), it.value().toUtf8().data(), err);
+      }
+    }
+  }
+
+#ifdef RADIANT_WINDOWS
+  /// dshow output can be something like this:
+  /// vcodec=mjpeg  min s=640x480 fps=5 max s=640x480 fps=120
+  /// In this case we will emit the following formats:
+  /// mjpeg 640x480 @5
+  /// mjpeg 640x480 @30
+  /// mjpeg 640x480 @60
+  /// mjpeg 640x480 @120
+  /// If min and max resolutions are different, we just output both min and max sizes.
+  static void emitFormats(std::vector<VideoInputFormat> & out, const VideoInputFormat & formatTpl,
+                          Nimble::SizeI minSize, Nimble::SizeI maxSize, float minFps, float maxFps)
+  {
+    VideoInputFormat format = formatTpl;
+
+    if (!format.vcodec.isEmpty()) {
+      format.category = VideoInputFormat::FORMAT_COMPRESSED;
+    } else if (format.pixelFormat.contains("rgb") || format.pixelFormat.contains("bgr")) {
+      format.category = VideoInputFormat::FORMAT_RGB;
+    } else if (format.pixelFormat.contains("yuv") || format.pixelFormat.contains("yuyv")) {
+      format.category = VideoInputFormat::FORMAT_YUV;
+    } else {
+      /// For instance NV12 or NV21 are not natively supported atm and require an expensive conversion
+      format.category = VideoInputFormat::FORMAT_UNKNOWN;
+    }
+
+    // It seems that when minSize is different from maxSize, this is a capture device
+    // that chooses the native resolution based on the signal that it receives. We have
+    // no way of knowing what is the correct resolution and aspect ratio to choose here,
+    // so just let the card do its thing.
+    if (minSize == maxSize)
+      format.resolution = minSize;
+
+    format.fps = minFps;
+    out.push_back(format);
+
+    for (int targetFps = 30; targetFps <= 120; targetFps *= 2) {
+      if (format.fps < targetFps-10.f && maxFps >= targetFps+10.f) {
+        format.fps = targetFps;
+        out.push_back(format);
+      }
+    }
+
+    if (format.fps < maxFps) {
+      format.fps = maxFps;
+      out.push_back(format);
+    }
+  }
+
+  /// Returns list of available input formats for the given dshow input source
+  /// Ffmpeg doesn't have an API for fetching this information, instead it has
+  /// an option "list_options" that can be set to true, which triggers the dshow
+  /// component to print format information using ffmpeg logging functions.
+  ///
+  /// We are forced to temporarily capture ffmpeg output from this thread, open
+  /// the stream using "list_options" flag and parse the output. Then based on
+  /// that parsed output we process and generate the formats in emitFormats
+  /// which gives as full list of available formats.
+  ///
+  /// Capture cards typically output dynamic resolutions that are rejected in
+  /// emitFormats, which means that we let the driver / card to choose the
+  /// resolution based on the incoming native resolution.
+  static std::vector<VideoInputFormat> scanInputFormats(
+      const QString & input, AVInputFormat * inputFormat, QMap<QString, QString> options)
+  {
+    std::vector<VideoInputFormat> ret;
+
+    QString videoTarget;
+    for (auto str: input.split(":"))
+      if (str.startsWith("video="))
+        videoTarget = str;
+
+    if (videoTarget.isEmpty())
+      return ret;
+
+    options["list_options"] = "true";
+
+    AVDictionary * tmpAvoptions = nullptr;
+    setMapOptions(options, &tmpAvoptions, QByteArray());
+
+    AVFormatContext * formatContext = avformat_alloc_context();
+
+    QRegExp pinR("Pin \"(.+)\"\\s.*");
+    QRegExp pixFormatR("pixel_format=(.+)");
+    QRegExp vcodecR("vcodec=(.+)");
+    QRegExp errR(".*unknown compression type.*");
+    QRegExp resR("min s=(\\d+)x(\\d+)\\s+fps=([\\d.]+)\\s+"
+                 "max s=(\\d+)x(\\d+)\\s+fps=([\\d.]+)");
+    QRegExp ignoreR(".*DirectShow video device options.*");
+
+    VideoInputFormat format;
+    s_logHandler = [&pinR, &pixFormatR, &resR, &vcodecR, &errR, &format, &ret, &ignoreR] (int level, const char * line) -> bool {
+      if (level != AV_LOG_INFO)
+        return false;
+
+      while (*line == ' ')
+        ++line;
+      QString msg = line;
+
+      if (pinR.exactMatch(msg)) {
+        format = VideoInputFormat();
+        format.pin = pinR.cap(1);
+      } else if (pixFormatR.exactMatch(msg)) {
+        format.pixelFormat = pixFormatR.cap(1);
+        format.vcodec.clear();
+      } else if (vcodecR.exactMatch(msg)) {
+        format.vcodec = vcodecR.cap(1);
+        format.pixelFormat.clear();
+      } else if (errR.exactMatch(msg)) {
+        format.pixelFormat.clear();
+        format.vcodec.clear();
+      } else if (resR.exactMatch(msg)) {
+        Nimble::SizeI minSize(resR.cap(1).toInt(), resR.cap(2).toInt());
+        Nimble::SizeI maxSize(resR.cap(4).toInt(), resR.cap(5).toInt());
+        float minFps = resR.cap(3).toFloat();
+        float maxFps = resR.cap(6).toFloat();
+        if (!format.pin.isEmpty() && (format.vcodec.isEmpty() ^ format.pixelFormat.isEmpty())) {
+          emitFormats(ret, format, minSize, maxSize, minFps, maxFps);
+        }
+      } else if (!ignoreR.exactMatch(msg)) {
+        return false;
+      }
+      return true;
+    };
+
+    avformat_open_input(&formatContext, videoTarget.toUtf8().data(),
+                        inputFormat, &tmpAvoptions);
+
+    s_logHandler = std::function<bool(int, const char*)>();
+
+    avformat_close_input(&formatContext);
+    avformat_free_context(formatContext);
+    av_dict_free(&tmpAvoptions);
+
+    return ret;
+  }
+
+  /// Given the list generated with scanInputFormats, choose the best format
+  /// from all formats that match the criteria given in AVDecoder::Options.
+  const VideoInputFormat * chooseFormat(const std::vector<VideoInputFormat> & formats,
+                                        const AVDecoder::Options & avOptions)
+  {
+    const QMap<QString, QString> & options = avOptions.demuxerOptions();
+
+    QString pin = options.value("video_pin_name");
+    QString pixelFormat = options.value("pixel_format");
+
+    VideoInputFormat::FormatCategory category = VideoInputFormat::FORMAT_UNKNOWN;
+    if (avOptions.pixelFormat() == VideoFrame::RGB || avOptions.pixelFormat() == VideoFrame::RGBA)
+      category = VideoInputFormat::FORMAT_RGB;
+    if (avOptions.pixelFormat() == VideoFrame::YUV || avOptions.pixelFormat() == VideoFrame::YUVA)
+      category = VideoInputFormat::FORMAT_YUV;
+
+    Nimble::SizeI resolution;
+    if (options.contains("video_size")) {
+      QRegExp sizeR("(\\d)+x(\\d+)");
+      if (sizeR.exactMatch(options.value("video_size")))
+        resolution.make(sizeR.cap(1).toInt(), sizeR.cap(2).toInt());
+    }
+
+    float fps = 0;
+    if (options.contains("framerate"))
+      fps = options.value("framerate").toFloat();
+
+    const AVDecoder::VideoStreamHints & hints = avOptions.videoStreamHints();
+
+    const VideoInputFormat * bestFormat = nullptr;
+    uint64_t bestScore = 0;
+
+    for (const VideoInputFormat & format: formats) {
+
+      /// If user has specified any exact parameter values, filter the list based on those
+
+      if (!pin.isNull() && format.pin != pin)
+        continue;
+
+      if (!pixelFormat.isNull() && format.pixelFormat != pixelFormat)
+        continue;
+
+      if (category != VideoInputFormat::FORMAT_UNKNOWN &&
+          format.category != category)
+        continue;
+
+      if (resolution.isValid() && resolution != format.resolution)
+        continue;
+
+      if (fps > 0 && std::abs(fps - format.fps) > 0.001f)
+        continue;
+
+      /// Format is acceptable, now form a "score" for each format and choose
+      /// the best one
+      uint64_t score = 0;
+
+      /// Use expensive or unknown video formats as a last choice
+      if (format.category != VideoInputFormat::FORMAT_UNKNOWN)
+        score += 10000000000000000000ull;
+
+      if (format.fps >= hints.minFps && format.fps <= hints.maxFps)
+        score += 1000000000000000000ull;
+
+      if (format.resolution.width() >= hints.minResolution.width() &&
+          format.resolution.height() >= hints.minResolution.height() &&
+          format.resolution.width() <= hints.maxResolution.width() &&
+          format.resolution.height() <= hints.maxResolution.height())
+        score += 100000000000000000ull;
+
+      /// If we prefer quality over resolution, we don't want to have compressed stream
+      if (hints.preferUncompressedStream &&
+          format.category != VideoInputFormat::FORMAT_COMPRESSED)
+        score += 10000000000000000ull;
+
+      /// If these lower digits of score are used at all, it means that we have
+      /// multiple formats that all match all the options given in
+      /// AVDecoder::Options, and also match the VideoStreamHints equally well.
+      /// From these formats, use the best resolution and biggest fps.
+
+      score += format.resolution.width() * format.resolution.height() * 10000ull;
+      score += uint64_t(format.fps * 10);
+
+      /// YUV is the best compared to RGB / compressed
+      if (format.category == VideoInputFormat::FORMAT_YUV)
+        score += 1ull;
+
+      if (score > bestScore || !bestFormat) {
+        bestFormat = &format;
+        bestScore = score;
+      }
+    }
+
+    return bestFormat;
+  }
+#endif
 
   FfmpegDecoder::D::D(FfmpegDecoder *decoder)
     : m_host(decoder),
@@ -572,16 +847,6 @@ namespace VideoDisplay
       m_options.setDemuxerOption("audio_buffer_size", "50");
 #endif
 
-    if(!m_options.demuxerOptions().isEmpty()) {
-      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
-        int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
-        if(err < 0) {
-          Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
-                           it.key().toUtf8().data(), it.value().toUtf8().data(), err);
-        }
-      }
-    }
-
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
     if(!m_options.format().isEmpty()) {
@@ -596,6 +861,32 @@ namespace VideoDisplay
     QString openTarget = src;
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
+
+#ifdef RADIANT_WINDOWS
+    if (m_options.format() == "dshow" &&
+        !m_options.demuxerOptions().contains("list_options")) {
+      std::vector<VideoInputFormat> formats = scanInputFormats(
+            src, inputFormat, m_options.demuxerOptions());
+
+      const VideoInputFormat * format = chooseFormat(formats, m_options);
+      if (format) {
+        if (!format->pin.isEmpty())
+          m_options.setDemuxerOption("video_pin_name", format->pin);
+        if (!format->pixelFormat.isEmpty())
+          m_options.setDemuxerOption("pixel_format", format->pixelFormat);
+        if (format->resolution.isValid())
+          m_options.setDemuxerOption("video_size", QString("%1x%2").
+                                     arg(format->resolution.width()).
+                                     arg(format->resolution.height()));
+        if (format->fps > 0)
+          m_options.setDemuxerOption("framerate", QString::number(format->fps));
+
+        /// @todo vcodec
+      }
+    }
+#endif
+
+    setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
 
     m_av.formatContext = avformat_alloc_context();
 
