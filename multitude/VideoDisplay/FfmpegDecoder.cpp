@@ -87,7 +87,7 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
-  RADIANT_TLS(std::function<bool(int, const char*)>) s_logHandler;
+  RADIANT_TLS(std::function<bool(int, const char*)> *) s_logHandler = nullptr;
 
   void libavLog(void *, int level, const char * fmt, va_list vl)
   {
@@ -103,7 +103,7 @@ namespace
         break;
     }
 
-    if (s_logHandler && s_logHandler(level, buffer))
+    if (s_logHandler && (*s_logHandler)(level, buffer))
       return;
 
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
@@ -429,7 +429,9 @@ namespace VideoDisplay
     QRegExp ignoreR(".*DirectShow video device options.*");
 
     VideoInputFormat format;
-    s_logHandler = [&pinR, &pixFormatR, &resR, &vcodecR, &errR, &format, &ret, &ignoreR] (int level, const char * line) -> bool {
+
+    std::function<bool(int, const char*)> logHandler = [&pinR, &pixFormatR, &resR, &vcodecR, &errR, &format, &ret, &ignoreR]
+        (int level, const char * line) -> bool {
       if (level != AV_LOG_INFO)
         return false;
 
@@ -463,10 +465,10 @@ namespace VideoDisplay
       return true;
     };
 
+    s_logHandler = &logHandler;
     avformat_open_input(&formatContext, videoTarget.toUtf8().data(),
                         inputFormat, &tmpAvoptions);
-
-    s_logHandler = std::function<bool(int, const char*)>();
+    s_logHandler = nullptr;
 
     avformat_close_input(&formatContext);
     avformat_free_context(formatContext);
