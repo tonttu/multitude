@@ -14,13 +14,16 @@ SOURCES += AudioTransfer.cpp AVDecoder.cpp
 HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
 
+HEADERS += FfmpegVideoFormatSelector.hpp
+
 linux:SOURCES += V4L2Monitor.cpp
 macx:SOURCES += VideoCaptureMonitorDummy.cpp
 
 win32 {
   SOURCES += WindowsVideoMonitor.cpp \
              WindowsVideoHelpers.cpp \
-             RGBEasy.cpp
+             RGBEasy.cpp \
+             FfmpegVideoFormatSelectorWin.cpp
 
   HEADERS += WindowsVideoHelpers.hpp \
              RGBEasy.hpp
