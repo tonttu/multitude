@@ -604,16 +604,16 @@ namespace VideoDisplay
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
 
-#ifdef RADIANT_WINDOWS
-    if (m_options.format() == "dshow" &&
-        !m_options.demuxerOptions().contains("list_options")) {
+    if ((m_options.format() == "dshow" &&
+        !m_options.demuxerOptions().contains("list_options")) ||
+        m_options.format() == "v4l2" || m_options.format() == "video4linux2") {
+      Radiant::info("Scanning..");
       std::vector<VideoInputFormat> formats = scanInputFormats(
             src, inputFormat, m_options.demuxerOptions());
 
       if (const VideoInputFormat * format = chooseFormat(formats, m_options))
         applyFormatOptions(*format, m_options);
     }
-#endif
 
     setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
 

@@ -15,9 +15,7 @@ HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
 
 HEADERS += FfmpegVideoFormatSelector.hpp
-
-linux:SOURCES += V4L2Monitor.cpp
-macx:SOURCES += VideoCaptureMonitorDummy.cpp
+SOURCES += FfmpegVideoFormatSelector.cpp
 
 win32 {
   SOURCES += WindowsVideoMonitor.cpp \
@@ -33,6 +31,16 @@ win32 {
   # RGBEASY (Datapath SDK)
   INCLUDEPATH += rgbeasy-sdk-v7.14.1/include
   LIBS += -lStrmiids -lOle32 -lOleAut32 -lPropsys
+}
+
+linux {
+  SOURCES += FfmpegVideoFormatSelectorLinux.cpp
+  SOURCES += V4L2Monitor.cpp
+}
+
+macx {
+  SOURCES += FfmpegVideoFormatSelectorDummy.cpp
+  SOURCES += VideoCaptureMonitorDummy.cpp
 }
 
 DEFINES += __STDC_CONSTANT_MACROS
