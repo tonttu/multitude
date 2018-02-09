@@ -2,6 +2,52 @@
 
 namespace VideoDisplay
 {
+  static Radiant::Mutex s_warnMutex;
+  static std::set<QString> s_warned;
+
+  static bool isValidFps(float fps, const AVDecoder::VideoStreamHints & hints)
+  {
+    return fps >= hints.minFps && fps <= hints.maxFps;
+  }
+
+  static bool isValidResolution(Nimble::SizeI res, const AVDecoder::VideoStreamHints & hints)
+  {
+    return res.width() >= hints.minResolution.width() &&
+        res.height() >= hints.minResolution.height() &&
+        res.width() <= hints.maxResolution.width() &&
+        res.height() <= hints.maxResolution.height();
+  }
+
+  // Warn exactly once per source
+  static bool shouldWarn(const QString & src)
+  {
+    Radiant::Guard g(s_warnMutex);
+    return s_warned.insert(src).second;
+  }
+
+  static void printWarning(const QString & src, const std::vector<VideoInputFormat> & formats)
+  {
+    QMap<QString, QStringList> grouped;
+    for (const VideoInputFormat & format: formats) {
+      QStringList & modes = grouped[format.vcodec + format.pixelFormat];
+      QString res = QString("%1x%2@").arg(format.resolution.width()).arg(format.resolution.height());
+
+      // The convention is to write framerate 60.0 as "60" and 24/1.001 as "23.976"
+      if (std::abs(format.fps - std::round(format.fps)) < 0.001)
+        res += QString::number(int(std::round(format.fps)));
+      else
+        res += QString::number(format.fps, 'f', 3);
+
+      if (!modes.contains(res))
+        modes << res;
+    }
+
+    Radiant::warning("Failed to find optimal video input format for video input %s, available formats:",
+                     src.toUtf8().data());
+    for (auto it = grouped.begin(); it != grouped.end(); ++it)
+      Radiant::warning("  %s: %s", it.key().toUtf8().data(), it.value().join(", ").toUtf8().data());
+  }
+
   const VideoInputFormat * chooseFormat(const std::vector<VideoInputFormat> & formats,
                                         const AVDecoder::Options & avOptions)
   {
@@ -30,7 +76,6 @@ namespace VideoDisplay
     const AVDecoder::VideoStreamHints & hints = avOptions.videoStreamHints();
 
     const VideoInputFormat * bestFormat = nullptr;
-    uint64_t bestScore = 0;
 
     for (const VideoInputFormat & format: formats) {
 
@@ -52,44 +97,51 @@ namespace VideoDisplay
       if (fps > 0 && std::abs(fps - format.fps) > 0.001f)
         continue;
 
-      /// Format is acceptable, now form a "score" for each format and choose
-      /// the best one
-      uint64_t score = 0;
+      /// Format is acceptable, now use the hints to choose the best format
 
       /// Use expensive or unknown video formats as a last choice
-      if (format.category != VideoInputFormat::FORMAT_UNKNOWN)
-        score += 10000000000000000000ull;
+      if (bestFormat && bestFormat->category != VideoInputFormat::FORMAT_UNKNOWN &&
+          format.category == VideoInputFormat::FORMAT_UNKNOWN)
+        continue;
 
-      if (format.fps >= hints.minFps && format.fps <= hints.maxFps)
-        score += 1000000000000000000ull;
+      if (bestFormat && isValidFps(bestFormat->fps, hints) &&
+          !isValidFps(format.fps, hints))
+        continue;
 
-      if (format.resolution.width() >= hints.minResolution.width() &&
-          format.resolution.height() >= hints.minResolution.height() &&
-          format.resolution.width() <= hints.maxResolution.width() &&
-          format.resolution.height() <= hints.maxResolution.height())
-        score += 100000000000000000ull;
+      if (bestFormat && isValidResolution(bestFormat->resolution, hints) &&
+          !isValidResolution(format.resolution, hints))
+        continue;
 
       /// If we prefer quality over resolution, we don't want to have compressed stream
-      if (hints.preferUncompressedStream &&
-          format.category != VideoInputFormat::FORMAT_COMPRESSED)
-        score += 10000000000000000ull;
+      if (hints.preferUncompressedStream && bestFormat &&
+          bestFormat->category != VideoInputFormat::FORMAT_COMPRESSED &&
+          format.category == VideoInputFormat::FORMAT_COMPRESSED)
+        continue;
 
-      /// If these lower digits of score are used at all, it means that we have
-      /// multiple formats that all match all the options given in
-      /// AVDecoder::Options, and also match the VideoStreamHints equally well.
-      /// From these formats, use the best resolution and biggest fps.
+      /// Use the best resolution and biggest fps.
 
-      score += format.resolution.width() * format.resolution.height() * 10000ull;
-      score += uint64_t(format.fps * 10);
+      if (bestFormat && bestFormat->resolution.width() * bestFormat->resolution.height() >
+          format.resolution.width() * format.resolution.height())
+        continue;
+
+      if (bestFormat && bestFormat->fps > format.fps)
+        continue;
 
       /// YUV is the best compared to RGB / compressed
-      if (format.category == VideoInputFormat::FORMAT_YUV)
-        score += 1ull;
+      if (bestFormat && bestFormat->category == VideoInputFormat::FORMAT_YUV &&
+          format.category != VideoInputFormat::FORMAT_YUV)
+        continue;
 
-      if (score > bestScore || !bestFormat) {
-        bestFormat = &format;
-        bestScore = score;
-      }
+      bestFormat = &format;
+    }
+
+    if (bestFormat) {
+      bool perfectFormat = isValidFps(bestFormat->fps, hints) &&
+          isValidResolution(bestFormat->resolution, hints) &&
+          (!hints.preferUncompressedStream ||
+           bestFormat->category != VideoInputFormat::FORMAT_COMPRESSED);
+      if (!perfectFormat && shouldWarn(avOptions.source()))
+        printWarning(avOptions.source(), formats);
     }
 
     return bestFormat;
