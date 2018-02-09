@@ -2,6 +2,7 @@
 #define __STDC_FORMAT_MACROS
 
 #include "FfmpegDecoder.hpp"
+#include "FfmpegVideoFormatSelector.hpp"
 
 #include "Utils.hpp"
 #include "AudioTransfer.hpp"
@@ -87,6 +88,8 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
+  RADIANT_TLS(const VideoDisplay::FfmpegDecoder::LogHandler *) s_logHandler = nullptr;
+
   void libavLog(void *, int level, const char * fmt, va_list vl)
   {
     if(level > AV_LOG_INFO) return;
@@ -100,6 +103,9 @@ namespace
       else
         break;
     }
+
+    if (s_logHandler && (*s_logHandler)(level, buffer))
+      return;
 
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
@@ -139,7 +145,6 @@ namespace
 
 namespace VideoDisplay
 {
-
   class VideoFrameFfmpeg : public VideoFrame
   {
   public:
@@ -296,6 +301,18 @@ namespace VideoDisplay
 
 
   // -------------------------------------------------------------------------
+
+  static void setMapOptions(const QMap<QString, QString> & input, AVDictionary ** output,
+                            const QByteArray & errorMsg)
+  {
+    for (auto it = input.begin(); it != input.end(); ++it) {
+      int err = av_dict_set(output, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
+      if (err < 0 && !errorMsg.isNull()) {
+        Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
+                         it.key().toUtf8().data(), it.value().toUtf8().data(), err);
+      }
+    }
+  }
 
   FfmpegDecoder::D::D(FfmpegDecoder *decoder)
     : m_host(decoder),
@@ -573,16 +590,6 @@ namespace VideoDisplay
       m_options.setDemuxerOption("audio_buffer_size", "50");
 #endif
 
-    if(!m_options.demuxerOptions().isEmpty()) {
-      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
-        int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
-        if(err < 0) {
-          Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
-                           it.key().toUtf8().data(), it.value().toUtf8().data(), err);
-        }
-      }
-    }
-
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
     if(!m_options.format().isEmpty()) {
@@ -597,6 +604,19 @@ namespace VideoDisplay
     QString openTarget = src;
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
+
+    if ((m_options.format() == "dshow" &&
+        !m_options.demuxerOptions().contains("list_options")) ||
+        m_options.format() == "v4l2" || m_options.format() == "video4linux2") {
+      Radiant::info("Scanning..");
+      std::vector<VideoInputFormat> formats = scanInputFormats(
+            src, inputFormat, m_options.demuxerOptions());
+
+      if (const VideoInputFormat * format = chooseFormat(formats, m_options))
+        applyFormatOptions(*format, m_options);
+    }
+
+    setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
 
     m_av.formatContext = avformat_alloc_context();
 
@@ -1474,6 +1494,11 @@ namespace VideoDisplay
 
   // -------------------------------------------------------------------------
 
+
+  void FfmpegDecoder::setTlsLogHandler(const FfmpegDecoder::LogHandler * handlerFunc)
+  {
+    s_logHandler = handlerFunc;
+  }
 
   FfmpegDecoder::FfmpegDecoder()
     : m_d(new D(this))

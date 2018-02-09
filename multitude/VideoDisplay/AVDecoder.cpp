@@ -140,4 +140,13 @@ namespace VideoDisplay
     const QFileInfo pathInfo(path);
     return pathInfo.isSymLink() && v4l2m.exactMatch(pathInfo.symLinkTarget());
   }
+
+  bool AVDecoder::VideoStreamHints::operator==(const AVDecoder::VideoStreamHints & o) const
+  {
+    return qFuzzyCompare(minFps, o.minFps) &&
+        qFuzzyCompare(maxFps, o.maxFps) &&
+        minResolution == o.minResolution &&
+        maxResolution == o.maxResolution &&
+        preferUncompressedStream == o.preferUncompressedStream;
+  }
 }
