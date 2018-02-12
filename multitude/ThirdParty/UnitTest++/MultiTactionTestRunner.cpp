@@ -574,7 +574,9 @@ namespace UnitTest
                                    "Run only the tests that match the given regex.",
                                    "REGEX");
 
-    QCommandLineOption excludeOption("exclude", "Exclude tests matching this regex.", "REGEX");
+    QCommandLineOption excludeOption("exclude", "Exclude tests matching this regex. "
+        "Exclude takes priority if both --match and --exclude are specified and the parameters conflict.",
+        "REGEX");
 
     QCommandLineOption v("v", "Run individual tests in verbose mode.");
     QCommandLineOption s("s", "Run individual tests in silent mode, suppress all console output from Cornerstone");
