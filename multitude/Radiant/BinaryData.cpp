@@ -228,15 +228,8 @@ namespace Radiant {
       return float(getRef<int64_t>());
     else if (marker == STRING_MARKER) {
       const char * source = & m_buf[m_current];
-      char * end = (char *) source;
-      double d = strtod(m_buf + m_current, & end);
-      if(end == (char *) source) {
-        if(ok)
-          *ok = false;
-      }
-      else {
-        return d;
-      }
+      m_current += (unsigned) stringSpace(source);
+      return QByteArray(source).toFloat(ok);
     }
     else if(ok)
       *ok = false;
@@ -269,15 +262,8 @@ namespace Radiant {
       return float(getRef<int64_t>());
     else if (marker == STRING_MARKER) {
       const char * source = & m_buf[m_current];
-      char * end = (char *) source;
-      double d = strtod(m_buf + m_current, & end);
-      if(end == (char *) source) {
-        if(ok)
-          *ok = false;
-      }
-      else {
-        return d;
-      }
+      m_current += (unsigned) stringSpace(source);
+      return QByteArray(source).toDouble(ok);
     }
 
     else if(ok)
