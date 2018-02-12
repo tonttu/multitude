@@ -275,18 +275,6 @@ namespace Nimble {
   typedef Vector2T<unsigned int> Vector2u;
   /// Vector of two doubles
   typedef Vector2T<double> Vector2d;
-
-  /// Output the given vector to a stream
-  /// @param os stream to output to
-  /// @param t vector to output
-  /// @return reference to the stream
-  template <class K, class T>
-  inline K &operator<<(K &os, const Nimble::Vector2T<T> &t)
-  {
-    os << t.x << ' ' << t.y;
-    return os;
-  }
-
 } // namespace
 
 namespace std
