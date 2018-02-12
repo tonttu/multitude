@@ -94,6 +94,7 @@ HEADERS += Version.hpp
 HEADERS += VersionGenerated.hpp
 HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
+HEADERS += fast_atof.h
 
 SOURCES += Mime.cpp \
     ThreadPoolExecutor.cpp \
