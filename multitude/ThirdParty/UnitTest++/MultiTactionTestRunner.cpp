@@ -353,26 +353,11 @@ namespace UnitTest
       return exitCode;
     }
 
-    std::vector<const UnitTest::Test*> includeTests(QString match)
+    std::vector<const UnitTest::Test*> filterTests(const QString & includeR, const QString & excludeR)
     {
       std::vector<const UnitTest::Test*> toRun;
-      QRegExp matchRegex(match);
-      auto test = UnitTest::Test::GetTestList().GetHead();
-      while (test) {
-        QString testName = test->m_details.testName;
-        QString suiteName = test->m_details.suiteName;
-        QString matchCandidate = suiteName + "/" + testName;
-        if(matchRegex.isEmpty() || matchCandidate.contains(matchRegex)) {
-          toRun.push_back(test);
-        }
-        test = test->m_nextTest;
-      }
-      return toRun;
-    }
-
-    std::vector<const UnitTest::Test*> excludeTests(QString match)
-    {
-      std::vector<const UnitTest::Test*> toRun;
+      QRegExp includeRegex(includeR);
+      QRegExp excludeRegex(excludeR);
 
       auto test = UnitTest::Test::GetTestList().GetHead();
       while (test) {
@@ -380,7 +365,8 @@ namespace UnitTest
         QString suiteName = test->m_details.suiteName;
         QString matchCandidate = suiteName + "/" + testName;
 
-        if(!matchCandidate.contains(match)) {
+        if ((includeRegex.isEmpty() || matchCandidate.contains(includeRegex)) &&
+            (excludeRegex.isEmpty() || !matchCandidate.contains(excludeRegex))) {
           toRun.push_back(test);
         }
         test = test->m_nextTest;
@@ -548,22 +534,9 @@ namespace UnitTest
       return vector;
     }
 
-    int runTestsInclusive(QString match, QString xmlOutput, const char *procName, TestRunnerFlags flags, int times)
+    int runTests(const QString & match, const QString & exclude, QString xmlOutput, const char *procName, TestRunnerFlags flags, int times)
     {
-      std::vector<const UnitTest::Test*> toRun = repeat(includeTests(match), times);
-
-      if(toRun.empty()) {
-        fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
-                match.toUtf8().data());
-        return 1;
-      }
-
-      return runTests(toRun, xmlOutput, procName, flags);
-    }
-
-    int runTestsExclusive(QString match, QString xmlOutput, const char *procName, TestRunnerFlags flags, int times)
-    {
-      std::vector<const UnitTest::Test*> toRun = repeat(excludeTests(match), times);
+      std::vector<const UnitTest::Test*> toRun = repeat(filterTests(match, exclude), times);
 
       if(toRun.empty()) {
         fprintf(stderr, "Failed to find tests with name or suite matching %s\n",
@@ -601,7 +574,7 @@ namespace UnitTest
                                    "Run only the tests that match the given regex.",
                                    "REGEX");
 
-    QCommandLineOption excludeOption("exclude", "Pattern to exclude tests (not regexp)", "PATTERN");
+    QCommandLineOption excludeOption("exclude", "Exclude tests matching this regex.", "REGEX");
 
     QCommandLineOption v("v", "Run individual tests in verbose mode.");
     QCommandLineOption s("s", "Run individual tests in silent mode, suppress all console output from Cornerstone");
@@ -680,17 +653,8 @@ namespace UnitTest
         return 1;
       }
       return runSingleTest(name, suite, xmlOutput);
-    } else if(!exclude.isEmpty()) {
-
-      if(!include.isEmpty()) {
-        fprintf(stderr, "Don't specify --match with --exclude");
-        return 1;
-      }
-
-      return runTestsExclusive(exclude, xmlOutput, argv[0], flags, times);
-
     } else {
-      return runTestsInclusive(include, xmlOutput, argv[0], flags, times);
+      return runTests(include, exclude, xmlOutput, argv[0], flags, times);
     }
   }
 
