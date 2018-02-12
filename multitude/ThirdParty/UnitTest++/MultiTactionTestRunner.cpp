@@ -580,9 +580,6 @@ namespace UnitTest
   {
     auto app = new QCoreApplication(argc, argv);
 
-    /// Avoid number separator mess
-    setlocale(LC_NUMERIC, "C");
-
     QStringList cmdLineArgs;
     for(int i = 0; i < argc; ++i) {
       cmdLineArgs << QString(argv[i]);
