@@ -16,7 +16,8 @@ HEADERS += Archive.hpp \
     SimpleExpressionLink.hpp \
     AttributeTuple.hpp \
     AttributeVectorContainer.hpp \
-    Event.hpp
+    Event.hpp \
+    GraphicsCoordinates.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -58,7 +59,8 @@ SOURCES += Archive.cpp \
     TransitionManager.cpp \
     SimpleExpression.cpp \
     SimpleExpressionLink.cpp \
-    Event.cpp
+    Event.cpp \
+    GraphicsCoordinates.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp

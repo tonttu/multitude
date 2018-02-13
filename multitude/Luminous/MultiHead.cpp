@@ -473,7 +473,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   MultiHead::MultiHead()
-      : Node(0, "MultiHead"),
+      : GraphicsCoordinates(nullptr, "MultiHead"),
       m_iconify(this, "iconify", false),
       m_dpi(this, "dpi", 40.053f), /* DPI for 55" */
       m_vsync(this, "vsync",
@@ -488,7 +488,6 @@ namespace Luminous
       m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
-    eventAddOut("graphics-bounds-changed");
   }
 
   MultiHead::~MultiHead()

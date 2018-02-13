@@ -23,6 +23,8 @@
 
 #include <memory>
 
+#include <Valuable/GraphicsCoordinates.hpp>
+
 #include <Valuable/AttributeAlias.hpp>
 #include <Valuable/AttributeString.hpp>
 #include <Valuable/AttributeFloat.hpp>
@@ -49,29 +51,8 @@ namespace Luminous {
   /// matrices. Multihead only stores the information of the configuration.
   /// Changing any of the values during runtime will have no effect unless the
   /// windows are restarted.
-  class LUMINOUS_API MultiHead : public Valuable::Node
+  class LUMINOUS_API MultiHead : public Valuable::GraphicsCoordinates
   {
-  public:
-    /// Result of coordinate system transformation, see MultiHead::graphicsToDesktop
-    struct DesktopPoint
-    {
-      /// X Screen number, or -1. See Window::screennumber
-      int screennumber = -1;
-      /// Location in desktop coordinates
-      Nimble::Vector2f location{0, 0};
-      /// True if the query was inside of any of the windows
-      bool isInside = false;
-    };
-
-    /// Result of coordinate system transformation, see MultiHead::desktopToGraphics
-    struct GraphicsPoint
-    {
-      /// Location in graphics coordinates
-      Nimble::Vector2f location{0, 0};
-      /// True if the query was inside of any of the windows
-      bool isInside = false;
-    };
-
   public:
 
     class Window;
@@ -437,7 +418,7 @@ namespace Luminous {
     const Window & window(size_t i) const;
 
     /// Returns the total graphics size
-    Rect graphicsBounds() const;
+    virtual Rect graphicsBounds() const override;
 
     /// Returns the default layer size
     Rect layerSize() const;
@@ -527,10 +508,10 @@ namespace Luminous {
     /// The same graphics coordinate might be visible in several areas, this
     /// finds the first of them.
     /// @sa Area::GraphicsToWindow
-    DesktopPoint graphicsToDesktop(Nimble::Vector2f loc) const;
+    virtual DesktopPoint graphicsToDesktop(Nimble::Vector2f loc) const override;
 
     /// Converts operating system desktop coordinates to graphics coordinates.
-    GraphicsPoint desktopToGraphics(Nimble::Vector2f loc, int screenNumber = -1) const;
+    virtual GraphicsPoint desktopToGraphics(Nimble::Vector2f loc, int screenNumber = -1) const override;
 
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce);
