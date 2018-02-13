@@ -45,8 +45,8 @@ enable-smtp {
   EmailSending.depends += Valuable folly smtpclient Radiant
 }
 
-SUBDIRS += Squish
 enable-luminous {
+  SUBDIRS += Squish
   SUBDIRS += Luminous
   Luminous.depends = Valuable Radiant
   enable-pdf {
