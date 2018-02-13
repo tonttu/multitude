@@ -134,14 +134,6 @@ namespace Radiant {
     /// @return number of bytes sent through the socket
     unsigned long txBytes() const;
 
-/// @cond
-
-    /// Currently not used.
-    /// @param t destination thread
-    void moveToThread(Thread * t);
-
-/// @endcond
-
   private:
     friend class TCPServerSocket;
 

@@ -339,10 +339,6 @@ namespace Radiant
     return (pfd.revents & POLLRDNORM) == POLLRDNORM;
   }
 
-  void TCPSocket::moveToThread(Thread *)
-  {
-  }
-
   int TCPSocket::fd() const
   {
     return m_d->m_fd;
