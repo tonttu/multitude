@@ -54,8 +54,10 @@ enable-luminous {
   }
 }
 
-SUBDIRS += Resonant
-Resonant.depends = Radiant Nimble Valuable
+enable-resonant {
+  SUBDIRS += Resonant
+  Resonant.depends = Radiant Nimble Valuable
+}
 
 enable-video-display {
   SUBDIRS += VideoDisplay
