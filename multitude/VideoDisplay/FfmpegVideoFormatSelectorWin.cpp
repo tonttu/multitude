@@ -22,7 +22,7 @@ namespace VideoDisplay
   /// mjpeg 640x480 @120
   /// If min and max resolutions are different, we just output both min and max sizes.
   static void emitFormats(std::vector<VideoInputFormat> & out, const VideoInputFormat & formatTpl,
-                          Nimble::SizeI minSize, Nimble::SizeI maxSize, float minFps, float maxFps)
+                          Nimble::SizeI minSize, Nimble::SizeI maxSize, double minFps, double maxFps)
   {
     VideoInputFormat format = formatTpl;
 
@@ -48,7 +48,7 @@ namespace VideoDisplay
     out.push_back(format);
 
     for (int targetFps = 30; targetFps <= 120; targetFps *= 2) {
-      if (format.fps < targetFps-10.f && maxFps >= targetFps+10.f) {
+      if (format.fps < targetFps-10.0 && maxFps >= targetFps+10.0) {
         format.fps = targetFps;
         out.push_back(format);
       }
@@ -126,8 +126,8 @@ namespace VideoDisplay
       } else if (resR.exactMatch(msg)) {
         Nimble::SizeI minSize(resR.cap(1).toInt(), resR.cap(2).toInt());
         Nimble::SizeI maxSize(resR.cap(4).toInt(), resR.cap(5).toInt());
-        float minFps = resR.cap(3).toFloat();
-        float maxFps = resR.cap(6).toFloat();
+        double minFps = resR.cap(3).toDouble();
+        double maxFps = resR.cap(6).toDouble();
         if (!format.pin.isEmpty() && (format.vcodec.isEmpty() ^ format.pixelFormat.isEmpty())) {
           emitFormats(ret, format, minSize, maxSize, minFps, maxFps);
         }

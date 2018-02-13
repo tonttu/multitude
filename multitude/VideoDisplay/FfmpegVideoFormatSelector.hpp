@@ -35,7 +35,7 @@ namespace VideoDisplay
     /// If this is raw format, this is the pixel format, for example "yuv420p"
     QString pixelFormat;
     Nimble::SizeI resolution;
-    float fps = 0;
+    double fps = 0;
   };
 
   /// Returns list of available input formats for the given dshow/v4l2 input source
