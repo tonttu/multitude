@@ -439,7 +439,7 @@ namespace Luminous {
     /// Total height of the display area, in graphics pixels.
     int height();
 
-    bool deserialize(const Valuable::ArchiveElement & element);
+    bool deserialize(const Valuable::ArchiveElement & element) override;
 
     /// Adds a window to the collection
     void addWindow(std::unique_ptr<Window> w);
@@ -514,7 +514,7 @@ namespace Luminous {
     virtual GraphicsPoint desktopToGraphics(Nimble::Vector2f loc, int screenNumber = -1) const override;
 
   private:
-    virtual bool readElement(const Valuable::ArchiveElement & ce);
+    virtual bool readElement(const Valuable::ArchiveElement & ce) override;
 
     std::vector<std::unique_ptr<Window> > m_windows;
     Valuable::AttributeBool m_iconify;
