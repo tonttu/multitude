@@ -11,8 +11,6 @@ HEADERS += TempFailureRetry.hpp \
     TemporaryDir.hpp
 HEADERS += BlockRingBuffer.hpp
 HEADERS += ArrayMap.hpp
-HEADERS += ThreadPoolExecutor.hpp
-HEADERS += BGThreadExecutor.hpp
 HEADERS += ObjectPool.hpp
 HEADERS += CommandLineArguments.hpp
 HEADERS += SerialPortHelpers.hpp \
@@ -96,8 +94,6 @@ HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
 
 SOURCES += Mime.cpp \
-    ThreadPoolExecutor.cpp \
-    BGThreadExecutor.cpp \
     ThreadChecks.cpp \
     TraceDuplicateFilter.cpp \
     TraceStdFilter.cpp \
@@ -173,6 +169,13 @@ ios {
 
 }
 linux*:SOURCES += DeviceMonitor.cpp
+
+enable-folly {
+  HEADERS += ThreadPoolExecutor.hpp
+  HEADERS += BGThreadExecutor.hpp
+  SOURCES += ThreadPoolExecutor.cpp
+  SOURCES += BGThreadExecutor.cpp
+}
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FOLLY_FUTURES

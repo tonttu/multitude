@@ -19,7 +19,9 @@
 #include <Radiant/Trace.hpp>
 #include <memory>
 
+#ifdef ENABLE_PUNCTUAL
 #include <Punctual/TaskScheduler.hpp>
+#endif
 
 #include <algorithm>
 #include <typeinfo>
@@ -938,10 +940,12 @@ namespace Valuable
 #endif
   int Node::processQueue()
   {
+#ifdef ENABLE_PUNCTUAL
     /// Which should be first?
     auto exec = Punctual::TaskScheduler::instance()->afterUpdate();
     /// @todo should we have some 'max' parameter for manual executor?
     exec->run();
+#endif
 
     {
       Radiant::Guard g(s_processingQueueMutex);

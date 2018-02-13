@@ -84,6 +84,8 @@ LIBS += $$LIB_FOLLY_FUTURES
 
 DEFINES += VALUABLE_EXPORT
 
+enable-punctual:DEFINES += ENABLE_PUNCTUAL
+
 CONFIG += qt
 QT += xml
 

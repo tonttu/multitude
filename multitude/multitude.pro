@@ -5,11 +5,15 @@ include(../cornerstone.pri)
 
 # 3rd party libraries
 
-smtpclient.subdir += ThirdParty/SMTPEmail
-SUBDIRS += smtpclient
+enable-smtp {
+  smtpclient.subdir += ThirdParty/SMTPEmail
+  SUBDIRS += smtpclient
+}
 
-folly.subdir += ThirdParty/folly
-SUBDIRS += folly
+enable-folly {
+  folly.subdir += ThirdParty/folly
+  SUBDIRS += folly
+}
 
 unittestcpp.subdir += ThirdParty/UnitTest++
 unittestcpp.depends += Radiant
@@ -22,23 +26,32 @@ SUBDIRS += Patterns
 SUBDIRS += Nimble
 
 SUBDIRS += Radiant
-Radiant.depends = Nimble folly
+Radiant.depends = Nimble
+enable-folly:Radiant.depends += folly
 
-# Make executors separate so that this can be dependency for different
-# subcomponents (like Luminous for render threads, Valuable for after events)
-SUBDIRS += Punctual
-Punctual.depends = folly Radiant
+enable-punctual {
+  # Make executors separate so that this can be dependency for different
+  # subcomponents (like Luminous for render threads, Valuable for after events)
+  SUBDIRS += Punctual
+  Punctual.depends = folly Radiant
+}
 
 SUBDIRS += Valuable
-Valuable.depends = Radiant Nimble Punctual folly
+Valuable.depends = Radiant Nimble
+enable-punctual:Valuable.depends += Punctual folly
 
-SUBDIRS += EmailSending
-EmailSending.depends += Valuable folly smtpclient Radiant
+enable-smtp {
+  SUBDIRS += EmailSending
+  EmailSending.depends += Valuable folly smtpclient Radiant
+}
 
 SUBDIRS += Squish
 enable-luminous {
   SUBDIRS += Luminous
-  Luminous.depends = Valuable Punctual folly Radiant
+  Luminous.depends = Valuable Radiant
+  enable-pdf {
+    Luminous.depends += Punctual folly
+  }
 }
 
 SUBDIRS += Resonant
