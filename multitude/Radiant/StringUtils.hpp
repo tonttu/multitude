@@ -21,6 +21,9 @@
 
 #include <stdlib.h>
 
+/// Use atof and atod from assimp
+#include "fast_atof.h"
+
 namespace Radiant
 {
   /// StringUtils is a collection of string manipulation functions.
@@ -108,6 +111,11 @@ namespace Radiant
     template <> inline bool fromString<bool>(const QByteArray & str) { return str.toInt() > 0; }
 
     /// @endcond
+
+    /// Locale-independent string to float conversions. Notice that the return
+    /// value of atof is float and not double, for double use atod.
+    inline float atof(const char * str) { return Assimp::fast_atof(str); }
+    inline double atod(const char * str) { return Assimp::fast_atod(str); }
 
 #ifdef WIN32
     RADIANT_API QString getLastErrorMessage();

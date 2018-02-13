@@ -15,6 +15,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <QFile>
+#include <QTextStream>
 
 #include <math.h>
 #include <stdlib.h>
@@ -95,16 +96,9 @@ namespace Radiant {
 
   double Variant::getDouble(double def) const
   { 
-    QByteArray ba = m_var.toUtf8();
-    const char * str = ba.data();
-    char * strEnd = (char *) str;
-
-    double v = strtod(str, &strEnd);
-    
-    if(strEnd > str)
-      return v;
-
-    return def;
+    bool ok = false;
+    double v = m_var.toDouble(&ok);
+    return ok ? v : def;
   }
 
   float Variant::getFloat(float def) const
@@ -176,48 +170,24 @@ namespace Radiant {
   int Variant::getFloats(float *p, int n)
   {
     QByteArray ba = m_var.toUtf8();
-    char *str = (char *) ba.data();
-
-    int i = 0;
-
-    while(str < ba.data() + ba.size() && i < n) {
-      char * endStr = str;
-
-      double tmp = strtod(str, &endStr);
-      
-      if(endStr <= str)
-        return i;
-      
-      str = endStr;
-
-      *p++ = float(tmp);
-      i++;
+    QTextStream tx(&ba);
+    int i;
+    for (i = 0; i < n; ++i) {
+      tx >> p[i];
+      if (tx.status() != QTextStream::Ok) break;
     }
-    
     return i;
   }
 
   int Variant::getDoubles(double *p, int n)
   {
     QByteArray ba = m_var.toUtf8();
-    const char * str = ba.data();
-
-    int i=0;
-
-    while(str < ba.data() + ba.size() && i < n) {
-      char * end = 0;
-      double tmp = strtod(str, &end);
-      const char * endStr = end;
-      
-      if(endStr <= str)
-	return i;
-      
-      str = endStr;
-
-      *p++ = tmp;
-      i++;
+    QTextStream tx(&ba);
+    int i;
+    for (i = 0; i < n; ++i) {
+      tx >> p[i];
+      if (tx.status() != QTextStream::Ok) break;
     }
-    
     return i;
   }
 
