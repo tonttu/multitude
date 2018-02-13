@@ -36,15 +36,17 @@ SUBDIRS += EmailSending
 EmailSending.depends += Valuable folly smtpclient Radiant
 
 SUBDIRS += Squish
-SUBDIRS += Luminous
-Luminous.depends = Valuable Punctual folly Radiant
+enable-luminous {
+  SUBDIRS += Luminous
+  Luminous.depends = Valuable Punctual folly Radiant
+}
 
 SUBDIRS += Resonant
 Resonant.depends = Radiant Nimble Valuable
 
 enable-video-display {
   SUBDIRS += VideoDisplay
-  VideoDisplay.depends = Resonant Luminous
+  VideoDisplay.depends = Resonant
 }
 
 enable-applications {
