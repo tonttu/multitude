@@ -116,7 +116,21 @@ namespace
     } else if(level >= AV_LOG_WARNING) {
       Radiant::warning("Video decoder: %s", msg.toUtf8().data());
     } else if(level >= AV_LOG_ERROR) {
-      if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
+      /// max_analyze_duration and first timestamps "errors" happen with some
+      /// files and those situations are handled in our decoder once the first
+      /// frame has been decoded and the decoder goes to READY state.
+      ///
+      /// We don't care about "real-time buffer <device> too full or near too
+      /// full (151% of size: 3041280 [rtbufsize parameter])! frame dropped!"
+      /// errors. Those mean that we are not reading all frames fast enough
+      /// from the dshow graph. This means that we are just probably seeking,
+      /// stopping, starting or just rendering at lower framerate than the
+      /// video input running. We typically use streaming-mode anyway in
+      /// this case, so we are only interested in the latest frame. We don't
+      /// care about dropped frames.
+      if (!msg.contains("max_analyze_duration reached") &&
+          !msg.contains("First timestamp is missing,") &&
+          !msg.contains("rtbufsize parameter")) {
         Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     } else {
