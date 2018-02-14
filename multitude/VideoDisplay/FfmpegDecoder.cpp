@@ -1723,6 +1723,11 @@ namespace VideoDisplay
       audioTransfer->setMinimizeLatency(minimize);
   }
 
+  QString FfmpegDecoder::source() const
+  {
+    return m_d->m_options.source();
+  }
+
   void FfmpegDecoder::audioTransferDeleted()
   {
     close();

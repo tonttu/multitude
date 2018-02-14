@@ -729,6 +729,10 @@ namespace VideoDisplay
     /// the audio playback will break.
     virtual void setMinimizeAudioLatency(bool minimize) = 0;
 
+    /// Returns source name, typically the same as Options::source, but can also
+    /// be something more human readable. This is meant only for debugging.
+    virtual QString source() const = 0;
+
     /// Close all AVDecoders
     static void shutdown();
 
