@@ -63,6 +63,8 @@ namespace VideoDisplay
 
     virtual void setMinimizeAudioLatency(bool minimize) override;
 
+    virtual QString source() const override;
+
     /// @cond
 
     /// Called from AudioTransfer::~AudioTransfer

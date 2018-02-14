@@ -17,6 +17,8 @@
 #include "FfmpegDecoder.hpp"
 #endif
 
+#include <Radiant/Timer.hpp>
+
 #include <QFileInfo>
 
 namespace VideoDisplay
@@ -94,15 +96,24 @@ namespace VideoDisplay
 
   void AVDecoder::shutdown()
   {
+    const double maxWaitTimeS = 5.0;
+
     Radiant::Guard g(s_decodersMutex);
     for (auto weak: s_decoders) {
       if (auto decoder = weak.lock()) {
         decoder->close();
       }
     }
+
+    Radiant::Timer t;
     for (auto weak: s_decoders) {
       if (auto decoder = weak.lock()) {
-        decoder->waitEnd();
+        bool ok = decoder->waitEnd(std::max<int>(1, (maxWaitTimeS - t.time()) * 1000));
+        if (!ok) {
+          Radiant::error("AVDecoder::shutdown # %s %s didn't close in %.1lf seconds, giving up",
+                         Radiant::StringUtils::type(*decoder).data(),
+                         decoder->source().toUtf8().data(), maxWaitTimeS);
+        }
       }
     }
   }
