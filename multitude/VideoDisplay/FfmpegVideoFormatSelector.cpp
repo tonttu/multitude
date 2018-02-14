@@ -98,37 +98,77 @@ namespace VideoDisplay
         continue;
 
       /// Format is acceptable, now use the hints to choose the best format
+      if (!bestFormat) {
+        bestFormat = &format;
+        continue;
+      }
 
       /// Use expensive or unknown video formats as a last choice
-      if (bestFormat && bestFormat->category != VideoInputFormat::FORMAT_UNKNOWN &&
+      if (bestFormat->category != VideoInputFormat::FORMAT_UNKNOWN &&
           format.category == VideoInputFormat::FORMAT_UNKNOWN)
         continue;
 
-      if (bestFormat && isValidFps(bestFormat->fps, hints) &&
+      if (bestFormat->category == VideoInputFormat::FORMAT_UNKNOWN &&
+          format.category != VideoInputFormat::FORMAT_UNKNOWN) {
+        bestFormat = &format;
+        continue;
+      }
+
+      if (isValidFps(bestFormat->fps, hints) &&
           !isValidFps(format.fps, hints))
         continue;
 
-      if (bestFormat && isValidResolution(bestFormat->resolution, hints) &&
+      if (!isValidFps(bestFormat->fps, hints) &&
+          isValidFps(format.fps, hints)) {
+        bestFormat = &format;
+        continue;
+      }
+
+      if (isValidResolution(bestFormat->resolution, hints) &&
           !isValidResolution(format.resolution, hints))
         continue;
 
-      /// If we prefer quality over resolution, we don't want to have compressed stream
-      if (hints.preferUncompressedStream && bestFormat &&
-          bestFormat->category != VideoInputFormat::FORMAT_COMPRESSED &&
-          format.category == VideoInputFormat::FORMAT_COMPRESSED)
+      if (!isValidResolution(bestFormat->resolution, hints) &&
+          isValidResolution(format.resolution, hints)) {
+        bestFormat = &format;
         continue;
+      }
+
+      /// If we prefer quality over resolution, we don't want to have compressed stream
+      if (hints.preferUncompressedStream) {
+        if (bestFormat->category != VideoInputFormat::FORMAT_COMPRESSED &&
+            format.category == VideoInputFormat::FORMAT_COMPRESSED)
+          continue;
+
+        if (bestFormat->category == VideoInputFormat::FORMAT_COMPRESSED &&
+            format.category != VideoInputFormat::FORMAT_COMPRESSED) {
+          bestFormat = &format;
+          continue;
+        }
+      }
 
       /// Use the best resolution and biggest fps.
 
-      if (bestFormat && bestFormat->resolution.width() * bestFormat->resolution.height() >
+      if (bestFormat->resolution.width() * bestFormat->resolution.height() >
           format.resolution.width() * format.resolution.height())
         continue;
 
-      if (bestFormat && bestFormat->fps > format.fps)
+      if (bestFormat->resolution.width() * bestFormat->resolution.height() <
+          format.resolution.width() * format.resolution.height()) {
+        bestFormat = &format;
+        continue;
+      }
+
+      if (bestFormat->fps > format.fps)
         continue;
 
+      if (bestFormat->fps < format.fps) {
+        bestFormat = &format;
+        continue;
+      }
+
       /// YUV is the best compared to RGB / compressed
-      if (bestFormat && bestFormat->category == VideoInputFormat::FORMAT_YUV &&
+      if (bestFormat->category == VideoInputFormat::FORMAT_YUV &&
           format.category != VideoInputFormat::FORMAT_YUV)
         continue;
 
