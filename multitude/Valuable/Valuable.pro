@@ -16,7 +16,8 @@ HEADERS += Archive.hpp \
     SimpleExpressionLink.hpp \
     AttributeTuple.hpp \
     AttributeVectorContainer.hpp \
-    Event.hpp
+    Event.hpp \
+    GraphicsCoordinates.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -58,7 +59,8 @@ SOURCES += Archive.cpp \
     TransitionManager.cpp \
     SimpleExpression.cpp \
     SimpleExpressionLink.cpp \
-    Event.cpp
+    Event.cpp \
+    GraphicsCoordinates.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
 SOURCES += ConfigElement.cpp
@@ -83,6 +85,8 @@ LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL
 LIBS += $$LIB_FOLLY_FUTURES
 
 DEFINES += VALUABLE_EXPORT
+
+enable-punctual:DEFINES += ENABLE_PUNCTUAL
 
 CONFIG += qt
 QT += xml
