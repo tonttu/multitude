@@ -158,8 +158,25 @@ namespace VideoDisplay
       avOptions.setDemuxerOption("video_size", QString("%1x%2").
                                  arg(format.resolution.width()).
                                  arg(format.resolution.height()));
-    if (format.fps > 0)
-      avOptions.setDemuxerOption("framerate", QString::number(format.fps));
+    if (format.fps > 0) {
+      if (avOptions.format() == "dshow") {
+        /// dshow internally uses frame interval and not framerate values, see
+        /// MinFrameInterval and MaxFrameInterval:
+        /// https://msdn.microsoft.com/en-us/library/windows/desktop/dd407352(v=vs.85).aspx
+        ///
+        /// Magewell USB Capture dongles have frame interval 166667 units (59.99988 fps),
+        /// and if we give "59.9999" here like what ffmpeg reports, that will be rounded to
+        /// wrong direction in ffmpeg and the video opening fails. Instead we give the
+        /// framerate as a fraction to work around these issues.
+        /// There are some limitations on how large numbers you can have in fractions
+        /// in ffmpeg, so we have a patch in place that increases that value to 1e7 so that
+        /// we can give accurate values here.
+        uint64_t frameInt = std::round(1e7 / format.fps);
+        avOptions.setDemuxerOption("framerate", QString("10000000:%1").arg(frameInt));
+      } else {
+        avOptions.setDemuxerOption("framerate", QString::number(format.fps));
+      }
+    }
 
 #ifdef RADIANT_LINUX
     if (!format.vcodec.isEmpty())
