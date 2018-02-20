@@ -921,7 +921,7 @@ namespace Luminous
   inline T * RenderContext::mapBuffer(const Buffer & buffer, Buffer::Type type,
                                       Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    return mapBuffer<T>(buffer, type, 0, buffer.size(), access);
+    return mapBuffer<T>(buffer, type, 0, buffer.bufferSize(), access);
   }
 
   template <typename Vertex, typename Uniform>
