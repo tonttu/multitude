@@ -91,6 +91,15 @@ namespace Luminous
       UNPACK   = GL_PIXEL_UNPACK_BUFFER,
     };
 
+    /// Used by BufferGL to implement partial uploads
+    struct DirtyRegion
+    {
+      /// Data offset to the first item that has changed, in bytes
+      size_t dataBegin = 0;
+      /// Past-the-last element data offset
+      size_t dataEnd = 0;
+    };
+
   public:
     /// Constructor
     LUMINOUS_API Buffer();
@@ -114,19 +123,38 @@ namespace Luminous
     /// Set the buffer contents. Does not copy the data. The pointer must
     /// remain valid as long as the buffer is in use.
     /// @param data pointer to data
-    /// @param size size of the data in bytes
+    /// @param dataSize size of the data in bytes
     /// @param usage usage hint
-    LUMINOUS_API void setData(const void * data, size_t size, Usage usage);
+    /// @param bufferSize size of the allocated buffer in bytes. 0 means that
+    ///        the buffer size will be the same as the data size. Buffer size
+    ///        can be larger than the dataSize, if you wish to allocate bigger
+    ///        buffer on the GPU, for instance if you want to update the data
+    ///        contents later using invalidateRegion.
+    LUMINOUS_API void setData(const void * data, size_t dataSize, Usage usage,
+                              size_t bufferSize = 0);
 
-    /// Get the size of the buffer
-    /// @return size of the buffer in bytes
-    LUMINOUS_API size_t size() const;
+    /// Get the size of the data() buffer
+    /// @return size of the data buffer in bytes
+    LUMINOUS_API size_t dataSize() const;
+    /// Get the size of the buffer in bytes. Can't be smaller than dataSize().
+    LUMINOUS_API size_t bufferSize() const;
     /// Get a pointer to the buffer data
     /// @return data pointer
     LUMINOUS_API const void * data() const;
     /// Get the usage hints for the buffer
     /// @return usage hints
     LUMINOUS_API Usage usage() const;
+
+    /// Used by BufferGL to implement partial data uploads. Actually removes
+    /// the thread-specific dirty region, even though the function is const.
+    LUMINOUS_API DirtyRegion takeDirtyRegion(unsigned int threadIndex) const;
+
+    /// Invalidates part of the data. This can increase dataSize() if this
+    /// specifies data that goes over the current dataSize(). Just make sure
+    /// that the total size doesn't go over bufferSize().
+    /// @param offset offset in bytes from the beginning of data()
+    /// @param size invalidated region size in bytes.
+    LUMINOUS_API void invalidateRegion(size_t offset, size_t size);
 
   private:
     friend class VertexArray;

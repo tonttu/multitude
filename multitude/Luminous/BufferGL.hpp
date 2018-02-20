@@ -76,7 +76,6 @@ namespace Luminous
     Buffer::Usage m_usage;
     size_t m_size;        // Size (in bytes)
     size_t m_allocatedSize;
-    size_t m_uploaded;    // Uploaded bytes (for incremental upload)
     int m_generation;
   };
 }

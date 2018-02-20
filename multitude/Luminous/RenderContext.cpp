@@ -747,13 +747,13 @@ namespace Luminous
         /// Fix the generation so it doesn't get automatically overwritten by an upload()
         buffer->buffer.setGeneration(0);
 #ifndef RENDERCONTEXT_SHAREDBUFFER_MAP
-        buffer->data.resize(buffer->buffer.size());
+        buffer->data.resize(buffer->buffer.dataSize());
 #endif
         break;
       }
 
       buffer = &pool.buffers[i];
-      if(buffer->buffer.size() - buffer->reservedBytes >= requiredBytes)
+      if(buffer->buffer.dataSize() - buffer->reservedBytes >= requiredBytes)
         break;
 
       nextSize <<= 1;

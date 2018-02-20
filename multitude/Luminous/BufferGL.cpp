@@ -18,9 +18,8 @@ namespace Luminous
   BufferGL::BufferGL(StateGL & state, const Buffer & buffer)
     : ResourceHandleGL(state)
     , m_usage(buffer.usage())
-    , m_size(buffer.size())
+    , m_size(buffer.bufferSize())
     , m_allocatedSize(0)
-    , m_uploaded(0)
     , m_generation(0)
   {    
     m_state.opengl().glGenBuffers(1, &m_handle);
@@ -31,7 +30,6 @@ namespace Luminous
     , m_usage(usage)
     , m_size(0)
     , m_allocatedSize(0)
-    , m_uploaded(0)
     , m_generation(0)
   {
     m_state.opengl().glGenBuffers(1, &m_handle);
@@ -48,7 +46,6 @@ namespace Luminous
     , m_usage(t.m_usage)
     , m_size(t.m_size)
     , m_allocatedSize(t.m_allocatedSize)
-    , m_uploaded(t.m_size)
     , m_generation(t.m_generation)
   {
   }
@@ -72,23 +69,44 @@ namespace Luminous
     // Reset usage timer
     touch();
 
-    // Update if dirty
-    if(m_generation < buffer.generation()) {
+    const Buffer::DirtyRegion dirtyRegion = buffer.takeDirtyRegion(m_state.threadIndex());
+    bool recreate = m_generation < buffer.generation();
+
+    if (!recreate) {
+      if (dirtyRegion.dataEnd == dirtyRegion.dataBegin)
+        return;
+
+      /// Do partial upload
+      bind(type);
+      m_state.opengl().glBufferSubData(type, dirtyRegion.dataBegin,
+                                       dirtyRegion.dataEnd - dirtyRegion.dataBegin,
+                                       static_cast<const uint8_t*>(buffer.data()) + dirtyRegion.dataBegin);
+      GLERROR("BufferGL::upload # glBufferSubData");
+      return;
+    }
+
+    if (recreate) {
       bind(type);
 
-      /// @todo incremental upload
-      if(buffer.size() != m_allocatedSize || buffer.usage() != m_usage) {
-        m_state.opengl().glBufferData(type, buffer.size(), buffer.data(), buffer.usage());
-        GLERROR("BufferGL::upload # glBufferData");
+      if(buffer.bufferSize() != m_allocatedSize || buffer.usage() != m_usage) {
+        if (buffer.bufferSize() == buffer.dataSize()) {
+          m_state.opengl().glBufferData(type, buffer.bufferSize(), buffer.data(), buffer.usage());
+          GLERROR("BufferGL::upload # glBufferData");
+        } else {
+          m_state.opengl().glBufferData(type, buffer.bufferSize(), nullptr, buffer.usage());
+          GLERROR("BufferGL::upload # glBufferData");
+
+          m_state.opengl().glBufferSubData(type, 0, buffer.dataSize(), buffer.data());
+          GLERROR("BufferGL::upload # glBufferSubData");
+        }
       } else if (buffer.data()) {
-        m_state.opengl().glBufferSubData(type, 0, buffer.size(), buffer.data());
+        m_state.opengl().glBufferSubData(type, 0, buffer.dataSize(), buffer.data());
         GLERROR("BufferGL::upload # glBufferSubData");
       }
 
       m_generation = buffer.generation();
-      m_size = buffer.size();
+      m_size = buffer.bufferSize();
       m_allocatedSize = m_size;
-      m_uploaded = buffer.size();
       m_usage = buffer.usage();
     }
   }
