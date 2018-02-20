@@ -65,6 +65,13 @@ namespace
     bool m_finished = false;
     static const int m_pointsPerCurve = 3; // 4 control points for cubic bezier, but start point is the end point of previous curve
     std::vector<Vertex> m_vertices;
+
+    /// True if this spline has been succesfully rendered to SplineManager::D::m_vertices
+    bool m_baked = false;
+    /// Vertex index to SplineManager::D::m_vertices
+    int m_bakedIndex = 0;
+    /// Past-the-end vertex index to SplineManager::D::m_vertices
+    int m_bakedIndexEnd = 0;
   };
 
   void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
@@ -82,7 +89,6 @@ namespace
     }
     m_data.points.append(point);
     processPoint(point, index + 1);
-    return;
   }
 
   void SplineInternal::processPoints()
@@ -586,6 +592,34 @@ namespace Luminous
 
   ///////////////////////////////////////////////////////////////////////////////////////
 
+  /// For effiency reasons we keep all generated vertices in one big vector
+  /// (SplineManager::D::m_vertices) where finished splines are in the beginning
+  /// (in depth order) and then all unfinished splines at the end. This way we
+  /// don't need to recreate and reupload the whole vector if we just add one
+  /// vertex to the end.
+  ///
+  /// However, it's also possible to add new finished or unfinished splines
+  /// between existing splines by giving arbitrary depth value. Since we need
+  /// to render the vertices in correct order, we do the final rendering in
+  /// batches. One batch is continuous section in m_vertices that can be
+  /// rendered with a single render command and has all the items in order.
+  ///
+  /// An example:
+  /// There are two existing splines A (depth 0) and B (depth 2), and we are
+  /// adding a new spline C (depth 1). m_vertices looks something like this:
+  /// AAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCC
+  /// <------------------ finished ------------------><--- unfinished ---->
+  /// <---- render pass 0 ---><---- render pass 2 ---><-- render pass 1 -->
+  ///
+  /// Since the new spline need to be rendered between A and B, we need to have
+  /// three render batches to render the unfinished spline C before spline B.
+  struct RenderBatch
+  {
+    int offset = -1;
+    int vertexCount = 0;
+    bool finished = false;
+  };
+
   class SplineManager::D
   {
   public:
@@ -593,17 +627,15 @@ namespace Luminous
     {
       m_descr.addAttribute<Nimble::Vector2f>("vertex_position");
       m_descr.addAttribute<Nimble::Vector4f>("vertex_color");
-      fillBuffer();
       m_vertexArray.addBinding(m_vertexBuffer, m_descr);
     }
 
     void clear();
 
-    void fillBuffer();
+    /// @param vertexOffset first vertex that has changed
+    void fillBuffer(size_t vertexOffset);
 
     void recalculate();
-    void recalculateAll();
-    void bakeStroke(SplineInternal & stroke);
     void recalculate(SplineInternal & stroke);
 
     void updateBoundingBox();
@@ -623,6 +655,7 @@ namespace Luminous
 
   public:
     std::vector<Vertex> m_vertices;
+    std::vector<RenderBatch> m_renderBatches;
     QMap<Valuable::Node::Uuid, SplineInternal> m_strokes;
     QMap<float, Valuable::Node::Uuid> m_depthMap;
 
@@ -630,7 +663,6 @@ namespace Luminous
 
     Luminous::Buffer m_vertexBuffer;
     Luminous::VertexArray m_vertexArray;
-    size_t m_finishedIndex = 0;
 
     bool m_hasTranslucentVertices = false;
 
@@ -642,76 +674,110 @@ namespace Luminous
     m_vertices.clear();
     m_bounds = Nimble::Rectf();
     m_strokes.clear();
-    m_finishedIndex = 0;
+    m_renderBatches.clear();
     m_hasTranslucentVertices = false;
-    fillBuffer();
   }
 
-  void SplineManager::D::fillBuffer()
+  void SplineManager::D::fillBuffer(size_t vertexOffset)
   {
-    m_vertexBuffer.setData(m_vertices.data(), sizeof(Vertex) * m_vertices.size(),
-                           Luminous::Buffer::DYNAMIC_DRAW);
+    const size_t bytesNeeded = sizeof(Vertex) * m_vertices.size();
+    /// Allocate slightly larger buffer than we need so that we don't need
+    /// to allocate a new buffer every time a small change is made to the
+    /// spline.
+    const size_t maxUsedBytes = bytesNeeded + 16*1024;
+
+    /// If possible, only upload changed part of m_vertices
+    if (m_vertexBuffer.data() == m_vertices.data()) {
+      if (m_vertexBuffer.bufferSize() >= bytesNeeded && m_vertexBuffer.bufferSize() <= maxUsedBytes) {
+        size_t offsetBytes = sizeof(Vertex) * vertexOffset;
+        m_vertexBuffer.invalidateRegion(offsetBytes, bytesNeeded - offsetBytes);
+        return;
+      }
+    }
+
+    m_vertexBuffer.setData(m_vertices.data(), bytesNeeded,
+                           Luminous::Buffer::DYNAMIC_DRAW, maxUsedBytes);
   }
 
   void SplineManager::D::recalculate()
   {
-    // truncate vertices from unfinished strokes and recalculate only those
-    m_vertices.resize(m_finishedIndex);
+    /// Stroke id, render batch index
+    std::vector<std::pair<Valuable::Node::Uuid, int>> unfinishedStrokes;
 
-    for (const auto & id : m_depthMap.values()) {
-      auto & stroke = m_strokes[id];
-      if (!stroke.m_finished)
-        recalculate(stroke);
-    }
-
-    fillBuffer();
-    updateBoundingBox();
-  }
-
-  void SplineManager::D::recalculateAll()
-  {
-    m_vertices.clear();
+    m_renderBatches.clear();
     m_hasTranslucentVertices = false;
 
-    std::vector<Valuable::Node::Uuid> unfinishedStrokes;
+    bool useCachedValues = true;
+    int invalidateOffset = 0;
+    int index = 0;
 
-    // Calculate finished strokes first, so we can easily keep them while recalculating
-    // strokes that are still edited
-    for (const auto & id : m_depthMap.values()) {
+    for (const auto & id : m_depthMap) {
       auto & stroke = m_strokes[id];
-      if (!stroke.m_finished)
-        unfinishedStrokes.push_back(id);
-      else
+      if (stroke.m_curves.empty())
+        continue;
+
+      m_hasTranslucentVertices |= stroke.m_data.color.a < 0.999f;
+
+      /// Calculate finished strokes first, so we can easily keep them while
+      /// recalculating strokes that are still edited
+      if (stroke.m_finished) {
+
+        /// This stroke has already been baked
+        if (useCachedValues && stroke.m_baked && stroke.m_bakedIndex == index) {
+          if (m_renderBatches.empty() || !m_renderBatches.back().finished) {
+            m_renderBatches.emplace_back();
+            m_renderBatches.back().finished = true;
+            m_renderBatches.back().offset = index;
+          }
+          m_renderBatches.back().vertexCount += stroke.m_bakedIndexEnd - stroke.m_bakedIndex;
+          index = stroke.m_bakedIndexEnd;
+          continue;
+        }
+
+        if (useCachedValues) {
+          useCachedValues = false;
+          invalidateOffset = index;
+          m_vertices.resize(index);
+        }
+
+        int offset = m_vertices.size();
         recalculate(stroke);
+        if (m_renderBatches.empty() || !m_renderBatches.back().finished) {
+          m_renderBatches.emplace_back();
+          m_renderBatches.back().finished = true;
+          m_renderBatches.back().offset = offset;
+        }
+        m_renderBatches.back().vertexCount += m_vertices.size() - offset;
+      } else {
+        if (m_renderBatches.empty() || m_renderBatches.back().finished)
+          m_renderBatches.emplace_back();
+        unfinishedStrokes.push_back({id, m_renderBatches.size() - 1});
+      }
     }
 
-    m_finishedIndex = m_vertices.size();
+    if (useCachedValues) {
+      invalidateOffset = index;
+      m_vertices.resize(index);
+    }
 
-    for (const auto & id : unfinishedStrokes) {
-      auto & stroke = m_strokes[id];
+    for (const auto p: unfinishedStrokes) {
+      auto & stroke = m_strokes[p.first];
+      RenderBatch & rb = m_renderBatches[p.second];
+
+      int offset = m_vertices.size();
       recalculate(stroke);
+      if (rb.offset == -1)
+        rb.offset = offset;
+      rb.vertexCount += m_vertices.size() - offset;
     }
 
-    fillBuffer();
+    fillBuffer(invalidateOffset);
     updateBoundingBox();
-  }
-
-  void SplineManager::D::bakeStroke(SplineInternal & stroke)
-  {
-    m_vertices.resize(m_finishedIndex);
-    recalculate(stroke);
-    m_finishedIndex = m_vertices.size();
-
-    recalculate();
   }
 
   void SplineManager::D::recalculate(SplineInternal & stroke)
   {
-    if(stroke.m_curves.size() < 1) {
-      return;
-    }
-
-    m_hasTranslucentVertices |= stroke.m_data.color.a < 0.999f;
+    stroke.m_bakedIndex = m_vertices.size();
 
     // use cached stroke data if available
     if (stroke.m_finished && !stroke.m_vertices.empty()) {
@@ -721,6 +787,8 @@ namespace Luminous
         m_vertices.push_back(stroke.m_vertices.front());
       }
       m_vertices.insert(m_vertices.end(), stroke.m_vertices.begin(), stroke.m_vertices.end());
+      stroke.m_baked = true;
+      stroke.m_bakedIndexEnd = m_vertices.size();
       return;
     }
 
@@ -809,6 +877,10 @@ namespace Luminous
     // cache stroke data for finished stroke
     if (stroke.m_finished) {
       stroke.m_vertices.assign(m_vertices.begin() + offset, m_vertices.end());
+      stroke.m_baked = true;
+      stroke.m_bakedIndexEnd = m_vertices.size();
+    } else {
+      stroke.m_baked = false;
     }
   }
 
@@ -821,22 +893,20 @@ namespace Luminous
 
   void SplineManager::D::render(Luminous::RenderContext & r) const
   {
-    // Nothing to render
-    if(m_vertices.empty())
-      return;
+    for (auto rb: m_renderBatches) {
+      auto b = r.render<Vertex, Luminous::BasicUniformBlock>(m_hasTranslucentVertices || r.opacity() < 0.9999f,
+                                                             Luminous::PRIMITIVE_TRIANGLE_STRIP, rb.offset,
+                                                             rb.vertexCount,
+                                                             1.f, m_vertexArray, r.splineShader());
 
-    auto b = r.render<Vertex, Luminous::BasicUniformBlock>(m_hasTranslucentVertices || r.opacity() < 0.9999f,
-                                                           Luminous::PRIMITIVE_TRIANGLE_STRIP, 0,
-                                                           m_vertices.size(),
-                                                           1.f, m_vertexArray, r.splineShader());
+      /// @todo what color to use here?
+      b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
+      b.uniform->depth = b.depth;
 
-    /// @todo what color to use here?
-    b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
-    b.uniform->depth = b.depth;
-
-    // Fill the uniform data
-    b.uniform->projMatrix = r.viewTransform().transposed();
-    b.uniform->modelMatrix = r.transform().transposed();
+      // Fill the uniform data
+      b.uniform->projMatrix = r.viewTransform().transposed();
+      b.uniform->modelMatrix = r.transform().transposed();
+    }
 
 #ifdef SPLINES_DEBUG
     Luminous::Style strokeStyle;
@@ -869,7 +939,7 @@ namespace Luminous
         simplifyStroke(stroke, tolerance);
       }
       if (calculate)
-        bakeStroke(stroke);
+        recalculate();
     }
   }
 
@@ -894,7 +964,7 @@ namespace Luminous
         }
       }
       if(calculate)
-        recalculateAll();
+        recalculate();
     }
   }
 
@@ -966,11 +1036,11 @@ namespace Luminous
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
     m_d->m_bounds = other.m_d->m_bounds;
-    m_d->m_finishedIndex = other.m_d->m_finishedIndex;
     m_d->m_vertices = other.m_d->m_vertices;
+    m_d->m_renderBatches = other.m_d->m_renderBatches;
     m_d->m_hasTranslucentVertices = other.m_d->m_hasTranslucentVertices;
 
-    m_d->fillBuffer();
+    m_d->fillBuffer(0);
   }
 
   SplineManager & SplineManager::operator=(const SplineManager & other)
@@ -978,10 +1048,10 @@ namespace Luminous
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
     m_d->m_bounds = other.m_d->m_bounds;
-    m_d->m_finishedIndex = other.m_d->m_finishedIndex;
     m_d->m_vertices = other.m_d->m_vertices;
+    m_d->m_renderBatches = other.m_d->m_renderBatches;
     m_d->m_hasTranslucentVertices = other.m_d->m_hasTranslucentVertices;
-    m_d->fillBuffer();
+    m_d->fillBuffer(0);
     return *this;
   }
 
@@ -1051,10 +1121,8 @@ namespace Luminous
     if (addedStrokes)
       addedStrokes->append(newStrokes);
 
-    // if anything was erased, need to recalculate all vertices
-    if (recalculate)
-      m_d->recalculateAll();
-    else if (newStrokes.size() > 0)
+    // if anything was changed, need to recalculate m_vertices
+    if (recalculate || newStrokes.size() > 0)
       m_d->recalculate();
     return true;
   }
@@ -1093,10 +1161,8 @@ namespace Luminous
     if (addedStrokes)
       addedStrokes->append(newStrokes);
 
-    // if anything was erased, need to recalculate all vertices
-    if (recalculate)
-      m_d->recalculateAll();
-    else if (newStrokes.size() > 0)
+    // if anything was changed, need to recalculate m_vertices
+    if (recalculate || newStrokes.size() > 0)
       m_d->recalculate();
     return true;
   }
@@ -1169,7 +1235,7 @@ namespace Luminous
       return;
     for (const auto & stroke : splines)
       m_d->removeStroke(stroke.id, false);
-    m_d->recalculateAll();
+    m_d->recalculate();
   }
 
   void SplineManager::addAndRemoveSplines(const SplineManager::Splines & addedSplines,
@@ -1179,7 +1245,7 @@ namespace Luminous
       m_d->addStroke(info, false);
     for (const auto & info : removedSplines)
       m_d->removeStroke(info.id, false);
-    m_d->recalculateAll();
+    m_d->recalculate();
   }
 
   void SplineManager::
@@ -1190,7 +1256,7 @@ namespace Luminous
       m_d->addStroke(info, false);
     for (const auto & id : removedSplines)
       m_d->removeStroke(id, false);
-    m_d->recalculateAll();
+    m_d->recalculate();
   }
 
   SplineManager::SplineData SplineManager::spline(Valuable::Node::Uuid id) const
@@ -1249,7 +1315,7 @@ namespace Luminous
 
       line += count;
     }
-    m_d->recalculateAll();
+    m_d->recalculate();
   }
 
   void SplineManager::clear()

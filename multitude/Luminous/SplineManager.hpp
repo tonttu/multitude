@@ -76,7 +76,7 @@ namespace Luminous {
     /// @param errorText text describing an error in erasing (if any)
     /// @return false if there was an error in erasing, otherwise true
     bool erase(const Nimble::Circle & eraser,
-               Splines * removedSplines, Splines * addedSplines,
+               Splines * removedSplines = nullptr, Splines * addedSplines = nullptr,
                QString * errorText = nullptr);
 
     /// Begins a new spline and returns its id.
