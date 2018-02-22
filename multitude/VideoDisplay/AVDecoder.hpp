@@ -284,6 +284,26 @@ namespace VideoDisplay
       SeekFlags m_flags;
     };
 
+    /// Hints for choosing the best format for a video capture or webcam streams.
+    /// None of these are hard requirements, but any available formats matching
+    /// these are considered before other formats.
+    struct VideoStreamHints
+    {
+      /// Preferred min and max framerate
+      float minFps = 29;
+      float maxFps = 121;
+
+      /// Preferred min and max resolution
+      Nimble::SizeI minResolution { 1900, 0 };
+      Nimble::SizeI maxResolution { 3840, 2160 };
+
+      /// Use YUV / RGB streams instead of MJPEG and other compressed formats
+      bool preferUncompressedStream = true;
+
+      VIDEODISPLAY_API bool operator==(const VideoStreamHints & o) const;
+      inline bool operator!=(const VideoStreamHints & o) const { return !operator==(o); }
+    };
+
     /// Video and audio parameters for AVDecoder when opening a new media file.
     class Options
     {
@@ -583,6 +603,11 @@ namespace VideoDisplay
       QString decoderBackend() const { return m_decoderBackend; }
       void setDecoderBackend(const QString & backendName) { m_decoderBackend = backendName; }
 
+      /// Hints for choosing the best format for a video capture or webcam streams.
+      /// @sa VideoStreamHints
+      const VideoStreamHints & videoStreamHints() const { return m_videoStreamHints; }
+      void setVideoStreamHints(const VideoStreamHints & hints) { m_videoStreamHints = hints; }
+
     private:
       QString m_source;
       QString m_format;
@@ -604,6 +629,7 @@ namespace VideoDisplay
       VideoFrame::Format m_pixelFormat;
       int m_videoDecodingThreads;
       QString m_decoderBackend;
+      VideoStreamHints m_videoStreamHints;
     };
 
   public:
@@ -728,6 +754,10 @@ namespace VideoDisplay
     /// the audio playback will break.
     /// @returns false if the feature is not supported
     virtual bool setMinimizeAudioLatency(bool minimize);
+
+    /// Returns source name, typically the same as Options::source, but can also
+    /// be something more human readable. This is meant only for debugging.
+    virtual QString source() const = 0;
 
     /// Close all AVDecoders
     static void shutdown();

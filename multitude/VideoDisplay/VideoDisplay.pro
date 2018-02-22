@@ -13,22 +13,33 @@ SOURCES += AudioTransfer.cpp AVDecoder.cpp \
 HEADERS += FfmpegDecoder.hpp
 SOURCES += FfmpegDecoder.cpp
 
-linux:SOURCES += V4L2Monitor.cpp
-macx:SOURCES += VideoCaptureMonitorDummy.cpp
+HEADERS += FfmpegVideoFormatSelector.hpp
+SOURCES += FfmpegVideoFormatSelector.cpp
 
 win32 {
   SOURCES += WindowsVideoMonitor.cpp \
              WindowsVideoHelpers.cpp \
-             RGBEasy.cpp
+             RGBEasy.cpp \
+             FfmpegVideoFormatSelectorWin.cpp
 
   HEADERS += WindowsVideoHelpers.hpp \
              RGBEasy.hpp
 
-  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg/bin
+  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg-mt/bin
 
   # RGBEASY (Datapath SDK)
   INCLUDEPATH += rgbeasy-sdk-v7.14.1/include
   LIBS += -lStrmiids -lOle32 -lOleAut32 -lPropsys
+}
+
+linux {
+  SOURCES += FfmpegVideoFormatSelectorLinux.cpp
+  SOURCES += V4L2Monitor.cpp
+}
+
+macx {
+  SOURCES += FfmpegVideoFormatSelectorDummy.cpp
+  SOURCES += VideoCaptureMonitorDummy.cpp
 }
 
 DEFINES += __STDC_CONSTANT_MACROS
