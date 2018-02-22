@@ -548,7 +548,7 @@ namespace VideoDisplay
     AVInputFormat * inputFormat = nullptr;
     AVDictionary * avoptions = nullptr;
 
-    const QString src(m_options.source());
+    QString src(m_options.source());
     const QFileInfo sourceFileInfo(src);
 
     QByteArray errorMsg("FfmpegDecoder::D::open # " + src.toUtf8() + ":");
@@ -604,6 +604,19 @@ namespace VideoDisplay
       m_options.setDemuxerOption("audio_buffer_size", "50");
 #endif
 
+#ifdef RADIANT_OSX
+    /// Detect some AVFoundation devices automatically
+    if (m_options.format().isEmpty()) {
+      if (src.startsWith("AVFoundation:")) {
+        src = src.mid(13);
+        m_options.setSource(src);
+        m_options.setFormat("avfoundation");
+      } else if (QRegExp("\\d+:\\d+").exactMatch(src)) {
+        m_options.setFormat("avfoundation");
+      }
+    }
+#endif
+
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
     if(!m_options.format().isEmpty()) {
@@ -621,8 +634,8 @@ namespace VideoDisplay
 
     if ((m_options.format() == "dshow" &&
         !m_options.demuxerOptions().contains("list_options")) ||
-        m_options.format() == "v4l2" || m_options.format() == "video4linux2") {
-      Radiant::info("Scanning..");
+        m_options.format() == "v4l2" || m_options.format() == "video4linux2" ||
+        m_options.format() == "avfoundation") {
       std::vector<VideoInputFormat> formats = scanInputFormats(
             src, inputFormat, m_options.demuxerOptions());
 

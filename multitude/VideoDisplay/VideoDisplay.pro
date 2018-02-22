@@ -38,7 +38,7 @@ linux {
 }
 
 macx {
-  SOURCES += FfmpegVideoFormatSelectorDummy.cpp
+  SOURCES += FfmpegVideoFormatSelectorMac.mm
   SOURCES += VideoCaptureMonitorDummy.cpp
 }
 
