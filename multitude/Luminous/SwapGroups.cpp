@@ -2,12 +2,16 @@
 
 #include <Radiant/Platform.hpp>
 
-namespace Luminous {
-
 #ifdef RADIANT_LINUX
-
 #include <GL/glx.h>
+#elif defined(RADIANT_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 
+namespace Luminous
+{
+#ifdef RADIANT_LINUX
   class SwapGroups::D
   {
   public:
@@ -25,7 +29,7 @@ namespace Luminous {
     GlXQueryFrameCountNV glXQueryFrameCountNV = nullptr;
     GlXResetFrameCountNV glXResetFrameCountNV = nullptr;
 
-    Display m_display = glXGetCurrentDisplay();
+    Display * m_display = glXGetCurrentDisplay();
     int m_screen = 0;
   };
 
@@ -79,9 +83,6 @@ namespace Luminous {
   }
 
 #elif defined(RADIANT_WINDOWS)
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 
   class SwapGroups::D
   {
@@ -153,6 +154,8 @@ namespace Luminous {
   }
 
 #else
+  class SwapGroups::D
+  {};
 
   SwapGroups::SwapGroups(int /*screen*/)
   {}
