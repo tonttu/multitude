@@ -38,8 +38,8 @@ linux {
 }
 
 macx {
-  SOURCES += FfmpegVideoFormatSelectorDummy.cpp
-  SOURCES += VideoCaptureMonitorDummy.cpp
+  SOURCES += FfmpegVideoFormatSelectorMac.mm
+  SOURCES += VideoCaptureMonitorMac.mm
 }
 
 DEFINES += __STDC_CONSTANT_MACROS
