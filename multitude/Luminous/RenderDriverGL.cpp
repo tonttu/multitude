@@ -927,19 +927,20 @@ namespace Luminous
     return m_d->m_gpuId;
   }
 
-  bool RenderDriverGL::setupSwapGroup(int group)
+  bool RenderDriverGL::setupSwapGroup(int group, int screen)
   {
+    SwapGroups groups(screen);
     // Do nothing if the extension is not supported
-    if(!SwapGroups::isExtensionSupported())
+    if (!groups.isExtensionSupported())
       return false;
 
     // Query the number of available swap groups and barriers
     GLuint maxGroups, maxBarriers;
-    if(SwapGroups::queryMaxSwapGroup(maxGroups, maxBarriers)) {
+    if (groups.queryMaxSwapGroup(maxGroups, maxBarriers)) {
 
       // If we have any swap groups, join the first one
-      if(maxGroups > 0) {
-        return SwapGroups::joinSwapGroup(group);
+      if (maxGroups > 0) {
+        return groups.joinSwapGroup(group);
       }
 
     }

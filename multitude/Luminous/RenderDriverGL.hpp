@@ -104,7 +104,7 @@ namespace Luminous
 
     LUMINOUS_API int uniformBufferOffsetAlignment() const OVERRIDE;
 
-    LUMINOUS_API bool setupSwapGroup(int group) OVERRIDE;
+    LUMINOUS_API bool setupSwapGroup(int group, int screen) OVERRIDE;
 
     LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
 
