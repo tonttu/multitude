@@ -2,6 +2,7 @@
 #define __STDC_FORMAT_MACROS
 
 #include "FfmpegDecoder.hpp"
+#include "FfmpegVideoFormatSelector.hpp"
 
 #include "Utils.hpp"
 #include "AudioTransfer.hpp"
@@ -87,6 +88,8 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
+  RADIANT_TLS(const VideoDisplay::FfmpegDecoder::LogHandler *) s_logHandler = nullptr;
+
   void libavLog(void *, int level, const char * fmt, va_list vl)
   {
     if(level > AV_LOG_INFO) return;
@@ -101,6 +104,9 @@ namespace
         break;
     }
 
+    if (s_logHandler && (*s_logHandler)(level, buffer))
+      return;
+
     QString msg = QString("%1: %2").arg((const char*)s_src).arg(buffer);
 
     if(level >= AV_LOG_DEBUG) {
@@ -110,7 +116,21 @@ namespace
     } else if(level >= AV_LOG_WARNING) {
       Radiant::warning("Video decoder: %s", msg.toUtf8().data());
     } else if(level >= AV_LOG_ERROR) {
-      if (!msg.contains("max_analyze_duration reached") && !msg.contains("First timestamp is missing,")) {
+      /// max_analyze_duration and first timestamps "errors" happen with some
+      /// files and those situations are handled in our decoder once the first
+      /// frame has been decoded and the decoder goes to READY state.
+      ///
+      /// We don't care about "real-time buffer <device> too full or near too
+      /// full (151% of size: 3041280 [rtbufsize parameter])! frame dropped!"
+      /// errors. Those mean that we are not reading all frames fast enough
+      /// from the dshow graph. This means that we are just probably seeking,
+      /// stopping, starting or just rendering at lower framerate than the
+      /// video input running. We typically use streaming-mode anyway in
+      /// this case, so we are only interested in the latest frame. We don't
+      /// care about dropped frames.
+      if (!msg.contains("max_analyze_duration reached") &&
+          !msg.contains("First timestamp is missing,") &&
+          !msg.contains("rtbufsize parameter")) {
         Radiant::error("Video decoder: %s", msg.toUtf8().data());
       }
     } else {
@@ -139,7 +159,6 @@ namespace
 
 namespace VideoDisplay
 {
-
   class VideoFrameFfmpeg : public VideoFrame
   {
   public:
@@ -180,6 +199,7 @@ namespace VideoDisplay
     bool seekByBytes;
     bool seekingSupported;
 
+    bool hasReliableDuration;
     double duration;
     double start;
     Nimble::Size videoSize;
@@ -295,6 +315,18 @@ namespace VideoDisplay
 
 
   // -------------------------------------------------------------------------
+
+  static void setMapOptions(const QMap<QString, QString> & input, AVDictionary ** output,
+                            const QByteArray & errorMsg)
+  {
+    for (auto it = input.begin(); it != input.end(); ++it) {
+      int err = av_dict_set(output, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
+      if (err < 0 && !errorMsg.isNull()) {
+        Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
+                         it.key().toUtf8().data(), it.value().toUtf8().data(), err);
+      }
+    }
+  }
 
   FfmpegDecoder::D::D(FfmpegDecoder *decoder)
     : m_host(decoder),
@@ -572,16 +604,6 @@ namespace VideoDisplay
       m_options.setDemuxerOption("audio_buffer_size", "50");
 #endif
 
-    if(!m_options.demuxerOptions().isEmpty()) {
-      for(auto it = m_options.demuxerOptions().begin(); it != m_options.demuxerOptions().end(); ++it) {
-        int err = av_dict_set(&avoptions, it.key().toUtf8().data(), it.value().toUtf8().data(), 0);
-        if(err < 0) {
-          Radiant::warning("%s av_dict_set(%s, %s): %d", errorMsg.data(),
-                           it.key().toUtf8().data(), it.value().toUtf8().data(), err);
-        }
-      }
-    }
-
     // If user specified any specific format, try to use that.
     // Otherwise avformat_open_input will just auto-detect the format.
     if(!m_options.format().isEmpty()) {
@@ -596,6 +618,19 @@ namespace VideoDisplay
     QString openTarget = src;
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
+
+    if ((m_options.format() == "dshow" &&
+        !m_options.demuxerOptions().contains("list_options")) ||
+        m_options.format() == "v4l2" || m_options.format() == "video4linux2") {
+      Radiant::info("Scanning..");
+      std::vector<VideoInputFormat> formats = scanInputFormats(
+            src, inputFormat, m_options.demuxerOptions());
+
+      if (const VideoInputFormat * format = chooseFormat(formats, m_options))
+        applyFormatOptions(*format, m_options);
+    }
+
+    setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
 
     m_av.formatContext = avformat_alloc_context();
 
@@ -881,7 +916,17 @@ namespace VideoDisplay
     } else {
       m_av.videoSize = Nimble::Size();
     }
-    m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
+    if (m_av.formatContext->duration != AV_NOPTS_VALUE) {
+      m_av.duration = m_av.formatContext->duration / double(AV_TIME_BASE);
+      m_av.hasReliableDuration = true;
+    } else {
+      /// m_av.duration will be updated every time we decode a frame, since it
+      /// might be needed for looping. However, since we set hasReliableDuration
+      /// to false, it makes sure we don't return possible incorrect number
+      /// from FfmpegDecoder::duration().
+      m_av.duration = 0;
+      m_av.hasReliableDuration = false;
+    }
     m_av.start = std::numeric_limits<double>::quiet_NaN();
 
     m_decodedVideoFrames.reset(new DecodedVideoFrames());
@@ -894,6 +939,7 @@ namespace VideoDisplay
   void FfmpegDecoder::D::close()
   {
     m_av.duration = 0;
+    m_av.hasReliableDuration = false;
     m_av.videoSize = Nimble::Size();
 
     if (m_videoFilter.graph)
@@ -1463,6 +1509,11 @@ namespace VideoDisplay
   // -------------------------------------------------------------------------
 
 
+  void FfmpegDecoder::setTlsLogHandler(const FfmpegDecoder::LogHandler * handlerFunc)
+  {
+    s_logHandler = handlerFunc;
+  }
+
   FfmpegDecoder::FfmpegDecoder()
     : m_d(new D(this))
   {
@@ -1676,6 +1727,11 @@ namespace VideoDisplay
     return true;
   }
 
+  QString FfmpegDecoder::source() const
+  {
+    return m_d->m_options.source();
+  }
+
   void FfmpegDecoder::audioTransferDeleted()
   {
     close();
@@ -1720,7 +1776,7 @@ namespace VideoDisplay
 
   double FfmpegDecoder::duration() const
   {
-    return m_d->m_av.duration;
+    return m_d->m_av.hasReliableDuration ? m_d->m_av.duration : 0;
   }
 
   int FfmpegDecoder::seek(const SeekRequest & req)

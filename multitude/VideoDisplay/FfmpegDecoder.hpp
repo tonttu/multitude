@@ -3,6 +3,8 @@
 
 #include "AVDecoder.hpp"
 
+#include <functional>
+
 namespace VideoDisplay
 {
 
@@ -18,6 +20,17 @@ namespace VideoDisplay
   /// Audio/Video decoder implementation that uses Ffmpeg as a backend
   class FfmpegDecoder : public AVDecoder
   {
+  public:
+    /// Parameters:
+    /// int level (see https://ffmpeg.org/doxygen/3.1/group__lavu__log__constants.html)
+    /// const char * message
+    /// Return value true means that the message was handled and won't be
+    /// forwarded to Radiant trace functions.
+    typedef std::function<bool(int, const char*)> LogHandler;
+
+    /// Set temporary log handler for this thread only
+    static void setTlsLogHandler(const LogHandler * handlerFunc);
+
   public:
     FfmpegDecoder();
     ~FfmpegDecoder();
@@ -49,6 +62,8 @@ namespace VideoDisplay
     virtual bool setAudioGain(float gain) OVERRIDE;
 
     virtual bool setMinimizeAudioLatency(bool minimize) override;
+
+    virtual QString source() const override;
 
     /// @cond
 

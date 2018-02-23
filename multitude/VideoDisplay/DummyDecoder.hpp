@@ -29,6 +29,8 @@ namespace VideoDisplay
 
     virtual Nimble::Matrix4f yuvMatrix() const override;
 
+    virtual QString source() const override;
+
   protected:
     virtual void load(const Options & options) override;
     virtual void runDecoder() override;

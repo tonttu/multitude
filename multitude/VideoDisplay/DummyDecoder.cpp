@@ -178,6 +178,11 @@ namespace VideoDisplay
                                   0,         0,         0,         1);
   }
 
+  QString DummyDecoder::source() const
+  {
+    return "DummyDecoder";
+  }
+
   void DummyDecoder::load(const AVDecoder::Options & options)
   {
     setPlayMode(options.playMode());
