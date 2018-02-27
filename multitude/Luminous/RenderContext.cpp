@@ -206,7 +206,7 @@ namespace Luminous
 
     unsigned long m_renderCount;
     unsigned long m_unfinishedRenderCount;
-    unsigned long m_frameNumber;
+    unsigned int m_frameNumber;
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
@@ -362,9 +362,9 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
+    debugLuminous("Closing OpenGL context. Rendered %lu things in %u frames, %lu things per frame",
          m_data->m_renderCount, m_data->m_frameNumber,
-         m_data->m_renderCount / std::max(m_data->m_frameNumber, (unsigned long) 1));
+         m_data->m_renderCount / std::max(m_data->m_frameNumber, 1u));
     delete m_data;
   }
 
@@ -1560,7 +1560,7 @@ namespace Luminous
     return (m_data->m_blockObjectsStack.top() & mask) != 0;
   }
 
-  void RenderContext::beginFrame(Radiant::TimeStamp frameTime, size_t frameNumber)
+  void RenderContext::beginFrame(Radiant::TimeStamp frameTime, unsigned int frameNumber)
   {
     m_data->m_frameTime = frameTime;
     m_data->m_frameNumber = frameNumber;
@@ -1605,32 +1605,32 @@ namespace Luminous
     m_data->m_opacityStack.push(1.f);
   }
 
-  void RenderContext::endFrame(size_t swapFrame)
+  void RenderContext::endFrame(unsigned int blitFrame)
   {
     if(!m_data->m_window->directRendering()) {
       auto & fbos = m_data->m_offScreenFrameBuffers;
 
-      if (swapFrame > m_data->m_frameNumber) {
-        Radiant::warning("RenderContext::endFrame # Tried to swap frame %lu, but the latest frame is %lu",
-                         swapFrame, m_data->m_frameNumber);
-        swapFrame = m_data->m_frameNumber;
+      if (blitFrame > m_data->m_frameNumber) {
+        Radiant::warning("RenderContext::endFrame # Tried to blit frame %u, but the latest frame is %u",
+                         blitFrame, m_data->m_frameNumber);
+        blitFrame = m_data->m_frameNumber;
       }
-      const size_t maxBufferCount = 4;
-      size_t neededBufferCount = m_data->m_frameNumber - swapFrame + 1;
+      const unsigned int maxBufferCount = 4;
+      unsigned int neededBufferCount = m_data->m_frameNumber - blitFrame + 1;
 
       if (neededBufferCount > maxBufferCount) {
         neededBufferCount = maxBufferCount;
-        swapFrame = m_data->m_frameNumber + 1 - maxBufferCount;
+        blitFrame = m_data->m_frameNumber + 1 - maxBufferCount;
       }
 
       if (neededBufferCount > fbos.size()) {
-        swapFrame = std::min(m_data->m_frameNumber, m_data->m_frameNumber + 1 - fbos.size());
+        blitFrame = std::min<unsigned int>(m_data->m_frameNumber, m_data->m_frameNumber + 1 - fbos.size());
         m_data->resizeOffScreenFrameBuffers(neededBufferCount);
       }
 
-      if (swapFrame != m_data->m_frameNumber) {
-        fbos[swapFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_READ);
-        m_data->m_driverGL->pushFrameBuffer(fbos[swapFrame % fbos.size()]);
+      if (blitFrame != m_data->m_frameNumber) {
+        fbos[blitFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_READ);
+        m_data->m_driverGL->pushFrameBuffer(fbos[blitFrame % fbos.size()]);
       }
 
       // Push window frame buffer
@@ -1645,8 +1645,8 @@ namespace Luminous
 
       m_data->m_driverGL->popFrameBuffer();
 
-      if (swapFrame != m_data->m_frameNumber) {
-        fbos[swapFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_DEFAULT);
+      if (blitFrame != m_data->m_frameNumber) {
+        fbos[blitFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_DEFAULT);
         m_data->m_driverGL->popFrameBuffer();
       }
     }

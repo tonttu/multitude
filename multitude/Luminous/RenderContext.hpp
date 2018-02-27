@@ -168,9 +168,14 @@ namespace Luminous
     void initialize();
 
     /// Called once for every frame before rendering. For internal implementation.
-    void beginFrame(Radiant::TimeStamp frameTime, size_t frameNumber);
+    /// @param frameNumber Frame number of the new frame
+    void beginFrame(Radiant::TimeStamp frameTime, unsigned int frameNumber);
     /// Called once for every frame after rendering. For internal implementation.
-    void endFrame(size_t swapFrame);
+    /// @param blitFrame which frame should we blit to the final frame buffer.
+    ///        Typically this is the same as frameNumber given in beginFrame,
+    ///        but when using frame lock, this might be older frame if this context
+    ///        is ahead of other contexts.
+    void endFrame(unsigned int blitFrame);
 
     /// Called once for every area before rendering anything in it. Can be
     /// called multiple times per frame depending on configuration.
