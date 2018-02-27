@@ -168,9 +168,9 @@ namespace Luminous
     void initialize();
 
     /// Called once for every frame before rendering. For internal implementation.
-    void beginFrame(Radiant::TimeStamp frameTime);
+    void beginFrame(Radiant::TimeStamp frameTime, size_t frameNumber);
     /// Called once for every frame after rendering. For internal implementation.
-    void endFrame();
+    void endFrame(size_t swapFrame);
 
     /// Called once for every area before rendering anything in it. Can be
     /// called multiple times per frame depending on configuration.
