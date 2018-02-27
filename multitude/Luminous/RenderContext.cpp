@@ -53,7 +53,7 @@ namespace Luminous
         : m_recursionLimit(DEFAULT_RECURSION_LIMIT)
         , m_renderCount(0)
         , m_unfinishedRenderCount(0)
-        , m_frameCount(0)
+        , m_frameNumber(0)
         , m_area(0)
         , m_window(win)
         , m_initialized(false)
@@ -64,7 +64,6 @@ namespace Luminous
         , m_bufferIndex(0)
         , m_useOffScreenFrameBuffer(false)
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
-        , m_offScreenFrameBuffer(FrameBuffer::NORMAL)
         , m_postProcessFilters(0)
         , m_supports_GL_NVX_gpu_memory_info(false)
         , m_supports_GL_ATI_meminfo(false)
@@ -76,13 +75,8 @@ namespace Luminous
       assert(win);
       m_finalFrameBuffer.setSize(win->size());
 
-      // Set initial data for an off-screen frame buffer
-      // The hardware resource is not created if this is actually never bound
-      m_offScreenFrameBuffer.setSize(win->size());
-      m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
-
-      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
-      m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
+      if (win->directRendering())
+        resizeOffScreenFrameBuffers(1);
 
       m_basicShader.loadShader("cornerstone:Luminous/GLSL150/basic.vs", Shader::Vertex);
       m_basicShader.loadShader("cornerstone:Luminous/GLSL150/basic.fs", Shader::Fragment);
@@ -134,6 +128,28 @@ namespace Luminous
     {
     }
 
+    void resizeOffScreenFrameBuffers(size_t newSize)
+    {
+      std::vector<FrameBuffer> newVector(newSize);
+      for (size_t frame = m_frameNumber; frame > m_frameNumber - m_offScreenFrameBuffers.size(); --frame) {
+        newVector[frame % newVector.size()] = std::move(m_offScreenFrameBuffers[frame %
+            m_offScreenFrameBuffers.size()]);
+        if (frame == 0) break;
+      }
+      std::swap(newVector, m_offScreenFrameBuffers);
+
+      // Set initial data for an off-screen frame buffer
+      // The hardware resource is not created if this is actually never bound
+      for (auto & fb: m_offScreenFrameBuffers) {
+        if (fb.size() != m_window->size()) {
+          fb.setSize(m_window->size());
+          fb.setSamples(std::max(0, m_window->antiAliasingSamples()));
+
+          fb.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
+          fb.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
+        }
+      }
+    }
 
     void initialize() {
 
@@ -177,7 +193,7 @@ namespace Luminous
     {
       return m_window->directRendering() ?
             m_finalFrameBuffer :
-            m_offScreenFrameBuffer;
+            m_offScreenFrameBuffers[m_frameNumber % m_offScreenFrameBuffers.size()];
     }
 
     size_t m_recursionLimit;
@@ -190,7 +206,7 @@ namespace Luminous
 
     unsigned long m_renderCount;
     unsigned long m_unfinishedRenderCount;
-    unsigned long m_frameCount;
+    unsigned int m_frameNumber;
 
     const Luminous::MultiHead::Area * m_area;
     const Luminous::MultiHead::Window * m_window;
@@ -309,7 +325,7 @@ namespace Luminous
     // Default window framebuffer. Eventually the result of the rendering pipeline end ups here
     FrameBuffer m_finalFrameBuffer;
     // Used when rendering non-directly/with postprocessing
-    FrameBuffer m_offScreenFrameBuffer;
+    std::vector<FrameBuffer> m_offScreenFrameBuffers;
 
     // owned by Application
     const Luminous::PostProcessFilters * m_postProcessFilters;
@@ -346,9 +362,9 @@ namespace Luminous
 
   RenderContext::~RenderContext()
   {
-    debugLuminous("Closing OpenGL context. Rendered %lu things in %lu frames, %lu things per frame",
-         m_data->m_renderCount, m_data->m_frameCount,
-         m_data->m_renderCount / std::max(m_data->m_frameCount, (unsigned long) 1));
+    debugLuminous("Closing OpenGL context. Rendered %lu things in %u frames, %lu things per frame",
+         m_data->m_renderCount, m_data->m_frameNumber,
+         m_data->m_renderCount / std::max(m_data->m_frameNumber, 1u));
     delete m_data;
   }
 
@@ -1544,9 +1560,10 @@ namespace Luminous
     return (m_data->m_blockObjectsStack.top() & mask) != 0;
   }
 
-  void RenderContext::beginFrame(Radiant::TimeStamp frameTime)
+  void RenderContext::beginFrame(Radiant::TimeStamp frameTime, unsigned int frameNumber)
   {
     m_data->m_frameTime = frameTime;
+    m_data->m_frameNumber = frameNumber;
     if(m_data->m_postProcessFilters) {
       m_data->createPostProcessFilters(*this, *m_data->m_postProcessFilters);
       // Reorders the chain is necessary
@@ -1572,8 +1589,11 @@ namespace Luminous
 
     // Push auxiliary frame buffer if needed
     if(m_data->m_useOffScreenFrameBuffer) {
-      m_data->m_driverGL->pushFrameBuffer(m_data->m_offScreenFrameBuffer);
-      m_data->m_frameBufferStack.push(&m_data->m_offScreenFrameBuffer);
+      auto & fbos = m_data->m_offScreenFrameBuffers;
+      if (fbos.empty())
+        m_data->resizeOffScreenFrameBuffers(1);
+      m_data->m_driverGL->pushFrameBuffer(fbos[frameNumber % fbos.size()]);
+      m_data->m_frameBufferStack.push(&fbos[frameNumber % fbos.size()]);
     }
 
 
@@ -1585,22 +1605,50 @@ namespace Luminous
     m_data->m_opacityStack.push(1.f);
   }
 
-  void RenderContext::endFrame()
+  void RenderContext::endFrame(unsigned int blitFrame)
   {
     if(!m_data->m_window->directRendering()) {
+      auto & fbos = m_data->m_offScreenFrameBuffers;
+
+      if (blitFrame > m_data->m_frameNumber) {
+        Radiant::warning("RenderContext::endFrame # Tried to blit frame %u, but the latest frame is %u",
+                         blitFrame, m_data->m_frameNumber);
+        blitFrame = m_data->m_frameNumber;
+      }
+      const unsigned int maxBufferCount = 4;
+      unsigned int neededBufferCount = m_data->m_frameNumber - blitFrame + 1;
+
+      if (neededBufferCount > maxBufferCount) {
+        neededBufferCount = maxBufferCount;
+        blitFrame = m_data->m_frameNumber + 1 - maxBufferCount;
+      }
+
+      if (neededBufferCount > fbos.size()) {
+        blitFrame = std::min<unsigned int>(m_data->m_frameNumber, m_data->m_frameNumber + 1 - fbos.size());
+        m_data->resizeOffScreenFrameBuffers(neededBufferCount);
+      }
+
+      if (blitFrame != m_data->m_frameNumber) {
+        fbos[blitFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_READ);
+        m_data->m_driverGL->pushFrameBuffer(fbos[blitFrame % fbos.size()]);
+      }
+
       // Push window frame buffer
       m_data->m_finalFrameBuffer.setTargetBind(FrameBuffer::BIND_DRAW);
       m_data->m_driverGL->pushFrameBuffer(m_data->m_finalFrameBuffer);
-      m_data->m_frameBufferStack.push(&m_data->m_finalFrameBuffer);
 
-      // Blit individual areas (from currently bound FBO)
+      // Blit individual areas from the buffer we are going to swap to the final frame buffer
       for(size_t i = 0; i < m_data->m_window->areaCount(); i++) {
         const Luminous::MultiHead::Area & area = m_data->m_window->area(i);
         blit(area.viewport(), area.viewport());
       }
 
       m_data->m_driverGL->popFrameBuffer();
-      m_data->m_frameBufferStack.pop();
+
+      if (blitFrame != m_data->m_frameNumber) {
+        fbos[blitFrame % fbos.size()].setTargetBind(FrameBuffer::BIND_DEFAULT);
+        m_data->m_driverGL->popFrameBuffer();
+      }
     }
 
     // Pop our auxiliary frame buffer if we have used it
