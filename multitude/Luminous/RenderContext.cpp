@@ -79,7 +79,7 @@ namespace Luminous
       // Set initial data for an off-screen frame buffer
       // The hardware resource is not created if this is actually never bound
       m_offScreenFrameBuffer.setSize(win->size());
-      m_offScreenFrameBuffer.setSamples(win->antiAliasingSamples());
+      m_offScreenFrameBuffer.setSamples(std::max(0, win->antiAliasingSamples()));
 
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_COLOR_ATTACHMENT0, GL_RGBA);
       m_offScreenFrameBuffer.createRenderBufferAttachment(GL_DEPTH_STENCIL_ATTACHMENT, GL_DEPTH24_STENCIL8);
