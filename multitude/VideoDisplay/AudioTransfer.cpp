@@ -177,9 +177,6 @@ namespace VideoDisplay
         ++m_buffersReader;
         continue;
       }
-      /// @todo shouldn't be hard-coded
-      if(m_seeking && m_samplesInGeneration > s_sampleRate/24.0)
-        return nullptr;
       return buffer;
     }
     return nullptr;
@@ -332,6 +329,13 @@ namespace VideoDisplay
       m_d->m_forceSync = true;
     }
 
+    /// When seeking, only play a couple of samples
+    /// @todo shouldn't be hard-coded
+    if (m_d->m_seeking && m_d->m_samplesInGeneration > s_sampleRate/24.0) {
+      zero(out, m_d->m_channels, n, 0);
+      return;
+    }
+
     int processed = 0;
     int remaining = n;
 
@@ -441,9 +445,17 @@ namespace VideoDisplay
 
       /// If the buffer is full, remove any old samples that couldn't be played anyway.
       /// This fixes stalling issues if the buffer is full because of audio playback issues.
-      auto now = Radiant::TimeStamp::currentTime();
-      Radiant::Guard g(m_d->m_decodedBuffersMutex);
-      m_d->dropOldSamples(m_d->m_maxAllowedAverageLatency, now);
+      if (m_d->m_seeking) {
+        int remove = m_d->m_samplesInBuffers.load() - m_d->m_maxAllowedAverageLatency * s_sampleRate;
+        if (remove > 0) {
+          Radiant::Guard g(m_d->m_decodedBuffersMutex);
+          m_d->dropOldSamples(remove);
+        }
+      } else {
+        auto now = Radiant::TimeStamp::currentTime();
+        Radiant::Guard g(m_d->m_decodedBuffersMutex);
+        m_d->dropOldSamples(m_d->m_maxAllowedAverageLatency, now);
+      }
     }
     return nullptr;
   }
