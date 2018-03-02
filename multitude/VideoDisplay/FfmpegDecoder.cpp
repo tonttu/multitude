@@ -1549,6 +1549,12 @@ namespace VideoDisplay
       }
       ret = frame;
     }
+    /// If we are behind more than one second, it's time to resynchronize
+    const double maxDiff = 1.0;
+    if (ret && (ts.pts() - ret->timestamp().pts()) > maxDiff) {
+      m_d->increaseSeekGeneration();
+      m_d->m_sync.sync(presentTimestamp, ret->timestamp());
+    }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
     return ret;
   }
