@@ -1754,8 +1754,6 @@ namespace VideoDisplay
     if (av.videoCodec && audioTransfer)
       audioTransfer->setEnabled(false);
 
-    bool waitingFrame = false;
-
     int lastError = 0;
     int consecutiveErrorCount = 0;
     /// With v4l2 streams on some devices (like Inogeni DVI capture cards) lots
@@ -1769,11 +1767,8 @@ namespace VideoDisplay
 
       int err = 0;
 
-      if(!waitingFrame || !m_d->m_realTimeSeeking) {
-        if (m_d->checkSeek()) {
-          videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
-        }
-      }
+      if (m_d->checkSeek())
+        videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
@@ -1917,8 +1912,6 @@ namespace VideoDisplay
           av.start = audioDpts;
         }
       }
-
-      waitingFrame = m_d->m_realTimeSeeking && av.videoCodec && !gotFrames;
 
       av_packet_unref(&av.packet);
 
