@@ -13,6 +13,7 @@
 
 #include "Export.hpp"
 
+#include <Radiant/Flags.hpp>
 #include <Radiant/TimeStamp.hpp>
 
 namespace Resonant
@@ -20,7 +21,15 @@ namespace Resonant
   /// Timing and latency information about the processed samples.
   struct CallbackTime
   {
-    CallbackTime(Radiant::TimeStamp outputTime, double latency, unsigned long flags)
+    enum CallbackFlag
+    {
+      FLAG_NONE             = 0,
+      FLAG_BUFFER_UNDERFLOW = 1 << 0,
+      FLAG_BUFFER_OVERFLOW  = 1 << 1,
+    };
+    typedef Radiant::FlagsT<CallbackFlag> CallbackFlags;
+
+    CallbackTime(Radiant::TimeStamp outputTime, double latency, CallbackFlags flags)
       : outputTime(outputTime),
         latency(latency),
         flags(flags)
@@ -29,8 +38,8 @@ namespace Resonant
     const Radiant::TimeStamp outputTime;
     /// Estimated latency
     const double latency;
-    /// PaStreamCallbackFlags
-    const unsigned long flags;
+    /// Error flags
+    const CallbackFlags flags;
   };
 
   /// A simple audio IO class API.

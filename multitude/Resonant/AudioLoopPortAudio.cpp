@@ -191,10 +191,13 @@ namespace Resonant
       s_underflowWarningsTimer += framesPerBuffer;
     }
 
+    CallbackTime::CallbackFlags callbackFlags;
     if(flags & paOutputUnderflow) {
+      callbackFlags |= CallbackTime::FLAG_BUFFER_UNDERFLOW;
       ++s_underflowWarnings;
     }
     if(flags & paOutputOverflow) {
+      callbackFlags |= CallbackTime::FLAG_BUFFER_OVERFLOW;
       Radiant::warning("DSPNetwork::callback # output overflow");
     }
 
@@ -277,10 +280,10 @@ namespace Resonant
     /// We also assume, that framesPerBuffer is somewhat constant in different
     /// threads at the same time.
     if(streams == 1) {
-      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
+      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, callbackFlags));
     } else if(streamnum == 0) {
       m_sem.acquire(static_cast<int> (streams));
-      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, flags));
+      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, callbackFlags));
       for (size_t i = 1; i < streams; ++i)
         m_streams[i].m_barrier->release();
     } else {

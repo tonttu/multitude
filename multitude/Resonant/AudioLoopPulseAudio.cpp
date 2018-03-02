@@ -111,7 +111,8 @@ namespace Resonant
     int frames = bytes / sizeof(float) / m_channelCount;
 
     m_collect->setInterleavedBuffer(buffer);
-    m_dsp.doCycle(frames, Resonant::CallbackTime(time, latency, 0));
+    CallbackTime::CallbackFlags flags;
+    m_dsp.doCycle(frames, CallbackTime(time, latency, flags));
     m_collect->setInterleavedBuffer(nullptr);
 
     pa_stream_write(m_outputStream, buffer, bytes, nullptr, 0l, PA_SEEK_RELATIVE);

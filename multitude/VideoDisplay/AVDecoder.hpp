@@ -174,6 +174,86 @@ namespace VideoDisplay
     VideoFrame& operator=(VideoFrame &&);
   };
 
+  /// Class that manages parameters for syncing audio and video to wall clock.
+  /// This is done by sync points that specificy common point in both
+  /// Radiant::TimeStamp (wall clock) and AVDecoder::Timestamp (media time)
+  class AVSync
+  {
+  public:
+    /// Decoder playing state
+    enum PlayMode
+    {
+      PAUSE,                  ///< Media is playing
+      PLAY                    ///< Media is paused
+    };
+
+  public:
+    AVSync()
+    {
+      m_syncPointVideoDisplay.setPts(std::numeric_limits<double>::quiet_NaN());
+    }
+
+    int seekGeneration() const { return m_syncPointVideoDisplay.seekGeneration(); }
+    void setSeekGeneration(int generation)
+    {
+      m_syncPointVideoDisplay.setSeekGeneration(generation);
+      m_syncPointVideoDisplay.setPts(std::numeric_limits<double>::quiet_NaN());
+    }
+
+    bool isValid() const
+    {
+      return std::isfinite(m_syncPointVideoDisplay.pts());
+    }
+
+    Timestamp map(Radiant::TimeStamp ts) const
+    {
+      if (m_playMode == PAUSE) {
+        return m_syncPointVideoDisplay;
+      } else {
+        double secs = (ts - m_syncPointRadiant).secondsD();
+        return Timestamp(m_syncPointVideoDisplay.pts() + secs, seekGeneration());
+      }
+    }
+
+    Radiant::TimeStamp map(double pts) const
+    {
+      if (m_playMode == PAUSE) {
+        return m_syncPointRadiant;
+      } else {
+        double secs = pts - m_syncPointVideoDisplay.pts();
+        return m_syncPointRadiant + Radiant::TimeStamp::createSeconds(secs);
+      }
+    }
+
+    void sync(Radiant::TimeStamp ts)
+    {
+      m_syncPointVideoDisplay = map(ts);
+      m_syncPointRadiant = ts;
+    }
+
+    void sync(Radiant::TimeStamp radiantTs, Timestamp videoDisplayTs)
+    {
+      m_syncPointRadiant = radiantTs;
+      m_syncPointVideoDisplay = videoDisplayTs;
+    }
+
+    PlayMode playMode() const { return m_playMode; }
+
+    void setPlayMode(PlayMode mode)
+    {
+      if (m_playMode == mode)
+        return;
+
+      sync(Radiant::TimeStamp::currentTime());
+      m_playMode = mode;
+    }
+
+  private:
+    Radiant::TimeStamp m_syncPointRadiant;
+    Timestamp m_syncPointVideoDisplay;
+    PlayMode m_playMode = PAUSE;
+  };
+
   /// @endcond
 
   /// This class provices the actual audio/video decoder for the video player.
@@ -222,12 +302,13 @@ namespace VideoDisplay
     };
     typedef Radiant::FlagsT<SeekFlag> SeekFlags;
 
-    /// Decoder playing state
-    enum PlayMode
+    enum PlayFlag
     {
-      PAUSE,                  ///< Media is playing
-      PLAY                    ///< Media is paused
+      PLAY_FLAG_NONE            = 0,
+      /// Skip the buffering and sync, just take the latest decoded frame
+      PLAY_FLAG_NO_BUFFERING    = 1 << 0,
     };
+    typedef Radiant::FlagsT<PlayFlag> PlayFlags;
 
     enum ErrorFlagsEnum
     {
@@ -298,7 +379,7 @@ namespace VideoDisplay
         , m_looping(false)
         , m_audioEnabled(true)
         , m_videoEnabled(true)
-        , m_playMode(PAUSE)
+        , m_playMode(AVSync::PAUSE)
         , m_videoStreamIndex(-1)
         , m_audioStreamIndex(-1)
         , m_audioBufferSeconds(2.0)
@@ -399,10 +480,10 @@ namespace VideoDisplay
       /// Initial play mode
       /// @sa setPlayMode
       /// @return initial play mode
-      PlayMode playMode() const { return m_playMode; }
+      AVSync::PlayMode playMode() const { return m_playMode; }
       /// @sa playMode
       /// @param playMode initial play mode
-      void setPlayMode(PlayMode playMode) { m_playMode = playMode; }
+      void setPlayMode(AVSync::PlayMode playMode) { m_playMode = playMode; }
 
       /// Demuxer and AVFormatContext options, see avconv -h full for full list.
       ///
@@ -596,7 +677,7 @@ namespace VideoDisplay
       bool m_looping;
       bool m_audioEnabled;
       bool m_videoEnabled;
-      PlayMode m_playMode;
+      AVSync::PlayMode m_playMode;
       QMap<QString, QString> m_demuxerOptions;
       QMap<QString, QString> m_videoOptions;
       QMap<QString, QString> m_audioOptions;
@@ -643,9 +724,9 @@ namespace VideoDisplay
     virtual void close() = 0;
 
     /// @returns decoder current playing mode
-    virtual PlayMode playMode() const = 0;
+    virtual AVSync::PlayMode playMode() const = 0;
     /// @param mode new play mode
-    virtual void setPlayMode(PlayMode mode) = 0;
+    virtual void setPlayMode(AVSync::PlayMode mode) = 0;
 
     /// Schedules a seek. If the previous request is still waiting, new request will replace the old one
     /// @param req new seek request
@@ -687,23 +768,13 @@ namespace VideoDisplay
     /// @returns media duration in seconds.
     virtual double duration() const = 0;
 
-    /// Based on the current playback and audio state, converts an absolute
-    /// wall-clock timestamp to video timestamp. This is most useful for
-    /// video/audio synchronization
-    /// @param ts real (wall-clock) timestamp
-    /// @returns video timestamp
-    virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const = 0;
-    /// Decoder might have many frames in a buffer, this is the video timestamp
-    /// of the latest decoded frame in that buffer.
-    /// @returns video timestamp
-    virtual Timestamp latestDecodedVideoTimestamp() const = 0;
-
     /// Gets a video frame from buffer that should be visible at the given timestamp.
     /// If this frame can't be found, then the closest frame will be used.
     /// @param ts video timestamp
     /// @param[out] errors ErrorFlags
     /// @returns decoded video frame from a buffer, or null if the buffer is empty
-    virtual VideoFrame * getFrame(const Timestamp & ts, ErrorFlags & errors) const = 0;
+    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                   PlayFlags flags = PLAY_FLAG_NONE) = 0;
     /// Deletes older video frames from the buffer, this needs to be called after
     /// the frame has been consumed, otherwise the buffer will fill quickly.
     /// @param ts timestamp of the previous consumed frame
@@ -723,11 +794,6 @@ namespace VideoDisplay
     /// @param gain new audio gain, typical range is 0-1, although larger values
     ///             can be used as well. Default value is 1.
     virtual void setAudioGain(float gain) = 0;
-
-    /// Tries to minimize the audio playback latency by dropping extra samples
-    /// from the buffer. Use this only with streaming sources, otherwise
-    /// the audio playback will break.
-    virtual void setMinimizeAudioLatency(bool minimize) = 0;
 
     /// Returns source name, typically the same as Options::source, but can also
     /// be something more human readable. This is meant only for debugging.

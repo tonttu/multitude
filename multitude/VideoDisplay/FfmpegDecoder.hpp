@@ -37,8 +37,8 @@ namespace VideoDisplay
 
     virtual void close() OVERRIDE;
 
-    virtual PlayMode playMode() const OVERRIDE;
-    virtual void setPlayMode(PlayMode mode) OVERRIDE;
+    virtual AVSync::PlayMode playMode() const OVERRIDE;
+    virtual void setPlayMode(AVSync::PlayMode mode) OVERRIDE;
 
     virtual int seek(const SeekRequest & req) OVERRIDE;
     virtual bool realTimeSeeking() const OVERRIDE;
@@ -51,17 +51,14 @@ namespace VideoDisplay
 
     virtual double duration() const OVERRIDE;
 
-    virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const OVERRIDE;
-    virtual Timestamp latestDecodedVideoTimestamp() const OVERRIDE;
-    virtual VideoFrame * getFrame(const Timestamp & ts, ErrorFlags & errors) const OVERRIDE;
+    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                   PlayFlags flags) override;
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 
     virtual QByteArray audioPannerSourceId() const override;
     virtual void setAudioGain(float gain) OVERRIDE;
-
-    virtual void setMinimizeAudioLatency(bool minimize) override;
 
     virtual QString source() const override;
 
