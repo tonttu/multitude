@@ -239,6 +239,8 @@ namespace Resonant
       } else {
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
               m_syncinfo.framesProcessed / 44100.0);
+        if (streamnum == 0)
+          m_syncinfo.framesProcessed += framesPerBuffer;
       }
     } else {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
