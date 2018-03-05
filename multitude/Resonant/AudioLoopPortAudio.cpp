@@ -55,14 +55,14 @@ namespace
 namespace Resonant
 {
   struct Stream {
-    Stream() : stream(0), streamInfo(0) {
+    Stream() {
       memset( &inParams,  0, sizeof(inParams));
       memset( &outParams, 0, sizeof(outParams));
     }
     PaStreamParameters inParams;
     PaStreamParameters outParams;
-    PaStream * stream;
-    const PaStreamInfo * streamInfo;
+    PaStream * stream = nullptr;
+    const PaStreamInfo * streamInfo = nullptr;
 
     uint64_t frames = 0;
   };
@@ -496,7 +496,7 @@ namespace Resonant
       if (!info) {
         Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_GetDeviceInfo(%d) failed",
                        s.outParams.device);
-        return false;
+        continue;
       }
 
       debugResonant("AudioLoopPortAudio::startReadWrite # Got audio device %d = %s",
@@ -539,7 +539,10 @@ namespace Resonant
       if( err != paNoError ) {
         Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)",
                        s.outParams.device, channels, samplerate);
-        return false;
+        if (s.stream)
+          Pa_CloseStream(s.stream);
+        s.stream = nullptr;
+        continue;
       }
 
       err = Pa_SetStreamFinishedCallback(s.stream, & m_d->paFinished );
@@ -560,18 +563,22 @@ namespace Resonant
     m_d->m_sampleRate = samplerate;
     m_d->m_interleaved.resize(m_d->m_channels.size() * s_interleavedBufferSize);
 
+    bool ok = false;
     for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
 
+      if (!s.stream) continue;
+
       PaError err = Pa_StartStream(s.stream);
 
-      if( err != paNoError ) {
+      if (err != paNoError) {
         Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_StartStream failed");
-        return false;
+      } else {
+        ok = true;
       }
     }
 
-    return true;
+    return ok;
   }
 
   bool AudioLoopPortAudio::stop()
