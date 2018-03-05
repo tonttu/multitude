@@ -20,7 +20,8 @@
 #include <set>
 #include <cassert>
 
-#define FRAMES_PER_BUFFER 128
+const int s_framesPerBuffer = 128;
+const int s_interleavedBufferSize = s_framesPerBuffer * 10;
 
 namespace
 {
@@ -54,7 +55,7 @@ namespace
 namespace Resonant
 {
   struct Stream {
-    Stream() : stream(0), streamInfo(0), startTime(0) {
+    Stream() : stream(0), streamInfo(0) {
       memset( &inParams,  0, sizeof(inParams));
       memset( &outParams, 0, sizeof(outParams));
     }
@@ -62,8 +63,8 @@ namespace Resonant
     PaStreamParameters outParams;
     PaStream * stream;
     const PaStreamInfo * streamInfo;
-    PaTime startTime;
-    Radiant::Semaphore * m_barrier;
+
+    uint64_t frames = 0;
   };
   // Channel c from device d
   struct Channel {
@@ -94,14 +95,17 @@ namespace Resonant
     CallbackList cb;
 
     std::set<int> m_written;
-    std::vector<void*> m_streamBuffers;
-
-    Radiant::Semaphore m_sem;
-
-    long m_frames = 0;
 
     bool m_isRunning = false;
     bool m_initialized = false;
+
+    unsigned int m_sampleRate = 44100;
+
+    /// This is locked while m_interleaved is being written and the primary
+    /// stream is being selected each frame
+    Radiant::Mutex m_streamMutex;
+    std::atomic<uint64_t> m_frames { 0 };
+    std::vector<float> m_interleaved;
 
     DSPNetwork & m_dsp;
     std::shared_ptr<ModuleOutCollect> m_collect;
@@ -109,7 +113,7 @@ namespace Resonant
     struct
     {
       Radiant::TimeStamp baseTime;
-      int framesProcessed = 0;
+      uint64_t framesProcessed = 0;
     } m_syncinfo;
 
   public:
@@ -122,25 +126,28 @@ namespace Resonant
     /// @param streamid Device / Stream number, @see setDevicesFile()
     void finished(int streamid);
 
+    CallbackTime createCallbackTime(const PaStreamCallbackTimeInfo & time,
+                                    unsigned long flags);
+
+    /// Writes data to audio device output
+    void writeFrames(float *& out, int streamNum,
+                     uint64_t available, int & remaining,
+                     int sourceChannels, int targetChannels);
+
     /// Callback function that is called from the PortAudio thread
-    /// @param in Array of interleaved input samples for each channel
     /// @param[out] out Array of interleaved input samples for each channel,
     ///                 this should be filled by the callback function.
-    /// @param framesPerBuffer The number of sample frames to be processed
-    /// @param streamid Device / Stream number, @see setDevicesFile()
-    /// @return paContinue, paComplete or paAbort. See PaStreamCallbackResult
-    ///         for more information
+    /// @param streamNum Device / Stream number, @see setDevicesFile()
     /// @see PaStreamCallback in PortAudio documentation
-    int callback(const void * in, void * out,
-                 unsigned long framesPerBuffer, int streamid,
-                 const PaStreamCallbackTimeInfo & time,
-                 unsigned long flags);
+    void callback(float * out, int streamNum,
+                  const PaStreamCallbackTimeInfo & time,
+                  unsigned long flags);
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  int AudioLoopPortAudio::D::paCallback(const void *in, void *out,
+  int AudioLoopPortAudio::D::paCallback(const void * /* in */, void *out,
                                                unsigned long framesPerBuffer,
                                                const PaStreamCallbackTimeInfo * time,
                                                PaStreamCallbackFlags status,
@@ -150,12 +157,12 @@ namespace Resonant
     int stream;
     std::tie(self, stream) = *static_cast<Callback*>(user);
 
-    if (self->m_isRunning) {
-      int r = self->callback(in, out, framesPerBuffer, stream, *time, status);
-      return self->m_isRunning ? r : paComplete;
-    } else {
+    if (!self->m_isRunning)
       return paComplete;
-    }
+
+    if (self->m_isRunning && framesPerBuffer == s_framesPerBuffer)
+      self->callback((float*)out, stream, *time, status);
+    return paContinue;
   }
 
   void AudioLoopPortAudio::D::paFinished(void * user)
@@ -173,22 +180,16 @@ namespace Resonant
     m_isRunning = false;
   }
 
-  int AudioLoopPortAudio::D::callback(const void * in, void * out,
-                                      unsigned long framesPerBuffer, int streamnum,
-                                      const PaStreamCallbackTimeInfo & time,
-                                      unsigned long flags)
+  CallbackTime AudioLoopPortAudio::D::createCallbackTime(const PaStreamCallbackTimeInfo & time,
+                                                         unsigned long flags)
   {
-    (void) in;
-
-    size_t streams = m_streams.size();
-
     Radiant::TimeStamp outputTime;
     double latency;
 
     const bool outputError = (flags & paOutputUnderflow) || (flags & paOutputOverflow);
 
-    if (streamnum == 0 && s_underflowWarnings) {
-      s_underflowWarningsTimer += framesPerBuffer;
+    if (s_underflowWarnings) {
+      s_underflowWarningsTimer += s_framesPerBuffer;
     }
 
     CallbackTime::CallbackFlags callbackFlags;
@@ -201,14 +202,14 @@ namespace Resonant
       Radiant::warning("DSPNetwork::callback # output overflow");
     }
 
-    if (streamnum == 0 && s_underflowWarnings > 0 && s_underflowWarningsTimer >= (44100*10)) {
+    if (s_underflowWarnings > 0 && s_underflowWarningsTimer >= (m_sampleRate*10)) {
       if (s_previousUnderflowWarning.value() != 0) {
         double secs = s_previousUnderflowWarning.sinceSecondsD();
         int sampleRate = (m_frames - s_framesOnLastWarning) / secs;
         if (sampleRate > 50000) {
           if (++s_sampleRateWarnings > 1) {
-            Radiant::warning("DSPNetwork # Unexpected sample rate, current sample rate is %d, expected about 44100",
-                             sampleRate);
+            Radiant::warning("DSPNetwork # Unexpected sample rate, current sample rate is %d, expected about %d",
+                             sampleRate, m_sampleRate);
           }
         } else {
           s_sampleRateWarnings = 0;
@@ -229,18 +230,17 @@ namespace Resonant
     // and is always 0, but on some other platforms it seems to be just a small
     // number (~0.001..0.005), too small and random to be the audio latency or
     // anything like that.
-    if(time.outputBufferDacTime < 1.0) {
+    if (time.outputBufferDacTime < 1.0) {
       latency = 0.030;
-      if(streamnum == 0 && (m_syncinfo.baseTime == Radiant::TimeStamp(0) || outputError)) {
+      if (m_syncinfo.baseTime == Radiant::TimeStamp(0) || outputError) {
         m_syncinfo.baseTime = Radiant::TimeStamp(Radiant::TimeStamp::currentTime()) +
             Radiant::TimeStamp::createSeconds(latency);
         outputTime = m_syncinfo.baseTime;
         m_syncinfo.framesProcessed = 0;
       } else {
         outputTime = m_syncinfo.baseTime + Radiant::TimeStamp::createSeconds(
-              m_syncinfo.framesProcessed / 44100.0);
-        if (streamnum == 0)
-          m_syncinfo.framesProcessed += framesPerBuffer;
+              double(m_syncinfo.framesProcessed) / m_sampleRate);
+        m_syncinfo.framesProcessed += s_framesPerBuffer;
       }
     } else {
       // On some ALSA implementations, time.currentTime is zero but time.outputBufferDacTime is valid
@@ -254,81 +254,105 @@ namespace Resonant
         latency = time.outputBufferDacTime - time.currentTime;
       }
 
-      if (streamnum == 0) {
-        if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > 44100 * 60 ||
-           outputError) {
-          m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
-              Radiant::TimeStamp::createSeconds(latency);
-          m_syncinfo.framesProcessed = 0;
-        }
+      if(m_syncinfo.baseTime == Radiant::TimeStamp(0) || m_syncinfo.framesProcessed > m_sampleRate * 60 ||
+         outputError) {
+        m_syncinfo.baseTime = Radiant::TimeStamp::currentTime() +
+            Radiant::TimeStamp::createSeconds(latency);
+        m_syncinfo.framesProcessed = 0;
+      }
 
-        outputTime = m_syncinfo.baseTime +
-            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
-        m_syncinfo.framesProcessed += framesPerBuffer;
-      } else {
-        outputTime = m_syncinfo.baseTime +
-            Radiant::TimeStamp::createSeconds(m_syncinfo.framesProcessed/44100.0);
+      outputTime = m_syncinfo.baseTime +
+          Radiant::TimeStamp::createSeconds(double(m_syncinfo.framesProcessed) / m_sampleRate);
+      m_syncinfo.framesProcessed += s_framesPerBuffer;
+    }
+
+    return CallbackTime(outputTime, latency, callbackFlags);
+  }
+
+  void AudioLoopPortAudio::D::writeFrames(float *& out, int streamNum,
+                                          uint64_t available, int & remaining,
+                                          int sourceChannels, int targetChannels)
+  {
+    Stream & stream = m_streams[streamNum];
+
+    if (available > s_interleavedBufferSize) {
+      available = s_framesPerBuffer;
+      stream.frames = m_frames - available;
+    }
+    const float * buffer = m_interleaved.data() + (stream.frames % s_interleavedBufferSize) * sourceChannels;
+    const uint32_t frames = std::min<uint64_t>(s_framesPerBuffer, available);
+    stream.frames += frames;
+    remaining -= frames;
+
+    for (auto it = m_channels.begin(); it != m_channels.end(); ++it) {
+      if (streamNum != it->second.device) continue;
+      const int sourceChannel = it->first;
+      const int targetChannel = it->second.channel;
+
+      const float * source = buffer + sourceChannel;
+      float * target = out + targetChannel;
+      const float * targetEnd = target + frames * targetChannels;
+
+      while (target < targetEnd) {
+        *target = *source;
+        target += targetChannels;
+        source += sourceChannels;
+      }
+    }
+    out += frames * targetChannels;
+  }
+
+  void AudioLoopPortAudio::D::callback(float * out, int streamnum,
+                                       const PaStreamCallbackTimeInfo & time,
+                                       unsigned long flags)
+  {
+    const size_t streamCount = m_streams.size();
+
+    // See the code where m_channels is created, with one device we can skip
+    // copying data and just directly write to the target device.
+    if (streamCount == 1) {
+      m_collect->setInterleavedBuffer(out);
+      m_dsp.doCycle(s_framesPerBuffer, createCallbackTime(time, flags));
+      return;
+    }
+
+    Stream & stream = m_streams[streamnum];
+
+    const int sourceChannels = m_channels.size();
+    const int targetChannels = stream.outParams.channelCount;
+
+    int remaining = s_framesPerBuffer;
+
+    bool primaryStream = streamCount == 1;
+    if (!primaryStream) {
+      uint64_t available = m_frames - stream.frames;
+      if (available > 0)
+        writeFrames(out, streamnum, available, remaining, sourceChannels, targetChannels);
+      if (remaining == 0)
+        return;
+    }
+
+    {
+      Radiant::Guard g(m_streamMutex);
+      if (!primaryStream)
+        primaryStream = stream.frames == m_frames;
+
+      if (primaryStream) {
+        CallbackTime cb = createCallbackTime(time, flags);
+        int offset = m_frames % s_interleavedBufferSize;
+        m_collect->setInterleavedBuffer(m_interleaved.data() + offset * sourceChannels);
+        m_dsp.doCycle(s_framesPerBuffer, cb);
+        m_frames += s_framesPerBuffer;
       }
     }
 
-    /// Here we assume that every stream (== audio device) is running in its
-    /// own separate thread, that is, this callback is called from multiple
-    /// different threads at the same time, one for each audio device.
-    /// The first thread is responsible for filling the buffer
-    /// (m_collect->interleaved()) by calling doCycle. This thread first waits
-    /// until all other threads have finished processing the previous data,
-    /// then runs the next cycle and informs everyone else that they can continue
-    /// running from the barrier.
-    /// We also assume, that framesPerBuffer is somewhat constant in different
-    /// threads at the same time.
-    if(streams == 1) {
-      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, callbackFlags));
-    } else if(streamnum == 0) {
-      m_sem.acquire(static_cast<int> (streams));
-      m_dsp.doCycle(framesPerBuffer, CallbackTime(outputTime, latency, callbackFlags));
-      for (size_t i = 1; i < streams; ++i)
-        m_streams[i].m_barrier->release();
-    } else {
-      m_streams[streamnum].m_barrier->acquire();
+    uint64_t available = m_frames - stream.frames;
+    if (available)
+      writeFrames(out, streamnum, available, remaining, sourceChannels, targetChannels);
+
+    if (remaining > 0) {
+      memset(out, 0, sizeof(float) * remaining * targetChannels);
     }
-
-    int outChannels = m_streams[streamnum].outParams.channelCount;
-
-    const float * res = m_collect->interleaved();
-    if(res != nullptr) {
-      for (Channels::iterator it = m_channels.begin(); it != m_channels.end(); ++it) {
-        if (streamnum != it->second.device) continue;
-        int from = it->first;
-        int to = it->second.channel;
-
-        const float * data = res + from;
-        float* target = (float*)out;
-        target += to;
-
-        size_t chans_from = m_collect->channels();
-
-        for (size_t i = 0; i < framesPerBuffer; ++i) {
-          *target = *data;
-          target += outChannels;
-          data += chans_from;
-        }
-      }
-      //memcpy(out, res, 4 * framesPerBuffer * outChannels);
-    }
-    else {
-      Radiant::error("DSPNetwork::callback # No data to play");
-      memset(out, 0, 4 * framesPerBuffer * outChannels);
-    }
-    if(streams > 1) m_sem.release();
-
-    if (streamnum == 0) {
-      m_frames += framesPerBuffer;
-      if(m_frames < 40000) {
-        debugResonant("DSPNetwork::callback # %lu", framesPerBuffer);
-      }
-    }
-
-    return paContinue;
   }
 
 
@@ -465,8 +489,6 @@ namespace Resonant
 
     for (size_t streamnum = 0, streams = m_d->m_streams.size(); streamnum < streams; ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
-      /// @todo m_barrier isn't released ever
-      s.m_barrier = streams == 1 ? nullptr : new Radiant::Semaphore(0);
       channels = devices[streamnum].second;
 
       const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);
@@ -509,7 +531,7 @@ namespace Resonant
                                   0, // & m_inParams,
                                   & s.outParams,
                                   samplerate,
-                                  FRAMES_PER_BUFFER,
+                                  s_framesPerBuffer,
                                   paClipOff,
                                   &D::paCallback,
                                   &m_d->cb.back() );
@@ -524,6 +546,8 @@ namespace Resonant
 
       s.streamInfo = Pa_GetStreamInfo(s.stream);
 
+      /// Right now we assume in D::callback that with one device the channels
+      /// are ordered and have direct mapping.
       for (int i = 0; i < s.outParams.channelCount; ++i)
         m_d->m_channels[static_cast<int> (m_d->m_channels.size())] = Channel(static_cast<int> (streamnum), i);
 
@@ -532,10 +556,9 @@ namespace Resonant
                     (double) s.streamInfo->outputLatency);
     }
 
-    m_d->m_streamBuffers.resize(m_d->m_streams.size());
-    m_d->m_sem.release(static_cast<int> (m_d->m_streams.size()));
-
     m_d->m_isRunning = true;
+    m_d->m_sampleRate = samplerate;
+    m_d->m_interleaved.resize(m_d->m_channels.size() * s_interleavedBufferSize);
 
     for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
       Stream & s = m_d->m_streams[streamnum];
@@ -546,8 +569,6 @@ namespace Resonant
         Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_StartStream failed");
         return false;
       }
-
-      s.startTime = Pa_GetStreamTime(s.stream);
     }
 
     return true;
@@ -559,7 +580,6 @@ namespace Resonant
       return true;
 
     m_d->m_isRunning = false;
-    m_d->m_sem.release(m_d->m_streams.size());
 
     {
       /* Hack to get the audio closed in all cases (mostly for Linux). */
