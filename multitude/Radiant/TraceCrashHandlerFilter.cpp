@@ -41,17 +41,18 @@ namespace Radiant
       #endif
 
       char buffer[1024*8];
-      int len = std::min<int>(sizeof(buffer), m_buffer.maxDataSize());
+      size_t maxSize = std::min<size_t>(sizeof(buffer), m_buffer.maxDataSize());
+      int len;
 
       if (msg.module.isEmpty()) {
-        len = snprintf(buffer, len, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s%s\n",
+        len = snprintf(buffer, maxSize, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s%s\n",
                        ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
                        ts->tm_hour, ts->tm_min, ts->tm_sec,
                        int(now.subSecondsUS()) / 1000,
                        s_prefixes[msg.severity],
                        msg.text.toUtf8().data());
       } else {
-        len = snprintf(buffer, len, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s> %s%s\n",
+        len = snprintf(buffer, maxSize, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s> %s%s\n",
                        ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
                        ts->tm_hour, ts->tm_min, ts->tm_sec,
                        int(now.subSecondsUS()) / 1000,
@@ -63,7 +64,7 @@ namespace Radiant
       if (len <= 0)
         return false;
 
-      m_buffer.write(buffer, len);
+      m_buffer.write(buffer, std::min<uint32_t>(maxSize, len));
 
       return false;
     }
