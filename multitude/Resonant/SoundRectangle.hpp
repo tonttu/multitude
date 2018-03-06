@@ -13,6 +13,8 @@
 
 #include "Export.hpp"
 
+#include <Nimble/Rect.hpp>
+
 #include <Valuable/Node.hpp>
 #include <Valuable/AttributeVector.hpp>
 #include <Valuable/AttributeFloat.hpp>
@@ -71,6 +73,9 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     int leftChannel() const { return m_leftChannel; }
     /// Returns the right channel id
     int rightChannel() const { return m_rightChannel; }
+
+    /// Returns the SoundRectangle as Nimble::Recti
+    Nimble::Recti rect() const { return Nimble::Recti(location(), Nimble::Size(size())); }
 
   private:
     // Corner location of the rectangle in screen coordinates

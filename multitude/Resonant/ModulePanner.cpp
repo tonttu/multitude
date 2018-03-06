@@ -49,11 +49,7 @@ namespace Resonant {
     m_speakers->clear();
     bool ok = Module::deserialize(element);
     ++m_generation;
-
-    if(ok && !m_rectangles->empty() && m_speakers->empty()) {
-      for(size_t i = 0; i < m_rectangles->size(); ++i)
-        addSoundRectangleSpeakers((*m_rectangles)[i]);
-    }
+    updateChannelCount();
 
     return ok;
   }
@@ -62,7 +58,7 @@ namespace Resonant {
   {
     (void) channelsIn;
 
-    channelsOut = static_cast<int> (m_speakers->size());
+    channelsOut = static_cast<int> (m_channelCount);
 
     return true;
   }
@@ -121,7 +117,7 @@ namespace Resonant {
     int bufferbytes = n * sizeof(float);
 
     // Zero the output channels
-    for(unsigned i = 0; i < m_speakers->size(); i++) {
+    for(unsigned i = 0; i < m_channelCount; i++) {
       memset(out[i], 0, bufferbytes);
     }
 
@@ -179,6 +175,7 @@ namespace Resonant {
 
     m_maxRadius = 1200;
     ++m_generation;
+    updateChannelCount();
   }
 
   void ModulePanner::addSoundRectangle(SoundRectangle * r)
@@ -186,8 +183,6 @@ namespace Resonant {
     //  Radiant::info("ModuleRectPanner::addSoundRectangle # new rect %d,%d %d,%d", r.location().x, r.location().y, r.size().x, r.size().y);
 
     m_rectangles->push_back(r);
-
-    addSoundRectangleSpeakers(r);
   }
 
   void ModulePanner::setMode(Mode mode)
@@ -202,39 +197,40 @@ namespace Resonant {
 
   int ModulePanner::locationToChannel(Nimble::Vector2 location) const
   {
-    int best = -1;
-    float bestd = 1000000.0f;
-    int i = 0;
-    for(auto it = m_speakers->begin(); it != m_speakers->end(); it++, i++) {
-      if (!*it) continue;
-      const LoudSpeaker & l = **it;
-      const float dist = (l.m_location - location).length();
-      if(dist < bestd || best == -1) {
-        best = i;
-        bestd = dist;
+    if (*m_operatingMode == RADIAL) {
+      int best = 0;
+      float bestd = std::numeric_limits<float>::infinity();
+      int i = 0;
+      for(auto it = m_speakers->begin(); it != m_speakers->end(); it++, i++) {
+        if (!*it) continue;
+        const LoudSpeaker & l = **it;
+        const float dist = (l.m_location - location).length();
+        if (dist < bestd) {
+          best = i;
+          bestd = dist;
+        }
+      }
+
+      return best;
+    } else {
+      const SoundRectangle * best = nullptr;
+      float bestd = 0;
+
+      for (const SoundRectangle * r: *m_rectangles) {
+        float dist = r->rect().cast<float>().distance(location);
+        if (!best || dist < bestd) {
+          best = r;
+          bestd = dist;
+        }
+      }
+
+      if (best) {
+        const float rectMidX = best->rect().cast<float>().center().x;
+        return location.x < rectMidX ? best->leftChannel() : best->rightChannel();
+      } else {
+        return 0;
       }
     }
-
-    return (best >= 0) ? best : 0;
-  }
-
-  void ModulePanner::setSpeaker(unsigned i, Nimble::Vector2 location)
-  {
-    assert(i < 100000);
-
-    if(m_speakers->size() <= i)
-      m_speakers->resize(i + 1);
-
-    LoudSpeaker * ls = new LoudSpeaker;
-
-    ls->m_location = location;
-    (*m_speakers)[i].reset(ls);
-    ++m_generation;
-  }
-
-  void ModulePanner::setSpeaker(unsigned i, float x, float y)
-  {
-    setSpeaker(i, Nimble::Vector2(x, y));
   }
 
   void ModulePanner::setSourceLocation(const QByteArray & id,
@@ -293,28 +289,23 @@ namespace Resonant {
   {
     int interpSamples = 2000;
 
-    for(unsigned i = 0; i < m_speakers->size(); i++) {
-      LoudSpeaker * ls = (*m_speakers)[i].get();
-
-      if(!ls)
-        continue;
-
+    for (unsigned channel = 0; channel < m_channelCount; ++channel) {
       float gain = 0;
       /// If the audio source is played from in several different locations at
       /// the same time, always the the maximum gain for each speaker.
       /// Alternatively we could add up the gains, but then things like
       /// recursive ViewWidget would have very loud audio.
       for (auto & p: src.m_locations)
-        gain = std::max(gain, computeGain(ls, p.second));
+        gain = std::max(gain, computeGain(channel, p.second));
 
       if(gain <= 0.0000001f) {
 
         // Silence that output:
         for(unsigned j = 0; j < src.m_pipes.size(); j++) {
           Pipe & p = src.m_pipes[j];
-          if(p.m_to == i && p.m_ramp.target() >= 0.0001f) {
+          if(p.m_to == channel && p.m_ramp.target() >= 0.0001f) {
             p.m_ramp.setTarget(0.0f, interpSamples);
-            debugResonant("ModulePanner::syncSource # Silencing %u", i);
+            debugResonant("ModulePanner::syncSource # Silencing %u", channel);
 
           }
         }
@@ -329,7 +320,7 @@ namespace Resonant {
           debugResonant("Checking %u: %u %f -> %f", j, p.m_to,
                 p.m_ramp.value(), p.m_ramp.target());
 
-          if(p.m_to == i) {
+          if(p.m_to == channel) {
             debugResonant("ModulePanner::syncSource # Adjusting %u", j);
             p.m_ramp.setTarget(gain, interpSamples);
             found = true;
@@ -347,8 +338,8 @@ namespace Resonant {
             Pipe & p = src.m_pipes[j];
             if(p.isDone()) {
               debugResonant("ModulePanner::syncSource # "
-                    "Starting %u towards %u", j, i);
-              p.m_to = i;
+                    "Starting %u towards %u", j, channel);
+              p.m_to = channel;
               p.m_ramp.setTarget(gain, interpSamples);
               found = true;
             }
@@ -378,37 +369,27 @@ namespace Resonant {
     Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", id.data());
   }
 
-  void ModulePanner::addSoundRectangleSpeakers(SoundRectangle * r)
-  {
-    // Add the two speakers
-    int x1 = r->location().x;
-    int x2 = r->location().x + r->size().x;
-    int y = r->location().y + r->size().y / 2;
-
-    if(r->leftChannel() == r->rightChannel())
-      x1 = x2 = 0.5f * (x1+x2);
-
-    setSpeaker(r->leftChannel(), x1, y);
-    setSpeaker(r->rightChannel(), x2, y);
-
-    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.leftChannel(), x1, y);
-    //  Radiant::info("ModuleRectPanner::addSoundRectangle # new speaker %d at %d,%d", r.rightChannel(), x2, y);
-  }
-
-  float ModulePanner::computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
+  float ModulePanner::computeGain(unsigned int channel, Nimble::Vector2 srcLocation) const
   {
     switch(*m_operatingMode) {
     case RADIAL:
-      return computeGainRadial(ls, srcLocation);
+      return computeGainRadial(channel, srcLocation);
     case RECTANGLES:
-      return computeGainRectangle(ls, srcLocation);
+      return computeGainRectangle(channel, srcLocation);
     default:
       return 0;
     }
   }
 
-  float ModulePanner::computeGainRadial(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
+  float ModulePanner::computeGainRadial(unsigned int channel, Nimble::Vector2 srcLocation) const
   {
+    if (channel >= m_speakers->size())
+      return 0;
+
+    const LoudSpeaker * ls = (*m_speakers)[channel].get();
+    if (!ls)
+      return 0;
+
     float d = (srcLocation - ls->m_location.asVector()).length();
     float rel = d / m_maxRadius;
 
@@ -417,12 +398,14 @@ namespace Resonant {
     return std::min(inv * 2.0f, 1.0f);
   }
 
-  float ModulePanner::computeGainRectangle(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const
+  float ModulePanner::computeGainRectangle(unsigned int channel, Nimble::Vector2 srcLocation) const
   {
     float gain = 0.f;
 
-    const SoundRectangle * r = getContainingRectangle(ls);
-    if(r) {
+    for (const SoundRectangle * r: *m_rectangles) {
+      if (r->leftChannel() != (int)channel && r->rightChannel() != (int)channel)
+        continue;
+
       //Radiant::info("ModuleRectPanner::computeGain # SPEAKER (%f,%f) source is inside rectangle (%d,%d) (%d,%d)", ls->m_location.x(), ls->m_location.y(), r->location().x, r->location().y, r->size().x, r->size().y);
 
       Nimble::Vector2 tmp(r->location().x, r->location().y);
@@ -438,62 +421,53 @@ namespace Resonant {
       float gainY = iy.interpolate(local.y);
 
       // Compute gain in x direction
-      float rectMidX = (float)(r->location().x) + r->size().x * 0.5f;
       Nimble::LinearInterpolator<float> ix;
 
-      if(ls->m_location.x() < rectMidX) {
-        // Left channel
+      if (r->leftChannel() == r->rightChannel()) {
         ix.addKey(-r->fade(), 0.f);
         ix.addKey(0.f, 1.f);
-        ix.addKey(r->size().x, 1.f - r->stereoPan());
-        ix.addKey(r->size().x + r->fade(), 0.f);
-      } else {
-        // Right channel
-        ix.addKey(-r->fade(), 0.f);
-        ix.addKey(0.f, 1.f - r->stereoPan());
         ix.addKey(r->size().x, 1.f);
         ix.addKey(r->size().x + r->fade(), 0.f);
+      } else {
+        if (r->leftChannel() == (int)channel) {
+          // Left channel
+          ix.addKey(-r->fade(), 0.f);
+          ix.addKey(0.f, 1.f);
+          ix.addKey(r->size().x, 1.f - r->stereoPan());
+          ix.addKey(r->size().x + r->fade(), 0.f);
+        } else {
+          // Right channel
+          ix.addKey(-r->fade(), 0.f);
+          ix.addKey(0.f, 1.f - r->stereoPan());
+          ix.addKey(r->size().x, 1.f);
+          ix.addKey(r->size().x + r->fade(), 0.f);
+        }
       }
 
       float gainX = ix.interpolate(local.x);
 
       //Radiant::info("ModuleRectPanner::computeGain # gain x %f, gain y %f", gainX, gainY);
 
-      gain = gainX * gainY;
+      gain = std::max(gain, gainX * gainY);
     }
 
-    //Radiant::info("ModuleRectPanner::computeGain # speaker at %f,%f | source %f,%f | gain %f", ls->m_location.x(), ls->m_location.y(), srcLocation.x, srcLocation.y, gain);
+    // Radiant::info("ModuleRectPanner::computeGain # channel %u | source %.1f,%.1f | gain %.2f",
+    //               channel, srcLocation.x, srcLocation.y, gain);
 
     return gain;
   }
 
-  const SoundRectangle * ModulePanner::getContainingRectangle(const LoudSpeaker * ls) const
+  void ModulePanner::updateChannelCount()
   {
-    // Find the channel for the speaker
-    int channel = -1;
-    bool found = false;
-    for(size_t i = 0; i < m_speakers->size(); i++) {
-      channel = static_cast<int> (i);
-      if((*m_speakers)[i].get() == ls) {
-        found = true;
-        break;
-      }
+    if (*m_operatingMode == RADIAL) {
+      m_channelCount = m_speakers->size();
+    } else if (*m_operatingMode == RECTANGLES) {
+      m_channelCount = 0;
+      for (const SoundRectangle * rect: *m_rectangles)
+        m_channelCount = std::max<unsigned int>(m_channelCount, std::max(rect->leftChannel(),
+                                                                         rect->rightChannel()) + 1);
+    } else {
+      m_channelCount = 0;
     }
-
-    if(!found)
-      return 0;
-
-    for(Rectangles::const_iterator it = m_rectangles->begin(); it != m_rectangles->end(); ++it) {
-      const SoundRectangle * r = *it;
-
-      if(channel == r->leftChannel() || channel == r->rightChannel())
-        return r;
-    }
-
-    // Should never happen
-    assert(0);
-
-    return 0;
   }
-
 }

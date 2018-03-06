@@ -117,15 +117,6 @@ namespace Resonant {
 
     void makeFullHDStereo();
 
-    /// Sets the location of a given loudspeaker in screen coordinates
-    /// @param i Speaker index, starting from 0
-    /// @param location Location in screen coordinates
-    void setSpeaker(unsigned i, Nimble::Vector2 location);
-    /// @param i Speaker index, starting from 0
-    /// @param x x coordinate of the speaker in screen coordinates
-    /// @param y y coordinate of the speaker in screen coordinates
-    void setSpeaker(unsigned i, float x, float y);
-
     /// Sets the radius for the distance for collecting the audio to a single loudspeaker.
     /// Only has an effect if using the radial #Mode.
     /// When a given sound source gets closer than he maximum radius its volume is faded in
@@ -156,6 +147,8 @@ namespace Resonant {
     friend class ModuleRectPanner;
     friend class ModuleSamplePlayer;
 
+    /// @todo this should be removed. There is no one to one mapping between
+    ///       a location and a channel
     int locationToChannel(Nimble::Vector2) const;
     /// Adds or update a source location
     /// @param id Source id
@@ -174,20 +167,25 @@ namespace Resonant {
     /// @cond
 
 
-    const SoundRectangle * getContainingRectangle(const LoudSpeaker * ls) const;
-    /// Computes the gain for the given speaker based on sound source location
-    virtual float computeGain(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
+    /// Computes the gain for the given channel based on sound source location
+    virtual float computeGain(unsigned int channel, Nimble::Vector2 srcLocation) const;
 
-    float computeGainRadial(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
-    float computeGainRectangle(const LoudSpeaker * ls, Nimble::Vector2 srcLocation) const;
+    float computeGainRadial(unsigned int channel, Nimble::Vector2 srcLocation) const;
+    float computeGainRectangle(unsigned int channel, Nimble::Vector2 srcLocation) const;
+
+    void updateChannelCount();
 
     Sources      m_sources;
+    /// Used only with RADIAL mode
     Valuable::AttributeContainer<LoudSpeakers> m_speakers;
+
+    unsigned int m_channelCount = 0;
 
     /// generation is increased every time speaker setup is changed
     long m_generation;
 
     Valuable::AttributeFloat m_maxRadius;
+    /// Used only with RECTANGLES mode
     Valuable::AttributeContainer<Rectangles> m_rectangles;
     Valuable::AttributeInt m_operatingMode;
     /// @endcond
