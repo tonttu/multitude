@@ -54,18 +54,6 @@ namespace
 
 namespace Resonant
 {
-  struct Stream {
-    Stream() {
-      memset( &inParams,  0, sizeof(inParams));
-      memset( &outParams, 0, sizeof(outParams));
-    }
-    PaStreamParameters inParams;
-    PaStreamParameters outParams;
-    PaStream * stream = nullptr;
-    const PaStreamInfo * streamInfo = nullptr;
-
-    uint64_t frames = 0;
-  };
   // Channel c from device d
   struct Channel {
     Channel(int d = -1, int c = -1) : device(d), channel(c) {}
@@ -76,6 +64,23 @@ namespace Resonant
 
   class AudioLoopPortAudio::D
   {
+  public:
+    struct Stream {
+      Stream() {
+        memset( &inParams,  0, sizeof(inParams));
+        memset( &outParams, 0, sizeof(outParams));
+      }
+      PaStreamParameters inParams;
+      PaStreamParameters outParams;
+      PaStream * stream = nullptr;
+      const PaStreamInfo * streamInfo = nullptr;
+
+      uint64_t frames = 0;
+
+      AudioLoopPortAudio::D * host = nullptr;
+      int streamNum = 0;
+    };
+
   public:
     static int paCallback(const void *in, void *out,
                           unsigned long framesPerBuffer,
@@ -89,10 +94,6 @@ namespace Resonant
     /// Maps [input channel] -> [device, channel]
     Channels m_channels;
     std::vector<Stream> m_streams;
-
-    typedef std::pair<AudioLoopPortAudio::D*, int> Callback;
-    typedef std::list<Callback> CallbackList;
-    CallbackList cb;
 
     std::set<int> m_written;
 
@@ -153,31 +154,32 @@ namespace Resonant
                                                PaStreamCallbackFlags status,
                                                void * user)
   {
-    AudioLoopPortAudio::D * self;
-    int stream;
-    std::tie(self, stream) = *static_cast<Callback*>(user);
+    auto stream = static_cast<Stream*>(user);
+    AudioLoopPortAudio::D * self = stream->host;
+    const int streamNum = stream->streamNum;
 
     if (!self->m_isRunning)
       return paComplete;
 
     if (self->m_isRunning && framesPerBuffer == s_framesPerBuffer)
-      self->callback((float*)out, stream, *time, status);
+      self->callback((float*)out, streamNum, *time, status);
     return paContinue;
   }
 
   void AudioLoopPortAudio::D::paFinished(void * user)
   {
-    AudioLoopPortAudio::D * self;
-    int stream;
-    std::tie(self, stream) = *static_cast<Callback*>(user);
+    auto stream = static_cast<Stream*>(user);
+    AudioLoopPortAudio::D * self = stream->host;
+    const int streamNum = stream->streamNum;
 
-    self->finished(stream);
-    debugResonant("AudioLoopPortAudio::paFinished # %p %d", self, stream);
+    self->finished(streamNum);
+    debugResonant("AudioLoopPortAudio::paFinished # %p %d", self, streamNum);
   }
 
-  void AudioLoopPortAudio::D::finished(int /*streamid*/)
+  void AudioLoopPortAudio::D::finished(int streamNum)
   {
-    m_isRunning = false;
+    if (m_isRunning)
+      Radiant::error("AudioLoopPortAudio # Stream %d closed", streamNum);
   }
 
   CallbackTime AudioLoopPortAudio::D::createCallbackTime(const PaStreamCallbackTimeInfo & time,
@@ -418,8 +420,8 @@ namespace Resonant
     }
 
     if(devices.empty()) {
-      m_d->m_streams.push_back(Stream());
-      Stream & s = m_d->m_streams.back();
+      m_d->m_streams.push_back(D::Stream());
+      D::Stream & s = m_d->m_streams.back();
 
       s.outParams.device = Pa_GetDefaultOutputDevice();
       if(s.outParams.device == paNoDevice) {
@@ -447,8 +449,8 @@ namespace Resonant
     }
     else {
       for (size_t dev = 0; dev < devices.size(); ++dev) {
-        m_d->m_streams.push_back(Stream());
-        Stream & s = m_d->m_streams.back();
+        m_d->m_streams.push_back(D::Stream());
+        D::Stream & s = m_d->m_streams.back();
 
         QByteArray tmp = devices[dev].first.toUtf8();
         const char * devkey = tmp.data();
@@ -488,7 +490,9 @@ namespace Resonant
     }
 
     for (size_t streamnum = 0, streams = m_d->m_streams.size(); streamnum < streams; ++streamnum) {
-      Stream & s = m_d->m_streams[streamnum];
+      D::Stream & s = m_d->m_streams[streamnum];
+      s.host = m_d.get();
+      s.streamNum = streamnum;
       channels = devices[streamnum].second;
 
       const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);
@@ -525,8 +529,6 @@ namespace Resonant
       s.inParams = s.outParams;
       s.inParams.device = Pa_GetDefaultInputDevice();
 
-      m_d->cb.push_back(std::make_pair(m_d.get(), static_cast<int> (streamnum)));
-
       PaError err = Pa_OpenStream(& s.stream,
                                   0, // & m_inParams,
                                   & s.outParams,
@@ -534,7 +536,7 @@ namespace Resonant
                                   s_framesPerBuffer,
                                   paClipOff,
                                   &D::paCallback,
-                                  &m_d->cb.back() );
+                                  &s );
 
       if( err != paNoError ) {
         Radiant::error("AudioLoopPortAudio::startReadWrite # Pa_OpenStream failed (device %d, channels %d, sample rate %d)",
@@ -565,7 +567,7 @@ namespace Resonant
 
     bool ok = false;
     for (size_t streamnum = 0; streamnum < m_d->m_streams.size(); ++streamnum) {
-      Stream & s = m_d->m_streams[streamnum];
+      D::Stream & s = m_d->m_streams[streamnum];
 
       if (!s.stream) continue;
 
@@ -594,15 +596,18 @@ namespace Resonant
     }
 
     for (size_t num = 0; num < m_d->m_streams.size(); ++num) {
-      Stream & s = m_d->m_streams[num];
+      D::Stream & s = m_d->m_streams[num];
+      if (!s.stream)
+        continue;
       int err = Pa_CloseStream(s.stream);
       if(err != paNoError) {
         Radiant::error("AudioLoopPortAudio::stop # Could not close stream");
       }
-      s.stream = 0;
-      s.streamInfo = 0;
-      m_d->m_channels.erase(static_cast<int> (num));
+      s.stream = nullptr;
+      s.streamInfo = nullptr;
     }
+    m_d->m_streams.clear();
+    m_d->m_channels.clear();
 
     return true;
   }
