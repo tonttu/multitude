@@ -20,6 +20,7 @@ namespace Resonant
     int m_channelCount = 0;
     bool m_running = false;
     long m_onReadyListener = -1;
+    bool m_underflow = false;
 
   public:
     D(DSPNetwork & dsp, const std::shared_ptr<ModuleOutCollect> & collect);
@@ -46,9 +47,15 @@ namespace Resonant
     m_outputStream = pa_stream_new(m_context->paContext(), "Cornerstone AudioLoop",
                                    &ss, nullptr);
 
+    m_underflow = false;
     pa_stream_set_write_callback(m_outputStream, [] (pa_stream *, std::size_t bytes, void * ptr) {
       auto d = static_cast<AudioLoopPulseAudio::D*>(ptr);
       d->callback(bytes);
+    }, this);
+
+    pa_stream_set_underflow_callback(m_outputStream, [] (pa_stream *, void * ptr) {
+      auto d = static_cast<AudioLoopPulseAudio::D*>(ptr);
+      d->m_underflow = true;
     }, this);
 
     m_channelCount = channels;
@@ -101,17 +108,21 @@ namespace Resonant
 
     pa_usec_t streamLatency;
     int neg;
-    if (pa_stream_get_latency(m_outputStream, &streamLatency, &neg) == PA_OK) {
+    if (pa_stream_get_latency(m_outputStream, &streamLatency, &neg) == PA_OK)
       latency = streamLatency / 1000000.0;
-      time += Radiant::TimeStamp(Radiant::TimeStamp::type(Radiant::TimeStamp::FRACTIONS_PER_SECOND * latency));
-    }
+    time += Radiant::TimeStamp::createSeconds(latency);
 
     float * buffer = nullptr;
     pa_stream_begin_write(m_outputStream, reinterpret_cast<void**>(&buffer), &bytes);
     int frames = bytes / sizeof(float) / m_channelCount;
 
     m_collect->setInterleavedBuffer(buffer);
-    m_dsp.doCycle(frames, Resonant::CallbackTime(time, latency, 0));
+    CallbackTime::CallbackFlags flags;
+    if (m_underflow) {
+      m_underflow = false;
+      flags |= CallbackTime::FLAG_BUFFER_UNDERFLOW;
+    }
+    m_dsp.doCycle(frames, CallbackTime(time, latency, flags));
     m_collect->setInterleavedBuffer(nullptr);
 
     pa_stream_write(m_outputStream, buffer, bytes, nullptr, 0l, PA_SEEK_RELATIVE);
