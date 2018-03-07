@@ -251,7 +251,7 @@ namespace VideoDisplay
 
     bool decodeVideoPacket(double & dpts);
     bool decodeAudioPacket(double & dpts);
-    VideoFrameFfmpeg * getFreeFrame(bool & setTimestampToPts, double & dpts);
+    VideoFrameFfmpeg * getFreeFrame();
     bool checkSeek();
 
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
@@ -259,7 +259,7 @@ namespace VideoDisplay
 
 
     FfmpegDecoder * m_host;
-    int m_activeSeekGeneration;
+    AVSync m_sync;
 
     bool m_running;
 
@@ -270,11 +270,10 @@ namespace VideoDisplay
     SeekRequest m_seekRequest;
     double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     double m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
-    // m_activeSeekGeneration will be set to this once the seeking is finished
+    // m_sync activeSeekGeneration will be set to this once the seeking is finished
     int m_seekRequestGeneration = 0;
 
     AVDecoder::Options m_options;
-    Radiant::TimeStamp m_pauseTimestamp;
 
     QList<AVPixelFormat> m_pixelFormats;
 
@@ -282,22 +281,11 @@ namespace VideoDisplay
     FilterGraph m_audioFilter;
 
     // only used when there is no audio or the audio track has ended
-    double m_radiantTimestampToPts;
 
     double m_loopOffset;
 
     float m_audioGain;
-    bool m_minimiseAudioLatency = false;
     AudioTransferPtr m_audioTransfer;
-
-    /// In some videos, the audio track might be shorter than the video track
-    /// We have some heuristic to determine when the audio track has actually ended,
-    /// we really can't rely on some header-information, we just detect when
-    /// there are not audio frames coming out from the av packets.
-    bool m_audioTrackHasEnded;
-    double m_maxAudioDelay;
-    double m_lastDecodedAudioPts;
-    double m_lastDecodedVideoPts;
 
     typedef Utils::LockFreeQueue<VideoFrameFfmpeg, 40> DecodedVideoFrames;
     std::unique_ptr<DecodedVideoFrames> m_decodedVideoFrames;
@@ -311,6 +299,10 @@ namespace VideoDisplay
     bool m_frameUnrefMightBlock = false;
 
     int m_index;
+
+    bool m_hasDecodedAudioFrames = false;
+
+    Radiant::Timer m_decodingStartTime;
   };
 
 
@@ -330,21 +322,14 @@ namespace VideoDisplay
 
   FfmpegDecoder::D::D(FfmpegDecoder *decoder)
     : m_host(decoder),
-      m_activeSeekGeneration(0),
       m_running(true),
       m_av(),
       m_ptsCorrection(),
       m_realTimeSeeking(false),
-      m_pauseTimestamp(Radiant::TimeStamp::currentTime()),
       m_videoFilter(),
       m_audioFilter(),
-      m_radiantTimestampToPts(std::numeric_limits<double>::quiet_NaN()),
       m_loopOffset(0),
       m_audioGain(1),
-      m_audioTrackHasEnded(false),
-      m_maxAudioDelay(0.3),
-      m_lastDecodedAudioPts(std::numeric_limits<double>::quiet_NaN()),
-      m_lastDecodedVideoPts(std::numeric_limits<double>::quiet_NaN()),
       m_index(0)
   {
     memset(&m_av, 0, sizeof(m_av));
@@ -555,6 +540,7 @@ namespace VideoDisplay
 
     m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
+    m_hasDecodedAudioFrames = false;
 
 #ifdef RADIANT_LINUX
     /// Detect video4linux2 devices automatically
@@ -893,13 +879,11 @@ namespace VideoDisplay
 
     if(m_av.audioCodec) {
       int channelLayout = av_get_channel_layout(m_options.channelLayout());
-      AudioTransferPtr audioTransfer = std::make_shared<AudioTransfer>(m_host, av_get_channel_layout_nb_channels(channelLayout));
+      AudioTransferPtr audioTransfer = std::make_shared<AudioTransfer>(
+            m_host, av_get_channel_layout_nb_channels(channelLayout), m_sync);
 
       m_audioTransfer = audioTransfer;
       audioTransfer->setGain(m_audioGain);
-      audioTransfer->setMinimizeLatency(m_minimiseAudioLatency);
-      audioTransfer->setSeekGeneration(m_activeSeekGeneration);
-      audioTransfer->setPlayMode(m_options.playMode());
 
       static QAtomicInt counter;
       int value = counter.fetchAndAddRelease(1);
@@ -1009,9 +993,6 @@ namespace VideoDisplay
           avcodec_flush_buffers(m_av.audioCodecContext);
         if(m_av.videoCodecContext)
           avcodec_flush_buffers(m_av.videoCodecContext);
-        m_audioTrackHasEnded = false;
-        m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
-        m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
         m_av.nextPts = m_av.startPts;
         m_av.nextPtsTb = m_av.startPtsTb;
       }
@@ -1026,18 +1007,9 @@ namespace VideoDisplay
 
   void FfmpegDecoder::D::increaseSeekGeneration()
   {
-    if (m_seekRequestGeneration > m_activeSeekGeneration) {
-      m_activeSeekGeneration = m_seekRequestGeneration;
-    } else {
-      ++m_activeSeekGeneration;
-      m_seekRequestGeneration = m_activeSeekGeneration;
-    }
-    AudioTransferPtr audioTransfer(m_audioTransfer);
-    if(audioTransfer)
-      audioTransfer->setSeekGeneration(m_activeSeekGeneration);
-    m_radiantTimestampToPts = std::numeric_limits<double>::quiet_NaN();
-    if(m_options.playMode() == PAUSE)
-      m_pauseTimestamp = Radiant::TimeStamp::currentTime();
+    if (m_seekRequestGeneration <= m_sync.seekGeneration())
+      m_seekRequestGeneration = m_sync.seekGeneration() + 1;
+    m_sync.setSeekGeneration(m_seekRequestGeneration);
   }
 
   bool FfmpegDecoder::D::seek()
@@ -1134,29 +1106,19 @@ namespace VideoDisplay
     if(m_av.videoCodecContext)
       avcodec_flush_buffers(m_av.videoCodecContext);
     increaseSeekGeneration();
-    m_audioTrackHasEnded = false;
-    m_lastDecodedAudioPts = std::numeric_limits<double>::quiet_NaN();
-    m_lastDecodedVideoPts = std::numeric_limits<double>::quiet_NaN();
     m_av.nextPts = m_av.startPts;
     m_av.nextPtsTb = m_av.startPtsTb;
 
     return true;
   }
 
-  VideoFrameFfmpeg * FfmpegDecoder::D::getFreeFrame(bool &setTimestampToPts, double &dpts)
+  VideoFrameFfmpeg * FfmpegDecoder::D::getFreeFrame()
   {
     AudioTransferPtr audioTransfer(m_audioTransfer);
 
     while(m_running && m_decodedVideoFrames) {
       VideoFrameFfmpeg * frame = m_decodedVideoFrames->takeFree();
       if(frame) return frame;
-      // Set this here, because another frame might be waiting for us
-      // However, if we have a filter that changes pts, this might not be right.
-      if(Nimble::Math::isNAN(m_radiantTimestampToPts)) {
-        const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
-        m_radiantTimestampToPts = dpts + m_loopOffset - now.secondsD() + 4.0/60.0;
-        setTimestampToPts = true;
-      }
       if(!m_running) break;
       // if the video buffer is full, and audio buffer is almost empty,
       // we need to resize the video buffer, otherwise we could starve.
@@ -1173,7 +1135,7 @@ namespace VideoDisplay
 
       // If we are not ready, then nobody is also releasing old decoded video frames
       if (m_host->state() != STATE_READY) {
-        if (m_host->releaseOldVideoFrames(Timestamp(0, m_activeSeekGeneration)) > 0)
+        if (m_host->releaseOldVideoFrames(Timestamp(0, m_sync.seekGeneration())) > 0)
           continue;
       }
 
@@ -1243,8 +1205,6 @@ namespace VideoDisplay
     if (m_av.frame->pts != AV_NOPTS_VALUE)
       dpts = av_q2d(tb) * m_av.frame->pts;
 
-    bool setTimestampToPts = false;
-
     VideoFrameFfmpeg * frame = nullptr;
 
     if(m_videoFilter.graph) {
@@ -1279,7 +1239,7 @@ namespace VideoDisplay
             m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
           }
 
-          frame = getFreeFrame(setTimestampToPts, dpts);
+          frame = getFreeFrame();
 
           if(!frame)
             return false;
@@ -1303,7 +1263,7 @@ namespace VideoDisplay
           }
 
           frame->setImageSize(Nimble::Vector2i(frame->frame->width, frame->frame->height));
-          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
+          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
 
           VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames->lastReadyItem();
           if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
@@ -1315,8 +1275,7 @@ namespace VideoDisplay
             // this by allowing maximum difference of maxPtsReorderDiff
             /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
             increaseSeekGeneration();
-            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
-            setTimestampToPts = false;
+            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
           }
           m_decodedVideoFrames->put();
         }
@@ -1329,7 +1288,7 @@ namespace VideoDisplay
         m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
       }
 
-      frame = getFreeFrame(setTimestampToPts, dpts);
+      frame = getFreeFrame();
       if(!frame)
         return false;
 
@@ -1365,21 +1324,15 @@ namespace VideoDisplay
       }
 
       frame->setImageSize(Nimble::Vector2i(m_av.frame->width, m_av.frame->height));
-      frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
+      frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
 
       VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames->lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
           lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
         increaseSeekGeneration();
-        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration));
-        setTimestampToPts = false;
+        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
       }
       m_decodedVideoFrames->put();
-    }
-
-    if(Nimble::Math::isNAN(m_radiantTimestampToPts) || setTimestampToPts) {
-      const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
-      m_radiantTimestampToPts = dpts + m_loopOffset - now.secondsD() + 4.0/60.0;
     }
 
     return true;
@@ -1467,7 +1420,7 @@ namespace VideoDisplay
             }
 
             int64_t channel_layout = av_frame_get_channel_layout(m_av.frame);
-            decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration),
+            decodedAudioBuffer->fillPlanar(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()),
                                          av_get_channel_layout_nb_channels(channel_layout),
                                          m_av.frame->nb_samples, (const float **)(m_av.frame->data));
             audioTransfer->putReadyBuffer(m_av.frame->nb_samples);
@@ -1488,7 +1441,7 @@ namespace VideoDisplay
 
           int samples = m_av.frame->nb_samples;
 
-          decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_activeSeekGeneration),
+          decodedAudioBuffer->fill(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()),
                                    m_av.audioCodecContext->channels, samples,
                                    reinterpret_cast<const int16_t *>(m_av.frame->data[0]));
           audioTransfer->putReadyBuffer(samples);
@@ -1541,86 +1494,60 @@ namespace VideoDisplay
     m_d->close();
   }
 
-  AVDecoder::PlayMode FfmpegDecoder::playMode() const
+  AVSync::PlayMode FfmpegDecoder::playMode() const
   {
-    return m_d->m_options.playMode();
+    return m_d->m_sync.playMode();
   }
 
-  void FfmpegDecoder::setPlayMode(AVDecoder::PlayMode mode)
+  void FfmpegDecoder::setPlayMode(AVSync::PlayMode mode)
   {
-    if(m_d->m_options.playMode() == mode)
-      return;
-
-    m_d->m_options.setPlayMode(mode);
-    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
-
-    if(audioTransfer)
-      audioTransfer->setPlayMode(mode);
-    if(mode == PAUSE)
-      m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
-    if(mode == PLAY)
-      m_d->m_radiantTimestampToPts -= m_d->m_pauseTimestamp.sinceSecondsD();
+    m_d->m_sync.setPlayMode(mode);
   }
 
-  Timestamp FfmpegDecoder::getTimestampAt(const Radiant::TimeStamp &ts) const
+  VideoFrame * FfmpegDecoder::playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                        PlayFlags flags)
   {
-    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
+    if (!m_d->m_av.videoCodec || !m_d->m_decodedVideoFrames)
+      return nullptr;
 
     /// If we are doing real-time seeking, we don't have a video frame buffer
     /// and we don't care about av-sync, just show the latest frame we have decoded
-    if(m_d->m_realTimeSeeking && m_d->m_av.videoCodec && m_d->m_decodedVideoFrames) {
-      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
-      if(frame)
-        return Timestamp(frame->timestamp().pts() + 0.0001, frame->timestamp().seekGeneration());
-    }
+    const bool useNewestFrame = m_d->m_realTimeSeeking || (flags & PLAY_FLAG_NO_BUFFERING);
 
-    /// Normally synchronize video to audio
-    if(audioTransfer && !m_d->m_audioTrackHasEnded && audioTransfer->isEnabled()) {
-      Timestamp t = audioTransfer->toPts(ts);
-      if (t.seekGeneration() == m_d->m_activeSeekGeneration)
-        return t;
-    }
-
-    if (m_d->m_options.playMode() == PAUSE && m_d->m_decodedVideoFrames) {
-      if (!std::isfinite(m_d->m_radiantTimestampToPts)) {
-        for (int i = 0; ; ++i) {
-          VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->readyItem(i);
-          if (!frame) break;
-
-          if (frame->timestamp().seekGeneration() < m_d->m_activeSeekGeneration)
-            continue;
-
-          return Timestamp(frame->timestamp().pts() + 0.0001, frame->timestamp().seekGeneration());
-        }
-      } else {
-        return Timestamp(m_d->m_pauseTimestamp.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_activeSeekGeneration);
+    if (useNewestFrame) {
+      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->lastReadyItem();
+      if (frame) {
+        if (frame->timestamp().seekGeneration() < m_d->m_sync.seekGeneration())
+          return nullptr;
+        m_d->m_sync.sync(presentTimestamp, frame->timestamp());
       }
+      return frame;
     }
 
-    if(Nimble::Math::isNAN(m_d->m_radiantTimestampToPts))
-      return Timestamp();
-
-    return Timestamp(ts.secondsD() + m_d->m_radiantTimestampToPts, m_d->m_activeSeekGeneration);
-  }
-
-  Timestamp FfmpegDecoder::latestDecodedVideoTimestamp() const
-  {
-    if (!m_d->m_decodedVideoFrames)
-      return Timestamp();
-
-    VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
-    if(frame) {
-      return frame->timestamp();
-    } else {
-      return Timestamp();
+    if (m_d->m_av.audioCodec && !m_d->m_hasDecodedAudioFrames && m_d->m_decodingStartTime.time() < 2.0) {
+      // Audio track is not ready, don't start playing yet
+      return nullptr;
     }
-  }
 
-  VideoFrame* FfmpegDecoder::getFrame(const Timestamp &ts, ErrorFlags &errors) const
-  {
+    if (!m_d->m_sync.isValid()) {
+      for (int i = 0; m_d->m_decodedVideoFrames; ++i) {
+        VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->readyItem(i);
+        if (!frame) break;
+
+        if (frame->timestamp().seekGeneration() < m_d->m_sync.seekGeneration())
+          continue;
+
+        m_d->m_sync.sync(presentTimestamp, frame->timestamp());
+        return frame;
+      }
+      return nullptr;
+    }
+
+    const Timestamp ts = m_d->m_sync.map(presentTimestamp);
     VideoFrameFfmpeg * ret = nullptr;
+
     for(int i = 0; m_d->m_decodedVideoFrames; ++i) {
-      VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->readyItem(i);
+      VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->readyItem(i);
       if(!frame) break;
 
       if(frame->timestamp().seekGeneration() < ts.seekGeneration())
@@ -1634,6 +1561,12 @@ namespace VideoDisplay
         return frame;
       }
       ret = frame;
+    }
+    /// If we are behind more than one second, it's time to resynchronize
+    const double maxDiff = 1.0;
+    if (ret && (ts.pts() - ret->timestamp().pts()) > maxDiff) {
+      m_d->increaseSeekGeneration();
+      m_d->m_sync.sync(presentTimestamp, ret->timestamp());
     }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
     return ret;
@@ -1729,17 +1662,6 @@ namespace VideoDisplay
     return true;
   }
 
-  bool FfmpegDecoder::setMinimizeAudioLatency(bool minimize)
-  {
-    m_d->m_minimiseAudioLatency = minimize;
-    AudioTransferPtr audioTransfer(m_d->m_audioTransfer);
-
-    if (audioTransfer)
-      audioTransfer->setMinimizeLatency(minimize);
-
-    return true;
-  }
-
   QString FfmpegDecoder::source() const
   {
     return m_d->m_options.source();
@@ -1758,6 +1680,7 @@ namespace VideoDisplay
   {
     assert(!isRunning());
     m_d->m_options = options;
+    m_d->m_sync.setPlayMode(options.playMode());
     m_d->updateSupportedPixFormats();
     seek(m_d->m_options.seekRequest());
   }
@@ -1849,29 +1772,25 @@ namespace VideoDisplay
     if (av.videoCodec && audioTransfer)
       audioTransfer->setEnabled(false);
 
-    m_d->m_pauseTimestamp = Radiant::TimeStamp::currentTime();
-    bool waitingFrame = false;
-
     int lastError = 0;
     int consecutiveErrorCount = 0;
     /// With v4l2 streams on some devices (like Inogeni DVI capture cards) lots
     /// of errors in the beginning is normal
     int maxConsecutiveErrors = 50;
 
+    m_d->m_decodingStartTime.start();
+
     while(m_d->m_running) {
       m_d->m_decodedVideoFrames->setSize(m_d->m_options.videoBufferFrames());
 
       int err = 0;
 
-      if(!waitingFrame || !m_d->m_realTimeSeeking) {
-        if (m_d->checkSeek()) {
-          videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
-        }
-      }
+      if (m_d->checkSeek())
+        videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
 
       if(m_d->m_running && m_d->m_realTimeSeeking && av.videoCodec) {
         VideoFrameFfmpeg* frame = m_d->m_decodedVideoFrames->lastReadyItem();
-        if(frame && frame->timestamp().seekGeneration() == m_d->m_activeSeekGeneration) {
+        if(frame && frame->timestamp().seekGeneration() == m_d->m_sync.seekGeneration()) {
           /// frame done, give some break for this thread
           Radiant::Sleep::sleepSome(0.001);
           continue;
@@ -2012,39 +1931,13 @@ namespace VideoDisplay
         }
       }
 
-      waitingFrame = m_d->m_realTimeSeeking && av.videoCodec && !gotFrames;
-
       av_packet_unref(&av.packet);
+
+      if (gotAudioFrame)
+        m_d->m_hasDecodedAudioFrames = true;
 
       if(gotFrames)
         state() = STATE_READY;
-
-      if (audioTransfer) {
-        if (!Nimble::Math::isNAN(audioDpts))
-          m_d->m_lastDecodedAudioPts = audioDpts;
-        if (!Nimble::Math::isNAN(videoDpts))
-          m_d->m_lastDecodedVideoPts = videoDpts;
-        double delay = m_d->m_lastDecodedAudioPts - m_d->m_lastDecodedVideoPts;
-
-        // In case of NaN, this will become false
-        bool ended = m_d->m_audioTrackHasEnded;
-        if (delay < -m_d->m_maxAudioDelay)
-          ended = true;
-        else if (!Nimble::Math::isNAN(audioDpts))
-          ended = false;
-        if (m_d->m_audioTrackHasEnded != ended) {
-          m_d->m_audioTrackHasEnded = ended;
-          if (ended) {
-            // Radiant::info("%s Audio/Video decoding delay: %lf, assuming that the audio track has ended", errorMsg.data(), delay);
-            m_d->m_radiantTimestampToPts = audioTransfer->toPts(Radiant::TimeStamp(0)).pts();
-          } else {
-            // Radiant::info("%s Got audio packet, restoring audio sync. Delay: %lf", errorMsg.data(), delay);
-            // This is a file specific feature, there seems to be no other way
-            // than just guess a better estimate when ever we see that we made a mistake
-            m_d->m_maxAudioDelay = std::min(1.4, m_d->m_maxAudioDelay + 0.1);
-          }
-        }
-      }
     }
 
     state() = STATE_FINISHED;
@@ -2053,8 +1946,7 @@ namespace VideoDisplay
     if (audioTransfer) {
       // Tell audio transfer that there are no more samples coming, so that it
       // knows that it can disable itself when it runs out of the decoded
-      // buffer. We can also then know that we shouldn't synchronize remaining
-      // video frames to audio anymore after that.
+      // buffer.
       audioTransfer->setDecodingFinished(true);
     }
 

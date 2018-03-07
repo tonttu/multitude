@@ -16,7 +16,7 @@ namespace Radiant
 {
   namespace CrashHandler
   {
-    static std::unique_ptr<google_breakpad::ExceptionHandler> s_exceptionHandler;
+    static google_breakpad::ExceptionHandler * s_exceptionHandler = nullptr;
 
     // These are pointers and never released, otherwise we'll have issues with
     // deletion order on shutdown when static objects are being released
@@ -125,7 +125,7 @@ namespace Radiant
       return succeeded;
     }
 
-    static std::unique_ptr<google_breakpad::ExceptionHandler> createExceptionHandler(
+    static google_breakpad::ExceptionHandler * createExceptionHandler(
         const std::string & path)
     {
       if (s_annotations)
@@ -142,7 +142,7 @@ namespace Radiant
         }
       }
 
-      return std::unique_ptr<google_breakpad::ExceptionHandler>(p);
+      return p;
     }
 
     QString makeDump()
@@ -164,7 +164,7 @@ namespace Radiant
         // Deletion order is important with ExceptionHandler, first delete the
         // old one and then create the new one. Otherwise the first one will
         // disable signal handlers on its destructor.
-        s_exceptionHandler.reset();
+        delete s_exceptionHandler;
         s_exceptionHandler = createExceptionHandler(path);
       }
     }

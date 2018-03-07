@@ -48,10 +48,7 @@ namespace Resonant {
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData &) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime &) OVERRIDE;
 
-    /// Access the collected frames, which have been interleaved
-    const float * interleaved() const { return m_interleaved; }
-
-    void setInterleavedBuffer(float * buffer) { m_interleaved = buffer ? buffer : m_internalInterleavedBuffer.data(); }
+    void setInterleavedBuffer(float * buffer) { m_interleaved = buffer; }
 
     /// Returns the number of channels that are collected by this module
     size_t channels() const { return m_channels; }
@@ -66,9 +63,8 @@ namespace Resonant {
     bool m_compressOutput;
     DSPNetwork * m_host;
 
-    /// Active interleaved buffer, either m_internalInterleavedBuffer or user-provieded buffer
+    /// Output buffer
     float * m_interleaved = nullptr;
-    std::vector<float> m_internalInterleavedBuffer;
     std::vector<ChannelLimiter> m_limiters;
 
     typedef std::vector<Move> container;
