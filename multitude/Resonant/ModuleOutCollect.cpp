@@ -62,8 +62,6 @@ namespace Resonant {
 
     assert(m_channels != 0);
 
-    m_internalInterleavedBuffer.resize(m_channels * MAX_CYCLE);
-    m_interleaved = m_internalInterleavedBuffer.data();
     m_lastSample.resize(m_channels);
 
     debugResonant("ModuleOutCollect::prepare # %d", (int) m_channels);
@@ -132,11 +130,11 @@ namespace Resonant {
   {
     size_t chans = m_channels;
 
-    assert(m_internalInterleavedBuffer.size() >= (n * chans));
-
     // Set to zero
     if(m_interleaved)
       memset(m_interleaved, 0, sizeof(float) * n * chans);
+    else
+      return;
 
     for(size_t i = 0; i < m_map.size(); i++) {
 

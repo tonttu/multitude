@@ -14,17 +14,15 @@ namespace VideoDisplay
 
     virtual void close() override;
 
-    virtual PlayMode playMode() const override;
-    virtual void setPlayMode(PlayMode mode) override;
+    virtual AVSync::PlayMode playMode() const override;
+    virtual void setPlayMode(AVSync::PlayMode mode) override;
 
     virtual int seek(const SeekRequest & req) override;
 
     virtual Nimble::Size videoSize() const override;
 
-    virtual Timestamp getTimestampAt(const Radiant::TimeStamp & ts) const override;
-    virtual Timestamp latestDecodedVideoTimestamp() const override;
-
-    virtual VideoFrame * getFrame(const Timestamp & ts, ErrorFlags & errors) const override;
+    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                   PlayFlags flags) override;
     virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) override;
 
     virtual Nimble::Matrix4f yuvMatrix() const override;

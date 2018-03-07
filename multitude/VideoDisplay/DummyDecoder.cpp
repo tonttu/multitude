@@ -1,14 +1,11 @@
 #include "DummyDecoder.hpp"
 
-#include <Radiant/Sleep.hpp>
-
 #include <random>
 
 namespace VideoDisplay
 {
   struct Frame
   {
-    bool used = false;
     VideoFrame videoFrame;
 
     std::vector<uint8_t> data;
@@ -48,18 +45,11 @@ namespace VideoDisplay
   {
   public:
     std::atomic<bool> m_running { true };
-    AVDecoder::PlayMode m_mode = AVDecoder::PAUSE;
+    AVSync m_sync;
+
     Nimble::Size m_size {1920, 1080};
     double m_fps = 60;
 
-    // At m_syncTime we should be playing frame m_syncFrame
-    Radiant::TimeStamp m_syncTime;
-    int m_syncFrame = 0;
-
-    int m_seekGeneration = 0;
-    int m_frameNum = -1;
-
-    Radiant::Mutex m_framesMutex;
     std::array<Frame, 20> m_frames;
   };
 
@@ -72,32 +62,28 @@ namespace VideoDisplay
   DummyDecoder::~DummyDecoder()
   {
     close();
-    if(isRunning())
-      waitEnd();
   }
 
   void DummyDecoder::close()
   {
     m_d->m_running = false;
+    state() = STATE_FINISHED;
   }
 
-  AVDecoder::PlayMode DummyDecoder::playMode() const
+  AVSync::PlayMode DummyDecoder::playMode() const
   {
-    return m_d->m_mode;
+    return m_d->m_sync.playMode();
   }
 
-  void DummyDecoder::setPlayMode(AVDecoder::PlayMode mode)
+  void DummyDecoder::setPlayMode(AVSync::PlayMode mode)
   {
-    if (m_d->m_mode == mode) return;
-    ++m_d->m_seekGeneration;
-    m_d->m_mode = mode;
-    m_d->m_syncTime = Radiant::TimeStamp::currentTime();
-    m_d->m_syncFrame = m_d->m_frameNum;
+    m_d->m_sync.setPlayMode(mode);
   }
 
   int DummyDecoder::seek(const AVDecoder::SeekRequest &)
   {
-    return ++m_d->m_seekGeneration;
+    m_d->m_sync.setSeekGeneration(m_d->m_sync.seekGeneration() + 1);
+    return m_d->m_sync.seekGeneration();
   }
 
   Nimble::Size DummyDecoder::videoSize() const
@@ -105,69 +91,20 @@ namespace VideoDisplay
     return m_d->m_size;
   }
 
-  Timestamp DummyDecoder::getTimestampAt(const Radiant::TimeStamp & ts) const
+  VideoFrame * DummyDecoder::playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags &, PlayFlags)
   {
-    if (m_d->m_mode == AVDecoder::PLAY) {
-      double t = ts.secondsD() - m_d->m_syncTime.secondsD();
-      return Timestamp(m_d->m_syncFrame / m_d->m_fps + t, m_d->m_seekGeneration);
-    } else {
-      return latestDecodedVideoTimestamp();
-    }
+    if (state() != STATE_READY)
+      return nullptr;
+
+    Timestamp ts = m_d->m_sync.map(presentTimestamp);
+    uint64_t frameNum = ts.pts() * m_d->m_fps;
+
+    return &m_d->m_frames[frameNum % m_d->m_frames.size()].videoFrame;
   }
 
-  Timestamp DummyDecoder::latestDecodedVideoTimestamp() const
+  int DummyDecoder::releaseOldVideoFrames(const Timestamp &, bool *)
   {
-    Radiant::Guard g(m_d->m_framesMutex);
-
-    if (m_d->m_frameNum < 0)
-      return Timestamp();
-    Frame & f = m_d->m_frames[m_d->m_frameNum % m_d->m_frames.size()];
-    return f.videoFrame.timestamp();
-  }
-
-  VideoFrame * DummyDecoder::getFrame(const Timestamp & ts, AVDecoder::ErrorFlags & errors) const
-  {
-    Radiant::Guard g(m_d->m_framesMutex);
-
-    Frame * ret = 0;
-    for (int idx = std::max<int>(0, m_d->m_frameNum - m_d->m_frames.size() + 1);
-         idx <= m_d->m_frameNum; ++idx) {
-      Frame & f = m_d->m_frames[idx % m_d->m_frames.size()];
-      if (!f.used && f.videoFrame.timestamp().seekGeneration() != ts.seekGeneration())
-        continue;
-
-      if (f.videoFrame.timestamp() > ts) {
-        if (ret) return &ret->videoFrame;
-        return &f.videoFrame;
-      }
-
-      if (f.videoFrame.timestamp() == ts)
-        return &f.videoFrame;
-
-      ret = &f;
-    }
-
-    errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
-    return ret ? &ret->videoFrame : nullptr;
-  }
-
-  int DummyDecoder::releaseOldVideoFrames(const Timestamp & ts, bool *)
-  {
-    Radiant::Guard g(m_d->m_framesMutex);
-
-    int count = 0;
-
-    // keep the latest frame alive
-    for (int idx = std::max<int>(0, m_d->m_frameNum - m_d->m_frames.size() + 1);
-         idx < m_d->m_frameNum; ++idx) {
-      Frame & f = m_d->m_frames[idx % m_d->m_frames.size()];
-      if (f.used && f.videoFrame.timestamp() <= ts) {
-        f.used = false;
-        ++count;
-      }
-    }
-
-    return count;
+    return 0;
   }
 
   Nimble::Matrix4f DummyDecoder::yuvMatrix() const
@@ -190,28 +127,12 @@ namespace VideoDisplay
 
   void DummyDecoder::runDecoder()
   {
+    state() = STATE_HEADER_READY;
+
     for (Frame & f: m_d->m_frames)
       init(f, m_d->m_size);
 
-    state() = STATE_HEADER_READY;
-
-    while (m_d->m_running) {
-      bool full = true;
-      if (m_d->m_mode == AVDecoder::PLAY) {
-        Radiant::Guard g(m_d->m_framesMutex);
-        Frame & f = m_d->m_frames[(m_d->m_frameNum + 1) % m_d->m_frames.size()];
-        if (!f.used) {
-          f.videoFrame.setIndex(++m_d->m_frameNum);
-          f.videoFrame.setTimestamp(Timestamp(m_d->m_frameNum / m_d->m_fps, m_d->m_seekGeneration));
-          f.used = true;
-          state() = STATE_READY;
-          full = false;
-        }
-      }
-
-      if (full)
-        Radiant::Sleep::sleepSome(1.0 / m_d->m_fps);
-    }
-    state() = STATE_FINISHED;
+    m_d->m_sync.sync(Radiant::TimeStamp::currentTime(), Timestamp());
+    state() = STATE_READY;
   }
 } // namespace VideoDisplay

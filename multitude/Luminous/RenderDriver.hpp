@@ -105,7 +105,7 @@ namespace Luminous
 
     LUMINOUS_API virtual int uniformBufferOffsetAlignment() const = 0;
 
-    LUMINOUS_API virtual bool setupSwapGroup(int group) = 0;
+    LUMINOUS_API virtual bool setupSwapGroup(int group, int screen) = 0;
 
     LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 

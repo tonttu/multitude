@@ -60,15 +60,11 @@ namespace VideoDisplay
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(AVDecoder *, int channels);
+    AudioTransfer(AVDecoder *, int channels, AVSync & avsync);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
     virtual void process(float ** in, float ** out, int n, const Resonant::CallbackTime & time) OVERRIDE;
-
-    Timestamp toPts(const Radiant::TimeStamp & ts) const;
-
-    Timestamp lastPts() const;
 
     float bufferStateSeconds() const;
 
@@ -78,9 +74,7 @@ namespace VideoDisplay
     DecodedAudioBuffer * takeFreeBuffer(int samples);
     void putReadyBuffer(int samples);
 
-    void setPlayMode(AVDecoder::PlayMode playMode);
     void setSeeking(bool seeking);
-    void setSeekGeneration(int seekGeneration);
 
     /// Gain factor for the sound-track
     float gain() const;
@@ -91,9 +85,6 @@ namespace VideoDisplay
 
     void setDecodingFinished(bool finished);
     bool isDecodingFinished() const;
-
-    void setMinimizeLatency(bool minimize);
-    bool minimizeLatency() const;
 
     VIDEODISPLAY_API static uint64_t bufferUnderrun();
 
