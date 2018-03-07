@@ -120,11 +120,6 @@ namespace VideoDisplay
     return false;
   }
 
-  bool AVDecoder::setMinimizeAudioLatency(bool)
-  {
-    return false;
-  }
-
   void AVDecoder::setPreviousDecoder(AVDecoderPtr decoder)
   {
     m_d->m_previousDecoder = decoder;
