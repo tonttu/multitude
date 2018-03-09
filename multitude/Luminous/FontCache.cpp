@@ -87,11 +87,13 @@ namespace
   /// saving or loading 16 bit grayscale images.
   bool saveImage(const Luminous::Image & image, const QString & filename)
   {
-
-    QFile file(filename);
+    QSaveFile file(filename);
     if (file.open(QFile::WriteOnly)) {
       Luminous::ImageCodecCS codec;
-      return codec.write(image, file);
+      bool ok = codec.write(image, file);
+      if (ok)
+        return file.commit();
+      return false;
     } else {
       Radiant::error("saveImage # Failed to open '%s': %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());

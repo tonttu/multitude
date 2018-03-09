@@ -734,7 +734,7 @@ namespace Luminous
   {
     initDefaultImageCodecs();
 
-    QFile file(filename);
+    QSaveFile file(filename);
     if (!file.open(QIODevice::WriteOnly)) {
       Radiant::error("Image::write # failed to open file '%s'", filename.toUtf8().data());
       return false;
@@ -752,13 +752,17 @@ namespace Luminous
       return false;
     }
 
+    bool ok;
     if (hasPreMultipliedAlpha() && !codec->canWritePremultipliedAlpha()) {
       Luminous::Image tmp(*this);
       tmp.toPostMultipliedAlpha();
-      return codec->write(tmp, file);
+      ok = codec->write(tmp, file);
     } else {
-      return codec->write(*this, file);
+      ok = codec->write(*this, file);
     }
+    if (ok)
+      return file.commit();
+    return ok;
   }
 
   void Image::fromData(const unsigned char * bytes, int width, int height,

@@ -232,7 +232,7 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::write(const Image & image, QFile & file)
+  bool ImageCodecQT::write(const Image & image, QSaveFile & file)
   {
     QImage qi;
 

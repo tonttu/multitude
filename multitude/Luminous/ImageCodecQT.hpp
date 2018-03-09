@@ -30,7 +30,7 @@ namespace Luminous
     virtual QString name() const OVERRIDE;
     virtual bool ping(ImageInfo & image, QFile & file) OVERRIDE;
     virtual bool read(Image & image, QFile & file) OVERRIDE;
-    virtual bool write(const Image & image, QFile & file) OVERRIDE;
+    virtual bool write(const Image & image, QSaveFile & file) OVERRIDE;
 
   private:
     QString m_suffix;
