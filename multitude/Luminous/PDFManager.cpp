@@ -363,10 +363,5 @@ namespace Luminous
     return m_d->m_defaultCachePath;
   }
 
-  const std::shared_ptr<PDFManager>& PDFManager::instance()
-  {
-    static auto ptr = std::make_shared<PDFManager>();
-    return ptr;
-  }
-
+  DEFINE_SINGLETON(PDFManager)
 }

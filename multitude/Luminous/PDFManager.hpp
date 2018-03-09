@@ -3,6 +3,7 @@
 #include "Export.hpp"
 
 #include <Radiant/Color.hpp>
+#include <Radiant/Singleton.hpp>
 
 #include <Nimble/Size.hpp>
 #include <folly/futures/Future.h>
@@ -15,6 +16,8 @@ namespace Luminous
 
   class LUMINOUS_API PDFManager
   {
+    DECLARE_SINGLETON(PDFManager);
+
   public:
     /// One PDF document written to a cache. There will be exactly one image
     /// file for each page in the PDF document.
@@ -41,8 +44,6 @@ namespace Luminous
     };
 
   public:
-    static const std::shared_ptr<PDFManager>& instance();
-
     PDFManager();
     ~PDFManager();
 
