@@ -348,7 +348,7 @@ namespace Luminous
           task.setFinished();
       });
 
-      return doc;
+      return std::move(doc);
     };
     return Punctual::createWrappedTask<CachedPDFDocument>(std::move(taskFunc));
   }
