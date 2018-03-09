@@ -148,6 +148,19 @@ namespace Radiant
       return path;
     }
 
+    QString localAppPath()
+    {
+      QString ret;
+      PWSTR path = nullptr;
+      if (SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &path) == S_OK) {
+        ret = QString::fromWCharArray(path).replace('\\', '/');
+        CoTaskMemFree(path);
+      } else {
+        error("PlatformUtils::localAppPath # SHGetKnownFolderPath() failed");
+      }
+      return ret;
+    }
+
     void * openPlugin(const char * path)
     {
       return (void *)(LoadLibraryA(path));

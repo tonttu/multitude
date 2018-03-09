@@ -104,6 +104,14 @@ namespace Radiant
       return QString("%1/.%2").arg(getUserHomePath(), module);
     }
 
+    QString localAppPath()
+    {
+      QString home = getUserHomePath();
+      while (!home.isEmpty() && home.endsWith('/'))
+        home.chop(1);
+      return home;
+    }
+
     void * openPlugin(const char * path)
     {
       return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
