@@ -240,7 +240,7 @@ namespace Luminous
 
   }
 
-  bool ImageCodecTGA::write(const Image & image, QFile & file)
+  bool ImageCodecTGA::write(const Image & image, QSaveFile & file)
   {
     // Fill the header
     TGAHeader header;

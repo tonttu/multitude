@@ -34,7 +34,7 @@ public:
   QString name() const;
   bool ping(ImageInfo & info, QFile & file);
   bool read(Image & image, QFile & file);
-  bool write(const Image & image, QFile & file);
+  bool write(const Image & image, QSaveFile & file);
   bool read(CompressedImage & image, QFile & file, int level = 0);
 
   /// Save the DXT compressed image data to a DDS file.

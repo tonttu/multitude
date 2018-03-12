@@ -30,7 +30,7 @@ namespace Luminous
       virtual QString name() const;
       virtual bool ping(ImageInfo & info, QFile & file);
       virtual bool read(Image & image, QFile & file);
-      virtual bool write(const Image & image, QFile & file);
+      virtual bool write(const Image & image, QSaveFile & file);
   };
 
 }

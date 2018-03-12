@@ -232,7 +232,7 @@ namespace Luminous
     return true;
   }
 
-  bool ImageCodecQT::write(const Image & image, QFile & file)
+  bool ImageCodecQT::write(const Image & image, QSaveFile & file)
   {
     QImage qi;
 
@@ -302,6 +302,19 @@ namespace Luminous
         dest[2] = src[2];
         dest[3] = src[3];
         src += 4;
+        dest += 4;
+      }
+    } else if(image.pixelFormat() == PixelFormat::bgrUByte()) {
+      qi = QImage(image.width(), image.height(), QImage::Format_RGB32);
+
+      uint8_t * dest = qi.bits();
+
+      while(src < sentinel) {
+        dest[0] = src[0];
+        dest[1] = src[1];
+        dest[2] = src[2];
+        dest[3] = 255;
+        src += 3;
         dest += 4;
       }
     } else {
