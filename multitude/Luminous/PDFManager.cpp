@@ -259,7 +259,7 @@ namespace Luminous
                                                           const QString& pageAbsoluteFilePath,
                                                           const Nimble::SizeI& resolution,
                                                           QRgb color)
-  {    
+  {
     auto writeImage = [pageAbsoluteFilePath, pdfAbsoluteFilePath, pageNumber] (QImage im) {
       bool ok = im.save(pageAbsoluteFilePath);
       if(!ok)
@@ -307,8 +307,8 @@ namespace Luminous
         QCryptographicHash hash(QCryptographicHash::Sha1);
         QFile file(pdfFilename);
         if (!file.open(QFile::ReadOnly))
-          throw std::runtime_error(QString("Could not open input file %1: %2").
-                                   arg(file.fileName(), file.errorString()).toStdString());
+          return boost::make_unexpected(QString("Could not open input file %1: %2").
+                                        arg(file.fileName(), file.errorString()).toStdString());
         hash.addData(file.readAll());
         hash.addData((const char*)&bgColor, sizeof(bgColor));
         hash.addData((const char*)&resolution, sizeof(resolution));
@@ -316,8 +316,8 @@ namespace Luminous
         self.path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
 
         if (!QDir().mkpath(self.path))
-          throw std::runtime_error(QString("Failed to create cache path %1").
-                                   arg(self.path).toStdString());
+          boost::make_unexpected(QString("Failed to create cache path %1").
+                                 arg(self.path).toStdString());
       }
 
       if (!s_pdfiumMutex.try_lock())
