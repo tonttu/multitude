@@ -22,8 +22,16 @@ namespace
     QString path;
     int pageNumber = 0;
     int pageCount = -1;
-    std::shared_ptr<std::vector<folly::Promise<QString>>> promises;
+    std::atomic<int> queuedTasks{0};
+    std::vector<folly::Promise<QString>> promises;
   };
+  typedef std::shared_ptr<BatchConverter> BatchConverterPtr;
+
+  /// How many image save tasks to have in the bg thread queue at the same time.
+  /// Too large number and the application will consume more memory if bg thread
+  /// is busy or saving the output files take longer than converting them. Too
+  /// small number and the conversion is not as efficient as it could be.
+  static const int s_maxQueuedTasks = 4;
 
   boost::expected<size_t> queryPageCount(const QString& pdfAbsoluteFilePath)
   {
@@ -104,9 +112,10 @@ namespace
     return targetResolution;
   }
 
-  void batchConvert(BatchConverter & batch, const Nimble::SizeI & resolution,
+  void batchConvert(BatchConverterPtr batchPtr, const Nimble::SizeI & resolution,
                     Radiant::Color bgColor, const QString & imageFormat)
   {
+    BatchConverter & batch = *batchPtr;
     QRgb bg = bgColor.toQColor().rgba();
 
     /// Work max one second at a time
@@ -120,24 +129,23 @@ namespace
       std::runtime_error error(QString("Could not open document %1.").
                                arg(batch.pdfAbsoluteFilePath).toStdString());
       for (; batch.pageNumber < batch.pageCount; ++batch.pageNumber) {
-        (*batch.promises)[batch.pageNumber].setException(error);
+        batch.promises[batch.pageNumber].setException(error);
       }
       return;
     }
 
-    auto promises = batch.promises;
     for (; batch.pageNumber < batch.pageCount; ++batch.pageNumber) {
       QString targetFile = QString("%2/%1.%3").arg(batch.pageNumber, 5, 10, QChar('0')).
           arg(batch.path, imageFormat);
       QFileInfo targetInfo(targetFile);
       if (targetInfo.exists() && targetInfo.size() > 0) {
-        (*batch.promises)[batch.pageNumber].setValue(std::move(targetFile));
+        batch.promises[batch.pageNumber].setValue(std::move(targetFile));
         continue;
       }
 
       FPDF_PAGE page = FPDF_LoadPage(doc, batch.pageNumber);
       if (!page) {
-        (*batch.promises)[batch.pageNumber].setException(
+        batch.promises[batch.pageNumber].setException(
               std::runtime_error(QString("Could not open page %2 from %1").
                                  arg(batch.pdfAbsoluteFilePath).arg(batch.pageNumber).
                                  toStdString()));
@@ -172,19 +180,21 @@ namespace
       FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), bg);
       FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
 
-      folly::Promise<QString> * promise = &(*batch.promises)[batch.pageNumber];
-      /// Capture promises to the lambda to keep the promise alive
-      auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, promise, promises] {
+      int pageNumber = batch.pageNumber;
+      auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, pageNumber, batchPtr] () mutable {
         image->write(targetFile);
-        promise->setValue(targetFile);
+        batchPtr->promises[pageNumber].setValue(targetFile);
+        image.reset();
+        --batchPtr->queuedTasks;
       });
       saveTask->setPriority(Radiant::Task::PRIORITY_NORMAL - 1);
+      ++batch.queuedTasks;
       Radiant::BGThread::instance()->addTask(std::move(saveTask));
 
       FPDFBitmap_Destroy(bitmap);
       FPDF_ClosePage(page);
 
-      if (timer.time() > maxWorkTime) {
+      if (timer.time() > maxWorkTime || batch.queuedTasks.load() >= s_maxQueuedTasks) {
         ++batch.pageNumber;
         break;
       }
@@ -292,16 +302,16 @@ namespace Luminous
       Radiant::Color bgColor, const QString & cachePath,
       const QString & imageFormat)
   {
-    BatchConverter self;
+    BatchConverterPtr batchConverter { new BatchConverter() };
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.
     QString cacheRoot = cachePath.isEmpty() ? defaultCachePath() : cachePath;
     Punctual::WrappedTaskFunc<CachedPDFDocument> taskFunc =
-        [pdfFilename, resolution, bgColor, cacheRoot, imageFormat, self]() mutable
+        [pdfFilename, resolution, bgColor, cacheRoot, imageFormat, batchConverter]()
         -> Punctual::WrappedTaskReturnType<CachedPDFDocument>
     {
-      if (self.path.isNull()) {
-        self.pdfAbsoluteFilePath = QFileInfo(pdfFilename).absoluteFilePath();
+      if (batchConverter->path.isNull()) {
+        batchConverter->pdfAbsoluteFilePath = QFileInfo(pdfFilename).absoluteFilePath();
 
         // Sha1 is used because it's really fast
         QCryptographicHash hash(QCryptographicHash::Sha1);
@@ -313,39 +323,46 @@ namespace Luminous
         hash.addData((const char*)&bgColor, sizeof(bgColor));
         hash.addData((const char*)&resolution, sizeof(resolution));
         hash.addData(imageFormat.toUtf8());
-        self.path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
+        batchConverter->path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
 
-        if (!QDir().mkpath(self.path))
+        if (!QDir().mkpath(batchConverter->path))
           boost::make_unexpected(QString("Failed to create cache path %1").
-                                 arg(self.path).toStdString());
+                                 arg(batchConverter->path).toStdString());
       }
 
       if (!s_pdfiumMutex.try_lock())
         return Punctual::NotReadyYet();
-      auto count = ::queryPageCount(self.pdfAbsoluteFilePath);
+      auto count = ::queryPageCount(batchConverter->pdfAbsoluteFilePath);
       s_pdfiumMutex.unlock();
 
       // Rethrows the exception if it fails
-      self.pageCount = count.value();
+      batchConverter->pageCount = count.value();
 
-      self.promises.reset(new std::vector<folly::Promise<QString>>(self.pageCount));
+      batchConverter->promises.resize(batchConverter->pageCount);
 
       CachedPDFDocument doc;
-      doc.cachePath = self.path;
-      doc.pages.reserve(self.pageCount);
-      for (auto & p: *self.promises)
+      doc.cachePath = batchConverter->path;
+      doc.pages.reserve(batchConverter->pageCount);
+      for (auto & p: batchConverter->promises)
         doc.pages.push_back(p.getFuture());
 
-      Radiant::FunctionTask::executeInBGThread([self, resolution, bgColor, imageFormat] (Radiant::Task & task) mutable {
+      Radiant::FunctionTask::executeInBGThread([batchConverter, resolution, bgColor, imageFormat] (Radiant::Task & task) {
+        if (batchConverter->queuedTasks.load() >= s_maxQueuedTasks) {
+          task.scheduleFromNowSecs(0.1);
+          return;
+        }
+
         if (!s_pdfiumMutex.try_lock()) {
           task.scheduleFromNowSecs(0.01);
           return;
         }
 
-        batchConvert(self, resolution, bgColor, imageFormat);
+        batchConvert(batchConverter, resolution, bgColor, imageFormat);
         s_pdfiumMutex.unlock();
-        if (self.pageNumber >= self.pageCount)
+        if (batchConverter->pageNumber >= batchConverter->pageCount)
           task.setFinished();
+        else if (batchConverter->queuedTasks.load() >= s_maxQueuedTasks)
+          task.scheduleFromNowSecs(0.1);
       });
 
       return std::move(doc);
