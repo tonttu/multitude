@@ -335,7 +335,9 @@ namespace Luminous
       auto count = ::queryPageCount(batchConverter->pdfAbsoluteFilePath);
       s_pdfiumMutex.unlock();
 
-      // Rethrows the exception if it fails
+      if (!count.valid())
+        return boost::make_unexpected(count.error());
+
       batchConverter->pageCount = count.value();
 
       batchConverter->promises.resize(batchConverter->pageCount);
