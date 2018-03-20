@@ -675,6 +675,7 @@ namespace Luminous
     m_vertices.clear();
     m_bounds = Nimble::Rectf();
     m_strokes.clear();
+    m_depthIndex.clear();
     m_renderBatches.clear();
     m_hasTranslucentVertices = false;
   }
@@ -1046,6 +1047,9 @@ namespace Luminous
   {
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
+    for (SplineInternal & spline: m_d->m_strokes)
+      spline.m_depthIndexIterator = m_d->m_depthIndex.insertMulti(
+            spline.m_depthIndexIterator.key(), &spline);
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_vertices = other.m_d->m_vertices;
     m_d->m_renderBatches = other.m_d->m_renderBatches;
@@ -1058,6 +1062,9 @@ namespace Luminous
   {
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
+    for (SplineInternal & spline: m_d->m_strokes)
+      spline.m_depthIndexIterator = m_d->m_depthIndex.insertMulti(
+            spline.m_depthIndexIterator.key(), &spline);
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_vertices = other.m_d->m_vertices;
     m_d->m_renderBatches = other.m_d->m_renderBatches;
