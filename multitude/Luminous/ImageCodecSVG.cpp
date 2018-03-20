@@ -131,7 +131,7 @@ namespace Luminous
   }
 
   /// Not supported (could use QSvgGenerator to render bitmap as SVG, but why?)
-  bool ImageCodecSVG::write(const Image & /*image*/, QFile & /*file*/)
+  bool ImageCodecSVG::write(const Image & /*image*/, QSaveFile & /*file*/)
   {
     return false;
   }

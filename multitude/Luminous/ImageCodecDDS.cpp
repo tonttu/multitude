@@ -291,7 +291,7 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   }
 }
 
-bool ImageCodecDDS::write(const Image &, QFile &)
+bool ImageCodecDDS::write(const Image &, QSaveFile &)
 {
   return false;
 }

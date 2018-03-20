@@ -180,7 +180,7 @@ namespace Luminous
     }
   }
 
-  bool ImageCodecCS::write(const Image & image, QFile & file)
+  bool ImageCodecCS::write(const Image & image, QSaveFile & file)
   {
     /// @todo should be configurable
     const Compression compression = COMPRESSION_LZ4;
