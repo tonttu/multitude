@@ -905,7 +905,7 @@ namespace Luminous
     int n = stroke.m_pointsPerCurve;
 
     // just one curve, nothing to do here
-    if (original.size() < n)
+    if (original.size() <= n)
       return;
 
     int i = 0;
