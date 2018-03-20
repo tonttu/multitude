@@ -30,6 +30,10 @@
 
 #include <atomic>
 
+#ifdef RADIANT_LINUX
+#include <malloc.h>
+#endif
+
 namespace
 {
   typedef std::map<QPair<QByteArray, bool>, std::weak_ptr<Luminous::Mipmap>> MipmapStore;
@@ -634,7 +638,7 @@ namespace Luminous
     // lastUsed => (mipmap, level)
     std::multimap<int, std::pair<MipmapPtr, int>> queue;
 
-    Radiant::Guard g(s_mipmapStoreMutex);
+    s_mipmapStoreMutex.lock();
     const int now = lastFrameTime();
 
     for(MipmapStore::iterator it = s_mipmapStore.begin(); it != s_mipmapStore.end();) {
@@ -666,6 +670,7 @@ namespace Luminous
       s_mipmapStoreMutex.unlock();
       s_mipmapStoreMutex.lock();
     }
+    s_mipmapStoreMutex.unlock();
 
     uint64_t releasedBytes = 0;
     for (auto & p: queue) {
@@ -698,6 +703,11 @@ namespace Luminous
         break;
       }
     }
+
+#ifdef RADIANT_LINUX
+    // Force the application to really release the memory to OS, see #15188
+    malloc_trim(0);
+#endif
 
     if (releasedBytes >= todoBytes) {
       m_outOfMemory = false;

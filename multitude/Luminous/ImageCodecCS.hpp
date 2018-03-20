@@ -73,7 +73,7 @@ namespace Luminous
     QString name() const override;
     bool ping(ImageInfo & info, QFile & file) override;
     bool read(Image & image, QFile & file) override;
-    bool write(const Image & image, QFile & file) override;
+    bool write(const Image & image, QSaveFile & file) override;
     bool canWritePremultipliedAlpha() const override { return true; }
   };
 }

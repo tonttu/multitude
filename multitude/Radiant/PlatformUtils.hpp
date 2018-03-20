@@ -55,6 +55,11 @@ namespace Radiant
     /// @return Absolute path of the given module inside user's home directory
     RADIANT_API QString getModuleUserDataPath(const char * module, bool isapplication);
 
+    /// Returns the local app path without the last '/' char.
+    /// On Windows this returns %LOCALAPPDATA% (C:/Users/multi/AppData/Local)
+    /// Elsewhere this returns: $HOME (/home/multi or /Users/multi)
+    RADIANT_API QString localAppPath();
+
     /// Open a dynamic library
     /// @param path Full path to plugin
     /// @returns Handle to plugin or nullptr if failed

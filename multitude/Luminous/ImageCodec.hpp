@@ -16,6 +16,7 @@
 
 #include <QString>
 #include <QFile>
+#include <QSaveFile>
 #include <cstdio>
 
 namespace Luminous
@@ -63,11 +64,11 @@ namespace Luminous
       virtual bool read(CompressedImage & image, QFile & file, int level = 0) { (void)level;(void)file; (void)image; return false; }
 #endif // LUMINOUS_OPENGLES
 
-      /// Store the given Image into a file
+      /// Store the given Image into a file. The caller is responsible of calling file.commit()
       /// @param image Image to store
       /// @param file file to write to
       /// @return true if the encoding was successful, false otherwise
-      virtual bool write(const Image & image, QFile & file) = 0;
+      virtual bool write(const Image & image, QSaveFile & file) = 0;
 
       /// Check if you can write images that have premultiplied alpha pixel format
       virtual bool canWritePremultipliedAlpha() const { return false; }
