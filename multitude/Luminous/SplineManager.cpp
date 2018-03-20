@@ -642,8 +642,6 @@ namespace Luminous
     void recalculate();
     void recalculate(SplineInternal & stroke);
 
-    void updateBoundingBox();
-
     void render(Luminous::RenderContext & r) const;
 
     void endStroke(Valuable::Node::Uuid id, bool simplify = false);
@@ -709,6 +707,8 @@ namespace Luminous
 
     m_renderBatches.clear();
     m_hasTranslucentVertices = false;
+    m_bounds = Nimble::Rect();
+    float maxWidth = 0;
 
     bool useCachedValues = true;
     int invalidateOffset = 0;
@@ -734,6 +734,8 @@ namespace Luminous
           }
           m_renderBatches.back().vertexCount += stroke.m_bakedIndexEnd - stroke.m_bakedIndex;
           index = stroke.m_bakedIndexEnd;
+          m_bounds.expand(stroke.m_bounds);
+          maxWidth = std::max(maxWidth, stroke.m_data.width);
           continue;
         }
 
@@ -751,6 +753,8 @@ namespace Luminous
           m_renderBatches.back().offset = offset;
         }
         m_renderBatches.back().vertexCount += m_vertices.size() - offset;
+        m_bounds.expand(stroke.m_bounds);
+        maxWidth = std::max(maxWidth, stroke.m_data.width);
       } else {
         if (m_renderBatches.empty() || m_renderBatches.back().finished)
           m_renderBatches.emplace_back();
@@ -772,10 +776,18 @@ namespace Luminous
       if (rb.offset == -1)
         rb.offset = offset;
       rb.vertexCount += m_vertices.size() - offset;
+      m_bounds.expand(stroke.m_bounds);
+      maxWidth = std::max(maxWidth, stroke.m_data.width);
     }
 
+    /// Take the spline width into account, since the bounding box is from the
+    /// control points and not from the actual spline outline. In the worst case
+    /// this might be slightly pessimistic and create too large m_bounds, since
+    /// maybe the splines at the edges are not so wide as some splines in the
+    /// center.
+    m_bounds.grow(maxWidth * 0.5f);
+
     fillBuffer(invalidateOffset);
-    updateBoundingBox();
     m_dirty = false;
   }
 
@@ -886,13 +898,6 @@ namespace Luminous
     } else {
       stroke.m_baked = false;
     }
-  }
-
-  void SplineManager::D::updateBoundingBox()
-  {
-    m_bounds = Nimble::Rect();
-    for (const auto & vertex : m_vertices)
-      m_bounds.expand(vertex.location);
   }
 
   void SplineManager::D::render(Luminous::RenderContext & r) const
