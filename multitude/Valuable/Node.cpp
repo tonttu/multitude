@@ -353,12 +353,16 @@ namespace Valuable
     // Change the attribute name
     attribute->setName(cname);
 
-    m_attributes[attribute->name()] = attribute;
+    /// m_attributes[cname] = attribute; would iterate m_attributes again,
+    /// optimize the insertion by adding the new attribute directly to the
+    /// implementation vector. This is safe, since we just checked that it
+    /// doesn't already exist.
+    m_attributes.vector().emplace_back(std::make_pair(cname, attribute));
 #ifdef ENABLE_THREAD_CHECKS
     attribute->setOwnerThread(m_ownerThread);
 #endif
     attribute->m_host  = this;
-    eventSend("attribute-added", attribute->name());
+    eventSend("attribute-added", cname);
     attributeAdded(attribute);
 
     attribute->emitHostChange();
