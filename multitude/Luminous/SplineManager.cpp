@@ -24,12 +24,13 @@ namespace
     Nimble::Vector4f color;
   };
 
+  template <typename T>
   Luminous::SplineManager::SplineInfo createInfo(Valuable::Node::Uuid id,
-                                        const Luminous::SplineManager::SplineData & data)
+                                                 T && data)
   {
     Luminous::SplineManager::SplineInfo info;
     info.id = id;
-    info.data = data;
+    info.data = std::forward<T>(data);
     return info;
   }
 
@@ -72,6 +73,9 @@ namespace
     int m_bakedIndex = 0;
     /// Past-the-end vertex index to SplineManager::D::m_vertices
     int m_bakedIndexEnd = 0;
+
+    /// Iterator to SplineManager::D::m_depthIndex for improving index removal time
+    QMap<float, SplineInternal*>::iterator m_depthIndexIterator;
   };
 
   void SplineInternal::addPoint(const Luminous::SplineManager::Point & point, float minimumDistance)
@@ -638,18 +642,12 @@ namespace Luminous
     void recalculate();
     void recalculate(SplineInternal & stroke);
 
-    void updateBoundingBox();
-
     void render(Luminous::RenderContext & r) const;
 
-    // these can be called without immediate recalculation to make processing
-    // multiple strokes at a time faster, for example when deserializing or erasing
-    // note: respective recalculations must be called eventually
-    void endStroke(Valuable::Node::Uuid id, bool calculate = true,
-                   bool simplify = false);
-    void addStroke(const SplineInfo & info, bool calculate = true,
-                   bool simplify = false);
-    void removeStroke(Valuable::Node::Uuid id, bool calculate = true);
+    void endStroke(Valuable::Node::Uuid id, bool simplify = false);
+    void endStroke(SplineInternal & stroke, bool simplify);
+    void addStroke(const SplineInfo & info, bool simplify = false);
+    void removeStroke(Valuable::Node::Uuid id);
 
     void simplifyStroke(SplineInternal & stroke, float tolerance = 0.2f) const;
 
@@ -657,7 +655,8 @@ namespace Luminous
     std::vector<Vertex> m_vertices;
     std::vector<RenderBatch> m_renderBatches;
     QMap<Valuable::Node::Uuid, SplineInternal> m_strokes;
-    QMap<float, Valuable::Node::Uuid> m_depthMap;
+    // Index m_strokes by depth
+    QMap<float, SplineInternal*> m_depthIndex;
 
     Nimble::Rect m_bounds;
 
@@ -667,6 +666,8 @@ namespace Luminous
     bool m_hasTranslucentVertices = false;
 
     Luminous::VertexDescription m_descr;
+
+    bool m_dirty = true;
   };
 
   void SplineManager::D::clear()
@@ -674,6 +675,7 @@ namespace Luminous
     m_vertices.clear();
     m_bounds = Nimble::Rectf();
     m_strokes.clear();
+    m_depthIndex.clear();
     m_renderBatches.clear();
     m_hasTranslucentVertices = false;
   }
@@ -701,18 +703,20 @@ namespace Luminous
 
   void SplineManager::D::recalculate()
   {
-    /// Stroke id, render batch index
-    std::vector<std::pair<Valuable::Node::Uuid, int>> unfinishedStrokes;
+    /// Stroke, render batch index
+    std::vector<std::pair<SplineInternal *, int>> unfinishedStrokes;
 
     m_renderBatches.clear();
     m_hasTranslucentVertices = false;
+    m_bounds = Nimble::Rect();
+    float maxWidth = 0;
 
     bool useCachedValues = true;
     int invalidateOffset = 0;
     int index = 0;
 
-    for (const auto & id : m_depthMap) {
-      auto & stroke = m_strokes[id];
+    for (SplineInternal * strokePtr: m_depthIndex) {
+      SplineInternal & stroke = *strokePtr;
       if (stroke.m_curves.empty())
         continue;
 
@@ -731,6 +735,8 @@ namespace Luminous
           }
           m_renderBatches.back().vertexCount += stroke.m_bakedIndexEnd - stroke.m_bakedIndex;
           index = stroke.m_bakedIndexEnd;
+          m_bounds.expand(stroke.m_bounds);
+          maxWidth = std::max(maxWidth, stroke.m_data.width);
           continue;
         }
 
@@ -748,10 +754,12 @@ namespace Luminous
           m_renderBatches.back().offset = offset;
         }
         m_renderBatches.back().vertexCount += m_vertices.size() - offset;
+        m_bounds.expand(stroke.m_bounds);
+        maxWidth = std::max(maxWidth, stroke.m_data.width);
       } else {
         if (m_renderBatches.empty() || m_renderBatches.back().finished)
           m_renderBatches.emplace_back();
-        unfinishedStrokes.push_back({id, m_renderBatches.size() - 1});
+        unfinishedStrokes.push_back({strokePtr, m_renderBatches.size() - 1});
       }
     }
 
@@ -761,7 +769,7 @@ namespace Luminous
     }
 
     for (const auto p: unfinishedStrokes) {
-      auto & stroke = m_strokes[p.first];
+      SplineInternal & stroke = *p.first;
       RenderBatch & rb = m_renderBatches[p.second];
 
       int offset = m_vertices.size();
@@ -769,10 +777,19 @@ namespace Luminous
       if (rb.offset == -1)
         rb.offset = offset;
       rb.vertexCount += m_vertices.size() - offset;
+      m_bounds.expand(stroke.m_bounds);
+      maxWidth = std::max(maxWidth, stroke.m_data.width);
     }
 
+    /// Take the spline width into account, since the bounding box is from the
+    /// control points and not from the actual spline outline. In the worst case
+    /// this might be slightly pessimistic and create too large m_bounds, since
+    /// maybe the splines at the edges are not so wide as some splines in the
+    /// center.
+    m_bounds.grow(maxWidth * 0.5f);
+
     fillBuffer(invalidateOffset);
-    updateBoundingBox();
+    m_dirty = false;
   }
 
   void SplineManager::D::recalculate(SplineInternal & stroke)
@@ -884,13 +901,6 @@ namespace Luminous
     }
   }
 
-  void SplineManager::D::updateBoundingBox()
-  {
-    m_bounds = Nimble::Rect();
-    for (const auto & vertex : m_vertices)
-      m_bounds.expand(vertex.location);
-  }
-
   void SplineManager::D::render(Luminous::RenderContext & r) const
   {
     for (auto rb: m_renderBatches) {
@@ -928,55 +938,57 @@ namespace Luminous
 #endif
   }
 
-  void SplineManager::D::endStroke(Valuable::Node::Uuid id, bool calculate, bool simplify)
+  void SplineManager::D::endStroke(Valuable::Node::Uuid id, bool simplify)
   {
-    if (m_strokes.contains(id)) {
-      SplineInternal & stroke = m_strokes[id];
-      stroke.m_finished = true;
-      if (simplify) {
-        // scale tolerance depending on the size of the stroke
-        float tolerance = 0.0005f * stroke.m_bounds.size().toVector().length();
-        simplifyStroke(stroke, tolerance);
-      }
-      if (calculate)
-        recalculate();
-    }
+    auto it = m_strokes.find(id);
+    if (it != m_strokes.end())
+      endStroke(it.value(), simplify);
   }
 
-  void SplineManager::D::addStroke(const SplineInfo & info, bool calculate, bool simplify)
+  void SplineManager::D::endStroke(SplineInternal & stroke, bool simplify)
   {
-    SplineInternal newStroke;
+    stroke.m_finished = true;
+    if (simplify) {
+      // scale tolerance depending on the size of the stroke
+      float tolerance = 0.0005f * stroke.m_bounds.size().toVector().length();
+      simplifyStroke(stroke, tolerance);
+    }
+    m_dirty = true;
+  }
+
+  void SplineManager::D::addStroke(const SplineInfo & info, bool simplify)
+  {
+    SplineInternal & newStroke = m_strokes[info.id];
+    /// If we are replacing and not adding, make sure the old entry from depth index is removed
+    if (newStroke.m_depthIndexIterator != decltype(newStroke.m_depthIndexIterator)())
+      m_depthIndex.erase(newStroke.m_depthIndexIterator);
     newStroke.m_data = info.data;
     newStroke.processPoints();
-    m_strokes[info.id] = newStroke;
-    m_depthMap.insertMulti(info.data.depth, info.id);
-    endStroke(info.id, calculate, simplify);
+    newStroke.m_depthIndexIterator = m_depthIndex.insertMulti(info.data.depth, &newStroke);
+    assert(m_strokes.size() == m_depthIndex.size());
+    endStroke(newStroke, simplify);
   }
 
-  void SplineManager::D::removeStroke(Valuable::Node::Uuid id, bool calculate)
+  void SplineManager::D::removeStroke(Valuable::Node::Uuid id)
   {
-    if(m_strokes.remove(id)) {
-      for (auto it = m_depthMap.begin(); it != m_depthMap.end();) {
-        if (it.value() == id) {
-          it = m_depthMap.erase(it);
-        } else {
-          ++it;
-        }
-      }
-      if(calculate)
-        recalculate();
+    auto it = m_strokes.find(id);
+    if (it != m_strokes.end()) {
+      m_depthIndex.erase(it->m_depthIndexIterator);
+      m_strokes.erase(it);
+      assert(m_strokes.size() == m_depthIndex.size());
+      m_dirty = true;
     }
   }
 
   void SplineManager::D::simplifyStroke(SplineInternal & stroke, float tolerance) const
   {
-    Points original = stroke.m_data.points;
-    Points newPoints;
     int n = stroke.m_pointsPerCurve;
-
     // just one curve, nothing to do here
-    if (original.size() < n)
+    if (stroke.m_data.points.size() <= n)
       return;
+
+    Points newPoints;
+    Points original = std::move(stroke.m_data.points);
 
     int i = 0;
     // always include first 2 points
@@ -1013,7 +1025,7 @@ namespace Luminous
     newPoints.append(original.at(i - 1));
     newPoints.append(original.at(i));
 
-    stroke.m_data.points = newPoints;
+    stroke.m_data.points = std::move(newPoints);
     stroke.processPoints();
   }
 
@@ -1035,6 +1047,9 @@ namespace Luminous
   {
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
+    for (SplineInternal & spline: m_d->m_strokes)
+      spline.m_depthIndexIterator = m_d->m_depthIndex.insertMulti(
+            spline.m_depthIndexIterator.key(), &spline);
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_vertices = other.m_d->m_vertices;
     m_d->m_renderBatches = other.m_d->m_renderBatches;
@@ -1047,6 +1062,9 @@ namespace Luminous
   {
     m_d = std::unique_ptr<D>(new D);
     m_d->m_strokes = other.m_d->m_strokes;
+    for (SplineInternal & spline: m_d->m_strokes)
+      spline.m_depthIndexIterator = m_d->m_depthIndex.insertMulti(
+            spline.m_depthIndexIterator.key(), &spline);
     m_d->m_bounds = other.m_d->m_bounds;
     m_d->m_vertices = other.m_d->m_vertices;
     m_d->m_renderBatches = other.m_d->m_renderBatches;
@@ -1098,32 +1116,37 @@ namespace Luminous
       return false;
     }
 
-    for (auto id : m_d->m_strokes.keys()) {
-      SplineInternal & stroke = m_d->m_strokes[id];
+    for (auto it = m_d->m_strokes.begin(); it != m_d->m_strokes.end();) {
+      SplineInternal & stroke = it.value();
       if (stroke.m_bounds.intersects(eraser.boundingBox())) {
         // remove or split strokes where erased
         if (eraser.isInside(Nimble::Rectangle(stroke.m_bounds)) ||
             stroke.erase(Nimble::Rectf(normalized[0], normalized[2]),
                          transformer, newStrokes)) {
           if (removedStrokes) {
-            removedStrokes->append(createInfo(id, stroke.m_data));
+            removedStrokes->append(createInfo(it.key(), std::move(stroke.m_data)));
           }
-          m_d->removeStroke(id, false);
+
+          m_d->m_depthIndex.erase(stroke.m_depthIndexIterator);
           recalculate = true;
+          it = m_d->m_strokes.erase(it);
+          assert(m_d->m_depthIndex.size() == m_d->m_strokes.size());
+          continue;
         }
       }
+      ++it;
     }
 
     // add the new split strokes
     for (auto newStroke : newStrokes) {
-      m_d->addStroke(newStroke, false);
+      m_d->addStroke(newStroke);
     }
     if (addedStrokes)
       addedStrokes->append(newStrokes);
 
     // if anything was changed, need to recalculate m_vertices
     if (recalculate || newStrokes.size() > 0)
-      m_d->recalculate();
+      m_d->m_dirty = true;
     return true;
   }
 
@@ -1146,9 +1169,9 @@ namespace Luminous
         if (Nimble::Rectangle(eraserBounds).isInside(Nimble::Rectangle(stroke.m_bounds)) ||
             stroke.erase(eraser, newStrokes)) {
           if (removedStrokes) {
-            removedStrokes->append(createInfo(id, stroke.m_data));
+            removedStrokes->append(createInfo(id, std::move(stroke.m_data)));
           }
-          m_d->removeStroke(id, false);
+          m_d->removeStroke(id);
           recalculate = true;
         }
       }
@@ -1156,14 +1179,14 @@ namespace Luminous
 
     // add the new split strokes
     for (auto newStroke : newStrokes) {
-      m_d->addStroke(newStroke, false);
+      m_d->addStroke(newStroke);
     }
     if (addedStrokes)
       addedStrokes->append(newStrokes);
 
     // if anything was changed, need to recalculate m_vertices
     if (recalculate || newStrokes.size() > 0)
-      m_d->recalculate();
+      m_d->m_dirty = true;
     return true;
   }
 
@@ -1178,29 +1201,30 @@ namespace Luminous
   {
     if (id < 0)
       id = Valuable::Node::generateId();
-    SplineInternal newStroke;
+    SplineInternal & newStroke = m_d->m_strokes[id];
 
     newStroke.m_data = data;
     newStroke.processPoints();
 
-    m_d->m_strokes[id] = newStroke;
-    m_d->m_depthMap.insertMulti(data.depth, id);
-    m_d->recalculate();
+    newStroke.m_depthIndexIterator = m_d->m_depthIndex.insertMulti(data.depth, &newStroke);
+    assert(m_d->m_depthIndex.size() == m_d->m_strokes.size());
+    m_d->m_dirty = true;
     return id;
   }
 
   void SplineManager::continueSpline(Valuable::Node::Uuid id, const Point & point, float minimumDistance)
   {
-    if (m_d->m_strokes.contains(id)) {
-      SplineInternal & stroke = m_d->m_strokes[id];
+    auto it = m_d->m_strokes.find(id);
+    if (it != m_d->m_strokes.end()) {
+      SplineInternal & stroke = it.value();
       stroke.addPoint(point, minimumDistance);
-      m_d->recalculate();
+      m_d->m_dirty = true;
     }
   }
 
   void SplineManager::endSpline(Valuable::Node::Uuid id)
   {
-    m_d->endStroke(id, true, true);
+    m_d->endStroke(id, true);
   }
 
   Valuable::Node::Uuid SplineManager::addSpline(const SplineData & data)
@@ -1220,8 +1244,8 @@ namespace Luminous
     if (splines.isEmpty())
       return;
     for (const auto & info : splines)
-      m_d->addStroke(info, false);
-    m_d->recalculate();
+      m_d->addStroke(info);
+    m_d->m_dirty = true;
   }
 
   void SplineManager::removeSpline(Valuable::Node::Uuid id)
@@ -1234,18 +1258,18 @@ namespace Luminous
     if (splines.isEmpty())
       return;
     for (const auto & stroke : splines)
-      m_d->removeStroke(stroke.id, false);
-    m_d->recalculate();
+      m_d->removeStroke(stroke.id);
+    m_d->m_dirty = true;
   }
 
   void SplineManager::addAndRemoveSplines(const SplineManager::Splines & addedSplines,
                                           const SplineManager::Splines & removedSplines)
   {
     for (const auto & info : addedSplines)
-      m_d->addStroke(info, false);
+      m_d->addStroke(info);
     for (const auto & info : removedSplines)
-      m_d->removeStroke(info.id, false);
-    m_d->recalculate();
+      m_d->removeStroke(info.id);
+    m_d->m_dirty = true;
   }
 
   void SplineManager::
@@ -1253,16 +1277,17 @@ namespace Luminous
                       const std::vector<Valuable::Node::Uuid> & removedSplines)
   {
     for (const auto & info : addedSplines)
-      m_d->addStroke(info, false);
+      m_d->addStroke(info);
     for (const auto & id : removedSplines)
-      m_d->removeStroke(id, false);
-    m_d->recalculate();
+      m_d->removeStroke(id);
+    m_d->m_dirty = true;
   }
 
   SplineManager::SplineData SplineManager::spline(Valuable::Node::Uuid id) const
   {
-    if (m_d->m_strokes.contains(id))
-      return m_d->m_strokes.value(id).m_data;
+    auto it = m_d->m_strokes.find(id);
+    if (it != m_d->m_strokes.end())
+      return it.value().m_data;
     return SplineData();
   }
 
@@ -1275,6 +1300,12 @@ namespace Luminous
     return strokes;
   }
 
+  void SplineManager::update()
+  {
+    if (m_d->m_dirty)
+      m_d->recalculate();
+  }
+
   void SplineManager::render(Luminous::RenderContext & r) const
   {
     m_d->render(r);
@@ -1283,8 +1314,8 @@ namespace Luminous
   QString SplineManager::serialize() const
   {
     QString str = QString("%1\n").arg(m_d->m_strokes.size());
-    for(auto id : m_d->m_strokes.keys()) {
-      str.append(serializeSpline(createInfo(id, m_d->m_strokes[id].m_data)));
+    for (auto it = m_d->m_strokes.begin(); it != m_d->m_strokes.end(); it++) {
+      str.append(serializeSpline(createInfo(it.key(), it.value().m_data)));
     }
     return str;
   }
@@ -1311,11 +1342,11 @@ namespace Luminous
       SplineInfo info = deserializeSpline(strokeLines, currentDepth() + 0.1f);
 
       if (!info.data.points.isEmpty())
-        m_d->addStroke(info, false);
+        m_d->addStroke(info);
 
       line += count;
     }
-    m_d->recalculate();
+    m_d->m_dirty = true;
   }
 
   void SplineManager::clear()
@@ -1331,9 +1362,9 @@ namespace Luminous
 
   float SplineManager::currentDepth() const
   {
-    if (m_d->m_depthMap.isEmpty())
+    if (m_d->m_depthIndex.isEmpty())
       return 0.f;
-    auto it = m_d->m_depthMap.end();
+    auto it = m_d->m_depthIndex.end();
     it--;
     return it.key();
   }
@@ -1413,7 +1444,7 @@ namespace Luminous
 
       data.points.push_back(p);
     }
-    return createInfo(strokeId, data);
+    return createInfo(strokeId, std::move(data));
   }
 
 }

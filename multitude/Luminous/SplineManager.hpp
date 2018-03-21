@@ -146,7 +146,16 @@ namespace Luminous {
     /// @return list of splines with their ids and data
     Splines allSplines() const;
 
-    /// Render the strokes
+    /// Updates the internal triangle strip presentation of all the splines in
+    /// the manager. This needs to be called every time any of the splines are
+    /// changed. Doesn't do anything if there are no changes, so this can safely
+    /// be called for instance every frame.
+    ///
+    /// This needs to be called before render()
+    void update();
+
+    /// Render the strokes. update() needs to be called before render() to
+    /// make sure we are rendering the latest state of the splines.
     void render(Luminous::RenderContext & r) const;
 
     /// Serialize the strokes to a string
