@@ -10,6 +10,11 @@
 
 #include <vector>
 
+#define NOMINMAX
+#include <Windows.h>
+#include <Setupapi.h>
+
+
 /// @cond
 
 namespace Radiant
@@ -39,6 +44,10 @@ namespace Radiant
     RADIANT_API QStringList busRelations(const QString & deviceId);
     RADIANT_API std::vector<Device> allDevices();
     RADIANT_API void dump();
+    RADIANT_API void dump(const std::vector<Device>& devices);
+
+    RADIANT_API QMap<QByteArray, QString> parseProperties(HDEVINFO& devinfo,
+                                                          SP_DEVINFO_DATA& data);
   }
 } // namespace Radiant
 
