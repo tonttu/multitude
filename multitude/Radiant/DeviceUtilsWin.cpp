@@ -507,7 +507,16 @@ namespace Radiant
           QMap<QByteArray, QString> devKeys = parseProperties(devinfo, data);
 
           if (!devKeys.isEmpty()) {
-            DeviceTmp & dev = devices[devKeys["DEVPKEY_Device_InstanceId"]];
+            QString instanceId = devKeys.value("DEVPKEY_Device_InstanceId");
+            if(instanceId.isEmpty()) {
+              instanceId = QString("No InstanceId - %1").arg(i);
+            }
+
+            auto it = devices.find(instanceId);
+            if(it != devices.end()) {
+              instanceId = QString("DuplicateId_%1: %2").arg(i).arg(instanceId);
+            }
+            DeviceTmp & dev = devices[instanceId];
             dev.keys = std::move(devKeys);
           }
         } else {
