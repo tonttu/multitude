@@ -249,6 +249,8 @@ namespace VideoDisplay
 
     void sync(Radiant::TimeStamp radiantTs, Timestamp videoDisplayTs)
     {
+      videoDisplayTs.setSeekGeneration(std::max(videoDisplayTs.seekGeneration(),
+                                                m_syncPointVideoDisplay.seekGeneration()));
       m_syncPointRadiant = radiantTs;
       m_syncPointVideoDisplay = videoDisplayTs;
     }
