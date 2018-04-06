@@ -34,7 +34,7 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(unsigned long val = std::mt19937::default_seed) : m_rand(val)
+    RandomUniform(unsigned long val = randomSeed()) : m_rand(val)
     {
     }
 
@@ -189,6 +189,9 @@ namespace Nimble {
     /// Returns a reference to an instance.
     static RandomUniform & instance() { return m_instance; }
 
+    /// Returns a new random seed
+    static unsigned long randomSeed();
+
   private:
     std::mt19937 m_rand;
     static RandomUniform  m_instance;
@@ -203,7 +206,7 @@ namespace Nimble {
       /// @param mean the mean of the normal distribution
       /// @param stdDev the standard deviation for the normal distribution
       /// @param seed seed value for the pseudo-random sequence
-      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long seed = std::mt19937::default_seed)
+      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long seed = RandomUniform::randomSeed())
         : m_rand(seed), m_dist(mean, stdDev) {}
 
       /// Generate a random number from the distribution
