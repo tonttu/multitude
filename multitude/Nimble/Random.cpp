@@ -8,9 +8,19 @@
  * 
  */
 
-
 #include "Random.hpp"
+
+#include <chrono>
 
 namespace Nimble {
   RandomUniform  RandomUniform::m_instance;
+
+  unsigned long RandomUniform::randomSeed()
+  {
+    static std::random_device rnd;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+    return rnd() ^ (static_cast<unsigned long>(rnd()) << 32ul) ^ ns;
+  }
+
 }

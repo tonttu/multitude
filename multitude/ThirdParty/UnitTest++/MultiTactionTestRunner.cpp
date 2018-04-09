@@ -2,6 +2,7 @@
 #include "UnitTest++.h"
 #include "XmlTestReporter.h"
 #include "TestReporterStdout.h"
+#include "CompositeTestReporter.h"
 
 #include <Radiant/BGThread.hpp>
 #include <Radiant/Semaphore.hpp>
@@ -487,12 +488,11 @@ namespace UnitTest
     int runSingleTest(QString testName, QString testSuite, QString xmlOutput)
     {
       std::unique_ptr<std::ofstream> xmlStream;
-      std::unique_ptr<UnitTest::TestReporter> reporter;
+      std::unique_ptr<UnitTest::CompositeTestReporter> reporter{new UnitTest::CompositeTestReporter()};
+      reporter->AddReporter(new UnitTest::TestReporterStdout());
       if(!xmlOutput.isEmpty()) {
         xmlStream.reset(new std::ofstream(xmlOutput.toUtf8().data()));
-        reporter.reset(new UnitTest::XmlTestReporter(*xmlStream));
-      } else {
-        reporter.reset(new UnitTest::TestReporterStdout());
+        reporter->AddReporter(new UnitTest::XmlTestReporter(*xmlStream));
       }
       UnitTest::TestRunner runner(*reporter);
       int foundCount = 0;

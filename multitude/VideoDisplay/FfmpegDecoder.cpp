@@ -242,9 +242,9 @@ namespace VideoDisplay
     bool open();
     void close();
 
-    void increaseSeekGeneration();
+    bool increaseSeekGeneration();
     bool seekToBeginning();
-    bool seek();
+    bool seek(SeekRequest req, int seekRequestGeneration);
 
     QByteArray supportedPixFormatsStr();
     void updateSupportedPixFormats();
@@ -272,6 +272,7 @@ namespace VideoDisplay
     double m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     // m_sync activeSeekGeneration will be set to this once the seeking is finished
     int m_seekRequestGeneration = 0;
+    Radiant::Mutex m_seekRequestMutex;
 
     AVDecoder::Options m_options;
 
@@ -1005,33 +1006,35 @@ namespace VideoDisplay
     return true;
   }
 
-  void FfmpegDecoder::D::increaseSeekGeneration()
+  bool FfmpegDecoder::D::increaseSeekGeneration()
   {
-    if (m_seekRequestGeneration <= m_sync.seekGeneration())
-      m_seekRequestGeneration = m_sync.seekGeneration() + 1;
-    m_sync.setSeekGeneration(m_seekRequestGeneration);
+    Radiant::Guard g(m_seekRequestMutex);
+    if (m_seekRequest.type() != AVDecoder::SEEK_NONE)
+      return false;
+    m_sync.setSeekGeneration(m_sync.seekGeneration() + 1);
+    return true;
   }
 
-  bool FfmpegDecoder::D::seek()
+  bool FfmpegDecoder::D::seek(SeekRequest req, int seekRequestGeneration)
   {
     QByteArray errorMsg("FfmpegDecoder::D::seek # " + m_options.source().toUtf8() + ":");
 
     m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
 
-    if(m_seekRequest.value() <= std::numeric_limits<double>::epsilon()) {
+    if(req.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
       if(ok)
-        increaseSeekGeneration();
+        m_sync.setSeekGeneration(seekRequestGeneration);
       return ok;
     }
 
     if(!m_av.seekingSupported)
       return false;
 
-    bool seekByBytes = m_av.seekByBytes || m_seekRequest.type() == SEEK_BY_BYTES;
+    bool seekByBytes = m_av.seekByBytes || req.type() == SEEK_BY_BYTES;
 
-    if(m_seekRequest.type() == SEEK_BY_BYTES &&
+    if(req.type() == SEEK_BY_BYTES &&
        (m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK)) {
       Radiant::error("%s Seek failed, media doesn't support byte seeking",
                      errorMsg.data());
@@ -1040,15 +1043,15 @@ namespace VideoDisplay
 
     int64_t pos = 0;
     if(!seekByBytes) {
-      if(m_seekRequest.type() == SEEK_BY_SECONDS) {
-        pos = m_seekRequest.value() * AV_TIME_BASE;
-        if (m_seekRequest.flags() & SEEK_FLAG_ACCURATE) {
-          m_exactVideoSeekRequestPts = m_exactAudioSeekRequestPts = m_seekRequest.value();
+      if(req.type() == SEEK_BY_SECONDS) {
+        pos = req.value() * AV_TIME_BASE;
+        if (req.flags() & SEEK_FLAG_ACCURATE) {
+          m_exactVideoSeekRequestPts = m_exactAudioSeekRequestPts = req.value();
         }
       } else {
-        assert(m_seekRequest.type() == SEEK_RELATIVE);
+        assert(req.type() == SEEK_RELATIVE);
         if(m_av.formatContext->duration > 0) {
-          pos = m_seekRequest.value() * m_av.formatContext->duration;
+          pos = req.value() * m_av.formatContext->duration;
         } else {
           if(m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK) {
             Radiant::error("%s Seek failed, couldn't get the content duration"
@@ -1064,9 +1067,9 @@ namespace VideoDisplay
     }
 
     if(seekByBytes) {
-      if(m_seekRequest.type() == SEEK_BY_BYTES) {
-        pos = m_seekRequest.value();
-      } else if(m_seekRequest.type() == SEEK_BY_SECONDS) {
+      if(req.type() == SEEK_BY_BYTES) {
+        pos = req.value();
+      } else if(req.type() == SEEK_BY_SECONDS) {
         int64_t size = avio_size(m_av.formatContext->pb);
         if(m_av.formatContext->duration <= 0 || size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media duration/size",
@@ -1074,22 +1077,22 @@ namespace VideoDisplay
           return false;
         }
         // This is just a guess, since there is no byte size and time 1:1 mapping
-        pos = size * m_seekRequest.value() / m_av.duration;
+        pos = size * req.value() / m_av.duration;
 
       } else {
-        assert(m_seekRequest.type() == SEEK_RELATIVE);
+        assert(req.type() == SEEK_RELATIVE);
         int64_t size = avio_size(m_av.formatContext->pb);
         if(size <= 0) {
           Radiant::error("%s Seek failed, couldn't get the media size",
                          errorMsg.data());
           return false;
         }
-        pos = m_seekRequest.value() * size;
+        pos = req.value() * size;
       }
     }
 
     int64_t minTs = 0, maxTs = std::numeric_limits<int64_t>::max();
-    if (m_seekRequest.flags() & SEEK_FLAG_FORWARD) {
+    if (req.flags() & SEEK_FLAG_FORWARD) {
       minTs = pos;
     } else {
       maxTs = pos;
@@ -1105,7 +1108,7 @@ namespace VideoDisplay
       avcodec_flush_buffers(m_av.audioCodecContext);
     if(m_av.videoCodecContext)
       avcodec_flush_buffers(m_av.videoCodecContext);
-    increaseSeekGeneration();
+    m_sync.setSeekGeneration(seekRequestGeneration);
     m_av.nextPts = m_av.startPts;
     m_av.nextPtsTb = m_av.startPtsTb;
 
@@ -1274,8 +1277,8 @@ namespace VideoDisplay
             // On some files there are some individual frames out-of-order, we try to minimize
             // this by allowing maximum difference of maxPtsReorderDiff
             /// @todo we probably also want to check if frame.pts is much larger than previous_frame.pts
-            increaseSeekGeneration();
-            frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
+            if (increaseSeekGeneration())
+              frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
           }
           m_decodedVideoFrames->put();
         }
@@ -1329,8 +1332,8 @@ namespace VideoDisplay
       VideoFrameFfmpeg * lastReadyFrame = m_decodedVideoFrames->lastReadyItem();
       if (lastReadyFrame && lastReadyFrame->timestamp().seekGeneration() == frame->timestamp().seekGeneration() &&
           lastReadyFrame->timestamp().pts()-maxPtsReorderDiff > frame->timestamp().pts()) {
-        increaseSeekGeneration();
-        frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
+        if (increaseSeekGeneration())
+          frame->setTimestamp(Timestamp(dpts + m_loopOffset, m_sync.seekGeneration()));
       }
       m_decodedVideoFrames->put();
     }
@@ -1460,13 +1463,23 @@ namespace VideoDisplay
 
   bool FfmpegDecoder::D::checkSeek()
   {
+    SeekRequest req;
+    int seekRequestGeneration;
+    {
+      Radiant::Guard g(m_seekRequestMutex);
+      req = m_seekRequest;
+      seekRequestGeneration = m_seekRequestGeneration;
+    }
+
     bool didSeek = false;
-    if((m_seekRequest.type() != SEEK_NONE)) {
-      if(seek()) {
+    if((req.type() != SEEK_NONE)) {
+      if(seek(req, seekRequestGeneration)) {
         m_loopOffset = 0;
         didSeek = true;
       }
-      m_seekRequest.setType(SEEK_NONE);
+      Radiant::Guard g(m_seekRequestMutex);
+      if (seekRequestGeneration == m_seekRequestGeneration)
+        m_seekRequest.setType(SEEK_NONE);
     }
     return didSeek;
   }
@@ -1517,8 +1530,11 @@ namespace VideoDisplay
     if (useNewestFrame) {
       VideoFrameFfmpeg * frame = m_d->m_decodedVideoFrames->lastReadyItem();
       if (frame) {
-        if (frame->timestamp().seekGeneration() < m_d->m_sync.seekGeneration())
+        if (frame->timestamp().seekGeneration() < m_d->m_sync.seekGeneration()) {
+          /// The buffer might be full of frames with old seek generation, delete them
+          releaseOldVideoFrames(Timestamp(std::numeric_limits<double>::lowest(), m_d->m_sync.seekGeneration()));
           return nullptr;
+        }
         m_d->m_sync.sync(presentTimestamp, frame->timestamp());
       }
       return frame;
@@ -1540,6 +1556,7 @@ namespace VideoDisplay
         m_d->m_sync.sync(presentTimestamp, frame->timestamp());
         return frame;
       }
+      releaseOldVideoFrames(Timestamp(std::numeric_limits<double>::lowest(), m_d->m_sync.seekGeneration()));
       return nullptr;
     }
 
@@ -1565,10 +1582,12 @@ namespace VideoDisplay
     /// If we are behind more than one second, it's time to resynchronize
     const double maxDiff = 1.0;
     if (ret && (ts.pts() - ret->timestamp().pts()) > maxDiff) {
-      m_d->increaseSeekGeneration();
-      m_d->m_sync.sync(presentTimestamp, ret->timestamp());
+      if (m_d->increaseSeekGeneration())
+        m_d->m_sync.sync(presentTimestamp, ret->timestamp());
     }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
+    if (!ret)
+      releaseOldVideoFrames(Timestamp(std::numeric_limits<double>::lowest(), m_d->m_sync.seekGeneration()));
     return ret;
   }
 
@@ -1717,6 +1736,9 @@ namespace VideoDisplay
 
   int FfmpegDecoder::seek(const SeekRequest & req)
   {
+    Radiant::Guard g(m_d->m_seekRequestMutex);
+    m_d->m_seekRequestGeneration = std::max(m_d->m_sync.seekGeneration(),
+                                            m_d->m_seekRequestGeneration);
     int gen = ++m_d->m_seekRequestGeneration;
     m_d->m_seekRequest = req;
     return gen;
