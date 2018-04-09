@@ -130,6 +130,34 @@ namespace Radiant
     /// found.
     RADIANT_API QString findWindowsServiceLogFile(const QString & serviceName,
                                                   const QString & logName);
+#ifndef CLANG_XML
+    /// Type of console for the calling process
+    /// @sa setupConsole
+    enum class ConsoleType {
+      /// For the calling process stdout, stderr, or stdin have been redirected
+      /// to a pipe or a file
+      Redirected,
+      /// Console for the calling process has been attached to the console of
+      /// its parent process
+      AttachedToParentProcess,
+      /// Console type for the calling process is unkown. Either the process
+      /// has a console of its own or the it's parent process does not have
+      /// a console.
+      Unknown
+    };
+
+    /// Setup console on Windows. This function will behave as follows:
+    /// If any of stdout, stderr, or stdin has been redirected to a file or
+    /// pipe, this functions does nothing and returns ConsoleType::Redirected.
+    /// Otherwise, it tries to attach the console of the calling process to the
+    /// console of the parent process. If this succeeds, stdout, stderr, and
+    /// stdin are reopened to the handles of the parent process and
+    /// ConsoleType::AttachedToParentProcess is returned. Otherwise the
+    /// function does nothing and ConsoleType::Unknown is returned.
+    /// @return console type of the calling process
+    RADIANT_API ConsoleType setupConsole();
+#endif
+
 #endif
 
     /// Get the command-line arguments for the current process

@@ -38,6 +38,9 @@
 #include <stdlib.h>
 #include <vector>
 
+#include <QVector>
+#include <QSet>
+
 namespace {
 
   bool systemShutdown(bool rebootAfterShutdown)
@@ -356,6 +359,43 @@ namespace Radiant
         }
       }
       return QString();
+    }
+
+    ConsoleType setupConsole()
+    {
+      // Standard handles to check for redirection
+      const QVector<DWORD> handleTypes { STD_OUTPUT_HANDLE, STD_ERROR_HANDLE, STD_INPUT_HANDLE };
+      // File types that prevent us from attaching to parent process console
+      const QSet<int> fileTypes { FILE_TYPE_DISK, FILE_TYPE_PIPE };
+
+      for(const auto handleType : handleTypes) {
+        const HANDLE handle = GetStdHandle(handleType);
+        const auto type = GetFileType(handle);
+
+        // If any of the standard handles have been redirected, we can't attach
+        // to parent process console because it would break the redirect. The
+        // downside of this is that if you only redirect, say stderr, you will
+        // not see any stdout in the parent process console.
+        if(fileTypes.contains(type))
+          return ConsoleType::Redirected;
+      }
+
+      // No redirection in place, try to attach to parent process console
+      const bool attachOk = (::AttachConsole(ATTACH_PARENT_PROCESS) != 0);
+      if(attachOk) {
+        // Attachment was successful, reopen the standard handles so they point to
+        // the parent process
+        freopen("CON", "wt", stdout);
+        freopen("CON", "wt", stderr);
+        freopen("CON", "rt", stdin);
+
+        return ConsoleType::AttachedToParentProcess;
+      }
+      // Attachment failed. Either this process already has a console (qmake
+      // CONFIG += console flag) or the parent process does not have a console
+      // (e.g. started by double-clicking the executable).
+
+      return ConsoleType::Unknown;
     }
 
     QStringList getCommandLine()
