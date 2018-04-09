@@ -253,13 +253,23 @@ namespace UnitTest
             continue;
           if (root.hasAttribute(attr.name())) {
             bool ok;
-            double a = root.attribute(attr.name()).toDouble(&ok);
-            if (!ok)
-              continue;
-            double b = attr.value().toDouble(&ok);
-            if (!ok)
-              continue;
-            root.setAttribute(attr.name(), QString::number(a+b));
+            if (attr.name() == "time") {
+              double a = root.attribute(attr.name()).toDouble(&ok);
+              if (!ok)
+                continue;
+              double b = attr.value().toDouble(&ok);
+              if (!ok)
+                continue;
+              root.setAttribute(attr.name(), QString::number(a+b));
+            } else {
+              qlonglong a = root.attribute(attr.name()).toLongLong(&ok);
+              if (!ok)
+                continue;
+              qlonglong b = attr.value().toLongLong(&ok);
+              if (!ok)
+                continue;
+              root.setAttribute(attr.name(), QString::number(a+b));
+            }
           } else {
             root.setAttribute(attr.name(), attr.value());
           }
