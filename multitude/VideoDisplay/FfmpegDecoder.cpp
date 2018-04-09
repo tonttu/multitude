@@ -60,6 +60,8 @@ extern "C" {
 
 namespace
 {
+  Radiant::Mutex s_exclusiveAccessMutex;
+  std::set<QString> s_exclusiveAccess;
 
   int libavLock(void ** mutexPtr, enum AVLockOp op)
   {
@@ -257,6 +259,12 @@ namespace VideoDisplay
     void setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
                    Nimble::Vector2i size);
 
+    /// If the source is a video capture device, then only one decoder can be
+    /// open at a time. Try to get exclusive access to this source. Often when
+    /// you are quickly reloading a video, the old decoder might still be open
+    /// and reserving the device when the new decoder is trying to open it.
+    bool claimExclusiveAccess(const QString & src, double maxWaitTimeSecs);
+    void releaseExclusiveAccess();
 
     FfmpegDecoder * m_host;
     AVSync m_sync;
@@ -304,6 +312,9 @@ namespace VideoDisplay
     bool m_hasDecodedAudioFrames = false;
 
     Radiant::Timer m_decodingStartTime;
+
+    bool m_hasExclusiveAccess = false;
+    std::set<QString>::iterator m_exclusiveAccess;
   };
 
 
@@ -619,10 +630,16 @@ namespace VideoDisplay
     if(sourceFileInfo.exists())
       openTarget = sourceFileInfo.absoluteFilePath();
 
-    if ((m_options.format() == "dshow" &&
-        !m_options.demuxerOptions().contains("list_options")) ||
-        m_options.format() == "v4l2" || m_options.format() == "video4linux2" ||
-        m_options.format() == "avfoundation") {
+    const bool isStream = m_options.format() == "dshow" ||
+        m_options.format() == "v4l2" ||
+        m_options.format() == "video4linux2" ||
+        m_options.format() == "avfoundation";
+
+    if (isStream) {
+      claimExclusiveAccess(src, 10.0);
+    }
+
+    if (isStream && !m_options.demuxerOptions().contains("list_options")) {
       std::vector<VideoInputFormat> formats = scanInputFormats(
             src, inputFormat, m_options.demuxerOptions());
 
@@ -661,6 +678,7 @@ namespace VideoDisplay
         avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
       avformat_free_context(m_av.formatContext);
       m_av.formatContext = nullptr;
+      releaseExclusiveAccess();
       return false;
     }
 
@@ -731,6 +749,7 @@ namespace VideoDisplay
     if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Didn't open any media streams", errorMsg.data());
       avformat_close_input(&m_av.formatContext);
+      releaseExclusiveAccess();
       return false;
     }
 
@@ -798,6 +817,7 @@ namespace VideoDisplay
     if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Failed to open any media stream codecs", errorMsg.data());
       avformat_close_input(&m_av.formatContext);
+      releaseExclusiveAccess();
       return false;
     }
 
@@ -967,6 +987,8 @@ namespace VideoDisplay
       audioTransfer->shutdown();
       Resonant::DSPNetwork::instance()->markDone(audioTransfer);
     }
+
+    releaseExclusiveAccess();
   }
 
   bool FfmpegDecoder::D::seekToBeginning()
@@ -1182,6 +1204,36 @@ namespace VideoDisplay
     }
     for(int i = frame.planes(); i < 4; ++i)
       frame.clear(i);
+  }
+
+  bool FfmpegDecoder::D::claimExclusiveAccess(const QString & src, double maxWaitTimeSecs)
+  {
+    Radiant::Timer timer;
+    while (m_running) {
+      {
+        Radiant::Guard g(s_exclusiveAccessMutex);
+        auto it = s_exclusiveAccess.find(src);
+        if (it == s_exclusiveAccess.end()) {
+          it = s_exclusiveAccess.insert(src).first;
+          m_hasExclusiveAccess = true;
+          m_exclusiveAccess = it;
+          return true;
+        }
+      }
+      if (timer.time() > maxWaitTimeSecs)
+        break;
+      Radiant::Sleep::sleepMs(10);
+    }
+    return false;
+  }
+
+  void FfmpegDecoder::D::releaseExclusiveAccess()
+  {
+    if (m_hasExclusiveAccess) {
+      m_hasExclusiveAccess = false;
+      Radiant::Guard g(s_exclusiveAccessMutex);
+      s_exclusiveAccess.erase(m_exclusiveAccess);
+    }
   }
 
   bool FfmpegDecoder::D::decodeVideoPacket(double &dpts)
