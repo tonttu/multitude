@@ -143,6 +143,10 @@ namespace Nimble {
     template<typename S>
     Nimble::SizeT<S> round() const;
 
+    /// Zero vector, needed to be compatible with Nimble::Vector2T
+    /// @return a zero vector
+    static inline SizeT<T> null() { return SizeT<T>(); }
+
   private:
     T m_width;
     T m_height;
