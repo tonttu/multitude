@@ -56,7 +56,7 @@ namespace Valuable
     const static int N = Elements<WrappedValue>::value;
 
     AttributeTuple(Node* host, const QByteArray& name,
-                   const WrappedValue& v = WrappedValue());
+                   const WrappedValue& v = WrappedValue::null());
 
     AttributeTuple & operator=(const AttributeTuple& tuple);
     AttributeTuple & operator=(const WrappedValue& tuple);
