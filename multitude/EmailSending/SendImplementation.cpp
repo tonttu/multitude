@@ -171,7 +171,7 @@ namespace Email
           .arg(job.settings.host).arg(port);
     }
 
-    bool requireLogin = type != SmtpClient::TcpConnection || !job.settings.username.isEmpty();
+    bool requireLogin = !job.settings.username.isEmpty() || !job.settings.password.isEmpty();
     if(m_activeStatus.ok && requireLogin) {
       m_activeStatus.ok = smtp.login();
       if(!m_activeStatus.ok) {
