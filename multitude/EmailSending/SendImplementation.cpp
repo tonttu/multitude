@@ -20,6 +20,15 @@ namespace Email
     }
   }
 
+  int connectionPort(const Sender::SMTPSettings & settings)
+  {
+    if (settings.port == 0) {
+      return settings.encryption == Sender::EncryptionType::SSL ? 465 : 25;
+    } else {
+      return settings.port;
+    }
+  }
+
   std::unique_ptr<MimeMessage> createMimeMessage(const Message& message)
   {
     std::unique_ptr<MimeMessage> mimeMessage(new MimeMessage());
@@ -125,7 +134,8 @@ namespace Email
 
     SmtpClient::ConnectionType type = connectionType(job.settings);
 
-    SmtpClient smtp(job.settings.host, job.settings.port, type);
+    int port = connectionPort(job.settings);
+    SmtpClient smtp(job.settings.host, port, type);
 
     connect(&smtp, SIGNAL(smtpError(SmtpClient::SmtpError)), this, SLOT(smtpError(SmtpClient::SmtpError)), Qt::DirectConnection);
 
@@ -158,7 +168,7 @@ namespace Email
     bool connected = m_activeStatus.ok;
     if(!m_activeStatus.ok) {
       m_activeStatus.errorMessage = QString("SMTP: failed to connect to %1:%2")
-          .arg(job.settings.host).arg(job.settings.port);
+          .arg(job.settings.host).arg(port);
     }
 
     bool requireLogin = type != SmtpClient::TcpConnection || !job.settings.username.isEmpty();
@@ -166,7 +176,7 @@ namespace Email
       m_activeStatus.ok = smtp.login();
       if(!m_activeStatus.ok) {
         m_activeStatus.errorMessage = QString("SMTP: failed to login to %1:%2 with username %3")
-            .arg(job.settings.host).arg(job.settings.port).arg(job.settings.username);
+            .arg(job.settings.host).arg(port).arg(job.settings.username);
       }
     }
 
@@ -176,7 +186,7 @@ namespace Email
       if(!m_activeStatus.ok) {
         if (m_activeStatus.errorMessage.isEmpty())
           m_activeStatus.errorMessage = QString("SMTP: failed to send message via %1:%2. Server response was '%3'")
-              .arg(job.settings.host).arg(job.settings.port).arg(smtp.getResponseText().toUtf8().data());
+              .arg(job.settings.host).arg(port).arg(smtp.getResponseText().toUtf8().data());
       }
     }
 
