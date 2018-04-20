@@ -1,5 +1,7 @@
 #include "SendImplementation.hpp"
 
+#include <QMimeDatabase>
+
 namespace Email
 {
 
@@ -49,7 +51,11 @@ namespace Email
         QByteArray payload = attachment.device->readAll();
 
         auto a = new MimeAttachment(payload, attachment.filename);
-        a->setContentType(attachment.contentType);
+        if (attachment.contentType.isEmpty()) {
+          a->setContentType(QMimeDatabase().mimeTypeForFileNameAndData(attachment.filename, payload).name());
+        } else {
+          a->setContentType(attachment.contentType);
+        }
 
         mimeMessage->addPart(a);
         attachment.device->close();
