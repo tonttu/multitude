@@ -78,14 +78,22 @@ namespace Radiant {
     {
       Radiant::error("Memcheck: Leaked %ld bytes in %ld allocation(s)", allocated(), m_allocations.size());
 
-      AllocationMap::iterator it = m_allocations.begin();
-      for (; it != m_allocations.end(); ++it) {
-        Radiant::error("Allocated %ld bytes @ %p", it->second.bytes, it->first);
-        it->second.stack.print();
+      /// Group the allocations by their callstacks and sizes, print big leaks first
+      std::map<Allocation, std::vector<void*>> groupedAllocations;
+      for (auto it = m_allocations.begin(); it != m_allocations.end(); ++it)
+        groupedAllocations[it->second].push_back(it->first);
+
+      for (auto it = groupedAllocations.begin(); it != groupedAllocations.end(); ++it) {
+        QStringList tmp;
+        for (void * ptr: it->second)
+          tmp << QString("0x%1").arg((uintptr_t)ptr);
+        Radiant::error("Allocated total %ld bytes @ %s", it->first.bytes * it->second.size(),
+                       tmp.join(", ").toUtf8().data());
+        it->first.stack.print();
       }
     }
 #endif
   }
-  }
+}
 
-DEFINE_SINGLETON(Radiant::MemChecker);
+DEFINE_SINGLETON(Radiant::MemChecker)
