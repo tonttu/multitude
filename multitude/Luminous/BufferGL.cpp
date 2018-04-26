@@ -64,6 +64,11 @@ namespace Luminous
     touch();
   }
 
+  void BufferGL::unbind(Buffer::Type type)
+  {
+    m_state.opengl().glBindBuffer(type, 0);
+  }
+
   void BufferGL::upload(const Buffer & buffer, Buffer::Type type)
   {
     // Reset usage timer
