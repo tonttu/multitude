@@ -698,15 +698,6 @@ namespace Luminous
 
   void RenderDriverGL::flush()
   {
-    for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
-      const BufferMapping & b = it->second;
-      m_d->m_opengl.glBindBuffer(b.target, it->first);
-      GLERROR("RenderDriverGL::flush # glBindBuffer");
-      m_d->m_opengl.glUnmapBuffer(b.target);
-      GLERROR("RenderDriverGL::flush # glUnmapBuffer");
-    }
-    m_d->m_stateGL.bufferMaps().clear();
-
     m_d->m_opaquePool.flush();
     m_d->m_translucentPool.flush();
 

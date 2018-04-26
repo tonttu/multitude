@@ -77,6 +77,7 @@ namespace Luminous
     size_t m_size;        // Size (in bytes)
     size_t m_allocatedSize;
     int m_generation;
+    Radiant::FlagsT<Buffer::MapAccess> m_mappedAccess;
   };
 }
 

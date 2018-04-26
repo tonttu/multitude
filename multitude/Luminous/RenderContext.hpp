@@ -38,6 +38,12 @@
 
 // #define RENDERCONTEXT_SHAREDBUFFER_MAP
 
+#ifdef RENDERCONTEXT_SHAREDBUFFER_MAP
+#error RENDERCONTEXT_SHAREDBUFFER_MAP "doesn't work anymore, since it relayed on \
+    old BufferGL::map behaviour that would reuse existing maps and automatically \
+    unmap the mapped buffers at the end of the frame."
+#endif
+
 namespace Luminous
 {
   class GLSLProgramObject;
