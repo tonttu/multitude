@@ -246,8 +246,11 @@ namespace Luminous
       }
       else {
         if(texture.samples() > 0) {
+          // The last parameter fixedSampleLocations needs to be true in order
+          // to use this texture inside a multisampled FBO with a multisampled
+          // render buffer
           m_state.opengl().glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, texture.samples(), intFormat,
-                                                   texture.width(), texture.height(), GL_FALSE);
+                                                   texture.width(), texture.height(), GL_TRUE);
         } else {
           m_state.opengl().glTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(), texture.height(), 0,
                                         texture.dataFormat().layout(), texture.dataFormat().type(), nullptr);
