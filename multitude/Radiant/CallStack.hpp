@@ -57,6 +57,19 @@ namespace Radiant
     /// Prints a human-readable version of the stack to the log
     RADIANT_API void print() const;
 
+    inline bool operator==(const CallStack & o) const
+    {
+      return m_frameCount == o.m_frameCount &&
+          memcmp(m_frames, o.m_frames, m_frameCount * sizeof(m_frames[0])) == 0;
+    }
+
+    inline bool operator<(const CallStack & o) const
+    {
+      return m_frameCount == o.m_frameCount
+          ? memcmp(m_frames, o.m_frames, m_frameCount * sizeof(m_frames[0])) < 0
+          : m_frameCount < o.m_frameCount;
+    }
+
   private:
     enum { MAX_FRAMES = 32 };
     stackptr_t m_frames[MAX_FRAMES];

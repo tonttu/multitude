@@ -83,6 +83,13 @@ namespace Radiant {
       Allocation(size_t s) : bytes(s) {}
       Allocation() {}
 
+      /// First order by bytes, larger allocations first
+      /// Then order by callstack
+      inline bool operator<(const Allocation & a) const
+      {
+        return bytes == a.bytes ? stack < a.stack : bytes > a.bytes;
+      }
+
       CallStack stack;
       size_t bytes;
     };
