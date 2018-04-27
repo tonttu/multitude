@@ -789,6 +789,8 @@ namespace Luminous
     const Program & fontShader() const;
     const Program & splineShader() const;
 
+    Luminous::StateGL & stateGl();
+
 /// @endcond
 
    private:

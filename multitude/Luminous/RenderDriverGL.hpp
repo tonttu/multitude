@@ -113,6 +113,8 @@ namespace Luminous
 
     LUMINOUS_API OpenGLAPI & opengl();
 
+    LUMINOUS_API StateGL & stateGl();
+
   private:
 
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;

@@ -1487,6 +1487,11 @@ namespace Luminous
     return m_data->m_splineShader;
   }
 
+  StateGL & RenderContext::stateGl()
+  {
+    return m_data->m_driverGL->stateGl();
+  }
+
   int RenderContext::uniformBufferOffsetAlignment() const
   {
     return m_data->m_uniformBufferOffsetAlignment;

@@ -946,6 +946,11 @@ namespace Luminous
     return m_d->m_opengl;
   }
 
+  StateGL & RenderDriverGL::stateGl()
+  {
+    return m_d->m_stateGL;
+  }
+
 }
 
 #undef GLERROR
