@@ -68,6 +68,9 @@ namespace Luminous
     /// @param textureUnit texture unit to bind to
     inline void bind(int textureUnit);
 
+    /// Returns multi-sampling count or zero if this is not a multi-sampled texture
+    inline int samples() const { return m_samples; }
+
     LUMINOUS_API static UploadMethod defaultUploadMethod();
     LUMINOUS_API static void setDefaultUploadMethod(UploadMethod method);
 

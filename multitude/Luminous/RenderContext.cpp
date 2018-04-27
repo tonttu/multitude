@@ -2021,8 +2021,6 @@ namespace Luminous
       r.glDisable(GL_DEPTH_TEST);
       r.glBindRenderbuffer(GL_RENDERBUFFER, 0);
       r.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      r.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-      r.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }
