@@ -24,20 +24,6 @@ namespace Luminous
 {
   class RenderDriverGL;
 
-  /// @cond
-
-  struct BufferMapping
-  {
-    BufferMapping() : target(0), access(0), offset(0), length(0), data(0) {}
-    GLenum target;
-    GLenum access;
-    int offset;
-    std::size_t length;
-    void * data;
-  };
-
-  /// @endcond
-
   /// Keeps track of current OpenGL state, one instance is shared between all
   /// *GL -classes in the same rendering context. None of these functions
   /// actually modify any OpenGL state. This class is used to minimize OpenGL
@@ -45,9 +31,6 @@ namespace Luminous
   class StateGL
   {
   public:
-    /// Cache to keep track of mapped buffers
-    typedef std::map<GLuint, BufferMapping> BufferMaps;
-
     /// Constructor
     /// @param threadIndex render thread index
     /// @param driver render driver to use
@@ -106,10 +89,6 @@ namespace Luminous
     /// @sa consumeUploadBytes
     inline void clearUploadedBytes();
 
-    /// Get the cache for active buffer mappings
-    /// @return buffer mapping cache
-    inline BufferMaps & bufferMaps();
-
     /// Get the render driver associated with this state
     /// @return render driver
     inline RenderDriverGL & driver() { return m_driver; }
@@ -159,8 +138,6 @@ namespace Luminous
     int64_t m_uploadLimit;
     int64_t m_uploadMargin;
     int64_t m_updateFrequency;
-
-    BufferMaps m_bufferMaps;
 
     RenderDriverGL & m_driver;
 
@@ -253,11 +230,6 @@ namespace Luminous
   void StateGL::clearUploadedBytes()
   {
     m_uploadedBytes = 0;
-  }
-
-  StateGL::BufferMaps & StateGL::bufferMaps()
-  {
-    return m_bufferMaps;
   }
 
   bool StateGL::setFramebuffer(GLenum target, GLuint handle)

@@ -89,6 +89,7 @@ namespace Luminous
       INDEX    = GL_ELEMENT_ARRAY_BUFFER,
       UNIFORM  = GL_UNIFORM_BUFFER,
       UNPACK   = GL_PIXEL_UNPACK_BUFFER,
+      PACK     = GL_PIXEL_PACK_BUFFER,
     };
 
     /// Used by BufferGL to implement partial uploads

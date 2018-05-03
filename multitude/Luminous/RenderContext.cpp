@@ -1487,6 +1487,11 @@ namespace Luminous
     return m_data->m_splineShader;
   }
 
+  StateGL & RenderContext::stateGl()
+  {
+    return m_data->m_driverGL->stateGl();
+  }
+
   int RenderContext::uniformBufferOffsetAlignment() const
   {
     return m_data->m_uniformBufferOffsetAlignment;
@@ -2021,8 +2026,6 @@ namespace Luminous
       r.glDisable(GL_DEPTH_TEST);
       r.glBindRenderbuffer(GL_RENDERBUFFER, 0);
       r.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      r.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-      r.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       GLERROR("CustomOpenGL::CustomOpenGL");
     }
   }

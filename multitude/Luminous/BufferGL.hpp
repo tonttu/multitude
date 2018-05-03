@@ -41,6 +41,9 @@ namespace Luminous
     /// @param type type to bind to
     LUMINOUS_API void bind(Buffer::Type type);
 
+    /// Unbind the buffer
+    LUMINOUS_API void unbind(Buffer::Type type);
+
     /// Specify buffer data. This function will upload the contents of the CPU
     /// buffer to GPU memory if needed.
     /// @param buffer
@@ -69,14 +72,18 @@ namespace Luminous
     /// @param length number of bytes to unmap
     LUMINOUS_API void unmap(Buffer::Type type, int offset = 0, std::size_t length = std::size_t(-1));
 
-  private:
-    void allocate(Buffer::Type type);
+    /// @cond
+
+    LUMINOUS_API void allocate(Buffer::Type type);
+
+    /// @endcond
 
   private:
     Buffer::Usage m_usage;
     size_t m_size;        // Size (in bytes)
     size_t m_allocatedSize;
     int m_generation;
+    Radiant::FlagsT<Buffer::MapAccess> m_mappedAccess;
   };
 }
 

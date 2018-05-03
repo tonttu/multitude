@@ -605,7 +605,9 @@ namespace Luminous
     // draw command
     m_d->m_stateGL.setProgram((unsigned)-1);
     m_d->m_stateGL.setVertexArray((unsigned)-1);
-    m_d->m_stateGL.setFramebuffer(GL_FRAMEBUFFER, (unsigned)-1);
+
+    m_d->m_opengl.glBindFramebuffer(GL_READ_FRAMEBUFFER, m_d->m_stateGL.readFramebuffer());
+    m_d->m_opengl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_d->m_stateGL.drawFramebuffer());
   }
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
@@ -698,15 +700,6 @@ namespace Luminous
 
   void RenderDriverGL::flush()
   {
-    for(auto it = m_d->m_stateGL.bufferMaps().begin(); it != m_d->m_stateGL.bufferMaps().end(); ++it) {
-      const BufferMapping & b = it->second;
-      m_d->m_opengl.glBindBuffer(b.target, it->first);
-      GLERROR("RenderDriverGL::flush # glBindBuffer");
-      m_d->m_opengl.glUnmapBuffer(b.target);
-      GLERROR("RenderDriverGL::flush # glUnmapBuffer");
-    }
-    m_d->m_stateGL.bufferMaps().clear();
-
     m_d->m_opaquePool.flush();
     m_d->m_translucentPool.flush();
 
@@ -951,6 +944,11 @@ namespace Luminous
   OpenGLAPI& RenderDriverGL::opengl()
   {
     return m_d->m_opengl;
+  }
+
+  StateGL & RenderDriverGL::stateGl()
+  {
+    return m_d->m_stateGL;
   }
 
 }

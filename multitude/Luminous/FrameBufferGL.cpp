@@ -147,12 +147,13 @@ namespace Luminous
 
   void FrameBufferGL::attach(GLenum attachment, TextureGL &texture)
   {
-    GLERROR("FrameBufferGL::attach # foo");
-
     texture.bind(0);
-    GLERROR("FrameBufferGL::attach # mmoo");
 
-    m_state.opengl().glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.handle(), 0);
+    if (texture.samples() > 0) {
+      m_state.opengl().glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D_MULTISAMPLE, texture.handle(), 0);
+    } else {
+      m_state.opengl().glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture.handle(), 0);
+    }
     GLERROR("FrameBufferGL::attach # glFramebufferTexture");
   }
 

@@ -64,6 +64,11 @@ namespace Luminous
     touch();
   }
 
+  void BufferGL::unbind(Buffer::Type type)
+  {
+    m_state.opengl().glBindBuffer(type, 0);
+  }
+
   void BufferGL::upload(const Buffer & buffer, Buffer::Type type)
   {
     // Reset usage timer
@@ -126,57 +131,28 @@ namespace Luminous
   void * BufferGL::map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access)
   {
     touch();
-
-    BufferMapping & mappings = m_state.bufferMaps()[m_handle];
-
-    if(mappings.data) {
-      if(mappings.access == access.asInt() && mappings.offset == offset && mappings.length == length) {
-        assert(mappings.data);
-        return mappings.data;
-      }
-
-      bind(type);
-      m_state.opengl().glUnmapBuffer(type);
-      GLERROR("BufferGL::map # glUnmapBuffer");
-    } else {
-      bind(type);
-    }
+    bind(type);
 
     if (length + offset > m_size)
       m_size = length + offset;
     if(m_allocatedSize < m_size)
       allocate(type);
 
-    mappings.access = access.asInt();
-    mappings.target = type;
-    mappings.offset = offset;
-    mappings.length = length;
+    m_mappedAccess = access;
 
-    if(offset + length > m_size) {
-      Radiant::warning("BufferGL::map # Attempting to map too large buffer range (%d [offset] + %d [length] > %d [m_size])",
-                       offset, int(length), int(m_size));
-    }
-
-    mappings.data = m_state.opengl().glMapBufferRange(mappings.target, mappings.offset, mappings.length, mappings.access);
+    void * data = m_state.opengl().glMapBufferRange(type, offset, length, access.asInt());
     GLERROR("BufferGL::map # glMapBufferRange");
-    assert(mappings.data);
+    assert(data);
 
-    return mappings.data;
+    return data;
   }
 
   void BufferGL::unmap(Buffer::Type type, int offset, std::size_t length)
   {
     touch();
-
-    auto it = m_state.bufferMaps().find(m_handle);
-    if(it == m_state.bufferMaps().end()) {
-      Radiant::warning("BufferGL::unmap # buffer not mapped");
-      return;
-    }
-
     bind(type);
 
-    if(length != std::size_t(-1) && (it->second.access & GL_MAP_FLUSH_EXPLICIT_BIT)) {
+    if(length != std::size_t(-1) && (m_mappedAccess & Buffer::MAP_FLUSH_EXPLICIT)) {
       m_state.opengl().glFlushMappedBufferRange(type, offset, length);
       GLERROR("BufferGL::unmap # glFlushMappedBufferRange");
     }
@@ -184,7 +160,7 @@ namespace Luminous
     m_state.opengl().glUnmapBuffer(type);
     GLERROR("BufferGL::unmap # glUnmapBuffer");
 
-    m_state.bufferMaps().erase(it);
+    m_mappedAccess.clear();
   }
 
   void BufferGL::allocate(Buffer::Type type)
