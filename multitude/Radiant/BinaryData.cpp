@@ -833,7 +833,7 @@ namespace Radiant {
     memset(&m_buf[0], 0, m_size);
 
     n = 0;
-    for (;;) {
+    while (s > 0) {
       n += stream.read(& m_buf[n], s - n, waitForData);
 
       if (n >= int(s) || !stream.isOpen()) break;
