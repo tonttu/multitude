@@ -71,7 +71,7 @@ namespace VideoDisplay
   class AudioTransfer::D
   {
   public:
-    D(AVDecoder * avff, int channels, AVSync & avsync)
+    D(AVDecoder * avff, int channels, std::shared_ptr<AVSync> avsync)
       : m_avff(avff)
       , m_channels(channels)
       , m_seekGeneration(0)
@@ -84,7 +84,7 @@ namespace VideoDisplay
       , m_gain(1.0f)
       , m_enabled(true)
       , m_decodingFinished(false)
-      , m_sync(avsync)
+      , m_sync(std::move(avsync))
       /*, samplesProcessed(0)*/
     {}
 
@@ -115,7 +115,7 @@ namespace VideoDisplay
     bool m_enabled;
     bool m_decodingFinished;
 
-    AVSync & m_sync;
+    std::shared_ptr<AVSync> m_sync;
 
     /// If the measured average latency doesn't keep inside these threshold, we
     /// start skipping or dropping samples.
@@ -199,7 +199,7 @@ namespace VideoDisplay
       const int offset = decodedBuffer->offset();
       const int samples = decodedBuffer->samples() - offset;
       const double endPts = decodedBuffer->timestamp().pts() + samples / double(s_sampleRate);
-      const Radiant::TimeStamp presentTs = m_sync.map(endPts);
+      const Radiant::TimeStamp presentTs = m_sync->map(endPts);
 
       const double latency = (currentTime - presentTs).secondsD();
       if (latency >= maxLatency) {
@@ -234,10 +234,10 @@ namespace VideoDisplay
 
   int AudioTransfer::D::sync(bool checkNow, double pts, int samples, const Resonant::CallbackTime & time)
   {
-    if (!m_sync.isValid())
+    if (!m_sync->isValid())
       return 0;
 
-    const Radiant::TimeStamp presentTs = m_sync.map(pts);
+    const Radiant::TimeStamp presentTs = m_sync->map(pts);
     const double latencySample = (time.outputTime - presentTs).secondsD();
     const int latencyCheckSecs = 3;
 
@@ -289,8 +289,8 @@ namespace VideoDisplay
     return 0;
   }
 
-  AudioTransfer::AudioTransfer(AVDecoder * avff, int channels, AVSync & avsync)
-    : m_d(new D(avff, channels, avsync))
+  AudioTransfer::AudioTransfer(AVDecoder * avff, int channels, std::shared_ptr<AVSync> avsync)
+    : m_d(new D(avff, channels, std::move(avsync)))
   {
     assert(channels > 0);
   }
@@ -313,7 +313,7 @@ namespace VideoDisplay
 
   void AudioTransfer::process(float **, float ** out, int n, const Resonant::CallbackTime & time)
   {
-    if (m_d->m_sync.playMode() != AVSync::PLAY || !m_d->m_enabled) {
+    if (m_d->m_sync->playMode() != AVSync::PLAY || !m_d->m_enabled) {
       zero(out, m_d->m_channels, n, 0);
       m_d->m_forceSync = true;
       m_d->m_latencySamplesCounter = 0;
@@ -322,9 +322,9 @@ namespace VideoDisplay
 
     Radiant::Guard g(m_d->m_decodedBuffersMutex);
 
-    if (m_d->m_seekGeneration != m_d->m_sync.seekGeneration()) {
+    if (m_d->m_seekGeneration != m_d->m_sync->seekGeneration()) {
       m_d->m_samplesInGeneration = 0;
-      m_d->m_seekGeneration = m_d->m_sync.seekGeneration();
+      m_d->m_seekGeneration = m_d->m_sync->seekGeneration();
       m_d->m_latencySamplesCounter = 0;
       m_d->m_forceSync = true;
     }

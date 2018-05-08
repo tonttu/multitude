@@ -60,7 +60,7 @@ namespace VideoDisplay
   class AudioTransfer : public Resonant::Module
   {
   public:
-    AudioTransfer(AVDecoder *, int channels, AVSync & avsync);
+    AudioTransfer(AVDecoder *, int channels, std::shared_ptr<AVSync> avsync);
     virtual ~AudioTransfer();
 
     virtual bool prepare(int & channelsIn, int & channelsOut) OVERRIDE;
