@@ -8,6 +8,12 @@
 
 #include <vector>
 
+#ifdef ENABLE_CI_BUILD
+#define DEFAULT_MINIDUMP_URL "http://diagnostics.multitaction.com/crash-reports/upload-crash-dump"
+#else
+#define DEFAULT_MINIDUMP_URL QString()
+#endif
+
 namespace Radiant
 {
   namespace CrashHandler
