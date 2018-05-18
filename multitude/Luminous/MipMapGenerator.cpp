@@ -66,7 +66,13 @@ namespace Luminous {
     }
 
     // Set the image format to 4 byte [RGBA] image
-    img.setPixelFormat(PixelFormat::rgbaUByte());
+    if (!img.setPixelFormat(PixelFormat::rgbaUByte())) {
+      Radiant::error("MipMapGenerator::doTask # Failed to convert the source image (%s) to RGBA pixel format",
+                     m_src.toUtf8().data());
+      setFinished();
+      if (m_listener) m_listener(false, ImageInfo());
+      return;
+    }
 
     m_flags =
         m_mipmapFormat.compression() == PixelFormat::COMPRESSED_RGB_DXT1  ? squish::kDxt1 :
