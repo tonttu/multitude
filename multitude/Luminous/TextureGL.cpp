@@ -288,24 +288,7 @@ namespace Luminous
       if(!bound)
         bind(textureUnit);
 
-      const int lineSizeBytes = texture.lineSizeBytes();
-      const int bytesPerPixel = texture.dataFormat().bytesPerPixel();
-
-      // Set proper alignment
-      int alignment = 8;
-      while (lineSizeBytes % alignment)
-        alignment >>= 1;
-
-      m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      GLERROR("TextureGL::upload # glPixelStorei");
-      m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, lineSizeBytes / bytesPerPixel);
-      GLERROR("TextureGL::upload # glPixelStorei");
-
       int uploaded = 0;
-
-      
-      // See how much of the bytes we can upload in this frame
-      int64_t bytesFree = m_state.availableUploadBytes();
 
       /// @todo glCompressedTexImage2D, probably needs some alignment
       if(compressedFormat) {
@@ -315,6 +298,22 @@ namespace Luminous
         GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
         m_dirtyRegion2D = QRegion();
       } else {
+        const int lineSizeBytes = texture.lineSizeBytes();
+        const int bytesPerPixel = texture.dataFormat().bytesPerPixel();
+
+        // Set proper alignment
+        int alignment = 8;
+        while (lineSizeBytes % alignment)
+          alignment >>= 1;
+
+        m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+        GLERROR("TextureGL::upload # glPixelStorei");
+        m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, lineSizeBytes / bytesPerPixel);
+        GLERROR("TextureGL::upload # glPixelStorei");
+
+        // See how much of the bytes we can upload in this frame
+        int64_t bytesFree = m_state.availableUploadBytes();
+
         for(const QRect & rect : m_dirtyRegion2D.rects()) {
           const int bytesPerRectScanline = rect.width() * bytesPerPixel;
           const int lineSizeBytes = texture.lineSizeBytes();

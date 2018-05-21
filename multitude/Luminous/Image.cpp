@@ -61,6 +61,9 @@ namespace Luminous
   template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_RGB> {
     static Type get(const Type * t, int i) { return i < 3 ? t[i] : convert_value<unsigned char, Type>(255); }
   };
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_BGR> {
+    static Type get(const Type * t, int i) { return i < 3 ? t[2-i] : convert_value<unsigned char, Type>(255); }
+  };
 
   template <PixelFormat::ChannelType TypeFrom, PixelFormat::ChannelType TypeTo,
             PixelFormat::ChannelLayout LayoutFrom, PixelFormat::ChannelLayout LayoutTo>
@@ -792,7 +795,8 @@ namespace Luminous
        m_pixelFormat.compression() != PixelFormat::COMPRESSION_NONE ||
        format.type() != PixelFormat::TYPE_UBYTE ||
        m_pixelFormat.type() != PixelFormat::TYPE_UBYTE ||
-       m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB ||
+       (m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB &&
+        m_pixelFormat.layout() != PixelFormat::LAYOUT_BGR) ||
        format.layout() != PixelFormat::LAYOUT_RGBA) {
       Radiant::error("Image::setPixelFormat # unsupported conversion");
       return false;
@@ -806,15 +810,22 @@ namespace Luminous
 
     int src_bpp = srcFormat.bytesPerPixel();
     int dest_bpp = format.bytesPerPixel();
-    for(int y = 0; y < m_height; ++y) {
-      uint8_t * l = src + y * m_width * src_bpp;
-      uint8_t * dest = bytes() + y * m_width * dest_bpp;
 
-      for(int x = 0; x < m_width; ++x) {
-        convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,
-            PixelFormat::LAYOUT_RGB, PixelFormat::LAYOUT_RGBA>(
-              format.numChannels(), l + x*src_bpp, dest + x*dest_bpp);
-      }
+#define CONVERT(srcLayout, targetLayout)                                  \
+    for(int y = 0; y < m_height; ++y) {                                   \
+      uint8_t * l = src + y * m_width * src_bpp;                          \
+      uint8_t * dest = bytes() + y * m_width * dest_bpp;                  \
+      for(int x = 0; x < m_width; ++x) {                                  \
+        convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,         \
+            srcLayout, targetLayout>(                                     \
+              format.numChannels(), l + x*src_bpp, dest + x*dest_bpp);    \
+      }                                                                   \
+    }
+
+    if (srcFormat.layout() == PixelFormat::LAYOUT_RGB) {
+      CONVERT(PixelFormat::LAYOUT_RGB, PixelFormat::LAYOUT_RGBA);
+    } else {
+      CONVERT(PixelFormat::LAYOUT_BGR, PixelFormat::LAYOUT_RGBA);
     }
 
     if(src != m_data) delete [] src;
