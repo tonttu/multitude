@@ -6,6 +6,7 @@
 
 #include "Utils.hpp"
 #include "AudioTransfer.hpp"
+#include "VideoCaptureMonitor.hpp"
 
 #include <Nimble/Vector2.hpp>
 
@@ -640,11 +641,30 @@ namespace VideoDisplay
     }
 
     if (isStream && !m_options.demuxerOptions().contains("list_options")) {
-      std::vector<VideoInputFormat> formats = scanInputFormats(
-            src, inputFormat, m_options.demuxerOptions());
+      bool skipScanInputFormat = false;
+#ifdef RADIANT_WINDOWS
+      if (auto monitor = VideoCaptureMonitor::weakInstance().lock()) {
+        for (VideoCaptureMonitor::VideoSource vsrc: monitor->sources()) {
+          if (vsrc.device == src.toUtf8()) {
+            /// Datapath VisionSC-HD4+ cards have issues in Windows when you
+            /// scan the input formats. Sometimes there is a side effect that
+            /// the same source that is scanned, can't be opened for a while.
+            /// We don't need any of these options with this card anyway,
+            /// since the card automatically selects all this.
+            if (vsrc.friendlyName.toLower().contains("datapath vision"))
+              skipScanInputFormat = true;
+            break;
+          }
+        }
+      }
+#endif
+      if (!skipScanInputFormat) {
+        std::vector<VideoInputFormat> formats = scanInputFormats(
+              src, inputFormat, m_options.demuxerOptions());
 
-      if (const VideoInputFormat * format = chooseFormat(formats, m_options))
-        applyFormatOptions(*format, m_options);
+        if (const VideoInputFormat * format = chooseFormat(formats, m_options))
+          applyFormatOptions(*format, m_options);
+      }
     }
 
     setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
