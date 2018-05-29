@@ -54,6 +54,13 @@ namespace VideoDisplay
     /// Returns currently active video sources
     QList<VideoSource> sources() const;
 
+    /// Returns weak pointer to any existing instance. Weak pointer will be
+    /// null if there are no alive shared_ptr instances of VideoCaptureMonitor.
+    static inline std::weak_ptr<VideoCaptureMonitor> weakInstance()
+    {
+      return s_multiSingletonInstance;
+    }
+
   private:
     VideoCaptureMonitor();
     virtual void doTask() override;
