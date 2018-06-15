@@ -219,6 +219,7 @@ enable-pdf {
     INCLUDEPATH += /opt/multitaction-pdfium2/include
     QMAKE_LIBDIR += /opt/multitaction-pdfium2/lib
     LIBS += -Wl,-whole-archive -lmultitaction-pdfium2 -Wl,-no-whole-archive
+    LIBS += $$LIB_FOLLY
   }
 
 

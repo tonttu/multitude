@@ -1,8 +1,10 @@
 #ifndef RADIANT_EMAILSENDER_HPP
 #define RADIANT_EMAILSENDER_HPP
 
-#include "Email.hpp"
+// Include order is important to avoid conflicts with Qt
+#include <folly/futures/Future.h>
 
+#include "Email.hpp"
 
 #include <Valuable/AttributeBool.hpp>
 #include <Valuable/AttributeEnum.hpp>
@@ -12,8 +14,6 @@
 #include <Valuable/Node.hpp>
 
 #include <memory>
-
-#include <folly/futures/Future.h>
 
 namespace Email
 {

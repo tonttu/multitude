@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 
-#include <folly/futures/ManualExecutor.h>
+#include <folly/executors/ManualExecutor.h>
 
 #include <Radiant/Singleton.hpp>
 

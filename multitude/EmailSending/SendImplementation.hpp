@@ -1,15 +1,13 @@
 #ifndef SENDIMPLEMENTATION_HPP
 #define SENDIMPLEMENTATION_HPP
 
-#include "Email.hpp"
 #include "Sender.hpp"
+#include "Email.hpp"
 
 #include <condition_variable>
 #include <mutex>
 
 #include <QThread>
-
-#include <folly/futures/Future.h>
 
 #include <SMTPEmail/src/SmtpMime>
 

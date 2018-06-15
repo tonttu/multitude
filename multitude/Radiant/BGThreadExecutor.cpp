@@ -9,12 +9,14 @@ namespace Radiant
   namespace
   {
     typedef BGThreadExecutor::Func Func;
-    typedef BGThreadExecutor::JobId JobId;
 
-    struct FuncTask : public Task
+    class FuncTask : public Task
     {
-      FuncTask(const Func & func, int8_t priority, Func && kill)
-        : m_func(func), m_kill(std::move(kill))
+    public:
+      template<class Arg>
+      FuncTask(Arg && func, int8_t priority, std::function<void()> && killFn)
+        : m_func(std::forward<Arg>(func))
+	, m_kill(killFn)
       {
         float lowPriority = Task::PRIORITY_LOW;
         float normalPriority = Task::PRIORITY_NORMAL;
@@ -38,14 +40,9 @@ namespace Radiant
         setFinished();
       }
 
-      std::function<void()> m_func;
+    private:
+      Func m_func;
       std::function<void()> m_kill;
-    };
-
-    struct Tasks
-    {
-      std::mutex mutex;
-      std::unordered_map<JobId, std::shared_ptr<FuncTask>> tasks;
     };
   }  // unnamed namespace
 
@@ -53,48 +50,16 @@ namespace Radiant
   {
   public:
     D(const std::shared_ptr<BGThread> & bgThread)
-      : m_bgThread(bgThread), m_jobId(0), m_tasks(new Tasks()) { }
+      : m_bgThread(bgThread) { }
 
-    JobId addWithPriority(const Func& func, int8_t priority)
+    void addWithPriority(Func func, int8_t priority)
     {
-      JobId key = m_jobId++;
-      std::weak_ptr<Tasks> weakTasks = m_tasks;
-      auto kill = [weakTasks, key] {
-        auto ptr = weakTasks.lock();
-        if(ptr) {
-          std::lock_guard<std::mutex> g(ptr->mutex);
-          ptr->tasks.erase(key);
-        }
-      };
-      auto taskPtr = std::make_shared<FuncTask>(func, priority, std::move(kill));
-      {
-        std::lock_guard<std::mutex> g(m_tasks->mutex);
-        m_tasks->tasks.emplace(key, taskPtr);
-      }
+      auto taskPtr = std::make_shared<FuncTask>(std::move(func), priority, nullptr);
       m_bgThread->addTask(taskPtr);
-      return key;
-    }
-
-    bool cancel(JobId id)
-    {
-      std::shared_ptr<FuncTask> ptr;
-      {
-        std::lock_guard<std::mutex> g(m_tasks->mutex);
-
-        auto it = m_tasks->tasks.find(id);
-        if(it == m_tasks->tasks.end()) {
-          return false;
-        }
-        ptr = it->second;
-        m_tasks->tasks.erase(it);
-      }
-      return m_bgThread->removeTask(ptr, true, false);
     }
 
   private:
     std::shared_ptr<BGThread> m_bgThread;
-    std::atomic<JobId> m_jobId;
-    std::shared_ptr<Tasks> m_tasks;
   };
 
   BGThreadExecutor::BGThreadExecutor(const std::shared_ptr<BGThread> & bgThread)
@@ -102,19 +67,14 @@ namespace Radiant
 
   BGThreadExecutor::~BGThreadExecutor() { }
 
-  JobId BGThreadExecutor::add(BGThreadExecutor::Func func)
+  void BGThreadExecutor::add(BGThreadExecutor::Func func)
   {
-    return m_d->addWithPriority(func, folly::Executor::MID_PRI);
+    m_d->addWithPriority(std::move(func), folly::Executor::MID_PRI);
   }
 
-  JobId BGThreadExecutor::addWithPriority(BGThreadExecutor::Func func, int8_t priority)
+  void BGThreadExecutor::addWithPriority(BGThreadExecutor::Func func, int8_t priority)
   {
-    return m_d->addWithPriority(func, priority);
-  }
-
-  bool BGThreadExecutor::cancel(JobId id)
-  {
-    return m_d->cancel(id);
+    m_d->addWithPriority(std::move(func), priority);
   }
 
   uint8_t BGThreadExecutor::getNumPriorities() const { return 255; }

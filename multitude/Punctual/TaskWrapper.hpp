@@ -5,8 +5,9 @@
 #include <Radiant/Task.hpp>
 
 #include <folly/futures/Promise.h>
-#include <boost/expected/expected.hpp>
+#include <folly/MoveWrapper.h>
 
+#include <boost/expected/expected.hpp>
 #include <boost/variant/variant.hpp>
 #include <boost/variant/get.hpp>
 

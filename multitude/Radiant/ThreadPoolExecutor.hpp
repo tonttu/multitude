@@ -8,8 +8,6 @@
 
 namespace Radiant
 {
-  typedef folly::JobId JobId;
-
   class RADIANT_API ThreadPoolExecutor : public folly::Executor
   {
   public:
@@ -20,9 +18,8 @@ namespace Radiant
     ThreadPoolExecutor(const std::shared_ptr<QThreadPool> & threadPool = nullptr);
     ~ThreadPoolExecutor();
 
-    JobId add(Func func) override;
-    JobId addWithPriority(Func func, int8_t priority) override;
-    bool cancel(JobId id) override;
+    void add(Func func) override;
+    void addWithPriority(Func func, int8_t priority) override;
 
     /// Not sure how this is supposed to be used. This executor accepts any
     /// int8_t priority. This would make the total number of priorities 256

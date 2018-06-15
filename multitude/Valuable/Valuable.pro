@@ -1,5 +1,7 @@
 include(../../cornerstone.pri)
 
+QMAKE_CXXFLAGS += -faligned-new -Wno-error=attributes
+
 HEADERS += Archive.hpp \
     AttributeFrame.hpp \
     AttributeLocation.hpp \
@@ -88,7 +90,7 @@ enable-punctual:DEFINES += ENABLE_PUNCTUAL
 enable-folly {
   HEADERS += EventWrapper.hpp
   SOURCES += EventWrapper.cpp
-  LIBS += $$LIB_FOLLY_FUTURES
+  LIBS += $$LIB_FOLLY
 }
 
 CONFIG += qt
