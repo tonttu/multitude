@@ -211,6 +211,7 @@ namespace Resonant
 
       case PA_CONTEXT_FAILED:
         Radiant::error("PulseAudioContext # PulseAudio connection failure: %s", pa_strerror(pa_context_errno(m_context)));
+        Q_FALLTHROUGH();
       case PA_CONTEXT_TERMINATED:
         restart();
         break;
