@@ -33,6 +33,8 @@ namespace Email
     std::unique_ptr<QIODevice> device;
     /// Content type for attachment, e.g. "application/octet-stream"
     QString contentType;
+    /// Content disposition for the attachment, typically either "inline" or "attachment"
+    QString contentDisposition = "attachment";
   };
 
   /// Email message
@@ -47,6 +49,17 @@ namespace Email
       Cc,
       /// Blind carbon copy
       Bcc
+    };
+
+    /// Multi-part type for the message
+    enum class MultiPartType {
+      Mixed           = 0,            ///< RFC 2046, section 5.1.3
+      Digest          = 1,            ///< RFC 2046, section 5.1.5
+      Alternative     = 2,            ///< RFC 2046, section 5.1.4
+      Related         = 3,            ///< RFC 2387
+      Report          = 4,            ///< RFC 6522
+      Signed          = 5,            ///< RFC 1847, section 2.1
+      Encrypted       = 6             ///< RFC 1847, section 2.2
     };
 
     Message();
@@ -89,6 +102,12 @@ namespace Email
     /// @return list of email addresses of recipients
     const QList<Address> recipients(RecipientType type = RecipientType::To) const;
 
+    /// Set multi-part type. The default is Related, but for inline attachments
+    /// Mixed is better. For instance Gmail shows inline html attachment inline
+    /// only in Mixed multi-part message.
+    void setMultiPartType(MultiPartType type);
+    MultiPartType multiPartType() const;
+
     /// Add file attachment to email
     /// @param filename filename of the attachment that appears in the email
     /// @param data data to attach
@@ -108,6 +127,7 @@ namespace Email
     QList<Address> m_recipientsCc;
     QList<Address> m_recipientsBcc;
     std::list<Attachment> m_attachments;
+    MultiPartType m_multiPartType = MultiPartType::Related;
   };
 
 }

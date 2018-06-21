@@ -31,9 +31,32 @@ namespace Email
     }
   }
 
+  MimeMultiPart::MultiPartType toSmtpType(Message::MultiPartType t)
+  {
+    switch (t) {
+      case Message::MultiPartType::Mixed:
+        return MimeMultiPart::Mixed;
+      case Message::MultiPartType::Digest:
+        return MimeMultiPart::Digest;
+      case Message::MultiPartType::Alternative:
+        return MimeMultiPart::Alternative;
+      case Message::MultiPartType::Related:
+        return MimeMultiPart::Related;
+      case Message::MultiPartType::Report:
+        return MimeMultiPart::Report;
+      case Message::MultiPartType::Signed:
+        return MimeMultiPart::Signed;
+      case Message::MultiPartType::Encrypted:
+        return MimeMultiPart::Encrypted;
+    }
+    Radiant::error("Unknown Message::MultiPartType %d", (int)t);
+    return MimeMultiPart::Related;
+  }
+
   std::unique_ptr<MimeMessage> createMimeMessage(const Message& message)
   {
-    std::unique_ptr<MimeMessage> mimeMessage(new MimeMessage());
+    std::unique_ptr<MimeMessage> mimeMessage(new MimeMessage(false));
+    mimeMessage->setContent(new MimeMultiPart(toSmtpType(message.multiPartType())));
 
     // Set sender and subject
     mimeMessage->setSender(new ::EmailAddress(message.sender().address, message.sender().name));
@@ -56,10 +79,12 @@ namespace Email
     // Include attachments
     const auto & list = message.attachments();
     for(auto & attachment : list) {
-      if(attachment.device->open(QIODevice::ReadOnly)) {
+      if(attachment.device->isOpen() || attachment.device->open(QIODevice::ReadOnly)) {
         QByteArray payload = attachment.device->readAll();
 
-        auto a = new MimeAttachment(payload, attachment.filename);
+        auto a = new MimeFile(payload, attachment.filename);
+        a->addHeaderLine(QString("Content-disposition: %1").arg(attachment.contentDisposition));
+
         if (attachment.contentType.isEmpty()) {
           a->setContentType(QMimeDatabase().mimeTypeForFileNameAndData(attachment.filename, payload).name());
         } else {

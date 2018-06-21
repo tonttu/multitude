@@ -61,6 +61,16 @@ namespace Email
     return recipientListByType(type);
   }
 
+  void Message::setMultiPartType(Message::MultiPartType type)
+  {
+    m_multiPartType = type;
+  }
+
+  Message::MultiPartType Message::multiPartType() const
+  {
+    return m_multiPartType;
+  }
+
   void Message::addAttachment(const QString& filename, std::unique_ptr<QIODevice> data, const QString& contentType)
   {
     Attachment attachment;
