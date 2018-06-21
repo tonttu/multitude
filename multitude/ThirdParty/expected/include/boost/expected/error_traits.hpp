@@ -9,19 +9,26 @@
 #include <boost/expected/bad_expected_access.hpp>
 #include <boost/exception_ptr.hpp>
 #include <exception>
+#include <system_error>
 
 namespace boost {
   template <class Error>
   struct error_traits
   {
     template <class Exception>
-    static Error make_error(Exception const&e)
+    static Error make_error(Exception const& e)
     {
-      return Error{};
+      return Error{e};
     }
     static Error make_error_from_current_exception()
     {
-      return Error{};
+      try {
+        throw;
+      } catch (std::exception & e) {
+        return make_error(e);
+      } catch (...) {
+        return Error{};
+      }
     }
     static void rethrow(Error const& e)
     {
@@ -65,6 +72,36 @@ namespace boost {
     }
   };
 
+  template <>
+  struct error_traits<std::error_code>
+  {
+    template <class Exception>
+    static std::error_code make_error(std::system_error const&e)
+    {
+      return e.code();
+    }
+    template <class Exception>
+    // requires is_base_of<std::system_error, Exception>
+    static std::error_code make_error(Exception const&e)
+    {
+      return e.code();
+    }
+
+    static std::error_code make_error_from_current_exception()
+    {
+      try {
+        throw;
+      } catch (std::system_error & e) {
+        return make_error(e);
+      } catch (...) {
+        return std::error_code();
+      }
+    }
+    static void rethrow(std::error_code const& e)
+    {
+      throw std::system_error(e);
+    }
+  };
 
 }
 #endif
