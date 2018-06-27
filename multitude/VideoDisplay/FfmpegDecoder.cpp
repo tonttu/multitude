@@ -345,7 +345,7 @@ namespace VideoDisplay
       m_audioGain(1),
       m_index(0)
   {
-    memset(&m_av, 0, sizeof(m_av));
+    memset(static_cast<void*>(&m_av), 0, sizeof(m_av));
     m_av.videoStreamIndex = -1;
     m_av.audioStreamIndex = -1;
     m_av.videoSize = Nimble::Size();
