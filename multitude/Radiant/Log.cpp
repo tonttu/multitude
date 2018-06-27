@@ -117,7 +117,7 @@ namespace Radiant {
     makeThread();
 
     DateTime dt(TimeStamp::currentTime());
-    char buf[128], buf2[128];
+    char buf[256], buf2[128];
     dt.print(buf2);
     sprintf(buf, "%s-%s-log.txt", prefix, buf2);
     return setLogFile(buf);
