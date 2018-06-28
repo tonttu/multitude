@@ -256,11 +256,13 @@ namespace Luminous
     switch(image.pixelFormat().layout()) {
       case PixelFormat::LAYOUT_RGB:
         reverse = true;
+	Q_FALLTHROUGH();
       case PixelFormat::LAYOUT_BGR:
         header.imageType = 2;
         break;
       case PixelFormat::LAYOUT_RGBA:
         reverse = true;
+	Q_FALLTHROUGH();
       case PixelFormat::LAYOUT_BGRA:
         header.imageType = 2;
         break;

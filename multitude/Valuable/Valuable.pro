@@ -50,7 +50,6 @@ HEADERS += v8.hpp
 HEADERS += ListenerHolder.hpp
 HEADERS += AttributeSpline.hpp
 HEADERS += AttributeAsset.hpp
-HEADERS += EventWrapper.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
@@ -79,14 +78,18 @@ SOURCES += State.cpp
 SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
 SOURCES += AttributeAsset.cpp
-SOURCES += EventWrapper.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL
-LIBS += $$LIB_FOLLY_FUTURES
 
 DEFINES += VALUABLE_EXPORT
 
 enable-punctual:DEFINES += ENABLE_PUNCTUAL
+
+enable-folly {
+  HEADERS += EventWrapper.hpp
+  SOURCES += EventWrapper.cpp
+  LIBS += $$LIB_FOLLY_FUTURES
+}
 
 CONFIG += qt
 QT += xml
