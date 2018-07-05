@@ -43,7 +43,7 @@ extern "C" {
 
 # include <libavcodec/avcodec.h>
 
-# include <libavfilter/avfiltergraph.h>
+# include <libavfilter/avfilter.h>
 # include <libavfilter/buffersink.h>
 # include <libavfilter/buffersrc.h>
 
@@ -425,21 +425,18 @@ namespace VideoDisplay
     QByteArray errorMsg("FfmpegDecoder::D::initFilters # " + m_options.source().toUtf8() +
                         " " + (video ? "video" : "audio") +":");
 
-    AVFilter * buffersrc = nullptr;
-    AVFilter * buffersink = nullptr;
-    AVFilter * format = nullptr;
     AVFilterInOut * outputs = nullptr;
     AVFilterInOut * inputs  = nullptr;
     int err = 0;
 
     try {
-      buffersrc = avfilter_get_by_name(video ? "buffer" : "abuffer");
+      const AVFilter* buffersrc = avfilter_get_by_name(video ? "buffer" : "abuffer");
       if(!buffersrc) throw "Failed to find filter \"(a)buffer\"";
 
-      buffersink = avfilter_get_by_name(video ? "buffersink" : "abuffersink");
+      const AVFilter* buffersink = avfilter_get_by_name(video ? "buffersink" : "abuffersink");
       if(!buffersink) throw "Failed to find filter \"(a)buffersink\"";
 
-      format = avfilter_get_by_name(video ? "format" : "aformat");
+      const AVFilter* format = avfilter_get_by_name(video ? "format" : "aformat");
       if (!format) throw "Failed to find filter \"(a)format\"";
 
       filterGraph.graph = avfilter_graph_alloc();
@@ -734,7 +731,7 @@ namespace VideoDisplay
           // Select the thread count automatically.
           // One thread is not enough for 4k videos if you have slow CPU, 4 seems
           // to be too much if you have lots of small videos playing at the same time.
-          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & CODEC_CAP_AUTO_THREADS) ? 0 : 2;
+          m_av.videoCodecContext->thread_count = (m_av.videoCodec->capabilities & AV_CODEC_CAP_AUTO_THREADS) ? 0 : 2;
         } else {
           m_av.videoCodecContext->thread_count = m_options.videoDecodingThreads();
         }
