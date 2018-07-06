@@ -215,10 +215,10 @@ linux-* {
 enable-pdf {
   linux-* {
     # Make sure pdfium is available
-    !exists(/opt/multitouch-pdfium1):error(multitouch-libpdfium1-dev is required to build PDF support)
-    INCLUDEPATH += /opt/multitouch-pdfium1/include
-    QMAKE_LIBDIR += /opt/multitouch-pdfium1/lib
-    LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive
+    !exists(/opt/multitaction-pdfium2):error(multitaction-libpdfium2-dev is required to build PDF support)
+    INCLUDEPATH += /opt/multitaction-pdfium2/include
+    QMAKE_LIBDIR += /opt/multitaction-pdfium2/lib
+    LIBS += -Wl,-whole-archive -lmultitaction-pdfium2 -Wl,-no-whole-archive
   }
 
 
