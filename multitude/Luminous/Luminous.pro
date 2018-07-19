@@ -218,7 +218,7 @@ enable-pdf {
     !exists(/opt/multitaction-pdfium2):error(multitaction-libpdfium2-dev is required to build PDF support)
     INCLUDEPATH += /opt/multitaction-pdfium2/include
     QMAKE_LIBDIR += /opt/multitaction-pdfium2/lib
-    LIBS += -Wl,-whole-archive -lmultitaction-pdfium2 -Wl,-no-whole-archive
+    LIBS += -lmultitaction-pdfium2
     LIBS += $$LIB_FOLLY
   }
 
