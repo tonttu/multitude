@@ -25,7 +25,8 @@ namespace Email
   struct EMAIL_API Attachment
   {
     Attachment();
-    Attachment(Attachment && o) = default;
+    Attachment(Attachment &&) = default;
+    Attachment & operator=(Attachment &&) = default;
 
     /// Filename that appears in the email
     QString filename;
