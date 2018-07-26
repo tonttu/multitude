@@ -90,12 +90,14 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
       m_texShader.setVertexDescription(desc);
+      m_texShader.setSampleShading(1.f);
 
       m_trilinearTexShader.loadShader("cornerstone:Luminous/GLSL150/trilinear_filtering.vs", Shader::Vertex);
       m_trilinearTexShader.loadShader("cornerstone:Luminous/GLSL150/trilinear_filtering.fs", Shader::Fragment);
       desc = Luminous::VertexDescription();
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_trilinearTexShader.setSampleShading(1.f);
       m_trilinearTexShader.setVertexDescription(desc);
 
       m_fontShader.loadShader("cornerstone:Luminous/GLSL150/distance_field.vs", Shader::Vertex);
