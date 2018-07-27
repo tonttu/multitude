@@ -28,6 +28,7 @@ HEADERS += DOMElement.hpp
 HEADERS += Export.hpp
 HEADERS += FileWatcher.hpp
 HEADERS += Node.hpp
+HEADERS += NodeUtils.hpp
 HEADERS += Serializer.hpp
 HEADERS += StyleValue.hpp
 HEADERS += Valuable.hpp
