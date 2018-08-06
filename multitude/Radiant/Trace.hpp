@@ -180,8 +180,8 @@ namespace Radiant
     RADIANT_API void trace(const char * module, Severity s, const char * msg, ...)
       RADIANT_PRINTF_CHECK(3, 4);
 
-    /// Used from JS
-    RADIANT_API void traceMsg(Severity s, const QByteArray & msg);
+    /// Effient way to print QString
+    RADIANT_API void traceMsg(Severity s, const QString & text);
 
     /// Display debug output
     /** This function calls trace to do the final work and it is
