@@ -17,7 +17,8 @@ HEADERS += Archive.hpp \
     AttributeTuple.hpp \
     AttributeVectorContainer.hpp \
     Event.hpp \
-    GraphicsCoordinates.hpp
+    GraphicsCoordinates.hpp \
+    WeakAttributePtr.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
