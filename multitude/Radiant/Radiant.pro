@@ -179,7 +179,7 @@ enable-folly {
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
-LIBS += $$LIB_FOLLY_FUTURES
+LIBS += $$LIB_FOLLY
 
 linux-* {
   LIBS += -lX11

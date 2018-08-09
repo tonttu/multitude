@@ -16,16 +16,14 @@ namespace Radiant
   {
   public:
     typedef folly::Func Func;
-    typedef folly::JobId JobId;
 
     /// Will use the given BGThread instance or the global singleton one if nullptr
     /// BGThreadExecutor won't start BGThread automatically
     explicit BGThreadExecutor(const std::shared_ptr<BGThread> & bgThread = nullptr);
     ~BGThreadExecutor();
 
-    JobId add(Func) override;
-    JobId addWithPriority(Func func, int8_t priority) override;
-    bool cancel(JobId id) override;
+    void add(Func) override;
+    void addWithPriority(Func func, int8_t priority) override;
     uint8_t getNumPriorities() const override;
 
     static const std::shared_ptr<BGThreadExecutor> & instance();

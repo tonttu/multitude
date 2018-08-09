@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 
-#include <folly/futures/ManualExecutor.h>
+#include <folly/executors/ManualExecutor.h>
 
 #include <Radiant/Singleton.hpp>
 
@@ -19,16 +19,16 @@ namespace Punctual
     /// @todo consider this API, should we protect direct address
     /// to executors some clever way -- the challenge is that in order
     /// to work with folly::Futures there must be way accessable executor)
-    std::shared_ptr<folly::ManualExecutor> beforeInput();
-    std::shared_ptr<folly::ManualExecutor> afterUpdate();
-    std::shared_ptr<folly::ManualExecutor> beforeUpdate();
+    folly::ManualExecutor* beforeInput();
+    folly::ManualExecutor* afterUpdate();
+    folly::ManualExecutor* beforeUpdate();
 
   private:
-    TaskScheduler();
+    TaskScheduler() = default;
 
-    std::shared_ptr<folly::ManualExecutor> m_afterUpdate;
-    std::shared_ptr<folly::ManualExecutor> m_beforeUpdate;
-    std::shared_ptr<folly::ManualExecutor> m_beforeInput;
+    folly::ManualExecutor m_afterUpdate;
+    folly::ManualExecutor m_beforeUpdate;
+    folly::ManualExecutor m_beforeInput;
   };
 
 }

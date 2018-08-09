@@ -1,12 +1,13 @@
 #pragma once
 
+#include <folly/futures/Future.h>
+
 #include "Export.hpp"
 
 #include <Radiant/Color.hpp>
 #include <Radiant/Singleton.hpp>
 
 #include <Nimble/Size.hpp>
-#include <folly/futures/Future.h>
 
 #include <memory>
 #include <QImage>

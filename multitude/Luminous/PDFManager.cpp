@@ -7,6 +7,8 @@
 
 #include <boost/expected/expected.hpp>
 
+#include <folly/MoveWrapper.h>
+
 #include <fpdfview.h>
 
 #include <QCryptographicHash>

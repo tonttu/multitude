@@ -128,7 +128,7 @@ namespace Radiant
     uint32_t m_id = 0;
     float m_pressure = 0;
     float m_rotation = 0;
-    Nimble::Vector2f m_tilt;
+    Nimble::Vector2f m_tilt = {0, 0};
     uint64_t m_sourceDevice = 0;
     double m_time = 0;
   };

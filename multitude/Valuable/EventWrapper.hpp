@@ -3,9 +3,10 @@
 
 #include "Export.hpp"
 
-#include <Valuable/Node.hpp>
-
+// Include order is crucial! (conflict with Qt)
 #include <folly/futures/Future.h>
+
+#include <Valuable/Node.hpp>
 
 namespace Valuable
 {

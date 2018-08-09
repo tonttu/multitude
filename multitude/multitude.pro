@@ -10,11 +10,6 @@ enable-smtp {
   SUBDIRS += smtpclient
 }
 
-enable-folly {
-  folly.subdir += ThirdParty/folly
-  SUBDIRS += folly
-}
-
 unittestcpp.subdir += ThirdParty/UnitTest++
 unittestcpp.depends += Radiant
 SUBDIRS += unittestcpp
@@ -27,22 +22,21 @@ SUBDIRS += Nimble
 
 SUBDIRS += Radiant
 Radiant.depends = Nimble
-enable-folly:Radiant.depends += folly
 
 enable-punctual {
   # Make executors separate so that this can be dependency for different
   # subcomponents (like Luminous for render threads, Valuable for after events)
   SUBDIRS += Punctual
-  Punctual.depends = folly Radiant
+  Punctual.depends = Radiant
 }
 
 SUBDIRS += Valuable
 Valuable.depends = Radiant Nimble
-enable-punctual:Valuable.depends += Punctual folly
+enable-punctual:Valuable.depends += Punctual
 
 enable-smtp {
   SUBDIRS += EmailSending
-  EmailSending.depends += Valuable folly smtpclient Radiant
+  EmailSending.depends += Valuable smtpclient Radiant
 }
 
 enable-luminous {
@@ -50,7 +44,7 @@ enable-luminous {
   SUBDIRS += Luminous
   Luminous.depends = Valuable Radiant
   enable-pdf {
-    Luminous.depends += Punctual folly
+    Luminous.depends += Punctual
   }
 }
 

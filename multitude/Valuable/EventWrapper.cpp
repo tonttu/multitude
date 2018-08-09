@@ -61,7 +61,7 @@ namespace Valuable
     });
 
     return ctx->promise.getFuture()
-      .then([node,listenerId](Radiant::BinaryData& bd) {
+      .then([node,listenerId](const Radiant::BinaryData& bd) {
         node->eventRemoveListener(listenerId);
         return std::move(bd);
       });
