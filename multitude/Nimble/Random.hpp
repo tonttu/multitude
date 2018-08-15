@@ -34,7 +34,7 @@ namespace Nimble {
   {
   public:
     /// Constructs a new random number generator with the given seed value
-    RandomUniform(unsigned long val = randomSeed()) : m_rand(val)
+    RandomUniform(uint64_t val = randomSeed()) : m_rand(val)
     {
     }
 
@@ -48,24 +48,29 @@ namespace Nimble {
     }
 
     /// Random numbers between 0 and x
-    inline float rand0X(float x)
+    template <class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+    inline T rand0X(T x)
     {
-      std::uniform_real_distribution<float> dst(0.f, x);
-      return dst(m_rand);
-    }
-
-    /// Random numbers between 0 and x
-    inline double rand0X(double x)
-    {
-      std::uniform_real_distribution<double> dst(0.0, x);
+      std::uniform_real_distribution<T> dst(0, x);
       return dst(m_rand);
     }
 
     /// Random numbers between 0 and x-1
+    template <class T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+    inline T rand0X(T x)
+    {
+      assert(x != 0);
+      std::uniform_int_distribution<T> dst(0, x - 1);
+      return dst(m_rand);
+    }
+
+    /// Random numbers between 0 and x-1
+    // This version will be called by types that implicitly convert to uint32_t
+    // but are not integral types, like enum values
     inline uint32_t rand0X(uint32_t x)
     {
       assert(x != 0);
-      std::uniform_int_distribution<uint32_t> dst(0, x-1);
+      std::uniform_int_distribution<uint32_t> dst(0, x - 1);
       return dst(m_rand);
     }
 
@@ -73,8 +78,8 @@ namespace Nimble {
     inline uint64_t rand0X64(uint64_t x)
     {
       assert(x != 0);
-      double s = rand0X(1.0);
-      return s*x;
+      std::uniform_int_distribution<uint64_t> dst(0, x-1);
+      return dst(m_rand);
     }
 
     /// Random numbers between -1 and 1
@@ -128,12 +133,11 @@ namespace Nimble {
       return rand();
     }
 
-    /// Get random numbers between 0 and range-1.
-    /// @param range The maximum output value. This value must not exceed 2^24-1.
+    /// A random number in range 0:2^64-1
     /// @return Generated random number
-    inline uint32_t randN24(uint32_t range)
+    inline uint64_t rand64()
     {
-      return rand24() % range;
+      return m_rand();
     }
 
     /// Random 2d vector inside a rectangle
@@ -190,10 +194,10 @@ namespace Nimble {
     static RandomUniform & instance() { return m_instance; }
 
     /// Returns a new random seed
-    static unsigned long randomSeed();
+    static uint64_t randomSeed();
 
   private:
-    std::mt19937 m_rand;
+    std::mt19937_64 m_rand;
     static RandomUniform  m_instance;
   };
 
@@ -206,7 +210,7 @@ namespace Nimble {
       /// @param mean the mean of the normal distribution
       /// @param stdDev the standard deviation for the normal distribution
       /// @param seed seed value for the pseudo-random sequence
-      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, unsigned long seed = RandomUniform::randomSeed())
+      RandomGaussian(float mean = 0.0f, float stdDev = 1.0f, uint64_t seed = RandomUniform::randomSeed())
         : m_rand(seed), m_dist(mean, stdDev) {}
 
       /// Generate a random number from the distribution
@@ -217,7 +221,7 @@ namespace Nimble {
       }
 
     private:
-      std::mt19937 m_rand;
+      std::mt19937_64 m_rand;
       std::normal_distribution<float> m_dist;
 
   };
