@@ -665,6 +665,12 @@ namespace Valuable
     QSet<QByteArray> m_eventListenNames;
 
     QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
+
+    // Used to implement WeakNodePtrT. We use an empty deleter with the
+    // shared_ptr so it doesn't have any unwanted side-effects
+    const std::shared_ptr<Valuable::Node> & sharedPtr();
+    std::shared_ptr<Node> m_self;
+    template <typename T> friend class WeakNodePtrT;
   };
 
   typedef Valuable::AttributeT<Node::Uuid> AttributeUuid;
