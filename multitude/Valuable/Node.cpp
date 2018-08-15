@@ -58,6 +58,7 @@ namespace
       , data(data_)
     {}
 
+    /// @todo use WeakNodePtrT here so that we don't need to eliminate these manually
     Valuable::Node * sender;
     Valuable::Node::ListenerFuncVoid func;
     Valuable::Node::ListenerFuncBd func2;
@@ -200,7 +201,7 @@ namespace Valuable
     // Host of Node class member Attributes must be zeroed to avoid double-delete
     m_id.removeHost();
 
-    // Removes listeners that point to this object
+    // Removes listeners and WeakNodePtrs that point to this object
     setBeingDestroyed();
 
     // Remove event listeners. No need to lock m_eventsMutex, since you
@@ -796,6 +797,7 @@ namespace Valuable
   void Node::setBeingDestroyed()
   {
     if (!m_isBeingDestroyed) {
+      m_self.reset();
       internalRemoveListeners();
       m_isBeingDestroyed = true;
     }
@@ -1126,6 +1128,13 @@ namespace Valuable
     Attribute * vo = (*it).second;
     m_attributes.erase(it);
     m_attributes[now] = vo;
+  }
+
+  const std::shared_ptr<Node> & Node::sharedPtr()
+  {
+    if (!m_self && !m_isBeingDestroyed)
+      m_self.reset(this, [] (Node*) {});
+    return m_self;
   }
 
   bool Node::readElement(const ArchiveElement &)
