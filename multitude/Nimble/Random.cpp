@@ -12,15 +12,15 @@
 
 #include <chrono>
 
-namespace Nimble {
-  RandomUniform  RandomUniform::m_instance;
+namespace Nimble
+{
+  RandomUniform RandomUniform::m_instance;
 
   uint64_t RandomUniform::randomSeed()
   {
-    static std::random_device rnd;
+    thread_local static std::random_device rnd;
     auto now = std::chrono::high_resolution_clock::now();
     auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     return rnd() ^ (static_cast<uint64_t>(rnd()) << uint64_t(32)) ^ ns;
   }
-
 }

@@ -40,14 +40,14 @@ namespace Nimble {
 
     ~RandomUniform() {}
 
-    /// Random numbers between 0 and 1
+    /// Returns a random number in a half-open interval [0, 1)
     inline float rand01()
     {
       std::uniform_real_distribution<float> dst;
       return dst(m_rand);
     }
 
-    /// Random numbers between 0 and x
+    /// Returns a random number in a half-open interval [0, x)
     template <class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
     inline T rand0X(T x)
     {
@@ -55,7 +55,7 @@ namespace Nimble {
       return dst(m_rand);
     }
 
-    /// Random numbers between 0 and x-1
+    /// Returns a random number in a half-open interval [0, x)
     template <class T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
     inline T rand0X(T x)
     {
@@ -64,7 +64,7 @@ namespace Nimble {
       return dst(m_rand);
     }
 
-    /// Random numbers between 0 and x-1
+    /// Returns a random number in a half-open interval [0, x)
     // This version will be called by types that implicitly convert to uint32_t
     // but are not integral types, like enum values
     inline uint32_t rand0X(uint32_t x)
@@ -74,67 +74,55 @@ namespace Nimble {
       return dst(m_rand);
     }
 
-    /// 64-bit random numbers between 0 and x-1
-    inline uint64_t rand0X64(uint64_t x)
-    {
-      assert(x != 0);
-      std::uniform_int_distribution<uint64_t> dst(0, x-1);
-      return dst(m_rand);
-    }
-
-    /// Random numbers between -1 and 1
+    /// Returns a random number in a closed interval [-1, 1]
     inline float rand11()
     {
-      std::uniform_real_distribution<float> dst(-1.f, 1.f);
+      std::uniform_real_distribution<float> dst(-1.f, std::nextafter(1.0f, std::numeric_limits<float>::max()));
       return dst(m_rand);
     }
 
-    /// Random numbers between -x and x
+    /// Returns a random number in a closed interval [-x, x]
     inline float randXX(float x)
     {
-      std::uniform_real_distribution<float> dst(-x, x);
+      std::uniform_real_distribution<float> dst(-x, std::nextafter(x, std::numeric_limits<float>::max()));
       return dst(m_rand);
     }
 
-    /// Random number from range [a, b) if a < b, else [b, a)
+    /// Returns a random number in a half-open interval [a, b) if a < b, else [b, a)
     inline float randRange(float a, float b)
     {
       if(b < a) std::swap(a, b);
       return randMinMax(a, b);
     }
 
-    /// Random numbers between min and max
+    /// Returns a random number in a half-open interval [min, max)
     inline float randMinMax(float min, float max)
     {
       std::uniform_real_distribution<float> dst(min, max);
       return dst(m_rand);
     }
 
-    /// A random number in range 0:2^32-1.
-    /// @return Generated random number
+    /// Returns a random number in a half-open interval [0, 2^32)
     inline uint32_t rand()
     {
       std::uniform_int_distribution<uint32_t> dst;
       return dst(m_rand);
     }
 
-    /// A random number in range 0:2^24-1.
-    /// @return Generated random number
+    /// Returns a random number in a half-open interval [0, 2^24)
     inline uint32_t rand24()
     {
       std::uniform_int_distribution<uint32_t> dst(0, (1 << 24) - 1);
       return dst(m_rand);
     }
 
-    /// A random number in range 0:2^32-1
-    /// @return Generated random number
+    /// Returns a random number in a half-open interval [0, 2^32)
     inline uint32_t rand32()
     {
       return rand();
     }
 
-    /// A random number in range 0:2^64-1
-    /// @return Generated random number
+    /// Returns a random number in a half-open interval [0, 2^64)
     inline uint64_t rand64()
     {
       return m_rand();
@@ -198,7 +186,7 @@ namespace Nimble {
 
   private:
     std::mt19937_64 m_rand;
-    static RandomUniform  m_instance;
+    static RandomUniform m_instance;
   };
 
   /// RandomGaussian generates pseudo-random numbers from a normal (gaussian) distribution.
