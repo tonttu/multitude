@@ -119,6 +119,10 @@ namespace Email
     float sendMessageTimeout() const;
     void setSendMessageTimeout(float timeout);
 
+    /// Converts successful SendStatus to folly::Unit and
+    /// failed SendStatus to std::runtime_error
+    static folly::Future<folly::Unit> toFuture(SendStatus status);
+
   private:
     // Implementation details (backend etc)
     class D;

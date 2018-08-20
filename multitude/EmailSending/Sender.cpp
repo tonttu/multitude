@@ -227,4 +227,12 @@ namespace Email
     m_sendMessageTimeout = timeout;
   }
 
+  folly::Future<folly::Unit> Sender::toFuture(SendStatus status)
+  {
+    if (status.ok)
+      return folly::Unit();
+    else
+      return std::runtime_error(status.errorMessage.toStdString());
+  }
+
 }
