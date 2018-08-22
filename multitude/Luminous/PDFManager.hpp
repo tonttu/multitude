@@ -27,7 +27,12 @@ namespace Luminous
       /// and render parameters, so it's unique and doesn't contain other files.
       QString cachePath;
 
-      /// Filenames of the image files for all pages
+      /// Number of pages in the document. This might not be the same as the
+      /// number of items in the "pages" vector, if you have set the
+      /// maxPageCount parameter when calling renderDocumentToCacheDir.
+      int pageCount = 0;
+
+      /// Filenames of the image files for all requested pages
       ///
       /// To wait for the whole document to finish, you can write something like:
       /// folly::collectAll(pages).then([](const std::vector<folly::Try<QString>> & files) {});
@@ -41,6 +46,24 @@ namespace Luminous
       /// Or you can use folly::reduce in the last example to get notifications
       /// in page order.
       std::vector<folly::Future<QString>> pages;
+    };
+
+    struct PDFCachingOptions
+    {
+      /// Target resolution of the rendered result. Actual result can be smaller
+      /// as the aspect ratio is preserved
+      Nimble::SizeI resolution;
+      /// Background color to be used with the generated images. If the color
+      /// is translucent, cache will contain images with an alpha channel.
+      Radiant::Color bgColor;
+      /// Cache root to use. If empty, defaultCachePath() will be used instead.
+      /// Actual files will be written to a subdirectory, for example the first
+      /// page will look like: <cachePath>/<sha1(file, params)>/00000.csimg
+      QString cachePath;
+      /// Image format (file extension) for the cached files. Unless you have a
+      /// great reason to change it, use the default "csimg" which is by far
+      /// the fastest image format to encode and decode.
+      QString imageFormat = "csimg";
     };
 
   public:
@@ -88,25 +111,14 @@ namespace Luminous
     const QString & defaultCachePath() const;
 
     /// @param pdfFilename pdf filename
-    /// @param resolution Target resolution of the rendered result. Actual result
-    ///                   can be smaller as the aspect ratio is preserved
-    /// @param bgColor Background color to be used with the generated images.
-    ///                If the color is translucent, cache will contain images
-    ///                with an alpha channel.
-    /// @param cachePath Cache root to use. If empty, defaultCachePath() will
-    ///                  be used instead. Actual files will be written to a
-    ///                  subdirectory, for example the first page will look like:
-    ///                  <cachePath>/<sha1(file, params)>/00000.csimg
-    /// @param imageFormat Image format (file extension) for the cached files.
-    ///                    Unless you have a great reason to change it, use the
-    ///                    default "csimg" which is by far the fastest image
-    ///                    format to encode and decode.
+    /// @param opts caching options, see PDFCachingOptions
+    /// @param maxPageCount The number of pages to cache at max
     /// @return cached pdf document object with the unique document cache
     ///         directory and futures for individual pages. If the operation
     ///         fails, the returned future contains std::runtime_error
-    folly::Future<CachedPDFDocument> renderDocumentToCacheDir(
-        const QString & pdfFilename, const Nimble::SizeI & resolution, Radiant::Color bgColor,
-        const QString & cachePath = QString(), const QString & imageFormat = "csimg");
+    folly::Future<CachedPDFDocument> renderDocumentToCacheDir(const QString & pdfFilename,
+                                                              const PDFCachingOptions & opts,
+                                                              int maxPageCount = std::numeric_limits<int>::max());
 
   private:
     class D;
