@@ -248,4 +248,6 @@ win32 {
   LIBS += -lAdvapi32 -lRpcrt4 -lShell32
 }
 
+DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)
+
 include(../../library.pri)

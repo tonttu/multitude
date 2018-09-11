@@ -24,6 +24,9 @@
 #include <dlfcn.h>
 #endif
 
+#define TOSTR2(x) #x
+#define TOSTR(x) TOSTR2(x)
+
 namespace crashpad
 {
   inline bool operator<(const UUID & a, const UUID & b)
@@ -62,10 +65,10 @@ namespace Radiant
       QString lib = libraryPath();
       QString test = lib + "/../bin/crashpad_handler.exe";
       if (!QFile::exists(test) && getenv("CORNERSTONE_DEPS_PATH")) {
-        test = QString(getenv("CORNERSTONE_DEPS_PATH")) + "/crashpad/bin/crashpad_handler.exe";
+        test = QString(getenv("CORNERSTONE_DEPS_PATH")) + "/manual/crashpad/bin/crashpad_handler.exe";
       }
       if (!QFile::exists(test)) {
-        test = "C:/Cornerstone-" CORNERSTONE_SHORT_VERSION_STR "-deps/crashpad/bin/crashpad_handler.exe";
+        test = QString("C:/%1/manual/crashpad/bin/crashpad_handler.exe").arg(TOSTR(MULTITACTION_DEPENDENCY_PATH));
       }
       if (!QFile::exists(test)) {
         test = "crashpad_handler.exe";
