@@ -43,10 +43,7 @@ enable-port-audio {
 
   unix: PKGCONFIG += portaudio-2.0
 
-  win32 {
-    INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/portaudio/include
-    LIBS += -L$$CORNERSTONE_DEPS_PATH/portaudio/lib -lportaudio_x64
-  }
+  win32: LIBS += -lportaudio
 }
 
 enable-pulse-audio {

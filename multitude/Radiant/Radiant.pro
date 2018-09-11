@@ -235,9 +235,9 @@ win32 {
 
   # CrashHandler requirements
   SOURCES += CrashHandlerCrashpad.cpp
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include/third_party/mini_chromium/mini_chromium
-  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/crashpad/lib
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/crashpad/include
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/crashpad/include/third_party/mini_chromium/mini_chromium
+  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/manual/crashpad/lib
 
   CONFIG(release, debug|release) {
     LIBS += -lcrashpad
