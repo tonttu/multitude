@@ -25,8 +25,6 @@ win32 {
   HEADERS += WindowsVideoHelpers.hpp \
              RGBEasy.hpp
 
-  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/ffmpeg-mt/bin
-
   # RGBEASY (Datapath SDK)
   INCLUDEPATH += rgbeasy-sdk-v7.14.1/include
   LIBS += -lStrmiids -lOle32 -lOleAut32 -lPropsys

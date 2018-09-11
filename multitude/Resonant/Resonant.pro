@@ -65,9 +65,4 @@ include(../../library.pri)
 
 DEFINES += RESONANT_EXPORT
 
-win* {
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/libsndfile/include
-  LIBS += -L$$CORNERSTONE_DEPS_PATH/libsndfile/lib -llibsndfile-1
-
-  LIBS += -lOle32 -lUser32
-}
+win32:LIBS += -llibsndfile-1
