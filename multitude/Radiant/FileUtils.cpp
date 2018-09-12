@@ -450,8 +450,20 @@ namespace Radiant
   QString FileUtils::makeFilenameUnique(const QString &filename)
   {
     QFileInfo info(filename);
-    QString cleanFilename = info.baseName().simplified();
-    QString suffix = info.completeSuffix();
+    const QString origFilename = info.fileName();
+
+    QString suffix = info.suffix();
+    if (origFilename.endsWith(".tar.gz"))
+      suffix = "tar.gz";
+    else if (origFilename.endsWith(".mt-canvus-canvas.zip"))
+      suffix = "mt-canvus-canvas.zip";
+
+    QString cleanFilename;
+    if (suffix.isEmpty())
+      cleanFilename = origFilename.simplified();
+    else
+      cleanFilename = origFilename.left(origFilename.size() - suffix.size() - 1).simplified();
+
     QString path = info.path();
 
     // vfat forbidden characters (see vfat_bad_char in fs/fat/namei_vfat.c)
