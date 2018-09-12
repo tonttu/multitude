@@ -16,6 +16,9 @@
 
 namespace
 {
+  /// This should be increased every time we make a cache-breaking change to the renderer
+  static const char * rendererVersion = "1";
+
   struct BatchConverter
   {
     QString pdfAbsoluteFilePath;
@@ -73,7 +76,7 @@ namespace
     FPDF_BITMAP bitmap = FPDFBitmap_Create(pixelSize.width(), pixelSize.height(), 1);
     /// Will the bitmap first with the chosen color
     FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), color);
-    FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
+    FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, FPDF_ANNOT);
 
     const uint8_t* buffer = static_cast<uint8_t*>(FPDFBitmap_GetBuffer(bitmap));
     const int bytesPerLine = pixelSize.width() * 4;
@@ -177,7 +180,7 @@ namespace
 
       /// Fill the bitmap first with the chosen color
       FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), bg);
-      FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
+      FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, FPDF_ANNOT);
 
       int pageNumber = batch.pageNumber;
       auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, pageNumber, batchPtr] () mutable {
@@ -320,6 +323,7 @@ namespace Luminous
         hash.addData((const char*)&opts.bgColor, sizeof(opts.bgColor));
         hash.addData((const char*)&opts.resolution, sizeof(opts.resolution));
         hash.addData(opts.imageFormat.toUtf8());
+        hash.addData(rendererVersion);
         batchConverter->path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
 
         if (!QDir().mkpath(batchConverter->path))
