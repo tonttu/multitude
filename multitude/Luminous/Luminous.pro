@@ -230,6 +230,11 @@ enable-pdf {
   SOURCES += PDFManager.cpp
 }
 
-LIBS += -llz4
+win32:CONFIG(debug,debug|release) {
+  LIBS += -llz4d
+} else {
+  LIBS += -llz4
+}
+
 
 include(../../library.pri)
