@@ -191,8 +191,11 @@ linux-* {
   SOURCES += SystemCpuTimeLinux.cpp
 
   # CrashHandler requirements
-  PKGCONFIG += breakpad-client
   SOURCES += CrashHandlerBreakpad.cpp
+
+  INCLUDEPATH += /opt/multitaction-breakpad/include/breakpad
+  QMAKE_LIBDIR += /opt/multitaction-breakpad/lib/x86_64-linux-gnu
+  LIBS += -lbreakpad -lbreakpad_client
 }
 
 macx {
