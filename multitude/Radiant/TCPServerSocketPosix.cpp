@@ -14,8 +14,14 @@
 #include "SocketWrapper.hpp"
 #include "Trace.hpp"
 
+#include <Nimble/Math.hpp>
+
 #include <sys/types.h>
 #include <stdio.h>
+
+#include <QDir>
+#include <QLockFile>
+#include <QTextStream>
 
 namespace Radiant
 {
@@ -172,6 +178,49 @@ namespace Radiant
   int TCPServerSocket::socket() const
   {
     return m_d->m_fd;
+  }
+
+  int TCPServerSocket::randomOpenTCPPort()
+  {
+    QLockFile lock(QDir::tempPath() + "/.cornerstone-random-tcp-port.lock");
+
+    QFile file(QDir::tempPath() + "/.cornerstone-random-tcp-port");
+    if (!file.open(QFile::ReadWrite)) {
+      Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to open %s: %s",
+                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
+      return 0;
+    }
+
+    // The file holds the next port available
+    uint32_t port = 0;
+    QTextStream(&file) >> port;
+
+    // Use the IANA registered ports range (1024-49151) excluding the
+    // ephemeral port range used by linux (32768-61000), since these ports
+    // are most likely not used by anyone on the system between the time
+    // this function returns and the port is actually opened.
+    const uint32_t minPort = 1024;
+    const uint32_t maxPort = 32767;
+
+    port = Nimble::Math::Clamp(port, minPort, maxPort);
+    uint32_t nextPort;
+    for (int i = 0;; ++i) {
+      nextPort = (port + 1 - minPort) % (maxPort - minPort + 1) + minPort;
+      Radiant::TCPServerSocket server;
+      if (server.open("0.0.0.0", port) == 0)
+        break;
+
+      if (i > 40000) {
+        Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to find open port");
+        return 0;
+      }
+      port = nextPort;
+    }
+
+    QTextStream stream(&file);
+    stream.seek(0);
+    stream << nextPort;
+    return port;
   }
 }
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <atomic>
 #include <algorithm>
+#include <stdexcept>
 
 namespace Radiant
 {
