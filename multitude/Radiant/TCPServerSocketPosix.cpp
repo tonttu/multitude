@@ -183,6 +183,8 @@ namespace Radiant
   int TCPServerSocket::randomOpenTCPPort()
   {
     QLockFile lock(QDir::tempPath() + "/.cornerstone-random-tcp-port.lock");
+    if (!lock.lock())
+      Radiant::error("TCPServerSocket::randomOpenTCPPort # Lock failed, error code: %d", lock.error());
 
     QFile file(QDir::tempPath() + "/.cornerstone-random-tcp-port");
     if (!file.open(QFile::ReadWrite)) {
