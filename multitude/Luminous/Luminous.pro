@@ -215,10 +215,10 @@ linux-* {
 enable-pdf {
   linux-* {
     # Make sure pdfium is available
-    !exists(/opt/multitouch-pdfium1):error(multitouch-libpdfium1-dev is required to build PDF support)
-    INCLUDEPATH += /opt/multitouch-pdfium1/include
-    QMAKE_LIBDIR += /opt/multitouch-pdfium1/lib
-    LIBS += -Wl,-whole-archive -lmultitouch-pdfium1 -Wl,-no-whole-archive
+    !exists(/opt/multitouch-pdfium2):error(multitouch-libpdfium2-dev is required to build PDF support)
+    INCLUDEPATH += /opt/multitouch-pdfium2/include
+    QMAKE_LIBDIR += /opt/multitouch-pdfium2/lib
+    LIBS += -Wl,-whole-archive -lmultitouch-pdfium2 -Wl,-no-whole-archive
   }
 
 
@@ -230,14 +230,14 @@ enable-pdf {
 
     exists($$CORNERSTONE_DEPS_PATH) {
 
-      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium/include
-      QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium/lib
+      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium-3282/include
+      QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium-3282/lib
       LIBS += -lgdi32 -ladvapi32
 
       CONFIG(debug,debug|release) {
-        LIBS += multitouch-pdfium1_d.lib
+        LIBS += multitouch-pdfium2_d.lib
       } else {
-        LIBS += multitouch-pdfium1.lib
+        LIBS += multitouch-pdfium2.lib
       }
 
     } else {
