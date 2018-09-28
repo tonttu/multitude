@@ -1,6 +1,8 @@
 include(../../cornerstone.pri)
 
-QMAKE_CXXFLAGS += -faligned-new -Wno-error=attributes
+linux-* {
+    QMAKE_CXXFLAGS += -faligned-new -Wno-error=attributes
+}
 
 HEADERS += Archive.hpp \
     AttributeFrame.hpp \

@@ -169,8 +169,8 @@ QT += svg
 
 # Platform specific: Microsoft Windows
 win32 {
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/nvapi/include
-  LIBS += -L$$CORNERSTONE_DEPS_PATH/nvapi/lib -lnvapi64
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/nvapi/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/manual/nvapi/lib -lnvapi64
 
   LIBS += -lUser32
   LIBS += -lDwmapi
@@ -184,9 +184,6 @@ win32 {
 
   HEADERS += DxInterop.hpp
   SOURCES += DxInterop.cpp
-
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/lz4/include
-  LIBS += -L$$CORNERSTONE_DEPS_PATH/lz4/lib
 }
 
 !macx:!arm64 {
@@ -227,29 +224,17 @@ enable-pdf {
     PKGCONFIG += multitouch-pdfium1
   }
 
-  win32 {
-
-    exists($$CORNERSTONE_DEPS_PATH) {
-
-      INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/pdfium/include
-      QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/pdfium/lib
-      LIBS += -lgdi32 -ladvapi32
-
-      CONFIG(debug,debug|release) {
-        LIBS += multitouch-pdfium1_d.lib
-      } else {
-        LIBS += multitouch-pdfium1.lib
-      }
-
-    } else {
-      # TODO: fix pdf for sdk-builds
-    }
-  }
+  win32:LIBS += -lpdfium $$LIB_FOLLY
 
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
 }
 
-LIBS += -llz4
+win32:CONFIG(debug,debug|release) {
+  LIBS += -llz4d
+} else {
+  LIBS += -llz4
+}
+
 
 include(../../library.pri)

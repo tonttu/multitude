@@ -83,7 +83,7 @@ namespace Radiant
       if (url.isEmpty()) {
         s_uploadCmd[0] = nullptr;
       } else {
-        s_uploadCmd[0] = "minidump_upload";
+        s_uploadCmd[0] = "/opt/multitaction-breakpad/bin/minidump_upload";
         s_uploadCmd[1] = "-p";
         s_uploadCmd[3] = "-v";
         s_uploadCmd[6] = url.toUtf8();

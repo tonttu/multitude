@@ -191,8 +191,11 @@ linux-* {
   SOURCES += SystemCpuTimeLinux.cpp
 
   # CrashHandler requirements
-  PKGCONFIG += breakpad-client
   SOURCES += CrashHandlerBreakpad.cpp
+
+  INCLUDEPATH += /opt/multitaction-breakpad/include/breakpad
+  QMAKE_LIBDIR += /opt/multitaction-breakpad/lib/x86_64-linux-gnu
+  LIBS += -lbreakpad -lbreakpad_client
 }
 
 macx {
@@ -235,9 +238,9 @@ win32 {
 
   # CrashHandler requirements
   SOURCES += CrashHandlerCrashpad.cpp
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include
-  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/crashpad/include/third_party/mini_chromium/mini_chromium
-  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/crashpad/lib
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/crashpad/include
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/crashpad/include/third_party/mini_chromium/mini_chromium
+  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/manual/crashpad/lib
 
   CONFIG(release, debug|release) {
     LIBS += -lcrashpad
@@ -247,5 +250,7 @@ win32 {
 
   LIBS += -lAdvapi32 -lRpcrt4 -lShell32
 }
+
+DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)
 
 include(../../library.pri)
