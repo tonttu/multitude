@@ -47,6 +47,12 @@ namespace Resonant
     m_outputStream = pa_stream_new(m_context->paContext(), "Cornerstone AudioLoop",
                                    &ss, nullptr);
 
+    if (!m_outputStream) {
+      Radiant::error("Failed to open PulseAudio stream with %d channels: %s", channels,
+                     pa_strerror(pa_context_errno(m_context->paContext())));
+      return;
+    }
+
     m_underflow = false;
     pa_stream_set_write_callback(m_outputStream, [] (pa_stream *, std::size_t bytes, void * ptr) {
       auto d = static_cast<AudioLoopPulseAudio::D*>(ptr);
