@@ -73,6 +73,14 @@ namespace Radiant {
     /// Returns the TCP socket, or -1 if the socket is not open
     int socket() const;
 
+    /// @cond
+
+    /// Returns a TCP port that can be used for listening incoming connections.
+    /// This is useful for unit tests
+    static int randomOpenTCPPort();
+
+    /// @endcond
+
   private:
     class D;
     D * m_d;

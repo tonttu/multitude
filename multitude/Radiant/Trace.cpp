@@ -56,6 +56,36 @@ namespace Radiant
       }
     }
 
+    static inline void processMessage(Message & msg)
+    {
+      if (s_initialized) {
+        processFilters(msg);
+        return;
+      }
+
+      if (s_queue.empty()) {
+        // If we close the application (or crash) before the system has been
+        // initialized, try to not lose the messages and just print them on
+        // stderr
+        atexit([] {
+          if (!s_initialized) {
+            bool headerPrinted = false;
+            for (Message & msg: s_queue) {
+              if (msg.severity > DEBUG) {
+                if (!headerPrinted) {
+                  fprintf(stderr, "%s: application closed before Radiant::Trace was initialized, queued messages:\n",
+                          PlatformUtils::getExecutablePath().toUtf8().data());
+                  headerPrinted = true;
+                }
+                fprintf(stderr, "%s %s\n", severityText(msg.severity).data(), msg.text.toUtf8().data());
+              }
+            }
+          }
+        });
+      }
+      s_queue.push_back(std::move(msg));
+    }
+
     static void processMessage(Severity s, QByteArray module, const char * format, va_list & ap)
     {
       Message msg;
@@ -63,32 +93,7 @@ namespace Radiant
       msg.severity = s;
       msg.text.vsprintf(format, ap);
 
-      if (!s_initialized) {
-        if (s_queue.empty()) {
-          // If we close the application (or crash) before the system has been
-          // initialized, try to not lose the messages and just print them on
-          // stderr
-          atexit([] {
-            if (!s_initialized) {
-              bool headerPrinted = false;
-              for (Message & msg: s_queue) {
-                if (msg.severity > DEBUG) {
-                  if (!headerPrinted) {
-                    fprintf(stderr, "%s: application closed before Radiant::Trace was initialized, queued messages:\n",
-                            PlatformUtils::getExecutablePath().toUtf8().data());
-                    headerPrinted = true;
-                  }
-                  fprintf(stderr, "%s %s\n", severityText(msg.severity).data(), msg.text.toUtf8().data());
-                }
-              }
-            }
-          });
-        }
-        s_queue.push_back(std::move(msg));
-        return;
-      }
-
-      processFilters(msg);
+      processMessage(msg);
     }
 
     static void crash()
@@ -169,9 +174,13 @@ namespace Radiant
         crash();
     }
 
-    void traceMsg(Severity s, const QByteArray & msg)
+    void traceMsg(Severity s, const QString & text)
     {
-      trace(s, "%s", msg.data());
+      Message msg;
+      msg.severity = s;
+      msg.text = text;
+
+      processMessage(msg);
     }
 
     void debug(const char * msg, ...)

@@ -16,6 +16,7 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+
 namespace Radiant
 {
   class LockFile_Impl
@@ -23,7 +24,7 @@ namespace Radiant
   public:
     LockFile_Impl(const char * filename)
     {
-      m_fd = open(filename, O_CREAT, 0644);
+      m_fd = open(filename, O_CREAT | O_CLOEXEC, 0644);
       m_locked = (flock(m_fd, LOCK_EX | LOCK_NB) == 0);
     }
 

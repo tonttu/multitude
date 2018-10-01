@@ -18,6 +18,9 @@
 
 namespace
 {
+  /// This should be increased every time we make a cache-breaking change to the renderer
+  static const char * rendererVersion = "1";
+
   struct BatchConverter
   {
     QString pdfAbsoluteFilePath;
@@ -75,7 +78,7 @@ namespace
     FPDF_BITMAP bitmap = FPDFBitmap_Create(pixelSize.width(), pixelSize.height(), 1);
     /// Will the bitmap first with the chosen color
     FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), color);
-    FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
+    FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, FPDF_ANNOT);
 
     const uint8_t* buffer = static_cast<uint8_t*>(FPDFBitmap_GetBuffer(bitmap));
     const int bytesPerLine = pixelSize.width() * 4;
@@ -114,11 +117,10 @@ namespace
     return targetResolution;
   }
 
-  void batchConvert(BatchConverterPtr batchPtr, const Nimble::SizeI & resolution,
-                    Radiant::Color bgColor, const QString & imageFormat)
+  void batchConvert(BatchConverterPtr batchPtr, const Luminous::PDFManager::PDFCachingOptions & opts)
   {
     BatchConverter & batch = *batchPtr;
-    QRgb bg = bgColor.toQColor().rgba();
+    QRgb bg = opts.bgColor.toQColor().rgba();
 
     /// Work max one second at a time
     const double maxWorkTime = 1.0;
@@ -138,7 +140,7 @@ namespace
 
     for (; batch.pageNumber < batch.pageCount; ++batch.pageNumber) {
       QString targetFile = QString("%2/%1.%3").arg(batch.pageNumber, 5, 10, QChar('0')).
-          arg(batch.path, imageFormat);
+          arg(batch.path, opts.imageFormat);
       QFileInfo targetInfo(targetFile);
       if (targetInfo.exists() && targetInfo.size() > 0) {
         batch.promises[batch.pageNumber].setValue(std::move(targetFile));
@@ -160,7 +162,7 @@ namespace
       }
 
       Nimble::SizeF targetResolution(FPDF_GetPageWidth(page), FPDF_GetPageHeight(page));
-      targetResolution.fit(resolution.cast<float>(), Qt::KeepAspectRatio);
+      targetResolution.fit(opts.resolution.cast<float>(), Qt::KeepAspectRatio);
       Nimble::SizeI pixelSize = targetResolution.cast<int>();
 
       std::shared_ptr<Luminous::Image> image(new Luminous::Image());
@@ -168,7 +170,7 @@ namespace
       int bitmapFormat = FPDFBitmap_BGR;
 
       /// Use BGR with non-alpha images, BGRA otherwise
-      if (bgColor.alpha() < 0.999f) {
+      if (opts.bgColor.alpha() < 0.999f) {
         pixelFormat = Luminous::PixelFormat::bgraUByte();
         bitmapFormat = FPDFBitmap_BGRA;
       }
@@ -180,7 +182,7 @@ namespace
 
       /// Fill the bitmap first with the chosen color
       FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), bg);
-      FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, 0);
+      FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, FPDF_ANNOT);
 
       int pageNumber = batch.pageNumber;
       auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, pageNumber, batchPtr] () mutable {
@@ -300,16 +302,14 @@ namespace Luminous
   }
 
   folly::Future<PDFManager::CachedPDFDocument> PDFManager::renderDocumentToCacheDir(
-      const QString & pdfFilename, const Nimble::SizeI & resolution,
-      Radiant::Color bgColor, const QString & cachePath,
-      const QString & imageFormat)
+      const QString & pdfFilename, const PDFCachingOptions & opts, int maxPageCount)
   {
     BatchConverterPtr batchConverter { new BatchConverter() };
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.
-    QString cacheRoot = cachePath.isEmpty() ? defaultCachePath() : cachePath;
+    QString cacheRoot = opts.cachePath.isEmpty() ? defaultCachePath() : opts.cachePath;
     Punctual::WrappedTaskFunc<CachedPDFDocument> taskFunc =
-        [pdfFilename, resolution, bgColor, cacheRoot, imageFormat, batchConverter]()
+        [pdfFilename, opts, cacheRoot, maxPageCount, batchConverter]()
         -> Punctual::WrappedTaskReturnType<CachedPDFDocument>
     {
       if (batchConverter->path.isNull()) {
@@ -322,9 +322,10 @@ namespace Luminous
           return boost::make_unexpected(QString("Could not open input file %1: %2").
                                         arg(file.fileName(), file.errorString()).toStdString());
         hash.addData(file.readAll());
-        hash.addData((const char*)&bgColor, sizeof(bgColor));
-        hash.addData((const char*)&resolution, sizeof(resolution));
-        hash.addData(imageFormat.toUtf8());
+        hash.addData((const char*)&opts.bgColor, sizeof(opts.bgColor));
+        hash.addData((const char*)&opts.resolution, sizeof(opts.resolution));
+        hash.addData(opts.imageFormat.toUtf8());
+        hash.addData(rendererVersion);
         batchConverter->path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
 
         if (!QDir().mkpath(batchConverter->path))
@@ -340,17 +341,19 @@ namespace Luminous
       if (!count.valid())
         return boost::make_unexpected(count.error());
 
-      batchConverter->pageCount = count.value();
+      batchConverter->pageCount = std::min<int>(maxPageCount, count.value());
 
       batchConverter->promises.resize(batchConverter->pageCount);
 
       CachedPDFDocument doc;
       doc.cachePath = batchConverter->path;
-      doc.pages.reserve(batchConverter->pageCount);
+      // Use the real value here instead of the value limited by maxPageCount
+      doc.pageCount = count.value();
+      doc.pages.reserve(batchConverter->promises.size());
       for (auto & p: batchConverter->promises)
         doc.pages.push_back(p.getFuture());
 
-      Radiant::FunctionTask::executeInBGThread([batchConverter, resolution, bgColor, imageFormat] (Radiant::Task & task) {
+      Radiant::FunctionTask::executeInBGThread([batchConverter, opts] (Radiant::Task & task) {
         if (batchConverter->queuedTasks.load() >= s_maxQueuedTasks) {
           task.scheduleFromNowSecs(0.1);
           return;
@@ -361,7 +364,7 @@ namespace Luminous
           return;
         }
 
-        batchConvert(batchConverter, resolution, bgColor, imageFormat);
+        batchConvert(batchConverter, opts);
         s_pdfiumMutex.unlock();
         if (batchConverter->pageNumber >= batchConverter->pageCount)
           task.setFinished();
