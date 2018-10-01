@@ -179,7 +179,7 @@ namespace Valuable
       }
     }
 
-    virtual QString asString(bool * const ok, Valuable::Attribute::Layer layer) const OVERRIDE
+    virtual QString asString(bool * const ok = nullptr, Valuable::Attribute::Layer layer = Base::CURRENT_VALUE) const OVERRIDE
     {
       if (ok)
         *ok = true;

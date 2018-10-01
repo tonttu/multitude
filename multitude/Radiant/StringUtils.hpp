@@ -133,6 +133,12 @@ namespace Radiant
     {
       return demangle(typeid(t).name());
     }
+
+    template <typename T>
+    inline QByteArray type()
+    {
+      return demangle(typeid(T).name());
+    }
   }
 }
 

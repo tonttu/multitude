@@ -21,7 +21,9 @@ HEADERS += Archive.hpp \
     AttributeTuple.hpp \
     AttributeVectorContainer.hpp \
     Event.hpp \
-    GraphicsCoordinates.hpp
+    GraphicsCoordinates.hpp \
+    WeakAttributePtr.hpp \
+    WeakNodePtr.hpp
 HEADERS += AttributeFlags.hpp
 HEADERS += CmdParser.hpp
 HEADERS += ConfigDocument.hpp
@@ -32,6 +34,7 @@ HEADERS += DOMElement.hpp
 HEADERS += Export.hpp
 HEADERS += FileWatcher.hpp
 HEADERS += Node.hpp
+HEADERS += NodeUtils.hpp
 HEADERS += Serializer.hpp
 HEADERS += StyleValue.hpp
 HEADERS += Valuable.hpp

@@ -450,27 +450,36 @@ namespace Radiant
   QString FileUtils::makeFilenameUnique(const QString &filename)
   {
     QFileInfo info(filename);
-    QString cleanFilename = info.baseName().simplified();
+    const QString origFilename = info.fileName();
+
     QString suffix = info.suffix();
+    if (origFilename.endsWith(".tar.gz"))
+      suffix = "tar.gz";
+    else if (origFilename.endsWith(".mt-canvus-canvas.zip"))
+      suffix = "mt-canvus-canvas.zip";
+
+    QString cleanFilename;
+    if (suffix.isEmpty())
+      cleanFilename = origFilename.simplified();
+    else
+      cleanFilename = origFilename.left(origFilename.size() - suffix.size() - 1).simplified();
+
     QString path = info.path();
+
     // vfat forbidden characters (see vfat_bad_char in fs/fat/namei_vfat.c)
     QRegExp r("[\\x0001-\\x0019*?<>|\":/\\\\]+");
     cleanFilename.replace(r, "-");
     // It's a bit unclear what is the file size limit (in some cases 481?),
     // but 256 seems like a good practical limit.
     cleanFilename = cleanFilename.left(256);
-    QFileInfo fi(cleanFilename);
-    if (fi.suffix() != suffix && !suffix.isEmpty()) {
-      cleanFilename += "." + suffix;
-      fi = QFileInfo(cleanFilename);
-    }
 
-    QString file = path + "/" + cleanFilename;
+    const QString dotSuffix = suffix.isEmpty() ? "" : QString(".%1").arg(suffix);
+
+    QString file = path + "/" + cleanFilename + dotSuffix;
     for (int i = 1; QFile::exists(file); ++i) {
-      file = QString("%2/%3 (%1).%4").arg(i).arg(path, fi.completeBaseName(), suffix);
+      file = QString("%2/%3 (%1)%4").arg(i).arg(path, cleanFilename, dotSuffix);
     }
     return file;
-
   }
 
   FILE * FileUtils::createFilePath(const QString & filePath)

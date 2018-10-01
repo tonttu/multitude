@@ -20,6 +20,7 @@
 #include <QFile>
 #include <QMap>
 #include <QTextStream>
+#include <QSettings>
 
 #include <fstream>
 #include <functional>
@@ -351,6 +352,9 @@ namespace UnitTest
         }
       }
 
+      QSettings stats("MultiTaction", "TestRunner");
+      QString statsKey = QString("times/%1.%2").arg(test->m_details.suiteName, test->m_details.testName);
+
       if (exitCode) {
         printf("\nTest %s/%s %s after %.2lfs%s%s\n",
                test->m_details.suiteName, test->m_details.testName, error.toUtf8().data(),
@@ -358,6 +362,14 @@ namespace UnitTest
 
         if (flags & TestRunnerFlag::PRINT_ONLY_FAILURES)
           printf("Application output:\n%s\n", process.readAll().data());
+
+        // We remove time stat for a failed test to force it to run first next time
+        stats.remove(statsKey);
+      } else {
+        // Next time these stats are used to order the test list so that slower tests
+        // are executed first, which will optimize total wall-clock times when running
+        // tests in parallel.
+        stats.setValue(statsKey, time);
       }
       process.close();
       fflush(stdout);
@@ -366,9 +378,11 @@ namespace UnitTest
 
     std::vector<const UnitTest::Test*> filterTests(const QString & includeR, const QString & excludeR)
     {
-      std::vector<const UnitTest::Test*> toRun;
+      std::multimap<double, const UnitTest::Test*> toRun;
       QRegExp includeRegex(includeR);
       QRegExp excludeRegex(excludeR);
+
+      QSettings stats("MultiTaction", "TestRunner");
 
       auto test = UnitTest::Test::GetTestList().GetHead();
       while (test) {
@@ -378,11 +392,16 @@ namespace UnitTest
 
         if ((includeRegex.isEmpty() || matchCandidate.contains(includeRegex)) &&
             (excludeRegex.isEmpty() || !matchCandidate.contains(excludeRegex))) {
-          toRun.push_back(test);
+          QString statsKey = QString("times/%1.%2").arg(suiteName, testName);
+          double key = stats.value(statsKey, std::numeric_limits<double>::infinity()).toDouble();
+          toRun.insert(std::make_pair(-key, test));
         }
         test = test->m_nextTest;
       }
-      return toRun;
+      std::vector<const UnitTest::Test*> ret;
+      for (auto & p: toRun)
+        ret.push_back(p.second);
+      return ret;
     }
 
     void printTestReport(const QDomDocument & doc, float time)
