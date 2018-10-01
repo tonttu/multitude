@@ -195,6 +195,18 @@ namespace Resonant {
     return (ModulePanner::Mode)*m_operatingMode;
   }
 
+  int ModulePanner::channels() const
+  {
+    if (getMode() == RADIAL)
+      return speakers().size();
+
+    int maxChannel = -1;
+    for (const SoundRectangle * rect: *m_rectangles)
+      maxChannel = std::max(maxChannel, std::max(rect->leftChannel(), rect->rightChannel()));
+
+    return maxChannel + 1;
+  }
+
   int ModulePanner::locationToChannel(Nimble::Vector2 location) const
   {
     if (*m_operatingMode == RADIAL) {
