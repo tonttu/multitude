@@ -910,7 +910,8 @@ namespace Luminous
                                                              1.f, m_vertexArray, r.splineShader());
 
       /// @todo what color to use here?
-      b.uniform->color = Nimble::Vector4f(1,1,1,r.opacity());
+      float opacity = r.opacity();
+      b.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
       b.uniform->depth = b.depth;
 
       // Fill the uniform data
