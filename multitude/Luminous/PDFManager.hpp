@@ -14,6 +14,7 @@
 
 namespace Luminous
 {
+#if !defined(__APPLE__)
   ///
   /// @brief Represents stamp annotation
   /// This API is experimental one and are subject to change in future
@@ -100,6 +101,7 @@ namespace Luminous
   };
 
   using PDFDocumentPtr = std::shared_ptr<PDFDocument>;
+#endif // #if !defined(__APPLE__)
 
   class LUMINOUS_API PDFManager
   {
@@ -206,11 +208,12 @@ namespace Luminous
     folly::Future<CachedPDFDocument> renderDocumentToCacheDir(const QString & pdfFilename,
                                                               const PDFCachingOptions & opts,
                                                               int maxPageCount = std::numeric_limits<int>::max());
-
+#if !defined(__APPLE__)
     /// @brief Opens PDF file for edit
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @return handle to the opened pdf document on success or nullptr if failed
     PDFDocumentPtr editDocument(const QString& pdfAbsoluteFilePath);
+#endif
   private:
     class D;
     std::unique_ptr<D> m_d;

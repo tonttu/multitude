@@ -8,9 +8,12 @@
 #include <boost/expected/expected.hpp>
 
 #include <fpdfview.h>
-#include <fpdf_edit.h>
-#include <fpdf_save.h>
-#include <fpdf_annot.h>
+
+#if !defined(__APPLE__)
+  #include <fpdf_edit.h>
+  #include <fpdf_save.h>
+  #include <fpdf_annot.h>
+#endif
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -212,6 +215,8 @@ namespace
   }
 
   /////////////////////////////////////////////////////////////////////////////
+
+#if !defined(__APPLE__)
 
   class PDFPAnnotationImpl : public Luminous::PDFPAnnotation
   {
@@ -426,10 +431,14 @@ namespace
     FPDF_DOCUMENT m_doc = nullptr;
   };
 
+#endif // #if !defined(__APPLE__)
+
 } // anonymous namespace
 
 namespace Luminous
 {
+
+#if !defined(__APPLE__)
   PDFPAnnotation::~PDFPAnnotation()
   {
   }
@@ -441,6 +450,7 @@ namespace Luminous
   PDFDocument::~PDFDocument()
   {
   }
+#endif
 
   class PDFManager::D
   {
@@ -617,6 +627,7 @@ namespace Luminous
     return m_d->m_defaultCachePath;
   }
 
+#if !defined(__APPLE__)
   PDFDocumentPtr PDFManager::editDocument(const QString& pdfAbsoluteFilePath)
   {
     std::lock_guard<std::mutex> guard(s_pdfiumMutex);
@@ -626,6 +637,7 @@ namespace Luminous
       return nullptr;
     return std::make_shared<PDFDocumentImpl>(doc);
   }
+#endif // #if !defined(__APPLE__)
 
   DEFINE_SINGLETON(PDFManager)
 }
