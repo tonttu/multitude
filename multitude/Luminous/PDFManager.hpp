@@ -21,27 +21,27 @@ namespace Luminous
   class LUMINOUS_API PDFPAnnotation
   {
   public:
-     virtual ~PDFPAnnotation();
+    virtual ~PDFPAnnotation();
 
     ///
     /// @brief Starts drawing new path
-    /// @param start Staring poin in the page coordinate system
+    /// @param start Starting point in the page coordinate system
     /// @param color Stroke color
     /// @param strokeWidth Stroke width
     /// @return true on success
     ///
-     virtual bool startDraw(const Nimble::Vector2f& start, const Radiant::Color& color, float strokeWidth) = 0;
+    virtual bool startDraw(const Nimble::Vector2f& start, const Radiant::Color& color, float strokeWidth) = 0;
     ///
     /// @brief lineTo Draw a line to the point
     /// @param pt point in the page coordinate system
     /// @return true on success
     ///
-     virtual bool lineTo(const Nimble::Vector2f& pt) = 0;
+    virtual bool lineTo(const Nimble::Vector2f& pt) = 0;
     ///
     /// @brief endDraw Ends drawing and attach created path to the annotation
     /// @return true on success
     ///
-     virtual bool endDraw() = 0;
+    virtual bool endDraw() = 0;
   };
 
   using PDFPAnnotationPtr = std::shared_ptr<PDFPAnnotation>;
