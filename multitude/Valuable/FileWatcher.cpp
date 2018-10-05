@@ -106,7 +106,7 @@ namespace Valuable
       QDir dir(path);
       dir.setFilter(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
-      foreach(QFileInfo fi, dir.entryInfoList())
+      Q_FOREACH(QFileInfo fi, dir.entryInfoList())
         files.insert(fi.absoluteFilePath());
 
       return files;
@@ -132,7 +132,7 @@ namespace Valuable
         m_delayTimer.singleShot(CHANGE_EVENT_DELAY, this, SLOT(sendDelayedEvents()));
     }
 
-  private slots:
+  private Q_SLOTS:
 
     void directoryChanged(const QString & relativePath)
     {
@@ -143,7 +143,7 @@ namespace Valuable
       getChanges(path, add, rm);
 
       // File creation events are never delayed
-      foreach(QString filename, add) {
+      Q_FOREACH(QString filename, add) {
 
         if(isDelayed(filename)) {
           // There is a delayed event already, merge the events to single changed event
@@ -165,7 +165,7 @@ namespace Valuable
       }
 
       // Always delay removal (we might be able to merge events)
-      foreach(QString filename, rm) {
+      Q_FOREACH(QString filename, rm) {
         if (m_userAddedFiles.contains(filename) ||
             m_userAddedDirectories.contains(QFileInfo(filename).absolutePath())) {
           delayEvent(filename, ChangeEvent::DELETE);
@@ -280,7 +280,7 @@ namespace Valuable
 
   void FileWatcher::addPaths(const QStringList &paths)
   {
-    foreach(QString path, paths)
+    Q_FOREACH(QString path, paths)
       addPath(path);
   }
 
@@ -340,7 +340,7 @@ namespace Valuable
 
   void FileWatcher::removePaths(const QStringList &paths)
   {
-    foreach(QString path, paths)
+    Q_FOREACH(QString path, paths)
       removePath(path);
   }
 

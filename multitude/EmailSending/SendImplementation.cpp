@@ -63,13 +63,13 @@ namespace Email
     mimeMessage->setSubject(message.subject());
 
     // Add recipients
-    foreach(const Address & address, message.recipients(Message::RecipientType::To))
+    Q_FOREACH(const Address & address, message.recipients(Message::RecipientType::To))
       mimeMessage->addRecipient(new ::EmailAddress(address.address, address.name), MimeMessage::To);
 
-    foreach(const Address & address, message.recipients(Message::RecipientType::Cc))
+    Q_FOREACH(const Address & address, message.recipients(Message::RecipientType::Cc))
       mimeMessage->addRecipient(new ::EmailAddress(address.address, address.name), MimeMessage::Cc);
 
-    foreach(const Address & address, message.recipients(Message::RecipientType::Bcc))
+    Q_FOREACH(const Address & address, message.recipients(Message::RecipientType::Bcc))
       mimeMessage->addRecipient(new ::EmailAddress(address.address, address.name), MimeMessage::Bcc);
 
     // Add text content

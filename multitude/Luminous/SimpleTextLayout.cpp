@@ -283,7 +283,7 @@ namespace Luminous
     m_layout.draw(&painter, QPoint(0, 0));
     dbgimg.save(QString("img-%1.png").arg(id.fetchAndAddOrdered(1)));
 
-    foreach (const QGlyphRun & glyphRun, m_layout.glyphRuns()) {
+    Q_FOREACH (const QGlyphRun & glyphRun, m_layout.glyphRuns()) {
       const QRawFont & rawFont = glyphRun.rawFont();
       const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
       // const QVector<QPointF> & positions = glyphRun.positions();
@@ -545,7 +545,7 @@ namespace Luminous
     bool missingGlyphs = false;
     const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
 
-    foreach (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
+    Q_FOREACH (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
       missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
 
     nonConst->setGlyphsReady(!missingGlyphs);

@@ -72,7 +72,7 @@ namespace Luminous
     m_codecs.push_back(codec);
 
     // Associate extensions with this codec
-    foreach(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts))
+    Q_FOREACH(QString ext, codec->extensions().split(" ", QString::SkipEmptyParts))
       m_aliases.insert(std::make_pair(ext, codec));
   }
 

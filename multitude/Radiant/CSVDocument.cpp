@@ -39,9 +39,9 @@ namespace Radiant {
 
     QString delim2 = QString::fromUtf8(delimiter);
 
-    foreach(QString line, csv.split("\n")) {
+    Q_FOREACH(QString line, csv.split("\n")) {
       Row r;
-      foreach(QString str, line.split(delim2)) {
+      Q_FOREACH(QString str, line.split(delim2)) {
 
         if(removeQuotations && str.size() >= 2) {
           if(str[0] == '\"')

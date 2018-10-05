@@ -64,7 +64,7 @@ namespace Radiant {
     {
       // But there really shouldn't be anybody else doing anything anymore!
       std::lock_guard<std::mutex> g(m_mutex);
-      foreach(QThread * thread, m_threads.keys())
+      Q_FOREACH(QThread * thread, m_threads.keys())
         delete thread;
     }
 
@@ -110,7 +110,7 @@ namespace Radiant {
     bool waitEnd()
     {
       bool ok = true;
-      foreach(QThread * t, m_threads.keys())
+      Q_FOREACH(QThread * t, m_threads.keys())
         if(!t->wait())
           ok = false;
       return ok;
@@ -118,7 +118,7 @@ namespace Radiant {
 
     bool isRunning() const
     {
-      foreach(const QThread * t, m_threads.keys())
+      Q_FOREACH(const QThread * t, m_threads.keys())
         if(t->isRunning())
           return true;
       return false;
@@ -127,7 +127,7 @@ namespace Radiant {
     int threadCount() const
     {
       int num = 0;
-      foreach(ThreadState s, m_threads)
+      Q_FOREACH(ThreadState s, m_threads)
         if(s == STARTING || s == RUNNING)
           ++num;
       return num;

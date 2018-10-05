@@ -1207,7 +1207,7 @@ namespace Valuable
       p.first->eventRemoveListener(this);
     }
 
-    foreach(Attribute* vo, m_attributeListening) {
+    Q_FOREACH(Attribute* vo, m_attributeListening) {
       for(QMap<long, AttributeListener>::iterator it = vo->m_listeners.begin(); it != vo->m_listeners.end(); ) {
         if(it->listener == this) {
           it = vo->m_listeners.erase(it);

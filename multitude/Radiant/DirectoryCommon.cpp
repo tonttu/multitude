@@ -73,7 +73,7 @@ namespace Radiant
   {
     MimeManager mime;
     QStringList tmp;
-    foreach(const QString & t, mimePattern.split('*'))
+    Q_FOREACH(const QString & t, mimePattern.split('*'))
       tmp << QRegExp::escape(t);
     /// @todo implement real mime loading. it shouldn't have anything to do with file extensions
     return Directory(pathname, mime.extensionsByMimeRegexp(tmp.join(".*")).join(","),

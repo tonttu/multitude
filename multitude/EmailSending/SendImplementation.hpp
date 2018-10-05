@@ -34,7 +34,7 @@ namespace Email
 
     void stop();
 
-  private slots:
+  private Q_SLOTS:
     void smtpError(SmtpClient::SmtpError error);
 
   private:
