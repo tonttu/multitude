@@ -10,9 +10,98 @@
 
 #include <memory>
 #include <QImage>
+#include <QIODevice>
 
 namespace Luminous
 {
+#if !defined(__APPLE__)
+  ///
+  /// @brief Represents stamp annotation
+  /// This API is experimental one and are subject to change in future
+  class LUMINOUS_API PDFPAnnotation
+  {
+  public:
+    virtual ~PDFPAnnotation();
+
+    ///
+    /// @brief Starts drawing new path
+    /// @param start Starting point in the page coordinate system
+    /// @param color Stroke color
+    /// @param strokeWidth Stroke width
+    /// @return true on success
+    ///
+    virtual bool startDraw(const Nimble::Vector2f& start, const Radiant::Color& color, float strokeWidth) = 0;
+    ///
+    /// @brief lineTo Draw a line to the point
+    /// @param pt point in the page coordinate system
+    /// @return true on success
+    ///
+    virtual bool lineTo(const Nimble::Vector2f& pt) = 0;
+    ///
+    /// @brief endDraw Ends drawing and attach created path to the annotation
+    /// @return true on success
+    ///
+    virtual bool endDraw() = 0;
+  };
+
+  using PDFPAnnotationPtr = std::shared_ptr<PDFPAnnotation>;
+
+  ///
+  /// @brief Represents PDF document page
+  /// This API is experimental one and are subject to change in future
+  class LUMINOUS_API PDFPage
+  {
+  public:
+    virtual ~PDFPage();
+
+    ///
+    /// @brief size
+    /// @return size of the page in points
+    ///
+    virtual Nimble::SizeF size() const = 0;
+    ///
+    /// @brief Creates a new stamp annotation covering the whole page
+    /// @return annotation handle
+    ///
+    virtual PDFPAnnotationPtr createAnnotation() = 0;
+    ///
+    /// @brief Updates page content
+    ///  This need to be called after all page edits was made
+    /// @return true on success
+    ///
+    virtual bool generateContent() = 0;
+  };
+
+  using PDFPagePtr = std::shared_ptr<PDFPage>;
+
+  ///
+  /// @brief Represent PDF document that is possible to edit
+  /// This API is experimental one and are subject to change in future
+  class LUMINOUS_API PDFDocument
+  {
+  public:
+    virtual ~PDFDocument();
+
+    ///
+    /// @brief pageCount
+    /// @return page count in the document
+    ///
+    virtual int pageCount() const = 0;
+    ///
+    /// @brief Opens page for edit
+    /// @param index Zero-based index of the page
+    /// @return page handle on success or nullptr if failed
+    ///
+    virtual PDFPagePtr openPage(int index) = 0;
+    ///
+    /// @brief Saves document to a memory buffer
+    /// @return stored document
+    ///
+    virtual std::unique_ptr<QIODevice> save() = 0;
+  };
+
+  using PDFDocumentPtr = std::shared_ptr<PDFDocument>;
+#endif // #if !defined(__APPLE__)
 
   class LUMINOUS_API PDFManager
   {
@@ -119,7 +208,12 @@ namespace Luminous
     folly::Future<CachedPDFDocument> renderDocumentToCacheDir(const QString & pdfFilename,
                                                               const PDFCachingOptions & opts,
                                                               int maxPageCount = std::numeric_limits<int>::max());
-
+#if !defined(__APPLE__)
+    /// @brief Opens PDF file for edit
+    /// @param pdfAbsoluteFilePath absolute file path of the pdf file
+    /// @return handle to the opened pdf document on success or nullptr if failed
+    PDFDocumentPtr editDocument(const QString& pdfAbsoluteFilePath);
+#endif
   private:
     class D;
     std::unique_ptr<D> m_d;
