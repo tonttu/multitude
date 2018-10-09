@@ -9,9 +9,10 @@
 #include <boost/expected/config.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
 #include <boost/expected/detail/requires.hpp>
-#include <boost/functional/type_traits_t.hpp>
 
-#ifdef BOOST_EXPECTED_USE_BOOST_HPP
+#ifndef BOOST_EXPECTED_USE_BOOST_HPP
+#include <boost/functional/type_traits_t.hpp>
+#else
 #include <boost/exception_ptr.hpp>
 #include <boost/type_traits.hpp>
 #endif
