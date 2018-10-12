@@ -3,7 +3,8 @@ include(../../cornerstone.pri)
 HEADERS += \
     TaskScheduler.hpp \
     Export.hpp \
-    TaskWrapper.hpp
+    TaskWrapper.hpp \
+    Helpers.hpp
 
 SOURCES += \
     TaskScheduler.cpp
