@@ -435,7 +435,7 @@ namespace Luminous
           m_eventHook->dropEvent(dynamic_cast<QDropEvent*>(ev));
         break;
       case QEvent::Close:
-        emit closed();
+        Q_EMIT closed();
         break;
       default:
         break;

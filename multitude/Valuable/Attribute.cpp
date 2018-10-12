@@ -229,10 +229,10 @@ namespace Valuable
   {
     REQUIRE_THREAD(m_ownerThread);
     // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
-    // We use foreach here because the callback functions might
-    // remove themselves from the listeners. Since foreach makes a
+    // We use Q_FOREACH here because the callback functions might
+    // remove themselves from the listeners. Since Q_FOREACH makes a
     // copy of the containers this doesn't present a problem
-    foreach(const AttributeListener & l, m_listeners) {
+    Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
@@ -252,10 +252,10 @@ namespace Valuable
   void Attribute::emitDelete()
   {
     //Radiant::trace("Attribute::emitDelete");
-    // We use foreach here because the callback functions might
-    // remove themselves from the listeners. Since foreach makes a
+    // We use Q_FOREACH here because the callback functions might
+    // remove themselves from the listeners. Since Q_FOREACH makes a
     // copy of the containers this doesn't present a problem
-    foreach(const AttributeListener & l, m_listeners) {
+    Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS
@@ -275,10 +275,10 @@ namespace Valuable
   void Attribute::emitHostChange()
   {
     // Radiant::trace("Attribute::emitChange # '%s'", m_name.data());
-    // We use foreach here because the callback functions might
-    // remove themselves from the listeners. Since foreach makes a
+    // We use Q_FOREACH here because the callback functions might
+    // remove themselves from the listeners. Since Q_FOREACH makes a
     // copy of the containers this doesn't present a problem
-    foreach(const AttributeListener & l, m_listeners) {
+    Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & HOST_CHANGE_ROLE) {
         if(!l.func) {
 #ifdef CORNERSTONE_JS

@@ -39,7 +39,7 @@ namespace Luminous
     Radiant::Mutex m_generateMutex;
     QString m_listBullet; // Bullet used in QTextLists
 
-  private slots:
+  private Q_SLOTS:
     void changed();
   };
 
@@ -218,7 +218,7 @@ namespace Luminous
           loc.x = rect.left() + indent - bullet.right() * 1.5;
         }
 
-        foreach (const QGlyphRun & glyphRun, textLayout.glyphRuns())
+        Q_FOREACH (const QGlyphRun & glyphRun, textLayout.glyphRuns())
           missingGlyphs |= nonConst->generateGlyphs(loc, glyphRun);
       }
     }

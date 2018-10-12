@@ -37,7 +37,7 @@ public:
 
     static EmailAddress * stringToEmail(const QString & str);
 
-private slots:
+private Q_SLOTS:
     void on_addAttachment_clicked();
 
     void on_sendEmail_clicked();

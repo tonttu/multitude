@@ -8,15 +8,18 @@
 
 #include <boost/expected/config.hpp>
 #include <boost/expected/detail/constexpr_utility.hpp>
-#include <boost/functional/type_traits_t.hpp>
+#include <boost/expected/detail/requires.hpp>
 
-#ifdef BOOST_EXPECTED_USE_BOOST_HPP
+#ifndef BOOST_EXPECTED_USE_BOOST_HPP
+#include <boost/functional/type_traits_t.hpp>
+#else
 #include <boost/exception_ptr.hpp>
 #include <boost/type_traits.hpp>
 #endif
 
 #include <exception>
 #include <utility>
+#include <type_traits>
 
 namespace boost
 {
@@ -28,10 +31,12 @@ namespace boost
   public:
     unexpected_type() = delete;
 
+    BOOST_EXPECTED_0_REQUIRES(std::is_copy_constructible<ErrorType>::value)
     BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType const& e) :
       error_(e)
     {
     }
+    BOOST_EXPECTED_0_REQUIRES(std::is_move_constructible<ErrorType>::value)
     BOOST_FORCEINLINE BOOST_CONSTEXPR explicit unexpected_type(ErrorType&& e) :
       error_(std::move(e))
     {
@@ -165,11 +170,11 @@ namespace boost
     return !(x < y);
   }
 
-  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<std::exception_ptr>&, const unexpected_type<std::exception_ptr>&)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>& x, const unexpected_type<std::exception_ptr>& y)
+  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<std::exception_ptr>&, const unexpected_type<std::exception_ptr>&)
   {
     return false;
   }

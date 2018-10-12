@@ -157,7 +157,7 @@ namespace Luminous
     QObject * asQObject() { return this; }
     const QObject * asQObject() const { return this; }
 
-  signals:
+  Q_SIGNALS:
     void closed();
 
   protected:

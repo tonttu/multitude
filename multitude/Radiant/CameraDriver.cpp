@@ -95,7 +95,7 @@ namespace Radiant
 
     std::vector<VideoCamera::CameraInfo> cameras;
 
-    foreach(QString str, m_preferredDrivers) {
+    Q_FOREACH(QString str, m_preferredDrivers) {
 
       CameraDriver * cd = getCameraDriver(str);
 

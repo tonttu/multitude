@@ -21,7 +21,7 @@ namespace Luminous
     void updateProfile();
     void check();
 
-  public slots:
+  public Q_SLOTS:
     void applicationStateChanged(Qt::ApplicationState state);
 
   public:

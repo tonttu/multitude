@@ -407,9 +407,9 @@ namespace Radiant
   QString FileUtils::findFile(const QString & filename, const QString & paths)
   {
     QStringList list = paths.split(pathSeparator(), QString::SkipEmptyParts);
-    /*needed to avoid bug(?) in foreach when there are duplicate values in list*/
+    /*needed to avoid bug(?) in Q_FOREACH when there are duplicate values in list*/
     list.removeDuplicates();
-    foreach(QString str, list) {
+    Q_FOREACH(QString str, list) {
       QString fullPath = str + "/" + filename;
       if(fileReadable(fullPath))
         return fullPath;
@@ -420,7 +420,7 @@ namespace Radiant
 
   QString FileUtils::findOverWritable(const QString & filename, const QString & paths)
   {
-    foreach(QString str, paths.split(pathSeparator(), QString::SkipEmptyParts)) {
+    Q_FOREACH(QString str, paths.split(pathSeparator(), QString::SkipEmptyParts)) {
       QString fullPath = str + "/" + filename;
 
       if(fileAppendable(fullPath))

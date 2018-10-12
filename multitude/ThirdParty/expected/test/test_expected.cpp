@@ -141,7 +141,6 @@ int nothrowing_fun(){ return 4; }
 void void_throwing_fun(){ throw test_exception(); }
 void do_nothing_fun(){}
 
-
 BOOST_AUTO_TEST_SUITE(except_default_constructor)
 
 BOOST_AUTO_TEST_CASE(except_default_constructor2)
@@ -154,9 +153,9 @@ BOOST_AUTO_TEST_CASE(except_default_constructor2)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(!e.valid());
-  BOOST_CHECK(! e);
-  BOOST_CHECK(! static_cast<bool>(e));
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK( e);
+  BOOST_CHECK( static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor)
@@ -169,16 +168,16 @@ BOOST_AUTO_TEST_CASE(except_default_constructor)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(!e.valid());
-  BOOST_CHECK(! e);
-  BOOST_CHECK(! static_cast<bool>(e));
+  BOOST_CHECK(e.valid());
+  BOOST_CHECK( e);
+  BOOST_CHECK( static_cast<bool>(e));
 }
 
 BOOST_AUTO_TEST_CASE(except_default_constructor_constexpr)
 {
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
-  BOOST_CHECK(!e.valid());
+  BOOST_CHECK(e.valid());
 }
 
 
@@ -207,7 +206,8 @@ BOOST_AUTO_TEST_CASE(expected_from_value2)
 //  } catch(...) {
 //    BOOST_CHECK(false);
 //  };
-  BOOST_CHECK(! e.valid());
+  BOOST_CHECK( e.valid());
+  BOOST_CHECK_EQUAL(e.value(), 0);
 }
 BOOST_AUTO_TEST_CASE(expected_from_cnv_value)
 {
@@ -335,6 +335,28 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(error_expected_constructors)
 
+BOOST_AUTO_TEST_CASE(make_expected_E_from_value)
+{
+  //auto e = make_expected<std::string>( 5 );
+  //BOOST_CHECK_EQUAL(e.valid(), false);
+}
+BOOST_AUTO_TEST_CASE(make_expected_from_U_value)
+{
+  expected<short> e = make_expected<short>( 5 );
+  static_assert(std::is_same<decltype(e), expected<short>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), true);
+}
+BOOST_AUTO_TEST_CASE(make_expected_from_U_value2)
+{
+  expected<std::string> e = make_expected<std::string>( "aa" );
+  static_assert(std::is_same<decltype(e), expected<std::string>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), true);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(error_expected_constructors)
+
 BOOST_AUTO_TEST_CASE(expected_from_value)
 {
   // From value constructor.
@@ -360,6 +382,7 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 BOOST_AUTO_TEST_SUITE(except_valid)
 
 BOOST_AUTO_TEST_CASE(except_valid_constexpr)
@@ -367,7 +390,7 @@ BOOST_AUTO_TEST_CASE(except_valid_constexpr)
   // From value constructor.
   BOOST_CONSTEXPR expected<int,int> e;
   BOOST_CONSTEXPR bool b = e.valid();
-  BOOST_CHECK(!b);
+  BOOST_CHECK(b);
 }
 BOOST_AUTO_TEST_CASE(except_value_constexpr)
 {
@@ -378,6 +401,7 @@ BOOST_AUTO_TEST_CASE(except_value_constexpr)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 BOOST_AUTO_TEST_SUITE(except_expected_assignment)
 
 BOOST_AUTO_TEST_CASE(expected_from_value)
@@ -530,6 +554,18 @@ BOOST_AUTO_TEST_CASE(expected_from_error)
   BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
 }
 
+BOOST_AUTO_TEST_CASE(expected_from_error_U)
+{
+  // From unexpected_type constructor.
+  auto e = make_expected_from_error<int, short>(42);
+  static_assert(std::is_same<decltype(e), expected<int, short>>{}, "");
+  BOOST_CHECK_EQUAL(e.valid(), false);
+  BOOST_CHECK_EQUAL(static_cast<bool>(e), false);
+}
+
+
+
+
 BOOST_AUTO_TEST_CASE(expected_from_exception)
 {
   // From unexpected_type constructor.
@@ -659,10 +695,11 @@ BOOST_AUTO_TEST_CASE(expected_swap_function_value)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-////////////////////////////////////
-BOOST_AUTO_TEST_SUITE(expected_bind)
 
-BOOST_AUTO_TEST_CASE(expected_bind)
+////////////////////////////////////
+BOOST_AUTO_TEST_SUITE(expected_map)
+
+BOOST_AUTO_TEST_CASE(expected_map)
 {
   auto fun = [](bool b) -> expected<int>
   {
@@ -682,6 +719,73 @@ BOOST_AUTO_TEST_CASE(expected_bind)
     throw test_exception();
   };
 
+  expected<int> e = fun(true).map(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 10);
+
+  e = fun(true).map(add_five).map(add_five);
+  BOOST_CHECK_NO_THROW(e.value());
+  BOOST_CHECK_EQUAL(*e, 15);
+
+  e = fun(false).map(add_five).map(add_five);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).map(launch_except), test_exception);
+
+}
+
+BOOST_AUTO_TEST_CASE(expected_void_map)
+{
+  auto fun = [](bool b)
+  {
+    if(b)
+      return make_expected();
+    else
+      return expected<void>(make_unexpected(test_exception()));
+  };
+
+  auto launch_except = []() -> void
+  {
+    throw test_exception();
+  };
+
+  auto do_nothing = [](){};
+
+  expected<void> e = fun(true).map(do_nothing);
+  BOOST_CHECK_NO_THROW(e.value());
+
+  e = fun(false).map(do_nothing);
+  BOOST_CHECK_THROW(e.value(), test_exception);
+
+  BOOST_CHECK_THROW(fun(true).map(launch_except), test_exception);
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+////////////////////////////////////
+BOOST_AUTO_TEST_SUITE(expected_bind)
+
+BOOST_AUTO_TEST_CASE(expected_bind)
+{
+  auto fun = [](bool b) -> expected<int>
+  {
+    if(b)
+      return make_expected(5);
+    else
+      return make_unexpected(test_exception());
+  };
+
+  auto add_five = [](int sum) -> expected<int>
+  {
+    return make_expected(sum + 5);
+  };
+
+  auto launch_except = [](int sum) -> expected<int>
+  {
+    throw test_exception();
+  };
+
   expected<int> e = fun(true).bind(add_five);
   BOOST_CHECK_NO_THROW(e.value());
   BOOST_CHECK_EQUAL(*e, 10);
@@ -693,7 +797,7 @@ BOOST_AUTO_TEST_CASE(expected_bind)
   e = fun(false).bind(add_five).bind(add_five);
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).bind(launch_except));
+  BOOST_CHECK_THROW(fun(true).bind(launch_except), test_exception);
 
 }
 
@@ -707,12 +811,14 @@ BOOST_AUTO_TEST_CASE(expected_void_bind)
       return expected<void>(make_unexpected(test_exception()));
   };
 
-  auto launch_except = []()
+  auto launch_except = []() -> expected<void>
   {
     throw test_exception();
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   expected<void> e = fun(true).bind(do_nothing);
   BOOST_CHECK_NO_THROW(e.value());
@@ -790,7 +896,7 @@ BOOST_AUTO_TEST_CASE(expected_non_void_then)
   e = fun(false).then(if_valued(add_five)).then(if_valued(add_five));
   BOOST_CHECK_THROW(e.value(), test_exception);
 
-  BOOST_CHECK_NO_THROW(fun(true).then(if_valued(launch_except)));
+  BOOST_CHECK_THROW(fun(true).then(if_valued(launch_except)), test_exception);
 
   e = fun(false).then(catch_all(then_launch_except));
   BOOST_CHECK_THROW(e.value(), test_exception);
@@ -839,9 +945,9 @@ BOOST_AUTO_TEST_CASE(expected_recover)
       return expected<int>(make_unexpected(test_exception()));
   };
 
-  auto add_five = [](int sum) -> int
+  auto add_five = [](int sum) -> expected<int>
   {
-    return sum + 5;
+    return make_expected(sum + 5);
   };
 
   auto recover_error = [](std::exception_ptr p)
@@ -895,7 +1001,9 @@ BOOST_AUTO_TEST_CASE(expected_void_recover)
       return expected<void>(boost::make_unexpected(test_exception()));
   };
 
-  auto do_nothing = [](){};
+  auto do_nothing = [](){
+    return make_expected();
+  };
 
   auto recover_error = [](std::exception_ptr p)
   {
@@ -1224,7 +1332,9 @@ BOOST_AUTO_TEST_CASE(moved_from_state)
   BOOST_CHECK (oj);
   BOOST_CHECK (!oj->moved);
 
-  expected<MoveAware<int>> ok = std::move(oi);
+#if 1
+// fixme needs default constructor for MoveAware<int>
+  expected<MoveAware<int>> ok{std::move(oi)};
   BOOST_CHECK (ok);
   BOOST_CHECK (!ok->moved);
   BOOST_CHECK (oi);
@@ -1235,6 +1345,8 @@ BOOST_AUTO_TEST_CASE(moved_from_state)
   BOOST_CHECK (!ok->moved);
   BOOST_CHECK (oj);
   BOOST_CHECK (oj->moved);
+
+#endif
 }
 BOOST_AUTO_TEST_CASE(move_only_value)
 {
@@ -1261,18 +1373,35 @@ BOOST_AUTO_TEST_CASE(move_only_value)
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_void));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_expected));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.map(return_int));
-  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_void));
+}
+BOOST_AUTO_TEST_CASE(move_only_value2)
+{
+  const auto make_int = []() {
+    std::unique_ptr<int> value{new int};
+    *value = 100;
+    return value;
+  };
+  const auto return_expected_void = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return make_expected();
+  };
+  const auto return_expected = [](std::unique_ptr<int> value) {
+    BOOST_CHECK(value != nullptr);
+    BOOST_CHECK(*value == 100);
+    return expected<void>{boost::expect};
+  };
+  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_expected_void));
   BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_expected));
-  BOOST_CHECK(expected<std::unique_ptr<int>>{make_int()}.bind(return_int));
 }
 BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
 {
   expected<int> oi;
   expected<int> oj = oi;
 
-  BOOST_CHECK (!oj);
+  BOOST_CHECK (oj);
   BOOST_CHECK (oj == oi);
-  BOOST_CHECK (!bool(oj));
+  BOOST_CHECK (bool(oj));
 
   oi = 1;
   expected<int> ok = oi;
@@ -1291,18 +1420,18 @@ BOOST_AUTO_TEST_CASE(copy_move_ctor_optional_int)
 }
 BOOST_AUTO_TEST_CASE(expected_expected)
 {
-  expected<expected<int>> oi1 = make_unexpected(-1);
+  expected<expected<int, int>> oi1 = make_unexpected(-1);
   BOOST_CHECK (!oi1);
 
   {
   expected<expected<int>> oi2 {expect};
   BOOST_CHECK (bool(oi2));
-  BOOST_CHECK (!(*oi2));
+  BOOST_CHECK ((*oi2));
   //std::cout << typeid(**oi2).name() << std::endl;
   }
 
   {
-  expected<expected<int>> oi2 {expect, make_unexpected(-1)};
+  expected<expected<int,int>> oi2 {expect, make_unexpected(-1)};
   BOOST_CHECK (bool(oi2));
   BOOST_CHECK (!*oi2);
   }
@@ -1310,7 +1439,7 @@ BOOST_AUTO_TEST_CASE(expected_expected)
   {
   expected<expected<int>> oi2 {expected<int>{}};
   BOOST_CHECK (bool(oi2));
-  BOOST_CHECK (!*oi2);
+  BOOST_CHECK (*oi2);
   }
 
   expected<int> oi;
@@ -1401,7 +1530,10 @@ BOOST_AUTO_TEST_CASE(ValueOr)
   expected<std::string> os{"AAA"};
   BOOST_CHECK (os.value_or("BBB") == "AAA");
   os = {};
-  BOOST_CHECK (os.value_or("BBB") == "BBB");
+  BOOST_CHECK (os);
+  BOOST_CHECK (os.value()=="");
+
+  BOOST_CHECK (os.value_or(std::string("BBB")) == "");
 }
 
 //////////////////////////////////////////////////
