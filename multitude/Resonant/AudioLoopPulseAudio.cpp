@@ -44,8 +44,32 @@ namespace Resonant
     stop();
 
     pa_sample_spec ss { PA_SAMPLE_FLOAT32, uint32_t(samplerate), uint8_t(channels) };
+    pa_channel_map map;
+    bool validMap = pa_channel_map_init_auto(&map, channels, PA_CHANNEL_MAP_DEFAULT);
+    if (!validMap)
+      validMap = pa_channel_map_init_auto(&map, channels, PA_CHANNEL_MAP_ALSA);
+    if (!validMap) {
+      map.channels = channels;
+      map.map[0] = PA_CHANNEL_POSITION_FRONT_LEFT;
+      map.map[1] = PA_CHANNEL_POSITION_FRONT_RIGHT;
+      map.map[2] = PA_CHANNEL_POSITION_REAR_LEFT;
+      map.map[3] = PA_CHANNEL_POSITION_REAR_RIGHT;
+      map.map[4] = PA_CHANNEL_POSITION_FRONT_CENTER;
+      map.map[5] = PA_CHANNEL_POSITION_LFE;
+      map.map[6] = PA_CHANNEL_POSITION_SIDE_LEFT;
+      map.map[7] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+      for (unsigned int i = 8; i < PA_CHANNELS_MAX; ++i)
+        map.map[i] = pa_channel_position(PA_CHANNEL_POSITION_AUX0 + i);
+    }
+
     m_outputStream = pa_stream_new(m_context->paContext(), "Cornerstone AudioLoop",
-                                   &ss, nullptr);
+                                   &ss, &map);
+
+    if (!m_outputStream) {
+      Radiant::error("Failed to open PulseAudio stream with %d channels: %s", channels,
+                     pa_strerror(pa_context_errno(m_context->paContext())));
+      return;
+    }
 
     m_underflow = false;
     pa_stream_set_write_callback(m_outputStream, [] (pa_stream *, std::size_t bytes, void * ptr) {

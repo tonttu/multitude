@@ -11,15 +11,24 @@
 
 #include <fpdfview.h>
 
+#if !defined(__APPLE__)
+  #include <fpdf_edit.h>
+  #include <fpdf_save.h>
+  #include <fpdf_annot.h>
+#endif
+
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QStandardPaths>
+#include <QBuffer>
 
 namespace
 {
   /// This should be increased every time we make a cache-breaking change to the renderer
   static const char * rendererVersion = "1";
+
+  static std::mutex s_pdfiumMutex;
 
   struct BatchConverter
   {
@@ -206,11 +215,244 @@ namespace
 
     FPDF_CloseDocument(doc);
   }
-}
+
+  /////////////////////////////////////////////////////////////////////////////
+
+#if !defined(__APPLE__)
+
+  class PDFPAnnotationImpl : public Luminous::PDFPAnnotation
+  {
+  public:
+    PDFPAnnotationImpl(FPDF_ANNOTATION annotation)
+      : m_annotation(annotation)
+    {
+      assert(m_annotation);
+    }
+
+    ~PDFPAnnotationImpl() override
+    {
+      assert(m_annotation);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      FPDFPage_CloseAnnot(m_annotation);
+      if (m_path)
+        FPDFPageObj_Destroy(m_path);
+    }
+
+    bool startDraw(const Nimble::Vector2f& start, const Radiant::Color& color, float strokeWidth) override
+    {
+      if (m_path)
+        return false;
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+
+      m_path = FPDFPageObj_CreateNewPath(start.x, start.y);
+      if (!m_path)
+        return false;
+
+      if (!FPDFPath_SetDrawMode(m_path, 0 /*NoFill*/, 1 /*DrawPathStroke*/))
+        return false;
+
+      const auto r = Nimble::Math::Clamp(static_cast<unsigned int>(color.red() * 255u), 0u, 255u);
+      const auto g = Nimble::Math::Clamp(static_cast<unsigned int>(color.green() * 255u), 0u, 255u);
+      const auto b = Nimble::Math::Clamp(static_cast<unsigned int>(color.blue() * 255u), 0u, 255u);
+      const auto a = Nimble::Math::Clamp(static_cast<unsigned int>(color.alpha() * 255u), 0u, 255u);
+      if (!FPDFPath_SetStrokeColor(m_path, r, g, b, a))
+        return false;
+
+      if (!FPDFPath_SetStrokeWidth(m_path, strokeWidth))
+        return false;
+
+      return true;
+    }
+
+    bool lineTo(const Nimble::Vector2f& point) override
+    {
+      if (!m_path)
+        return false;
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      return FPDFPath_LineTo(m_path, point.x, point.y);
+    }
+
+    bool endDraw() override
+    {
+      if (!m_path)
+        return false;
+      assert(m_annotation);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      FPDF_BOOL res = FPDFAnnot_AppendObject(m_annotation, m_path);
+      m_path = nullptr;
+      return res;
+    }
+  private:
+    FPDF_PAGEOBJECT m_path = nullptr;
+    FPDF_ANNOTATION m_annotation = nullptr;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  class PDFPageImpl : public Luminous::PDFPage
+  {
+  public:
+    PDFPageImpl(FPDF_PAGE page)
+      : m_page(page)
+    {
+      assert(m_page);
+    }
+
+    ~PDFPageImpl() override
+    {
+      assert(m_page);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      FPDF_ClosePage(m_page);
+    }
+
+    Nimble::SizeF size() const override
+    {
+      assert(m_page);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      const auto width = FPDF_GetPageWidth(m_page);
+      const auto height = FPDF_GetPageHeight(m_page);
+      return {static_cast<float>(width), static_cast<float>(height)};
+    }
+
+    Luminous::PDFPAnnotationPtr createAnnotation() override
+    {
+      assert(m_page);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      assert(FPDFAnnot_IsSupportedSubtype(FPDF_ANNOT_STAMP));
+
+      FPDF_ANNOTATION annotation = FPDFPage_CreateAnnot(m_page, FPDF_ANNOT_STAMP);
+      if (!annotation)
+        return nullptr;
+
+      auto result = std::make_shared<PDFPAnnotationImpl>(annotation);
+
+      FS_RECTF rect;
+      rect.left = 0;
+      rect.bottom = 0;
+      rect.right = FPDF_GetPageWidth(m_page);
+      rect.top = FPDF_GetPageHeight(m_page);
+
+      if (!FPDFAnnot_SetRect(annotation, &rect))
+        return nullptr;
+
+      return result;
+    }
+
+    bool generateContent() override
+    {
+      assert(m_page);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      return FPDFPage_GenerateContent(m_page);
+    }
+  private:
+    FPDF_PAGE m_page = nullptr;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  class QBufferWriter : public FPDF_FILEWRITE
+  {
+  public:
+    QBufferWriter()
+    {
+      version = 1;
+      WriteBlock = &QBufferWriter::writeBlockThunk;
+
+      m_buffer.reset(new QBuffer());
+      m_buffer->open(QBuffer::ReadWrite);
+    }
+
+    std::unique_ptr<QIODevice> takeBuffer()
+    {
+      assert(m_buffer);
+      return std::move(m_buffer);
+    }
+  private:
+    static int writeBlockThunk(struct FPDF_FILEWRITE_* pThis, const void* pData, unsigned long size)
+    {
+      return static_cast<QBufferWriter*>(pThis)->writeBlock(pData, size);
+    }
+
+    int writeBlock(const void* pData, unsigned long size)
+    {
+      assert(m_buffer);
+      assert(m_buffer->isOpen());
+      return m_buffer->write(static_cast<const char*>(pData), size);
+    }
+
+    std::unique_ptr<QIODevice> m_buffer;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  class PDFDocumentImpl : public Luminous::PDFDocument
+  {
+  public:
+    PDFDocumentImpl(FPDF_DOCUMENT doc)
+      : m_doc(doc)
+    {
+      assert(m_doc);
+    }
+
+    ~PDFDocumentImpl() override
+    {
+      assert(m_doc);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      FPDF_CloseDocument(m_doc);
+    }
+
+    int pageCount() const override
+    {
+      assert(m_doc);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      return FPDF_GetPageCount(m_doc);
+    }
+
+    Luminous::PDFPagePtr openPage(int index) override
+    {
+      assert(m_doc);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      FPDF_PAGE page = FPDF_LoadPage(m_doc, index);
+      if (!page)
+        return nullptr;
+
+      return std::make_shared<PDFPageImpl>(page);
+    }
+
+    virtual std::unique_ptr<QIODevice> save() override
+    {
+      assert(m_doc);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      QBufferWriter writer;
+      if (!FPDF_SaveAsCopy(m_doc, &writer, 0))
+        return nullptr;
+
+      return writer.takeBuffer();
+    }
+  private:
+    FPDF_DOCUMENT m_doc = nullptr;
+  };
+
+#endif // #if !defined(__APPLE__)
+
+} // anonymous namespace
 
 namespace Luminous
 {
-  static std::mutex s_pdfiumMutex;
+
+#if !defined(__APPLE__)
+  PDFPAnnotation::~PDFPAnnotation()
+  {
+  }
+
+  PDFPage::~PDFPage()
+  {
+  }
+
+  PDFDocument::~PDFDocument()
+  {
+  }
+#endif
 
   class PDFManager::D
   {
@@ -386,6 +628,18 @@ namespace Luminous
   {
     return m_d->m_defaultCachePath;
   }
+
+#if !defined(__APPLE__)
+  PDFDocumentPtr PDFManager::editDocument(const QString& pdfAbsoluteFilePath)
+  {
+    std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+
+    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), 0);
+    if (!doc)
+      return nullptr;
+    return std::make_shared<PDFDocumentImpl>(doc);
+  }
+#endif // #if !defined(__APPLE__)
 
   DEFINE_SINGLETON(PDFManager)
 }

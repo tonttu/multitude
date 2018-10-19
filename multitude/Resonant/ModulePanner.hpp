@@ -140,6 +140,8 @@ namespace Resonant {
     const Sources & sources() const { return m_sources; }
     const LoudSpeakers & speakers() const { return *m_speakers; }
 
+    int channels() const;
+
     /// @endcond
 
   private:
