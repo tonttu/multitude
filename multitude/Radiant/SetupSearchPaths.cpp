@@ -15,6 +15,11 @@ namespace
       // Add user home directory and config directory
       QDir::addSearchPath("home", QDir::homePath());
       QDir::addSearchPath("user-config", Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
+#ifdef RADIANT_WINDOWS
+      QDir::addSearchPath("system-config", Radiant::PlatformUtils::windowsProgramDataPath() + "\\MultiTaction");
+#else
+      QDir::addSearchPath("system-config", "/etc/MultiTaction");
+#endif
 
 #ifdef RADIANT_WINDOWS
       // Setup Qt plugin path to ensure SQL (and other) Qt plugins are found (#15243)

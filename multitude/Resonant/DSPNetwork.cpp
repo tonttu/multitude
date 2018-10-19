@@ -148,7 +148,7 @@ namespace Resonant {
 
     int channels = 2;
     if (m_panner)
-      channels = std::max<int>(channels, m_panner->speakers().size());
+      channels = std::max(channels, m_panner->channels());
 
     if (auto outchannels = getenv("RESONANT_OUTCHANNELS")) {
       channels = atoi(outchannels);
