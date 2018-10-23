@@ -516,14 +516,14 @@ namespace Luminous
                                                           const Nimble::SizeI& resolution,
                                                           QRgb color)
   {
-    auto writeImage = [pageAbsoluteFilePath, pdfAbsoluteFilePath, pageNumber] (QImage im) {
+    auto writeImage = [pageAbsoluteFilePath, pdfAbsoluteFilePath, pageNumber] (QImage&& im) {
       bool ok = im.save(pageAbsoluteFilePath);
       if(!ok)
         throw std::runtime_error(QString("Could not save page %1 of %2 as %3").
                                  arg(QString::number(pageNumber), pdfAbsoluteFilePath,
                                      pageAbsoluteFilePath).toStdString());
     };
-    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).then(writeImage);
+    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).thenValue(writeImage);
   }
 
 
