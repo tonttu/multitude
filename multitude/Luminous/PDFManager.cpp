@@ -523,7 +523,7 @@ namespace Luminous
                                  arg(QString::number(pageNumber), pdfAbsoluteFilePath,
                                      pageAbsoluteFilePath).toStdString());
     };
-    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).then(writeImage);
+    return renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).thenValue(writeImage);
   }
 
 
