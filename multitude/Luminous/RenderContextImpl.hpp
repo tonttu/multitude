@@ -113,12 +113,38 @@ namespace Luminous
   template <typename InputIterator>
   void RenderContext::drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style)
   {
+    if (numVertices < 2)
+      return;
     assert(style.strokeWidth() > 0.f);
     const Program & program = (style.strokeProgram() ? *style.strokeProgram() : basicShader());
-    /// @todo Can't rely on supported line sizes. Should just make triangle strips for values > 1
-    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(Luminous::PRIMITIVE_LINE_STRIP, 0, numVertices, program, style.strokeColor(), style.strokeWidth(), style);
-    for (size_t i = 0; i < numVertices; ++i, ++begin)
-      b.vertex[i].location = *begin;
+    auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+          Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, numVertices*2, program, style.strokeColor(), 0, style);
+    const float r = style.strokeWidth() / 2.f;
+    BasicVertex * out = b.vertex;
+
+    Nimble::Vector2f prev = *begin++;
+    Nimble::Vector2f curr = *begin++;
+    // Tangent of first point is points[1] - points[0]
+    // "begin" doesn't need to be random access iterator, so we will only use
+    // operator++ with it.
+    Nimble::Vector2f n = (curr - prev).perpendicular().normalized(r);
+    out++->location = prev + n;
+    out++->location = prev - n;
+
+    for (size_t i = 1; i < numVertices-1; ++i) {
+      Nimble::Vector2f next = *begin++;
+      // Tangent of point n is points[n+1] - points[n-1]
+      n = (next - prev).perpendicular().normalized(r);
+      out++->location = curr + n;
+      out++->location = curr - n;
+      prev = curr;
+      curr = next;
+    }
+
+    // Tangent of last point is points[last] - points[last-1]
+    n = (curr - prev).perpendicular().normalized(r);
+    out++->location = curr + n;
+    out++->location = curr - n;
   }
 
   template<typename T>
