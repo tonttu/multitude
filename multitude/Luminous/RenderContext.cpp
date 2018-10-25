@@ -542,7 +542,7 @@ namespace Luminous
       // Minimize geometric error when approximating a circle with a polygon
       const float scale = this->approximateScaling();
 
-      const float tolerance = 0.5f;
+      const float tolerance = 0.25f;
       const float actualRadius = scale * (radius + 0.5f * style.strokeWidth());
 
       linesegments = std::max<int>(16, Nimble::Math::PI / acos(1.f - (tolerance / actualRadius)));
