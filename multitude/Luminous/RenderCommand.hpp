@@ -43,11 +43,25 @@ namespace Luminous
     unsigned int uniformSizeBytes;
     unsigned int uniformOffsetBytes;
 
-    std::array<std::pair<int, int>, 8> samplers;
-    std::array<std::pair<int, ShaderUniform>, 8> uniforms;
+    // Index to RenderDriverGL::D::m_samplers
+    unsigned int samplersBegin;
+    unsigned int samplersEnd;
+
+    // Index to RenderDriverGL::D::m_uniforms
+    unsigned int uniformsBegin;
+    unsigned int uniformsEnd;
   };
 /// @endcond
-  
+
+  /// At the moment only normal RenderCommand is supported, but in the future
+  /// we could add alternative render commands for things like
+  /// glMultiDrawElements and they could all be indexed through this class.
+  struct RenderCommandIndex
+  {
+    /// Index to RenderDriverGL::D::m_renderCommands, max means null command
+    unsigned int renderCommandIndex = std::numeric_limits<unsigned int>::max();
+  };
+
   /// The most basic type of vertex to use with shader programs.
   /// Contains only 2D location of the vertex.
   struct BasicVertex

@@ -98,11 +98,16 @@ namespace Luminous
     // Stack of active frame buffers
     std::stack<FrameBufferGL*, std::vector<FrameBufferGL*> > m_fboStack;
     // Master rendering queue that consists of segments of rendering commands
-    std::deque<RenderQueueSegment> m_masterRenderQueue;
+    std::vector<RenderQueueSegment> m_masterRenderQueue;
 
     // Pools for avoiding mallocs
-    OpaqueRenderQueuePool m_opaquePool;
-    TranslucentRenderQueuePool m_translucentPool;
+    std::vector<RenderCommand> m_renderCommands;
+    std::vector<std::pair<RenderState, RenderCommandIndex>> m_opaqueQueue;
+    std::vector<std::pair<RenderState, RenderCommandIndex>> m_translucentQueue;
+    // uniform location -> sampler
+    std::vector<std::pair<int, int>> m_samplers;
+    // uniform location -> uniform value
+    std::vector<std::pair<int, ShaderUniform>> m_uniforms;
 
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
@@ -162,9 +167,10 @@ namespace Luminous
     void newRenderQueueSegment(PipelineCommand * cmd)
     {
       /// @todo Maybe look into a pool allocator to improve performance. Should profile more
-      m_masterRenderQueue.emplace_back(cmd, m_opaquePool, m_translucentPool);
+      m_masterRenderQueue.emplace_back(cmd, m_opaqueQueue.size(), m_translucentQueue.size());
     }
 
+#if 0
     void debugOutputStats()
     {
       static int foo = 0;
@@ -189,6 +195,7 @@ namespace Luminous
 
       }
     }
+#endif
 
   };
 
@@ -279,15 +286,15 @@ namespace Luminous
   void RenderDriverGL::D::render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
   {
     // Set texture samplers
-    for(auto uit = cmd.samplers.begin(); uit != cmd.samplers.end(); ++uit) {
-      if(uit->first < 0) break;
-      m_opengl.glUniform1i(uit->first, uit->second);
+    for (auto idx = cmd.samplersBegin; idx < cmd.samplersEnd; ++idx) {
+      auto p = m_samplers[idx];
+      m_opengl.glUniform1i(p.first, p.second);
       GLERROR("RenderDriverGL::render # glUniform1i");
     }
 
     // Apply style-uniforms
-    for(auto uniform : cmd.uniforms) {
-      if (uniform.first < 0) break;
+    for (auto idx = cmd.uniformsBegin; idx < cmd.uniformsEnd; ++idx) {
+      auto & uniform = m_uniforms[idx];
       applyUniform(uniform.first, uniform.second);
     }
 
@@ -335,9 +342,6 @@ namespace Luminous
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
 
-    /// @todo why did we do this, makes no sense?
-    //if(vertexArray.indexBuffer() != 0) m_state.vertexArray->bind();
-
     // In case of non-shared buffers, we'll re-upload if anything has changed
     m_state.uniformBuffer->upload(uniformBuffer, Buffer::UNIFORM);
 
@@ -367,59 +371,52 @@ namespace Luminous
 
     RenderQueueSegment & rt = currentRenderQueueSegment();
 
-    RenderCommand * cmd;
+    RenderCommandIndex idx;
+    idx.renderCommandIndex = m_renderCommands.size();
+    m_renderCommands.emplace_back();
+    RenderCommand * cmd = &m_renderCommands.back();
+    cmd->samplersBegin = cmd->samplersEnd = m_samplers.size();
+    cmd->uniformsBegin = cmd->uniformsEnd = m_uniforms.size();
 
     if(translucent) {
-      TranslucentRenderQueue & queue = rt.getTranslucentQueue();
-      auto & pair = queue.queue->newEntry();
-      pair.first = m_state;
-      cmd = &pair.second;
+      m_translucentQueue.emplace_back(m_state, idx);
+      ++rt.translucentCmdEnd;
     } else {
-      OpaqueRenderQueue & queue = rt.getOpaqueQueue(m_state);
-      cmd = &queue.queue->newEntry();
+      m_opaqueQueue.emplace_back(m_state, idx);
+      ++rt.opaqueCmdEnd;
     }
 
     // Assign the samplers
     {
       unit = 0;
-      std::size_t slot = 0; // one day this will be different from unit... when that day comes fix resetCommand
       if (textures != nullptr) {
-        auto it = std::begin(*textures);
-        auto end = std::end(*textures);
-        while (it != end && slot < cmd->samplers.size()) {
-          auto location = m_state.program->uniformLocation(it->first);
+        for (auto & p: *textures) {
+          auto location = m_state.program->uniformLocation(p.first);
           if (location >= 0) {
-            cmd->samplers[slot++] = std::make_pair(location, unit++);
+            m_samplers.emplace_back(location, unit);
+            ++cmd->samplersEnd;
+          } else {
+            Radiant::warning("RenderDriverGL - Cannot bind sampler %s - No such sampler found", p.first.data());
           }
-          else {
-            Radiant::warning("RenderDriverGL - Cannot bind sampler %s - No such sampler found", it->first.data());
-          }
-          ++it;
+          ++unit;
         }
       }
-      cmd->samplers[slot].first = -1;
     }
 
     // Assign the uniforms
     {
-      size_t slot = 0;
       if (uniforms) {
-        auto it = std::begin(*uniforms);
-        auto end = std::end(*uniforms);
-        while (it != end && slot < cmd->uniforms.size()) {
-          GLint location = m_state.program->uniformLocation(it->first);
+        for (auto & p: *uniforms) {
+          GLint location = m_state.program->uniformLocation(p.first);
           if (location >= 0) {
-            assert(it->second.type() != ShaderUniform::Unknown);
-            cmd->uniforms[slot++] = std::make_pair(location, it->second);
+            assert(p.second.type() != ShaderUniform::Unknown);
+            m_uniforms.emplace_back(location, p.second);
+            ++cmd->uniformsEnd;
+          } else {
+            Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", p.first.data());
           }
-          else {
-            Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", it->first.data());
-          }
-
-          ++it;
         }
       }
-      cmd->uniforms[slot].first = -1;
     }
 
     return *cmd;
@@ -700,9 +697,6 @@ namespace Luminous
 
   void RenderDriverGL::flush()
   {
-    m_d->m_opaquePool.flush();
-    m_d->m_translucentPool.flush();
-
     // Debug: output some render stats
     //m_d->debugOutputStats();
 
@@ -712,53 +706,68 @@ namespace Luminous
     // setDefaultState();
     // Iterate over the segments of the master render queue executing the
     // stored render commands
-    while(!m_d->m_masterRenderQueue.empty()) {
-
-      RenderQueueSegment & queues = m_d->m_masterRenderQueue.front();
-
+    for (RenderQueueSegment & queues: m_d->m_masterRenderQueue) {
       // Execute the pipeline command that defines this segment
       assert(queues.pipelineCommand);
       queues.pipelineCommand->execute();
 
-      for(auto it = queues.opaqueQueue.begin(), end = queues.opaqueQueue.end(); it != end; ++it) {
-        const RenderState & state = it->first;
-        OpaqueRenderQueue & opaque = it->second;
+      const RenderState * prevState = nullptr;
+      GLint uniformHandle = 0;
 
-        if(opaque.queue->size() == 0)
-          continue;
+      constexpr auto disabled = std::numeric_limits<unsigned int>::max();
 
-        m_d->setState(state);
+      if (queues.opaqueCmdBegin != queues.opaqueCmdEnd) {
+        std::stable_sort(m_d->m_opaqueQueue.begin() + queues.opaqueCmdBegin,
+                         m_d->m_opaqueQueue.begin() + queues.opaqueCmdEnd, []
+                         (const std::pair<RenderState, RenderCommandIndex> & a, const std::pair<RenderState, RenderCommandIndex> & b)
+        {
+          return a.first < b.first;
+        });
 
-        GLint uniformHandle = state.uniformBuffer->handle();
-        GLint uniformBlockIndex = 0;
+        for (auto idx = queues.opaqueCmdEnd - 1;; --idx) {
+          auto & p = m_d->m_opaqueQueue[idx];
+          const RenderState & state = p.first;
+          const RenderCommandIndex & cmdIndex = p.second;
 
-        for(int i = static_cast<int>(opaque.queue->size()) - 1; i >= 0; --i) {
-          m_d->render((*opaque.queue)[i], uniformHandle, uniformBlockIndex);
+          if (!prevState || *prevState != state) {
+            m_d->setState(state);
+            uniformHandle = state.uniformBuffer->handle();
+          }
+
+          prevState = &state;
+
+          if (cmdIndex.renderCommandIndex != disabled)
+            m_d->render(m_d->m_renderCommands[cmdIndex.renderCommandIndex], uniformHandle, 0);
+
+          if (idx == queues.opaqueCmdBegin)
+            break;
         }
 
-        // TODO: Was there any use of frame?
-        //if(opaque.usedSize * 10 > opaque.queue.capacity())
-        //  opaque.frame = m_d->m_frame;
-
-        //opaque.usedSize = 0;
+        prevState = nullptr;
       }
 
-      for(std::size_t i = 0; i < queues.translucentQueue.queue->size(); ++i) {
-        auto p = (*queues.translucentQueue.queue)[(int)i];
+      for (auto idx = queues.translucentCmdBegin; idx < queues.translucentCmdEnd; ++idx) {
+        auto & p = m_d->m_translucentQueue[idx];
         const RenderState & state = p.first;
-        const RenderCommand & cmd = p.second;
-        m_d->setState(state);
-        m_d->render(cmd, state.uniformBuffer->handle(), 0);
+        const RenderCommandIndex & cmdIndex = p.second;
+
+        if (!prevState || *prevState != state) {
+          m_d->setState(state);
+          uniformHandle = state.uniformBuffer->handle();
+        }
+
+        prevState = &state;
+
+        if (cmdIndex.renderCommandIndex != disabled)
+          m_d->render(m_d->m_renderCommands[cmdIndex.renderCommandIndex], uniformHandle, 0);
       }
-
-      //if(queues.translucentQueue.usedSize * 10 > queues.translucentQueue.queue.capacity())
-      //  queues.translucentQueue.frame = m_d->m_frame;
-
-      //queues.translucentQueue.usedSize = 0;
-
-      // Remove the processed segment from the master queue
-      m_d->m_masterRenderQueue.pop_front();
     }
+    m_d->m_masterRenderQueue.clear();
+    m_d->m_opaqueQueue.clear();
+    m_d->m_translucentQueue.clear();
+    m_d->m_renderCommands.clear();
+    m_d->m_uniforms.clear();
+    m_d->m_samplers.clear();
 
     // VAO should be bound only when rendering something or modifying the VAO state
     if (m_d->m_stateGL.setVertexArray(0)) {
