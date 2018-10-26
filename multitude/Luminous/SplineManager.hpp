@@ -55,6 +55,9 @@ namespace Luminous {
     /// @return bounding box as a rect
     Nimble::Rect boundingBox() const;
 
+    /// Returns the bounding box of a single spline
+    Nimble::Rect boundingBox(Valuable::Node::Uuid id) const;
+
     /// Erase splines inside area. Hit splines are removed and replaced with new subsplines
     /// for any remaining parts outside the eraser. Supply removedSplines and addedSplines
     /// if the data should be saved for later use (for example to restore previous state)

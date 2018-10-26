@@ -1090,6 +1090,14 @@ namespace Luminous
     return m_d->m_bounds;
   }
 
+  Nimble::Rect SplineManager::boundingBox(Valuable::Node::Uuid id) const
+  {
+    auto it = m_d->m_strokes.find(id);
+    if (it != m_d->m_strokes.end())
+      return it.value().m_bounds;
+    return Nimble::Rect();
+  }
+
   bool SplineManager::erase(const Nimble::Rectangle & eraser,
                      Splines * removedStrokes, Splines * addedStrokes,
                      QString * errorText)
