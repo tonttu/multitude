@@ -153,7 +153,7 @@ namespace Radiant {
 #endif // WIN32
 
   TimeStamp::TimeStamp(const QDateTime & datetime)
-    : m_val(datetime.toTime_t() * ticksPerSecond().value())
+    : m_val(datetime.toMSecsSinceEpoch() * (ticksPerSecond().value() / 1000))
   {
   }
 

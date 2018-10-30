@@ -1216,7 +1216,7 @@ namespace Luminous
     // Compute MD5 from the absolute path
     QCryptographicHash hash(QCryptographicHash::Md5);
     const qint64 s = fi.size();
-    uint t = fi.lastModified().toTime_t();
+    auto t = fi.lastModified().toMSecsSinceEpoch();
     hash.addData(fi.absoluteFilePath().toUtf8());
     hash.addData(reinterpret_cast<const char*>(&s), sizeof(s));
     hash.addData(reinterpret_cast<const char*>(&t), sizeof(t));
