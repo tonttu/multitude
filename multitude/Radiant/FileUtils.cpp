@@ -523,7 +523,7 @@ namespace Radiant
 
     QDateTime newer = std::max(fi.created(), fi.lastModified());
 
-    return TimeStamp(newer.toTime_t());
+    return TimeStamp(newer);
   }
 
   void FileUtils::indent(FILE * f, int levels)

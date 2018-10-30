@@ -3,8 +3,11 @@
 
 #include "Thread.hpp"
 
+#ifdef ENABLE_THREAD_CHECKS
+#include "Trace.hpp"
+#endif
+
 #include <QThread>
-#include <cassert>
 
 namespace Radiant
 {
@@ -31,11 +34,24 @@ namespace Radiant
       } \
     } \
   } while (false)
+#define REQUIRE_SAME_THREAD_IMPL(file, line, threadVar) do { \
+  if (!threadVar) { \
+    threadVar = Radiant::Thread::myThreadId(); \
+  } else if (threadVar != Radiant::Thread::myThreadId()) { \
+    Radiant::fatal("%s:%d # Currently on thread '%s', expected thread id %p", file, line, QThread::currentThread()->objectName().toUtf8().data(), threadVar); \
+   } \
+ } while (false)
 #define REQUIRE_THREAD(thread) REQUIRE_THREAD_IMPL2(__FILE__, __LINE__, thread)
 #define REQUIRE_MAIN_THREAD REQUIRE_THREAD_IMPL(__FILE__, __LINE__, Radiant::ThreadInfo::mainThreadId, "main thread")
+#define THREAD_CHECK_ID(thread) Radiant::Thread::id_t thread = nullptr;
+#define THREAD_CHECK_ID_SELF(thread) Radiant::Thread::id_t thread = Radiant::Thread::myThreadId();
+#define REQUIRE_SAME_THREAD(threadVar) REQUIRE_SAME_THREAD_IMPL(__FILE__, __LINE__, threadVar)
 #else
 #define REQUIRE_THREAD(thread) do {} while (false)
 #define REQUIRE_MAIN_THREAD do {} while (false)
+#define REQUIRE_SAME_THREAD(thread) do {} while (false)
+#define THREAD_CHECK_ID(thread)
+#define THREAD_CHECK_ID_SELF(thread)
 #endif
 
 #endif // RADIANT_THREADCHECKS_HPP

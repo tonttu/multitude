@@ -133,7 +133,6 @@ SOURCES += ColorCorrectionFilter.cpp
 SOURCES += RenderContext.cpp
 SOURCES += RenderDriver.cpp
 SOURCES += RenderManager.cpp
-SOURCES += RenderQueues.cpp
 SOURCES += RenderResource.cpp
 SOURCES += FrameBuffer.cpp
 SOURCES += ScreenDetector.cpp
