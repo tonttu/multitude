@@ -12,6 +12,11 @@ namespace VideoDisplay
 
   static bool isValidResolution(Nimble::SizeI res, const AVDecoder::VideoStreamHints & hints)
   {
+    /// The resolution is undefined, so most likely this is a capture device,
+    /// and we can't control the resolution, so undefined is valid.
+    if (res.width() == -1 && res.height() == -1)
+      return true;
+
     return res.width() >= hints.minResolution.width() &&
         res.height() >= hints.minResolution.height() &&
         res.width() <= hints.maxResolution.width() &&
