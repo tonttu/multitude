@@ -15,6 +15,8 @@
 #include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <Radiant/StringUtils.hpp>
+#include <QGuiApplication>
 #include <QOpenGLContext>
 #include <QDropEvent>
 #include <QTouchEvent>
@@ -369,6 +371,15 @@ namespace Luminous
               m_eventHook->touchEvent(event);
             }
           }
+          return true;
+        }
+      } else if (msg->message == WM_MOUSEACTIVATE) {
+        auto wnd = QGuiApplication::focusWindow();
+        // Can't use dynamic_cast because of private inheritance
+        if (wnd && Radiant::StringUtils::type(*wnd).contains("Luminous::Window")) {
+          // Do not allow focus changing between application windows, otherwise
+          // the windows might flash white
+          *result = MA_NOACTIVATE;
           return true;
         }
       }
