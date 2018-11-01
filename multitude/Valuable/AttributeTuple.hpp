@@ -391,16 +391,21 @@ namespace Valuable
   template <typename T, typename A>
   bool AttributeTuple<T,A>::set(const StyleValue& sv, Layer layer)
   {
+    if (sv.isEmpty())
+      return false;
+
     beginChangeTransaction();
 
+    bool ok = true;
     for(int i = 0; i < N; ++i) {
       int index = t2r(i, sv.size());
       StyleValue s(sv[index]);
-      m_values[i]->set(s, layer);
+      if (!m_values[i]->set(s, layer))
+        ok = false;
     }
 
     endChangeTransaction();
-    return true;
+    return ok;
   }
 
   template <typename T, typename A>
