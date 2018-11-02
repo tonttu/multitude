@@ -557,14 +557,14 @@ namespace Radiant
     /// @return true if the pointers are equal; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator==(const IntrusivePtr<Y> & rhs) const { return m_ptr == rhs.m_ptr; }
+    inline bool operator==(const IntrusivePtr<Y> & rhs) const { return m_counter == rhs.m_counter; }
 
     /// Compare if two intrusive pointers are inequal
     /// @param rhs intrusive pointer to compare
     /// @return true if the pointers are inequal; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator!=(const IntrusivePtr<Y> & rhs) const { return m_ptr != rhs.m_ptr; }
+    inline bool operator!=(const IntrusivePtr<Y> & rhs) const { return m_counter != rhs.m_counter; }
 
     /// Compare if intrusive pointer is equal to the given intrusive weak pointer
     /// @param rhs intrusive weak pointer to compare
@@ -587,7 +587,7 @@ namespace Radiant
     /// @return true if the pointers are equal; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator== (const Y * rhs) const { return m_ptr == rhs; }
+    inline bool operator== (const Y * rhs) const { return m_counter == intrusivePtrGetCounter(*rhs); }
 
     /// Compare if the intrusive pointer is equal to nullptr
     /// @return true if the intrusive pointer is nullptr
@@ -601,21 +601,21 @@ namespace Radiant
     /// @return true if the pointers are inequal; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator!= (const Y * rhs) const { return m_ptr != rhs; }
+    inline bool operator!= (const Y * rhs) const { return m_counter != intrusivePtrGetCounter(*rhs); }
 
     /// Compare the order of two intrusive pointers
     /// @param rhs intrusive pointer to compare
     /// @return true if this intrusive pointer is less than the given intrusive pointer; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator< (const IntrusivePtr<Y> & rhs) const { return m_ptr < rhs.m_ptr; }
+    inline bool operator< (const IntrusivePtr<Y> & rhs) const { return m_counter < rhs.m_counter; }
 
     /// Compare the intrusive pointer to a raw pointer
     /// @param rhs raw pointer to compare
     /// @return true if this intrusive pointer is less than the given raw pointer; otherwise false
     /// @tparam Y Type of the object pointed by parameter pointer
     template <typename Y>
-    inline bool operator< (const Y * rhs) const { return m_ptr < rhs; }
+    inline bool operator< (const Y * rhs) const { return m_counter < intrusivePtrGetCounter(*rhs); }
 
     /// @returns the counter object, can be null
     const IntrusivePtrCounter * counter() const { return m_counter; }
@@ -691,6 +691,12 @@ namespace Radiant
   /// @tparam T Type of the object pointed by raw pointer
   /// @tparam Y Type of the object pointed by intrusive pointer
   template <typename T, typename Y> inline bool operator< (const T * lhs, const IntrusivePtr<Y> & rhs) { return !(rhs == lhs || rhs < lhs); }
+
+  /// Compare the order of intrusive and weak pointers
+  template <typename T, typename Y>
+  inline bool operator< (const IntrusivePtr<T> & lhs, const IntrusiveWeakPtr<Y> & rhs) { return lhs.counter() < rhs.counter(); }
+  template <typename T, typename Y>
+  inline bool operator< (const IntrusiveWeakPtr<T> & lhs, const IntrusivePtr<Y> & rhs) { return lhs.counter() < rhs.counter(); }
 
   /// Check if nullptr is equal to intrusive pointer
   /// @param rhs Right side operand
