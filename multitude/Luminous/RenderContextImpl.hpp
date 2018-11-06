@@ -111,6 +111,82 @@ namespace Luminous
   }
 
   template <typename InputIterator>
+  void RenderContext::drawFilledPolyLine(
+      InputIterator begin, size_t numVertices, const Luminous::Style & style,
+      Nimble::Matrix3f uvMatrix)
+  {
+    if (numVertices < 2)
+      return;
+
+    assert(style.strokeWidth() > 0.f);
+    const float r = style.strokeWidth() / 2.f;
+
+    Nimble::Vector2f prev = *begin++;
+    Nimble::Vector2f curr = *begin++;
+    // Tangent of first point is points[1] - points[0]
+    // "begin" doesn't need to be random access iterator, so we will only use
+    // operator++ with it.
+    Nimble::Vector2f n = (curr - prev).perpendicular().normalized(r);
+
+    if (style.fill().hasTextures()) {
+      const Program & program = (style.fillProgram() ? *style.fillProgram() : texShader());
+      auto b = drawPrimitiveT<BasicVertexUV, BasicUniformBlock>(
+            Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, numVertices*2, program, style.fillColor(), 0, style);
+      BasicVertexUV * out = b.vertex;
+
+      float distance = 0;
+      float invr = 1.f / style.strokeWidth();
+
+      out->location = prev + n;
+      out++->texCoord = uvMatrix.project(distance, 1);
+      out->location = prev - n;
+      out++->texCoord = uvMatrix.project(distance, 0);
+
+      for (size_t i = 1; i < numVertices-1; ++i) {
+        Nimble::Vector2f next = *begin++;
+        // Tangent of point n is points[n+1] - points[n-1]
+        n = (next - prev).perpendicular().normalized(r);
+        distance += (curr - prev).length() * invr;
+        out->location = curr + n;
+        out++->texCoord = uvMatrix.project(distance, 1);
+        out->location = curr - n;
+        out++->texCoord = uvMatrix.project(distance, 0);
+        prev = curr;
+        curr = next;
+      }
+
+      // Tangent of last point is points[last] - points[last-1]
+      n = (curr - prev).perpendicular().normalized(r);
+      distance += (curr - prev).length() * invr;
+      out->location = curr + n;
+      out++->texCoord = uvMatrix.project(distance, 1);
+      out->location = curr - n;
+      out++->texCoord = uvMatrix.project(distance, 0);
+    } else {
+      const Program & program = (style.fillProgram() ? *style.fillProgram() : basicShader());
+      auto b = drawPrimitiveT<BasicVertex, BasicUniformBlock>(
+            Luminous::PRIMITIVE_TRIANGLE_STRIP, 0, numVertices*2, program, style.fillColor(), 0, style);
+      BasicVertex * out = b.vertex;
+
+      out++->location = prev + n;
+      out++->location = prev - n;
+
+      for (size_t i = 1; i < numVertices-1; ++i) {
+        Nimble::Vector2f next = *begin++;
+        n = (next - prev).perpendicular().normalized(r);
+        out++->location = curr + n;
+        out++->location = curr - n;
+        prev = curr;
+        curr = next;
+      }
+
+      n = (curr - prev).perpendicular().normalized(r);
+      out++->location = curr + n;
+      out++->location = curr - n;
+    }
+  }
+
+  template <typename InputIterator>
   void RenderContext::drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style)
   {
     if (numVertices < 2)
