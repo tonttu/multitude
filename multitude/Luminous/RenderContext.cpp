@@ -16,6 +16,7 @@
 
 #include "Error.hpp"
 
+#include "Image.hpp"
 #include "RenderCommand.hpp"
 
 // Luminous v2
@@ -124,6 +125,12 @@ namespace Luminous
       uint64_t limit = win->uploadLimit();
       uint64_t margin = win->uploadMargin();
       renderDriver.setUploadLimits( limit, margin );
+
+      m_dottedLineImage.read("cornerstone:Images/border.dot.png", true);
+      m_dottedLineImage.texture().setWrap(Luminous::Texture::WRAP_REPEAT,
+                                          Luminous::Texture::WRAP_REPEAT,
+                                          Luminous::Texture::WRAP_REPEAT);
+      m_dottedLineImage.texture().setMipmapsEnabled(true);
     }
 
     ~Internal()
@@ -277,6 +284,8 @@ namespace Luminous
     Program m_trilinearTexShader;
     Program m_fontShader;
     Program m_splineShader;
+
+    Image m_dottedLineImage;
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
@@ -1467,6 +1476,11 @@ namespace Luminous
     float s = std::max(sx, sy);
 
     return sqrt(s);
+  }
+
+  const Texture & RenderContext::dottedLineTexture() const
+  {
+    return m_data->m_dottedLineImage.texture();
   }
 
   const Program & RenderContext::fontShader() const

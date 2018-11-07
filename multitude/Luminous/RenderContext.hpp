@@ -413,6 +413,12 @@ namespace Luminous
     template <typename InputIterator>
     void drawPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style);
 
+    /// Draws a polyline using width from style.strokeWidth() but other parameters,
+    /// including textures, from style.fill().
+    template <typename InputIterator>
+    void drawFilledPolyLine(InputIterator begin, size_t numVertices, const Luminous::Style & style,
+                            Nimble::Matrix3f uvMatrix = Nimble::Matrix3f::IDENTITY);
+
     /// Draws a set of points
     /// @param begin Initial position of sequence
     /// @param numPoints Number of points
@@ -785,6 +791,9 @@ namespace Luminous
     float approximateScaling() const;
 
 /// @cond
+
+    /// Returnns the texture used for rendering dotted lines
+    const Luminous::Texture & dottedLineTexture() const;
 
     const Program & fontShader() const;
     const Program & splineShader() const;
