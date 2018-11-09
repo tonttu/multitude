@@ -30,6 +30,8 @@ namespace
 
   struct BatchConverter
   {
+    // Keep the manager alive while we are using pdfium
+    Luminous::PDFManagerPtr manager;
     QString pdfAbsoluteFilePath;
     QString path;
     int pageNumber = 0;
@@ -386,8 +388,9 @@ namespace
   class PDFDocumentImpl : public Luminous::PDFDocument
   {
   public:
-    PDFDocumentImpl(FPDF_DOCUMENT doc)
+    PDFDocumentImpl(FPDF_DOCUMENT doc, Luminous::PDFManagerPtr manager)
       : m_doc(doc)
+      , m_manager(std::move(manager))
     {
       assert(m_doc);
     }
@@ -429,6 +432,8 @@ namespace
     }
   private:
     FPDF_DOCUMENT m_doc = nullptr;
+    // Keep the manager alive while we are using pdfium
+    Luminous::PDFManagerPtr m_manager;
   };
 
 #endif // #if !defined(__APPLE__)
@@ -478,7 +483,9 @@ namespace Luminous
 
   folly::Future<size_t> PDFManager::queryPageCount(const QString& pdfAbsoluteFilePath)
   {
-    Punctual::WrappedTaskFunc<size_t> taskFunc = [pdfAbsoluteFilePath] ()
+    // Keep PDFManager alive while we are using pdfium
+    auto manager = s_multiSingletonInstance.lock();
+    Punctual::WrappedTaskFunc<size_t> taskFunc = [pdfAbsoluteFilePath, manager] ()
       -> Punctual::WrappedTaskReturnType<size_t>
     {
       if(!s_pdfiumMutex.try_lock()) {
@@ -495,8 +502,9 @@ namespace Luminous
                                                int pageNumber, const Nimble::SizeI& resolution,
                                                QRgb color)
   {
+    auto manager = s_multiSingletonInstance.lock();
     std::function<Punctual::WrappedTaskReturnType<QImage>(void)> taskFunc =
-      [pdfAbsoluteFilePath, pageNumber, resolution, color]()
+      [pdfAbsoluteFilePath, pageNumber, resolution, color, manager]()
         -> Punctual::WrappedTaskReturnType<QImage>
     {
       if(!s_pdfiumMutex.try_lock())
@@ -528,8 +536,9 @@ namespace Luminous
   folly::Future<Nimble::SizeF>
   PDFManager::getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
   {
+    auto manager = s_multiSingletonInstance.lock();
     Punctual::WrappedTaskFunc<Nimble::SizeF> taskFunc =
-      [pdfAbsoluteFilePath, pageNumber]()
+      [pdfAbsoluteFilePath, pageNumber, manager]()
         -> Punctual::WrappedTaskReturnType<Nimble::SizeF>
     {
       if(!s_pdfiumMutex.try_lock())
@@ -545,6 +554,8 @@ namespace Luminous
       const QString & pdfFilename, const PDFCachingOptions & opts, int maxPageCount)
   {
     BatchConverterPtr batchConverter { new BatchConverter() };
+    batchConverter->manager = s_multiSingletonInstance.lock();
+
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.
     QString cacheRoot = opts.cachePath.isEmpty() ? defaultCachePath() : opts.cachePath;
@@ -635,7 +646,7 @@ namespace Luminous
     FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), 0);
     if (!doc)
       return nullptr;
-    return std::make_shared<PDFDocumentImpl>(doc);
+    return std::make_shared<PDFDocumentImpl>(doc, s_multiSingletonInstance.lock());
   }
 #endif // #if !defined(__APPLE__)
 
