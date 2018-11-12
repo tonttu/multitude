@@ -125,12 +125,6 @@ namespace Luminous
       uint64_t limit = win->uploadLimit();
       uint64_t margin = win->uploadMargin();
       renderDriver.setUploadLimits( limit, margin );
-
-      m_dottedLineImage.read("cornerstone:Images/border.dot.png", true);
-      m_dottedLineImage.texture().setWrap(Luminous::Texture::WRAP_REPEAT,
-                                          Luminous::Texture::WRAP_REPEAT,
-                                          Luminous::Texture::WRAP_REPEAT);
-      m_dottedLineImage.texture().setMipmapsEnabled(true);
     }
 
     ~Internal()
@@ -285,7 +279,7 @@ namespace Luminous
     Program m_fontShader;
     Program m_splineShader;
 
-    Image m_dottedLineImage;
+    std::array<Image, 128+1> m_dashedLineImages;
 
     Luminous::RenderDriver & m_driver;
     Luminous::RenderDriverGL * m_driverGL;
@@ -1478,9 +1472,54 @@ namespace Luminous
     return sqrt(s);
   }
 
-  const Texture & RenderContext::dottedLineTexture() const
+  const Texture & RenderContext::dashedLineTexture(float dashPortion) const
   {
-    return m_data->m_dottedLineImage.texture();
+    const unsigned int w = m_data->m_dashedLineImages.size() - 1;
+    // Round up to make sure that when this is used to render dashed borders,
+    // the texture doesn't stop before bottom or right edges.
+    const unsigned int idx = std::min<unsigned int>(w, std::max<int>(0, std::ceil(dashPortion * w)));
+
+    // m_dashedLineImages[x] is an image like this:
+    // XXX....
+    // XXX....
+    // XXX....
+    // .......
+    // .......
+    // .......
+    // .......
+    // Where X are white pixels and . are transparent pixels.
+    // The width and height of box X is x pixels.
+
+    Luminous::Image & img = m_data->m_dashedLineImages[idx];
+    if (img.isEmpty()) {
+      img.allocate(w, w, Luminous::PixelFormat::bgraUByte());
+      for (unsigned int y = 0; y < idx; ++y) {
+        unsigned char * data = img.line(y);
+        unsigned char * border = data + idx * 4;
+        unsigned char * end = data + w * 4;
+        for (; data < border; data += 4) {
+          data[0] = 255u;
+          data[1] = 255u;
+          data[2] = 255u;
+          data[3] = 255u;
+        }
+        for (; data < end; data += 4) {
+          data[0] = 255u;
+          data[1] = 255u;
+          data[2] = 255u;
+          data[3] = 255u;
+        }
+      }
+      for (unsigned int y = idx; y < w; ++y) {
+        unsigned char * data = img.line(y);
+        memset(data, 0, w*4);
+      }
+      img.texture().setWrap(Luminous::Texture::WRAP_REPEAT,
+                            Luminous::Texture::WRAP_REPEAT,
+                            Luminous::Texture::WRAP_REPEAT);
+      img.texture().setMagFilter(Luminous::Texture::FILTER_NEAREST);
+    }
+    return img.texture();
   }
 
   const Program & RenderContext::fontShader() const

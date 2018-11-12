@@ -792,8 +792,8 @@ namespace Luminous
 
 /// @cond
 
-    /// Returnns the texture used for rendering dotted lines
-    const Luminous::Texture & dottedLineTexture() const;
+    /// Returns the texture used for rendering dashed / dotted lines
+    const Luminous::Texture & dashedLineTexture(float dashPortion = 0.5f) const;
 
     const Program & fontShader() const;
     const Program & splineShader() const;
