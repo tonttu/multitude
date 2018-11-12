@@ -48,7 +48,7 @@ namespace Valuable
     AttributeT(Node * host, const QByteArray & name, const MatrixType & v = MatrixType::IDENTITY)
       : Base(host, name, v) {}
 
-    AttributeT() : Base(nullptr, "", MatrixType::IDENTITY) {}
+    AttributeT() : Base(nullptr, QByteArray(), MatrixType::IDENTITY) {}
     virtual ~AttributeT() {}
 
     /// Returns the data in its native format
