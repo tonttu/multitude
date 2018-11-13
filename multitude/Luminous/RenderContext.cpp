@@ -1504,10 +1504,10 @@ namespace Luminous
           data[3] = 255u;
         }
         for (; data < end; data += 4) {
-          data[0] = 255u;
-          data[1] = 255u;
-          data[2] = 255u;
-          data[3] = 255u;
+          data[0] = 0;
+          data[1] = 0;
+          data[2] = 0;
+          data[3] = 0;
         }
       }
       for (unsigned int y = idx; y < w; ++y) {
