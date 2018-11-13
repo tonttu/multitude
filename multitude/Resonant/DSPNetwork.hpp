@@ -101,13 +101,13 @@ namespace Resonant {
     {
     public:
       /// Creates an empty connection object, with undefined connections.
-      Connection() : m_channel(0),m_buf(0) { }
+      Connection() : m_channel(0) { }
       /// Creates a connection object
       /** @param moduleId The id of the module that we are connecting to.
           @param channel The channel to connect to.
       */
       Connection(const QByteArray & moduleId, int channel)
-        : m_moduleId(moduleId), m_channel(channel),m_buf(0)
+        : m_moduleId(moduleId), m_channel(channel)
       {
       }
 
@@ -130,7 +130,6 @@ namespace Resonant {
       /// @cond
       QByteArray m_moduleId;
       int         m_channel;
-      Buf        *m_buf;
       /// @endcond
     };
 
