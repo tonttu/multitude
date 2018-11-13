@@ -44,6 +44,7 @@
 //
 #if defined (__APPLE__)
 // && defined (__MACH__)
+#   define RADIANT_MACOS 1
 #   define RADIANT_OSX 1
 #   define RADIANT_UNIX 1
 
