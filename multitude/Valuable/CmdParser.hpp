@@ -51,7 +51,7 @@ namespace Valuable
      * AttributeString target(&opts, "target", "/tmp/target");
      * AttributeBool verbose(&opts, "v", false);
      * AttributeBool recursive(&opts, "recursive", true);
-     * StringList files = CmdParser::parse(argc, argv, opts);
+     * QStringList files = CmdParser::parse(argc, argv, opts);
      * \endcode
      * Example input: -v --limit 12 --no-recursive --target out file1.txt file2.txt
      *
