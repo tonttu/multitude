@@ -43,8 +43,8 @@ namespace Radiant
  } while (false)
 #define REQUIRE_THREAD(thread) REQUIRE_THREAD_IMPL2(__FILE__, __LINE__, thread)
 #define REQUIRE_MAIN_THREAD REQUIRE_THREAD_IMPL(__FILE__, __LINE__, Radiant::ThreadInfo::mainThreadId, "main thread")
-#define THREAD_CHECK_ID(thread) Radiant::Thread::id_t thread = nullptr;
-#define THREAD_CHECK_ID_SELF(thread) Radiant::Thread::id_t thread = Radiant::Thread::myThreadId();
+#define THREAD_CHECK_ID(thread) mutable Radiant::Thread::id_t thread = nullptr;
+#define THREAD_CHECK_ID_SELF(thread) mutable Radiant::Thread::id_t thread = Radiant::Thread::myThreadId();
 #define REQUIRE_SAME_THREAD(threadVar) REQUIRE_SAME_THREAD_IMPL(__FILE__, __LINE__, threadVar)
 #else
 #define REQUIRE_THREAD(thread) do {} while (false)

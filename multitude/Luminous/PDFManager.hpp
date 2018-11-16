@@ -157,7 +157,6 @@ namespace Luminous
     };
 
   public:
-    PDFManager();
     ~PDFManager();
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
@@ -216,8 +215,10 @@ namespace Luminous
     PDFDocumentPtr editDocument(const QString& pdfAbsoluteFilePath);
 #endif
   private:
+    PDFManager();
+
     class D;
     std::unique_ptr<D> m_d;
   };
-
+  typedef std::shared_ptr<PDFManager> PDFManagerPtr;
 }
