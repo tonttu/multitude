@@ -68,10 +68,6 @@ namespace VideoDisplay
   /// the stream using "list_options" flag and parse the output. Then based on
   /// that parsed output we process and generate the formats in emitFormats
   /// which gives as full list of available formats.
-  ///
-  /// Capture cards typically output dynamic resolutions that are rejected in
-  /// emitFormats, which means that we let the driver / card to choose the
-  /// resolution based on the incoming native resolution.
   std::vector<VideoInputFormat> scanInputFormats(
       const QString & input, AVInputFormat * inputFormat, QMap<QString, QString> options)
   {

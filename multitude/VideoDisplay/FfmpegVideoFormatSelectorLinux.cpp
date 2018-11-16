@@ -107,33 +107,41 @@ namespace VideoDisplay
 
       // Iterate all resolutions for this pixel format
       for (size.index = 0; ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &size) == 0; ++size.index) {
+        v4l2_frmivalenum frameInt;
+        memset(&frameInt, 0, sizeof(frameInt));
+        frameInt.pixel_format = fmt.pixelformat;
+
         if (size.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-          v4l2_frmivalenum frameInt;
-          memset(&frameInt, 0, sizeof(frameInt));
-          frameInt.pixel_format = fmt.pixelformat;
           frameInt.width = size.discrete.width;
           frameInt.height = size.discrete.height;
-
           inputFormat.resolution.make(frameInt.width, frameInt.height);
+        } else {
+          frameInt.width = 0;
+          frameInt.height = 0;
+          inputFormat.resolution = Nimble::SizeI();
+        }
 
-          // Iterate all fps values for this pixel format and resolution
-          for (frameInt.index = 0; ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frameInt) == 0; ++frameInt.index) {
-            if (frameInt.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-              // notice that we are converting the frame interval to frame rate here
-              inputFormat.fps = float(frameInt.discrete.denominator) / frameInt.discrete.numerator;
+        // Iterate all fps values for this pixel format and resolution
+        for (frameInt.index = 0; ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frameInt) == 0; ++frameInt.index) {
+          if (frameInt.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+            // notice that we are converting the frame interval to frame rate here
+            inputFormat.fps = float(frameInt.discrete.denominator) / frameInt.discrete.numerator;
+            ret.push_back(inputFormat);
+          } else if (frameInt.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) {
+            // max frame internal is the min fps
+            float minfps = std::max(1.f, float(frameInt.stepwise.max.denominator) / frameInt.stepwise.max.numerator);
+            float maxfps = float(frameInt.stepwise.min.denominator) / frameInt.stepwise.min.numerator;
+            for (float fps = minfps; fps < maxfps+1; fps *= 2) {
+              if (std::abs(fps - 15.f) < 2.f)
+                fps = 15.f;
+              inputFormat.fps = fps;
               ret.push_back(inputFormat);
-            } else {
-              break;
             }
           }
-          if (frameInt.index == 0) {
-            inputFormat.fps = 0;
-            ret.push_back(inputFormat);
-          }
-        } else {
-          /// We are skipping non-discrete resolutions, see the comment in
-          /// scanInputFormats in FfmpegVideoFormatSelectorWin.cpp
-          break;
+        }
+        if (frameInt.index == 0) {
+          inputFormat.fps = 0;
+          ret.push_back(inputFormat);
         }
       }
     }

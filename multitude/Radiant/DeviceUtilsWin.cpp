@@ -374,7 +374,12 @@ namespace Radiant
 
     void dump()
     {
-      for (Device & dev: allDevices())
+      dump(allDevices());
+    }
+
+    void dump(const std::vector<Device> &devices)
+    {
+      for (const Device & dev: devices)
         dumpDev(dev);
     }
 
@@ -420,6 +425,74 @@ namespace Radiant
       return ret;
     }
 
+    QMap<QByteArray, QString> parseProperties(HDEVINFO& devinfo, SP_DEVINFO_DATA& data)
+    {
+      QMap<QByteArray, QString> devKeys;
+
+      std::vector<DEVPROPKEY> keys(1024);
+      DWORD count = 0;
+      if (SetupDiGetDevicePropertyKeys(devinfo, &data, keys.data(), keys.size(), &count, 0)) {
+        for (DWORD j = 0; j < count; ++j) {
+          DEVPROPKEY key = keys[j];
+          DEVPROPTYPE type;
+          std::array<uint8_t, 2048> buffer;
+
+          if (SetupDiGetDeviceProperty(devinfo, &data, &key, &type, buffer.data(),
+                                       buffer.size(), nullptr, 0)) {
+            uint8_t* d = buffer.data();
+            int t = DEVPROP_MASK_TYPE & type;
+            QString value;
+            if (t == DEVPROP_TYPE_EMPTY) value = "(empty)";
+            else if (t == DEVPROP_TYPE_NULL) value = "(null)";
+            else if (t == DEVPROP_TYPE_SBYTE) value = QString::number(*(int8_t*)d);
+            else if (t == DEVPROP_TYPE_BYTE) value = QString::number(*(uint8_t*)d);
+            else if (t == DEVPROP_TYPE_INT16) value = QString::number(*(int16_t*)d);
+            else if (t == DEVPROP_TYPE_UINT16) value = QString::number(*(uint16_t*)d);
+            else if (t == DEVPROP_TYPE_INT32) value = QString::number(*(int32_t*)d);
+            else if (t == DEVPROP_TYPE_UINT32) value = QString::number(*(int64_t*)d);
+            else if (t == DEVPROP_TYPE_INT64) value = QString::number(*(int64_t*)d);
+            else if (t == DEVPROP_TYPE_UINT64) value = QString::number(*(uint64_t*)d);
+            else if (t == DEVPROP_TYPE_FLOAT) value = QString::number(*(float*)d);
+            else if (t == DEVPROP_TYPE_DOUBLE) value = QString::number(*(double*)d);
+            else if (t == DEVPROP_TYPE_GUID) {
+              GUID * guid = (GUID*)d;
+              wchar_t str[128];
+              StringFromGUID2(*guid, str, 128);
+              value = QString::fromWCharArray(str);
+            }
+            else if (t == DEVPROP_TYPE_STRING) value = QString::fromWCharArray((wchar_t*)d);
+            else if (t == DEVPROP_TYPE_BOOLEAN) value = *(bool*)d ? "true" : "false";
+            else if (t == DEVPROP_TYPE_FILETIME) {
+              FILETIME* time = (FILETIME*)d;
+              SYSTEMTIME s;
+              FileTimeToSystemTime(time, &s);
+              value = QString("%1-%2-%3 %4:%5:%6.%7").arg(s.wYear).arg(s.wMonth).arg(s.wDay).
+                  arg(s.wHour).arg(s.wMinute).arg(s.wSecond).arg(s.wMilliseconds);
+            }
+            else if (t == DEVPROP_TYPE_DECIMAL) value = "<DEVPROP_TYPE_DECIMAL>";
+            else if (t == DEVPROP_TYPE_CURRENCY) value = "<DEVPROP_TYPE_CURRENCY>";
+            else if (t == DEVPROP_TYPE_DATE) value = "<DEVPROP_TYPE_DATE>";
+            else if (t == DEVPROP_TYPE_STRING_LIST) value = "<DEVPROP_TYPE_STRING_LIST>";
+            else if (t == DEVPROP_TYPE_SECURITY_DESCRIPTOR) value = "<DEVPROP_TYPE_SECURITY_DESCRIPTOR>";
+            else if (t == DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING) value = "<DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING>";
+            else if (t == DEVPROP_TYPE_DEVPROPKEY) value = "<DEVPROP_TYPE_DEVPROPKEY>";
+            else if (t == DEVPROP_TYPE_DEVPROPTYPE) value = "<DEVPROP_TYPE_DEVPROPTYPE>";
+            else if (t == DEVPROP_TYPE_BINARY) value = "<DEVPROP_TYPE_BINARY>";
+            else if (t == DEVPROP_TYPE_ERROR) value = "<DEVPROP_TYPE_ERROR>";
+            else if (t == DEVPROP_TYPE_NTSTATUS) value = "<DEVPROP_TYPE_NTSTATUS>";
+            else if (t == DEVPROP_TYPE_STRING_INDIRECT) value = "<DEVPROP_TYPE_STRING_INDIRECT>";
+            devKeys[keyName(key)] = value;
+          } else {
+            devKeys[keyName(key)] = QString();
+          }
+        }
+      } else {
+        Radiant::error("DeviceUtils::parseProperties # SetupDiGetDevicePropertyKeys failed");
+      }
+
+      return devKeys;
+    }
+
     std::vector<Device> allDevices()
     {
       QMap<QString, DeviceTmp> devices;
@@ -431,70 +504,19 @@ namespace Radiant
 
       for (int i = 0;; ++i) {
         if (SetupDiEnumDeviceInfo(devinfo, i, &data)) {
-          QMap<QByteArray, QString> devKeys;
-          std::vector<DEVPROPKEY> keys(1024);
-          DWORD count = 0;
-          if (SetupDiGetDevicePropertyKeys(devinfo, &data, keys.data(), keys.size(), &count, 0)) {
-            for (DWORD j = 0; j < count; ++j) {
-              DEVPROPKEY key = keys[j];
-              DEVPROPTYPE type;
-              std::array<uint8_t, 2048> buffer;
-
-              if (SetupDiGetDeviceProperty(devinfo, &data, &key, &type, buffer.data(),
-                                           buffer.size(), nullptr, 0)) {
-                uint8_t* d = buffer.data();
-                int t = DEVPROP_MASK_TYPE & type;
-                QString value;
-                if (t == DEVPROP_TYPE_EMPTY) value = "(empty)";
-                else if (t == DEVPROP_TYPE_NULL) value = "(null)";
-                else if (t == DEVPROP_TYPE_SBYTE) value = QString::number(*(int8_t*)d);
-                else if (t == DEVPROP_TYPE_BYTE) value = QString::number(*(uint8_t*)d);
-                else if (t == DEVPROP_TYPE_INT16) value = QString::number(*(int16_t*)d);
-                else if (t == DEVPROP_TYPE_UINT16) value = QString::number(*(uint16_t*)d);
-                else if (t == DEVPROP_TYPE_INT32) value = QString::number(*(int32_t*)d);
-                else if (t == DEVPROP_TYPE_UINT32) value = QString::number(*(int64_t*)d);
-                else if (t == DEVPROP_TYPE_INT64) value = QString::number(*(int64_t*)d);
-                else if (t == DEVPROP_TYPE_UINT64) value = QString::number(*(uint64_t*)d);
-                else if (t == DEVPROP_TYPE_FLOAT) value = QString::number(*(float*)d);
-                else if (t == DEVPROP_TYPE_DOUBLE) value = QString::number(*(double*)d);
-                else if (t == DEVPROP_TYPE_GUID) {
-                  GUID * guid = (GUID*)d;
-                  wchar_t str[128];
-                  StringFromGUID2(*guid, str, 128);
-                  value = QString::fromWCharArray(str);
-                }
-                else if (t == DEVPROP_TYPE_STRING) value = QString::fromWCharArray((wchar_t*)d);
-                else if (t == DEVPROP_TYPE_BOOLEAN) value = *(bool*)d ? "true" : "false;";
-                else if (t == DEVPROP_TYPE_FILETIME) {
-                  FILETIME* time = (FILETIME*)d;
-                  SYSTEMTIME s;
-                  FileTimeToSystemTime(time, &s);
-                  value = QString("%1-%2-%3 %4:%5:%6.%7").arg(s.wYear).arg(s.wMonth).arg(s.wDay).
-                      arg(s.wHour).arg(s.wMinute).arg(s.wSecond).arg(s.wMilliseconds);
-                }
-                else if (t == DEVPROP_TYPE_DECIMAL) value = "<DEVPROP_TYPE_DECIMAL>";
-                else if (t == DEVPROP_TYPE_CURRENCY) value = "<DEVPROP_TYPE_CURRENCY>";
-                else if (t == DEVPROP_TYPE_DATE) value = "<DEVPROP_TYPE_DATE>";
-                else if (t == DEVPROP_TYPE_STRING_LIST) value = "<DEVPROP_TYPE_STRING_LIST>";
-                else if (t == DEVPROP_TYPE_SECURITY_DESCRIPTOR) value = "<DEVPROP_TYPE_SECURITY_DESCRIPTOR>";
-                else if (t == DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING) value = "<DEVPROP_TYPE_SECURITY_DESCRIPTOR_STRING>";
-                else if (t == DEVPROP_TYPE_DEVPROPKEY) value = "<DEVPROP_TYPE_DEVPROPKEY>";
-                else if (t == DEVPROP_TYPE_DEVPROPTYPE) value = "<DEVPROP_TYPE_DEVPROPTYPE>";
-                else if (t == DEVPROP_TYPE_BINARY) value = "<DEVPROP_TYPE_BINARY>";
-                else if (t == DEVPROP_TYPE_ERROR) value = "<DEVPROP_TYPE_ERROR>";
-                else if (t == DEVPROP_TYPE_NTSTATUS) value = "<DEVPROP_TYPE_NTSTATUS>";
-                else if (t == DEVPROP_TYPE_STRING_INDIRECT) value = "<DEVPROP_TYPE_STRING_INDIRECT>";
-                devKeys[keyName(key)] = value;
-              } else {
-                devKeys[keyName(key)] = QString();
-              }
-            }
-          } else {
-            Radiant::error("DeviceUtils::allDevices # SetupDiGetDevicePropertyKeys failed");
-          }
+          QMap<QByteArray, QString> devKeys = parseProperties(devinfo, data);
 
           if (!devKeys.isEmpty()) {
-            DeviceTmp & dev = devices[devKeys["DEVPKEY_Device_InstanceId"]];
+            QString instanceId = devKeys.value("DEVPKEY_Device_InstanceId");
+            if(instanceId.isEmpty()) {
+              instanceId = QString("No InstanceId - %1").arg(i);
+            }
+
+            auto it = devices.find(instanceId);
+            if(it != devices.end()) {
+              instanceId = QString("DuplicateId_%1: %2").arg(i).arg(instanceId);
+            }
+            DeviceTmp & dev = devices[instanceId];
             dev.keys = std::move(devKeys);
           }
         } else {
