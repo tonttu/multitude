@@ -42,8 +42,6 @@ namespace Email
 
     SendImplementation& m_host;
 
-    std::mutex m_waitMutex;
-
     bool m_keepRunning;
 
 
