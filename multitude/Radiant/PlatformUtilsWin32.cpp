@@ -208,6 +208,26 @@ namespace Radiant
       return info;
     }
 
+    QString libraryFilePath()
+    {
+      HMODULE module = nullptr;
+      if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                             (LPCSTR)&libraryFilePath, &module) == 0) {
+        Radiant::error("Radiant::PlatformUtils::libraryFilePath # GetModuleHandleExA failed: %s",
+                       StringUtils::getLastErrorMessage().toUtf8().data());
+        return QString();
+      }
+
+      wchar_t name[MAX_PATH];
+      if (GetModuleFileNameW(module, name, MAX_PATH) == 0) {
+        Radiant::error("Radiant::PlatformUtils::libraryFilePath # GetModuleFileNameW failed: %s",
+                       StringUtils::getLastErrorMessage().toUtf8().data());
+        return QString();
+      }
+      return QString::fromWCharArray(name);
+    }
+
     QString getLibraryPath(const QString& libraryName)
     {
       auto wLibraryName = libraryName.toStdWString();
