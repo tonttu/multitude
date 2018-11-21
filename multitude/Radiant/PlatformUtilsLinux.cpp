@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <QFileInfo>
 #include <QStringList>
 #include <QProcess>
 #include <QCoreApplication>
@@ -188,6 +189,14 @@ namespace Radiant
       }
 
       return info;
+    }
+
+    QString libraryFilePath()
+    {
+      Dl_info info;
+      if (dladdr((const void*)libraryFilePath, &info))
+        return QFileInfo(info.dli_fname).absoluteFilePath();
+      return QString();
     }
 
     QString getLibraryPath(const QString& libraryName)
