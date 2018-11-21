@@ -32,6 +32,7 @@
 #endif
 
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <QTemporaryFile>
 
 namespace Radiant
@@ -115,6 +116,14 @@ namespace Radiant
       /// @todo not implemented
 
       return info;
+    }
+
+    QString libraryFilePath()
+    {
+      Dl_info info;
+      if (dladdr((const void*)libraryFilePath, &info))
+        return QFileInfo(info.dli_fname).absoluteFilePath();
+      return QString();
     }
 
     QString getLibraryPath(const QString& libraryName)
