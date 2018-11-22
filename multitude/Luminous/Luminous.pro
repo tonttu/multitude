@@ -80,6 +80,7 @@ HEADERS += SpriteRenderer.hpp
 HEADERS += XRandR.hpp
 HEADERS += Xinerama.hpp
 HEADERS += SplineManager.hpp
+HEADERS += BezierCurve.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
