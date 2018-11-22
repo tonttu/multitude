@@ -82,6 +82,7 @@ HEADERS += Xinerama.hpp
 HEADERS += SplineManager.hpp
 HEADERS += BezierCurve.hpp
 HEADERS += BezierSplineFitter.hpp
+HEADERS += BezierSplineBuilder.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
@@ -151,6 +152,7 @@ SOURCES += VertexDescription.cpp
 SOURCES += Window.cpp
 SOURCES += SplineManager.cpp
 SOURCES += BezierSplineFitter.cpp
+SOURCES += BezierSplineBuilder.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
