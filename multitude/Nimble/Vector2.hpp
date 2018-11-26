@@ -113,11 +113,14 @@ namespace Nimble {
     /// Scales the vector with inverse of v
     inline Vector2T&	descale		(const Vector2T& v)			{ x /= v.x; y /= v.y; return *this; }
     /// Rotates the vector given the sine and cosine of the rotation angle
-    inline Vector2T&	rotate		(double s, double c)		{ T t = x; x = (T)((x*c)+(y*-s)); y = (T)((t*s)+(y*c)); return *this; }
+    template <typename F>
+    inline Vector2T & rotate (F s, F c) { T t = x; x = (T)((x*c)+(y*-s)); y = (T)((t*s)+(y*c)); return *this; }
     /// Rotate the vector by given radians
-    inline Vector2T&	rotate		(double angle)					{ return rotate(sin(angle), cos(angle)); }
+    template <typename F>
+    inline Vector2T & rotate(F angle) { return rotate(std::sin(angle), std::cos(angle)); }
     /// Returns atan2(y/x)
-    inline double	angle		(void) const				        { return std::atan2(double(y), double(x)); }
+    template <typename F = float>
+    inline F angle() const { return std::atan2(F(y), F(x)); }
     /// Clamps both components to the range [0,1]
     inline Vector2T&	clampUnit	(void)						{ return clamp(T(0.0), T(1.0)); }
     /// Clamps both components to the range [low, high]
