@@ -19,8 +19,6 @@
 #include <cstdint>
 #include <sstream>
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 #include <DbgHelp.h>
 #pragma comment(lib, "DbgHelp.lib")

@@ -249,8 +249,6 @@ INLINE_ELAPSED(__inline__)
 
 /* Visual C++ */
 #if _MSC_VER >= 1400 && (defined(_M_AMD64) || defined(_M_X64)) && !defined(HAVE_TICK_COUNTER)
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 typedef ULONG64 ticks;
 
