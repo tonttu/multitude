@@ -59,6 +59,22 @@ namespace Luminous
     /// @return size of the page in points
     ///
     virtual Nimble::SizeF size() const = 0;
+
+    enum class Rotation
+    {
+      NO_ROTATION,
+      CLOCKWISE_90,
+      CLOCKWISE_180,
+      CLOCKWISE_270,
+      UNKNWON
+    };
+
+    ///
+    /// \brief rotation
+    /// \return return rotation of the page
+    ///
+    virtual Rotation rotation() const = 0;
+
     ///
     /// @brief Creates a new stamp annotation covering the whole page
     /// @return annotation handle
