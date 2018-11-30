@@ -34,7 +34,6 @@ namespace Resonant {
       m_operatingMode(this, "mode", mode)
   {
     setName("pan2d");
-
   }
 
   ModulePanner::~ModulePanner()
@@ -72,16 +71,6 @@ namespace Resonant {
 
     if(id == "fullhdstereo") {
       makeFullHDStereo();
-    }
-    else if(id == "addsource") {
-      Source s;
-      data.readString(s.m_id);
-      m_sources.push_back(s);
-    }
-    else if(id == "removesource") {
-      QByteArray id;
-      data.readString(id);
-      removeSource(id);
     }
     else if(id == "setsourcelocation") {
       QByteArray id = data.read<QByteArray>();
@@ -121,18 +110,12 @@ namespace Resonant {
       memset(out[i], 0, bufferbytes);
     }
 
-    for(int i = 0; i < (int) m_sources.size(); i++) {
-
-      Source & s = *m_sources[i];
-
-      for(int j = 0; j < (int) s.m_pipes.size(); j++) {
-
-        Pipe & p = s.m_pipes[j];
-
+    for (Source & s: m_sources) {
+      for (Pipe & p: s.pipes) {
         if(p.isDone())
           continue;
 
-        const float * src = in[i];
+        const float * src = in[p.m_from];
 
         float * dest = out[p.m_to];
         float * sentinel = dest + n;
@@ -151,9 +134,9 @@ namespace Resonant {
           }
         }
 
-        debugResonant("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
+        /*debugResonant("ModulePanner::process # source %d, pipe %d -> %d, gain = %f "
               "in = %p %f out = %f",
-              i, j, p.m_to, p.m_ramp.value(), in[i], *in[i], out[p.m_to][0]);
+              i, j, p.m_to, p.m_ramp.value(), in[p.m_from], *in[p.m_from], out[p.m_to][0]);*/
 
       }
     }
@@ -195,6 +178,16 @@ namespace Resonant {
     return (ModulePanner::Mode)*m_operatingMode;
   }
 
+  ModulePanner::Sources ModulePanner::sources() const
+  {
+    Sources copy;
+    {
+      Radiant::Guard g(m_sourceMutex);
+      copy = m_sources;
+    }
+    return copy;
+  }
+
   int ModulePanner::channels() const
   {
     if (getMode() == RADIAL)
@@ -205,6 +198,16 @@ namespace Resonant {
       maxChannel = std::max(maxChannel, std::max(rect->leftChannel(), rect->rightChannel()));
 
     return maxChannel + 1;
+  }
+
+  void ModulePanner::addSource(const QByteArray & moduleId, unsigned int channels)
+  {
+    Source src;
+    src.moduleId = moduleId;
+    src.channelOffset = m_sources.empty() ? 0 : m_sources.back().channelOffset + m_sources.back().channels;
+    src.channels = channels;
+    Radiant::Guard g(m_sourceMutex);
+    m_sources.push_back(src);
   }
 
   int ModulePanner::locationToChannel(Nimble::Vector2 location) const
@@ -245,52 +248,52 @@ namespace Resonant {
     }
   }
 
-  void ModulePanner::setSourceLocation(const QByteArray & id,
+  void ModulePanner::setSourceLocation(const QByteArray & moduleId,
                                        const QByteArray & path,
                                        Nimble::Vector2 location)
   {
-    debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", id.data(),
+    debugResonant("ModulePanner::setSourceLocation # %s [%f %f]", moduleId.data(),
           location.x, location.y);
 
     Source * s = 0;
 
-    for(unsigned i = 0; i < m_sources.size(); i++) {
-      Source & s2 = * m_sources[i];
-      if(s2.m_id == id) {
+    for (Source & s2: m_sources)
+      if (s2.moduleId == moduleId)
         s = & s2;
-      }
-    }
 
     if(!s) {
-      Radiant::error("ModulePanner::setSourceLocation # id \"%s\" is not known",
-            id.data());
+      Radiant::error("ModulePanner::setSourceLocation # module id \"%s\" is not known",
+            moduleId.data());
       return;
     }
 
-    auto it = s->m_locations.find(path);
-    if (it == s->m_locations.end()) {
-      s->m_locations.insert(std::make_pair(path, location));
-    } else if (s->m_generation == m_generation && it->second == location) {
+    auto it = s->locations.find(path);
+    if (it == s->locations.end()) {
+      Radiant::Guard g(m_sourceMutex);
+      s->locations.insert(std::make_pair(path, location));
+    } else if (s->generation == m_generation && it->second == location) {
       return;
     } else {
       it->second = location;
     }
 
-    s->m_generation = m_generation;
+    s->generation = m_generation;
     syncSource(*s);
   }
 
-  void ModulePanner::clearSourceLocation(const QByteArray & id, const QByteArray & path)
+  void ModulePanner::clearSourceLocation(const QByteArray & moduleId, const QByteArray & path)
   {
-    for (auto & ptr: m_sources) {
-      Source & s = *ptr;
-      if (s.m_id == id) {
-        auto it = s.m_locations.find(path);
-        if (it == s.m_locations.end())
+    for (Source & s: m_sources) {
+      if (s.moduleId == moduleId) {
+        auto it = s.locations.find(path);
+        if (it == s.locations.end())
           return;
 
-        s.m_locations.erase(it);
-        s.m_generation = m_generation;
+        {
+          Radiant::Guard g(m_sourceMutex);
+          s.locations.erase(it);
+        }
+        s.generation = m_generation;
         syncSource(s);
         return;
       }
@@ -301,93 +304,106 @@ namespace Resonant {
   {
     int interpSamples = 2000;
 
-    for (unsigned channel = 0; channel < m_channelCount; ++channel) {
-      float gain = 0;
-      /// If the audio source is played from in several different locations at
-      /// the same time, always the the maximum gain for each speaker.
-      /// Alternatively we could add up the gains, but then things like
-      /// recursive ViewWidget would have very loud audio.
-      for (auto & p: src.m_locations)
-        gain = std::max(gain, computeGain(channel, p.second));
+    for (unsigned outputChannel = 0; outputChannel < m_channelCount; ++outputChannel) {
+      for (unsigned int inputChannel = src.channelOffset; inputChannel < src.channelOffset + src.channels; ++inputChannel) {
+        float gain = 0;
+        /// If the audio source is played from in several different locations at
+        /// the same time, always the the maximum gain for each speaker.
+        /// Alternatively we could add up the gains, but then things like
+        /// recursive ViewWidget would have very loud audio.
+        for (auto & p: src.locations)
+          gain = std::max(gain, computeGain(inputChannel, outputChannel, p.second));
 
-      if(gain <= 0.0000001f) {
+        if(gain <= 0.0000001f) {
 
-        // Silence that output:
-        for(unsigned j = 0; j < src.m_pipes.size(); j++) {
-          Pipe & p = src.m_pipes[j];
-          if(p.m_to == channel && p.m_ramp.target() >= 0.0001f) {
-            p.m_ramp.setTarget(0.0f, interpSamples);
-            debugResonant("ModulePanner::syncSource # Silencing %u", channel);
-
-          }
-        }
-      }
-      else {
-        bool found = false;
-
-        // Find existing pipe:
-        for(unsigned j = 0; j < src.m_pipes.size() && !found; j++) {
-          Pipe & p = src.m_pipes[j];
-
-          debugResonant("Checking %u: %u %f -> %f", j, p.m_to,
-                p.m_ramp.value(), p.m_ramp.target());
-
-          if(p.m_to == channel) {
-            debugResonant("ModulePanner::syncSource # Adjusting %u", j);
-            p.m_ramp.setTarget(gain, interpSamples);
-            found = true;
-          }
-        }
-
-        if(!found) {
-
-          // Pick up a new pipe:
-          for(unsigned j = 0; j <= src.m_pipes.size() && !found; j++) {
-            if(j == src.m_pipes.size()) {
-              src.m_pipes.resize(j+1);
-              debugResonant("ModulePanner::syncSource # pipes resize to %d", j+1);
+          // Silence that output:
+          for (Pipe & p: src.pipes) {
+            if(p.m_from == inputChannel && p.m_to == outputChannel && p.m_ramp.target() >= 0.0001f) {
+              p.m_ramp.setTarget(0.0f, interpSamples);
+              debugResonant("ModulePanner::syncSource # Silencing %u", outputChannel);
             }
-            Pipe & p = src.m_pipes[j];
-            if(p.isDone()) {
-              debugResonant("ModulePanner::syncSource # "
-                    "Starting %u towards %u", j, channel);
-              p.m_to = channel;
+          }
+        }
+        else {
+          bool found = false;
+
+          // Find existing pipe:
+          for(unsigned j = 0; j < src.pipes.size() && !found; j++) {
+            Pipe & p = src.pipes[j];
+
+            debugResonant("Checking %u: %u %f -> %f", j, p.m_to,
+                          p.m_ramp.value(), p.m_ramp.target());
+
+            if(p.m_from == inputChannel && p.m_to == outputChannel) {
+              debugResonant("ModulePanner::syncSource # Adjusting %u", j);
               p.m_ramp.setTarget(gain, interpSamples);
               found = true;
             }
           }
-        }
 
-        if(!found) {
-          Radiant::error("Could not allocate pipe for a moving source");
+          if(!found) {
+
+            // Pick up a new pipe:
+            for(unsigned j = 0; j <= src.pipes.size() && !found; j++) {
+              if(j == src.pipes.size()) {
+                Radiant::Guard g(m_sourceMutex);
+                src.pipes.resize(j+1);
+                debugResonant("ModulePanner::syncSource # pipes resize to %d", j+1);
+              }
+              Pipe & p = src.pipes[j];
+              if(p.isDone()) {
+                debugResonant("ModulePanner::syncSource # "
+                              "Starting %u towards %u", j, outputChannel);
+                p.m_from = inputChannel;
+                p.m_to = outputChannel;
+                p.m_ramp.setTarget(gain, interpSamples);
+                found = true;
+              }
+            }
+          }
+
+          if(!found) {
+            Radiant::error("Could not allocate pipe for a moving source");
+          }
         }
       }
     }
   }
 
-  void ModulePanner::removeSource(const QByteArray & id)
+  void ModulePanner::removeSource(const QByteArray & moduleId)
   {
-
     for(Sources::iterator it = m_sources.begin(); it != m_sources.end(); ++it) {
-      Source & s = * (*it);
-      if(s.m_id == id) {
-        m_sources.erase(it);
+      Source & s = *it;
+      if(s.moduleId == moduleId) {
+        unsigned int channels = s.channels;
+        {
+          Radiant::Guard g(m_sourceMutex);
+          it = m_sources.erase(it);
+        }
         debugResonant("ModulePanner::removeSource # Removed source %s, now %lu",
-              id.data(), m_sources.size());
+              moduleId.data(), m_sources.size());
+
+        for (; it != m_sources.end(); ++it) {
+          Source & s2 = *it;
+          for (Pipe & p: s2.pipes)
+            p.m_from -= channels;
+          s2.channelOffset -= channels;
+        }
         return;
       }
     }
 
-    Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", id.data());
+    Radiant::error("ModulePanner::removeSource # No such source: \"%s\"", moduleId.data());
   }
 
-  float ModulePanner::computeGain(unsigned int channel, Nimble::Vector2 srcLocation) const
+  float ModulePanner::computeGain(unsigned int inputChannel, unsigned int outputChannel, Nimble::Vector2 srcLocation) const
   {
+    (void)inputChannel;
     switch(*m_operatingMode) {
     case RADIAL:
-      return computeGainRadial(channel, srcLocation);
+      return computeGainRadial(outputChannel, srcLocation);
     case RECTANGLES:
-      return computeGainRectangle(channel, srcLocation);
+      return computeGainRectangle(outputChannel, srcLocation);
     default:
       return 0;
     }

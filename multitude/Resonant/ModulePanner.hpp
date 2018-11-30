@@ -55,17 +55,20 @@ namespace Resonant {
 
       Nimble::Rampf m_ramp;
 
+      unsigned m_from = 0;
       unsigned m_to = 0;
     };
 
     class Source
     {
     public:
-      std::map<QByteArray, Nimble::Vector2f> m_locations;
-      QByteArray  m_id;
-      long m_generation = 0; /// @see ModulePanner::m_generation
+      std::map<QByteArray, Nimble::Vector2f> locations;
+      QByteArray moduleId;
+      long generation = 0; /// @see ModulePanner::m_generation
+      unsigned int channels = 0;
+      unsigned int channelOffset = 0;
 
-      std::vector<Pipe> m_pipes;
+      std::vector<Pipe> pipes;
     };
 
     class LoudSpeaker : public Valuable::Node
@@ -80,7 +83,7 @@ namespace Resonant {
       Valuable::AttributeVector2f m_location; // PixelLocation.
     };
 
-    typedef std::vector<Radiant::RefObj<Source>> Sources;
+    typedef std::vector<Source> Sources;
     typedef std::vector<SoundRectangle*> Rectangles;
     typedef std::vector<std::shared_ptr<LoudSpeaker>> LoudSpeakers;
 
@@ -136,11 +139,15 @@ namespace Resonant {
 
     /// @cond
 
+    /// These are only used by CalibrationOverlayWidget, see m_sourceMutex
     const Rectangles & rectangles() const { return *m_rectangles; }
-    const Sources & sources() const { return m_sources; }
+    Sources sources() const;
     const LoudSpeakers & speakers() const { return *m_speakers; }
 
     int channels() const;
+
+    void addSource(const QByteArray & moduleId, unsigned int channels);
+    void removeSource(const QByteArray & moduleId);
 
     /// @endcond
 
@@ -159,24 +166,31 @@ namespace Resonant {
     ///             Luminous::RenderContext::viewWidgetPathId. This can be also
     ///             an empty string.
     /// @param location source location
-    void setSourceLocation(const QByteArray & id, const QByteArray & path, Nimble::Vector2 location);
+    void setSourceLocation(const QByteArray & moduleId, const QByteArray & path, Nimble::Vector2 location);
     /// Removes a single location from a source
-    void clearSourceLocation(const QByteArray & id, const QByteArray & path);
+    void clearSourceLocation(const QByteArray & moduleId, const QByteArray & path);
     void syncSource(Source & src);
-    void removeSource(const QByteArray &);
     void addSoundRectangleSpeakers(SoundRectangle * r);
 
     /// @cond
 
 
     /// Computes the gain for the given channel based on sound source location
-    virtual float computeGain(unsigned int channel, Nimble::Vector2 srcLocation) const;
+    virtual float computeGain(unsigned int inputChannel, unsigned int outputChannel, Nimble::Vector2 srcLocation) const;
 
     float computeGainRadial(unsigned int channel, Nimble::Vector2 srcLocation) const;
     float computeGainRectangle(unsigned int channel, Nimble::Vector2 srcLocation) const;
 
     void updateChannelCount();
 
+    /// sources() is the only function that is used outside the audio thread,
+    /// so to make that function thread-safe, we just need to lock this mutex
+    /// in sources() and everywhere where we modify m_sources,
+    /// Source::locations or Source::pipes vectors. This could mean that the data that
+    /// sources() returns might not be fully consistent, but that doesn't matter.
+    /// The function is undocumented and only used by the
+    /// CalibrationOverlayWidget.
+    mutable Radiant::Mutex m_sourceMutex;
     Sources      m_sources;
     /// Used only with RADIAL mode
     Valuable::AttributeContainer<LoudSpeakers> m_speakers;

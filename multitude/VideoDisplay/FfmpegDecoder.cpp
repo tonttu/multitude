@@ -1730,7 +1730,7 @@ namespace VideoDisplay
   QByteArray FfmpegDecoder::audioPannerSourceId() const
   {
     if (auto audioTransfer = m_d->m_audioTransfer) {
-      return audioTransfer->id() + "-0";
+      return audioTransfer->id();
     }
     return QByteArray();
   }
