@@ -154,6 +154,9 @@ namespace Resonant {
       channels = atoi(outchannels);
     }
 
+    if (m_panner && m_panner->mode() == ModulePanner::PASS_THROUGH)
+      m_panner->setPassthroughChannelCount(channels);
+
     if (backend == AUDIO_LOOP_PULSE_AUDIO) {
 #ifdef CORNERSTONE_ENABLE_PULSE
       m_audioLoop.reset(new AudioLoopPulseAudio(*this, m_collect));

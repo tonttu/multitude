@@ -65,7 +65,20 @@ where the gain falls to zero if the sound source moves outside the rectangle.
     Nimble::Vector2i location() const { return m_location.asVector(); }
     /// Returns the size of the rectangle
     Nimble::Vector2i size() const { return m_size.asVector(); }
-    /// Returns amount of stereo panning
+    /// Returns amount of stereo panning. See the following table for examples
+    /// values and how it affects source volume levels:
+    /// <table>
+    /// <tr><th>stereo-pan</th><th>source location</th><th>gain at the left speaker</th><th>gain at the right speaker</th></tr>
+    /// <tr><td>1.0</td>       <td>left</td>           <td>1.0</td>                     <td>0.0</td></tr>
+    /// <tr><td>1.0</td>       <td>center</td>         <td>0.5</td>                     <td>0.5</td></tr>
+    /// <tr><td>1.0</td>       <td>right</td>          <td>0.0</td>                     <td>1.0</td></tr>
+    /// <tr><td>0.5</td>       <td>left</td>           <td>1.0</td>                     <td>0.5</td></tr>
+    /// <tr><td>0.5</td>       <td>center</td>         <td>0.75</td>                    <td>0.75</td></tr>
+    /// <tr><td>0.5</td>       <td>right</td>          <td>0.5</td>                     <td>1.0</td></tr>
+    /// <tr><td>0.0</td>       <td>left</td>           <td>1.0</td>                     <td>1.0</td></tr>
+    /// <tr><td>0.0</td>       <td>center</td>         <td>1.0</td>                     <td>1.0</td></tr>
+    /// <tr><td>0.0</td>       <td>right</td>          <td>1.0</td>                     <td>1.0</td></tr>
+    /// </table>
     float stereoPan() const { return m_stereoPan; }
     /// Returns the width of the fade border
     int fade() const { return m_fadeWidth; }

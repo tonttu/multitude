@@ -54,17 +54,40 @@ namespace Resonant {
 
       Nimble::Rampf m_ramp;
 
-      unsigned m_from = 0;
-      unsigned m_to = 0;
+      unsigned m_sourceChannel = 0;
+      unsigned m_outputChannel = 0;
+    };
+
+    struct SourceLocation
+    {
+      Nimble::Vector2f location{0, 0};
+      float gain = 0;
+
+      inline bool operator==(const SourceLocation & o) const
+      {
+        return location == o.location && gain == o.gain;
+      }
     };
 
     class Source
     {
     public:
-      std::map<QByteArray, Nimble::Vector2f> locations;
+      /// One audio source can be multiplexed to several locations with
+      /// different audio gains, for example a single video through several
+      /// ViewWidgets or several VideoWidgets sharing the same AVDecoder.
+      std::map<QByteArray, SourceLocation> locations;
+      /// Resonant::Module::id
       QByteArray moduleId;
-      long generation = 0; /// @see ModulePanner::m_generation
-      unsigned int channels = 0;
+      /// @see ModulePanner::m_generation
+      long generation = 0;
+      /// Number of channels in this source
+      unsigned int channelCount = 0;
+      /// The total number of channels with 'in' parameter given to
+      /// ModulePanner::process is the sum of all channels in all Sources in
+      /// ModulePanner::m_sources. The channels are in the same order as this
+      /// m_sources vector and channelOffset is the sum of all channels in all
+      /// Sources in m_sources vector before this object. Channels for this
+      /// Source are channelCount channels starting at in[channelOffset].
       unsigned int channelOffset = 0;
 
       std::vector<Pipe> pipes;
@@ -95,12 +118,36 @@ namespace Resonant {
       /// sound source.
       /// @sa ModulePanner::setCaptureRadius
       RADIAL = 0,
-      /// Rectangles, where the panning is based on rectangular regions
+      /// Rectangles, where the panning is based on rectangular regions. Any
+      /// multichannel audio sources are mixed to a mono, so that they can have
+      /// a single positional inside a sound rectangle. If you don't care about
+      /// sound position inside a sound rectangle and wish to keep stereo
+      /// sources as stereo, consider using STEREO_ZONES instead.
       /// @sa ModulePanner::addSoundRectangle
       /// @sa SoundRectangle
-      RECTANGLES = 1
+      RECTANGLES = 1,
+      /// Similar to RECTANGLES, but instead of having a positional audio inside
+      /// a sound rectangle, the rectangles are just separate stereo audio zones.
+      /// Any stereo sound inside one audio zone will remain stereo, so left
+      /// and right channels from a audio source, like a video, are played
+      /// through left and right sound rectangle speaker without mixing the
+      /// audio to mono. Mono audio sources are played on both sound rectangle
+      /// channels and from audio sources with more than two channels, only
+      /// the first two channels are played.
+      /// You might want to set SoundRectangle::stereoPan to zero, since it
+      /// will just adjust stereo channel balance instead of giving an
+      /// impression of positional audio. If you wish to use stereoPan to have
+      /// positional audio inside one sound rectangle, use RECTANGLES mode
+      /// instead.
+      STEREO_ZONES = 2,
+      /// Audio panning module is used for controlling audio source gain, but
+      /// actual panning is not done. Rectangles and loudspeakers are not used.
+      /// This is useful for muting videos that are not visible and controlling
+      /// gain of multiple VideoWidgets using the same shared decoder and different
+      /// gain values. MultiWidgets::Application will set up PASS_THROUGH panner
+      /// by default if there's no --audio-config defined.
+      PASS_THROUGH = 3,
     };
-
 
     /// Constructs the panner module
     ModulePanner(Mode mode=RADIAL);
@@ -134,7 +181,7 @@ namespace Resonant {
     void setMode(Mode mode);
     /// Query the current panner mode
     /// @return Current panner mode
-    Mode getMode() const;
+    Mode mode() const;
 
     /// @cond
 
@@ -144,6 +191,8 @@ namespace Resonant {
     const LoudSpeakers & speakers() const { return *m_speakers; }
 
     int channels() const;
+
+    void setPassthroughChannelCount(unsigned int channelCount);
 
     void addSource(const QByteArray & moduleId, unsigned int channels);
     void removeSource(const QByteArray & moduleId);
@@ -164,7 +213,7 @@ namespace Resonant {
     ///             Luminous::RenderContext::viewWidgetPathId. This can be also
     ///             an empty string.
     /// @param location source location
-    void setSourceLocation(const QByteArray & moduleId, const QByteArray & path, Nimble::Vector2 location);
+    void setSourceLocation(const QByteArray & moduleId, const QByteArray & path, Nimble::Vector2 location, float gain);
     /// Removes a single location from a source
     void clearSourceLocation(const QByteArray & moduleId, const QByteArray & path);
     void syncSource(Source & src);
@@ -174,10 +223,12 @@ namespace Resonant {
 
 
     /// Computes the gain for the given channel based on sound source location
-    virtual float computeGain(unsigned int inputChannel, unsigned int outputChannel, Nimble::Vector2 srcLocation) const;
+    virtual float computeGain(unsigned int sourceChannel, unsigned int outputChannel,
+                              unsigned int sourceChannelCount, Nimble::Vector2 srcLocation) const;
 
-    float computeGainRadial(unsigned int channel, Nimble::Vector2 srcLocation) const;
-    float computeGainRectangle(unsigned int channel, Nimble::Vector2 srcLocation) const;
+    float computeGainRadial(unsigned int outputChannel, Nimble::Vector2 srcLocation) const;
+    float computeGainRectangle(unsigned int outputChannel, Nimble::Vector2 srcLocation,
+                               unsigned int sourceChannel, unsigned int sourceChannelCount, bool stereo) const;
 
     void updateChannelCount();
 
