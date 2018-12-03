@@ -58,7 +58,6 @@ HEADERS += Mutex.hpp
 HEADERS += Platform.hpp
 HEADERS += PlatformUtils.hpp
 HEADERS += Radiant.hpp
-HEADERS += RefObj.hpp
 HEADERS += IntrusivePtr.hpp
 HEADERS += Task.hpp
 HEADERS += RingBuffer.hpp

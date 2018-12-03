@@ -18,7 +18,6 @@
 #include <Nimble/Ramp.hpp>
 #include <Nimble/Vector2.hpp>
 
-#include <Radiant/RefObj.hpp>
 #include <memory>
 
 #include <Valuable/AttributeFloat.hpp>
@@ -153,7 +152,6 @@ namespace Resonant {
 
   private:
 
-    friend class ModuleRectPanner;
     friend class ModuleSamplePlayer;
 
     /// @todo this should be removed. There is no one to one mapping between

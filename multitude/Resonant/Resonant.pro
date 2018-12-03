@@ -14,7 +14,6 @@ HEADERS += ModuleGain.hpp
 HEADERS += Module.hpp
 HEADERS += ModuleOutCollect.hpp
 HEADERS += ModulePanner.hpp
-HEADERS += ModuleRectPanner.hpp
 HEADERS += ModuleSamplePlayer.hpp
 HEADERS += Resonant.hpp
 HEADERS += SoundRectangle.hpp
@@ -28,7 +27,6 @@ SOURCES += ModuleFilePlay.cpp
 SOURCES += ModuleGain.cpp
 SOURCES += ModuleOutCollect.cpp
 SOURCES += ModulePanner.cpp
-SOURCES += ModuleRectPanner.cpp
 SOURCES += ModuleSamplePlayer.cpp
 SOURCES += SoundRectangle.cpp
 
