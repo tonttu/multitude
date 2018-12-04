@@ -569,15 +569,11 @@ namespace VideoDisplay
         if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == 0) {
           QByteArray card = (const char*)cap.card;
 
-          // With Magewell Pro Capture Quad (HDMI) cards we ask higher framerate
-          // than the normal 25 and also use work-around for issue in av_frame_unref.
+          // With Magewell Pro Capture Quad (HDMI) cards we use work-around for
+          // issue in av_frame_unref.
           // See also comments for m_frameUnrefMightBlock
-          if (card.contains("Pro Capture Quad")) {
-            if (!m_options.demuxerOptions().contains("framerate")) {
-              m_options.setDemuxerOption("framerate", "60");
-            }
+          if (card.contains("Pro Capture Quad"))
             m_frameUnrefMightBlock = true;
-          }
         }
         ::close(fd);
       }
@@ -1734,7 +1730,7 @@ namespace VideoDisplay
   QByteArray FfmpegDecoder::audioPannerSourceId() const
   {
     if (auto audioTransfer = m_d->m_audioTransfer) {
-      return audioTransfer->id() + "-0";
+      return audioTransfer->id();
     }
     return QByteArray();
   }

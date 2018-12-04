@@ -154,6 +154,9 @@ namespace Resonant {
       channels = atoi(outchannels);
     }
 
+    if (m_panner && m_panner->mode() == ModulePanner::PASS_THROUGH)
+      m_panner->setPassthroughChannelCount(channels);
+
     if (backend == AUDIO_LOOP_PULSE_AUDIO) {
 #ifdef CORNERSTONE_ENABLE_PULSE
       m_audioLoop.reset(new AudioLoopPulseAudio(*this, m_collect));
@@ -366,8 +369,6 @@ namespace Resonant {
            countBufferBytes());
     }
 
-    char buf[128];
-
     while(m_newItems.size()) {
 
       debugResonant("DSPNetwork::checkNewItems # Next ");
@@ -400,19 +401,12 @@ namespace Resonant {
 
           ItemPtr oi = findItemUnsafe(m_panner->id());
           for(int i = 0; i < mchans; i++) {
-
             Connection conn;
             conn.setModuleId(id);
-            conn.m_channel = i % mchans;
+            conn.m_channel = i;
             oi->m_inputs.push_back(conn);
-
-            m_controlData.rewind();
-            snprintf(buf, sizeof(buf), "%s-%d", id.data(), i);
-            m_controlData.writeString(buf);
-            m_controlData.rewind();
-
-            m_panner->eventProcess("addsource", m_controlData);
           }
+          m_panner->addSource(id, mchans);
           compile(oi);
 
           continue;
@@ -482,25 +476,16 @@ namespace Resonant {
       if(!m_doneCount)
         return;
 
-      char buf[128];
-
       for(iterator it = m_items.begin(); it != m_items.end(); ) {
 
         ItemPtr item = (*it);
 
         if(item->m_done) {
 
-          for(unsigned i = 0; i < item->m_outs.size() && m_panner; i++) {
-
-            m_controlData.rewind();
-            snprintf(buf, sizeof(buf), "%s-%d", item->m_module->id().data(), i);
-            m_controlData.writeString(buf);
-            m_controlData.rewind();
-
-            m_panner->eventProcess("removesource", m_controlData);
-
+          if (m_panner) {
             ItemPtr oi = findItemUnsafe(m_panner->id());
             oi->eraseInputs(item->m_module->id());
+            m_panner->removeSource(item->m_module->id());
           }
 
           uncompile(item);

@@ -74,6 +74,9 @@ namespace Radiant
     /// @todo not implemented on OSX
     RADIANT_API MemInfo memInfo();
 
+    /// Returns an absolute path to the Radiant library .so/.dll file
+    RADIANT_API QString libraryFilePath();
+
     /// This function returns the path to a library the running process is
     /// linked against.
     /// @param libraryName (part of) linked library name to search for

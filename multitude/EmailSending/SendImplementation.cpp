@@ -121,16 +121,11 @@ namespace Email
   {
     while(m_keepRunning) {
 
-      std::unique_lock<std::mutex> waitLock(m_waitMutex);
+      std::unique_lock<std::mutex> queueLock(m_host.messageQueueMutex);
 
-      auto t = std::chrono::milliseconds(1000);
-
-      m_host.messageQueueCondition.wait_for(waitLock, t, [this] {
-        std::lock_guard<std::mutex> g(m_host.messageQueueMutex);
+      m_host.messageQueueCondition.wait(queueLock, [this] {
         return !m_host.messageQueue.empty() || !m_keepRunning;
       });
-
-      std::unique_lock<std::mutex> queueLock(m_host.messageQueueMutex);
 
       // We might have woken up because stop was requested
       if(m_host.messageQueue.empty())
