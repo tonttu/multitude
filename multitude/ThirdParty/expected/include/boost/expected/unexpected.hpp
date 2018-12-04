@@ -188,11 +188,11 @@ namespace boost
   }
 
 #ifdef BOOST_EXPECTED_USE_BOOST_HPP
-  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_CONSTEXPR bool operator<(const unexpected_type<boost::exception_ptr>&, const unexpected_type<boost::exception_ptr>&)
   {
     return false;
   }
-  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<boost::exception_ptr>& x, const unexpected_type<boost::exception_ptr>& y)
+  inline BOOST_CONSTEXPR bool operator>(const unexpected_type<boost::exception_ptr>&, const unexpected_type<boost::exception_ptr>&)
   {
     return false;
   }

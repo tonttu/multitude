@@ -5,7 +5,6 @@
 #ifdef RADIANT_LINUX
 #include <GL/glx.h>
 #elif defined(RADIANT_WINDOWS)
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
 

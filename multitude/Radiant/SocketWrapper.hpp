@@ -16,8 +16,6 @@
 #include "Export.hpp"
 
 #ifdef RADIANT_WINDOWS
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <cerrno>

@@ -62,9 +62,6 @@
 #     define RADIANT_WIN32 1
 #   endif
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-
 //
 // Detect linux
 //

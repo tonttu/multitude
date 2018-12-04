@@ -13,10 +13,6 @@
 
 #include "Radiant/Platform.hpp"
 
-#ifdef RADIANT_MSVC
-#pragma warning( disable : 4275 )
-#endif
-
 // Import by default
 #ifdef RADIANT_EXPORT
 #define RADIANT_API MULTI_DLLEXPORT
