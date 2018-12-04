@@ -64,31 +64,6 @@ namespace
   Radiant::Mutex s_exclusiveAccessMutex;
   std::set<QString> s_exclusiveAccess;
 
-  int libavLock(void ** mutexPtr, enum AVLockOp op)
-  {
-    Radiant::Mutex *& mutex = reinterpret_cast<Radiant::Mutex *&>(*mutexPtr);
-
-    switch(op) {
-    case AV_LOCK_CREATE:
-      mutex = new Radiant::Mutex();
-      return !mutex;
-
-    case AV_LOCK_OBTAIN:
-      mutex->lock();
-      return 0;
-
-    case AV_LOCK_RELEASE:
-      mutex->unlock();
-      return 0;
-
-    case AV_LOCK_DESTROY:
-      delete mutex;
-      mutex = 0;
-      return 0;
-    }
-    return 1;
-  }
-
   RADIANT_TLS(const char *) s_src = nullptr;
 
   RADIANT_TLS(const VideoDisplay::FfmpegDecoder::LogHandler *) s_logHandler = nullptr;
@@ -2051,15 +2026,8 @@ namespace VideoDisplay
   {
     MULTI_ONCE {
       av_log_set_callback(libavLog);
-      avcodec_register_all();
       avdevice_register_all();
-      av_register_all();
       avformat_network_init();
-      avfilter_register_all();
-
-      int err = av_lockmgr_register(libavLock);
-      if(err != 0)
-        Radiant::error("libavInit # Failed to register new Ffmpeg lock manager");
     }
   }
 }
