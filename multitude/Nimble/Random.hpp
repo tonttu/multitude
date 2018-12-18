@@ -178,6 +178,12 @@ namespace Nimble {
       return std::uniform_int_distribution<uint32_t>(0,1)(m_rand);
     }
 
+    /// Returns the internal pseudo random number generator engine
+    inline std::mt19937_64 & engine()
+    {
+      return m_rand;
+    }
+
     /// Returns a reference to an instance.
     static RandomUniform & instance() { return m_instance; }
 
@@ -206,6 +212,12 @@ namespace Nimble {
       inline float rand()
       {
         return m_dist(m_rand);
+      }
+
+      /// Returns the internal pseudo random number generator engine
+      inline std::mt19937_64 & engine()
+      {
+        return m_rand;
       }
 
     private:

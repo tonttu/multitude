@@ -47,9 +47,7 @@ namespace Radiant {
     /// The internal, signed 64-bit integer type
     typedef int64_t type;
 
-    enum : int64_t {
-        FRACTIONS_PER_SECOND = 0x1000000
-    };
+    static constexpr int64_t FRACTIONS_PER_SECOND { 0x1000000 };
 
     /// The number of ticks that take place during one second
     /// @return Number of ticks per second
