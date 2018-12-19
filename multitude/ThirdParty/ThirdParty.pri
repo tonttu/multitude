@@ -16,5 +16,7 @@ contains(LIBS, -lQxtCore$${SHARED_LIB_SUFFIX}) {
 
 # Create custom install target for headers in release mode
 CONFIG(release, debug|release) {
-  $$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+  enable-sdk {
+    $$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
+  }
 }
