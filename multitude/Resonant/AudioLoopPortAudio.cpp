@@ -15,6 +15,16 @@
 #include <alsa/error.h>
 #endif
 
+#ifdef RADIANT_WINDOWS
+extern "C"
+{
+  /// Portaudio doesn't install pa_debugprint.h that contains this function,
+  /// so we declare it manually
+  typedef void (*PaUtilLogCallback ) (const char *log);
+  void PaUtil_SetDebugPrintFunction(PaUtilLogCallback  cb);
+}
+#endif
+
 #include <map>
 #include <list>
 #include <set>
@@ -367,6 +377,16 @@ namespace Resonant
 #ifdef RADIANT_LINUX
     MULTI_ONCE {
       snd_lib_error_set_handler(alsaError);
+    }
+#endif
+
+#ifdef RADIANT_WINDOWS
+    // vcpkg version of PortAudio is compiled with debug messages enabled.
+    // By default they are printed to stderr, we want catch those.
+    MULTI_ONCE {
+      PaUtil_SetDebugPrintFunction([] (const char* msg) {
+        Radiant::debug("PortAudio: %s", QByteArray(msg).trimmed().data());
+      });
     }
 #endif
 
