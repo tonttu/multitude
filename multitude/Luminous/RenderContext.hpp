@@ -115,6 +115,20 @@ namespace Luminous
       float depth;
     };
 
+    /// Proxy object for multi draw commands
+    template <typename UniformBlock>
+    struct MultiDrawBuilder
+    {
+      UniformBlock * uniform = nullptr;
+      /// Array of starting indices, has command->drawCount elements
+      int * offsets = nullptr;
+      /// Array of number of indices to be rendered, has command->drawCount elements
+      int * counts = nullptr;
+      /// Automatically calculated depth value
+      float depth = 0.f;
+      MultiDrawCommand * command;
+    };
+
 /// @cond
 
     struct SharedBuffer
@@ -742,6 +756,16 @@ namespace Luminous
                                                const std::map<QByteArray, const Texture *> * textures = nullptr,
                                                const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
+    template <typename UniformBlock>
+    MultiDrawBuilder<UniformBlock> multiDrawArrays(
+          bool translucent,
+          Luminous::PrimitiveType type,
+          int drawCount,
+          const Luminous::VertexArray & vertexArray,
+          const Luminous::Program & program,
+          const std::map<QByteArray, const Texture *> * textures = nullptr,
+          const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
     /// Similar to drawPrimitiveT but has less restrictions on the uniform block. It is enough for the
     /// uniform block to have fields @c projMatrix and @c vievMatrix (both Nimble::Matrix4).
     /// @sa drawPrimitiveT
@@ -846,6 +870,16 @@ namespace Luminous
                                         const Program & program,
                                         const std::map<QByteArray, const Texture *> * textures = nullptr,
                                         const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
+
+    MultiDrawCommand & createMultiDrawCommand(
+          bool translucent,
+          int drawCount,
+          const Luminous::VertexArray & vertexArray,
+          const Luminous::Buffer & uniformBuffer,
+          float & depth,
+          const Program & shader,
+          const std::map<QByteArray,const Texture *> * textures = nullptr,
+          const std::map<QByteArray, ShaderUniform> * uniforms = nullptr);
 
     template <typename T>
     std::pair<T *, SharedBuffer *> sharedBuffer(

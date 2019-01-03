@@ -829,6 +829,25 @@ namespace Luminous
     return cmd;
   }
 
+  MultiDrawCommand & RenderContext::createMultiDrawCommand(
+      bool translucent,
+      int drawCount,
+      const VertexArray & vertexArray,
+      const Buffer & uniformBuffer,
+      float & depth,
+      const Program & shader,
+      const std::map<QByteArray, const Texture *> * textures,
+      const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    MultiDrawCommand & cmd = m_data->m_driver.createMultiDrawCommand(
+          translucent, drawCount, vertexArray, uniformBuffer, shader, textures, uniforms);
+
+    depth = 0.99999f + m_data->m_automaticDepthDiff * m_data->m_renderCalls.top();
+    ++(m_data->m_renderCalls.top());
+
+    return cmd;
+  }
+
   // Create a render command using the shared buffers
   std::size_t RenderContext::alignUniform(std::size_t uniformSize) const
   {

@@ -29,16 +29,9 @@
 namespace Luminous
 {
 /// @cond
-  struct RenderCommand
+  struct RenderCommandBase
   {
     PrimitiveType primitiveType;
-    std::size_t primitiveCount;
-
-    float primitiveSize;    // Used for points and lines
-
-    bool indexed;
-    unsigned int indexOffset;
-    unsigned int vertexOffset;
 
     unsigned int uniformSizeBytes;
     unsigned int uniformOffsetBytes;
@@ -51,6 +44,27 @@ namespace Luminous
     unsigned int uniformsBegin;
     unsigned int uniformsEnd;
   };
+
+  struct RenderCommand : public RenderCommandBase
+  {
+    std::size_t primitiveCount;
+
+    float primitiveSize;    // Used for points and lines
+
+    bool indexed;
+    unsigned int indexOffset;
+    unsigned int vertexOffset;
+  };
+
+  struct MultiDrawCommand : public RenderCommandBase
+  {
+    int drawCount;
+
+    // Allocated by RenderDriverGL::D
+    int * offsets;
+    int * counts;
+  };
+
 /// @endcond
 
   /// At the moment only normal RenderCommand is supported, but in the future
@@ -60,6 +74,7 @@ namespace Luminous
   {
     /// Index to RenderDriverGL::D::m_renderCommands, max means null command
     unsigned int renderCommandIndex = std::numeric_limits<unsigned int>::max();
+    unsigned int multiDrawCommandIndex = std::numeric_limits<unsigned int>::max();
   };
 
   /// The most basic type of vertex to use with shader programs.

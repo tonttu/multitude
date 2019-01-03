@@ -31,6 +31,7 @@
 
 #include <Nimble/Matrix4.hpp>
 #include <memory>
+#include <Radiant/VectorAllocator.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 
@@ -102,8 +103,10 @@ namespace Luminous
 
     // Pools for avoiding mallocs
     std::vector<RenderCommand> m_renderCommands;
+    std::vector<MultiDrawCommand> m_MultiDrawCommands;
     std::vector<std::pair<RenderState, RenderCommandIndex>> m_opaqueQueue;
     std::vector<std::pair<RenderState, RenderCommandIndex>> m_translucentQueue;
+    Radiant::VectorAllocator<int> m_multiDrawArrays { 1024 };
     // uniform location -> sampler
     std::vector<std::pair<int, int>> m_samplers;
     // uniform location -> uniform value
@@ -141,14 +144,16 @@ namespace Luminous
     void applyUniform(GLint location, const Luminous::ShaderUniform & uniform);
 
     void render(const RenderCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
+    void multiDraw(const MultiDrawCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex);
 
 
-    RenderCommand & createRenderCommand(bool translucent,
-                                        const Program & shader,
-                                        const VertexArray & vertexArray,
-                                        const Buffer & uniformBuffer,
-                                        const std::map<QByteArray,const Texture *> * textures,
-                                        const std::map<QByteArray, ShaderUniform> * uniforms);
+    void createRenderCommand(RenderCommandBase & cmd,
+                             bool & translucent,
+                             const Program & shader,
+                             const VertexArray & vertexArray,
+                             const Buffer & uniformBuffer,
+                             const std::map<QByteArray,const Texture *> * textures,
+                             const std::map<QByteArray, ShaderUniform> * uniforms);
 
     // Utility function for resource cleanup
     template <typename ContainerType>
@@ -331,13 +336,41 @@ namespace Luminous
 
   }
 
-  RenderCommand & RenderDriverGL::D::createRenderCommand(bool translucent,
-                                                         const Program & shader,
-                                                         const VertexArray & vertexArray,
-                                                         const Buffer & uniformBuffer,
-                                                         const std::map<QByteArray,const Texture *> * textures,
-                                                         const std::map<QByteArray, ShaderUniform> * uniforms)
+  void RenderDriverGL::D::multiDraw(const MultiDrawCommand & cmd, GLint uniformHandle, GLint uniformBlockIndex)
   {
+    // Set texture samplers
+    for (auto idx = cmd.samplersBegin; idx < cmd.samplersEnd; ++idx) {
+      auto p = m_samplers[idx];
+      m_opengl.glUniform1i(p.first, p.second);
+      GLERROR("RenderDriverGL::render # glUniform1i");
+    }
+
+    // Apply style-uniforms
+    for (auto idx = cmd.uniformsBegin; idx < cmd.uniformsEnd; ++idx) {
+      auto & uniform = m_uniforms[idx];
+      applyUniform(uniform.first, uniform.second);
+    }
+
+    m_opengl.glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+                               cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
+    GLERROR("RenderDriverGL::render # glBindBufferRange");
+
+    // Draw non-indexed
+    m_opengl.glMultiDrawArrays(cmd.primitiveType, cmd.offsets, cmd.counts, cmd.drawCount);
+    GLERROR("RenderDriverGL::render # glDrawArrays");
+  }
+
+  void RenderDriverGL::D::createRenderCommand(RenderCommandBase & cmd,
+                                              bool & translucent,
+                                              const Program & shader,
+                                              const VertexArray & vertexArray,
+                                              const Buffer & uniformBuffer,
+                                              const std::map<QByteArray,const Texture *> * textures,
+                                              const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    cmd.samplersBegin = cmd.samplersEnd = m_samplers.size();
+    cmd.uniformsBegin = cmd.uniformsEnd = m_uniforms.size();
+
     m_state.program = &m_driver.handle(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
     m_state.uniformBuffer = &m_driver.handle(uniformBuffer);
@@ -369,23 +402,6 @@ namespace Luminous
     }
     m_state.textures[unit] = nullptr;
 
-    RenderQueueSegment & rt = currentRenderQueueSegment();
-
-    RenderCommandIndex idx;
-    idx.renderCommandIndex = m_renderCommands.size();
-    m_renderCommands.emplace_back();
-    RenderCommand * cmd = &m_renderCommands.back();
-    cmd->samplersBegin = cmd->samplersEnd = m_samplers.size();
-    cmd->uniformsBegin = cmd->uniformsEnd = m_uniforms.size();
-
-    if(translucent) {
-      m_translucentQueue.emplace_back(m_state, idx);
-      ++rt.translucentCmdEnd;
-    } else {
-      m_opaqueQueue.emplace_back(m_state, idx);
-      ++rt.opaqueCmdEnd;
-    }
-
     // Assign the samplers
     {
       unit = 0;
@@ -394,7 +410,7 @@ namespace Luminous
           auto location = m_state.program->uniformLocation(p.first);
           if (location >= 0) {
             m_samplers.emplace_back(location, unit);
-            ++cmd->samplersEnd;
+            ++cmd.samplersEnd;
           } else {
             Radiant::warning("RenderDriverGL - Cannot bind sampler %s - No such sampler found", p.first.data());
           }
@@ -411,15 +427,13 @@ namespace Luminous
           if (location >= 0) {
             assert(p.second.type() != ShaderUniform::Unknown);
             m_uniforms.emplace_back(location, p.second);
-            ++cmd->uniformsEnd;
+            ++cmd.uniformsEnd;
           } else {
             Radiant::warning("RenderDriverGL - Cannot bind uniform %s - No such uniform", p.first.data());
           }
         }
       }
     }
-
-    return *cmd;
   }
 
   template <typename ContainerType>
@@ -692,7 +706,53 @@ namespace Luminous
                                                       const std::map<QByteArray, const Texture *> * textures,
                                                       const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-    return m_d->createRenderCommand(translucent, shader, vertexArray, uniformBuffer, textures, uniforms);
+    RenderCommandIndex idx;
+    idx.renderCommandIndex = m_d->m_renderCommands.size();
+    m_d->m_renderCommands.emplace_back();
+    RenderCommand & cmd = m_d->m_renderCommands.back();
+
+    m_d->createRenderCommand(cmd, translucent, shader, vertexArray, uniformBuffer, textures, uniforms);
+
+    RenderQueueSegment & rt = m_d->currentRenderQueueSegment();
+
+    if (translucent) {
+      m_d->m_translucentQueue.emplace_back(m_d->m_state, idx);
+      ++rt.translucentCmdEnd;
+    } else {
+      m_d->m_opaqueQueue.emplace_back(m_d->m_state, idx);
+      ++rt.opaqueCmdEnd;
+    }
+
+    return cmd;
+  }
+
+  MultiDrawCommand & RenderDriverGL::createMultiDrawCommand(
+      bool translucent, int drawCount, const VertexArray & vertexArray,
+      const Buffer & uniformBuffer, const Program & shader,
+      const std::map<QByteArray, const Texture *> * textures,
+      const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    RenderCommandIndex idx;
+    idx.multiDrawCommandIndex = m_d->m_MultiDrawCommands.size();
+    m_d->m_MultiDrawCommands.emplace_back();
+    MultiDrawCommand & cmd = m_d->m_MultiDrawCommands.back();
+    cmd.offsets = m_d->m_multiDrawArrays.allocate(drawCount);
+    cmd.counts = m_d->m_multiDrawArrays.allocate(drawCount);
+    cmd.drawCount = drawCount;
+
+    m_d->createRenderCommand(cmd, translucent, shader, vertexArray, uniformBuffer, textures, uniforms);
+
+    RenderQueueSegment & rt = m_d->currentRenderQueueSegment();
+
+    if (translucent) {
+      m_d->m_translucentQueue.emplace_back(m_d->m_state, idx);
+      ++rt.translucentCmdEnd;
+    } else {
+      m_d->m_opaqueQueue.emplace_back(m_d->m_state, idx);
+      ++rt.opaqueCmdEnd;
+    }
+
+    return cmd;
   }
 
   void RenderDriverGL::flush()
@@ -738,6 +798,8 @@ namespace Luminous
 
           if (cmdIndex.renderCommandIndex != disabled)
             m_d->render(m_d->m_renderCommands[cmdIndex.renderCommandIndex], uniformHandle, 0);
+          else if (cmdIndex.multiDrawCommandIndex != disabled)
+            m_d->multiDraw(m_d->m_MultiDrawCommands[cmdIndex.multiDrawCommandIndex], uniformHandle, 0);
 
           if (idx == queues.opaqueCmdBegin)
             break;
@@ -760,12 +822,16 @@ namespace Luminous
 
         if (cmdIndex.renderCommandIndex != disabled)
           m_d->render(m_d->m_renderCommands[cmdIndex.renderCommandIndex], uniformHandle, 0);
+        else if (cmdIndex.multiDrawCommandIndex != disabled)
+          m_d->multiDraw(m_d->m_MultiDrawCommands[cmdIndex.multiDrawCommandIndex], uniformHandle, 0);
       }
     }
     m_d->m_masterRenderQueue.clear();
     m_d->m_opaqueQueue.clear();
     m_d->m_translucentQueue.clear();
     m_d->m_renderCommands.clear();
+    m_d->m_MultiDrawCommands.clear();
+    m_d->m_multiDrawArrays.clear();
     m_d->m_uniforms.clear();
     m_d->m_samplers.clear();
 
@@ -786,9 +852,7 @@ namespace Luminous
   {
     auto it = m_d->m_buffers.find(buffer.resourceId());
     if(it == m_d->m_buffers.end()) {
-      // libstdc++ doesn't have this yet
-      //it = m_d->m_textures.emplace(buffer.resourceId(), m_d->m_stateGL).first;
-      it = m_d->m_buffers.insert(std::make_pair(buffer.resourceId(), std::make_shared<BufferGL>(m_d->m_stateGL, buffer))).first;
+      it = m_d->m_buffers.emplace(buffer.resourceId(), std::make_shared<BufferGL>(m_d->m_stateGL, buffer)).first;
       it->second->setExpirationSeconds(buffer.expiration());
     }
 
@@ -814,17 +878,17 @@ namespace Luminous
     // Check if any of the associated buffers have changed
     for (size_t i = 0; i < vertexArray.bindingCount(); ++i) {
       auto & binding = vertexArray.binding(i);
-      auto * buffer = RenderManager::getResource<Buffer>(binding.buffer);
+      Buffer * buffer = RenderManager::getResource<Buffer>(binding.buffer);
       assert(buffer != nullptr);
-      auto & buffergl = handle(*buffer);
+      BufferGL & buffergl = handle(*buffer);
       buffergl.upload(*buffer, Buffer::VERTEX);
     }
 
     RenderResource::Id indexBufferId = vertexArray.indexBuffer();
     if (indexBufferId) {
-      auto * buffer = RenderManager::getResource<Buffer>(indexBufferId);
+      Buffer * buffer = RenderManager::getResource<Buffer>(indexBufferId);
       assert(buffer);
-      auto & buffergl = handle(*buffer);
+      BufferGL & buffergl = handle(*buffer);
       buffergl.upload(*buffer, Buffer::INDEX);
     }
 

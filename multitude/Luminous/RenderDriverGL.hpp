@@ -56,6 +56,15 @@ namespace Luminous
                                                              const std::map<QByteArray, const Texture *> * textures,
                                                              const std::map<QByteArray, ShaderUniform> * uniforms) OVERRIDE;
 
+    LUMINOUS_API virtual MultiDrawCommand & createMultiDrawCommand(
+        bool translucent,
+        int drawCount,
+        const VertexArray & vertexArray,
+        const Buffer & uniformBuffer,
+        const Luminous::Program & shader,
+        const std::map<QByteArray, const Texture *> * textures,
+        const std::map<QByteArray, ShaderUniform> * uniforms) override;
+
     LUMINOUS_API virtual void setDefaultState() OVERRIDE;
     LUMINOUS_API virtual void flush() OVERRIDE;
 

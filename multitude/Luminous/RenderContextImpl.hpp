@@ -51,6 +51,39 @@ namespace Luminous
     return builder;
   }
 
+  template <typename UniformBlock>
+  RenderContext::MultiDrawBuilder<UniformBlock> RenderContext::multiDrawArrays(
+      bool translucent,
+      Luminous::PrimitiveType type,
+      int drawCount,
+      const Luminous::VertexArray & vertexArray,
+      const Luminous::Program & program,
+      const std::map<QByteArray, const Texture *> * textures,
+      const std::map<QByteArray, ShaderUniform> * uniforms)
+  {
+    MultiDrawBuilder<UniformBlock> builder;
+
+    std::size_t uniformSize = alignUniform(sizeof(UniformBlock));
+    unsigned int uniformOffset;
+
+    SharedBuffer * ubuffer;
+    void * uniformData;
+    std::tie(uniformData, ubuffer) = sharedBuffer(uniformSize, 1, Buffer::UNIFORM, uniformOffset);
+    builder.uniform = static_cast<UniformBlock*>(uniformData);
+
+    MultiDrawCommand & cmd = createMultiDrawCommand(translucent, drawCount, vertexArray, ubuffer->buffer, builder.depth, program, textures, uniforms);
+
+    cmd.primitiveType = type;
+    cmd.uniformOffsetBytes = uniformOffset * (unsigned int) uniformSize;
+    cmd.uniformSizeBytes = (unsigned int)uniformSize;
+
+    builder.offsets = cmd.offsets;
+    builder.counts = cmd.counts;
+    builder.command = &cmd;
+
+    return builder;
+  }
+
   template <typename Vertex, typename UniformBlock>
   RenderContext::RenderBuilder<Vertex, UniformBlock> RenderContext::render(
               bool translucent, Luminous::PrimitiveType type, int indexCount, int vertexCount, float primitiveSize,
