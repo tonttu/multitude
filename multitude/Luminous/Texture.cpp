@@ -142,8 +142,8 @@ namespace Luminous
     m_d->dataFormat = dataFormat;
     m_d->data = data;
     m_d->translucent = dataFormat.hasAlpha();
-    for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
-      m_d->dirtyRegions[i] = QRegion();
+    for (QRegion & dirty: m_d->dirtyRegions)
+      dirty = QRegion();
     invalidate();
   }
 
@@ -225,7 +225,7 @@ namespace Luminous
 
   QRegion Texture::dirtyRegion(unsigned int threadIndex) const
   {
-    assert(int(threadIndex) < m_d->dirtyRegions.size());
+    assert(threadIndex < m_d->dirtyRegions.size());
     return m_d->dirtyRegions[threadIndex];
   }
 
@@ -240,8 +240,8 @@ namespace Luminous
   void Texture::addDirtyRect(const QRect & rect)
   {
     auto intersected = rect.intersected(QRect(0, 0, width(), height()));
-    for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
-      m_d->dirtyRegions[i] += intersected;
+    for (QRegion & dirty: m_d->dirtyRegions)
+      dirty += intersected;
   }
 
   unsigned int Texture::samples() const

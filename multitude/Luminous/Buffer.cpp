@@ -78,8 +78,8 @@ namespace Luminous
     m_d->bufferSize = bufferSize == 0 ? dataSize : bufferSize;
     m_d->usage = usage;
 
-    for (int i = 0; i < m_d->dirtyRegions.size(); ++i)
-      m_d->dirtyRegions[i] = DirtyRegion();
+    for (DirtyRegion & d: m_d->dirtyRegions)
+      d = DirtyRegion();
 
     invalidate();
   }
@@ -106,7 +106,7 @@ namespace Luminous
 
   Buffer::DirtyRegion Buffer::takeDirtyRegion(unsigned int threadIndex) const
   {
-    assert(threadIndex < (unsigned) m_d->dirtyRegions.size());
+    assert(threadIndex < m_d->dirtyRegions.size());
     DirtyRegion r;
     std::swap(r, m_d->dirtyRegions[threadIndex]);
     return r;
@@ -115,8 +115,7 @@ namespace Luminous
   void Buffer::invalidateRegion(size_t offset, size_t size)
   {
     m_d->dataSize = std::max(m_d->dataSize, offset + size);
-    for (int i = 0; i < m_d->dirtyRegions.size(); ++i) {
-      DirtyRegion & dirty = m_d->dirtyRegions[i];
+    for (DirtyRegion & dirty: m_d->dirtyRegions) {
       dirty.dataBegin = std::min(dirty.dataBegin, offset);
       dirty.dataEnd = std::max(dirty.dataEnd, offset + size);
     }

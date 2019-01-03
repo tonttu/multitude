@@ -13,7 +13,7 @@
 
 #include "RenderManager.hpp"
 
-#include <QVector>
+#include <vector>
 
 namespace Luminous
 {
@@ -41,7 +41,7 @@ namespace Luminous
   /// This class is a utility for handling variables specific to rendering threads.
   /// @sa ContextArray
   template <typename T>
-  class ContextArrayT : public QVector<T>, public ContextArray
+  class ContextArrayT : public ContextArray
   {
   public:
     /// Constructor
@@ -56,13 +56,24 @@ namespace Luminous
 
     /// Get a reference to an object instance associated with the calling thread
     /// @return reference to object in the calling thread
-    T & operator*() { return (*this)[RenderManager::threadIndex()]; }
+    typename std::vector<T>::reference operator*() { return (*this)[RenderManager::threadIndex()]; }
     /// Get a reference to an object instance associated with the calling thread
     /// @return reference to object in the calling thread
-    const T & operator*() const { return (*this)[RenderManager::threadIndex()]; }
+    typename std::vector<T>::const_reference operator*() const { return (*this)[RenderManager::threadIndex()]; }
+
+    typename std::vector<T>::iterator begin() { return m_data.begin(); }
+    typename std::vector<T>::const_iterator begin() const { return m_data.begin(); }
+    typename std::vector<T>::iterator end() { return m_data.end(); }
+    typename std::vector<T>::const_iterator end() const { return m_data.end(); }
+
+    inline size_t size() const { return m_data.size(); }
+
+    typename std::vector<T>::reference operator[](size_t index) { return m_data[index]; }
+    typename std::vector<T>::const_reference operator[](size_t index) const { return m_data[index]; }
 
   private:
-    virtual void resize(unsigned int threadCount) OVERRIDE;
+    virtual void resize(unsigned int threadCount) override;
+    std::vector<T> m_data;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -88,8 +99,8 @@ namespace Luminous
   template <typename T>
   void ContextArrayT<T>::resize(unsigned int threadCount)
   {
-    this->clear();
-    QVector<T>::resize(threadCount);
+    m_data.clear();
+    m_data.resize(threadCount);
   }
 }
 #endif // LUMINOUS_CONTEXTARRAY_HPP
