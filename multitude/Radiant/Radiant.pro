@@ -92,6 +92,7 @@ HEADERS += VersionGenerated.hpp
 HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
 HEADERS += fast_atof.h
+HEADERS += VectorAllocator.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
