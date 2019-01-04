@@ -662,6 +662,9 @@ namespace Luminous
     /// MultiWidgets::FrameInfo::currentTime on the same frame
     Radiant::TimeStamp frameTime() const;
 
+    /// Frame number of the frame we are currently rendering
+    unsigned int frameNumber() const;
+
     /// Maximum texture size supported by this context, same as GL_MAX_TEXTURE_SIZE
     unsigned int maxTextureSize() const;
 

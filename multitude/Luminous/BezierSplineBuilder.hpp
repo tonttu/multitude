@@ -16,7 +16,8 @@ namespace Luminous
   class LUMINOUS_API BezierSplineBuilder
   {
   public:
-    BezierSplineBuilder();
+    /// @param path The generated spline, updated after every addPoint call
+    BezierSplineBuilder(std::vector<BezierNode> & path);
     ~BezierSplineBuilder();
 
     /// Adds a new sample point to the builder. Based on the parameters this
@@ -27,8 +28,6 @@ namespace Luminous
     /// @param maxFitErrorSqr see maxErrorSqr parameter in BezierSplineFitter::fit
     void addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr);
 
-    /// The generated spline, updated after every addPoint call
-    const std::vector<BezierNode> & path() const;
     /// Bounding box of all spline control points, taking account the spline width
     const Nimble::Rectf & bounds() const;
 

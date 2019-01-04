@@ -1440,6 +1440,11 @@ namespace Luminous
     return m_data->m_frameTime;
   }
 
+  unsigned int RenderContext::frameNumber() const
+  {
+    return m_data->m_frameNumber;
+  }
+
   unsigned int RenderContext::maxTextureSize() const
   {
     return m_data->m_maxTextureSize;
@@ -1483,12 +1488,7 @@ namespace Luminous
 
   float RenderContext::approximateScaling() const
   {
-    const float sx = Nimble::Vector2f(transform()[0][0], transform()[0][1]).lengthSqr();
-    const float sy = Nimble::Vector2f(transform()[1][0], transform()[1][1]).lengthSqr();
-
-    float s = std::max(sx, sy);
-
-    return sqrt(s);
+    return std::sqrt(std::abs(transform3().upperLeft().det()));
   }
 
   const Texture & RenderContext::dashedLineTexture(float dashPortion) const

@@ -5,16 +5,24 @@ namespace Luminous
   class BezierSplineBuilder::D
   {
   public:
+    D(std::vector<BezierNode> & path)
+      : m_path(path)
+    {}
+
+  public:
     std::vector<BezierSplineFitter::Point> m_inputPoints;
-    std::vector<BezierNode> m_path;
-    Nimble::Rectf m_bounds;
+    std::vector<BezierNode> & m_path;
+    /// This is here to avoid allocating new vector every frame
+    std::vector<BezierNode> m_tmpPath;
+    Nimble::Rectf m_readyBounds;
+    Nimble::Rectf m_mutableBounds;
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  BezierSplineBuilder::BezierSplineBuilder()
-    : m_d(new D())
+  BezierSplineBuilder::BezierSplineBuilder(std::vector<BezierNode> & path)
+    : m_d(new D(path))
   {
   }
 
@@ -40,15 +48,13 @@ namespace Luminous
       ++size;
     }
 
+    size_t firstAddedNodeIndex;
+
     if (m_d->m_path.size() <= 2) {
       Luminous::BezierSplineFitter pathFitter(m_d->m_inputPoints.data(), m_d->m_inputPoints.size());
-      m_d->m_path = pathFitter.fit(maxFitErrorSqr);
-      for (auto & node: m_d->m_path) {
-        const float radius = 0.5f * node.strokeWidth;
-        m_d->m_bounds.expand(node.point, radius);
-        m_d->m_bounds.expand(node.ctrlIn, radius);
-        m_d->m_bounds.expand(node.ctrlOut, radius);
-      }
+      m_d->m_path.clear();
+      pathFitter.fit(m_d->m_path, maxFitErrorSqr);
+      firstAddedNodeIndex = 0;
     } else {
       m_d->m_path.pop_back();
 
@@ -58,27 +64,46 @@ namespace Luminous
           break;
 
       Luminous::BezierSplineFitter pathFitter(m_d->m_inputPoints.data() + size, m_d->m_inputPoints.size() - size);
-      auto newPath = pathFitter.fit(maxFitErrorSqr, p.point - p.ctrlIn);
+      std::vector<BezierNode> & newPath = m_d->m_tmpPath;
+      newPath.clear();
+      pathFitter.fit(newPath, maxFitErrorSqr, p.point - p.ctrlIn);
       newPath[0].ctrlIn = p.ctrlIn;
-      for (auto & node: newPath) {
-        const float radius = 0.5f * node.strokeWidth;
-        m_d->m_bounds.expand(node.point, radius);
-        m_d->m_bounds.expand(node.ctrlIn, radius);
-        m_d->m_bounds.expand(node.ctrlOut, radius);
-      }
 
       m_d->m_path.pop_back();
+      firstAddedNodeIndex = m_d->m_path.size();
       m_d->m_path.insert(m_d->m_path.end(), newPath.begin(), newPath.end());
     }
-  }
 
-  const std::vector<BezierNode> & BezierSplineBuilder::path() const
-  {
-    return m_d->m_path;
+    // The algorithm here works so that it replaces the last two BezierNodes
+    // with a totally new bezier spline. To get accurate bounding box of the
+    // spline incrementally, we handle the last two points separately.
+    auto it = m_d->m_path.begin() + firstAddedNodeIndex;
+    auto fixedEnd = m_d->m_path.end() - 2;
+
+    while (it < fixedEnd) {
+      BezierNode & node = *it;
+      const float radius = 0.5f * node.strokeWidth;
+      m_d->m_readyBounds.expand(node.point, radius);
+      m_d->m_readyBounds.expand(node.ctrlIn, radius);
+      m_d->m_readyBounds.expand(node.ctrlOut, radius);
+
+      ++it;
+    }
+
+    m_d->m_mutableBounds = m_d->m_readyBounds;
+    while (it != m_d->m_path.end()) {
+      BezierNode & node = *it;
+      const float radius = 0.5f * node.strokeWidth;
+      m_d->m_mutableBounds.expand(node.point, radius);
+      m_d->m_mutableBounds.expand(node.ctrlIn, radius);
+      m_d->m_mutableBounds.expand(node.ctrlOut, radius);
+
+      ++it;
+    }
   }
 
   const Nimble::Rectf & BezierSplineBuilder::bounds() const
   {
-    return m_d->m_bounds;
+    return m_d->m_mutableBounds;
   }
 }

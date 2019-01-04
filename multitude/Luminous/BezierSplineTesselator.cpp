@@ -6,6 +6,7 @@ namespace Luminous
   class BezierSplineTesselator::D
   {
   public:
+    D(std::vector<BezierSplineTesselator::Vertex> & vertices);
     /// In an arc of angle radians and radius of strokeWidth/2, the max error
     /// between a perfect arc and a polyline with roundCapSegments segments
     /// is at most m_maxRoundCapError
@@ -17,13 +18,18 @@ namespace Luminous
     void renderCapEnd(BezierCurve2::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
 
   public:
-    std::vector<BezierSplineTesselator::Vertex> m_vertices;
+    std::vector<BezierSplineTesselator::Vertex> & m_vertices;
     float m_maxCurveError;
     float m_maxRoundCapError;
 
     // Cached to avoid extra memory allocations
     std::vector<BezierCurve2::PolylinePoint> m_polylineBuffer;
   };
+
+  BezierSplineTesselator::D::D(std::vector<BezierSplineTesselator::Vertex> & vertices)
+    : m_vertices(vertices)
+  {
+  }
 
   int BezierSplineTesselator::D::roundCapSegments(float strokeWidth, float angle) const
   {
@@ -113,8 +119,8 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  BezierSplineTesselator::BezierSplineTesselator(float maxCurveError, float maxRoundCapError)
-    : m_d(new D())
+  BezierSplineTesselator::BezierSplineTesselator(std::vector<Vertex> & vertices, float maxCurveError, float maxRoundCapError)
+    : m_d(new D(vertices))
   {
     m_d->m_maxCurveError = maxCurveError;
     m_d->m_maxRoundCapError = maxRoundCapError;
@@ -153,6 +159,8 @@ namespace Luminous
         polylineBuffer.push_back({inputIt->point, curve.tangent(0.f), inputIt->strokeWidth});
 
       float cc = m_d->capSegmentAngleCos(inputIt[0].strokeWidth);
+      if (cc < -1.f || cc > 1.f)
+        cc = -1.f;
       curve.evaluate(polylineBuffer, maxCurveError, cc,
           inputIt[0].strokeWidth, inputIt[1].strokeWidth,
           curve.tangent(0.f));
@@ -215,10 +223,5 @@ namespace Luminous
     }
 
     m_d->renderCapEnd(p, normal, v);
-  }
-
-  const std::vector<BezierSplineTesselator::Vertex> & BezierSplineTesselator::triangleStrip() const
-  {
-    return m_d->m_vertices;
   }
 }

@@ -33,7 +33,7 @@ namespace Luminous
 
     /// Inserts the generated spline points at the end of the given vector
     void fit(std::vector<BezierNode> & nodes, float maxErrorSqr,
-             Nimble::Vector2f leftTangent, Nimble::Vector2f rightTangent) const;
+             Nimble::Vector2f leftTangent = {0, 0}, Nimble::Vector2f rightTangent = {0, 0}) const;
 
   private:
     class D;
