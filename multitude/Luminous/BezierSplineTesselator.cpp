@@ -1,5 +1,5 @@
 #include "BezierSplineTesselator.hpp"
-#include "BezierCurve.hpp"
+#include "CubicBezierCurve.hpp"
 
 namespace Luminous
 {
@@ -14,8 +14,8 @@ namespace Luminous
     inline float capSegmentAngle(float strokeWidth) const;
     /// Optimized version of std::cos(capSegmentAngle(strokeWidth))
     inline float capSegmentAngleCos(float strokeWidth) const;
-    void renderCapBegin(BezierCurve2::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
-    void renderCapEnd(BezierCurve2::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
+    void renderCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
+    void renderCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
 
   public:
     std::vector<BezierSplineTesselator::Vertex> & m_vertices;
@@ -23,7 +23,7 @@ namespace Luminous
     float m_maxRoundCapError;
 
     // Cached to avoid extra memory allocations
-    std::vector<BezierCurve2::PolylinePoint> m_polylineBuffer;
+    std::vector<CubicBezierCurve::PolylinePoint> m_polylineBuffer;
   };
 
   BezierSplineTesselator::D::D(std::vector<BezierSplineTesselator::Vertex> & vertices)
@@ -48,7 +48,7 @@ namespace Luminous
   }
 
   void BezierSplineTesselator::D::renderCapBegin(
-      BezierCurve2::PolylinePoint p, Nimble::Vector2f normal, Vertex v)
+      CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, Vertex v)
   {
     int segments = roundCapSegments(p.width);
 
@@ -84,7 +84,7 @@ namespace Luminous
   }
 
   void BezierSplineTesselator::D::renderCapEnd(
-      BezierCurve2::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v)
+      CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v)
   {
     int segments = roundCapSegments(p.width);
 
@@ -142,7 +142,7 @@ namespace Luminous
 
     auto & polylineBuffer = m_d->m_polylineBuffer;
 
-    BezierCurve2::PolylinePoint p;
+    CubicBezierCurve::PolylinePoint p;
     Nimble::Vector2f normal;
 
     Vertex v;
@@ -154,7 +154,7 @@ namespace Luminous
     float maxCurveError = std::max(m_d->m_maxCurveError, 0.0001f);
     for (const BezierNode * inputIt = nodes.data(), * inputLast = inputIt + nodes.size() - 1; inputIt != inputLast; ++inputIt) {
       polylineBuffer.clear();
-      BezierCurve2 curve(inputIt[0], inputIt[1]);
+      CubicBezierCurve curve(inputIt[0], inputIt[1]);
       if (first)
         polylineBuffer.push_back({inputIt->point, curve.tangent(0.f), inputIt->strokeWidth});
 

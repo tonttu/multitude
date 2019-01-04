@@ -29,7 +29,7 @@ namespace Luminous
 
   /// A cubic Bezier curve
   /// @todo this will replace Luminous::BezierCurve once we get rid of SplineManager
-  class BezierCurve2
+  class CubicBezierCurve
   {
   public:
     struct PolylinePoint
@@ -40,15 +40,15 @@ namespace Luminous
     };
 
   public:
-    BezierCurve2()
+    CubicBezierCurve()
     {}
 
-    BezierCurve2(Nimble::Vector2f p0, Nimble::Vector2f ctrlOutP0,
-                 Nimble::Vector2f ctrlInP1, Nimble::Vector2f p1)
+    CubicBezierCurve(Nimble::Vector2f p0, Nimble::Vector2f ctrlOutP0,
+                     Nimble::Vector2f ctrlInP1, Nimble::Vector2f p1)
       : m_data{{p0, ctrlOutP0, ctrlInP1, p1}}
     {}
 
-    BezierCurve2(const BezierNode & begin, const BezierNode & end)
+    CubicBezierCurve(const BezierNode & begin, const BezierNode & end)
       : m_data{{begin.point, begin.ctrlOut, end.ctrlIn, end.point}}
     {}
 
@@ -75,8 +75,8 @@ namespace Luminous
     /// @param left First half of the curve (before t)
     /// @param right Second half of the curve (after t)
     /// @param t Where to split the curve
-    inline void subdivideCurve(BezierCurve2 & left,
-                               BezierCurve2 & right, float t) const;
+    inline void subdivideCurve(CubicBezierCurve & left,
+                               CubicBezierCurve & right, float t) const;
 
     /// Checks whether the curve is flat given the tolerance.
     inline bool isFlat(float tolerance) const;
@@ -91,7 +91,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  void BezierCurve2::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
+  void CubicBezierCurve::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
                               float widthBegin, float widthEnd, Nimble::Vector2f prevUnitTangent) const
   {
     if (isFlat(tolerance)) {
@@ -105,7 +105,7 @@ namespace Luminous
       }
     }
 
-    BezierCurve2 left, right;
+    CubicBezierCurve left, right;
     float mid = 0.5f;
     subdivideCurve(left, right, mid);
     float widthMiddle = mid * (widthBegin + widthEnd);
@@ -113,8 +113,8 @@ namespace Luminous
     right.evaluate(points, tolerance, angleToleranceCos, widthMiddle, widthEnd, tangent(mid).normalized());
   }
 
-  void BezierCurve2::subdivideCurve(BezierCurve2 & left,
-                                    BezierCurve2 & right, float t) const
+  void CubicBezierCurve::subdivideCurve(CubicBezierCurve & left,
+                                    CubicBezierCurve & right, float t) const
   {
     // De Casteljau's algorithm
     auto p0 = m_data[0];
@@ -133,7 +133,7 @@ namespace Luminous
     right = { p13, p22, p31, p3 };
   }
 
-  bool BezierCurve2::isFlat(float tolerance) const
+  bool CubicBezierCurve::isFlat(float tolerance) const
   {
     // calculate the maximum difference between the middle control points and a straight
     // line between the end points.
@@ -148,7 +148,7 @@ namespace Luminous
     return diff <= tolerance;
   }
 
-  Nimble::Vector2f BezierCurve2::tangent(float t) const
+  Nimble::Vector2f CubicBezierCurve::tangent(float t) const
   {
     float tm = 1.f - t;
     auto p0 = m_data[0];

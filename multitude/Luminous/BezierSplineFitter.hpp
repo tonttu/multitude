@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Export.hpp"
-#include "BezierCurve.hpp"
+#include "CubicBezierCurve.hpp"
 
 namespace Luminous
 {

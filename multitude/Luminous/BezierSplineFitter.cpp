@@ -1,5 +1,5 @@
 #include "BezierSplineFitter.hpp"
-#include "BezierCurve.hpp"
+#include "CubicBezierCurve.hpp"
 
 namespace Luminous
 {
@@ -14,18 +14,18 @@ namespace Luminous
     void fitCubic(std::vector<BezierNode> & nodes, float error, size_t first, size_t last,
                   Nimble::Vector2f tan1, Nimble::Vector2f tan2);
 
-    void addCurve(std::vector<BezierNode> & nodes, const BezierCurve2 & curve, float strokeWidth);
+    void addCurve(std::vector<BezierNode> & nodes, const CubicBezierCurve & curve, float strokeWidth);
 
     // Use least-squares method to find Bezier control points for region.
-    BezierCurve2 generateBezier(size_t first, size_t last, const std::vector<float> & uPrime,
-                                Nimble::Vector2f tan1, Nimble::Vector2f tan2);
+    CubicBezierCurve generateBezier(size_t first, size_t last, const std::vector<float> & uPrime,
+                                    Nimble::Vector2f tan1, Nimble::Vector2f tan2);
 
     // Given set of points and their parameterization, try to find
     // a better parameterization.
-    bool reparameterize(size_t first, size_t last, std::vector<float> & u, const BezierCurve2 & curve);
+    bool reparameterize(size_t first, size_t last, std::vector<float> & u, const CubicBezierCurve & curve);
 
     // Use Newton-Raphson iteration to find better root.
-    float findRoot(const BezierCurve2 & curve, Nimble::Vector2f point, float u);
+    float findRoot(const CubicBezierCurve & curve, Nimble::Vector2f point, float u);
 
     // Evaluate a bezier curve at a particular parameter value
     Nimble::Vector2f evaluate(int degree, const Nimble::Vector2f * curve, float t);
@@ -35,7 +35,7 @@ namespace Luminous
     std::vector<float> chordLengthParameterize(size_t first, size_t last);
 
     // Find the maximum squared distance of digitized points to fitted curve.
-    std::pair<float, size_t> findMaxError(size_t first, size_t last, const BezierCurve2 & curve,
+    std::pair<float, size_t> findMaxError(size_t first, size_t last, const CubicBezierCurve & curve,
                                           const std::vector<float> & u);
 
   public:
@@ -63,7 +63,7 @@ namespace Luminous
     bool parametersInOrder = true;
     // Try 4 iterations
     for (int i = 0; i <= 4; i++) {
-      BezierCurve2 curve = generateBezier(first, last, uPrime, tan1, tan2);
+      CubicBezierCurve curve = generateBezier(first, last, uPrime, tan1, tan2);
       //  Find max deviation of points to fitted curve
       auto maxErrorRes = findMaxError(first, last, curve, uPrime);
       /// @todo check that the stroke width is not changed too much
@@ -84,7 +84,7 @@ namespace Luminous
     fitCubic(nodes, error, split, last, -tanCenter, tan2);
   }
 
-  void BezierSplineFitter::D::addCurve(std::vector<BezierNode> & nodes, const BezierCurve2 & curve,
+  void BezierSplineFitter::D::addCurve(std::vector<BezierNode> & nodes, const CubicBezierCurve & curve,
                                        float strokeWidth)
   {
     auto & prev = nodes.back();
@@ -92,7 +92,7 @@ namespace Luminous
     nodes.push_back(BezierNode{curve[3], curve[2], curve[3], strokeWidth});
   }
 
-  BezierCurve2 BezierSplineFitter::D::generateBezier(
+  CubicBezierCurve BezierSplineFitter::D::generateBezier(
       size_t first, size_t last, const std::vector<float> & uPrime,
       Nimble::Vector2f tan1, Nimble::Vector2f tan2)
   {
@@ -177,7 +177,7 @@ namespace Luminous
             pt2};
   }
 
-  bool BezierSplineFitter::D::reparameterize(size_t first, size_t last, std::vector<float> & u, const BezierCurve2 & curve)
+  bool BezierSplineFitter::D::reparameterize(size_t first, size_t last, std::vector<float> & u, const CubicBezierCurve & curve)
   {
     for (size_t i = first; i <= last; i++)
       u[i - first] = findRoot(curve, m_points[i].point, u[i - first]);
@@ -190,7 +190,7 @@ namespace Luminous
     return true;
   }
 
-  float BezierSplineFitter::D::findRoot(const BezierCurve2 & curve, Nimble::Vector2f point, float u)
+  float BezierSplineFitter::D::findRoot(const CubicBezierCurve & curve, Nimble::Vector2f point, float u)
   {
     Nimble::Vector2f curve1[3];
     Nimble::Vector2f curve2[2];
@@ -236,7 +236,7 @@ namespace Luminous
   }
 
   std::pair<float, size_t> BezierSplineFitter::D::findMaxError(
-      size_t first, size_t last, const BezierCurve2 & curve, const std::vector<float> & u)
+      size_t first, size_t last, const CubicBezierCurve & curve, const std::vector<float> & u)
   {
     size_t index = (last - first + 1) / 2;
     float maxDist = 0;
