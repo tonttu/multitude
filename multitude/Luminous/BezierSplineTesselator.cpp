@@ -161,7 +161,19 @@ namespace Luminous
       float cc = m_d->capSegmentAngleCos(inputIt[0].strokeWidth);
       if (cc < -1.f || cc > 1.f)
         cc = -1.f;
-      curve.evaluate(polylineBuffer, maxCurveError, cc,
+
+      union {
+        float f;
+        uint32_t i;
+      };
+      float maxValue = std::max({std::abs(curve[0].x), std::abs(curve[0].y),
+                                 std::abs(curve[1].x), std::abs(curve[1].y),
+                                 std::abs(curve[2].x), std::abs(curve[2].y),
+                                 std::abs(curve[3].x), std::abs(curve[3].y)});
+      f = maxValue;
+      i += 5;
+      float floatDiff = f - maxValue;
+      curve.evaluate(polylineBuffer, std::max(floatDiff, maxCurveError), cc,
           inputIt[0].strokeWidth, inputIt[1].strokeWidth,
           curve.tangent(0.f));
 
@@ -191,22 +203,25 @@ namespace Luminous
           float angleCos = dot(unitTangent, prevUnitTangent);
           /// The spline might not have c1 continuity, so we detect
           /// sharp turns and render a round join here.
-          if (angleCos < s) {
+          if (angleCos < s && s >= -1.f && s < 1.f) {
             float angle = std::acos(angleCos);
-            int steps = angle / std::acos(s);
+            if (std::isfinite(angle)) {
+              int steps = angle / std::acos(s);
 
-            bool left = cross(prevUnitTangent, unitTangent) > 0.f;
-            Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * (p.width * 0.5f);
-            angle = angle / (steps + 1) * (left ? 1 : -1);
+              bool left = cross(prevUnitTangent, unitTangent) > 0.f;
+              Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * (p.width * 0.5f);
+              angle = angle / (steps + 1) * (left ? 1 : -1);
 
-            for (int i = 0; i < steps; ++i) {
-              normal2.rotate(angle);
+              float s = std::sin(angle), c = std::cos(angle);
+              for (int i = 0; i < steps; ++i) {
+                normal2.rotate(s, c);
 
-              v.location = p.point - normal2;
-              out.push_back(v);
+                v.location = p.point - normal2;
+                out.push_back(v);
 
-              v.location = p.point + normal2;
-              out.push_back(v);
+                v.location = p.point + normal2;
+                out.push_back(v);
+              }
             }
           }
         }

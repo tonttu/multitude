@@ -97,12 +97,16 @@ namespace Luminous
     if (isFlat(tolerance)) {
       Nimble::Vector2f t = tangent(1.f);
       const float len = t.length();
-      /// If the length is less than 0.001, we start getting serious
-      /// floating point accuracy issues
-      if (len < 0.001f || dot(t /= len, prevUnitTangent) > angleToleranceCos) {
+      if (len < tolerance || dot(t /= len, prevUnitTangent) > angleToleranceCos) {
         points.push_back({m_data[3], t, widthEnd});
         return;
       }
+    }
+
+    float len2 = (m_data[3] - m_data[0]).lengthSqr();
+    if (len2 < tolerance * tolerance) {
+      points.push_back({m_data[3], tangent(1.f).normalized(), widthEnd});
+      return;
     }
 
     CubicBezierCurve left, right;
