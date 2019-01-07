@@ -103,7 +103,7 @@ namespace Luminous
     void setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color);
     void setStrokeDepth(Valuable::Node::Uuid id, float depth);
 
-    void render(RenderContext & r);
+    void render(RenderContext & r) const;
 
   private:
     class D;

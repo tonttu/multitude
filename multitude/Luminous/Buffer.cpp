@@ -116,8 +116,13 @@ namespace Luminous
   {
     m_d->dataSize = std::max(m_d->dataSize, offset + size);
     for (DirtyRegion & dirty: m_d->dirtyRegions) {
-      dirty.dataBegin = std::min(dirty.dataBegin, offset);
-      dirty.dataEnd = std::max(dirty.dataEnd, offset + size);
+      if (dirty.dataBegin == dirty.dataEnd) {
+        dirty.dataBegin = offset;
+        dirty.dataEnd = offset + size;
+      } else {
+        dirty.dataBegin = std::min(dirty.dataBegin, offset);
+        dirty.dataEnd = std::max(dirty.dataEnd, offset + size);
+      }
     }
   }
 }

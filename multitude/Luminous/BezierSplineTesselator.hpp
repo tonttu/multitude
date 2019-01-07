@@ -13,7 +13,7 @@ namespace Luminous
     struct Vertex
     {
       Nimble::Vector2f location;
-      Radiant::ColorPMA color;
+      Nimble::Vector4f color;
     };
 
   public:

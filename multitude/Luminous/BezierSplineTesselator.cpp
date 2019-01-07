@@ -146,7 +146,7 @@ namespace Luminous
     Nimble::Vector2f normal;
 
     Vertex v;
-    v.color = color;
+    v.color = color.toVector();
 
     Nimble::Vector2f prevUnitTangent;
     bool first = true;

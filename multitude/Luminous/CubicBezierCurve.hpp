@@ -81,8 +81,14 @@ namespace Luminous
     /// Checks whether the curve is flat given the tolerance.
     inline bool isFlat(float tolerance) const;
 
+    /// Calcuates the bezier value
+    inline Nimble::Vector2f value(float t) const;
+
     /// Calculates the derivative of the bezier curve in the given point
     inline Nimble::Vector2f tangent(float t) const;
+
+    /// Calculates the second derivative, see tangent() for the first derivative
+    inline Nimble::Vector2f derivative2(float t) const;
 
   private:
     std::array<Nimble::Vector2f, 4> m_data;
@@ -92,7 +98,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   void CubicBezierCurve::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
-                              float widthBegin, float widthEnd, Nimble::Vector2f prevUnitTangent) const
+                                  float widthBegin, float widthEnd, Nimble::Vector2f prevUnitTangent) const
   {
     if (isFlat(tolerance)) {
       Nimble::Vector2f t = tangent(1.f);
@@ -118,7 +124,7 @@ namespace Luminous
   }
 
   void CubicBezierCurve::subdivideCurve(CubicBezierCurve & left,
-                                    CubicBezierCurve & right, float t) const
+                                        CubicBezierCurve & right, float t) const
   {
     // De Casteljau's algorithm
     auto p0 = m_data[0];
@@ -152,6 +158,17 @@ namespace Luminous
     return diff <= tolerance;
   }
 
+  Nimble::Vector2f CubicBezierCurve::value(float t) const
+  {
+    float tm = 1.f - t;
+    auto p0 = m_data[0];
+    auto p1 = m_data[1];
+    auto p2 = m_data[2];
+    auto p3 = m_data[3];
+
+    return tm*tm*tm*p0 + 3*tm*tm*t*p1 + 3*tm*t*t*p2 + t*t*t*p3;
+  }
+
   Nimble::Vector2f CubicBezierCurve::tangent(float t) const
   {
     float tm = 1.f - t;
@@ -161,5 +178,16 @@ namespace Luminous
     auto p3 = m_data[3];
 
     return 3*tm*tm*(p1 - p0) + 6*tm*t*(p2 - p1) + 3*t*t*(p3 - p2);
+  }
+
+  Nimble::Vector2f CubicBezierCurve::derivative2(float t) const
+  {
+    float tm = 1.f - t;
+    auto p0 = m_data[0];
+    auto p1 = m_data[1];
+    auto p2 = m_data[2];
+    auto p3 = m_data[3];
+
+    return 6*tm*(p2 - 2.f * p1 + p0) + 6*t*(p3 - 2.f * p2 + p1);
   }
 }

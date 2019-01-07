@@ -8,6 +8,8 @@
 
 #include <QMutex>
 
+#include <boost/container/flat_map.hpp>
+
 /// Number of consecutive frames with inefficient buffer usage before freeing
 /// the existing buffer and reallocating a new smaller one.
 static constexpr int s_bufferRecreateFrames = 30;
@@ -136,7 +138,7 @@ namespace Luminous
     int m_minLod = 0;
     int m_lodLevels = 0;
 
-    std::map<Valuable::Node::Uuid, StrokeCache> m_mipmaps;
+    boost::container::flat_map<Valuable::Node::Uuid, StrokeCache> m_mipmaps;
 
     ContextArrayT<GpuContext> m_gpuContext;
 
@@ -179,6 +181,7 @@ namespace Luminous
     if (levelGpu.cpuGeneration < mipmap.cpuGeneration) {
       levelGpu.strokeId = mipmap.stroke.id;
       levelGpu.depth = mipmap.stroke.depth;
+      levelGpu.cpuGeneration = mipmap.cpuGeneration;
 
       const uint32_t bufferSize = gpuContext.buffer.size();
       const uint32_t vertexCount = level.triangleStrip.size();
@@ -186,22 +189,18 @@ namespace Luminous
       if (levelGpu.bufferOffset + levelGpu.vertexCount == bufferSize) {
         // This is the last item in the buffer, we can just replace it
         gpuContext.buffer.resize(bufferSize - levelGpu.vertexCount + vertexCount);
-        levelGpu.vertexCount = vertexCount;
-        gpuContext.vertexBuffer.invalidateRegion(levelGpu.bufferOffset * sizeof(gpuContext.buffer[0]),
-            vertexCount * sizeof(gpuContext.buffer[0]));
-      } else if (vertexCount <= levelGpu.vertexCount) {
-        // New contents fit in the same region
-        levelGpu.vertexCount = vertexCount;
-        gpuContext.vertexBuffer.invalidateRegion(levelGpu.bufferOffset * sizeof(gpuContext.buffer[0]),
-            vertexCount * sizeof(gpuContext.buffer[0]));
-      } else {
+      } else if (vertexCount > levelGpu.vertexCount) {
         // Append to the end
         levelGpu.vertexCount = vertexCount;
         levelGpu.bufferOffset = bufferSize;
-        gpuContext.buffer.resize(bufferSize + vertexCount);
-      }
+        gpuContext.buffer.insert(gpuContext.buffer.end(), level.triangleStrip.data(),
+                                 level.triangleStrip.data() + levelGpu.vertexCount);
+        return levelGpu;
+      } // else the contents fit to the same region
 
-      levelGpu.cpuGeneration = mipmap.cpuGeneration;
+      levelGpu.vertexCount = vertexCount;
+      gpuContext.vertexBuffer.invalidateRegion(levelGpu.bufferOffset * sizeof(gpuContext.buffer[0]),
+          vertexCount * sizeof(gpuContext.buffer[0]));
       std::copy_n(level.triangleStrip.data(), levelGpu.vertexCount,
                   gpuContext.buffer.data() + levelGpu.bufferOffset);
     }
@@ -411,7 +410,7 @@ namespace Luminous
     }
   }
 
-  void BezierSplineRenderer::render(RenderContext & r)
+  void BezierSplineRenderer::render(RenderContext & r) const
   {
     GpuContext & gpuContext = *m_d->m_gpuContext;
 
