@@ -3,6 +3,13 @@
 
 namespace Luminous
 {
+  struct ErrorResult
+  {
+    float maxErrorSqr = 0;
+    float maxStrokeWidthError = 0;
+    size_t pointIdx = 0;
+  };
+
   class BezierSplineFitter::D
   {
   public:
@@ -35,8 +42,8 @@ namespace Luminous
     std::vector<float> chordLengthParameterize(size_t first, size_t last);
 
     // Find the maximum squared distance of digitized points to fitted curve.
-    std::pair<float, size_t> findMaxError(size_t first, size_t last, const CubicBezierCurve & curve,
-                                          const std::vector<float> & u);
+    ErrorResult findMaxError(size_t first, size_t last, const CubicBezierCurve & curve,
+                             const std::vector<float> & u);
 
   public:
     const Point * m_points;
@@ -65,18 +72,18 @@ namespace Luminous
     for (int i = 0; i <= 4; i++) {
       CubicBezierCurve curve = generateBezier(first, last, uPrime, tan1, tan2);
       //  Find max deviation of points to fitted curve
-      auto maxErrorRes = findMaxError(first, last, curve, uPrime);
-      /// @todo check that the stroke width is not changed too much
-      if (maxErrorRes.first < error && parametersInOrder) {
+      const ErrorResult maxErrorRes = findMaxError(first, last, curve, uPrime);
+      const float widthErrorSqr = maxErrorRes.maxStrokeWidthError * maxErrorRes.maxStrokeWidthError;
+      if (maxErrorRes.maxErrorSqr < error && widthErrorSqr < error && parametersInOrder) {
         addCurve(nodes, curve, m_points[last].strokeWidth);
         return;
       }
-      split = maxErrorRes.second;
+      split = maxErrorRes.pointIdx;
       // If error not too large, try reparameterization and iteration
-      if (maxErrorRes.first >= maxError)
+      if (maxErrorRes.maxErrorSqr >= maxError)
         break;
       parametersInOrder = reparameterize(first, last, uPrime, curve);
-      maxError = maxErrorRes.first;
+      maxError = maxErrorRes.maxErrorSqr;
     }
     // Fitting failed -- split at max error point and fit recursively
     Nimble::Vector2f tanCenter = m_points[split - 1].point - m_points[split + 1].point;
@@ -235,21 +242,28 @@ namespace Luminous
     return u;
   }
 
-  std::pair<float, size_t> BezierSplineFitter::D::findMaxError(
+  ErrorResult BezierSplineFitter::D::findMaxError(
       size_t first, size_t last, const CubicBezierCurve & curve, const std::vector<float> & u)
   {
-    size_t index = (last - first + 1) / 2;
-    float maxDist = 0;
+    ErrorResult res;
+    res.pointIdx = (last - first + 1) / 2;
+    const float firstStrokeWidth = m_points[first].strokeWidth;
+    const float lastStrokeWidth = m_points[last].strokeWidth;
     for (size_t i = first + 1; i < last; i++) {
       Nimble::Vector2f P = evaluate(3, curve.data(), u[i - first]);
       Nimble::Vector2f v = P - m_points[i].point;
-      float dist = v.lengthSqr();
-      if (dist >= maxDist) {
-        maxDist = dist;
-        index = i;
+      float distSqr = v.lengthSqr();
+      if (distSqr >= res.maxErrorSqr) {
+        res.maxErrorSqr = distSqr;
+        res.pointIdx = i;
       }
+
+      const float newStrokeWidth = Nimble::Math::lerp(firstStrokeWidth, lastStrokeWidth, u[i - first]);
+      const float strokeWidthError = std::abs(m_points[i].strokeWidth - newStrokeWidth);
+      res.maxStrokeWidthError = std::max(res.maxStrokeWidthError, strokeWidthError);
     }
-    return std::make_pair(maxDist, index);
+
+    return res;
   }
 
   /////////////////////////////////////////////////////////////////////////////
