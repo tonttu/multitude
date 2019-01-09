@@ -119,6 +119,8 @@ namespace VideoDisplay
         m_index(-1)
     {}
 
+    virtual ~VideoFrame() {}
+
     Timestamp timestamp() const { return m_timestamp; }
     void setTimestamp(Timestamp ts) { m_timestamp = ts; }
 
