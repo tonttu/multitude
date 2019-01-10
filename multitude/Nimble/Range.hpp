@@ -51,6 +51,9 @@ namespace Nimble {
     /// The upper limit of the range
     inline T high() const { return m_high; }
 
+    inline void setLow(const T & low) { m_low = low; }
+    inline void setHigh(const T & high) { m_high = high; }
+
     /// Clamps the argument value to be between the low and high limits.
     /// @param v Value to clamp
     /// @return Clamped value

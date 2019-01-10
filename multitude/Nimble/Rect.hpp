@@ -509,12 +509,7 @@ namespace Nimble {
   template<class T>
   std::array<Nimble::Vector2T<T>, 4> RectT<T>::computeCorners() const
   {
-#if 0 /// @todo enable for new enough compilers (GCC >= 4.7, maybe Visual Studio >= 2013)
     return {{ low(), highLow(), high(), lowHigh() }};
-#else
-    std::array<Nimble::Vector2T<T>, 4> arr = {{ low(), highLow(), high(), lowHigh() }};
-    return arr;
-#endif
   }
 
   /// Rectangle of floats
