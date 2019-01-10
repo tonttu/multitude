@@ -44,8 +44,12 @@ namespace Luminous
                                                SplineRange range);
 
   /// Bounding box of all spline control points. The resulting bbox might be
-  /// too large, but it can be calculated quickly.
+  /// too large, but the implementation is faster than splineBounds
   LUMINOUS_API Nimble::Rectf splineBoundsApproximation(const BezierSpline & path);
+
+  /// Bezier spline bounding box. This function is accurate but slower than
+  /// splineBoundsApproximation.
+  LUMINOUS_API Nimble::Rectf splineBounds(const BezierSpline & path);
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////

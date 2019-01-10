@@ -284,6 +284,7 @@ namespace Luminous
     if (m_d->m_mipmaps.find(s.id) != m_d->m_mipmaps.end())
       return 0;
 
+    /// The bounding box for rendering doesn't need to be perfect, use the faster method here
     if (s.bbox.isEmpty())
       s.bbox = splineBoundsApproximation(*s.path);
 
