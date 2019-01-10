@@ -18,10 +18,10 @@ namespace Luminous
 
   public:
     // Fit a Bezier curve to a (sub)set of digitized points
-    void fitCubic(std::vector<BezierNode> & nodes, float error, size_t first, size_t last,
+    void fitCubic(BezierSpline & nodes, float error, size_t first, size_t last,
                   Nimble::Vector2f tan1, Nimble::Vector2f tan2);
 
-    void addCurve(std::vector<BezierNode> & nodes, const CubicBezierCurve & curve, float strokeWidth);
+    void addCurve(BezierSpline & nodes, const CubicBezierCurve & curve, float strokeWidth);
 
     // Use least-squares method to find Bezier control points for region.
     CubicBezierCurve generateBezier(size_t first, size_t last, const std::vector<float> & uPrime,
@@ -51,7 +51,7 @@ namespace Luminous
   };
 
   void BezierSplineFitter::D::fitCubic(
-      std::vector<BezierNode> & nodes, float error, size_t first, size_t last,
+      BezierSpline & nodes, float error, size_t first, size_t last,
       Nimble::Vector2f tan1, Nimble::Vector2f tan2)
   {
     //  Use heuristic if region only has two points in it
@@ -91,7 +91,7 @@ namespace Luminous
     fitCubic(nodes, error, split, last, -tanCenter, tan2);
   }
 
-  void BezierSplineFitter::D::addCurve(std::vector<BezierNode> & nodes, const CubicBezierCurve & curve,
+  void BezierSplineFitter::D::addCurve(BezierSpline & nodes, const CubicBezierCurve & curve,
                                        float strokeWidth)
   {
     auto & prev = nodes.back();
@@ -280,15 +280,15 @@ namespace Luminous
   {
   }
 
-  std::vector<BezierNode> BezierSplineFitter::fit(float maxErrorSqr, Nimble::Vector2f leftTangent,
-                                                  Nimble::Vector2f rightTangent) const
+  BezierSpline BezierSplineFitter::fit(float maxErrorSqr, Nimble::Vector2f leftTangent,
+                                       Nimble::Vector2f rightTangent) const
   {
-    std::vector<BezierNode> nodes;
+    BezierSpline nodes;
     fit(nodes, maxErrorSqr, leftTangent, rightTangent);
     return nodes;
   }
 
-  void BezierSplineFitter::fit(std::vector<BezierNode> & nodes, float maxErrorSqr,
+  void BezierSplineFitter::fit(BezierSpline & nodes, float maxErrorSqr,
                                Nimble::Vector2f leftTangent, Nimble::Vector2f rightTangent) const
   {
     if (m_d->m_pointsCount > 0) {

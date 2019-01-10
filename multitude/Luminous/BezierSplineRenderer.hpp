@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Export.hpp"
-#include "CubicBezierCurve.hpp"
+#include "BezierSpline.hpp"
 
 #include <Nimble/Rect.hpp>
 
@@ -42,7 +42,7 @@ namespace Luminous
       Valuable::Node::Uuid id = 0;
       /// If this is empty, the rect is calculated automatically
       Nimble::Rect bbox;
-      const std::vector<Luminous::BezierNode> * path = nullptr;
+      const BezierSpline * path = nullptr;
       Radiant::ColorPMA color{1, 1, 1, 1};
       float depth = 0;
     };
@@ -99,7 +99,7 @@ namespace Luminous
 
     /// Update stroke bezier spline data. Bounding box is calculated
     /// automatically or it can be given as a parameter.
-    void setStrokePath(Valuable::Node::Uuid id, const std::vector<Luminous::BezierNode> * path, Nimble::Rect bbox = Nimble::Rect());
+    void setStrokePath(Valuable::Node::Uuid id, const BezierSpline * path, Nimble::Rect bbox = Nimble::Rect());
     void setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color);
     void setStrokeDepth(Valuable::Node::Uuid id, float depth);
 

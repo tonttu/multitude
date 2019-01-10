@@ -17,7 +17,7 @@ namespace Luminous
   {
   public:
     /// @param path The generated spline, updated after every addPoint call
-    BezierSplineBuilder(std::vector<BezierNode> & path);
+    BezierSplineBuilder(BezierSpline & path);
     ~BezierSplineBuilder();
 
     /// Adds a new sample point to the builder. Based on the parameters this

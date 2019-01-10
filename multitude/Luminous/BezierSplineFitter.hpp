@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Export.hpp"
-#include "CubicBezierCurve.hpp"
+#include "BezierSpline.hpp"
 
 namespace Luminous
 {
@@ -28,11 +28,11 @@ namespace Luminous
 
     /// Returns the generated spline in a new vector
     /// @param maxErrorSqr squared max error between points and the fitted curve
-    std::vector<BezierNode> fit(float maxErrorSqr, Nimble::Vector2f leftTangent = {0, 0},
-                                Nimble::Vector2f rightTangent = {0, 0}) const;
+    BezierSpline fit(float maxErrorSqr, Nimble::Vector2f leftTangent = {0, 0},
+                     Nimble::Vector2f rightTangent = {0, 0}) const;
 
     /// Inserts the generated spline points at the end of the given vector
-    void fit(std::vector<BezierNode> & nodes, float maxErrorSqr,
+    void fit(BezierSpline & nodes, float maxErrorSqr,
              Nimble::Vector2f leftTangent = {0, 0}, Nimble::Vector2f rightTangent = {0, 0}) const;
 
   private:

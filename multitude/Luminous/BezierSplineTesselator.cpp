@@ -129,7 +129,7 @@ namespace Luminous
   BezierSplineTesselator::~BezierSplineTesselator()
   {}
 
-  void BezierSplineTesselator::tesselate(const std::vector<BezierNode> & nodes, const Radiant::ColorPMA & color)
+  void BezierSplineTesselator::tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color)
   {
     auto & out = m_d->m_vertices;
     /// @todo this could be incremental, only the last two nodes have changed in

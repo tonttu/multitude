@@ -284,14 +284,8 @@ namespace Luminous
     if (m_d->m_mipmaps.find(s.id) != m_d->m_mipmaps.end())
       return 0;
 
-    if (s.bbox.isEmpty()) {
-      for (const BezierNode & p : *s.path) {
-        const float radius = p.strokeWidth * 0.5f;
-        s.bbox.expand(p.point, radius);
-        s.bbox.expand(p.ctrlIn, radius);
-        s.bbox.expand(p.ctrlOut, radius);
-      }
-    }
+    if (s.bbox.isEmpty())
+      s.bbox = splineBoundsApproximation(*s.path);
 
     if (s.color.alpha() < 1.f)
       ++m_d->m_translucentStrokes;
@@ -325,7 +319,7 @@ namespace Luminous
   }
 
   void BezierSplineRenderer::setStrokePath(Valuable::Node::Uuid id,
-                                           const std::vector<BezierNode> * path,
+                                           const BezierSpline * path,
                                            Nimble::Rect bbox)
   {
     auto it = m_d->m_mipmaps.find(id);

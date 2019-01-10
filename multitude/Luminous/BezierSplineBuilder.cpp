@@ -5,15 +5,15 @@ namespace Luminous
   class BezierSplineBuilder::D
   {
   public:
-    D(std::vector<BezierNode> & path)
+    D(BezierSpline & path)
       : m_path(path)
     {}
 
   public:
     std::vector<BezierSplineFitter::Point> m_inputPoints;
-    std::vector<BezierNode> & m_path;
+    BezierSpline & m_path;
     /// This is here to avoid allocating new vector every frame
-    std::vector<BezierNode> m_tmpPath;
+    BezierSpline m_tmpPath;
     Nimble::Rectf m_readyBounds;
     Nimble::Rectf m_mutableBounds;
   };
@@ -21,7 +21,7 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  BezierSplineBuilder::BezierSplineBuilder(std::vector<BezierNode> & path)
+  BezierSplineBuilder::BezierSplineBuilder(BezierSpline & path)
     : m_d(new D(path))
   {
   }
@@ -64,7 +64,7 @@ namespace Luminous
           break;
 
       Luminous::BezierSplineFitter pathFitter(m_d->m_inputPoints.data() + size, m_d->m_inputPoints.size() - size);
-      std::vector<BezierNode> & newPath = m_d->m_tmpPath;
+      BezierSpline & newPath = m_d->m_tmpPath;
       newPath.clear();
       pathFitter.fit(newPath, maxFitErrorSqr, p.point - p.ctrlIn);
       newPath[0].ctrlIn = p.ctrlIn;
@@ -78,7 +78,7 @@ namespace Luminous
     // with a totally new bezier spline. To get accurate bounding box of the
     // spline incrementally, we handle the last two points separately.
     auto it = m_d->m_path.begin() + firstAddedNodeIndex;
-    auto fixedEnd = m_d->m_path.end() - 2;
+    auto fixedEnd = m_d->m_path.end() - std::min<size_t>(2, m_d->m_path.size());
 
     while (it < fixedEnd) {
       BezierNode & node = *it;

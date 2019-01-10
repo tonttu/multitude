@@ -30,7 +30,7 @@ namespace Luminous
 
     /// Tesselates the whole Bezier spline to a triangle strip. Output vector
     /// given in the constructor is cleared automatically.
-    void tesselate(const std::vector<BezierNode> & nodes, const Radiant::ColorPMA & color);
+    void tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color);
 
   private:
     class D;

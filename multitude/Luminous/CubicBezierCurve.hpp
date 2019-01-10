@@ -1,6 +1,8 @@
 #pragma once
 
+#include <Nimble/Circle.hpp>
 #include <Nimble/Vector2.hpp>
+#include <Nimble/Range.hpp>
 
 #include <array>
 #include <vector>
@@ -19,6 +21,7 @@ namespace Luminous
   ///
   /// This form already uses less memory when N is at least 4, and with
   /// lots of points it saves 30% memory.
+  /// @sa Luminous::BezierSpline
   struct BezierNode
   {
     Nimble::Vector2f point;
@@ -57,6 +60,9 @@ namespace Luminous
 
     inline const Nimble::Vector2f * data() const { return m_data.data(); }
 
+    /// Minimal rectangle containing the control points of the curve.
+    inline Nimble::Rectf bounds() const;
+
     /// Makes polyline approximation of the curve. Does not include the start point
     /// @param[out] points Result is stored into this vector
     /// @param tolerance max error
@@ -75,11 +81,30 @@ namespace Luminous
     /// @param left First half of the curve (before t)
     /// @param right Second half of the curve (after t)
     /// @param t Where to split the curve
-    inline void subdivideCurve(CubicBezierCurve & left,
-                               CubicBezierCurve & right, float t) const;
+    inline void subdivide(CubicBezierCurve & left,
+                          CubicBezierCurve & right, float t) const;
 
     /// Checks whether the curve is flat given the tolerance.
     inline bool isFlat(float tolerance) const;
+
+    /// Calculates intersections of the curve with a shape and return
+    /// intersecting curve parts as t parameter ranges.
+    ///
+    /// For instance, if the curve and the shape don't intersect at all,
+    /// intersections vector will not be touched.
+    /// If the curve is fully inside the shape, one range (0..1) will be
+    /// returned.
+    /// @param[out] intersections Intersecting parts of the curve are appended
+    ///             to this vector as t ranges
+    /// @param shape Arbitrary shape for the intersection testing. Needs to have
+    ///        shape->intersects(Nimble::Rect) and shape->contains(Nimble::Rect).
+    /// @param sizeToleranceSqr Square of the maximum error the function can do
+    /// @sa Luminous::splineIntersections
+    template <typename Shape>
+    void intersections(std::vector<Nimble::Rangef> & intersections,
+                       const Shape & shape,
+                       float sizeToleranceSqr,
+                       float leftT = 0.f, float rightT = 1.f) const;
 
     /// Calcuates the bezier value
     inline Nimble::Vector2f value(float t) const;
@@ -96,6 +121,14 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
+
+  Nimble::Rectf CubicBezierCurve::bounds() const
+  {
+    Nimble::Rectf bb;
+    for (const Nimble::Vector2f & point : m_data)
+      bb.expand(point);
+    return bb;
+  }
 
   void CubicBezierCurve::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
                                   float widthBegin, float widthEnd, Nimble::Vector2f prevUnitTangent) const
@@ -117,14 +150,14 @@ namespace Luminous
 
     CubicBezierCurve left, right;
     float mid = 0.5f;
-    subdivideCurve(left, right, mid);
+    subdivide(left, right, mid);
     float widthMiddle = mid * (widthBegin + widthEnd);
     left.evaluate(points, tolerance, angleToleranceCos, widthBegin, widthMiddle, prevUnitTangent);
     right.evaluate(points, tolerance, angleToleranceCos, widthMiddle, widthEnd, tangent(mid).normalized());
   }
 
-  void CubicBezierCurve::subdivideCurve(CubicBezierCurve & left,
-                                        CubicBezierCurve & right, float t) const
+  void CubicBezierCurve::subdivide(CubicBezierCurve & left,
+                                   CubicBezierCurve & right, float t) const
   {
     // De Casteljau's algorithm
     auto p0 = m_data[0];
@@ -156,6 +189,41 @@ namespace Luminous
     float diff = std::max(projB, projC);
 
     return diff <= tolerance;
+  }
+
+  template <typename Shape>
+  void CubicBezierCurve::intersections(std::vector<Nimble::Rangef> & intersections,
+                                       const Shape & shape,
+                                       float sizeToleranceSqr,
+                                       float leftT, float rightT) const
+  {
+    const Nimble::Rectf curveBounds = bounds();
+    if (shape.contains(curveBounds)) {
+      if (!intersections.empty() && intersections.back().high() == leftT)
+        intersections.back().setHigh(rightT);
+      else
+        intersections.push_back({leftT, rightT});
+      return;
+    }
+
+    if (!shape.intersects(curveBounds))
+      return;
+
+    const float curveLengthSqr = (curveBounds.low() - curveBounds.high()).lengthSqr();
+    if (curveLengthSqr < sizeToleranceSqr) {
+      if (!intersections.empty() && intersections.back().high() == leftT)
+        intersections.back().setHigh(rightT);
+      else
+        intersections.push_back({leftT, rightT});
+      return;
+    }
+
+    Luminous::CubicBezierCurve left, right;
+    subdivide(left, right, 0.5f);
+
+    float mid = 0.5f * (leftT + rightT);
+    left.intersections(intersections, shape, sizeToleranceSqr, leftT, mid);
+    right.intersections(intersections, shape, sizeToleranceSqr, mid, rightT);
   }
 
   Nimble::Vector2f CubicBezierCurve::value(float t) const
