@@ -52,7 +52,7 @@ namespace Nimble
     m_extent1 = rect.height() * 0.5f;
   }
 
-  bool Rectangle::isInside(Nimble::Vector2f p) const
+  bool Rectangle::contains(Nimble::Vector2f p) const
   {
     /// @todo we need a separate class for some kind of quadrilateral shapes
     /// This function works for parallelograms, but it would be simpler for just rectangles
@@ -65,20 +65,20 @@ namespace Nimble
     return std::abs(p.x) <= m_extent0 && std::abs(p.y) <= m_extent1;
   }
 
-  bool Rectangle::isInside(const Nimble::Rectangle & r) const
+  bool Rectangle::contains(const Nimble::Rectangle & r) const
   {
     // rectangle is inside if all points are inside
     std::array<Nimble::Vector2f, 4> corners = r.computeCorners();
 
     for(int i = 0; i < 4; ++i)
-      if(!isInside(corners[i])) return false;
+      if(!contains(corners[i])) return false;
     return true;
   }
 
   bool Rectangle::intersects(const Rectangle & r) const
   {
     // Check if other center is inside another rectangle
-    if(r.isInside(m_origin) || isInside(r.m_origin))
+    if(r.contains(m_origin) || contains(r.m_origin))
         return true;
 
     // Fast negation in clear cases

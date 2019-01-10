@@ -196,7 +196,7 @@ namespace Luminous {
         if(isErased(p))
           continue;
 
-        if(eraser.isInside(p.m_location)) {
+        if(eraser.contains(p.m_location)) {
           changed = true;
           if(!eraseFunc(p)) {
             ++validPoints;

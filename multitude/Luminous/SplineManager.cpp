@@ -1129,7 +1129,7 @@ namespace Luminous
       SplineInternal & stroke = it.value();
       if (stroke.m_bounds.intersects(eraser.boundingBox())) {
         // remove or split strokes where erased
-        if (eraser.isInside(Nimble::Rectangle(stroke.m_bounds)) ||
+        if (eraser.contains(Nimble::Rectangle(stroke.m_bounds)) ||
             stroke.erase(Nimble::Rectf(normalized[0], normalized[2]),
                          transformer, newStrokes)) {
           if (removedStrokes) {
@@ -1175,7 +1175,7 @@ namespace Luminous
       SplineInternal & stroke = m_d->m_strokes[id];
       if (stroke.m_bounds.intersects(eraserBounds)) {
         // remove or split strokes where erased
-        if (Nimble::Rectangle(eraserBounds).isInside(Nimble::Rectangle(stroke.m_bounds)) ||
+        if (Nimble::Rectangle(eraserBounds).contains(Nimble::Rectangle(stroke.m_bounds)) ||
             stroke.erase(eraser, newStrokes)) {
           if (removedStrokes) {
             removedStrokes->append(createInfo(id, std::move(stroke.m_data)));

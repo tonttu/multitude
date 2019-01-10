@@ -115,7 +115,7 @@ bool ClipStack::isVisible(const Nimble::Vector2 & p) const
 
     const D::StackItem & si = *it;
 
-    if(!si.m_rectangle.isInside(p))
+    if(!si.m_rectangle.contains(p))
       return false;
   }
 
