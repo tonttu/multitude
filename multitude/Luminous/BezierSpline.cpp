@@ -54,16 +54,24 @@ namespace Luminous
 
   Nimble::Rectf splineBounds(const BezierSpline & path)
   {
-    Nimble::Rect bbox;
     if (path.empty())
+      return Nimble::Rect();
+
+    return splineBounds(path.data(), path.data() + path.size());
+  }
+
+  Nimble::Rectf splineBounds(const Luminous::BezierNode * begin, const Luminous::BezierNode * end)
+  {
+    Nimble::Rect bbox;
+    if (begin == end)
       return bbox;
 
-    bbox.expand(path[0].point, 0.5f * path[0].strokeWidth);
+    bbox.expand(begin->point, 0.5f * begin->strokeWidth);
 
-    for (size_t i = 0, m = path.size() - 1; i < m; ++i) {
+    for (auto last = end - 1; begin < last; ++begin) {
       // Solve derivative's roots for x and y, see
       // https://pomax.github.io/bezierinfo/#boundingbox
-      const CubicBezierCurve curve(path[i], path[i+1]);
+      const CubicBezierCurve curve(begin[0], begin[1]);
       const Nimble::Vector2f a = 3.f * (-curve[0] + 3.f*curve[1] - 3.f*curve[2] + curve[3]);
       const Nimble::Vector2f b = 6.f * (curve[0] - 2.f*curve[1] + curve[2]);
       const Nimble::Vector2f c = 3.f * (curve[1] - curve[0]);
@@ -75,9 +83,9 @@ namespace Luminous
         const float t1 = (tmp - b.x) / (2.f * a.x);
         const float t2 = (tmp + b.x) / (-2.f * a.x);
         if (t1 > 0 && t1 < 1.f)
-          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(path[i].strokeWidth, path[i+1].strokeWidth, t1));
+          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
         if (t2 > 0 && t2 < 1.f)
-          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(path[i].strokeWidth, path[i+1].strokeWidth, t2));
+          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
       }
 
       if (dy >= 0.f) {
@@ -85,12 +93,12 @@ namespace Luminous
         const float t1 = (tmp - b.y) / (2.f * a.y);
         const float t2 = (tmp + b.y) / (-2.f * a.y);
         if (t1 > 0 && t1 < 1.f)
-          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(path[i].strokeWidth, path[i+1].strokeWidth, t1));
+          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
         if (t2 > 0 && t2 < 1.f)
-          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(path[i].strokeWidth, path[i+1].strokeWidth, t2));
+          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
       }
 
-      bbox.expand(path[i+1].point, 0.5f * path[i+1].strokeWidth);
+      bbox.expand(begin[1].point, 0.5f * begin[1].strokeWidth);
     }
 
     return bbox;

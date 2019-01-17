@@ -50,6 +50,8 @@ namespace Luminous
   /// Bezier spline bounding box. This function is accurate but slower than
   /// splineBoundsApproximation.
   LUMINOUS_API Nimble::Rectf splineBounds(const BezierSpline & path);
+  LUMINOUS_API Nimble::Rectf splineBounds(const Luminous::BezierNode * begin,
+                                          const Luminous::BezierNode * end);
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////

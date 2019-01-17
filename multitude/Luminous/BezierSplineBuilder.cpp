@@ -14,7 +14,7 @@ namespace Luminous
     BezierSpline & m_path;
     /// This is here to avoid allocating new vector every frame
     BezierSpline m_tmpPath;
-    Nimble::Rectf m_readyBounds;
+    Nimble::Rectf m_stableBounds;
     Nimble::Rectf m_mutableBounds;
   };
 
@@ -30,7 +30,7 @@ namespace Luminous
   {
   }
 
-  void BezierSplineBuilder::addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr)
+  size_t BezierSplineBuilder::addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr)
   {
     auto size = m_d->m_inputPoints.size();
     if (noiseThreshold > 0 && size >= 2) {
@@ -76,30 +76,19 @@ namespace Luminous
 
     // The algorithm here works so that it replaces the last two BezierNodes
     // with a totally new bezier spline. To get accurate bounding box of the
-    // spline incrementally, we handle the last two points separately.
-    auto it = m_d->m_path.begin() + firstAddedNodeIndex;
-    auto fixedEnd = m_d->m_path.end() - std::min<size_t>(2, m_d->m_path.size());
+    // spline incrementally, we don't cache the bounding box of the last two
+    // bezier curves.
+    auto it = m_d->m_path.data() + (std::max<size_t>(1, firstAddedNodeIndex) - 1);
+    auto end = m_d->m_path.data() + m_d->m_path.size();
+    auto stableEnd = end - std::min<size_t>(2, m_d->m_path.size());
+    auto mutableBegin = end - std::min<size_t>(3, m_d->m_path.size());
 
-    while (it < fixedEnd) {
-      BezierNode & node = *it;
-      const float radius = 0.5f * node.strokeWidth;
-      m_d->m_readyBounds.expand(node.point, radius);
-      m_d->m_readyBounds.expand(node.ctrlIn, radius);
-      m_d->m_readyBounds.expand(node.ctrlOut, radius);
+    m_d->m_stableBounds.expand(splineBounds(it, stableEnd));
 
-      ++it;
-    }
+    m_d->m_mutableBounds = m_d->m_stableBounds;
+    m_d->m_mutableBounds.expand(splineBounds(mutableBegin, end));
 
-    m_d->m_mutableBounds = m_d->m_readyBounds;
-    while (it != m_d->m_path.end()) {
-      BezierNode & node = *it;
-      const float radius = 0.5f * node.strokeWidth;
-      m_d->m_mutableBounds.expand(node.point, radius);
-      m_d->m_mutableBounds.expand(node.ctrlIn, radius);
-      m_d->m_mutableBounds.expand(node.ctrlOut, radius);
-
-      ++it;
-    }
+    return std::max<size_t>(m_d->m_path.size(), 2) - 2;
   }
 
   const Nimble::Rectf & BezierSplineBuilder::bounds() const

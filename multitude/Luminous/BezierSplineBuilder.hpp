@@ -26,7 +26,9 @@ namespace Luminous
     /// @param noiseThreshold expected maximum noise from a stationary object,
     ///        used to filter out small movements
     /// @param maxFitErrorSqr see maxErrorSqr parameter in BezierSplineFitter::fit
-    void addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr);
+    /// @returns number of stable points in the output path. Stable points do not
+    ///          change in the following calls to this function.
+    size_t addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr);
 
     /// Bounding box of all spline control points, taking account the spline width
     const Nimble::Rectf & bounds() const;
