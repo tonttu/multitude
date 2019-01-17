@@ -28,6 +28,8 @@ namespace Luminous
     Nimble::Vector2f ctrlIn;
     Nimble::Vector2f ctrlOut;
     float strokeWidth;
+
+    inline bool operator==(const BezierNode & b) const;
   };
 
   /// A cubic Bezier curve
@@ -59,9 +61,6 @@ namespace Luminous
     inline Nimble::Vector2f operator[](int i) const { return m_data[i]; }
 
     inline const Nimble::Vector2f * data() const { return m_data.data(); }
-
-    /// Minimal rectangle containing the control points of the curve.
-    inline Nimble::Rectf bounds() const;
 
     /// Makes polyline approximation of the curve. Does not include the start point
     /// @param[out] points Result is stored into this vector
@@ -104,6 +103,7 @@ namespace Luminous
     void intersections(std::vector<Nimble::Rangef> & intersections,
                        const Shape & shape,
                        float sizeToleranceSqr,
+                       float widthBegin, float widthEnd,
                        float leftT = 0.f, float rightT = 1.f) const;
 
     /// Calcuates the bezier value
@@ -122,12 +122,12 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  Nimble::Rectf CubicBezierCurve::bounds() const
+  bool BezierNode::operator==(const BezierNode & b) const
   {
-    Nimble::Rectf bb;
-    for (const Nimble::Vector2f & point : m_data)
-      bb.expand(point);
-    return bb;
+    return point == b.point &&
+        ctrlIn == b.ctrlIn &&
+        ctrlOut == b.ctrlOut &&
+        strokeWidth == b.strokeWidth;
   }
 
   void CubicBezierCurve::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
@@ -195,9 +195,15 @@ namespace Luminous
   void CubicBezierCurve::intersections(std::vector<Nimble::Rangef> & intersections,
                                        const Shape & shape,
                                        float sizeToleranceSqr,
+                                       float widthBegin, float widthEnd,
                                        float leftT, float rightT) const
   {
-    const Nimble::Rectf curveBounds = bounds();
+    Nimble::Rectf curveBounds;
+    curveBounds.expand(m_data[0], widthBegin * 0.5f);
+    curveBounds.expand(m_data[1], (widthBegin + widthEnd * 0.5f) * 0.3333333f);
+    curveBounds.expand(m_data[2], (widthBegin * 0.5f + widthEnd) * 0.3333333f);
+    curveBounds.expand(m_data[3], widthEnd * 0.5f);
+
     if (shape.contains(curveBounds)) {
       if (!intersections.empty() && intersections.back().high() == leftT)
         intersections.back().setHigh(rightT);
@@ -209,7 +215,7 @@ namespace Luminous
     if (!shape.intersects(curveBounds))
       return;
 
-    const float curveLengthSqr = (curveBounds.low() - curveBounds.high()).lengthSqr();
+    const float curveLengthSqr = (m_data[0] - m_data[3]).lengthSqr();
     if (curveLengthSqr < sizeToleranceSqr) {
       if (!intersections.empty() && intersections.back().high() == leftT)
         intersections.back().setHigh(rightT);
@@ -222,8 +228,9 @@ namespace Luminous
     subdivide(left, right, 0.5f);
 
     float mid = 0.5f * (leftT + rightT);
-    left.intersections(intersections, shape, sizeToleranceSqr, leftT, mid);
-    right.intersections(intersections, shape, sizeToleranceSqr, mid, rightT);
+    float widthMid = 0.5f * (widthBegin + widthEnd);
+    left.intersections(intersections, shape, sizeToleranceSqr, widthBegin, widthMid, leftT, mid);
+    right.intersections(intersections, shape, sizeToleranceSqr, widthMid, widthEnd, mid, rightT);
   }
 
   Nimble::Vector2f CubicBezierCurve::value(float t) const

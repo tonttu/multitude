@@ -69,7 +69,7 @@ namespace Luminous
     for (size_t idx = 0, m = path.size() - 1; idx < m; ++idx) {
       curveIntersections.clear();
       Luminous::CubicBezierCurve curve(path[idx], path[idx+1]);
-      curve.intersections(curveIntersections, shape, sizeToleranceSqr);
+      curve.intersections(curveIntersections, shape, sizeToleranceSqr, path[idx].strokeWidth, path[idx+1].strokeWidth);
 
       for (const Nimble::Rangef r: curveIntersections) {
         if (!splineIntersections.empty()) {
