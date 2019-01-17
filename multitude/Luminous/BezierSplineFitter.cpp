@@ -79,7 +79,8 @@ namespace Luminous
         return;
       }
       split = maxErrorRes.pointIdx;
-      // If error not too large, try reparameterization and iteration
+      // If error is too large, give up. Otherwise do reparameterization
+      // and try again.
       if (maxErrorRes.maxErrorSqr >= maxError)
         break;
       parametersInOrder = reparameterize(first, last, uPrime, curve);
@@ -122,7 +123,7 @@ namespace Luminous
       Nimble::Vector2f tmp = m_points[first + i].point - pt1 * (b0 + b1) - pt2 * (b2 + b3);
       C[0][0] += dot(a1, a1);
       C[0][1] += dot(a1, a2);
-      // C[1][0] += a1.dot(a2);
+      // Save one dot product by using the already calculated value
       C[1][0] = C[0][1];
       C[1][1] += dot(a2, a2);
       X[0] += dot(a1, tmp);
@@ -133,7 +134,7 @@ namespace Luminous
     float detC0C1 = C[0][0] * C[1][1] - C[1][0] * C[0][1];
     float alpha1, alpha2;
     if (std::abs(detC0C1) > s_epsilon) {
-      // Kramer's rule
+      // Cramer's rule
       float detC0X = C[0][0] * X[1]    - C[1][0] * X[0],
           detXC1 = X[0]    * C[1][1] - X[1]    * C[0][1];
       // Derive alpha values
