@@ -301,11 +301,14 @@ namespace Luminous
     return s.id;
   }
 
-  void BezierSplineRenderer::removeStroke(Valuable::Node::Uuid id)
+  BezierSplineRenderer::Stroke BezierSplineRenderer::takeStroke(Valuable::Node::Uuid id)
   {
+    BezierSplineRenderer::Stroke stroke;
+
     auto it = m_d->m_mipmaps.find(id);
     if (it != m_d->m_mipmaps.end()) {
-      if (it->second.stroke.color.alpha() < 1.f)
+      stroke = it->second.stroke;
+      if (stroke.color.alpha() < 1.f)
         --m_d->m_translucentStrokes;
 
       m_d->m_mipmaps.erase(it);
@@ -317,6 +320,15 @@ namespace Luminous
         }
       }
     }
+    return stroke;
+  }
+
+  BezierSplineRenderer::Stroke BezierSplineRenderer::stroke(Valuable::Node::Uuid id) const
+  {
+    auto it = m_d->m_mipmaps.find(id);
+    if (it != m_d->m_mipmaps.end())
+      return it->second.stroke;
+    return Stroke();
   }
 
   void BezierSplineRenderer::setStrokePath(Valuable::Node::Uuid id,

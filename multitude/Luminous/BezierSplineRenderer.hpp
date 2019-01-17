@@ -95,7 +95,8 @@ namespace Luminous
     /// Adds a new stroke to the renderer. Returns a new generated id if the
     /// given stroke didn't have non-zero id.
     Valuable::Node::Uuid addStroke(Stroke s);
-    void removeStroke(Valuable::Node::Uuid id);
+    Stroke takeStroke(Valuable::Node::Uuid id);
+    Stroke stroke(Valuable::Node::Uuid id) const;
 
     /// Update stroke bezier spline data. Bounding box is calculated
     /// automatically or it can be given as a parameter.
