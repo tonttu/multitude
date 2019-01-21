@@ -17,7 +17,7 @@ static constexpr int s_bufferRecreateFrames = 30;
 static constexpr int s_bufferMinSize = 512;
 /// How much (from 0 to 1) of the buffer needs to be used so that it's not
 /// considered as inefficient.
-static constexpr float s_bufferMinUsage = 0.15f;
+static constexpr float s_bufferMinUsage = 0.05f;
 
 namespace Luminous
 {
@@ -120,6 +120,13 @@ namespace Luminous
     /// we free all memory in buffer and recreate it from scratch to optimize
     /// memory usage.
     int consecutiveFramesWithInefficientBufferUsage = 0;
+
+    /// We have several Views per GpuContext, but we want to do certain things
+    /// only once per frame per GpuContext, so we keep track of the frame
+    /// numbers. When the frame number is different from this, we update
+    /// renderedVertices stats and do buffer cleanup.
+    uint32_t frame = 0;
+    uint32_t renderedVertices = 0;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -316,6 +323,7 @@ namespace Luminous
       for (GpuContext & context: m_d->m_gpuContext) {
         for (auto & p: context.views) {
           p.second.added.erase(id);
+          p.second.changed.erase(id);
           p.second.removed.insert(id);
         }
       }
@@ -441,13 +449,26 @@ namespace Luminous
     size_t oldBufferSize = gpuContext.buffer.size();
     size_t oldBufferCapacity = gpuContext.buffer.capacity();
 
-    if (gpuContext.consecutiveFramesWithInefficientBufferUsage > s_bufferRecreateFrames) {
-      gpuContext.consecutiveFramesWithInefficientBufferUsage = 0;
-      gpuContext.buffer.clear();
-      gpuContext.buffer.shrink_to_fit();
-      gpuContext.buffer.reserve(s_bufferMinSize);
-      gpuContext.mipmaps.clear();
-      view.viewRect = Nimble::Rectf();
+    if (r.frameNumber() != gpuContext.frame) {
+      float bufferUsage = float(gpuContext.renderedVertices) / gpuContext.buffer.capacity();
+      if (bufferUsage < s_bufferMinUsage && gpuContext.buffer.capacity() > s_bufferMinSize)
+        ++gpuContext.consecutiveFramesWithInefficientBufferUsage;
+      else
+        gpuContext.consecutiveFramesWithInefficientBufferUsage = 0;
+
+      gpuContext.frame = r.frameNumber();
+      gpuContext.renderedVertices = 0;
+
+      if (gpuContext.consecutiveFramesWithInefficientBufferUsage > s_bufferRecreateFrames) {
+        gpuContext.consecutiveFramesWithInefficientBufferUsage = 0;
+        gpuContext.buffer.clear();
+        gpuContext.buffer.shrink_to_fit();
+        gpuContext.buffer.reserve(s_bufferMinSize);
+        gpuContext.mipmaps.clear();
+
+        for (auto & p: gpuContext.views)
+          p.second.viewRect = Nimble::Rectf();
+      }
     }
 
     if (view.viewRect.contains(visibleArea)) {
@@ -458,22 +479,25 @@ namespace Luminous
           if (view.removed.count(mipmapLevelGpu.strokeId)) {
             mipmapLevelGpu = view.renderables[--size];
             view.depthChanged = true;
-          } else if (view.changed.count(mipmapLevelGpu.strokeId)) {
-            StrokeCache & mipmap = m_d->m_mipmaps[mipmapLevelGpu.strokeId];
-            if (extendedArea.intersects(mipmap.stroke.bbox)) {
-              mipmapLevelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
+          } else {
+            auto it = view.changed.find(mipmapLevelGpu.strokeId);
+            if (it == view.changed.end()) {
               ++idx;
             } else {
-              view.depthChanged = true;
-              mipmapLevelGpu = view.renderables[--size];
+              StrokeCache & mipmap = m_d->m_mipmaps[mipmapLevelGpu.strokeId];
+              if (extendedArea.intersects(mipmap.stroke.bbox)) {
+                mipmapLevelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
+                ++idx;
+              } else {
+                view.depthChanged = true;
+                mipmapLevelGpu = view.renderables[--size];
+              }
+              view.changed.erase(it);
             }
-          } else {
-            ++idx;
           }
         }
         view.renderables.resize(size);
         view.removed.clear();
-        view.changed.clear();
       }
 
       for (Valuable::Node::Uuid id: view.added) {
@@ -484,7 +508,21 @@ namespace Luminous
           view.depthChanged = true;
         }
       }
+
+      // Any remaining items in view.changed were not already in view.renderables,
+      // but their bounding box might have changed so that they now should be
+      // there, so check them separately.
+      for (Valuable::Node::Uuid id: view.changed) {
+        StrokeCache & mipmap = m_d->m_mipmaps[id];
+        if (extendedArea.intersects(mipmap.stroke.bbox)) {
+          StrokeMipmapGpu & levelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
+          view.renderables.push_back(levelGpu);
+          view.depthChanged = true;
+        }
+      }
+
       view.added.clear();
+      view.changed.clear();
     } else {
       view.viewRect = extendedArea;
       view.activeLod = mipmapLevel;
@@ -538,11 +576,7 @@ namespace Luminous
       renderedVertices += mipmapLevelGpu.vertexCount;
     }
 
-    float bufferUsage = float(renderedVertices) / gpuContext.buffer.capacity();
-    if (bufferUsage < s_bufferMinUsage && gpuContext.buffer.capacity() > s_bufferMinSize)
-      ++gpuContext.consecutiveFramesWithInefficientBufferUsage;
-    else
-      gpuContext.consecutiveFramesWithInefficientBufferUsage = 0;
+    gpuContext.renderedVertices += renderedVertices;
 
     float opacity = r.opacity();
     builder.uniform->color = Nimble::Vector4f(opacity, opacity, opacity, opacity);
