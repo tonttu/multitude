@@ -106,7 +106,7 @@ namespace Luminous
                        float widthBegin, float widthEnd,
                        float leftT = 0.f, float rightT = 1.f) const;
 
-    /// Calcuates the bezier value
+    /// Calculates the bezier value
     inline Nimble::Vector2f value(float t) const;
 
     /// Calculates the derivative of the bezier curve in the given point

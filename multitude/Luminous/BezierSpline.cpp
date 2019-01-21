@@ -72,30 +72,30 @@ namespace Luminous
       // Solve derivative's roots for x and y, see
       // https://pomax.github.io/bezierinfo/#boundingbox
       const CubicBezierCurve curve(begin[0], begin[1]);
-      const Nimble::Vector2f a = 3.f * (-curve[0] + 3.f*curve[1] - 3.f*curve[2] + curve[3]);
+      const Nimble::Vector2f a2 = 2.f * 3.f * (-curve[0] + 3.f*curve[1] - 3.f*curve[2] + curve[3]);
       const Nimble::Vector2f b = 6.f * (curve[0] - 2.f*curve[1] + curve[2]);
       const Nimble::Vector2f c = 3.f * (curve[1] - curve[0]);
-      const float dx = b.x*b.x - 4.f*a.x*c.x;
-      const float dy = b.y*b.y - 4.f*a.y*c.y;
+      const Nimble::Vector2f d = {b.x*b.x - 2.f*a2.x*c.x, b.y*b.y - 2.f*a2.y*c.y};
+      for (int i = 0; i < 2; ++i) {
 
-      if (dx >= 0.f) {
-        const float tmp = std::sqrt(dx);
-        const float t1 = (tmp - b.x) / (2.f * a.x);
-        const float t2 = (tmp + b.x) / (-2.f * a.x);
-        if (t1 > 0 && t1 < 1.f)
-          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
-        if (t2 > 0 && t2 < 1.f)
-          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
-      }
-
-      if (dy >= 0.f) {
-        const float tmp = std::sqrt(dy);
-        const float t1 = (tmp - b.y) / (2.f * a.y);
-        const float t2 = (tmp + b.y) / (-2.f * a.y);
-        if (t1 > 0 && t1 < 1.f)
-          bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
-        if (t2 > 0 && t2 < 1.f)
-          bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
+        if (d[i] >= 0.f) {
+          const float tmp = std::sqrt(d[i]);
+          // Check if the derivative is close to a line and we are about to
+          // trying to solve quadratic formula by dividing with a number very
+          // close to zero. If so, just solve bt+c=0 instead of at²+bt+c=0.
+          if (std::abs(tmp - b[i]) > std::abs(a2[i]) * 1e4) {
+            const float t = -c[i] / b[i];
+            if (t > 0 && t < 1.f)
+              bbox.expand(curve.value(t), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t));
+          } else {
+            const float t1 = (tmp - b[i]) / a2[i];
+            const float t2 = (-tmp - b[i]) / a2[i];
+            if (t1 > 0 && t1 < 1.f)
+              bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
+            if (t2 > 0 && t2 < 1.f)
+              bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
+          }
+        }
       }
 
       bbox.expand(begin[1].point, 0.5f * begin[1].strokeWidth);
