@@ -1928,6 +1928,8 @@ namespace VideoDisplay
         if(m_d->m_options.isLooping()) {
           if (m_d->seekToBeginning())
             videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
+          else
+            break; // We are requested to loop, but seek failed and reopening the source failed.
           eof = EofState::Normal;
 
           m_d->m_loopOffset += m_d->m_av.duration;
