@@ -137,23 +137,16 @@ namespace
 
 namespace VideoDisplay
 {
-  class VideoFrameFfmpeg : public VideoFrame
+  VideoFrameFfmpeg::~VideoFrameFfmpeg()
   {
-  public:
-    ~VideoFrameFfmpeg()
-    {
-      if (frame) {
-        if (referenced)
-          av_frame_unref(frame);
-        av_frame_free(&frame);
-        frame = nullptr;
-      }
-      referenced = false;
+    if (frame) {
+      if (referenced)
+        av_frame_unref(frame);
+      av_frame_free(&frame);
+      frame = nullptr;
     }
-
-    bool referenced = false;
-    AVFrame* frame = nullptr;
-  };
+    referenced = false;
+  }
 
   struct MyAV
   {

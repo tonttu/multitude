@@ -5,6 +5,8 @@
 
 #include <functional>
 
+struct AVFrame;
+
 namespace VideoDisplay
 {
 
@@ -16,6 +18,15 @@ namespace VideoDisplay
   ///  * Register Cornerstone lock manager
   ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
   VIDEODISPLAY_API void ffmpegInit();
+
+  class VideoFrameFfmpeg : public VideoFrame
+  {
+  public:
+    ~VideoFrameFfmpeg();
+
+    bool referenced = false;
+    AVFrame* frame = nullptr;
+  };
 
   /// Audio/Video decoder implementation that uses Ffmpeg as a backend
   class FfmpegDecoder : public AVDecoder
