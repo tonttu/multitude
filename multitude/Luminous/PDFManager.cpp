@@ -274,6 +274,14 @@ namespace
       return FPDFPath_LineTo(m_path, point.x, point.y);
     }
 
+    bool bezierTo(const Nimble::Vector2f & c1, const Nimble::Vector2f & c2, const Nimble::Vector2f & p) override
+    {
+      if (!m_path)
+        return false;
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      return FPDFPath_BezierTo(m_path, c1.x, c1.y, c2.x, c2.y, p.x, p.y);
+    }
+
     bool endDraw() override
     {
       if (!m_path)

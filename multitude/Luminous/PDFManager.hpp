@@ -39,6 +39,14 @@ namespace Luminous
     ///
     virtual bool lineTo(const Nimble::Vector2f& pt) = 0;
     ///
+    /// Draws a cubic Bezier curve from the current point
+    /// @param c1 first control point
+    /// @param c2 second control point
+    /// @param p ending point
+    /// @return true on success
+    ///
+    virtual bool bezierTo(const Nimble::Vector2f & c1, const Nimble::Vector2f & c2, const Nimble::Vector2f & p) = 0;
+    ///
     /// @brief endDraw Ends drawing and attach created path to the annotation
     /// @return true on success
     ///
