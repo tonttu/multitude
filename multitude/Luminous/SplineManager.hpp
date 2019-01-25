@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BezierSpline.hpp"
 #include "Export.hpp"
 
 #include <Nimble/Rectangle.hpp>
@@ -177,13 +176,6 @@ namespace Luminous {
     /// Serialized string needs to be split to lines to use this
     /// @return deserialized spline
     static SplineInfo deserializeSpline(const QStringList & lines, float defaultDepth = 0.f);
-
-    /// Converts Points to BezierSpline
-    /// @param fixControlPoints if true, attemps to fix control points from
-    ///        the original curve to be more smooth. This is needed since
-    ///        SplineManager doesn't generate control points properly for a
-    ///        cubic bezier spline.
-    static BezierSpline exportPath(const Points & points, float strokeWidth, bool fixControlPoints = true);
 
     /// Remove all data in the container
     void clear();
