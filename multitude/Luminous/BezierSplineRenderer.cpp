@@ -364,7 +364,8 @@ namespace Luminous
     // Invalidate View
     for (GpuContext & context: m_d->m_gpuContext)
       for (auto & p: context.views)
-        p.second.changed.insert(id);
+        if (!p.second.added.count(id))
+          p.second.changed.insert(id);
   }
 
   void BezierSplineRenderer::setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color)
@@ -392,7 +393,8 @@ namespace Luminous
     // Invalidate View
     for (GpuContext & context: m_d->m_gpuContext)
       for (auto & p: context.views)
-        p.second.changed.insert(id);
+        if (!p.second.added.count(id))
+          p.second.changed.insert(id);
   }
 
   void BezierSplineRenderer::setStrokeDepth(Valuable::Node::Uuid id, float depth)
