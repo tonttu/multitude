@@ -350,8 +350,7 @@ namespace Luminous
     StrokeCache & c = it->second;
 
     if (bbox.isEmpty())
-      for (auto p : *path)
-        bbox.expand(p.point, p.strokeWidth * 0.5f);
+      bbox = splineBoundsApproximation(*path);
 
     c.stroke.path = path;
     c.stroke.bbox = bbox;
