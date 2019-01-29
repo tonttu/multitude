@@ -137,23 +137,16 @@ namespace
 
 namespace VideoDisplay
 {
-  class VideoFrameFfmpeg : public VideoFrame
+  VideoFrameFfmpeg::~VideoFrameFfmpeg()
   {
-  public:
-    ~VideoFrameFfmpeg()
-    {
-      if (frame) {
-        if (referenced)
-          av_frame_unref(frame);
-        av_frame_free(&frame);
-        frame = nullptr;
-      }
-      referenced = false;
+    if (frame) {
+      if (referenced)
+        av_frame_unref(frame);
+      av_frame_free(&frame);
+      frame = nullptr;
     }
-
-    bool referenced = false;
-    AVFrame* frame = nullptr;
-  };
+    referenced = false;
+  }
 
   struct MyAV
   {
@@ -244,6 +237,7 @@ namespace VideoDisplay
 
     FfmpegDecoder * m_host;
     std::shared_ptr<AVSync> m_sync = std::make_shared<AVSync>();
+    bool m_hasExternalSync = false;
 
     bool m_running;
 
@@ -1619,11 +1613,19 @@ namespace VideoDisplay
       }
       ret = frame;
     }
-    /// If we are behind more than one second, it's time to resynchronize
-    const double maxDiff = 1.0;
-    if (ret && (ts.pts() - ret->timestamp().pts()) > maxDiff) {
-      if (m_d->increaseSeekGeneration())
-        m_d->m_sync->sync(presentTimestamp, ret->timestamp());
+    if (ret) {
+      const double maxDiff = 1.0;
+      if (m_d->m_hasExternalSync) {
+        /// If we are off by more than one second, it's time to seek
+        if (std::abs(ts.pts() - ret->timestamp().pts()) > maxDiff)
+          seek(SeekRequest(ts.pts() + 0.5f, SEEK_BY_SECONDS));
+      } else {
+        /// If we are behind more than one second, it's time to resynchronize
+        if ((ts.pts() - ret->timestamp().pts()) > maxDiff) {
+          if (m_d->increaseSeekGeneration())
+            m_d->m_sync->sync(presentTimestamp, ret->timestamp());
+        }
+      }
     }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
     if (!ret)
@@ -1739,6 +1741,13 @@ namespace VideoDisplay
   {
     assert(!isRunning());
     m_d->m_options = options;
+    if (auto sync = m_d->m_options.externalSync()) {
+      m_d->m_sync = sync;
+      m_d->m_hasExternalSync = true;
+    } else if (m_d->m_hasExternalSync) {
+      m_d->m_hasExternalSync = false;
+      m_d->m_sync = std::make_shared<AVSync>();
+    }
     m_d->m_sync->setPlayMode(options.playMode());
     m_d->updateSupportedPixFormats();
     seek(m_d->m_options.seekRequest());
@@ -1912,6 +1921,8 @@ namespace VideoDisplay
         if(m_d->m_options.isLooping()) {
           if (m_d->seekToBeginning())
             videoDpts = audioDpts = std::numeric_limits<double>::quiet_NaN();
+          else
+            break; // We are requested to loop, but seek failed and reopening the source failed.
           eof = EofState::Normal;
 
           m_d->m_loopOffset += m_d->m_av.duration;

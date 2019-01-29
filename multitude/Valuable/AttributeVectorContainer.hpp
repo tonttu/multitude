@@ -71,6 +71,24 @@ namespace Valuable
       return *this;
     }
 
+    AttributeVectorContainer & operator=(const container & vector)
+    {
+      const bool wasEmpty = empty();
+      m_vector = vector;
+      if (!wasEmpty || !empty())
+        m_eventListeners.send(Event::Type::CHANGED);
+      return *this;
+    }
+
+    AttributeVectorContainer & operator=(container && vector)
+    {
+      const bool wasEmpty = empty();
+      m_vector = std::move(vector);
+      if (!wasEmpty || !empty())
+        m_eventListeners.send(Event::Type::CHANGED);
+      return *this;
+    }
+
     // Move vector contents, doesn't move listeners or anything Attribute-specific
     AttributeVectorContainer & operator=(AttributeVectorContainer && container)
     {

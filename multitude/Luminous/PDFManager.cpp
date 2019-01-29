@@ -274,6 +274,14 @@ namespace
       return FPDFPath_LineTo(m_path, point.x, point.y);
     }
 
+    bool bezierTo(const Nimble::Vector2f & c1, const Nimble::Vector2f & c2, const Nimble::Vector2f & p) override
+    {
+      if (!m_path)
+        return false;
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      return FPDFPath_BezierTo(m_path, c1.x, c1.y, c2.x, c2.y, p.x, p.y);
+    }
+
     bool endDraw() override
     {
       if (!m_path)
@@ -316,6 +324,25 @@ namespace
       return {static_cast<float>(width), static_cast<float>(height)};
     }
 
+    Rotation rotation() const override
+    {
+      assert(m_page);
+      std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+      switch( FPDFPage_GetRotation(m_page))
+      {
+      case 0:
+        return Rotation::NO_ROTATION;
+      case 1:
+        return Rotation::CLOCKWISE_90;
+      case 2:
+        return Rotation::CLOCKWISE_180;
+      case 3:
+        return Rotation::CLOCKWISE_270;
+      default:
+        return Rotation::UNKNWON;
+      }
+    }
+
     Luminous::PDFPAnnotationPtr createAnnotation() override
     {
       assert(m_page);
@@ -333,6 +360,13 @@ namespace
       rect.bottom = 0;
       rect.right = FPDF_GetPageWidth(m_page);
       rect.top = FPDF_GetPageHeight(m_page);
+
+      // This is wierd, but stamp annotation bounding rect should be transposed
+      int rotation = FPDFPage_GetRotation(m_page);
+      if (rotation == 1 /*90 degrees*/ ||
+          rotation == 3 /*270 degrees*/ ) {
+          std::swap(rect.right, rect.top);
+      }
 
       if (!FPDFAnnot_SetRect(annotation, &rect))
         return nullptr;

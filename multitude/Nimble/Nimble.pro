@@ -29,6 +29,7 @@ HEADERS += Splines.hpp
 HEADERS += Vector2.hpp
 HEADERS += Vector3.hpp
 HEADERS += Vector4.hpp
+HEADERS += ClipRegion.hpp
 
 SOURCES += ClipStack.cpp \
     Circle.cpp

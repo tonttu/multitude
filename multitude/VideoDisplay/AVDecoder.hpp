@@ -21,6 +21,7 @@
 
 #include <array>
 #include <cassert>
+#include <memory>
 
 /** VideoDisplay is a video player library.
 
@@ -118,6 +119,8 @@ namespace VideoDisplay
         m_planes(0),
         m_index(-1)
     {}
+
+    virtual ~VideoFrame() {}
 
     Timestamp timestamp() const { return m_timestamp; }
     void setTimestamp(Timestamp ts) { m_timestamp = ts; }
@@ -691,6 +694,9 @@ namespace VideoDisplay
       const VideoStreamHints & videoStreamHints() const { return m_videoStreamHints; }
       void setVideoStreamHints(const VideoStreamHints & hints) { m_videoStreamHints = hints; }
 
+      std::shared_ptr<AVSync> externalSync() const { return m_sync; }
+      void setExternalSync(std::shared_ptr<AVSync> sync) { m_sync = std::move(sync); }
+
     private:
       QString m_source;
       QString m_format;
@@ -713,6 +719,7 @@ namespace VideoDisplay
       int m_videoDecodingThreads;
       QString m_decoderBackend;
       VideoStreamHints m_videoStreamHints;
+      std::shared_ptr<AVSync> m_sync;
     };
 
   public:
