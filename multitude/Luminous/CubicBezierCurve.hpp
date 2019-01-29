@@ -32,6 +32,9 @@ namespace Luminous
     inline bool operator==(const BezierNode & b) const;
   };
 
+  inline std::ostream & operator<<(std::ostream & os, const BezierNode & node);
+  inline std::istream & operator>>(std::istream & is, BezierNode & node);
+
   /// A cubic Bezier curve
   /// @todo this will replace Luminous::BezierCurve once we get rid of SplineManager
   class CubicBezierCurve
@@ -128,6 +131,16 @@ namespace Luminous
         ctrlIn == b.ctrlIn &&
         ctrlOut == b.ctrlOut &&
         strokeWidth == b.strokeWidth;
+  }
+
+  std::ostream & operator<<(std::ostream & os, const BezierNode & node)
+  {
+    return os << node.ctrlIn << ' ' << node.point << ' ' << node.ctrlOut << ' ' << node.strokeWidth;
+  }
+
+  std::istream & operator>>(std::istream & is, BezierNode & node)
+  {
+    return is >> node.ctrlIn >> node.point >> node.ctrlOut >> node.strokeWidth;
   }
 
   void CubicBezierCurve::evaluate(std::vector<PolylinePoint> & points, float tolerance, float angleToleranceCos,
