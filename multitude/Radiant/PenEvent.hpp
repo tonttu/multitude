@@ -34,19 +34,25 @@ namespace Radiant
       FLAG_TILT_X     = 1 << 2,
       /// Event tilt y is defined
       FLAG_TILT_Y     = 1 << 3,
+      /// Raw location is defined
+      FLAG_RAW_LOCATION = 1 << 4,
 
       /// The barrel button is pressed
-      FLAG_BARREL     = 1 << 4,
+      FLAG_BARREL     = 1 << 5,
       /// The pen is inverted
-      FLAG_INVERTED   = 1 << 5,
+      FLAG_INVERTED   = 1 << 6,
       /// The eraser button is pressed
-      FLAG_ERASER     = 1 << 6,
-
-      /// Event originates from a RawInputHandler. Event raw location uses
-      /// a relative units and has value of 0..1 instead of himetric units
-      FLAG_RAW        = 1 << 7,
+      FLAG_ERASER     = 1 << 7,
     };
     typedef Radiant::FlagsT<Flag> Flags;
+
+    enum RawLocationType
+    {
+      /// Raw location is in himetric units
+      RAW_LOCATION_HIMETRIC,
+      /// Raw location is in relative units (0..1). This is used by RawInputHandler.
+      RAW_LOCATION_RELATIVE,
+    };
 
     enum Type
     {
@@ -104,10 +110,16 @@ namespace Radiant
     Nimble::Vector2f tilt() const { return m_tilt; }
     void setTilt(Nimble::Vector2f tilt) { m_tilt = tilt; }
 
-    /// Raw event location in device coordinates. In windows this is in
-    /// himetric units or relative units from 0..1 depending on FLAG_RAW
+    /// Raw event location in device coordinates. Only valid if FLAG_RAW_LOCATION
+    /// is set. Notice that this is in different units than location and
+    /// also different from PenData::rawLocation.
+    /// @sa rawLocationType
     Nimble::Vector2f rawLocation() const { return m_rawLocation; }
     void setRawLocation(Nimble::Vector2f location) { m_rawLocation = location; }
+
+    /// How to interpret rawLocation values.
+    RawLocationType rawLocationType() const { return m_rawLocationType; }
+    void setRawLocationType(RawLocationType rawLocationType) { m_rawLocationType = rawLocationType; }
 
     /// Unique ID for the source device. This can be used to differentiate
     /// between multiple pens, if the hardware supports that. This can be
@@ -125,6 +137,7 @@ namespace Radiant
     Nimble::Vector2f m_rawLocation = {0, 0};
     Type m_type = TYPE_NONE;
     Flags m_flags = FLAG_NONE;
+    RawLocationType m_rawLocationType = RAW_LOCATION_HIMETRIC;
     uint32_t m_id = 0;
     float m_pressure = 0;
     float m_rotation = 0;
