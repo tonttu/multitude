@@ -13,27 +13,20 @@ namespace Luminous
   class LUMINOUS_API BezierSplineFitter
   {
   public:
-    struct Point
-    {
-      Nimble::Vector2f point;
-      float strokeWidth;
-    };
-
-  public:
     /// @param points an array of points that will not be copied to the
     ///        fitter class. Make sure the pointer remains valid until
     ///        this class is destroyed.
-    BezierSplineFitter(const Point * points, size_t size);
+    BezierSplineFitter(const Nimble::Vector3f * points, size_t size);
     ~BezierSplineFitter();
 
     /// Returns the generated spline in a new vector
     /// @param maxErrorSqr squared max error between points and the fitted curve
-    BezierSpline fit(float maxErrorSqr, Nimble::Vector2f leftTangent = {0, 0},
-                     Nimble::Vector2f rightTangent = {0, 0}) const;
+    BezierSpline fit(float maxErrorSqr, Nimble::Vector3f leftTangent = {0, 0, 0},
+                     Nimble::Vector3f rightTangent = {0, 0, 0}) const;
 
     /// Inserts the generated spline points at the end of the given vector
     void fit(BezierSpline & nodes, float maxErrorSqr,
-             Nimble::Vector2f leftTangent = {0, 0}, Nimble::Vector2f rightTangent = {0, 0}) const;
+             Nimble::Vector3f leftTangent = {0, 0, 0}, Nimble::Vector3f rightTangent = {0, 0, 0}) const;
 
   private:
     class D;

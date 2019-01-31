@@ -54,7 +54,7 @@ namespace Luminous
         return false;
     }
 
-    splineIntersections(path, m_splineIntersections, m_shape, m_sizeToleranceSqr, m_curveIntersections);
+    splineIntersections2D(path, m_splineIntersections, m_shape, m_sizeToleranceSqr, m_curveIntersections);
 
     if (m_splineIntersections.empty())
       return false;

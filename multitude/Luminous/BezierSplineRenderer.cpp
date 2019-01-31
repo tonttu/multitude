@@ -293,7 +293,7 @@ namespace Luminous
 
     /// The bounding box for rendering doesn't need to be perfect, use the faster method here
     if (s.bbox.isEmpty())
-      s.bbox = splineBoundsApproximation(*s.path);
+      s.bbox = splineBoundsApproximation2D(*s.path);
 
     if (s.color.alpha() < 1.f)
       ++m_d->m_translucentStrokes;
@@ -350,7 +350,7 @@ namespace Luminous
     StrokeCache & c = it->second;
 
     if (bbox.isEmpty())
-      bbox = splineBoundsApproximation(*path);
+      bbox = splineBoundsApproximation2D(*path);
 
     c.stroke.path = path;
     c.stroke.bbox = bbox;

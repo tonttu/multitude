@@ -23,7 +23,6 @@ namespace Luminous
       path[0].ctrlIn = path[0].point = right[0];
       path[0].ctrlOut = right[1];
       path[1].ctrlIn = right[2];
-      path[0].strokeWidth = Nimble::Math::lerp(path[0].strokeWidth, path[1].strokeWidth, range.leftT);
     }
 
     if (range.rightT != 0.f) {
@@ -34,47 +33,45 @@ namespace Luminous
       path[prev].ctrlOut = left[1];
       path[idx].ctrlIn = left[2];
       path[idx].point = path[idx].ctrlOut = left[3];
-      path[idx].strokeWidth = Nimble::Math::lerp(path[prev].strokeWidth, path[idx].strokeWidth, range.rightT);
     }
 
     return path;
   }
 
-  Nimble::Rectf splineBoundsApproximation(const BezierSpline & path)
+  Nimble::Rectf splineBoundsApproximation2D(const BezierSpline & path)
   {
     Nimble::Rect bbox;
     for (auto & p: path) {
-      float r = 0.5f * p.strokeWidth;
-      bbox.expand(p.ctrlIn, r);
-      bbox.expand(p.ctrlOut, r);
-      bbox.expand(p.point, r);
+      bbox.expand(p.ctrlIn.vector2(), p.ctrlIn.z);
+      bbox.expand(p.ctrlOut.vector2(), p.ctrlOut.z);
+      bbox.expand(p.point.vector2(), p.point.z);
     }
     return bbox;
   }
 
-  Nimble::Rectf splineBounds(const BezierSpline & path)
+  Nimble::Rectf splineBounds2D(const BezierSpline & path)
   {
     if (path.empty())
       return Nimble::Rect();
 
-    return splineBounds(path.data(), path.data() + path.size());
+    return splineBounds2D(path.data(), path.data() + path.size());
   }
 
-  Nimble::Rectf splineBounds(const Luminous::BezierNode * begin, const Luminous::BezierNode * end)
+  Nimble::Rectf splineBounds2D(const Luminous::BezierNode * begin, const Luminous::BezierNode * end)
   {
     Nimble::Rect bbox;
     if (begin == end)
       return bbox;
 
-    bbox.expand(begin->point, 0.5f * begin->strokeWidth);
+    bbox.expand(begin->point.vector2(), begin->point.z);
 
     for (auto last = end - 1; begin < last; ++begin) {
       // Solve derivative's roots for x and y, see
       // https://pomax.github.io/bezierinfo/#boundingbox
       const CubicBezierCurve curve(begin[0], begin[1]);
-      const Nimble::Vector2f a2 = 2.f * 3.f * (-curve[0] + 3.f*curve[1] - 3.f*curve[2] + curve[3]);
-      const Nimble::Vector2f b = 6.f * (curve[0] - 2.f*curve[1] + curve[2]);
-      const Nimble::Vector2f c = 3.f * (curve[1] - curve[0]);
+      const Nimble::Vector2f a2 = 2.f * 3.f * (-curve[0].vector2() + 3.f*curve[1].vector2() - 3.f*curve[2].vector2() + curve[3].vector2());
+      const Nimble::Vector2f b = 6.f * (curve[0].vector2() - 2.f*curve[1].vector2() + curve[2].vector2());
+      const Nimble::Vector2f c = 3.f * (curve[1].vector2() - curve[0].vector2());
       const Nimble::Vector2f d = {b.x*b.x - 2.f*a2.x*c.x, b.y*b.y - 2.f*a2.y*c.y};
       for (int i = 0; i < 2; ++i) {
 
@@ -85,20 +82,26 @@ namespace Luminous
           // close to zero. If so, just solve bt+c=0 instead of at²+bt+c=0.
           if (std::abs(tmp - b[i]) > std::abs(a2[i]) * 1e4) {
             const float t = -c[i] / b[i];
-            if (t > 0 && t < 1.f)
-              bbox.expand(curve.value(t), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t));
+            if (t > 0 && t < 1.f) {
+              Nimble::Vector3f p = curve.value(t);
+              bbox.expand(p.vector2(), p.z);
+            }
           } else {
             const float t1 = (tmp - b[i]) / a2[i];
             const float t2 = (-tmp - b[i]) / a2[i];
-            if (t1 > 0 && t1 < 1.f)
-              bbox.expand(curve.value(t1), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t1));
-            if (t2 > 0 && t2 < 1.f)
-              bbox.expand(curve.value(t2), 0.5f * Nimble::Math::lerp(begin[0].strokeWidth, begin[1].strokeWidth, t2));
+            if (t1 > 0 && t1 < 1.f) {
+              Nimble::Vector3f p = curve.value(t1);
+              bbox.expand(p.vector2(), p.z);
+            }
+            if (t2 > 0 && t2 < 1.f) {
+              Nimble::Vector3f p = curve.value(t2);
+              bbox.expand(p.vector2(), p.z);
+            }
           }
         }
       }
 
-      bbox.expand(begin[1].point, 0.5f * begin[1].strokeWidth);
+      bbox.expand(begin[1].point.vector2(), begin[1].point.z);
     }
 
     return bbox;

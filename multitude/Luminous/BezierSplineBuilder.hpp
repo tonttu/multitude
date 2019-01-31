@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BezierSplineFitter.hpp"
+#include "BezierSpline.hpp"
 
 #include <Nimble/Rect.hpp>
 
@@ -17,18 +17,22 @@ namespace Luminous
   {
   public:
     /// @param path The generated spline, updated after every addPoint call
-    BezierSplineBuilder(BezierSpline & path);
+    /// @param maxStrokeRadiusRate Limits how quickly the stroke radius
+    ///        (half of the stroke width) can change between two consecutive
+    ///        points. Relative to the distance between the two points.
+    BezierSplineBuilder(BezierSpline & path, float maxStrokeRadiusRate);
     ~BezierSplineBuilder();
 
     /// Adds a new sample point to the builder. Based on the parameters this
     /// might add, remove or change couple of the last control points in the spline.
-    /// @param p New unfiltered point to add to the builder
+    /// @param p New unfiltered point to add to the builder. Interpretes the .z
+    ///        component as half of the stroke width.
     /// @param noiseThreshold expected maximum noise from a stationary object,
     ///        used to filter out small movements
     /// @param maxFitErrorSqr see maxErrorSqr parameter in BezierSplineFitter::fit
     /// @returns number of stable points in the output path. Stable points do not
     ///          change in the following calls to this function.
-    size_t addPoint(BezierSplineFitter::Point p, float noiseThreshold, float maxFitErrorSqr);
+    size_t addPoint(Nimble::Vector3f p, float noiseThreshold, float maxFitErrorSqr);
 
     /// Bounding box of all spline control points, taking account the spline width
     const Nimble::Rectf & bounds() const;

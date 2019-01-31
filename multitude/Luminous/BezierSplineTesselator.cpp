@@ -7,13 +7,13 @@ namespace Luminous
   {
   public:
     D(std::vector<BezierSplineTesselator::Vertex> & vertices);
-    /// In an arc of angle radians and radius of strokeWidth/2, the max error
+    /// In an arc of angle radians and radius of strokeRadius, the max error
     /// between a perfect arc and a polyline with roundCapSegments segments
     /// is at most m_maxRoundCapError
-    inline int roundCapSegments(float strokeWidth, float angle = Nimble::Math::PI) const;
-    inline float capSegmentAngle(float strokeWidth) const;
+    inline int roundCapSegments(float strokeRadius, float angle = Nimble::Math::PI) const;
+    inline float capSegmentAngle(float strokeRadius) const;
     /// Optimized version of std::cos(capSegmentAngle(strokeWidth))
-    inline float capSegmentAngleCos(float strokeWidth) const;
+    inline float capSegmentAngleCos(float strokeRadius) const;
     void renderCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
     void renderCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
 
@@ -31,26 +31,26 @@ namespace Luminous
   {
   }
 
-  int BezierSplineTesselator::D::roundCapSegments(float strokeWidth, float angle) const
+  int BezierSplineTesselator::D::roundCapSegments(float strokeRadius, float angle) const
   {
-    return 1 + angle / capSegmentAngle(strokeWidth);
+    return 1 + angle / capSegmentAngle(strokeRadius);
   }
 
-  float BezierSplineTesselator::D::capSegmentAngle(float strokeWidth) const
+  float BezierSplineTesselator::D::capSegmentAngle(float strokeRadius) const
   {
-    return 2.f * std::acos(1.f - m_maxRoundCapError / (strokeWidth * 0.5f));
+    return 2.f * std::acos(1.f - m_maxRoundCapError / strokeRadius);
   }
 
-  float BezierSplineTesselator::D::capSegmentAngleCos(float strokeWidth) const
+  float BezierSplineTesselator::D::capSegmentAngleCos(float strokeRadius) const
   {
-    float a = 1.f - m_maxRoundCapError / (strokeWidth * 0.5f);
+    float a = 1.f - m_maxRoundCapError / strokeRadius;
     return 2.f * a * a - 1.f;
   }
 
   void BezierSplineTesselator::D::renderCapBegin(
       CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, Vertex v)
   {
-    int segments = roundCapSegments(p.width);
+    int segments = roundCapSegments(p.point.z);
 
     if (segments <= 1)
       return;
@@ -65,7 +65,7 @@ namespace Luminous
     Nimble::Vector2f dir1 = dir0;
 
     for (int segment = 1;;) {
-      v.location = p.point + dir0;
+      v.location = p.point.vector2() + dir0;
       m_vertices.push_back(v);
 
       if (++segment == segments)
@@ -73,7 +73,7 @@ namespace Luminous
 
       dir1.rotate(-s, c);
 
-      v.location = p.point + dir1;
+      v.location = p.point.vector2() + dir1;
       m_vertices.push_back(v);
 
       if (++segment == segments)
@@ -83,10 +83,12 @@ namespace Luminous
     }
   }
 
+  /// @todo we should take the .z tangent into account here and scale
+  /// the round cap begin/end accordingly
   void BezierSplineTesselator::D::renderCapEnd(
       CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v)
   {
-    int segments = roundCapSegments(p.width);
+    int segments = roundCapSegments(p.point.z);
 
     if (segments <= 1)
       return;
@@ -100,7 +102,7 @@ namespace Luminous
     for (int segment = 1;;) {
       dir0.rotate(s, c);
 
-      v.location = p.point + dir0;
+      v.location = p.point.vector2() + dir0;
       m_vertices.push_back(v);
 
       if (++segment == segments)
@@ -108,7 +110,7 @@ namespace Luminous
 
       dir1.rotate(-s, c);
 
-      v.location = p.point + dir1;
+      v.location = p.point.vector2() + dir1;
       m_vertices.push_back(v);
 
       if (++segment == segments)
@@ -156,9 +158,9 @@ namespace Luminous
       polylineBuffer.clear();
       CubicBezierCurve curve(inputIt[0], inputIt[1]);
       if (first)
-        polylineBuffer.push_back({inputIt->point, curve.tangent(0.f), inputIt->strokeWidth});
+        polylineBuffer.push_back({inputIt->point, curve.tangent2D(0.f)});
 
-      float cc = m_d->capSegmentAngleCos(inputIt[0].strokeWidth);
+      float cc = m_d->capSegmentAngleCos(inputIt[0].point.z);
       if (cc < -1.f || cc > 1.f)
         cc = -1.f;
 
@@ -166,6 +168,7 @@ namespace Luminous
         float f;
         uint32_t i;
       };
+      static_assert(sizeof(f) == sizeof(i));
       float maxValue = std::max({std::abs(curve[0].x), std::abs(curve[0].y),
                                  std::abs(curve[1].x), std::abs(curve[1].y),
                                  std::abs(curve[2].x), std::abs(curve[2].y),
@@ -173,33 +176,32 @@ namespace Luminous
       f = maxValue;
       i += 5;
       float floatDiff = f - maxValue;
-      curve.evaluate(polylineBuffer, std::max(floatDiff, maxCurveError), cc,
-          inputIt[0].strokeWidth, inputIt[1].strokeWidth,
-          curve.tangent(0.f));
+      float err = std::max(floatDiff, maxCurveError);
+      curve.evaluate2D(polylineBuffer, err*err, cc, curve.tangent2D(0.f));
 
       for (size_t idx = 0, s = polylineBuffer.size(); idx < s; ++idx) {
         p = polylineBuffer[idx];
-        float len = p.tangent.length();
+        float len = p.tangent2D.length();
         Nimble::Vector2f unitTangent;
 
         if (first) {
           if (len <= std::numeric_limits<float>::epsilon())
-            unitTangent = (polylineBuffer[1].point -
-                polylineBuffer[0].point).normalized();
+            unitTangent = (polylineBuffer[1].point.vector2() -
+                polylineBuffer[0].point.vector2()).normalized();
           else
-            unitTangent = p.tangent / len;
-          normal = unitTangent.perpendicular() * (p.width * 0.5f);
+            unitTangent = p.tangent2D / len;
+          normal = unitTangent.perpendicular() * p.point.z;
 
           m_d->renderCapBegin(p, normal, v);
         } else if (len > std::numeric_limits<float>::epsilon()) {
-          unitTangent = p.tangent / len;
-          normal = unitTangent.perpendicular() * (p.width * 0.5f);
+          unitTangent = p.tangent2D / len;
+          normal = unitTangent.perpendicular() * p.point.z;
         } else {
           unitTangent = prevUnitTangent;
         }
 
         if (!first) {
-          float s = m_d->capSegmentAngleCos(p.width);
+          float s = m_d->capSegmentAngleCos(p.point.z);
           float angleCos = dot(unitTangent, prevUnitTangent);
           /// The spline might not have c1 continuity, so we detect
           /// sharp turns and render a round join here.
@@ -209,17 +211,17 @@ namespace Luminous
               int steps = angle / std::acos(s);
 
               bool left = cross(prevUnitTangent, unitTangent) > 0.f;
-              Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * (p.width * 0.5f);
+              Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * p.point.z;
               angle = angle / (steps + 1) * (left ? 1 : -1);
 
               float s = std::sin(angle), c = std::cos(angle);
               for (int i = 0; i < steps; ++i) {
                 normal2.rotate(s, c);
 
-                v.location = p.point - normal2;
+                v.location = p.point.vector2() - normal2;
                 out.push_back(v);
 
-                v.location = p.point + normal2;
+                v.location = p.point.vector2() + normal2;
                 out.push_back(v);
               }
             }
@@ -229,10 +231,10 @@ namespace Luminous
         first = false;
         prevUnitTangent = unitTangent;
 
-        v.location = p.point - normal;
+        v.location = p.point.vector2() - normal;
         out.push_back(v);
 
-        v.location = p.point + normal;
+        v.location = p.point.vector2() + normal;
         out.push_back(v);
       }
     }
