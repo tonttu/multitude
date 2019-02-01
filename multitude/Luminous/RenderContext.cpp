@@ -1576,6 +1576,8 @@ namespace Luminous
 
     const Nimble::Recti viewport(0, 0, target.size().width(), target.size().height());
 
+    pushClipRect(viewport.cast<float>());
+
     // Push a scissor area that is the size of the frame buffer. This is done
     // because the currently defined scissor area might be smaller the viewport
     // defined by the frame buffer.
@@ -1598,6 +1600,8 @@ namespace Luminous
 
     // Restore scissor area
     popScissorRect();
+
+    popClipRect();
 
     // Restore the matrix stack
     popTransform();

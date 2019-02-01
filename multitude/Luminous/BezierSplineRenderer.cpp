@@ -428,6 +428,8 @@ namespace Luminous
 
   void BezierSplineRenderer::render(RenderContext & r) const
   {
+    if (m_d->m_mipmaps.empty())
+      return;
     GpuContext & gpuContext = *m_d->m_gpuContext;
 
     View & view = gpuContext.views[r.viewWidgetPathId()];
