@@ -32,7 +32,7 @@ namespace Luminous
     /// @param maxFitErrorSqr see maxErrorSqr parameter in BezierSplineFitter::fit
     /// @returns number of stable points in the output path. Stable points do not
     ///          change in the following calls to this function.
-    size_t addPoint(Nimble::Vector3f p, float noiseThreshold, float maxFitErrorSqr);
+    size_t addPoint(Nimble::Vector3f p, float noiseThreshold, float maxFitErrorSqr, float fitErrorAcc = 0);
 
     /// Bounding box of all spline control points, taking account the spline width
     const Nimble::Rectf & bounds() const;

@@ -50,7 +50,7 @@ namespace Luminous
   {
   }
 
-  size_t BezierSplineBuilder::addPoint(Nimble::Vector3f p, float noiseThreshold, float maxFitErrorSqr)
+  size_t BezierSplineBuilder::addPoint(Nimble::Vector3f p, float noiseThreshold, float maxFitErrorSqr, float fitErrorAcc)
   {
     auto size = m_d->m_inputPoints.size();
     if (noiseThreshold > 0 && size >= 2) {
@@ -87,7 +87,13 @@ namespace Luminous
       Luminous::BezierSplineFitter pathFitter(m_d->m_inputPoints.data() + size, m_d->m_inputPoints.size() - size);
       BezierSpline & newPath = m_d->m_tmpPath;
       newPath.clear();
-      pathFitter.fit(newPath, maxFitErrorSqr, p.point - p.ctrlIn);
+      float err = maxFitErrorSqr;
+      if (fitErrorAcc > 0) {
+        float speed = (m_d->m_inputPoints.back().vector2() - m_d->m_inputPoints[m_d->m_inputPoints.size()-2].vector2()).length();
+        float tmp = std::max(1.f, speed/fitErrorAcc);
+        err *= tmp*tmp;
+      }
+      pathFitter.fit(newPath, err, p.point - p.ctrlIn);
       newPath[0].ctrlIn = p.ctrlIn;
 
       m_d->m_path.pop_back();
