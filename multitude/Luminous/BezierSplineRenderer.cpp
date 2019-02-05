@@ -6,6 +6,8 @@
 #include "RenderContext.hpp"
 #include "VertexArray.hpp"
 
+#include <Radiant/BGThread.hpp>
+
 #include <QMutex>
 
 #include <boost/container/flat_map.hpp>
@@ -18,9 +20,18 @@ static constexpr int s_bufferMinSize = 512;
 /// How much (from 0 to 1) of the buffer needs to be used so that it's not
 /// considered as inefficient.
 static constexpr float s_bufferMinUsage = 0.05f;
+/// How often to check and how old unused Views should be removed
+static constexpr double s_viewClearTimeoutSecs = 9.f;
 
 namespace Luminous
 {
+  namespace
+  {
+    QMutex s_cleanerMutex;
+    std::set<const BezierSplineRenderer*> s_activeRenderers;
+    bool s_cleanerInitialized = false;
+  }
+
   /// One LOD mipmap triangle strip of a stroke
   struct StrokeMipmap
   {
@@ -69,7 +80,6 @@ namespace Luminous
   };
 
   /// Each separate ViewWidget path to the BezierSplineRenderer has its own View
-  /// @todo add "lastUsed" and remove unused Views
   struct View
   {
     int activeLod = std::numeric_limits<int>::min();
@@ -86,6 +96,10 @@ namespace Luminous
     std::set<Valuable::Node::Uuid> removed;
     std::set<Valuable::Node::Uuid> changed;
     std::set<Valuable::Node::Uuid> added;
+
+    /// When was this View previously rendered. Old unused Views are
+    /// removed by CleanerTask
+    Radiant::TimeStamp lastRenderedTime;
   };
 
   /// Each render thread has its own data
@@ -135,10 +149,24 @@ namespace Luminous
   class BezierSplineRenderer::D
   {
   public:
+    /// Periodically removes all unused Views from all active renderers
+    class CleanerTask : public Radiant::Task
+    {
+    public:
+      CleanerTask();
+      virtual void doTask() override;
+
+    private:
+      static void check();
+    };
+
+  public:
     int scaleToLod(float scale) const;
     float lodToScale(int lod) const;
 
     StrokeMipmapGpu & createMipmapLevelGpu(GpuContext & gpuContext, StrokeCache & mipmap, int mipmapLevel, float invScale);
+    /// Returns true if there are no more active views
+    bool clearOldViews(Radiant::TimeStamp oldestAcceptedTime);
 
   public:
     BezierSplineRenderer::RenderOptions m_opts;
@@ -149,8 +177,45 @@ namespace Luminous
 
     ContextArrayT<GpuContext> m_gpuContext;
 
+    /// True if this renderer is in s_activeRenderers
+    std::atomic_flag m_isActive;
+
     int m_translucentStrokes = 0;
   };
+
+  /// Periodically removes all unused Views from all active renderers
+  BezierSplineRenderer::D::CleanerTask::CleanerTask()
+    : Task(PRIORITY_LOW)
+  {
+    scheduleFromNowSecs(s_viewClearTimeoutSecs);
+  }
+
+  void BezierSplineRenderer::D::CleanerTask::doTask()
+  {
+    {
+      QMutexLocker locker(&s_cleanerMutex);
+      if (s_activeRenderers.empty()) {
+        s_cleanerInitialized = false;
+        setFinished();
+        return;
+      }
+    }
+    Valuable::Node::invokeAfterUpdate(check);
+    scheduleFromNowSecs(s_viewClearTimeoutSecs);
+  }
+
+  void BezierSplineRenderer::D::CleanerTask::check()
+  {
+    auto oldestAcceptedTime = Radiant::TimeStamp::currentTime() - Radiant::TimeStamp::createSeconds(s_viewClearTimeoutSecs);
+    QMutexLocker locker(&s_cleanerMutex);
+    for (auto it = s_activeRenderers.begin(); it != s_activeRenderers.end();) {
+      if ((*it)->m_d->clearOldViews(oldestAcceptedTime)) {
+        it = s_activeRenderers.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
 
   int BezierSplineRenderer::D::scaleToLod(float scale) const
   {
@@ -215,6 +280,25 @@ namespace Luminous
     return levelGpu;
   }
 
+  bool BezierSplineRenderer::D::clearOldViews(Radiant::TimeStamp oldestAcceptedTime)
+  {
+    bool empty = true;
+    for (GpuContext & context: m_gpuContext) {
+      for (auto it = context.views.begin(); it != context.views.end(); ) {
+        View & view = it->second;
+        if (view.lastRenderedTime < oldestAcceptedTime) {
+          it = context.views.erase(it);
+        } else {
+          empty = false;
+          ++it;
+        }
+      }
+    }
+    if (empty)
+      m_isActive.clear();
+    return empty;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -227,10 +311,15 @@ namespace Luminous
     : m_d(new D())
   {
     setRenderOptions(opts);
+    m_d->m_isActive.clear();
   }
 
   BezierSplineRenderer::~BezierSplineRenderer()
   {
+    if (m_d->m_isActive.test_and_set()) {
+      QMutexLocker locker(&s_cleanerMutex);
+      s_activeRenderers.erase(this);
+    }
   }
 
   void BezierSplineRenderer::clear()
@@ -430,9 +519,20 @@ namespace Luminous
   {
     if (m_d->m_mipmaps.empty())
       return;
+
+    if (!m_d->m_isActive.test_and_set()) {
+      QMutexLocker locker(&s_cleanerMutex);
+      s_activeRenderers.insert(this);
+      if (!s_cleanerInitialized) {
+        Radiant::BGThread::instance()->addTask(std::make_shared<D::CleanerTask>());
+        s_cleanerInitialized = true;
+      }
+    }
+
     GpuContext & gpuContext = *m_d->m_gpuContext;
 
     View & view = gpuContext.views[r.viewWidgetPathId()];
+    view.lastRenderedTime = r.frameTime();
 
     float scale = r.approximateScaling();
     int mipmapLevel = m_d->scaleToLod(scale);
