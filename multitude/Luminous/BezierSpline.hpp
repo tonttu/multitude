@@ -64,9 +64,11 @@ namespace Luminous
   ///        the original curve to be more smooth. This is needed since
   ///        SplineManager doesn't generate control points properly for a
   ///        cubic bezier spline.
+  /// @returns non-empty converted spline or no value if the given point vector
+  /// doesn't have correct number of points (3N+1).
   template <typename PointVector>
-  inline BezierSpline convertSplineManagerPath2D(const PointVector & points,
-                                                 float strokeWidth, bool fixControlPoints = true);
+  inline std::optional<BezierSpline> convertSplineManagerPath2D(
+      const PointVector & points, float strokeWidth, bool fixControlPoints = true);
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -111,17 +113,20 @@ namespace Luminous
   }
 
   template <typename PointVector>
-  BezierSpline convertSplineManagerPath2D(const PointVector & points,
-                                          float strokeWidth, bool fixControlPoints)
+  std::optional<BezierSpline> convertSplineManagerPath2D(const PointVector & points,
+                                                         float strokeWidth, bool fixControlPoints)
   {
-    BezierSpline path;
-    if ((points.size() % 3) != 1 || points.size() == 1) {
-      Radiant::error("Invalid SplineData (%d points)", (int)points.size());
+    if ((points.size() % 3) != 1)
+      return {};
+
+    const float r = strokeWidth * 0.5f;
+    if (points.size() == 1) {
+      BezierSpline path(1);
+      path[0].ctrlIn = path[0].point = path[0].ctrlOut = Nimble::Vector3f(points[0], r);
       return path;
     }
 
-    float r = strokeWidth * 0.5f;
-    path.resize(1 + points.size() / 3);
+    BezierSpline path(1 + points.size() / 3);
     path[0].ctrlIn = path[0].point = Nimble::Vector3f(points[0], r);
     path[0].ctrlOut = Nimble::Vector3f(points[1], r);
 

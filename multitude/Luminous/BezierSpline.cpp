@@ -41,10 +41,23 @@ namespace Luminous
   Nimble::Rectf splineBoundsApproximation2D(const BezierSpline & path)
   {
     Nimble::Rect bbox;
-    for (auto & p: path) {
-      bbox.expand(p.ctrlIn.vector2(), p.ctrlIn.z);
-      bbox.expand(p.ctrlOut.vector2(), p.ctrlOut.z);
-      bbox.expand(p.point.vector2(), p.point.z);
+    if (path.empty())
+      return bbox;
+
+    bbox.expand(path[0].point.vector2(), path[0].point.z);
+
+    if (path.size() == 1)
+      return bbox;
+
+    auto last = --path.end();
+    bbox.expand(path[0].ctrlOut.vector2(), path[0].ctrlOut.z);
+    bbox.expand(last->ctrlIn.vector2(), last->ctrlIn.z);
+    bbox.expand(last->point.vector2(), last->point.z);
+
+    for (auto it = ++path.begin(); it < last; ++it) {
+      bbox.expand(it->ctrlIn.vector2(), it->ctrlIn.z);
+      bbox.expand(it->point.vector2(), it->point.z);
+      bbox.expand(it->ctrlOut.vector2(), it->ctrlOut.z);
     }
     return bbox;
   }
