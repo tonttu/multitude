@@ -5,6 +5,8 @@
 
 #include <QList>
 
+#include <optional>
+
 namespace Luminous
 {
   /// A cubic bezier spline is simply a vector of bezier nodes
