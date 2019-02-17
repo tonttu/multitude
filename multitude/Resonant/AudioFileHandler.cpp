@@ -34,13 +34,16 @@ namespace Resonant {
   
   SNDFILE* AudioFileHandler::open(const QString& filename, int openMode, SF_INFO *info)
   {
-    // Run through QFileInfo so search paths are taken into account
-    QFileInfo fi(filename);
-    if(!fi.exists())
-      return nullptr;
+    if(openMode == SFM_READ) {
+      // Run through QFileInfo so search paths are taken into account
+      QFileInfo fi(filename);
+      if(!fi.exists())
+        return nullptr;
 
-    SNDFILE* sndf = sf_open(fi.absoluteFilePath().toUtf8().data(), openMode, info);
-    return sndf;
+      return sf_open(fi.absoluteFilePath().toUtf8().data(), openMode, info);
+    } else {
+      return sf_open(filename.toUtf8().data(), openMode, info);
+    }
   }
 
   AudioFileHandler::Handle::Handle
