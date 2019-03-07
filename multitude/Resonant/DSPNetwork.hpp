@@ -242,11 +242,9 @@ namespace Resonant {
         for the signal processing thread. */
     void addModule(ItemPtr item);
     /** Marks a given DSP module as finished. Once this function has been called the
-        DSP thread will remove the module from the graph, and delete it. */
-    void markDone(ItemPtr );
-    /** Marks a given DSP module as finished. Once this function has been called the
-        DSP thread will remove the module from the graph, and delete it. */
-    void markDone(ModulePtr module);
+        DSP thread will remove the module from the graph, and delete it.
+        Won't do anything if there isn't a singleton instance of DSPNetwork alive. */
+    static void markDone(ModulePtr module);
 
     /** Send binary control data to the DSP network.
         When sending messages, the BinaryData object should contain an identifier string

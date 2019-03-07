@@ -967,7 +967,7 @@ namespace VideoDisplay
     m_audioTransfer.reset();
     if(audioTransfer) {
       audioTransfer->shutdown();
-      Resonant::DSPNetwork::instance()->markDone(audioTransfer);
+      Resonant::DSPNetwork::markDone(audioTransfer);
     }
 
     releaseExclusiveAccess();

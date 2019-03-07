@@ -188,34 +188,31 @@ namespace Resonant {
     m_newItems.push_back(item);
   }
 
-  void DSPNetwork::markDone(ItemPtr i)
-  {
-    /// Calling overloaded markDone here, will search itself from items...
-    assert(i->module());
-    markDone(i->module());
-  }
-
   void DSPNetwork::markDone(ModulePtr module)
   {
+    auto self = s_multiSingletonInstance.lock();
+    if (!self)
+      return;
+
     // The order of the guards matters. DSPNetwork::doCycle() locks the
     // mutexes in this order. Since this function is in the public API it can
     // be called any time and if the mutexes are locked in different order a
     // deadlock may occur.
-    Radiant::Guard g2( m_itemMutex);
-    Radiant::Guard g1( m_newMutex);
-    ItemPtr it = findItemUnsafe(module->id());
+    Radiant::Guard g2(self->m_itemMutex);
+    Radiant::Guard g1(self->m_newMutex);
+    ItemPtr it = self->findItemUnsafe(module->id());
 
     if(it) {
       it->m_done = true;
-      m_doneCount++;
+      self->m_doneCount++;
     } else {
       bool found = false;
-      for(auto it = m_newItems.begin(); it != m_newItems.end();) {
+      for(auto it = self->m_newItems.begin(); it != self->m_newItems.end();) {
         ItemPtr item = *it;
         if(module == item->module()) {
           found = true;
           item->m_module = nullptr;
-          it = m_newItems.erase(it);
+          it = self->m_newItems.erase(it);
         } else {
           ++it;
         }
