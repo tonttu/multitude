@@ -92,6 +92,11 @@ namespace Radiant
       T* data() const { return m_data; }
       int size() const { return m_size; }
 
+      void setSize(int size)
+      {
+        m_size = size;
+      }
+
     private:
       friend class BlockRingBuffer<T>;
       BlockRingBuffer<T> & m_buffer;
@@ -185,6 +190,11 @@ namespace Radiant
     int size() const
     {
       return m_size;
+    }
+
+    int capacity() const
+    {
+      return m_buffer.size();
     }
 
     /// Consumes exactly count elements from the buffer. Can be called only
