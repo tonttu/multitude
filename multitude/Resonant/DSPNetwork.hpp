@@ -186,6 +186,7 @@ namespace Resonant {
         return m_usePanner;
       }
 
+      void addConnection(const NewConnection & c) { m_connections.push_back(c); }
 
     private:
 
