@@ -81,6 +81,8 @@ namespace Resonant {
           delete [] m_data;
           m_data = new float [n];
           m_size = n;
+          for(int i = 0; i < n; i++)
+            m_data[i] = 0.0f;
         }
       }
 
