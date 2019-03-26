@@ -32,7 +32,7 @@
 #include <Valuable/AttributeEnum.hpp>
 
 #include <vector>
-
+#include <optional>
 
 namespace Luminous {
 
@@ -336,6 +336,17 @@ namespace Luminous {
       /// Set direct rendering mode
       void setDirectRendering(bool enable) { m_directRendering = enable; }
 
+      std::optional<uint32_t> gpuAffinityMask() const
+      {
+        if (m_gpuAffinityMask.currentLayer() == DEFAULT)
+          return {};
+        return *m_gpuAffinityMask;
+      }
+      void setGpuAffinityMask(uint32_t mask)
+      {
+        m_gpuAffinityMask = mask;
+      }
+
       /// Windowing system icon resource name, see QWindow::setIcon
       QString icon() const { return m_icon; }
       void setIcon(const QString & icon) { m_icon = icon; }
@@ -385,6 +396,8 @@ namespace Luminous {
 
       Valuable::AttributeBool       m_directRendering;
       Valuable::AttributeInt        m_screennumber; // for X11
+
+      Valuable::AttributeT<uint32_t> m_gpuAffinityMask;
 
       Valuable::AttributeString     m_icon;
 
