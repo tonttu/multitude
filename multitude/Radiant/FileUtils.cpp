@@ -433,7 +433,7 @@ namespace Radiant
   {
     int idx = source.indexOf(':');
     if (idx < 0) {
-      return source;
+      return QFileInfo(source).absoluteFilePath();
     }
 
     const QString prefix = source.left(idx);
@@ -441,7 +441,7 @@ namespace Radiant
 
     auto lst = QDir::searchPaths(prefix);
     if (lst.isEmpty()) {
-      return source;
+      return QFileInfo(source).absoluteFilePath();
     }
 
     return lst[0] + "/" + name;

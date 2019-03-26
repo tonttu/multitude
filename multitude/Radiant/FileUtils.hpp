@@ -171,10 +171,7 @@ namespace Radiant
     ///
     /// See also QDir::searchPaths.
     ///
-    /// @return Absolute file path to the file if source was a valid name using
-    ///         Qt search path syntax.
-    ///         Returns source if the source doesn't use search path syntax or
-    ///         if the syntax is unknown
+    /// @return Absolute file path to the file
     static QString resolvePath(const QString & source);
 
     /**
