@@ -311,6 +311,7 @@ namespace Luminous
       m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1),
+      m_gpuAffinityMask(this, "gpu-affinity-mask", 0),
       m_icon(this, "icon", "cornerstone:Icons/cornerstone-application-icon.ico")
   {
     // stay-on-top default value depends on frameless value for backwards compatibility
