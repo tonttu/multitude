@@ -963,6 +963,7 @@ namespace Luminous
 
   private:
     RenderContext & m_r;
+    bool m_reset;
   };
 
   template <> LUMINOUS_API

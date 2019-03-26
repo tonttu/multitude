@@ -2083,6 +2083,7 @@ namespace Luminous
 
   CustomOpenGL::CustomOpenGL(RenderContext & r, bool reset)
     : m_r(r)
+    , m_reset(reset)
   {
     // First, flush the current deferred render queues
     r.flush();
@@ -2101,7 +2102,8 @@ namespace Luminous
   CustomOpenGL::~CustomOpenGL()
   {
     GLERROR("CustomOpenGL::~CustomOpenGL");
-    m_r.setDefaultState();
+    if (m_reset)
+      m_r.setDefaultState();
   }
 
 
