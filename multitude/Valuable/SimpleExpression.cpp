@@ -90,6 +90,8 @@ namespace Valuable
     if (op == OP_MUL) {
       // optimize x * 0 == 0
       if (t == Token(0.f)) {
+        if (m_tokens.size() >= 2 && m_tokens[1].tag == TOKEN_PARAM)
+          --m_paramCount;
         m_tokens.resize(1);
         m_tokens[0] = Token(0.f);
         return;
@@ -100,8 +102,11 @@ namespace Valuable
 
       if (m_tokens.size() == 1) {
         // optimize 0 * x = 0
-        if (m_tokens[0] == Token(0.f))
+        if (m_tokens[0] == Token(0.f)) {
+          if (t.tag == TOKEN_PARAM)
+            --m_paramCount;
           return;
+        }
         // optimize 1 * x = x
         if (m_tokens[0] == Token(1.f)) {
           m_tokens[0] = t;
@@ -174,12 +179,11 @@ namespace Valuable
       return;
     }
 
-    m_d->m_paramCount = std::max(m_d->m_paramCount, expr.m_d->m_paramCount);
-
     if (op == OP_PLUS) {
       // optimize 0 + x == x
       if (m_d->m_tokens.size() == 1 && m_d->m_tokens[0] == D::Token(0.f)) {
         m_d->m_tokens = exprTokens;
+        m_d->m_paramCount = expr.m_d->m_paramCount;
         return;
       }
     }
@@ -192,11 +196,13 @@ namespace Valuable
         // optimize 1 * x = x
         if (m_d->m_tokens[0] == D::Token(1.f)) {
           m_d->m_tokens = exprTokens;
+          m_d->m_paramCount = expr.m_d->m_paramCount;
           return;
         }
       }
     }
 
+    m_d->m_paramCount = std::max(m_d->m_paramCount, expr.m_d->m_paramCount);
     m_d->m_tokens.insert(m_d->m_tokens.end(), exprTokens.begin(), exprTokens.end());
     m_d->m_tokens.push_back(D::Token(op));
   }

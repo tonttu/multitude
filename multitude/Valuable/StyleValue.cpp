@@ -562,6 +562,8 @@ namespace Valuable
       } else if(t == TYPE_COLOR_PMA) {
         out += QString("%1 %2 %3 %4").arg(v.asColorPMA().r).arg(v.asColorPMA().g).
                arg(v.asColorPMA().b).arg(v.asColorPMA().a);
+      } else if (t == TYPE_EXPR) {
+        out += QString::fromUtf8("calc("+v.asExpr().toString()+")");
       } else {
         Radiant::error("StyleValue::stringify # Unknown component type %d (%s)", t, v.typeName());
         continue;
