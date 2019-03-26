@@ -10,6 +10,7 @@
 
 #include "FrameBufferGL.hpp"
 #include "RenderDriverGL.hpp"
+#include "RenderManager.hpp"
 
 #include <Luminous/FrameBuffer.hpp>
 
@@ -109,6 +110,11 @@ namespace Luminous
     : ResourceHandleGL(std::move(target))
     , m_type(std::move(target.m_type))
     , m_bind(std::move(target.m_bind))
+    , m_size(std::move(target.m_size))
+    , m_generation(std::move(target.m_generation))
+    , m_textureAttachments(std::move(target.m_textureAttachments))
+    , m_renderBufferAttachments(std::move(target.m_renderBufferAttachments))
+    , m_dirty(std::move(target.m_dirty))
   {
   }
 
@@ -119,6 +125,12 @@ namespace Luminous
   }
 
   void FrameBufferGL::bind()
+  {
+    syncImpl();
+    bindImpl();
+  }
+
+  void FrameBufferGL::bindImpl()
   {
     assert(m_type != FrameBuffer::INVALID);
 
@@ -199,23 +211,41 @@ namespace Luminous
 
   void FrameBufferGL::sync(const FrameBuffer &target)
   {
+    if (target.generation() == m_generation)
+      return;
+
+    m_generation = target.generation();
+    m_dirty = true;
     m_type = target.targetType();
     m_bind = target.targetBind();
     m_size = target.size();
+    m_textureAttachments = target.textureAttachments();
+    m_renderBufferAttachments = target.renderBufferAttachments();
+  }
 
-    bind();
+  void FrameBufferGL::syncImpl()
+  {
+    if (!m_dirty)
+      return;
+    m_dirty = false;
 
-    auto texAttachments = target.textureAttachments();
-    auto bufAttachments = target.renderBufferAttachments();
+    bindImpl();
 
     /// @todo should also detach removed attachments
 
-    for(GLenum attachment : texAttachments)
-      attach(attachment, m_state.driver().handle(*target.texture(attachment)));
+    for (auto it = m_textureAttachments.begin(); it != m_textureAttachments.end(); ++it) {
+      GLenum attachment = it.key();
+      Texture * texture = RenderManager::getResource<Luminous::Texture>(it.value());
+      if (texture)
+        attach(attachment, m_state.driver().handle(*texture));
+    }
 
-    for(GLenum attachment : bufAttachments)
-      attach(attachment, m_state.driver().handle(*target.renderBuffer(attachment)));
-
+    for (auto it = m_renderBufferAttachments.begin(); it != m_renderBufferAttachments.end(); ++it) {
+      GLenum attachment = it.key();
+      RenderBuffer * buffer = RenderManager::getResource<Luminous::RenderBuffer>(it.value());
+      if (buffer)
+        attach(attachment, m_state.driver().handle(*buffer));
+    }
     check();
   }
 

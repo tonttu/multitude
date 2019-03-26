@@ -115,9 +115,12 @@ namespace Luminous
     std::vector<std::unique_ptr<Luminous::Texture> > m_ownedTextureAttachments;
     std::vector<std::unique_ptr<Luminous::RenderBuffer> > m_ownedRenderBufferAttachments;
 
-    D()
+    FrameBuffer & m_host;
+
+    D(FrameBuffer & host)
       : m_targetBind(FrameBuffer::BIND_DEFAULT)
       , m_samples(0)
+      , m_host(host)
     {}
 
     GLenum deduceBufferFormat(GLenum attachment) const
@@ -139,6 +142,7 @@ namespace Luminous
       texture.setData(m_size.width(), m_size.height(), texture.dataFormat(), 0);
 
       m_textureAttachments[attachment] = texture.resourceId();
+      m_host.invalidate();
     }
 
     void attach(GLenum attachment, Luminous::RenderBuffer &buffer)
@@ -153,6 +157,7 @@ namespace Luminous
       buffer.setStorageFormat(m_size, format, m_samples);
 
       m_renderBufferAttachments[attachment] = buffer.resourceId();
+      m_host.invalidate();
     }
 
     Luminous::Texture & createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)
@@ -191,79 +196,19 @@ namespace Luminous
 
   FrameBuffer::FrameBuffer(FrameBuffer::FrameBufferType type)
     : RenderResource(RenderResource::FrameBuffer)
-    , m_d(new D())
+    , m_d(new D(*this))
   {
     m_d->m_targetType = type;
   }
 
   FrameBuffer::~FrameBuffer()
   {
-    delete m_d;
-  }
-
-  FrameBuffer::FrameBuffer(const FrameBufferCopy &rt)
-    : RenderResource(RenderResource::FrameBuffer)
-    , m_d(rt.m_d)
-  {
-  }
-
-  FrameBuffer::FrameBufferCopy FrameBuffer::shallowCopyNoAttachments() const
-  {
-    auto d = new FrameBuffer::D();
-
-    d->m_targetType = m_d->m_targetType;
-    d->m_size = m_d->m_size;
-    d->m_samples = m_d->m_samples;
-
-    return FrameBufferCopy(d);
-  }
-
-  FrameBuffer::FrameBufferCopy FrameBuffer::shallowCopy() const
-  {
-    // First, make a shallow copy with no attachments
-    auto d = shallowCopyNoAttachments();
-
-    // Make a shallow copy of the attachments (copy resource Ids)
-    d.m_d->m_textureAttachments = m_d->m_textureAttachments;
-    d.m_d->m_renderBufferAttachments = m_d->m_renderBufferAttachments;
-
-    return FrameBufferCopy(d);
-  }
-
-  FrameBuffer::FrameBufferCopy FrameBuffer::deepCopy() const
-  {
-    // First, make a shallow copy with no attachments
-    auto d = shallowCopyNoAttachments();
-
-    // Make a deep copy of attachments and attach the copies
-    for(auto i = m_d->m_textureAttachments.begin(); i != m_d->m_textureAttachments.end(); ++i) {
-
-      GLenum attachment = i.key();
-      RenderResource::Id resourceId = i.value();
-
-      Luminous::Texture * tex = RenderManager::getResource<Luminous::Texture>(resourceId);
-
-      d.m_d->createTextureAttachment(attachment, tex->dataFormat());
-    }
-
-    for(auto i = m_d->m_renderBufferAttachments.begin(); i != m_d->m_renderBufferAttachments.end(); ++i) {
-
-      GLenum attachment = i.key();
-      RenderResource::Id resourceId = i.value();
-
-      Luminous::RenderBuffer * buf = RenderManager::getResource<Luminous::RenderBuffer>(resourceId);
-
-      d.m_d->createRenderBufferAttachment(attachment, buf->format());
-    }
-
-    return FrameBufferCopy(d);
   }
 
   FrameBuffer::FrameBuffer(FrameBuffer &&rt)
     : RenderResource(std::move(rt))
-    , m_d(rt.m_d)
+    , m_d(std::move(rt.m_d))
   {
-    rt.m_d = nullptr;
   }
 
   FrameBuffer & FrameBuffer::operator=(FrameBuffer && rt)
@@ -342,14 +287,14 @@ namespace Luminous
     return nullptr;
   }
 
-  QList<GLenum> FrameBuffer::textureAttachments() const
+  QMap<GLenum, RenderResource::Id> FrameBuffer::textureAttachments() const
   {
-    return m_d->m_textureAttachments.keys();
+    return m_d->m_textureAttachments;
   }
 
-  QList<GLenum> FrameBuffer::renderBufferAttachments() const
+  QMap<GLenum, RenderResource::Id> FrameBuffer::renderBufferAttachments() const
   {
-    return m_d->m_renderBufferAttachments.keys();
+    return m_d->m_renderBufferAttachments;
   }
 
   FrameBuffer::FrameBufferType FrameBuffer::targetType() const
@@ -364,7 +309,10 @@ namespace Luminous
 
   void FrameBuffer::setTargetBind(FrameBufferBind target)
   {
+    if (m_d->m_targetBind == target)
+      return;
     m_d->m_targetBind = target;
+    invalidate();
   }
 
   Texture & FrameBuffer::createTextureAttachment(GLenum attachment, const Luminous::PixelFormat & format)

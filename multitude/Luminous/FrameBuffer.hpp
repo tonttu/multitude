@@ -80,28 +80,6 @@ namespace Luminous
   class LUMINOUS_API FrameBuffer
       : public RenderResource, public Patterns::NotCopyable
   {
-  private:
-    class D;
-    D * m_d;
-
-    /// This class is a helper used to implement copying FrameBuffer classes.
-    /// You should never manually instantiate this class. It is also meant to be
-    /// used with FrameBuffer::deepCopy, FrameBuffer::shallowCopy, and
-    /// FrameBuffer::shallowCopyNoAttachments functions.
-    /// @sa FrameBuffer
-    class LUMINOUS_API FrameBufferCopy
-    {
-    private:
-      FrameBufferCopy(D * d) : m_d(d) {}
-
-      D * m_d;
-
-      friend class FrameBuffer;
-    };
-
-    ////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////
-
   public:
     /// Type of FrameBuffer
     enum FrameBufferType
@@ -131,16 +109,6 @@ namespace Luminous
     /// Destructor
     ~FrameBuffer();
 
-    /// Construct render target from proxy object returned by one of copy functions
-    /// @sa shallowCopyNoAttachments, shallowCopy, deepCopy
-    /// @param rt FrameBufferCopy of the copied render target
-    FrameBuffer(const FrameBufferCopy & rt);
-    /// Assign proxy object to render target
-    /// @sa shallowCopyNoAttachments, shallowCopy, deepCopy
-    /// @param rt FrameBufferCopy of the copied render target
-    /// @return Reference to this
-    FrameBuffer & operator=(const FrameBufferCopy & rt);
-
     /// Move constructor
     /// @param rt Render target to move
     FrameBuffer(FrameBuffer && rt);
@@ -148,19 +116,6 @@ namespace Luminous
     /// @param rt FrameBuffer to move
     /// @return Reference to this
     FrameBuffer & operator=(FrameBuffer && rt);
-
-    /// Shallow copy without attachments. Copes only target type, size and sampling
-    /// options.
-    /// @return Proxy object for constructing new FrameBuffer
-    FrameBufferCopy shallowCopyNoAttachments() const;
-    /// Shallow copy with attachments. The copied FrameBuffer will use the same render
-    /// buffers and textures as attachments.
-    /// @return Proxy object for constructing new FrameBuffer
-    FrameBufferCopy shallowCopy() const;
-    /// Deep copy creates an identical render target to the copied one. Copied object
-    /// has its own attachments whose values are copied from this.
-    /// @return Proxy object for constructing new FrameBuffer
-    FrameBufferCopy deepCopy() const;
 
     /// Size of the render target. Each attachment has this as theirs size
     /// @sa setSize
@@ -211,10 +166,10 @@ namespace Luminous
 
     /// Returns list of attachments where Texture is used.
     /// @return Enumerations textures attached
-    QList<GLenum> textureAttachments() const;
+    QMap<GLenum, RenderResource::Id> textureAttachments() const;
     /// Returns list of attachments where RenderBuffer is used.
     /// @return Enumerations for render buffer attachments
-    QList<GLenum> renderBufferAttachments() const;
+    QMap<GLenum, RenderResource::Id> renderBufferAttachments() const;
 
     /// Returns type of this render target.
     /// @return Type of this target.
@@ -228,6 +183,10 @@ namespace Luminous
     /// @param bind How to bind this target.
     /// @sa bind
     void setTargetBind(FrameBufferBind bind);
+
+  private:
+    class D;
+    std::unique_ptr<D> m_d;
   };
 }
 
