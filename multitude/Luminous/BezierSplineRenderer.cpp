@@ -41,6 +41,10 @@ namespace Luminous
       , triangleStrip(o.triangleStrip)
     {}
 
+    StrokeMipmap(StrokeMipmap && m) = delete;
+    StrokeMipmap & operator=(const StrokeMipmap &) = delete;
+    StrokeMipmap & operator=(StrokeMipmap &&) = delete;
+
     std::atomic<bool> ready{false};
     QMutex generateMutex;
 
@@ -50,9 +54,29 @@ namespace Luminous
   /// Stroke mipmap cache
   struct StrokeCache
   {
+    StrokeCache() = default;
+
+    StrokeCache(StrokeCache && s)
+      : stroke(std::move(s.stroke))
+      , cpuGeneration(s.cpuGeneration)
+      , mipmaps(std::move(s.mipmaps))
+      , mipmapsResized((bool)s.mipmapsResized)
+    {}
+
+    StrokeCache & operator=(StrokeCache && s)
+    {
+      stroke = std::move(s.stroke);
+      cpuGeneration = s.cpuGeneration;
+      mipmaps = std::move(s.mipmaps);
+      mipmapsResized = (bool)s.mipmapsResized;
+      return *this;
+    }
+
     BezierSplineRenderer::Stroke stroke;
     uint32_t cpuGeneration = 1;
     std::vector<StrokeMipmap> mipmaps;
+    std::atomic<bool> mipmapsResized{false};
+    QMutex mipmapsResizeMutex;
   };
 
   /// One LOD mipmap triangle strip of a stroke, pointing on vertex buffer on GPU
@@ -231,8 +255,11 @@ namespace Luminous
   StrokeMipmapGpu & BezierSplineRenderer::D::createMipmapLevelGpu(
       GpuContext & gpuContext, StrokeCache & mipmap, int mipmapLevel, float invScale)
   {
-    if ((int)mipmap.mipmaps.size() != m_lodLevels)
+    if (!mipmap.mipmapsResized) {
+      QMutexLocker locker(&mipmap.mipmapsResizeMutex);
       mipmap.mipmaps.resize(m_lodLevels);
+      mipmap.mipmapsResized = true;
+    }
 
     StrokeMipmap & level = mipmap.mipmaps[mipmapLevel];
     if (!level.ready) {
