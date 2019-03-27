@@ -79,7 +79,7 @@ namespace Resonant {
       {
         if(n != m_size) {
           delete [] m_data;
-          m_data = new float [n];
+          m_data = new float [n] ();
           m_size = n;
         }
       }
@@ -186,6 +186,7 @@ namespace Resonant {
         return m_usePanner;
       }
 
+      void addConnection(const NewConnection & c) { m_connections.push_back(c); }
 
     private:
 

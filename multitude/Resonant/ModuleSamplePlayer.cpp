@@ -262,8 +262,10 @@ namespace Resonant {
 
   bool ModuleSamplePlayer::SampleVoice::synthesize(float ** out, int n, ModuleSamplePlayer * host)
   {
-    if(m_state != PLAYING || m_startTime > host->time()) {
-      //printf(":"); fflush(0);
+    if(m_startTime > host->time()) {
+      return true;
+    } else if(m_state != PLAYING) {
+      // printf(":"); fflush(0);
       return m_state == WAITING_FOR_SAMPLE;
     }
 
@@ -499,7 +501,10 @@ namespace Resonant {
       }
     }
 
-    m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
+    if(m_startTime > host->time())
+      m_state = WAITING_FOR_SAMPLE;
+    else
+      m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
     if(m_info) {
       m_info->m_playHeadPosition = m_dpos;

@@ -568,8 +568,6 @@ namespace Resonant {
   bool DSPNetwork::compile(ItemPtr item, int location)
   {
     int i = 0;
-    int ins = (int) item->m_inputs.size();
-    int outs = ins;
 
     std::list<NewConnection>::iterator conit;
 
@@ -583,6 +581,10 @@ namespace Resonant {
       }
       i++;
     }
+
+    // Get the input channel count, after the above compilation step is ok
+    int ins = (int) item->m_inputs.size();
+    int outs = ins;
 
     item->m_module->prepare(ins, outs);
 
