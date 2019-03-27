@@ -11,6 +11,7 @@
 #include "AudioFileHandler.hpp"
 #include "Resonant.hpp"
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/Trace.hpp>
 #include <Radiant/Sleep.hpp>
 
@@ -34,16 +35,8 @@ namespace Resonant {
   
   SNDFILE* AudioFileHandler::open(const QString& filename, int openMode, SF_INFO *info)
   {
-    if(openMode == SFM_READ) {
-      // Run through QFileInfo so search paths are taken into account
-      QFileInfo fi(filename);
-      if(!fi.exists())
-        return nullptr;
-
-      return sf_open(fi.absoluteFilePath().toUtf8().data(), openMode, info);
-    } else {
-      return sf_open(filename.toUtf8().data(), openMode, info);
-    }
+    QString resolved = Radiant::FileUtils::resolvePath(filename);
+    return sf_open(resolved.toUtf8().data(), openMode, info);
   }
 
   AudioFileHandler::Handle::Handle
