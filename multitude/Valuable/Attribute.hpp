@@ -172,12 +172,11 @@ namespace Valuable
 
     Attribute();
 
-    /// Create a copy of the given Attribute WITHOUT the link to host,
-    /// listeners, or the attribute name. So only the values are copied.
-    Attribute(const Attribute & o);
+    Attribute(const Attribute & o) = delete;
+    const Attribute & operator = (const Attribute &) = delete;
 
-    /// @copydoc Attribute(const Attribute & o);
-    const Attribute & operator = (const Attribute &);
+    Attribute(Attribute && o);
+    const Attribute & operator = (Attribute &&);
 
     /** Constructs a new value object and attaches it to its host.
 

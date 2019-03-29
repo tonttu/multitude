@@ -81,17 +81,38 @@ namespace Valuable
     }
   }
 
-  Attribute::Attribute(const Attribute & o)
-    : m_host(0)
-    , m_ownerShorthand(nullptr)
-    , m_listenersId(0)
+  Attribute::Attribute(Attribute && o)
+    : m_host(nullptr)
+    , m_ownerShorthand(o.m_ownerShorthand)
+    , m_name(std::move(o.m_name))
+    , m_listeners(std::move(o.m_listeners))
+    , m_listenersId(o.m_listenersId)
+#ifdef ENABLE_THREAD_CHECKS
+    , m_ownerThread(o.m_ownerThread)
+#endif
   {
-    *this = o;
+    if (auto host = o.m_host) {
+      o.removeHost();
+      host->addAttribute(this);
+    }
   }
 
-  const Attribute & Attribute::operator = (const Attribute &)
+  const Attribute & Attribute::operator=(Attribute && o)
   {
-    // Do not copy the name or listeners. It will break stuff.
+    removeHost();
+    m_name = std::move(o.m_name);
+    m_ownerShorthand = o.m_ownerShorthand;
+    m_listeners = std::move(o.m_listeners);
+    m_listenersId = o.m_listenersId;
+#ifdef ENABLE_THREAD_CHECKS
+    m_ownerThread = o.m_ownerThread;
+#endif
+
+    if (auto host = o.m_host) {
+      o.removeHost();
+      host->addAttribute(this);
+    }
+
     return *this;
   }
 
