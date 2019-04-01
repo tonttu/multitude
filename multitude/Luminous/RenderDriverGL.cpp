@@ -918,7 +918,6 @@ namespace Luminous
     }
 
     // Update the OpenGL state
-    /// @todo use generation to remove unneeded state changes?
     it->second.sync(target);
 
     return it->second;
