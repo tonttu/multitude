@@ -153,7 +153,7 @@ namespace Luminous
 
   void FrameBufferGL::attach(GLenum attachment, RenderBufferGL &renderBuffer)
   {
-    m_state.opengl().glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, renderBuffer.handle());
+    m_state.opengl().glFramebufferRenderbuffer(bindTarget(m_bind), attachment, GL_RENDERBUFFER, renderBuffer.handle());
     GLERROR("FrameBufferGL::attach # glFramebufferRenderbuffer");
   }
 
@@ -162,9 +162,9 @@ namespace Luminous
     texture.bind(0);
 
     if (texture.samples() > 0) {
-      m_state.opengl().glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D_MULTISAMPLE, texture.handle(), 0);
+      m_state.opengl().glFramebufferTexture2D(bindTarget(m_bind), attachment, GL_TEXTURE_2D_MULTISAMPLE, texture.handle(), 0);
     } else {
-      m_state.opengl().glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture.handle(), 0);
+      m_state.opengl().glFramebufferTexture2D(bindTarget(m_bind), attachment, GL_TEXTURE_2D, texture.handle(), 0);
     }
     GLERROR("FrameBufferGL::attach # glFramebufferTexture");
   }
@@ -172,7 +172,7 @@ namespace Luminous
   void FrameBufferGL::detach(GLenum attachment)
   {
     /// @todo what about textures?
-    m_state.opengl().glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
+    m_state.opengl().glFramebufferRenderbuffer(bindTarget(m_bind), attachment, GL_RENDERBUFFER, 0);
     GLERROR("FrameBufferGL::deattach # glFramebufferRenderbuffer");
   }
 
@@ -195,7 +195,7 @@ namespace Luminous
 
     }
 
-    GLenum status = m_state.opengl().glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    GLenum status = m_state.opengl().glCheckFramebufferStatus(bindTarget(m_bind));
     GLERROR("FrameBufferGL::check # glCheckFramebufferStatus");
 
     if(status == GL_FRAMEBUFFER_COMPLETE)
