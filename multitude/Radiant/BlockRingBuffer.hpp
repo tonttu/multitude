@@ -104,6 +104,62 @@ namespace Radiant
       int m_size;
     };
 
+    /// Writes to several buffers that are expected to be same size and in same location.
+    /// @tparam N guess on how many buffers are used at max
+    template <size_t N>
+    class PlanarWriter
+    {
+    public:
+      PlanarWriter(std::vector<BlockRingBuffer<T>> & buffers)
+        : m_buffers(buffers)
+      {
+        assert(buffers.size() > 0 && buffers.size() <= N);
+
+        uint8_t * allocator = m_writerData.data();
+        for (int i = 0, c = buffers.size(); i < c; ++i) {
+          Writer * writer = new (allocator) Writer(buffers[i].write(buffers[i].capacity()));
+
+          m_data[i] = writer->data();
+          allocator += sizeof(Writer);
+        }
+      }
+
+      ~PlanarWriter()
+      {
+        Writer * writer = reinterpret_cast<Writer*>(m_writerData.data());
+        for (int i = 0, c = m_buffers.size(); i < c; ++i) {
+          writer->~Writer();
+          ++writer;
+        }
+      }
+
+      T ** data()
+      {
+        return m_data.data();
+      }
+
+      int size()
+      {
+        Writer * writer = reinterpret_cast<Writer*>(m_writerData.data());
+        return writer->size();
+      }
+
+      void setSize(int size)
+      {
+        Writer * writer = reinterpret_cast<Writer*>(m_writerData.data());
+        for (int idx = 0, c = m_buffers.size(); idx < c; ++idx) {
+          writer->setSize(size);
+          ++writer;
+        }
+      }
+
+    private:
+      std::vector<BlockRingBuffer<T>> & m_buffers;
+      // We could use boost::container::small_vector instead, but that is not in Ubuntu trusty repository
+      std::array<uint8_t, N * sizeof(Writer)> m_writerData;
+      std::array<float*, N> m_data;
+    };
+
     /// Creates a new buffer with given capacity
     BlockRingBuffer(int capacity)
       : m_buffer(capacity)
