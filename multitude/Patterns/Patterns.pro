@@ -1,7 +1,7 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 HEADERS += NotCopyable.hpp
 
-include(../../library.pri)
+include(../setup-lib.pri)
 
 TEMPLATE = aux

@@ -1,4 +1,4 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 unix: PKGCONFIG += sndfile
 
@@ -59,7 +59,7 @@ enable-pulse-audio {
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-include(../../library.pri)
+include(../setup-lib.pri)
 
 DEFINES += RESONANT_EXPORT
 

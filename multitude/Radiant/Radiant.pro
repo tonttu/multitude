@@ -1,4 +1,4 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 HEADERS += TempFailureRetry.hpp \
     ThreadChecks.hpp \
@@ -253,4 +253,4 @@ win32 {
 
 DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)
 
-include(../../library.pri)
+include(../setup-lib.pri)
