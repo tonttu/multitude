@@ -36,12 +36,14 @@
 
 namespace
 {
+#ifndef RADIANT_MOBILE
   // Utility similar to system()
   int run(QString cmd, QStringList argv = QStringList(),
           QByteArray * out = 0, QByteArray * err = 0)
   {
     return Radiant::FileUtils::run(cmd, argv, out, err);
   }
+#endif
 
   uint64_t toKB(uint64_t value, const QByteArray & unit)
   {
@@ -199,6 +201,7 @@ namespace Radiant
       return QString();
     }
 
+#ifndef RADIANT_MOBILE
     QString getLibraryPath(const QString& libraryName)
     {
       auto pid = QCoreApplication::applicationPid();
@@ -247,6 +250,7 @@ namespace Radiant
       if(err != 0)
         Radiant::warning("terminateProcessByName # failed to run '%s'", cmd.toUtf8().data());
     }
+#endif
 
     void setEnv(const QString & name, const QString & value)
     {

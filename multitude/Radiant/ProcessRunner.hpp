@@ -1,7 +1,11 @@
 #ifndef RADIANT_PROCESSRUNNER_HPP
 #define RADIANT_PROCESSRUNNER_HPP
 
+
 #include "Export.hpp"
+
+#ifndef RADIANT_MOBILE
+
 #include <QByteArray>
 #include <QStringList>
 #include <QString>
@@ -229,5 +233,7 @@ namespace Radiant
   typedef std::function<void(const QByteArray &buffer, int lineStart, int lineEnd)> LineHandler;
   RADIANT_API ProcessOutputHandler lineByLineHandler(const LineHandler & lineHandler);
 }
+
+#endif
 
 #endif // RADIANT_PROCESSRUNNER_HPP

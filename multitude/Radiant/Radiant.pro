@@ -65,9 +65,6 @@ HEADERS += SafeBool.hpp
 HEADERS += Semaphore.hpp
 HEADERS += SerialPort.hpp
 HEADERS += Sleep.hpp
-HEADERS += SHMDuplexPipe.hpp
-HEADERS += SHMPipe.hpp
-HEADERS += SMRingBuffer.hpp
 HEADERS += StringUtils.hpp
 HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
@@ -131,9 +128,6 @@ SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
 SOURCES += Sleep.cpp
 SOURCES += SemaphoreQt.cpp
-SOURCES += SHMDuplexPipe.cpp
-SOURCES += SHMPipe.cpp
-SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
 SOURCES += TimeStamp.cpp
 SOURCES += Trace.cpp
@@ -158,11 +152,13 @@ SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
-SOURCES += CrashHandlerCommon.cpp
-SOURCES += TraceCrashHandlerFilter.cpp
+!mobile:SOURCES += CrashHandlerCommon.cpp
+!mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
-linux*:SOURCES += ProcessRunnerPosix.cpp
-win32:SOURCES += ProcessRunnerWin32.cpp
+!mobile {
+  linux*:SOURCES += ProcessRunnerPosix.cpp
+  win32:SOURCES += ProcessRunnerWin32.cpp
+}
 
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
@@ -180,6 +176,8 @@ enable-folly {
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FOLLY
+
+message("CONFIG = "$$CONFIG)
 
 linux-* {
   LIBS += -lX11
@@ -209,9 +207,11 @@ macx {
 DEFINES += RADIANT_EXPORT
 
 unix {
-  SOURCES += CallStackUnix.cpp
+  !mobile:SOURCES += CallStackUnix.cpp
+  mobile:SOURCES += CallStackDummy.cpp
 
-  LIBS += -lpthread $$LIB_RT -ldl
+  !mobile:LIBS += -lpthread
+  LIBS +=  $$LIB_RT -ldl
   CONFIG += qt
   QT = core network gui
 }

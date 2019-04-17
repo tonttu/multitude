@@ -4,7 +4,7 @@
 #include "Export.hpp"
 #include "Platform.hpp"
 
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
 
 #include <QMap>
 #include <QString>

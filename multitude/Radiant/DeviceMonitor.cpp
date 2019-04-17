@@ -1,6 +1,6 @@
 #include "DeviceMonitor.hpp"
 
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
 
 #include <Radiant/Platform.hpp>
 #include <Nimble/Math.hpp>

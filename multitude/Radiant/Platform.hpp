@@ -20,6 +20,8 @@
 //////////////////////////////////////////////////////////////////////////
 #if defined (__aarch64__)
 #   define RADIANT_ARM64 1
+#elif defined(__arm__)
+#   define RADIANT_ARM32 1
 #elif defined(__amd64__) || defined(_M_X64)
 #   define RADIANT_AMD64 1
 #elif defined (__i386__) || defined (_M_IX86)

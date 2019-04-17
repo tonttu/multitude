@@ -63,3 +63,4 @@ DEFINES += RESONANT_EXPORT
 
 win32:LIBS += -llibsndfile-1
 unix:LIBS += -lsndfile
+mobile:LIBS += -lFLAC -lvorbisenc -lvorbis -logg

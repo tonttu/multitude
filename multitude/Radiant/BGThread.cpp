@@ -80,7 +80,7 @@ namespace Radiant
 
     container::iterator it = findTask(task);
     if(it != m_taskQueue.end()) {
-      task->m_host = 0;
+      task->m_host = nullptr;
       m_taskQueue.erase(it);
       if (cancel)
         task->setCanceled();
@@ -249,7 +249,7 @@ namespace Radiant
           task->finished();
         }
 
-        task->m_host = 0;
+        task->m_host = nullptr;
       }
 
       std::lock_guard<std::mutex> g(m_mutexWait);

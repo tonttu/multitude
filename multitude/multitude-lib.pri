@@ -1,5 +1,5 @@
 TEMPLATE = lib
-CONFIG += link_pkgconfig
+# mobile:CONFIG += staticlib
 DESTDIR = $$ROOT/lib/$$TARGET_SYSTEM
 DLLDESTDIR = $$ROOT/bin
 
