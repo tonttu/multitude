@@ -52,8 +52,8 @@ namespace Resonant {
       m_rewindTo(-1),
       m_status(OPEN_NOT),
       m_ready(false),
-      m_file(0),
-      m_info(0),
+      m_file(nullptr),
+      m_info(nullptr),
       m_userFormat(userFormat),
       m_userDone(false)
   {
@@ -270,7 +270,7 @@ namespace Resonant {
 
     sf_close(m_file);
 
-    m_file = 0;
+    m_file = nullptr;
 
     return true;
   }
@@ -374,7 +374,7 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  AudioFileHandler * AudioFileHandler::m_instance = 0;
+  AudioFileHandler * AudioFileHandler::m_instance = nullptr;
 
   AudioFileHandler::AudioFileHandler()
     : Thread("AudioFileHandler")
@@ -390,7 +390,7 @@ namespace Resonant {
       stop();
 
     if(m_instance == this)
-      m_instance = 0;
+      m_instance = nullptr;
   }
 
   AudioFileHandler::Handle * AudioFileHandler::readFile
