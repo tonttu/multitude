@@ -1,7 +1,5 @@
 include(../setup.pri)
 
-unix: PKGCONFIG += sndfile
-
 HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
     ModuleBufferPlayer.hpp \
@@ -39,7 +37,7 @@ enable-port-audio {
   SOURCES += PortAudioSource.cpp
   SOURCES += AudioLoopPortAudio.cpp
 
-  unix: PKGCONFIG += portaudio-2.0
+  unix: LIBS += -lportaudio
 
   win32: LIBS += -lportaudio
 }
@@ -64,3 +62,4 @@ include(../setup-lib.pri)
 DEFINES += RESONANT_EXPORT
 
 win32:LIBS += -llibsndfile-1
+unix:LIBS += -lsndfile

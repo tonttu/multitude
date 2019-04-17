@@ -21,13 +21,23 @@ linux-g++ {
 exists($$DEPS_DIR) {
   message("Adding extra deps dir")
   INCLUDEPATH += $$DEPS_DIR/$$TARGET_SYSTEM/include
-  LIBS += -L$$DEPS_DIR/$$TARGET_SYSTEM/lib
+  DEPS_LIBDIR = $$DEPS_DIR/$${TARGET_SYSTEM}lib
+  LIBS += -L$$DEPS_LIBDIR
+  PKG_CONFIG_PATH = $$DEPS_LIBDIR/pkgconfig
+  message("PKG_CONFIG_PATH="$$PKG_CONFIG_PATH)
+  !exists($$PKG_CONFIG_PATH) {
+    error("No PKG_CONFIG_PATH dir")
+  }
 }
 
 !exists($$DEPS_DIR) {
-  message("No deps dir");
+  error("No deps dir, please define DEPS_DIR");
 }
 
 unix:LIBS += -L$$ROOT/lib/$$TARGET_SYSTEM
 
 VERSION = 2.7
+
+LIB_NIMBLE = -lNimble
+LIB_RADIANT = -lRadiant
+LIB_VALUABLE = -lValuable
