@@ -113,6 +113,40 @@ namespace Radiant
       struct tm * ts = localtime_r(&t, &tmp);
     #endif
 
+#ifdef RADIANT_MOBILE
+      /* On mobile devices (at least debugging on Android), printing to stdout/stderr does not work, but printing via qDebug etc.
+         does work. */
+      if(msg.severity == INFO)
+        qInfo("%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
+              ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+              ts->tm_hour, ts->tm_min, ts->tm_sec,
+              int(now.subSecondsUS()) / 1000, colorsEnd, storage, msg.text.toUtf8().data(),
+              colorsEnd);
+      else if(msg.severity == DEBUG)
+        qDebug("%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
+               ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+               ts->tm_hour, ts->tm_min, ts->tm_sec,
+               int(now.subSecondsUS()) / 1000, colorsEnd, storage, msg.text.toUtf8().data(),
+               colorsEnd);
+      else if(msg.severity == WARNING)
+        qWarning("%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
+                 ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+                 ts->tm_hour, ts->tm_min, ts->tm_sec,
+                 int(now.subSecondsUS()) / 1000, colorsEnd, storage, msg.text.toUtf8().data(),
+                 colorsEnd);
+      else if(msg.severity == FAILURE)
+        qCritical("%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
+                  ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+                  ts->tm_hour, ts->tm_min, ts->tm_sec,
+                  int(now.subSecondsUS()) / 1000, colorsEnd, storage, msg.text.toUtf8().data(),
+                  colorsEnd);
+      else
+        qFatal("%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
+               ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
+               ts->tm_hour, ts->tm_min, ts->tm_sec,
+               int(now.subSecondsUS()) / 1000, colorsEnd, storage, msg.text.toUtf8().data(),
+               colorsEnd);
+#else
       fprintf(out, "%s[%04d-%02d-%02d %02d:%02d:%02d.%03d]%s %s%s%s\n", timestampColor,
               ts->tm_year+1900, ts->tm_mon+1, ts->tm_mday,
               ts->tm_hour, ts->tm_min, ts->tm_sec,
@@ -120,6 +154,7 @@ namespace Radiant
               colorsEnd);
 
       fflush(out);
+#endif
 
       return false;
     }
