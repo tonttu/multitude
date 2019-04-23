@@ -38,6 +38,7 @@ enable-port-audio {
   SOURCES += AudioLoopPortAudio.cpp
 
   unix: LIBS += -lportaudio
+  linux-*: LIBS += -lasound
 
   win32: LIBS += -lportaudio
 }
