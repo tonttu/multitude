@@ -1,6 +1,7 @@
-internal-build {
-  include(multitude-internal.pri)
+!exists($${CONFIG_PATH}) {
+  error("Could not find external qmake settings file " $${CONFIG_PATH});
 }
-!internal-build {
-  include(../cornerstone.pri)
-}
+
+include($${CONFIG_PATH})
+
+include(multitude-core.pri)
