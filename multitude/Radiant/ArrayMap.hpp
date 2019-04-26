@@ -209,11 +209,10 @@ namespace Radiant
   template <typename Key, typename T, typename Allocator>
   typename ArrayMap<Key, T, Allocator>::iterator ArrayMap<Key, T, Allocator>::erase(iterator it)
   {
-    //auto idx = it - begin();
+    auto idx = it - begin();
     *it = std::move(m_data.back());
     m_data.resize(m_data.size() - 1);
-    return it;
-    //return begin() + idx;
+    return begin() + idx;
   }
 
   template <typename Key, typename T, typename Allocator>
