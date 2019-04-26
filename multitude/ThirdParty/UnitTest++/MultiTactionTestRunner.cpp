@@ -326,6 +326,11 @@ namespace UnitTest
       QString error, errorDetails;
       int exitCode = 0;
 
+      bool validOutput = false;
+      {
+        QFile file(xmlOutput);
+        validOutput = file.open(QFile::ReadOnly) && !file.readAll().trimmed().isEmpty();
+      }
       if (!finished) {
         error = "timed out";
         writeFailureXml(xmlOutput, test, time, "timeout");
@@ -334,6 +339,14 @@ namespace UnitTest
         error = "crashed";
         writeFailureXml(xmlOutput, test, time, "crashed");
         exitCode = 1;
+      } else if (!validOutput && process.exitCode() != 0) {
+        // In Windows when the application calls abort() in debug mode, the
+        // application doesn't technically crash, so QProcess exit status is
+        // NormalExit, but the application still fails to write the output
+        // xml file. Make sure we don't miss this failure.
+        error = "failed";
+        writeFailureXml(xmlOutput, test, time, "failed");
+        exitCode = process.exitCode();
       } else {
         // exitCode() is only valid on normal process exit
         assert(process.exitStatus() == QProcess::NormalExit);
@@ -361,7 +374,7 @@ namespace UnitTest
                time, errorDetails.isEmpty() ? "" : ":\n", errorDetails.toUtf8().data());
 
         if (flags & TestRunnerFlag::PRINT_ONLY_FAILURES)
-          printf("Application output:\n%s\n", process.readAll().data());
+          printf("Application output:\n%s\n", process.readAll().replace("\r\n", "\n").data());
 
         // We remove time stat for a failed test to force it to run first next time
         stats.remove(statsKey);
@@ -414,7 +427,7 @@ namespace UnitTest
       int secs = time;
       int mins = secs / 60;
       secs = secs % 60;
-      printf("Ran %d test in %d min %d s\n", tests, mins, secs);
+      printf("Ran %d test%s in %d min %d s\n", tests, tests == 1 ? "" : "s", mins, secs);
       if (failedTests == 0 && failures == 0) {
         printf("No errors\n");
       } else {
