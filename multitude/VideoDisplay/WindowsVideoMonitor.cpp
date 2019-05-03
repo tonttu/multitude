@@ -15,6 +15,7 @@
 
 #include "WindowsVideoHelpers.hpp"
 #include "RGBEasy.hpp"
+#include "MWCapture.hpp"
 
 namespace VideoDisplay
 {
@@ -248,6 +249,7 @@ namespace VideoDisplay
 
     bool m_externalLibsInitialized = false;
     RGBEasyLibPtr m_rgbEasy = RGBEasyLib::instance();
+    std::shared_ptr<MWCapture> m_mwCapture = MWCapture::instance();
   };
 
   // -----------------------------------------------------------------
@@ -364,6 +366,7 @@ namespace VideoDisplay
   void VideoCaptureMonitor::D::initInput(VideoInput& vi) const
   {
     m_rgbEasy->initInput(vi);
+    m_mwCapture->initInput(vi);
   }
 
   std::map<int, int>
@@ -546,6 +549,9 @@ namespace VideoDisplay
       return m_rgbEasy->createEasyRGBSource(videoInput, audioInput);
     }
 
+    if (!videoInput.magewellDevicePath.isEmpty())
+      return m_mwCapture->createSource(videoInput, audioInput);
+
     std::unique_ptr<Source> src;
     src.reset(new Source(videoInput, audioInput));
     return src;
@@ -553,6 +559,9 @@ namespace VideoDisplay
 
   SourcePtr VideoCaptureMonitor::D::createSource(const VideoInput& videoInput)
   {
+    if (!videoInput.magewellDevicePath.isEmpty())
+      return m_mwCapture->createSource(videoInput, AudioInput());
+
     std::unique_ptr<Source> src;
     src.reset(new Source());
     src->video = videoInput;
