@@ -74,7 +74,6 @@ namespace Radiant {
   class MouseEvent;
   class Mutex;
   class Plane;
-  class SMRingBuffer;
   class Semaphore;
   class SerialPort;
   class Sleep;
