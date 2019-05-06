@@ -17,6 +17,3 @@ enable-resonant {
   SUBDIRS += Resonant
   Resonant.depends = Radiant Nimble Valuable
 }
-
-
-# sudo apt-get install libudev-dev

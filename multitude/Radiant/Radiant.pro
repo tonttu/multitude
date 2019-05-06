@@ -177,8 +177,6 @@ enable-folly {
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
 LIBS += $$LIB_FOLLY
 
-message("CONFIG = "$$CONFIG)
-
 linux-* {
   LIBS += -lX11
   PKGCONFIG += libudev
