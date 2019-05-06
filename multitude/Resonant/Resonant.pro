@@ -1,6 +1,4 @@
-include(../../cornerstone.pri)
-
-unix: PKGCONFIG += sndfile
+include(../setup.pri)
 
 HEADERS += AudioFileHandler.hpp \
     LimiterAlgorithm.hpp \
@@ -39,7 +37,8 @@ enable-port-audio {
   SOURCES += PortAudioSource.cpp
   SOURCES += AudioLoopPortAudio.cpp
 
-  unix: PKGCONFIG += portaudio-2.0
+  unix: LIBS += -lportaudio
+  linux-*: LIBS += -lasound
 
   win32: LIBS += -lportaudio
 }
@@ -59,8 +58,10 @@ enable-pulse-audio {
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_VALUABLE
 
-include(../../library.pri)
+include(../setup-lib.pri)
 
 DEFINES += RESONANT_EXPORT
 
 win32:LIBS += -llibsndfile-1
+unix:LIBS += -lsndfile
+mobile:LIBS += -lFLAC -lvorbisenc -lvorbis -logg

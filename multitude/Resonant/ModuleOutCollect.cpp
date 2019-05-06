@@ -57,7 +57,7 @@ namespace Resonant {
     if(forcechans) {
       m_channels =  atoi(forcechans);
       Radiant::info("ModuleOutCollect::prepare # forcing channel count to %ld",
-                    m_channels);
+                    (long) m_channels);
     }
 
     assert(m_channels != 0);

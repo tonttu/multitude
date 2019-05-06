@@ -1,7 +1,7 @@
 # Don't use default multitude install rules because we want these files to go
 # under ThirdParty. We override this at the end of this file.
 skip_install_target = true
-include(../../library.pri)
+include(../setup-lib.pri)
 
 # Hack required to build libQxtNetwork
 SHARED_LIB_SUFFIX=

@@ -177,7 +177,7 @@ namespace Resonant {
   {
   public:
     Internal()
-    { memset( & m_info, 0, sizeof(m_info)); };
+    { memset( & m_info, 0, sizeof(m_info)); }
 
     SF_INFO m_info;
   };
@@ -963,7 +963,7 @@ namespace Resonant {
         sprintf(command, "mpg123 %s --wav %s", file.toUtf8().data(), wavname.c_str());
 #endif
         Radiant::info("Performing mp3 -> wav conversion with [%s]", command);
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
         int err = Radiant::FileUtils::runInShell(command);
 #else
         int err = system(command);

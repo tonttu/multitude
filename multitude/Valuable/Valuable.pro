@@ -1,4 +1,4 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 linux-* {
     QMAKE_CXXFLAGS += -faligned-new -Wno-error=attributes
@@ -101,4 +101,5 @@ enable-folly {
 CONFIG += qt
 QT += xml
 
-include(../../library.pri)
+include(../setup-lib.pri)
+

@@ -5,7 +5,7 @@ win32 {
   QMAKE_INSTALL_FILE='\"C:\Program Files\Git\usr\bin\install.exe\"'
 }
 
-include(../../../cornerstone.pri)
+include(../../setup.pri)
 
 QT += xml
 

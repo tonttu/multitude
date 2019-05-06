@@ -58,7 +58,7 @@ namespace {
   int s_fileWriterCount = 0;
   std::function<void (Radiant::FileWriter::FileWriterMode mode)> s_callback = nullptr;
 
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
 
   bool do_flock(QFile & file, int flags = LOCK_EX) {
     while(flock(file.handle(), flags) == -1) {
@@ -98,6 +98,7 @@ namespace {
 
     return true;
   }
+
 
   void s_mountRW(const QString & name)
   {
@@ -191,14 +192,14 @@ namespace Radiant
   FileWriter::FileWriter(const QString & name)
   {
     (void)name;
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
     MULTI_ONCE{ fileWriterInit(); }
 #endif
     if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
     s_fileWriterCount++;
     if (!s_fileWriterMountedRW) {
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
       s_mountRW(name);
 #endif
       s_fileWriterMountedRW = true;
@@ -212,7 +213,7 @@ namespace Radiant
     if (!s_fileWriterEnabled) return;
     Guard g(s_fileWriterMutex);
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
       s_mountRO();
 #endif
       s_fileWriterMountedRW = false;
@@ -256,7 +257,7 @@ namespace Radiant
   {
     Guard g(s_fileWriterMutex);
     if (--s_fileWriterCount == 0 && s_fileWriterMountedRW) {
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
       s_mountRO();
 #endif
       s_fileWriterMountedRW = false;
@@ -484,7 +485,7 @@ namespace Radiant
 
   FILE * FileUtils::createFilePath(const QString & filePath)
   {
-    if(filePath.isEmpty()) return 0;
+    if(filePath.isEmpty()) return nullptr;
 
     QFileInfo fi(filePath);
     QDir().mkpath(fi.path());
@@ -552,7 +553,8 @@ namespace Radiant
 #endif
   }
 
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
+
   int FileUtils::runInShell(QString cmd, QByteArray * out, QByteArray * err, bool quiet)
   {
     return run("/bin/sh", QStringList() << "-c" << cmd, out, err, quiet);

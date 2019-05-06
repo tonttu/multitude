@@ -1,4 +1,4 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 HEADERS += TempFailureRetry.hpp \
     ThreadChecks.hpp \
@@ -65,9 +65,6 @@ HEADERS += SafeBool.hpp
 HEADERS += Semaphore.hpp
 HEADERS += SerialPort.hpp
 HEADERS += Sleep.hpp
-HEADERS += SHMDuplexPipe.hpp
-HEADERS += SHMPipe.hpp
-HEADERS += SMRingBuffer.hpp
 HEADERS += StringUtils.hpp
 HEADERS += SocketUtilPosix.hpp
 HEADERS += TCPServerSocket.hpp
@@ -131,9 +128,6 @@ SOURCES += Log.cpp
 SOURCES += MemCheck.cpp
 SOURCES += Sleep.cpp
 SOURCES += SemaphoreQt.cpp
-SOURCES += SHMDuplexPipe.cpp
-SOURCES += SHMPipe.cpp
-SOURCES += SMRingBuffer.cpp
 SOURCES += StringUtils.cpp
 SOURCES += TimeStamp.cpp
 SOURCES += Trace.cpp
@@ -158,11 +152,13 @@ SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
-SOURCES += CrashHandlerCommon.cpp
-SOURCES += TraceCrashHandlerFilter.cpp
+!mobile:SOURCES += CrashHandlerCommon.cpp
+!mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
-linux*:SOURCES += ProcessRunnerPosix.cpp
-win32:SOURCES += ProcessRunnerWin32.cpp
+!mobile {
+  linux*:SOURCES += ProcessRunnerPosix.cpp
+  win32:SOURCES += ProcessRunnerWin32.cpp
+}
 
 # ios:OTHER_FILES += PlatformUtilsIOS.mm
 ios {
@@ -209,9 +205,11 @@ macx {
 DEFINES += RADIANT_EXPORT
 
 unix {
-  SOURCES += CallStackUnix.cpp
+  !mobile:SOURCES += CallStackUnix.cpp
+  mobile:SOURCES += CallStackDummy.cpp
 
-  LIBS += -lpthread $$LIB_RT -ldl
+  !mobile:LIBS += -lpthread
+  LIBS +=  $$LIB_RT -ldl
   CONFIG += qt
   QT = core network gui
 }
@@ -253,4 +251,4 @@ win32 {
 
 DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)
 
-include(../../library.pri)
+include(../setup-lib.pri)

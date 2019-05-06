@@ -1,4 +1,7 @@
 #include "ProcessRunner.hpp"
+
+#ifndef RADIANT_MOBILE
+
 #include <Radiant/Platform.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/Trace.hpp>
@@ -49,3 +52,4 @@ namespace Radiant
     };
   }
 }
+#endif

@@ -639,7 +639,7 @@ namespace Resonant {
 
     for(size_t i = 0; i < s; i++) {
       if(bufIsFree((int) i, location)) {
-        debugResonant("DSPNetwork::findFreeBuf # Found %d -> %lu", location, i);
+        debugResonant("DSPNetwork::findFreeBuf # Found %d -> %lu", location, (unsigned long) i);
         return m_buffers[i];
       }
     }
@@ -648,7 +648,7 @@ namespace Resonant {
 
     m_buffers[s].init();
 
-    debugResonant("DSPNetwork::findFreeBuf # Created %d -> %lu", location, s);
+    debugResonant("DSPNetwork::findFreeBuf # Created %d -> %lu", location, (unsigned long) s);
 
     return m_buffers[s];
   }
@@ -713,9 +713,9 @@ namespace Resonant {
 
     while(findItemUnsafe(m->id())) {
       if(!index)
-        sprintf(buf, "%p", m.get());
+        sprintf(buf, "%p", (void *) m.get());
       else
-        sprintf(buf, "%p-%.4d", m.get(), index);
+        sprintf(buf, "%p-%.4d", (void *) m.get(), index);
       m->setId(buf);
       index++;
     }

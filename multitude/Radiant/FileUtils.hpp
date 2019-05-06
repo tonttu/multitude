@@ -226,7 +226,7 @@ namespace Radiant
     /// @return Directory separator for the current platform
     static QString directorySeparator();
 
-#ifdef RADIANT_LINUX
+#if defined(RADIANT_LINUX) && !defined(RADIANT_MOBILE)
     /// @todo these run-functions are in a wrong place
 
     /// Will run /bin/sh -c 'cmd'

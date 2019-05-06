@@ -1,4 +1,4 @@
-include(../../cornerstone.pri)
+include(../setup.pri)
 
 HEADERS += Export.hpp \
     LineIntersection.hpp \
@@ -43,4 +43,4 @@ SOURCES += Splines.cpp
 
 DEFINES += NIMBLE_EXPORT
 
-include(../../library.pri)
+include(../setup-lib.pri)
