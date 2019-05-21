@@ -806,13 +806,11 @@ namespace VideoDisplay
     /// @param ts video timestamp
     /// @param[out] errors ErrorFlags
     /// @returns decoded video frame from a buffer, or null if the buffer is empty
-    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
-                                   PlayFlags flags = PLAY_FLAG_NONE) = 0;
-    /// Deletes older video frames from the buffer, this needs to be called after
-    /// the frame has been consumed, otherwise the buffer will fill quickly.
-    /// @param ts timestamp of the previous consumed frame
-    /// @param eof null or pointer to bool that will be set to true if the stream is at EOF
-    virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) = 0;
+    virtual std::shared_ptr<VideoFrame> playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                                  PlayFlags flags = PLAY_FLAG_NONE) = 0;
+
+    /// Returns true if the video playback is at the end
+    virtual bool isEof() const = 0;
 
     /// YUV to RGB conversion matrix using the active video color profile.
     /// This can be used directly in GLSL: vec4 rgb = m * vec4(y, u, v, 1.0);

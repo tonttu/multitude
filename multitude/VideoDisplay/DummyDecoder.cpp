@@ -4,10 +4,8 @@
 
 namespace VideoDisplay
 {
-  struct Frame
+  struct Frame : public VideoFrame
   {
-    VideoFrame videoFrame;
-
     std::vector<uint8_t> data;
   };
 
@@ -16,24 +14,23 @@ namespace VideoDisplay
     Nimble::Vector2i ry = resolution.toVector();
     Nimble::Vector2i ruv = ry / 2;
 
-    VideoFrame & v = f.videoFrame;
-    v.setImageSize(ry);
+    f.setImageSize(ry);
 
-    v.setFormat(VideoFrame::YUV);
-    v.setPlanes(3);
+    f.setFormat(VideoFrame::YUV);
+    f.setPlanes(3);
 
-    v.setPlaneSize(0, ry);
-    v.setPlaneSize(1, ruv);
-    v.setPlaneSize(2, ruv);
+    f.setPlaneSize(0, ry);
+    f.setPlaneSize(1, ruv);
+    f.setPlaneSize(2, ruv);
 
-    v.setLineSize(0, ry.x);
-    v.setLineSize(1, ruv.x);
-    v.setLineSize(2, ruv.x);
+    f.setLineSize(0, ry.x);
+    f.setLineSize(1, ruv.x);
+    f.setLineSize(2, ruv.x);
 
     f.data.resize(ry.x * ry.y + 2 * (ruv.x * ruv.y));
-    v.setData(0, f.data.data());
-    v.setData(1, f.data.data() + ry.x * ry.y);
-    v.setData(2, f.data.data() + ry.x * ry.y + ruv.x * ruv.y);
+    f.setData(0, f.data.data());
+    f.setData(1, f.data.data() + ry.x * ry.y);
+    f.setData(2, f.data.data() + ry.x * ry.y + ruv.x * ruv.y);
 
     std::mt19937 gen((unsigned int)(uintptr_t)f.data.data());
     std::uniform_int_distribution<> dis(0, 255);
@@ -50,7 +47,7 @@ namespace VideoDisplay
     Nimble::Size m_size {1920, 1080};
     double m_fps = 60;
 
-    std::array<Frame, 20> m_frames;
+    std::array<std::shared_ptr<Frame>, 20> m_frames;
   };
 
   DummyDecoder::DummyDecoder()
@@ -91,7 +88,7 @@ namespace VideoDisplay
     return m_d->m_size;
   }
 
-  VideoFrame * DummyDecoder::playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags &, PlayFlags)
+  std::shared_ptr<VideoFrame> DummyDecoder::playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags &, PlayFlags)
   {
     if (state() != STATE_READY)
       return nullptr;
@@ -99,12 +96,12 @@ namespace VideoDisplay
     Timestamp ts = m_d->m_sync.map(presentTimestamp);
     uint64_t frameNum = ts.pts() * m_d->m_fps;
 
-    return &m_d->m_frames[frameNum % m_d->m_frames.size()].videoFrame;
+    return m_d->m_frames[frameNum % m_d->m_frames.size()];
   }
 
-  int DummyDecoder::releaseOldVideoFrames(const Timestamp &, bool *)
+  bool DummyDecoder::isEof() const
   {
-    return 0;
+    return false;
   }
 
   Nimble::Matrix4f DummyDecoder::yuvMatrix() const
@@ -129,8 +126,10 @@ namespace VideoDisplay
   {
     state() = STATE_HEADER_READY;
 
-    for (Frame & f: m_d->m_frames)
-      init(f, m_d->m_size);
+    for (std::shared_ptr<Frame> & f: m_d->m_frames) {
+      f.reset(new Frame());
+      init(*f, m_d->m_size);
+    }
 
     m_d->m_sync.sync(Radiant::TimeStamp::currentTime(), Timestamp());
     state() = STATE_READY;

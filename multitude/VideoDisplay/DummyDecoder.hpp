@@ -21,9 +21,9 @@ namespace VideoDisplay
 
     virtual Nimble::Size videoSize() const override;
 
-    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
-                                   PlayFlags flags) override;
-    virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) override;
+    virtual std::shared_ptr<VideoFrame> playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                                  PlayFlags flags) override;
+    virtual bool isEof() const override;
 
     virtual Nimble::Matrix4f yuvMatrix() const override;
 
