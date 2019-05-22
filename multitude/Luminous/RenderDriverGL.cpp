@@ -568,9 +568,7 @@ namespace Luminous
   {
     auto it = m_d->m_textures.find(texture.resourceId());
     if(it == m_d->m_textures.end()) {
-      // libstdc++ doesn't have this yet
-      //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGL).first;
-      it = m_d->m_textures.insert(std::make_pair(texture.resourceId(), TextureGL(m_d->m_stateGL))).first;
+      it = m_d->m_textures.emplace(texture.resourceId(), m_d->m_stateGL).first;
       it->second.setExpirationSeconds(texture.expiration());
     }
 
