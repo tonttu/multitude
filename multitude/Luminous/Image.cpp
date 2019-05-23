@@ -64,6 +64,12 @@ namespace Luminous
   template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_BGR> {
     static Type get(const Type * t, int i) { return i < 3 ? t[2-i] : convert_value<unsigned char, Type>(255); }
   };
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_RED> {
+    static Type get(const Type * t, int i) { return i < 3 ? t[0] : convert_value<unsigned char, Type>(255); }
+  };
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_ALPHA> {
+    static Type get(const Type * t, int i) { return i < 3 ? convert_value<unsigned char, Type>(255) : t[0]; }
+  };
 
   template <PixelFormat::ChannelType TypeFrom, PixelFormat::ChannelType TypeTo,
             PixelFormat::ChannelLayout LayoutFrom, PixelFormat::ChannelLayout LayoutTo>
@@ -795,10 +801,13 @@ namespace Luminous
        m_pixelFormat.compression() != PixelFormat::COMPRESSION_NONE ||
        format.type() != PixelFormat::TYPE_UBYTE ||
        m_pixelFormat.type() != PixelFormat::TYPE_UBYTE ||
-       (m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB &&
+       (m_pixelFormat.layout() != PixelFormat::LAYOUT_ALPHA &&
+        m_pixelFormat.layout() != PixelFormat::LAYOUT_RED &&
+        m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB &&
         m_pixelFormat.layout() != PixelFormat::LAYOUT_BGR) ||
        format.layout() != PixelFormat::LAYOUT_RGBA) {
-      Radiant::error("Image::setPixelFormat # unsupported conversion");
+      Radiant::error("Image::setPixelFormat # unsupported conversion %s -> %s",
+                     m_pixelFormat.toString().toUtf8().data(), format.toString().toUtf8().data());
       return false;
     }
 

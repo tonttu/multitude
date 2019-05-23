@@ -37,10 +37,6 @@ namespace Luminous
       case QImage::Format_Grayscale8:
       case QImage::Format_Mono:
       case QImage::Format_MonoLSB:
-        qformatOut = QImage::Format_Grayscale8;
-        formatOut = PixelFormat::redUByte();
-        break;
-
       case QImage::Format_Indexed8:
       case QImage::Format_RGB32:
       case QImage::Format_RGB16:

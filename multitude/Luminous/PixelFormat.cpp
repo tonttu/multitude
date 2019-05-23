@@ -213,7 +213,7 @@ namespace Luminous
   {
     /// @todo add support to compressed formats
     const QString premul = isPremultipliedAlpha() ? QString("pre-multiplied") : QString("post-multiplied");
-    return QString("PixelFormat(%1, %2, %3").arg(layoutToString(m_layout)).arg(typeToString(m_type)).arg(premul);
+    return QString("PixelFormat(%1, %2, %3)").arg(layoutToString(m_layout)).arg(typeToString(m_type)).arg(premul);
   }
 
 }
