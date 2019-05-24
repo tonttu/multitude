@@ -1396,9 +1396,7 @@ namespace VideoDisplay
       if(gotFrame) {
         AVRational tb {1, m_av.frame->sample_rate};
         if (m_av.frame->pts != AV_NOPTS_VALUE) {
-          m_av.frame->pts = av_rescale_q(m_av.frame->pts, m_av.audioCodecContext->time_base, tb);
-        } else if (m_av.frame->pkt_pts != AV_NOPTS_VALUE) {
-          m_av.frame->pts = av_rescale_q(m_av.frame->pkt_pts, av_codec_get_pkt_timebase(m_av.audioCodecContext), tb);
+          m_av.frame->pts = av_rescale_q(m_av.frame->pts, m_av.audioCodecContext->pkt_timebase, tb);
         } else if (m_av.nextPts != AV_NOPTS_VALUE) {
           m_av.frame->pts = av_rescale_q(m_av.nextPts, m_av.nextPtsTb, tb);
         }
