@@ -16,6 +16,8 @@ namespace VideoDisplay
     QString rgbDeviceName;
     int rgbIndex = -1;
 
+    QString magewellDevicePath;
+
     QString instanceId;
 
     QString asString() const;

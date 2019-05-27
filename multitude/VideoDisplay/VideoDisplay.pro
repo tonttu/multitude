@@ -20,14 +20,25 @@ win32 {
   SOURCES += WindowsVideoMonitor.cpp \
              WindowsVideoHelpers.cpp \
              RGBEasy.cpp \
-             FfmpegVideoFormatSelectorWin.cpp
+             FfmpegVideoFormatSelectorWin.cpp \
+             MWCapture.cpp
 
   HEADERS += WindowsVideoHelpers.hpp \
-             RGBEasy.hpp
+             RGBEasy.hpp \
+             MWCapture.hpp
 
   # RGBEASY (Datapath SDK)
   INCLUDEPATH += rgbeasy-sdk-v7.14.1/include
   LIBS += -lStrmiids -lOle32 -lOleAut32 -lPropsys
+
+  # MWCapture (Magewell SDK)
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/mwcapture/include
+  QMAKE_LIBDIR += $$CORNERSTONE_DEPS_PATH/manual/mwcapture/lib
+  CONFIG(debug,debug|release) {
+    LIBS += -lLibMWCaptured
+  } else {
+    LIBS += -lLibMWCapture
+  }
 }
 
 linux {
