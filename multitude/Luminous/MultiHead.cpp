@@ -486,7 +486,7 @@ namespace Luminous
 #endif
               ),
       m_glFinish(this, "gl-finish", false),
-      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
+      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_BUFFER_MAP),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
   }

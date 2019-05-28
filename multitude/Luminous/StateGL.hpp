@@ -124,6 +124,8 @@ namespace Luminous
     /// @todo inline would be nice, but circular dependencies don't allow it
     LUMINOUS_API OpenGLAPI& opengl();
 
+    LUMINOUS_API void addTask(std::function<void()> task);
+
   private:
     /// Currently bound shader program
     GLuint m_currentProgram;

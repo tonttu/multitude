@@ -809,6 +809,8 @@ namespace VideoDisplay
     virtual std::shared_ptr<VideoFrame> playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
                                                   PlayFlags flags = PLAY_FLAG_NONE) = 0;
 
+    virtual std::shared_ptr<VideoFrame> peekFrame(std::shared_ptr<VideoFrame>, int offset) = 0;
+
     /// Returns true if the video playback is at the end
     virtual bool isEof() const = 0;
 

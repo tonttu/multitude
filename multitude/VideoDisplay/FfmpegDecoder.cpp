@@ -1727,6 +1727,22 @@ namespace VideoDisplay
     return current;
   }
 
+  std::shared_ptr<VideoFrame> FfmpegDecoder::peekFrame(std::shared_ptr<VideoFrame> ref, int offset)
+  {
+    bool found = false;
+    Radiant::Guard g(m_d->m_decodedVideoFramesMutex);
+    for (auto it = m_d->m_decodedVideoFrames.begin(); it != m_d->m_decodedVideoFrames.end();) {
+      std::shared_ptr<VideoFrameFfmpeg> & frame = *it;
+      if (!found)
+        found = frame == ref;
+
+      if (found)
+        if (offset-- == 0)
+          return frame;
+    }
+    return nullptr;
+  }
+
   bool FfmpegDecoder::isEof() const
   {
     if (!finished())

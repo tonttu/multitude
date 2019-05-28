@@ -80,6 +80,8 @@ namespace Luminous
 
   TextureGL::~TextureGL()
   {
+    if (m_asyncUploadTasks > 0)
+      sync(0);
     if(m_handle) {
       m_state.opengl().glDeleteTextures(1, &m_handle);
       GLERROR("TextureGL::~TextureGL # glDeleteTextures");
@@ -113,7 +115,7 @@ namespace Luminous
     return *this;
   }
 
-  void TextureGL::upload1D(const Texture & texture, int textureUnit, bool forceBind)
+  void TextureGL::upload1D(const Texture & texture, int textureUnit)
   {
     bool bound = false;
 
@@ -150,11 +152,6 @@ namespace Luminous
       GLERROR("TextureGL::upload # glTexImage1D");
     }
 
-    if(!bound && forceBind) {
-      bind(textureUnit);
-      bound = true;
-    }
-
     /// @todo should we touch the dirty region if data is null?
     if(!texture.data()) {
       if (paramsDirty) {
@@ -177,7 +174,7 @@ namespace Luminous
 
       int uploaded = texture.dataSize();
       /// @todo Use upload limiter
-      m_state.opengl().glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+      m_state.opengl().glTexSubImage1D(m_target, 0, 0, texture.width(), texture.dataFormat().layout(), texture.dataFormat().type(), texture.data().get());
       GLERROR("TextureGL::upload1D # glTexSubImage1D");
 
       if (texture.mipmapsEnabled()) {
@@ -196,7 +193,7 @@ namespace Luminous
     }
   }
 
-  void TextureGL::upload2D(const Texture & texture, int textureUnit, bool forceBind)
+  void TextureGL::upload2D(const Texture & texture, int textureUnit)
   {
     bool bound = false;
 
@@ -206,6 +203,7 @@ namespace Luminous
     const bool dirty = m_generation != texture.generation();
     if (dirty) {
       m_generation = texture.generation();
+      m_useAsyncUpload = texture.allowAsyncUpload();
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
@@ -240,7 +238,7 @@ namespace Luminous
       GLenum intFormat = internalFormat(texture);
       if(compressedFormat) {
         m_state.opengl().glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
-                                                texture.height(), 0, texture.dataSize(), texture.data());
+                                                texture.height(), 0, texture.dataSize(), texture.data().get());
         GLERROR("TextureGL::upload # glCompressedTexImage2D");
         m_dirtyRegion2D = QRegion();
       }
@@ -263,11 +261,6 @@ namespace Luminous
       }
     }
 
-    if(!bound && forceBind) {
-      bind(textureUnit);
-      bound = true;
-    }
-
     /// @todo should we touch the dirty region if data is null?
     if(!texture.data()) {
       if (paramsDirty) {
@@ -285,68 +278,30 @@ namespace Luminous
 
     // Perform an (incremental) upload of the data
     if(!m_dirtyRegion2D.isEmpty()) {
-      if(!bound)
-        bind(textureUnit);
+      QRegion dirty;
+      dirty.swap(m_dirtyRegion2D);
 
-      int uploaded = 0;
-
-      /// @todo glCompressedTexImage2D, probably needs some alignment
-      if(compressedFormat) {
-        uploaded = texture.dataSize();
-        m_state.opengl().glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(),
-                                                   texture.dataFormat().compression(), uploaded, texture.data());
-        GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
-        m_dirtyRegion2D = QRegion();
-      } else {
-        const int lineSizeBytes = texture.lineSizeBytes();
-        const int bytesPerPixel = texture.dataFormat().bytesPerPixel();
-
-        // Set proper alignment
-        int alignment = 8;
-        while (lineSizeBytes % alignment)
-          alignment >>= 1;
-
-        m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-        GLERROR("TextureGL::upload # glPixelStorei");
-        m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, lineSizeBytes / bytesPerPixel);
-        GLERROR("TextureGL::upload # glPixelStorei");
-
-        // See how much of the bytes we can upload in this frame
-        int64_t bytesFree = m_state.availableUploadBytes();
-
-        for(const QRect & rect : m_dirtyRegion2D.rects()) {
-          const int bytesPerRectScanline = rect.width() * bytesPerPixel;
-          const int lineSizeBytes = texture.lineSizeBytes();
-
-          const int scanlinesToUpload = Nimble::Math::Clamp<int32_t>(bytesFree / bytesPerRectScanline, 1, rect.height());
-
-          auto offset = rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
-          auto data = static_cast<const char *>(texture.data()) + offset;
-
-          QRect destRect = rect;
-          destRect.setHeight(scanlinesToUpload);
-          uploadData(texture, data, offset, destRect,
-                     scanlinesToUpload * lineSizeBytes);
-
-          GLERROR("TextureGL::upload # glTexSubImage2D");
-          uploaded += bytesPerRectScanline * scanlinesToUpload;
-          bytesFree -= bytesPerRectScanline * scanlinesToUpload;
-
-          if (int(scanlinesToUpload) != rect.height()) {
-            m_dirtyRegion2D -= QRegion(rect.left(), rect.top(), rect.width(), scanlinesToUpload);
-            break;
-          } else {
-            m_dirtyRegion2D -= rect;
-          }
+      if (m_useAsyncUpload) {
+        {
+          QMutexLocker g(&m_asyncUploadMutex);
+          ++m_asyncUploadTasks;
         }
-      }
-      if (texture.mipmapsEnabled()) {
-        m_state.opengl().glGenerateMipmap(GL_TEXTURE_2D);
-        GLERROR("TextureGL::upload2D # glGenerateMipmap");
-      }
+        m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), dirty, compressedFormat, textureUnit] {
+          m_state.opengl().glBindTexture(m_target, m_handle);
+          upload2DImpl(tex, dirty, compressedFormat, mipmaps);
+          {
+            QMutexLocker g(&m_asyncUploadMutex);
+            --m_asyncUploadTasks;
+          }
+          m_asyncUploadCond.wakeAll();
+        });
+      } else {
+        if (!bound)
+          bind(textureUnit);
 
-      // Update upload-limiter
-      m_state.consumeUploadBytes(uploaded);
+        //Radiant::info("sync upload");
+        upload2DImpl(texture.dataInfo(), dirty, compressedFormat, texture.mipmapsEnabled());
+      }
     }
 
     if (paramsDirty) {
@@ -356,7 +311,45 @@ namespace Luminous
     }
   }
 
-  void TextureGL::upload3D(const Texture & texture, int textureUnit, bool forceBind)
+  void TextureGL::upload2DImpl(const Texture::DataInfo & texture, const QRegion & region,
+                               bool compressedFormat, bool mipmapsEnabled)
+  {
+    /// @todo glCompressedTexImage2D, probably needs some alignment
+    if(compressedFormat) {
+      m_state.opengl().glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.size.x, texture.size.y,
+                                                 texture.dataFormat.compression(), texture.dataSize, texture.data.get());
+      GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
+    } else {
+      const int lineSizeBytes = texture.lineSizeBytes;
+      const int bytesPerPixel = texture.dataFormat.bytesPerPixel();
+
+      // Set proper alignment
+      int alignment = 8;
+      while (lineSizeBytes % alignment)
+        alignment >>= 1;
+
+      m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+      GLERROR("TextureGL::upload # glPixelStorei");
+      m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, lineSizeBytes / bytesPerPixel);
+      GLERROR("TextureGL::upload # glPixelStorei");
+
+      for(const QRect & rect : region.rects()) {
+        const int lineSizeBytes = texture.lineSizeBytes;
+
+        auto offset = rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
+        auto data = static_cast<const char *>(texture.data.get()) + offset;
+
+        uploadData(texture.dataFormat, data, offset, rect,
+                   rect.height() * lineSizeBytes);
+      }
+    }
+    if (mipmapsEnabled) {
+      m_state.opengl().glGenerateMipmap(GL_TEXTURE_2D);
+      GLERROR("TextureGL::upload2D # glGenerateMipmap");
+    }
+  }
+
+  void TextureGL::upload3D(const Texture & texture, int textureUnit)
   {
     bool bound = false;
 
@@ -405,11 +398,6 @@ namespace Luminous
       paramsDirty = true;
     }
 
-    if(!bound && forceBind) {
-      bind(textureUnit);
-      bound = true;
-    }
-
     /// @todo should we touch the dirty region if data is null?
     if(!texture.data()) {
       if (paramsDirty) {
@@ -445,7 +433,7 @@ namespace Luminous
 
       int uploaded = texture.dataSize();
       m_state.opengl().glTexSubImage3D(m_target, 0, 0, 0, 0, texture.width(), texture.height(), texture.depth(),
-                                       texture.dataFormat().layout(), texture.dataFormat().type(), texture.data());
+                                       texture.dataFormat().layout(), texture.dataFormat().type(), texture.data().get());
       GLERROR("TextureGL::upload3D # glTexSubImage3D");
 
       if (texture.mipmapsEnabled()) {
@@ -464,13 +452,14 @@ namespace Luminous
     }
   }
 
-  void TextureGL::uploadData(const Texture & texture, const char * data, unsigned int destOffset,
+  void TextureGL::uploadData(const PixelFormat & dataFormat, const char * data, unsigned int destOffset,
                              const QRect & destRect, unsigned int bytes)
   {
     if (s_defaultUploadMethod == METHOD_TEXTURE) {
       m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, destRect.left(), destRect.top(),
                                        destRect.width(), destRect.height(),
-                                       texture.dataFormat().layout(), texture.dataFormat().type(), data);
+                                       dataFormat.layout(), dataFormat.type(), data);
+      GLERROR("TextureGL::uploadData # glTexSubImage2D");
     } else {
       if (!m_uploadBuffer)
         m_uploadBuffer.reset(new BufferGL(m_state, Buffer::DYNAMIC_DRAW));
@@ -489,9 +478,12 @@ namespace Luminous
 
       m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, destRect.left(), destRect.top(),
                                        destRect.width(), destRect.height(),
-                                       texture.dataFormat().layout(), texture.dataFormat().type(),
+                                       dataFormat.layout(), dataFormat.type(),
                                        (const void *)(uintptr_t)destOffset);
+      GLERROR("TextureGL::uploadData # glTexSubImage2D");
+
       m_state.opengl().glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+      GLERROR("TextureGL::uploadData # glBindBuffer");
     }
   }
 
@@ -509,16 +501,16 @@ namespace Luminous
     return paramsDirty;
   }
 
-  void TextureGL::upload(const Texture & texture, int textureUnit, bool forceBind)
+  void TextureGL::upload(const Texture & texture, int textureUnit)
   {
     // Reset usage timer
     touch();
 
     switch (texture.dimensions())
     {
-    case 1: upload1D(texture, textureUnit, forceBind); break;
-    case 2: upload2D(texture, textureUnit, forceBind); break;
-    case 3: upload3D(texture, textureUnit, forceBind); break;
+    case 1: upload1D(texture, textureUnit); break;
+    case 2: upload2D(texture, textureUnit); break;
+    case 3: upload3D(texture, textureUnit); break;
     default:
       Radiant::error("TextureGL::upload # Error: unknown number of dimensions (%d) while trying to upload texture", texture.dimensions());
       assert(false);

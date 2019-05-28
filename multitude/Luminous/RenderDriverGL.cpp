@@ -46,8 +46,78 @@
 #include <QStringList>
 #include <QVector>
 
+#include <QOffscreenSurface>
+
 namespace Luminous
 {
+  /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
+  class Worker : public QThread
+  {
+  public:
+    Worker(QOpenGLContext & shared)
+    {
+      m_surface.setFormat(shared.format());
+      m_surface.create();
+
+      m_context.setFormat(shared.format());
+      m_context.setShareContext(&shared);
+      m_context.create();
+
+      m_context.moveToThread(this);
+    }
+
+    ~Worker()
+    {
+      m_running = false;
+      m_tasksCond.wakeAll();
+      wait();
+    }
+
+    void addTask(std::function<void()> task)
+    {
+      {
+        QMutexLocker g(&m_tasksMutex);
+        m_tasks.push_back(std::move(task));
+      }
+      m_tasksCond.notify_one();
+    }
+
+  private:
+    virtual void run() override
+    {
+      if (!m_context.makeCurrent(&m_surface)) {
+        Radiant::info("%s: Failed to make OpenGL context current", objectName().toUtf8().data());
+        return;
+      }
+
+      while (m_running) {
+        std::function<void()> task;
+        {
+          QMutexLocker g(&m_tasksMutex);
+          while (m_tasks.empty() && m_running)
+            m_tasksCond.wait(&m_tasksMutex);
+
+          if (!m_running)
+            return;
+
+          task = std::move(m_tasks.front());
+          m_tasks.erase(m_tasks.begin());
+        }
+
+        task();
+      }
+    }
+
+  private:
+    QOffscreenSurface m_surface;
+    QOpenGLContext m_context;
+
+    std::vector<std::function<void()>> m_tasks;
+    QMutex m_tasksMutex;
+    QWaitCondition m_tasksCond;
+    std::atomic<bool> m_running{true};
+  };
+
   //////////////////////////////////////////////////////////////////////////
   // RenderDriver implementation
   class RenderDriverGL::D
@@ -127,6 +197,8 @@ namespace Luminous
     unsigned int m_gpuId;
 
     OpenGLAPI& m_opengl;
+
+    std::unique_ptr<Worker> m_worker;
 
   public:
 
@@ -247,7 +319,7 @@ namespace Luminous
     for(std::size_t t = 0; t < state.textures.size(); ++t) {
       if(!state.textures[t]) break;
       else {
-        state.textures[t]->bind(static_cast<int>(t));
+        state.textures[t]->sync(static_cast<int>(t));
       }
     }
 
@@ -395,7 +467,7 @@ namespace Luminous
 
         translucent |= texture->translucent();
         textureGL = &m_driver.handle(*texture);
-        textureGL->upload(*texture, unit, false);
+        textureGL->upload(*texture, unit);
 
         m_state.textures[unit++] = textureGL;
       }
@@ -488,6 +560,11 @@ namespace Luminous
   RenderDriverGL::RenderDriverGL(unsigned int threadIndex, OpenGLAPI& opengl)
     : m_d(new RenderDriverGL::D(threadIndex, *this, opengl))
   {
+    if (auto current = QOpenGLContext::currentContext()) {
+      m_d->m_worker = std::make_unique<Worker>(*current);
+      m_d->m_worker->setObjectName(QString("GL worker #%1").arg(threadIndex));
+      m_d->m_worker->start();
+    }
   }
 
   RenderDriverGL::~RenderDriverGL()
@@ -568,15 +645,13 @@ namespace Luminous
   {
     auto it = m_d->m_textures.find(texture.resourceId());
     if(it == m_d->m_textures.end()) {
-      // libstdc++ doesn't have this yet
-      //it = m_d->m_textures.emplace(texture.hash(), m_d->m_stateGL).first;
-      it = m_d->m_textures.insert(std::make_pair(texture.resourceId(), TextureGL(m_d->m_stateGL))).first;
+      it = m_d->m_textures.emplace(texture.resourceId(), m_d->m_stateGL).first;
       it->second.setExpirationSeconds(texture.expiration());
     }
 
     /// @todo avoid bind somehow?
     if (texture.isValid()) {
-      it->second.upload(texture, 0, false);
+      it->second.upload(texture, 0);
     }
 
     return it->second;
@@ -1023,6 +1098,13 @@ namespace Luminous
     return m_d->m_stateGL;
   }
 
+  void RenderDriverGL::addTask(std::function<void()> task)
+  {
+    if (m_d->m_worker)
+      m_d->m_worker->addTask(std::move(task));
+    else
+      task();
+  }
 }
 
 #undef GLERROR

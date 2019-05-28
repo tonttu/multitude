@@ -96,7 +96,17 @@ namespace VideoDisplay
     Timestamp ts = m_d->m_sync.map(presentTimestamp);
     uint64_t frameNum = ts.pts() * m_d->m_fps;
 
-    return m_d->m_frames[frameNum % m_d->m_frames.size()];
+    auto & frame = m_d->m_frames[frameNum % m_d->m_frames.size()];
+    frame->setIndex(frameNum);
+    return frame;
+  }
+
+  std::shared_ptr<VideoFrame> DummyDecoder::peekFrame(std::shared_ptr<VideoFrame> ref, int offset)
+  {
+    Frame & f = static_cast<Frame&>(*ref);
+    auto & ret = m_d->m_frames[(f.index() + offset) % m_d->m_frames.size()];
+    ret->setIndex(f.index() + offset);
+    return ret;
   }
 
   bool DummyDecoder::isEof() const

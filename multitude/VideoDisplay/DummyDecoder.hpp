@@ -23,6 +23,7 @@ namespace VideoDisplay
 
     virtual std::shared_ptr<VideoFrame> playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
                                                   PlayFlags flags) override;
+    virtual std::shared_ptr<VideoFrame> peekFrame(std::shared_ptr<VideoFrame> ref, int offset) override;
     virtual bool isEof() const override;
 
     virtual Nimble::Matrix4f yuvMatrix() const override;

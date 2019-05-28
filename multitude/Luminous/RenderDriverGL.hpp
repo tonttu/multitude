@@ -124,6 +124,10 @@ namespace Luminous
 
     LUMINOUS_API StateGL & stateGl();
 
+    /// Add a new task that is going to be executed on a different
+    /// thread with a shared OpenGL context. Used for GPU data transfers.
+    LUMINOUS_API void addTask(std::function<void()> task);
+
   private:
 
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
