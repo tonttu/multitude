@@ -65,7 +65,6 @@ LIBS += $$LIB_PATTERNS $$LIB_VALUABLE $$LIB_FFMPEG
 
 macx {
   LIBS += -framework OpenGL
-  PKGCONFIG += libavdevice
 }
 
 DEFINES += VIDEODISPLAY_EXPORT
