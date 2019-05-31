@@ -644,6 +644,15 @@ namespace VideoDisplay
 
     int err = avformat_open_input(&m_av.formatContext, openTarget.toUtf8().data(),
                                   inputFormat, &avoptions);
+    if(err != 0) {
+      if (m_running)
+        avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
+      av_dict_free(&avoptions);
+      avformat_free_context(m_av.formatContext);
+      m_av.formatContext = nullptr;
+      releaseExclusiveAccess();
+      return false;
+    }
 
     {
       AVDictionaryEntry * it = nullptr;
@@ -653,15 +662,6 @@ namespace VideoDisplay
       }
       av_dict_free(&avoptions);
       avoptions = nullptr;
-    }
-
-    if(err != 0) {
-      if (m_running)
-        avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
-      avformat_free_context(m_av.formatContext);
-      m_av.formatContext = nullptr;
-      releaseExclusiveAccess();
-      return false;
     }
 
     // Retrieve stream information, avformat processes some stream data, so
@@ -749,21 +749,20 @@ namespace VideoDisplay
 
       err = avcodec_open2(m_av.videoCodecContext, m_av.videoCodec, &avoptions);
 
-      {
+      if(err < 0) {
+        m_av.videoCodecContext = nullptr;
+        m_av.videoCodec = nullptr;
+        avError(QString("%1 Failed to open video codec").arg(errorMsg.data()), err);
+      } else {
         AVDictionaryEntry * it = nullptr;
         while((it = av_dict_get(avoptions, "", it, AV_DICT_IGNORE_SUFFIX))) {
           Radiant::warning("%s Unrecognized video codec option %s = %s",
                            errorMsg.data(), it->key, it->value);
         }
-        av_dict_free(&avoptions);
-        avoptions = nullptr;
       }
 
-      if(err < 0) {
-        m_av.videoCodecContext = nullptr;
-        m_av.videoCodec = nullptr;
-        avError(QString("%1 Failed to open video codec").arg(errorMsg.data()), err);
-      }
+      av_dict_free(&avoptions);
+      avoptions = nullptr;
     }
 
     if(m_av.audioCodec) {
@@ -779,21 +778,20 @@ namespace VideoDisplay
 
       err = avcodec_open2(m_av.audioCodecContext, m_av.audioCodec, &avoptions);
 
-      {
+      if(err < 0) {
+        m_av.audioCodecContext = nullptr;
+        m_av.audioCodec = nullptr;
+        avError(QString("%1 Failed to open audio codec").arg(errorMsg.data()), err);
+      } else {
         AVDictionaryEntry * it = nullptr;
         while((it = av_dict_get(avoptions, "", it, AV_DICT_IGNORE_SUFFIX))) {
           Radiant::warning("%s Unrecognized audio codec option %s = %s",
                            errorMsg.data(), it->key, it->value);
         }
-        av_dict_free(&avoptions);
-        avoptions = nullptr;
       }
 
-      if(err < 0) {
-        m_av.audioCodecContext = nullptr;
-        m_av.audioCodec = nullptr;
-        avError(QString("%1 Failed to open audio codec").arg(errorMsg.data()), err);
-      }
+      av_dict_free(&avoptions);
+      avoptions = nullptr;
     }
 
     if(!m_av.videoCodec && !m_av.audioCodec) {
