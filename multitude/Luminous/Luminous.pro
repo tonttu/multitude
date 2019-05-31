@@ -233,6 +233,7 @@ enable-pdf {
 
   macx {
     INCLUDEPATH += /usr/local/include/pdfium
+    LIBS += -lpdfium
   }
 
   win32:LIBS += -lpdfium $$LIB_FOLLY
