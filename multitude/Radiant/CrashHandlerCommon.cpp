@@ -19,14 +19,14 @@ namespace Radiant
       QFile file(filename);
       if (file.open(QFile::ReadOnly)) {
         QByteArray data;
+        const qint64 maxSize = static_cast<qint64>(attachmentMaxSize());
         if (flags & ATTACHMENT_TAIL) {
           const qint64 fileSize = file.size();
-          const qint64 maxSize = attachmentMaxSize();
           if (fileSize > maxSize) {
             file.seek(fileSize - maxSize);
           }
         }
-        data = file.read(attachmentMaxSize());
+        data = file.read(maxSize);
         AttachmentMetadata metadata;
         metadata.filename = QFileInfo(filename).absoluteFilePath();
         metadata.flags = flags;
@@ -43,7 +43,7 @@ namespace Radiant
                            AttachmentMetadata metadata)
     {
       QByteArray & persistent = s_attachments[key];
-      const qint64 maxSize = attachmentMaxSize();
+      const int maxSize = static_cast<int>(attachmentMaxSize());
       if (data.size() > maxSize) {
         if (metadata.flags & ATTACHMENT_TAIL) {
           persistent = data.mid(data.size() - maxSize, maxSize);
@@ -55,7 +55,7 @@ namespace Radiant
         persistent = data;
       }
 
-      setAttachmentPtr(key, persistent.data(), persistent.size(), metadata);
+      setAttachmentPtr(key, persistent.data(), static_cast<size_t>(persistent.size()), metadata);
     }
 
     void setAttachmentBuffer(const QByteArray & key, AttachmentRingBuffer & buffer)
@@ -98,31 +98,31 @@ namespace Radiant
       return m_buffer.size() - sizeof(uint64_t);
     }
 
-    void AttachmentRingBuffer::write(char * newData, uint32_t len)
+    void AttachmentRingBuffer::write(char * newData, size_t len)
     {
       if (len == 0)
         return;
 
       uint64_t * header = reinterpret_cast<uint64_t*>(m_buffer.data());
       uint8_t * data = reinterpret_cast<uint8_t*>(header + 1);
-      const uint32_t dataSize = maxDataSize();
+      const size_t dataSize = maxDataSize();
 
       if (len > dataSize) {
         newData += (len - dataSize);
         len = dataSize;
       }
 
-      uint32_t base;
+      size_t base;
       {
         Guard g(m_headerMutex);
         base = *header % dataSize;
         *header += len;
       }
 
-      int copy = std::min<int>(len, dataSize - base);
+      size_t copy = std::min<size_t>(len, dataSize - base);
       memcpy(data + base, newData, copy);
 
-      if ((int)len > copy)
+      if (len > copy)
         memcpy(data, newData + copy, len - copy);
     }
 

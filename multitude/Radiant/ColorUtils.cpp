@@ -142,7 +142,7 @@ namespace Radiant
 
   const Nimble::Matrix3f g_tristimulusMatrix(0.4142f, 0.3576f, 0.1805f,
                                            0.2126f, 0.7152f, 0.0722f,
-                                           0.0193f, 0.1192f, 0.9505);
+                                           0.0193f, 0.1192f, 0.9505f);
 
 
   void ColorUtils::rgbToCIEXYZ(const Nimble::Vector3f &rgb, Nimble::Vector3f &cie)

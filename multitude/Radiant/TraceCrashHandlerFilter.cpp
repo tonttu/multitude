@@ -64,7 +64,7 @@ namespace Radiant
       if (len <= 0)
         return false;
 
-      m_buffer.write(buffer, std::min<uint32_t>(maxSize, len));
+      m_buffer.write(buffer, std::min<size_t>(maxSize, static_cast<size_t>(len)));
 
       return false;
     }

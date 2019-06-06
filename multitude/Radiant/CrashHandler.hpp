@@ -115,7 +115,7 @@ namespace Radiant
       size_t maxDataSize() const;
 
       /// Write data to the end of the buffer, thread-safe
-      void write(char * data, uint32_t len);
+      void write(char * data, size_t len);
 
     private:
       /// This is the data that should be registered to the crash reporting system,

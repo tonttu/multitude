@@ -247,6 +247,10 @@ win32 {
   }
 
   LIBS += -lAdvapi32 -lRpcrt4 -lShell32
+
+  QMAKE_LFLAGS += /ignore:4099
+
+  DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 
 DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)

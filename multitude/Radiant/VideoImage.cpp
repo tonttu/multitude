@@ -26,17 +26,18 @@ namespace Radiant {
   {
     m_type = type;
 
-    while((width % align) != 0)
+    while((width % static_cast<int>(align)) != 0)
       width++;
 
     m_linesize = width;
-    m_data = (uint8_t *) alignedMalloc(m_linesize * height, align);
+    m_data = static_cast<uint8_t*>(alignedMalloc(static_cast<size_t>(m_linesize * height),
+                                                 static_cast<unsigned int>(align)));
   }
 
   void VideoImage::Plane::freeMemory()
   {
     alignedFree(m_data);
-    m_data = 0;
+    m_data = nullptr;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -170,45 +171,45 @@ namespace Radiant {
     else if(m_format == IMAGE_YUV_411) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
-      rowbytes[0]  = m_width + m_width / 2;
+      rowbytes[0]  = static_cast<uint>(m_width + m_width / 2);
     }
     else if(m_format == IMAGE_YUV_420) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
-      rowbytes[0]  = m_width + m_width / 2; // ?????
+      rowbytes[0]  = static_cast<uint>(m_width + m_width / 2); // ?????
     }
     else if(m_format == IMAGE_YUV_420P) {
-      linecount[1] = linecount[2] = m_height / 2;
-      rowbytes[1]  = rowbytes[2]  = m_width / 2;
+      linecount[1] = linecount[2] = static_cast<uint>(m_height / 2);
+      rowbytes[1]  = rowbytes[2]  = static_cast<uint>(m_width / 2);
     }
     else if(m_format == IMAGE_YUV_422) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
-      rowbytes[0]  = m_width + m_width;
+      rowbytes[0]  = static_cast<uint>(m_width + m_width);
     }
     else if(m_format == IMAGE_YUV_422P) {
-      linecount[1] = linecount[2] = m_height;
-      rowbytes[1]  = rowbytes[2]  = m_width / 2;
+      linecount[1] = linecount[2] = static_cast<uint>(m_height);
+      rowbytes[1]  = rowbytes[2]  = static_cast<uint>(m_width / 2);
     }
     else if(m_format == IMAGE_RGB || m_format == IMAGE_BGR) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
-      rowbytes[0]  = m_width * 3;
+      rowbytes[0]  = static_cast<uint>(m_width * 3);
     }
     else if(m_format == IMAGE_RGBA || m_format == IMAGE_BGRA) {
       linecount[1] = linecount[2] = 0;
       rowbytes[1]  = rowbytes[2]  = 0;
-      rowbytes[0]  = m_width * 4;
+      rowbytes[0]  = static_cast<uint>(m_width * 4);
     }
 
     for(uint i = 0; i < 4; i++) {
       const Plane & src = that.m_planes[i];
       Plane & dest = m_planes[i];
 
-      uint lines = linecount[i];
+      int lines = static_cast<int>(linecount[i]);
       uint bytes = rowbytes[i];
 
-      for(uint y = 0; y < lines; y++) {
+      for(int y = 0; y < lines; y++) {
         /* Take separate pointers, so that if something goes wrong we can check out the
         situation with debugger. */
         uint8_t * destptr = dest.line(y);
