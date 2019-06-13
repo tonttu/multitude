@@ -91,7 +91,7 @@ namespace Radiant
       Message msg;
       msg.module = std::move(module);
       msg.severity = s;
-      msg.text.vsprintf(format, ap);
+      msg.text = QString::vasprintf(format, ap);
 
       processMessage(msg);
     }
