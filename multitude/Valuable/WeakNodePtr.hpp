@@ -25,7 +25,15 @@ namespace Valuable
     /// Returns the wrapped node, or null if has been deleted already
     T * operator*() const
     {
-      return m_node.lock().get();
+      T* node = m_node.lock().get();
+#ifdef ENABLE_THREAD_CHECKS
+      // While WeakNodePtr can be moved between threads, it is not safe to
+      // access its content from thread different than its owner.
+      if(node) {
+        REQUIRE_THREAD(node->m_ownerThread);
+      }
+#endif
+      return node;
     }
 
     void reset(T * node = nullptr)

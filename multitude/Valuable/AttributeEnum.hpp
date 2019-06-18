@@ -192,6 +192,18 @@ namespace Valuable
       return QString::number((int)v);
     }
 
+    virtual bool deserialize(const ArchiveElement & element) override
+    {
+      QString tmp = element.get();
+      bool ok = false;
+      int num = tmp.toInt(&ok);
+      if (ok) {
+        return set(num);
+      } else {
+        return set(tmp);
+      }
+    }
+
     static inline T interpolate(T a, T b, float m)
     {
       return m >= 0.5f ? b : a;

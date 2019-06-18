@@ -278,8 +278,18 @@ namespace VideoDisplay
       return false;
     }
 
+    bool enabled = (input.status & (V4L2_IN_ST_NO_POWER | V4L2_IN_ST_NO_SIGNAL)) == 0;
+
+    struct v4l2_crop crop {};
+    crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (ioctl(s.fd, VIDIOC_G_CROP, &crop) == 0) {
+      /// Magewell Pro Capture cards use empty crop rectangle to report that there is no signal
+      if (crop.c.width == 0 && crop.c.height == 0)
+        enabled = false;
+    }
+
     s.name = QString((const char*)input.name);
-    return (input.status & (V4L2_IN_ST_NO_POWER | V4L2_IN_ST_NO_SIGNAL)) == 0;
+    return enabled;
   }
 
   // -----------------------------------------------------------------

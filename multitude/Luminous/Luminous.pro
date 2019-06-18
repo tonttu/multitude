@@ -234,7 +234,8 @@ enable-pdf {
 
 
   macx {
-    PKGCONFIG += multitouch-pdfium1
+    INCLUDEPATH += /usr/local/include/pdfium
+    LIBS += -lpdfium
   }
 
   win32:LIBS += -lpdfium $$LIB_FOLLY
