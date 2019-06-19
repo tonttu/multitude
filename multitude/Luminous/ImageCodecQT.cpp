@@ -25,6 +25,12 @@ namespace Luminous
   static bool checkFormat(QImage::Format formatIn, QImage::Format & qformatOut, PixelFormat & formatOut)
   {
     switch (formatIn) {
+      case QImage::Format_Indexed8:
+      case QImage::Format_Mono:
+      case QImage::Format_MonoLSB:
+        // Palette formats, we don't know the optimal pixel format without actually reading the image
+        return false;
+
       case QImage::Format_Invalid:
       case QImage::NImageFormats:
         return false;
@@ -35,9 +41,6 @@ namespace Luminous
         break;
 
       case QImage::Format_Grayscale8:
-      case QImage::Format_Mono:
-      case QImage::Format_MonoLSB:
-      case QImage::Format_Indexed8:
       case QImage::Format_RGB32:
       case QImage::Format_RGB16:
       case QImage::Format_RGB666:
@@ -71,6 +74,23 @@ namespace Luminous
     return true;
   }
 
+  static bool checkFormat(const QImage & img, QImage::Format & qformatOut, PixelFormat & formatOut)
+  {
+    if (img.format() == QImage::Format_Indexed8 ||
+        img.format() == QImage::Format_Mono ||
+        img.format() == QImage::Format_MonoLSB) {
+      if (img.hasAlphaChannel()) {
+        qformatOut = QImage::Format_ARGB32;
+        formatOut = PixelFormat::rgbaUByte();
+      } else {
+        qformatOut = QImage::Format_RGB32;
+        formatOut = PixelFormat::rgbUByte();
+      }
+      return true;
+    }
+    return checkFormat(img.format(), qformatOut, formatOut);
+  }
+
   static bool load(QImage & img, QFile & file)
   {
     QImageReader r(&file);
@@ -87,7 +107,7 @@ namespace Luminous
         bool ok = checkFormat(r.imageFormat(), qf, pf);
         if (!ok) {
           auto img = r.read();
-          ok = checkFormat(img.format(), qf, pf);
+          ok = checkFormat(img, qf, pf);
           size = img.size();
         }
         if (ok && (!bestSize.isValid() || (size.width()*size.height() > bestSize.width()*bestSize.height()))) {
@@ -149,7 +169,7 @@ namespace Luminous
         ok = checkFormat(r.imageFormat(), qf, pf);
         if (!ok) {
           auto img = r.read();
-          ok = checkFormat(img.format(), qf, pf);
+          ok = checkFormat(img, qf, pf);
           size = img.size();
         }
         if (ok && (!bestSize.isValid() || (size.width()*size.height() > bestSize.width()*bestSize.height()))) {
@@ -170,16 +190,17 @@ namespace Luminous
       QSize size = r.size();
       PixelFormat pf;
       QImage::Format qf;
+      ok = checkFormat(r.imageFormat(), qf, pf);
       /// Some ImageReader plugins like gif don't support image format scanning
       /// without actually reading the image
-      if (r.imageFormat() == QImage::Format_Invalid && !r.size().isEmpty()) {
+      if (!ok || size.isEmpty()) {
         QImage img = r.read();
         if (!img.isNull()) {
-          ok = checkFormat(img.format(), qf, pf);
+          ok = checkFormat(img, qf, pf);
           size = img.size();
+        } else {
+          ok = false;
         }
-      } else {
-        ok = checkFormat(r.imageFormat(), qf, pf);
       }
       if (ok) {
         info.pf = pf;
@@ -199,10 +220,9 @@ namespace Luminous
     if (!load(qi, file))
       return false;
 
-    QImage::Format srcFormat = qi.format();
     QImage::Format dstFormat;
     PixelFormat format;
-    if (!checkFormat(srcFormat, dstFormat, format))
+    if (!checkFormat(qi, dstFormat, format))
       return false;
 
     qi = std::move(qi).convertToFormat(dstFormat);

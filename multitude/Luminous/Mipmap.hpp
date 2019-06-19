@@ -155,6 +155,11 @@ namespace Luminous
     /// @returns false if the cache directory can't be created
     LUMINOUS_API static bool setImageCachePath(const QString & path);
 
+    /// Remove all cached mipmaps from disk for the given file. Removes
+    /// the files synchronously, doesn't invalidate any existing
+    /// Luminous::Mipmaps that could still hold the data in memory.
+    LUMINOUS_API static void removeFromCache(const QString & src);
+
   private:
     Mipmap(const QString & filenameAbs);
 
