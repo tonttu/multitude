@@ -28,9 +28,9 @@ namespace
       if(qtPluginPath.exists() && qtPluginPath.isDir()) {
         QCoreApplication::addLibraryPath(qtPluginPath.absoluteFilePath());
 
-        debugRadiant("Searching Qt plugins from %s", qtPluginPath.absoluteFilePath());
+        debugRadiant("Searching Qt plugins from %s", qtPluginPath.absoluteFilePath().toUtf8().data());
       } else {
-        debugRadiant("Qt plugin folder %s does not exist.", qtPluginPath.absoluteFilePath());
+        debugRadiant("Qt plugin folder %s does not exist.", qtPluginPath.absoluteFilePath().toUtf8().data());
       }
 #endif
     }

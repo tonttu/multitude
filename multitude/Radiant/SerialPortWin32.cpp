@@ -60,8 +60,8 @@ namespace Radiant
   };
 
   SerialPort::SerialPort()
-  : m_d(new D(*this)),
-    m_traceName(nullptr)
+  : m_traceName(nullptr),
+    m_d(new D(*this))
   {}
 
   SerialPort::SerialPort(SerialPort && port)
