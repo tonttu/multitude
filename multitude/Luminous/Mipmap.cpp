@@ -27,6 +27,7 @@
 #include <QSemaphore>
 #include <QSettings>
 #include <QDateTime>
+#include <QStandardPaths>
 
 #include <atomic>
 
@@ -1243,10 +1244,13 @@ namespace Luminous
   {
     if (s_basePath.isEmpty()) {
       MULTI_ONCE {
-        QString basePath = QString("%2/imagecache-%1").arg(s_imageCacheVersion).arg(
-              Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false));
+        QString basePath = Radiant::PlatformUtils::localAppPath();
+        if (basePath.isEmpty())
+          basePath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+        basePath += QString("/MultiTaction/cache/mipmaps.%1").arg(s_imageCacheVersion);
+
         if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
-          basePath = QString("%2/cornerstone-imagecache-%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
+          basePath = QString("%2/cornerstone.mipmaps.%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
           QDir().mkpath(basePath);
         }
         s_basePath = basePath;
