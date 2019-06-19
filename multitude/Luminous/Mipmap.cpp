@@ -47,7 +47,7 @@ namespace
   const Radiant::Priority s_defaultPingPriority = Radiant::Task::PRIORITY_HIGH + 2;
 
   /// Update this when there is incompatible change in imagecache
-  const unsigned int s_imageCacheVersion = 1;
+  const unsigned int s_imageCacheVersion = 2;
 
   bool s_dxtSupported = true;
 
@@ -1209,26 +1209,31 @@ namespace Luminous
     return found;
   }
 
+  /// <cache path>/<beginning of file name hash>/<file name hash>.<mipmap level>.<suffix>
   QString Mipmap::cacheFileName(const QString & src, int level, const QString & suffix)
   {
     QFileInfo fi(src);
 
-    // Compute MD5 from the absolute path
-    QCryptographicHash hash(QCryptographicHash::Md5);
-    const qint64 s = fi.size();
-    auto t = fi.lastModified().toMSecsSinceEpoch();
+    // Compute a hash from the original image absolute path. Do not include
+    // timestamp or other information to this hash so that we can easily
+    // remove items from the cache. SHA1 seems to be the fastest somewhat
+    // reliable hash so it works here well.
+    //
+    // The cache filename doesn't need to include timestamp, since we compare
+    // the source file and cache file timestamps anyway when loading mipmaps.
+    // This way the old mipmap gets automatically rewritten if the source
+    // content changes.
+    QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData(fi.absoluteFilePath().toUtf8());
-    hash.addData(reinterpret_cast<const char*>(&s), sizeof(s));
-    hash.addData(reinterpret_cast<const char*>(&t), sizeof(t));
 
-    const QString md5 = hash.result().toHex();
+    const QString hashTxt = hash.result().toHex();
 
-    // Avoid putting all mipmaps into the same folder (because of OS performance)
-    const QString prefix = md5.left(2);
+    // Avoid putting all mipmaps into the same folder (because of file system performance)
+    const QString prefix = hashTxt.left(2);
     const QString postfix = level < 0 ? QString(".%1").arg(suffix) :
-        QString("_level%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
+        QString(".%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
 
-    const QString fullPath = imageCachePath() + QString("/%1/%2%3").arg(prefix).arg(md5).arg(postfix);
+    const QString fullPath = imageCachePath() + QString("/%1/%2%3").arg(prefix).arg(hashTxt).arg(postfix);
 
     return fullPath;
   }
@@ -1259,6 +1264,22 @@ namespace Luminous
     } else {
       return false;
     }
+  }
+
+  void Mipmap::removeFromCache(const QString & src)
+  {
+    /// See Mipmap::cacheFileName
+    QFileInfo fi(src);
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    hash.addData(fi.absoluteFilePath().toUtf8());
+
+    const QString hashTxt = hash.result().toHex();
+    const QString prefix = hashTxt.left(2);
+
+    QDir deleteGlob(imageCachePath() + "/" + prefix,
+                    hashTxt + ".*", QDir::NoSort, QDir::Files);
+    for (const QFileInfo & mipmapFile: deleteGlob.entryInfoList())
+      QFile::remove(mipmapFile.absoluteFilePath().toUtf8().data());
   }
 
   void Mipmap::startLoading(bool compressedMipmaps)
