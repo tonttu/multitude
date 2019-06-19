@@ -118,53 +118,53 @@ namespace Luminous
 
     /// Constructs an 8-bit RGB pixel format
     /// @return new pixel format
-    static PixelFormat rgbUByte()
-    { return PixelFormat(LAYOUT_RGB, TYPE_UBYTE); }
+    static PixelFormat rgbUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RGB, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit RGBA pixel format
     /// @return new pixel format
-    static PixelFormat rgbaUByte()
-    { return PixelFormat(LAYOUT_RGBA, TYPE_UBYTE); }
+    static PixelFormat rgbaUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RGBA, TYPE_UBYTE, isPremultipliedAlpha); }
 
 
 #ifndef LUMINOUS_OPENGLES
         /// Constructs an 8-bit BGR pixel format
     /** Some platforms do not support this format. */
-        static PixelFormat bgrUByte()
-    { return PixelFormat(LAYOUT_BGR, TYPE_UBYTE); }
+    static PixelFormat bgrUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_BGR, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit BGRA pixel format
     /// @return new pixel format
-    static PixelFormat bgraUByte()
-    { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE); }
+    static PixelFormat bgraUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_BGRA, TYPE_UBYTE, isPremultipliedAlpha); }
 
     /// Constructs a floating-point luminance pixel format
-    static PixelFormat redFloat()
-    { return PixelFormat(LAYOUT_RED, TYPE_FLOAT); }
+    static PixelFormat redFloat(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RED, TYPE_FLOAT, isPremultipliedAlpha); }
     /// Constructs a floating-point luminance-alpha pixel format
-    static PixelFormat redGreenFloat()
-    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_FLOAT); }
+    static PixelFormat redGreenFloat(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_FLOAT, isPremultipliedAlpha); }
 #endif
 
     /// Constructs an 8-bit alpha-only pixel format
     /// @return new pixel format
-    static PixelFormat alphaUByte()
-    { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE); }
+    static PixelFormat alphaUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_ALPHA, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit red pixel format
     /** This format is commonly used for storing grayscale images. */
     /// @return new pixel format
-    static PixelFormat redUByte()
-    { return PixelFormat(LAYOUT_RED, TYPE_UBYTE); }
+    static PixelFormat redUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RED, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit green pixel format
     /// @return new pixel format
-    static PixelFormat greenUByte()
-    { return PixelFormat(LAYOUT_GREEN, TYPE_UBYTE); }
+    static PixelFormat greenUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_GREEN, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit blue pixel format
     /// @return new pixel format
-    static PixelFormat blueUByte()
-    { return PixelFormat(LAYOUT_BLUE, TYPE_UBYTE); }
+    static PixelFormat blueUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_BLUE, TYPE_UBYTE, isPremultipliedAlpha); }
     /// Constructs an 8-bit luminance-alpha pixel format
     /// @return new pixel format
-    static PixelFormat redGreenUByte()
-    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_UBYTE); }
+    static PixelFormat redGreenUByte(bool isPremultipliedAlpha = false)
+    { return PixelFormat(LAYOUT_RED_GREEN, TYPE_UBYTE, isPremultipliedAlpha); }
 
     /// Compare if two pixel formats are the same
     inline bool operator == (const PixelFormat & that) const
