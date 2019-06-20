@@ -18,7 +18,7 @@ namespace Luminous
   public:
     /// Separate thread that polls PCIe RX (data transfer from host to GPU)
     /// throughput, GPU utilization values and Xid errors roughly every 20 ms.
-    class DeviceQuery
+    class LUMINOUS_API DeviceQuery
     {
     public:
       struct Sample

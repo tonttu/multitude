@@ -60,7 +60,7 @@ namespace Luminous
     NVML_FUNC(nvmlDeviceGetIndex);
 
   public:
-    QLibrary m_nvmlLib { "libnvidia-ml" };
+    QLibrary m_nvmlLib;
   };
 
   Nvml::DeviceQuery::D::D(std::shared_ptr<Nvml> && nvml, nvmlDevice_t dev, int openglIndex)
@@ -97,8 +97,11 @@ namespace Luminous
     nvmlEventSet_t set = nullptr;
     m_nvml->m_d->nvmlEventSetCreate(&set);
     nvmlReturn_t error = m_nvml->m_d->nvmlDeviceRegisterEvents(m_dev, nvmlEventTypeXidCriticalError, set);
-    if (error != NVML_SUCCESS)
+    if (error != NVML_SUCCESS && error != NVML_ERROR_NOT_SUPPORTED) {
       Radiant::error("Failed to monitor Xid errors on %s [error code %d]", name.toUtf8().data(), error);
+      m_nvml->m_d->nvmlEventSetFree(set);
+      set = nullptr;
+    }
 
     while (m_running) {
       Nvml::DeviceQuery::Sample sample;
@@ -165,7 +168,8 @@ namespace Luminous
   std::shared_ptr<Nvml::DeviceQuery> Nvml::createDeviceQueryThread(const QByteArray & busId, int openglIndex) const
   {
     nvmlDevice_t dev = nullptr;
-    if (m_d->nvmlDeviceGetHandleByPciBusId(busId.data(), &dev) == NVML_SUCCESS)
+    if (m_d->nvmlDeviceGetHandleByPciBusId &&
+        m_d->nvmlDeviceGetHandleByPciBusId(busId.data(), &dev) == NVML_SUCCESS)
       return std::make_shared<DeviceQuery>(s_multiSingletonInstance.lock(), dev, openglIndex);
     return nullptr;
   }
@@ -191,6 +195,11 @@ namespace Luminous
 
   Nvml::D::D()
   {
+#ifdef RADIANT_WINDOWS
+    m_nvmlLib.setFileName(qgetenv("PROGRAMFILES") + "/NVIDIA Corporation/NVSMI/nvml.dll");
+#elif defined(RADIANT_LINUX)
+    m_nvmlLib.setFileName("libnvidia-ml");
+#endif
     if (!m_nvmlLib.load()) {
       // This is not really an error, since this library only exists if you have nvidia drivers installed
       Radiant::debug("Failed to load %s: %s", m_nvmlLib.fileName().toUtf8().data(),
