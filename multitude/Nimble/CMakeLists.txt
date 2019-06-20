@@ -16,6 +16,8 @@ set(SOURCES
 
 add_library(Nimble SHARED ${SOURCES})
 
+add_definitions(-DNIMBLE_EXPORT)
+
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
 include_directories(${Qt5Core_INCLUDE_DIRS})

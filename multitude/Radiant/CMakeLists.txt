@@ -2,6 +2,8 @@ include(../../common.cmake)
 
 project(Radiant VERSION ${CORNERSTONE_VERSION} DESCRIPTION "A collection of C++ utility classes")
 
+add_library(Radiant SHARED)
+
 set(SOURCES
   Mime.cpp
   ThreadChecks.cpp
@@ -68,12 +70,35 @@ set(SOURCES
   TraceCrashHandlerFilter.cpp
 )
 
-add_library(Radiant SHARED ${SOURCES})
+if (UNIX)
+  list(APPEND SOURCES
+    ProcessRunnerPosix.cpp
+    DeviceMonitor.cpp
+    TraceSyslogFilter.cpp
+    SystemCpuTimeLinux.cpp
+    CallStackUnix.cpp
+  )
+
+  # CrashHandler
+  list(APPEND SOURCES CrashHandlerBreakpad.cpp)
+  include_directories(/opt/multitaction-breakpad/include/breakpad)
+  target_link_libraries(Radiant
+    "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad.a"
+    "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad_client.a"
+  )
+endif (UNIX)
+
+if (ENABLE_FOLLY)
+  target_include_directories(Radiant PUBLIC /opt/multitaction-libfolly1/include)
+  list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
+endif()
+
+set_target_properties(Radiant PROPERTIES SOURCES "${SOURCES}")
+
+add_definitions(-DRADIANT_EXPORT)
 
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
-message("QT5 IN ${Qt5Core_INCLUDE_DIRS}")
 
 target_link_libraries(Radiant Qt5::Core Qt5::Network Qt5::Gui)
