@@ -41,7 +41,7 @@ namespace Nimble {
     /// The w-component
     T   w;
 
-    inline Vector4T	() {}
+    inline Vector4T	() = default;
     /// Constructs a vector and initializes it with the given values
     inline Vector4T (const Vector2T<T> & v, T cz, T cw) : x(v.x), y(v.y), z(cz), w(cw) {}
     /// Constructs a vector and initializes it with the given values
