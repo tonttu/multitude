@@ -20,7 +20,7 @@
 namespace Luminous
 {
 
-  void glErrorToString(const QString & msg, int line)
+  bool glErrorToString(const QString & msg, int line)
   {
     static QMap<GLuint, QString> errors;
 
@@ -40,21 +40,24 @@ namespace Luminous
 
     auto context = QOpenGLContext::currentContext();
     if (!context) {
-      return;
+      return true;
     }
     OpenGLAPI* opengl = context->versionFunctions<Luminous::OpenGLAPI>();
     assert(opengl);
 
     GLenum err, err2 = GL_NO_ERROR;
+    bool hadErrors = false;
     while((err = opengl->glGetError()) != GL_NO_ERROR) {
       // If glGetError ever returns the same error twice, it's broken somehow.
       // This happens when called without GL context etc.
       if (err == err2) {
         Radiant::error("%s # glGetError called with broken OpenGL context", msg.toUtf8().data());
-        return;
+        return true;
       }
       err2 = err;
       Radiant::error("%s:%d: %s", msg.toUtf8().data(), line, errors.value(err).toUtf8().data());
+      hadErrors = true;
     };
+    return hadErrors;
   }
 }

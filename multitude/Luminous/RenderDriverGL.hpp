@@ -26,7 +26,7 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, const QSurfaceFormat & format);
+    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API void initGl(OpenGLAPI & opengl);

@@ -289,6 +289,7 @@ namespace Luminous
         }
         m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), dirty, compressedFormat, textureUnit] {
           m_state.opengl().glBindTexture(m_target, m_handle);
+          GLERROR("TextureGL::upload2D # glBindTexture");
           upload2DImpl(tex, dirty, compressedFormat, mipmaps);
           auto fence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
           {
@@ -331,9 +332,9 @@ namespace Luminous
         alignment >>= 1;
 
       m_state.opengl().glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
-      GLERROR("TextureGL::upload # glPixelStorei");
+      GLERROR("TextureGL::upload # glPixelStorei GL_UNPACK_ALIGNMENT");
       m_state.opengl().glPixelStorei(GL_UNPACK_ROW_LENGTH, lineSizeBytes / bytesPerPixel);
-      GLERROR("TextureGL::upload # glPixelStorei");
+      GLERROR("TextureGL::upload # glPixelStorei GL_UNPACK_ROW_LENGTH");
 
       for(const QRect & rect : region.rects()) {
         const int lineSizeBytes = texture.lineSizeBytes;

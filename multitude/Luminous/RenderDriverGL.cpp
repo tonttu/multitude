@@ -54,11 +54,13 @@ namespace Luminous
   class Worker : public QThread
   {
   public:
-    Worker(const QSurfaceFormat & format)
+    Worker(QScreen * screen, const QSurfaceFormat & format)
+      : m_surface(screen)
     {
       m_surface.setFormat(format);
       m_surface.create();
 
+      m_context.setScreen(screen);
       m_context.setFormat(format);
       m_context.moveToThread(this);
     }
@@ -562,10 +564,10 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, const QSurfaceFormat & format)
+  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
     : m_d(new RenderDriverGL::D(threadIndex, *this))
   {
-    m_d->m_worker = std::make_unique<Worker>(format);
+    m_d->m_worker = std::make_unique<Worker>(screen, format);
     m_d->m_worker->setObjectName(QString("GL worker #%1").arg(threadIndex));
   }
 
