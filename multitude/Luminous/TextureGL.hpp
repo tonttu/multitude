@@ -39,6 +39,8 @@ namespace Luminous
       METHOD_BUFFER_UPLOAD,
       /// Use an UNPACK buffer, use synchronous BufferGL::map and memcpy
       METHOD_BUFFER_MAP,
+      METHOD_BUFFER_MAP_NOSYNC,
+      METHOD_BUFFER_MAP_NOSYNC_ORPHAN,
     };
 
   public:
@@ -78,6 +80,9 @@ namespace Luminous
     LUMINOUS_API static UploadMethod defaultUploadMethod();
     LUMINOUS_API static void setDefaultUploadMethod(UploadMethod method);
 
+    LUMINOUS_API static bool isAsyncUploadingEnabled();
+    LUMINOUS_API static void setAsyncUploadingEnabled(bool enabled);
+
   private:
     void upload1D(const Texture & texture, int textureUnit);
     void upload2D(const Texture & texture, int textureUnit);
@@ -105,6 +110,7 @@ namespace Luminous
 
     bool m_useAsyncUpload = true;
     int m_asyncUploadTasks = 0;
+    std::vector<GLsync> m_fences;
     QMutex m_asyncUploadMutex;
     QWaitCondition m_asyncUploadCond;
   };
@@ -131,10 +137,20 @@ namespace Luminous
   void TextureGL::sync(int textureUnit)
   {
     bind(textureUnit);
-    if (m_asyncUploadTasks > 0) {
+    while (true) {
       QMutexLocker g(&m_asyncUploadMutex);
-      while (m_asyncUploadTasks > 0)
+      if (!m_fences.empty()) {
+        GLsync sync = m_fences.front();
+        m_fences.erase(m_fences.begin());
+        g.unlock();
+        m_state.opengl().glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+        m_state.opengl().glDeleteSync(sync);
+        g.relock();
+      }
+      if (m_asyncUploadTasks > 0)
         m_asyncUploadCond.wait(&m_asyncUploadMutex);
+      if (m_fences.empty() && m_asyncUploadTasks == 0)
+        break;
     }
   }
 }

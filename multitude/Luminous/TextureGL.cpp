@@ -64,6 +64,7 @@ namespace
 namespace Luminous
 {
   static TextureGL::UploadMethod s_defaultUploadMethod = TextureGL::METHOD_TEXTURE;
+  static bool s_asyncUploadingEnabled = true;
 
   TextureGL::TextureGL(StateGL & state)
     : ResourceHandleGL(state)
@@ -203,7 +204,7 @@ namespace Luminous
     const bool dirty = m_generation != texture.generation();
     if (dirty) {
       m_generation = texture.generation();
-      m_useAsyncUpload = texture.allowAsyncUpload();
+      m_useAsyncUpload = s_asyncUploadingEnabled && texture.allowAsyncUpload();
 
       // Check if we need to reallocate the texture. We reallocate if the
       // dimensions, size, or format has changed.
@@ -289,9 +290,11 @@ namespace Luminous
         m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), dirty, compressedFormat, textureUnit] {
           m_state.opengl().glBindTexture(m_target, m_handle);
           upload2DImpl(tex, dirty, compressedFormat, mipmaps);
+          auto fence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
           {
             QMutexLocker g(&m_asyncUploadMutex);
             --m_asyncUploadTasks;
+            m_fences.push_back(fence);
           }
           m_asyncUploadCond.wakeAll();
         });
@@ -299,7 +302,6 @@ namespace Luminous
         if (!bound)
           bind(textureUnit);
 
-        //Radiant::info("sync upload");
         upload2DImpl(texture.dataInfo(), dirty, compressedFormat, texture.mipmapsEnabled());
       }
     }
@@ -466,9 +468,17 @@ namespace Luminous
 
       if (s_defaultUploadMethod == METHOD_BUFFER_UPLOAD) {
         m_uploadBuffer->upload(Buffer::UNPACK, destOffset, bytes, data);
-      } else if (s_defaultUploadMethod == METHOD_BUFFER_MAP) {
-        void * target = m_uploadBuffer->map(Buffer::UNPACK, destOffset, bytes,
-                                            Buffer::MAP_WRITE | Buffer::MAP_INVALIDATE_BUFFER);
+      } else if (s_defaultUploadMethod == METHOD_BUFFER_MAP ||
+                 s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC ||
+                 s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN) {
+        Radiant::FlagsT<Buffer::MapAccess> flags = Buffer::MAP_WRITE;
+        if (s_defaultUploadMethod == METHOD_BUFFER_MAP ||
+            s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
+          flags |= Buffer::MAP_INVALIDATE_BUFFER;
+        if (s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC ||
+            s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
+          flags |= Buffer::MAP_UNSYNCHRONIZED;
+        void * target = m_uploadBuffer->map(Buffer::UNPACK, destOffset, bytes, flags);
         memcpy(target, data, bytes);
         m_uploadBuffer->unmap(Buffer::UNPACK, destOffset, bytes);
       } else {
@@ -525,6 +535,16 @@ namespace Luminous
   void TextureGL::setDefaultUploadMethod(TextureGL::UploadMethod method)
   {
     s_defaultUploadMethod = method;
+  }
+
+  bool TextureGL::isAsyncUploadingEnabled()
+  {
+    return s_asyncUploadingEnabled;
+  }
+
+  void TextureGL::setAsyncUploadingEnabled(bool enabled)
+  {
+    s_asyncUploadingEnabled = enabled;
   }
 
   void TextureGL::setTexParameters() const
