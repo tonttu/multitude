@@ -54,16 +54,22 @@ namespace Luminous
   class Worker : public QThread
   {
   public:
-    Worker(QOpenGLContext & shared)
+    Worker(const QSurfaceFormat & format)
     {
-      m_surface.setFormat(shared.format());
+      m_surface.setFormat(format);
       m_surface.create();
 
-      m_context.setFormat(shared.format());
-      m_context.setShareContext(&shared);
-      m_context.create();
-
+      m_context.setFormat(format);
       m_context.moveToThread(this);
+    }
+
+    bool init(QOpenGLContext & shared)
+    {
+      m_context.setShareContext(&shared);
+      if (!m_context.create())
+        return false;
+
+      return true;
     }
 
     ~Worker()
@@ -123,7 +129,7 @@ namespace Luminous
   class RenderDriverGL::D
   {
   public:
-    D(unsigned int threadIndex, RenderDriverGL & driver, OpenGLAPI& opengl)
+    D(unsigned int threadIndex, RenderDriverGL & driver)
       : m_driver(driver)
       , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
@@ -131,7 +137,6 @@ namespace Luminous
       , m_frame(0)
       , m_fps(0.0)
       , m_gpuId(static_cast<unsigned int>(-1))
-      , m_opengl(opengl)
     {
       m_state.program = nullptr;
       m_state.textures[0] = nullptr;
@@ -196,7 +201,7 @@ namespace Luminous
     // GPU id (AMD_gpu_association or other unique way of referring to the GPU)
     unsigned int m_gpuId;
 
-    OpenGLAPI& m_opengl;
+    OpenGLAPI * m_opengl = nullptr;
 
     std::unique_ptr<Worker> m_worker;
 
@@ -326,7 +331,7 @@ namespace Luminous
     if(state.vertexArray) {
       state.vertexArray->bind();
     } else if (m_stateGL.setVertexArray(0)) {
-      m_opengl.glBindVertexArray(0);
+      m_opengl->glBindVertexArray(0);
       GLERROR("RenderDriverGL::setState # glBindVertexArray");
     }
   }
@@ -338,21 +343,21 @@ namespace Luminous
     // Set the uniform
     switch (uniform.type())
     {
-    case ShaderUniform::Int:          m_opengl.glUniform1iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int2:         m_opengl.glUniform2iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int3:         m_opengl.glUniform3iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::Int4:         m_opengl.glUniform4iv(location, 1, (const int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt:  m_opengl.glUniform1uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt2: m_opengl.glUniform2uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt3: m_opengl.glUniform3uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::UnsignedInt4: m_opengl.glUniform4uiv(location, 1, (const unsigned int*)uniform.data()); break;
-    case ShaderUniform::Float:        m_opengl.glUniform1fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float2:       m_opengl.glUniform2fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float3:       m_opengl.glUniform3fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float4:       m_opengl.glUniform4fv(location, 1, (const float*)uniform.data()); break;
-    case ShaderUniform::Float2x2:     m_opengl.glUniformMatrix2fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
-    case ShaderUniform::Float3x3:     m_opengl.glUniformMatrix3fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
-    case ShaderUniform::Float4x4:     m_opengl.glUniformMatrix4fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Int:          m_opengl->glUniform1iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int2:         m_opengl->glUniform2iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int3:         m_opengl->glUniform3iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::Int4:         m_opengl->glUniform4iv(location, 1, (const int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt:  m_opengl->glUniform1uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt2: m_opengl->glUniform2uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt3: m_opengl->glUniform3uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::UnsignedInt4: m_opengl->glUniform4uiv(location, 1, (const unsigned int*)uniform.data()); break;
+    case ShaderUniform::Float:        m_opengl->glUniform1fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2:       m_opengl->glUniform2fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3:       m_opengl->glUniform3fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4:       m_opengl->glUniform4fv(location, 1, (const float*)uniform.data()); break;
+    case ShaderUniform::Float2x2:     m_opengl->glUniformMatrix2fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float3x3:     m_opengl->glUniformMatrix3fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
+    case ShaderUniform::Float4x4:     m_opengl->glUniformMatrix4fv(location, 1, GL_TRUE, (const float*)uniform.data()); break;
     default:
       Radiant::error("RenderDriverGL: Unknown shader uniform type %d", uniform.type());
       assert(false);
@@ -365,7 +370,7 @@ namespace Luminous
     // Set texture samplers
     for (auto idx = cmd.samplersBegin; idx < cmd.samplersEnd; ++idx) {
       auto p = m_samplers[idx];
-      m_opengl.glUniform1i(p.first, p.second);
+      m_opengl->glUniform1i(p.first, p.second);
       GLERROR("RenderDriverGL::render # glUniform1i");
     }
 
@@ -375,7 +380,7 @@ namespace Luminous
       applyUniform(uniform.first, uniform.second);
     }
 
-    m_opengl.glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+    m_opengl->glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
                                cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
 
     //Radiant::warning("RenderDriverGL::D::render # OFFSET %d SIZE: %d", cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
@@ -384,25 +389,25 @@ namespace Luminous
 
     // Set linewidth
     if (cmd.primitiveType == Luminous::PRIMITIVE_LINE || cmd.primitiveType == Luminous::PRIMITIVE_LINE_STRIP) {
-      m_opengl.glLineWidth(cmd.primitiveSize);
+      m_opengl->glLineWidth(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glLineWidth");
     }
 
     // Set point width
     if (cmd.primitiveType == Luminous::PRIMITIVE_POINT) {
-      m_opengl.glPointSize(cmd.primitiveSize);
+      m_opengl->glPointSize(cmd.primitiveSize);
       GLERROR("RenderDriverGL::render # glPointSize");
     }
 
     if (cmd.indexed) {
       // Draw using the index buffer
-      m_opengl.glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+      m_opengl->glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
                                         (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
       GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
-      m_opengl.glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
+      m_opengl->glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
       GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
@@ -413,7 +418,7 @@ namespace Luminous
     // Set texture samplers
     for (auto idx = cmd.samplersBegin; idx < cmd.samplersEnd; ++idx) {
       auto p = m_samplers[idx];
-      m_opengl.glUniform1i(p.first, p.second);
+      m_opengl->glUniform1i(p.first, p.second);
       GLERROR("RenderDriverGL::render # glUniform1i");
     }
 
@@ -423,12 +428,12 @@ namespace Luminous
       applyUniform(uniform.first, uniform.second);
     }
 
-    m_opengl.glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
+    m_opengl->glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockIndex, uniformHandle,
                                cmd.uniformOffsetBytes, cmd.uniformSizeBytes);
     GLERROR("RenderDriverGL::render # glBindBufferRange");
 
     // Draw non-indexed
-    m_opengl.glMultiDrawArrays(cmd.primitiveType, cmd.offsets, cmd.counts, cmd.drawCount);
+    m_opengl->glMultiDrawArrays(cmd.primitiveType, cmd.offsets, cmd.counts, cmd.drawCount);
     GLERROR("RenderDriverGL::render # glDrawArrays");
   }
 
@@ -557,14 +562,11 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, OpenGLAPI& opengl)
-    : m_d(new RenderDriverGL::D(threadIndex, *this, opengl))
+  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, const QSurfaceFormat & format)
+    : m_d(new RenderDriverGL::D(threadIndex, *this))
   {
-    if (auto current = QOpenGLContext::currentContext()) {
-      m_d->m_worker = std::make_unique<Worker>(*current);
-      m_d->m_worker->setObjectName(QString("GL worker #%1").arg(threadIndex));
-      m_d->m_worker->start();
-    }
+    m_d->m_worker = std::make_unique<Worker>(format);
+    m_d->m_worker->setObjectName(QString("GL worker #%1").arg(threadIndex));
   }
 
   RenderDriverGL::~RenderDriverGL()
@@ -572,21 +574,33 @@ namespace Luminous
     delete m_d;
   }
 
+  void RenderDriverGL::initGl(OpenGLAPI & opengl)
+  {
+    m_d->m_opengl = &opengl;
+    if (auto current = QOpenGLContext::currentContext()) {
+      if (m_d->m_worker->init(*current)) {
+        m_d->m_worker->start();
+        return;
+      }
+    }
+    m_d->m_worker.reset();
+  }
+
   void RenderDriverGL::clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil)
   {
-    m_d->newRenderQueueSegment(new CommandClearGL(m_d->m_opengl, mask, color, depth, stencil));
+    m_d->newRenderQueueSegment(new CommandClearGL(*m_d->m_opengl, mask, color, depth, stencil));
   }
 
   void RenderDriverGL::draw(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
-    m_d->m_opengl.glDrawArrays(type, (GLint) offset, (GLsizei) primitives);
+    m_d->m_opengl->glDrawArrays(type, (GLint) offset, (GLsizei) primitives);
     GLERROR("RenderDriverGL::draw glDrawArrays");
   }
 
   void RenderDriverGL::drawIndexed(PrimitiveType type, unsigned int offset, unsigned int primitives)
   {
     /// @todo allow other index types (unsigned byte, unsigned short and unsigned int)
-    m_d->m_opengl.glDrawElements(type, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
+    m_d->m_opengl->glDrawElements(type, (GLsizei) primitives, GL_UNSIGNED_INT, (const GLvoid *)((sizeof(uint) * offset)));
     GLERROR("RenderDriverGL::draw glDrawElements");
   }
 
@@ -669,7 +683,7 @@ namespace Luminous
 
   void RenderDriverGL::setDefaultState()
   {
-    m_d->m_opengl.glEnable(GL_SAMPLE_SHADING);
+    m_d->m_opengl->glEnable(GL_SAMPLE_SHADING);
     GLERROR("RenderDriverGL::setDefaultState # glEnable");
 
     // Default modes
@@ -684,7 +698,7 @@ namespace Luminous
     setDrawBuffers(buffers);
 
     // Enable scissor test
-    m_d->m_opengl.glEnable(GL_SCISSOR_TEST);
+    m_d->m_opengl->glEnable(GL_SCISSOR_TEST);
     GLERROR("RenderDriverGL::setDefaultState # glEnable");
 
     // Invalidate the current cached OpenGL state so it gets reset on the next
@@ -692,71 +706,71 @@ namespace Luminous
     m_d->m_stateGL.setProgram((unsigned)-1);
     m_d->m_stateGL.setVertexArray((unsigned)-1);
 
-    m_d->m_opengl.glBindFramebuffer(GL_READ_FRAMEBUFFER, m_d->m_stateGL.readFramebuffer());
-    m_d->m_opengl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_d->m_stateGL.drawFramebuffer());
+    m_d->m_opengl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_d->m_stateGL.readFramebuffer());
+    m_d->m_opengl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_d->m_stateGL.drawFramebuffer());
   }
 
   void RenderDriverGL::setBlendMode( const BlendMode & mode )
   {
-    m_d->newRenderQueueSegment(new CommandSetBlendMode(m_d->m_opengl, mode));
+    m_d->newRenderQueueSegment(new CommandSetBlendMode(*m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setDepthMode(const DepthMode & mode)
   {
-    m_d->newRenderQueueSegment(new CommandSetDepthMode(m_d->m_opengl, mode));
+    m_d->newRenderQueueSegment(new CommandSetDepthMode(*m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setStencilMode( const StencilMode & mode )
   {
-    m_d->newRenderQueueSegment(new CommandSetStencilMode(m_d->m_opengl, mode));
+    m_d->newRenderQueueSegment(new CommandSetStencilMode(*m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setCullMode(const CullMode & mode)
   {
-    m_d->newRenderQueueSegment(new CommandCullMode(m_d->m_opengl, mode));
+    m_d->newRenderQueueSegment(new CommandCullMode(*m_d->m_opengl, mode));
   }
 
   void RenderDriverGL::setFrontFace(FaceWinding winding)
   {
-    m_d->newRenderQueueSegment(new CommandFrontFace(m_d->m_opengl, winding));
+    m_d->newRenderQueueSegment(new CommandFrontFace(*m_d->m_opengl, winding));
   }
 
   void RenderDriverGL::enableClipDistance(const QList<int> & planes)
   {
-    m_d->newRenderQueueSegment(new CommandClipDistance(m_d->m_opengl, planes, true));
+    m_d->newRenderQueueSegment(new CommandClipDistance(*m_d->m_opengl, planes, true));
   }
 
   void RenderDriverGL::disableClipDistance(const QList<int> & planes)
   {
-    m_d->newRenderQueueSegment(new CommandClipDistance(m_d->m_opengl, planes, false));
+    m_d->newRenderQueueSegment(new CommandClipDistance(*m_d->m_opengl, planes, false));
   }
 
   void RenderDriverGL::setDrawBuffers(const std::vector<GLenum> & buffers)
   {
-    m_d->newRenderQueueSegment(new CommandDrawBuffers(m_d->m_opengl, buffers));
+    m_d->newRenderQueueSegment(new CommandDrawBuffers(*m_d->m_opengl, buffers));
   }
 
   void RenderDriverGL::setViewport(const Nimble::Recti & rect)
   {
-    m_d->newRenderQueueSegment(new CommandViewportGL(m_d->m_opengl, rect));
+    m_d->newRenderQueueSegment(new CommandViewportGL(*m_d->m_opengl, rect));
   }
 
   void RenderDriverGL::setScissor(const Nimble::Recti & rect)
   {
-    m_d->m_opengl.glEnable(GL_SCISSOR_TEST);
+    m_d->m_opengl->glEnable(GL_SCISSOR_TEST);
     GLERROR("RenderDriverGL::setScissor # glEnable");
-    m_d->newRenderQueueSegment(new CommandScissorGL(m_d->m_opengl, rect));
+    m_d->newRenderQueueSegment(new CommandScissorGL(*m_d->m_opengl, rect));
   }
 
   void RenderDriverGL::blit(const Nimble::Recti &src, const Nimble::Recti &dst,
                             Luminous::ClearMask mask, Luminous::Texture::Filter filter)
   {
-    m_d->newRenderQueueSegment(new CommandBlitGL(m_d->m_opengl, src, dst, mask, filter));
+    m_d->newRenderQueueSegment(new CommandBlitGL(*m_d->m_opengl, src, dst, mask, filter));
   }
 
   void RenderDriverGL::setRenderBuffers(bool colorBuffer, bool depthBuffer, bool stencilBuffer)
   {
-    m_d->newRenderQueueSegment(new CommandChangeRenderBuffersGL(m_d->m_opengl, colorBuffer, depthBuffer, stencilBuffer));
+    m_d->newRenderQueueSegment(new CommandChangeRenderBuffersGL(*m_d->m_opengl, colorBuffer, depthBuffer, stencilBuffer));
   }
 
   void * RenderDriverGL::mapBuffer(const Buffer & buffer, Buffer::Type type, int offset, std::size_t length,
@@ -912,7 +926,7 @@ namespace Luminous
 
     // VAO should be bound only when rendering something or modifying the VAO state
     if (m_d->m_stateGL.setVertexArray(0)) {
-      m_d->m_opengl.glBindVertexArray(0);
+      m_d->m_opengl->glBindVertexArray(0);
       GLERROR("RenderDriverGL::flush # glBindVertexArray");
     }
   }
@@ -1004,7 +1018,7 @@ namespace Luminous
 
     m_d->m_fboStack.push(&rtGL);
 
-    auto cmd = new CommandChangeFrameBufferGL(m_d->m_opengl, rtGL);
+    auto cmd = new CommandChangeFrameBufferGL(*m_d->m_opengl, rtGL);
 
     m_d->newRenderQueueSegment(cmd);
   }
@@ -1021,7 +1035,7 @@ namespace Luminous
 
       auto rt = m_d->m_fboStack.top();
 
-      auto cmd = new CommandChangeFrameBufferGL(m_d->m_opengl, *rt);
+      auto cmd = new CommandChangeFrameBufferGL(*m_d->m_opengl, *rt);
 
       m_d->newRenderQueueSegment(cmd);
     }
@@ -1045,8 +1059,8 @@ namespace Luminous
   int RenderDriverGL::uniformBufferOffsetAlignment() const
   {
     int alignment;
-    m_d->m_opengl.glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
-    if(m_d->m_opengl.glGetError() == GL_NO_ERROR)
+    m_d->m_opengl->glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
+    if(m_d->m_opengl->glGetError() == GL_NO_ERROR)
       return alignment;
     Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
     return 256;
@@ -1088,9 +1102,9 @@ namespace Luminous
     return false;
   }
 
-  OpenGLAPI& RenderDriverGL::opengl()
+  OpenGLAPI & RenderDriverGL::opengl()
   {
-    return m_d->m_opengl;
+    return *m_d->m_opengl;
   }
 
   StateGL & RenderDriverGL::stateGl()
