@@ -155,7 +155,7 @@ namespace {
 
       // Output whatever we managed to find out regardless of failures above,
       // it might still be useful
-      fprintf(stderr, "#%d %s at %s:%d\n", frameNumber, symbol->Name, line.FileName, line.LineNumber);
+      fprintf(stderr, "#%d %s at %s:%lu\n", frameNumber, symbol->Name, line.FileName, line.LineNumber);
     }
 
     return EXCEPTION_EXECUTE_HANDLER;

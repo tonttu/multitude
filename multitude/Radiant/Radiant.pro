@@ -247,6 +247,11 @@ win32 {
   }
 
   LIBS += -lAdvapi32 -lRpcrt4 -lShell32
+
+  # PDB 'filename' was not found with 'object/library' or at 'path'; linking object as if no debug info
+  QMAKE_LFLAGS += /ignore:4099
+
+  DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 
 DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)

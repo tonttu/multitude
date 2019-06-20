@@ -2,15 +2,18 @@
 #include "StringUtils.hpp"
 #include "Trace.hpp"
 
-#define NOMINMAX
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+
 #include <Windows.h>
 #include <devguid.h>
 #include <initguid.h>
-#include <Setupapi.h>
-#include <Devpkey.h>
+#include <SetupAPI.h>
+#include <devpkey.h>
 #include <objbase.h>
 #include <pciprop.h>
-#include <Cfgmgr32.h>
+#include <cfgmgr32.h>
 
 #include <QStringList>
 #include <QSet>
@@ -255,7 +258,7 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
   if (out.bus == -1) {
     int32_t bus;
     if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_Device_BusNumber, &type,
-                                 (PBYTE)&bus, sizeof(bus), nullptr, 0)) {
+                                 reinterpret_cast<PBYTE>(&bus), sizeof(bus), nullptr, 0)) {
       out.bus = bus;
     }
   }
@@ -263,7 +266,7 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
   if (out.link == -1) {
     int32_t link;
     if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_PciDevice_MaxLinkWidth, &type,
-                                 (PBYTE)&link, sizeof(link), nullptr, 0)) {
+                                 reinterpret_cast<PBYTE>(&link), sizeof(link), nullptr, 0)) {
       out.link = link;
     }
   }
@@ -271,7 +274,7 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
   if (out.speed == -1) {
     int32_t speed;
     if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_PciDevice_MaxLinkSpeed, &type,
-                                 (PBYTE)&speed, sizeof(speed), nullptr, 0)) {
+                                 reinterpret_cast<PBYTE>(&speed), sizeof(speed), nullptr, 0)) {
       if (speed == DevProp_PciExpressDevice_LinkSpeed_TwoAndHalf_Gbps) {
         out.speed = 2500;
       } else if (speed == DevProp_PciExpressDevice_LinkSpeed_Five_Gbps) {
@@ -289,9 +292,9 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
   if (out.numaNode == -1) {
     int32_t numaProximityDomain;
     if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_Numa_Proximity_Domain, &type,
-                                 (PBYTE)&numaProximityDomain, sizeof(numaProximityDomain), nullptr, 0)) {
+                                 reinterpret_cast<PBYTE>(&numaProximityDomain), sizeof(numaProximityDomain), nullptr, 0)) {
       unsigned char node;
-      if (GetNumaProximityNode(numaProximityDomain, &node)) {
+      if (GetNumaProximityNode(static_cast<ULONG>(numaProximityDomain), &node)) {
         out.numaNode = node;
       } else {
         Radiant::error("GetNumaProximityNode: %s", Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
@@ -304,14 +307,14 @@ static void readProperties(Radiant::DeviceUtils::DeviceInfo & out, HDEVINFO & de
 
   wchar_t parent[1024];
   if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_Device_Parent, &type,
-                               (PBYTE)&parent, sizeof(parent), nullptr, 0)) {
+                               reinterpret_cast<PBYTE>(&parent), sizeof(parent), nullptr, 0)) {
     /// @todo not entirely sure how device info lists work, would it be ok
     ///       just to reuse the existing devinfo?
-    HDEVINFO devinfo2 = SetupDiCreateDeviceInfoList(nullptr, 0);
+    HDEVINFO devinfo2 = SetupDiCreateDeviceInfoList(nullptr, nullptr);
 
     SP_DEVINFO_DATA data2;
     data2.cbSize = sizeof(data2);
-    if (SetupDiOpenDeviceInfo(devinfo2, parent, 0, 0, &data2)) {
+    if (SetupDiOpenDeviceInfo(devinfo2, parent, nullptr, 0, &data2)) {
       readProperties(out, devinfo2, data2);
     }
 
@@ -332,12 +335,12 @@ namespace Radiant
       SP_DEVINFO_DATA data;
       data.cbSize = sizeof(SP_DEVINFO_DATA);
 
-      for (int i = 0;; ++i) {
+      for (DWORD i = 0;; ++i) {
         if (SetupDiEnumDeviceInfo(devinfo, i, &data)) {
           DEVPROPTYPE type;
           wchar_t buffer[1024];
           if (SetupDiGetDeviceProperty(devinfo, &data, &DEVPKEY_Device_InstanceId, &type,
-                                       (PBYTE)&buffer, sizeof(buffer), nullptr, 0)) {
+                                       reinterpret_cast<PBYTE>(&buffer), sizeof(buffer), nullptr, 0)) {
             if (deviceInstanceId != QString::fromWCharArray(buffer))
               continue;
           }
@@ -356,17 +359,17 @@ namespace Radiant
       return deviceInfo(deviceInstanceId, &GUID_DEVCLASS_DISPLAY);
     }
 
-    std::vector<int> DeviceUtils::cpuList(int numaNode)
+    std::vector<int> cpuList(int numaNode)
     {
       std::vector<int> cpus;
       ULONGLONG mask = 0;
-      if (GetNumaNodeProcessorMask(numaNode, &mask) == 0) {
+      if (GetNumaNodeProcessorMask(static_cast<UCHAR>(numaNode), &mask) == 0) {
         Radiant::error("NumaUtils::cpuList # %s", Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
         return cpus;
       }
       for (unsigned int i = 0; i < sizeof(mask)*8; ++i) {
         if (mask & (ULONGLONG(1) << i)) {
-          cpus.push_back(i);
+          cpus.push_back(static_cast<int>(i));
         }
       }
       return cpus;
@@ -390,7 +393,7 @@ namespace Radiant
       CONFIGRET err = CM_Get_Device_ID_List_Size(&size, filter, flags);
       if (err == CR_SUCCESS) {
         std::wstring buffer(size, L'\0');
-        if (CM_Get_Device_ID_List(filter, const_cast<wchar_t*>(buffer.data()), (unsigned long)buffer.size(), flags) == CR_SUCCESS) {
+        if (CM_Get_Device_ID_List(filter, const_cast<wchar_t*>(buffer.data()), static_cast<ULONG>(buffer.size()), flags) == CR_SUCCESS) {
           std::wstring::size_type pos = 0;
           auto end = buffer.find(L"\0", 0, 2);
           assert(end != std::wstring::npos);
@@ -431,39 +434,39 @@ namespace Radiant
 
       std::vector<DEVPROPKEY> keys(1024);
       DWORD count = 0;
-      if (SetupDiGetDevicePropertyKeys(devinfo, &data, keys.data(), keys.size(), &count, 0)) {
+      if (SetupDiGetDevicePropertyKeys(devinfo, &data, keys.data(), static_cast<DWORD>(keys.size()), &count, 0)) {
         for (DWORD j = 0; j < count; ++j) {
           DEVPROPKEY key = keys[j];
           DEVPROPTYPE type;
           std::array<uint8_t, 2048> buffer;
 
           if (SetupDiGetDeviceProperty(devinfo, &data, &key, &type, buffer.data(),
-                                       buffer.size(), nullptr, 0)) {
+                                       static_cast<DWORD>(buffer.size()), nullptr, 0)) {
             uint8_t* d = buffer.data();
             int t = DEVPROP_MASK_TYPE & type;
             QString value;
             if (t == DEVPROP_TYPE_EMPTY) value = "(empty)";
             else if (t == DEVPROP_TYPE_NULL) value = "(null)";
-            else if (t == DEVPROP_TYPE_SBYTE) value = QString::number(*(int8_t*)d);
-            else if (t == DEVPROP_TYPE_BYTE) value = QString::number(*(uint8_t*)d);
-            else if (t == DEVPROP_TYPE_INT16) value = QString::number(*(int16_t*)d);
-            else if (t == DEVPROP_TYPE_UINT16) value = QString::number(*(uint16_t*)d);
-            else if (t == DEVPROP_TYPE_INT32) value = QString::number(*(int32_t*)d);
-            else if (t == DEVPROP_TYPE_UINT32) value = QString::number(*(int64_t*)d);
-            else if (t == DEVPROP_TYPE_INT64) value = QString::number(*(int64_t*)d);
-            else if (t == DEVPROP_TYPE_UINT64) value = QString::number(*(uint64_t*)d);
-            else if (t == DEVPROP_TYPE_FLOAT) value = QString::number(*(float*)d);
-            else if (t == DEVPROP_TYPE_DOUBLE) value = QString::number(*(double*)d);
+            else if (t == DEVPROP_TYPE_SBYTE) value = QString::number(*reinterpret_cast<int8_t*>(d));
+            else if (t == DEVPROP_TYPE_BYTE) value = QString::number(*reinterpret_cast<uint8_t*>(d));
+            else if (t == DEVPROP_TYPE_INT16) value = QString::number(*reinterpret_cast<int16_t*>(d));
+            else if (t == DEVPROP_TYPE_UINT16) value = QString::number(*reinterpret_cast<uint16_t*>(d));
+            else if (t == DEVPROP_TYPE_INT32) value = QString::number(*reinterpret_cast<int32_t*>(d));
+            else if (t == DEVPROP_TYPE_UINT32) value = QString::number(*reinterpret_cast<int64_t*>(d));
+            else if (t == DEVPROP_TYPE_INT64) value = QString::number(*reinterpret_cast<int64_t*>(d));
+            else if (t == DEVPROP_TYPE_UINT64) value = QString::number(*reinterpret_cast<uint64_t*>(d));
+            else if (t == DEVPROP_TYPE_FLOAT) value = QString::number(static_cast<double>(*reinterpret_cast<float*>(d)));
+            else if (t == DEVPROP_TYPE_DOUBLE) value = QString::number(*reinterpret_cast<double*>(d));
             else if (t == DEVPROP_TYPE_GUID) {
-              GUID * guid = (GUID*)d;
+              GUID * guid = reinterpret_cast<GUID*>(d);
               wchar_t str[128];
               StringFromGUID2(*guid, str, 128);
               value = QString::fromWCharArray(str);
             }
-            else if (t == DEVPROP_TYPE_STRING) value = QString::fromWCharArray((wchar_t*)d);
-            else if (t == DEVPROP_TYPE_BOOLEAN) value = *(bool*)d ? "true" : "false";
+            else if (t == DEVPROP_TYPE_STRING) value = QString::fromWCharArray(reinterpret_cast<wchar_t*>(d));
+            else if (t == DEVPROP_TYPE_BOOLEAN) value = *reinterpret_cast<bool*>(d) ? "true" : "false";
             else if (t == DEVPROP_TYPE_FILETIME) {
-              FILETIME* time = (FILETIME*)d;
+              FILETIME* time = reinterpret_cast<FILETIME*>(d);
               SYSTEMTIME s;
               FileTimeToSystemTime(time, &s);
               value = QString("%1-%2-%3 %4:%5:%6.%7").arg(s.wYear).arg(s.wMonth).arg(s.wDay).
@@ -502,7 +505,7 @@ namespace Radiant
       SP_DEVINFO_DATA data;
       data.cbSize = sizeof(SP_DEVINFO_DATA);
 
-      for (int i = 0;; ++i) {
+      for (DWORD i = 0;; ++i) {
         if (SetupDiEnumDeviceInfo(devinfo, i, &data)) {
           QMap<QByteArray, QString> devKeys = parseProperties(devinfo, data);
 

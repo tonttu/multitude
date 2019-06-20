@@ -75,7 +75,7 @@ LIBS += $$LIB_RADIANT
 win32 {
   HEADERS += Win32/TimeHelpers.h
   SOURCES += Win32/TimeHelpers.cpp
-  DEFINES += UNITTEST_WIN32_DLL
+  DEFINES += UNITTEST_WIN32_DLL _CRT_SECURE_NO_WARNINGS
   LIBS += Dbghelp.lib
 } else {
   HEADERS += Posix/TimeHelpers.h

@@ -35,18 +35,21 @@ namespace crashpad
   }
 }
 
+namespace
+{
+  // These are pointers and never released, otherwise we'll have issues with
+  // deletion order on shutdown when static objects are being released
+  crashpad::SimpleStringDictionary * s_simpleAnnotations = nullptr;
+  crashpad::SimpleAddressRangeBag * s_extraMemoryRanges = nullptr;
+  std::unique_ptr<crashpad::CrashReportDatabase> s_database;
+  std::unique_ptr<crashpad::CrashpadClient> s_client;
+  std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
+}
+
 namespace Radiant
 {
   namespace CrashHandler
   {
-    // These are pointers and never released, otherwise we'll have issues with
-    // deletion order on shutdown when static objects are being released
-    crashpad::SimpleStringDictionary * s_simpleAnnotations = nullptr;
-    crashpad::SimpleAddressRangeBag * s_extraMemoryRanges = nullptr;
-    std::unique_ptr<crashpad::CrashReportDatabase> s_database;
-    std::unique_ptr<crashpad::CrashpadClient> s_client;
-    std::map<QByteArray, std::pair<void*, size_t>> * s_attachments = nullptr;
-
 #ifdef RADIANT_WINDOWS
     static QString libraryPath()
     {

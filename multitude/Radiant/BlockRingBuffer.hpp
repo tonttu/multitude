@@ -114,7 +114,7 @@ namespace Radiant
       : m_buffer(o.m_buffer)
       , m_reader(o.m_reader)
       , m_writer(o.m_writer)
-      , m_size((int)o.m_size)
+      , m_size(static_cast<int>(o.m_size))
     {
     }
 
@@ -124,7 +124,7 @@ namespace Radiant
       m_buffer = o.m_buffer;
       m_reader = o.m_reader;
       m_writer = o.m_writer;
-      m_size = (int)o.m_size;
+      m_size = static_cast<int>(o.m_size);
       return *this;
     }
 
@@ -160,7 +160,7 @@ namespace Radiant
     ///          count if the buffer doesn't have enough data
     int read(T* output, int count)
     {
-      const int capacity = m_buffer.size();
+      const int capacity = static_cast<int>(m_buffer.size());
 
       count = std::min<int>(count, m_size);
 
@@ -179,7 +179,7 @@ namespace Radiant
     /// but it can be less if there isn't enough continuous data available
     Reader read(int count)
     {
-      const int capacity = m_buffer.size();
+      const int capacity = static_cast<int>(m_buffer.size());
 
       count = std::min(capacity - m_reader, std::min<int>(count, m_size));
 
