@@ -4,6 +4,8 @@
 
 #include <Nimble/Rect.hpp>
 
+#include <memory>
+
 namespace Luminous
 {
   /// Build a Bezier spline one point at a time from point series. This is
