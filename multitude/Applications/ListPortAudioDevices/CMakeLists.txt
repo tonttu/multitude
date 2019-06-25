@@ -12,4 +12,3 @@ endif()
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
 target_link_libraries(ListPortAudioDevices Qt5::Core)
-
