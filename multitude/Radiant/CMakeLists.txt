@@ -102,3 +102,6 @@ find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
 target_link_libraries(Radiant Qt5::Core Qt5::Network Qt5::Gui)
+
+# Required to find the generated version header files in shadow builds
+target_include_directories(Radiant PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
