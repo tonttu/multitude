@@ -89,7 +89,6 @@ if (UNIX)
 endif (UNIX)
 
 if (ENABLE_FOLLY)
-  target_include_directories(Radiant PUBLIC /opt/multitaction-libfolly1/include)
   list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
 endif()
 
@@ -97,11 +96,7 @@ set_target_properties(Radiant PROPERTIES SOURCES "${SOURCES}")
 
 add_definitions(-DRADIANT_EXPORT)
 
-find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Radiant Qt5::Core Qt5::Network Qt5::Gui)
-
-# Required to find the generated version header files in shadow builds
-target_include_directories(Radiant PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
+target_link_libraries(Radiant Qt5::Network Qt5::Gui)
