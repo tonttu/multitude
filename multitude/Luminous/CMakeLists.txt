@@ -70,17 +70,24 @@ set(SOURCES
   BezierSplineTesselator.cpp
   BezierSplineRenderer.cpp
   BezierSpline.cpp
+  ImageCodecQT.cpp
+  ImageCodecSVG.cpp
+  ScreenDetectorAMD.cpp
+  ScreenDetectorNV.cpp
+  XRandR.cpp
+  Xinerama.cpp
 )
 
-if(ENABLE_PDF)
+if(UNIX)
 
-  if(UNIX)
-    target_include_directories(Radiant PUBLIC /opt/multitaction-libfolly1/include)
-    target_link_libraries(Luminous /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
-
-    target_include_directories(Radiant PUBLIC /opt/multitaction-pdfium2/include)
-    target_link_libraries(Luminous /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.so)
+  if(ENABLE_PDF)
+    target_include_directories(Radiant PRIVATE /opt/multitaction-pdfium2/include)
+    target_link_libraries(Luminous PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.so)
   endif()
+
+  find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
+  target_link_libraries(Luminous PRIVATE Qt5::X11Extras)
+  target_link_libraries(Luminous PRIVATE XNVCtrl Xrandr Xext Xinerama)
 
 endif()
 
@@ -93,5 +100,8 @@ find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Svg PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Luminous Squish Valuable Nimble)
-target_link_libraries(Luminous Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
+target_link_libraries(Luminous PRIVATE Squish)
+target_link_libraries(Luminous PUBLIC Valuable Nimble)
+target_link_libraries(Luminous PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
+
+target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk)

@@ -1,7 +1,5 @@
 include(../../common.cmake)
 
-project(Radiant VERSION ${CORNERSTONE_VERSION} DESCRIPTION "A collection of C++ utility classes")
-
 add_library(Radiant SHARED)
 
 set(SOURCES
@@ -81,15 +79,21 @@ if (UNIX)
 
   # CrashHandler
   list(APPEND SOURCES CrashHandlerBreakpad.cpp)
-  include_directories(/opt/multitaction-breakpad/include/breakpad)
-  target_link_libraries(Radiant
+  target_include_directories(Radiant PRIVATE /opt/multitaction-breakpad/include/breakpad)
+  target_link_libraries(Radiant PRIVATE
     "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad.a"
     "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad_client.a"
   )
+
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(UDEV REQUIRED libudev)
+
+  target_link_libraries(Radiant PRIVATE ${UDEV_LIBRARIES})
 endif (UNIX)
 
 if (ENABLE_FOLLY)
   list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
+  target_link_libraries(Radiant PUBLIC /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
 endif()
 
 set_target_properties(Radiant PROPERTIES SOURCES "${SOURCES}")
@@ -99,4 +103,4 @@ add_definitions(-DRADIANT_EXPORT)
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Radiant Qt5::Network Qt5::Gui)
+target_link_libraries(Radiant PUBLIC Qt5::Network Qt5::Gui)
