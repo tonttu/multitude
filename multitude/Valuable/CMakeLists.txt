@@ -34,9 +34,9 @@ set(SOURCES
 
 add_library(Valuable SHARED ${SOURCES})
 
-add_definitions(-DVALUABLE_EXPORT)
+target_compile_definitions(Valuable PRIVATE -DVALUABLE_EXPORT)
 
-target_link_libraries(Valuable Radiant)
+target_link_libraries(Valuable PUBLIC Radiant)
 
 if(ENABLE_FOLLY)
   list(APPEND SOURCES EventWrapper.cpp)
@@ -44,4 +44,4 @@ endif()
 
 find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Valuable Qt5::Xml)
+target_link_libraries(Valuable PRIVATE Qt5::Xml)

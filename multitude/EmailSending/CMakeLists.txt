@@ -10,7 +10,7 @@ set(SOURCES
 
 add_library(EmailSending SHARED ${SOURCES})
 
-add_definitions(-DEMAIL_EXPORT)
+target_compile_definitions(EmailSending PRIVATE -DEMAIL_EXPORT)
 
 target_link_libraries(EmailSending Valuable Radiant)
 

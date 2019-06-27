@@ -1,7 +1,5 @@
 include(../../common.cmake)
 
-project(Luminous VERSION ${CORNERSTONE_VERSION} DESCRIPTION "A library of C++ classes for computer graphics using OpenGL")
-
 add_library(Luminous SHARED)
 
 set(SOURCES
@@ -81,8 +79,9 @@ set(SOURCES
 if(UNIX)
 
   if(ENABLE_PDF)
-    target_include_directories(Radiant PRIVATE /opt/multitaction-pdfium2/include)
+    target_include_directories(Luminous PRIVATE /opt/multitaction-pdfium2/include)
     target_link_libraries(Luminous PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.so)
+    target_link_libraries(Luminous PRIVATE Punctual)
   endif()
 
   find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
@@ -93,7 +92,7 @@ endif()
 
 set_target_properties(Luminous PROPERTIES SOURCES "${SOURCES}")
 
-add_definitions(-DLUMINOUS_EXPORT)
+target_compile_definitions(Luminous PRIVATE -DLUMINOUS_EXPORT)
 
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)

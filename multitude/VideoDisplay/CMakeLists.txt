@@ -1,7 +1,5 @@
 include(../../common.cmake)
 
-project(VideoDisplay VERSION ${CORNERSTONE_VERSION} DESCRIPTION "a C++ library for playing movie files using OpenGL hardware.")
-
 add_library(VideoDisplay SHARED)
 
 set(SOURCES
@@ -19,15 +17,13 @@ if(UNIX)
   )
 
   target_include_directories(VideoDisplay PRIVATE /opt/multitaction-ffmpeg40/include)
+  target_link_directories(VideoDisplay PRIVATE /opt/multitaction-ffmpeg40/lib)
+  target_link_libraries(VideoDisplay PRIVATE ${FFMPEG_LIBS})
 endif()
 
 set_target_properties(VideoDisplay PROPERTIES SOURCES "${SOURCES}")
 
-add_definitions(-DVIDEODISPLAY_EXPORT)
+target_compile_definitions(VideoDisplay PRIVATE -DVIDEODISPLAY_EXPORT)
+target_compile_definitions(VideoDisplay PUBLIC -DENABLE_VIDEO_DISPLAY)
 
-find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
-target_link_libraries(VideoDisplay Qt5::Core)
-
-target_include_directories(VideoDisplay PUBLIC ${Qt5Gui_INCLUDE_DIRS})
+target_link_libraries(VideoDisplay PUBLIC Radiant)

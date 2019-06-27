@@ -1,7 +1,5 @@
 include(../../common.cmake)
 
-project(Resonant VERSION ${CORNERSTONE_VERSION} DESCRIPTION "A collection of C++ classes for sound processing.")
-
 add_library(Resonant SHARED)
 
 set(SOURCES
@@ -26,7 +24,7 @@ if(ENABLE_PORT_AUDIO)
     AudioLoopPortAudio.cpp
   )
 
-  target_link_libraries(Resonant portaudio)
+  target_link_libraries(Resonant PRIVATE portaudio)
 endif()
 
 if(ENABLE_PULSE_AUDIO)
@@ -38,20 +36,15 @@ if(ENABLE_PULSE_AUDIO)
     PulseAudioContext.cpp
   )
 
-  target_link_libraries(Resonant pulse)
+  target_link_libraries(Resonant PRIVATE pulse)
 endif()
 
 set_target_properties(Resonant PROPERTIES SOURCES "${SOURCES}")
 
-add_definitions(-DRESONANT_EXPORT)
+target_compile_definitions(Resonant PRIVATE -DRESONANT_EXPORT)
 
 if(UNIX)
-  target_link_libraries(Resonant sndfile)
+  target_link_libraries(Resonant PRIVATE sndfile)
 endif()
 
-find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
-target_link_libraries(Resonant Qt5::Core)
-
-target_include_directories(Resonant PUBLIC ${Qt5Gui_INCLUDE_DIRS})
+target_link_libraries(Resonant PUBLIC Radiant)

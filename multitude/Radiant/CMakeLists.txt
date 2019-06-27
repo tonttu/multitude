@@ -98,7 +98,7 @@ endif()
 
 set_target_properties(Radiant PROPERTIES SOURCES "${SOURCES}")
 
-add_definitions(-DRADIANT_EXPORT)
+target_compile_definitions(Radiant PRIVATE -DRADIANT_EXPORT)
 
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
