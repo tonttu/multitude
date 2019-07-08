@@ -30,7 +30,7 @@ namespace Nimble {
     typedef T type;
 
     /// Creates a matrix without initializing the elements
-    Matrix2T() {}
+    Matrix2T() = default;
     /// Constructs a matrix and initializes it to the given values
     Matrix2T(T v11, T v12, T v21, T v22) { m[0].make(v11, v12); m[1].make(v21, v22); }
     /// Copy constructor

@@ -31,7 +31,7 @@ namespace Nimble {
     typedef T type;
 
     /// Constructs the matrix without initializing any values.
-    Matrix3T() {}
+    Matrix3T() = default;
     /// Constructs a matrix and initializes it from memory
     template <class K>
     Matrix3T(const K * x)
