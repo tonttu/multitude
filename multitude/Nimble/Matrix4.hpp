@@ -40,7 +40,7 @@ namespace Nimble {
     template <class K>
     Matrix4T(const K * x) { const K * end = x + 16; T * my = data(); while(x!=end) *my++ = *x++; }
     /// Constructs a matrix without initializing it
-    Matrix4T() {}
+    Matrix4T() = default;
     /// Constructs a matrix and fills it with given values
     Matrix4T(T x11, T x12, T x13, T x14,
          T x21, T x22, T x23, T x24,

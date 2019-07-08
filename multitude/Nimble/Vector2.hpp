@@ -43,7 +43,7 @@ namespace Nimble {
     T		y;
 
     /** Default constructor, does \b not initialize the values. */
-    inline Vector2T () {}
+    inline Vector2T () = default;
     /// Constructs a vector initializing it to given values
     inline Vector2T (T cx, T cy) : x(cx), y(cy) {}
 
