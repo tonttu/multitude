@@ -90,6 +90,7 @@ HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
 HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
+HEADERS += TimeTracker.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
