@@ -90,6 +90,7 @@ HEADERS += VersionString.hpp
 HEADERS += TraceCrashHandlerFilter.hpp
 HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
+HEADERS += TimeTracker.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
@@ -189,8 +190,10 @@ linux-* {
   # CrashHandler requirements
   SOURCES += CrashHandlerBreakpad.cpp
 
-  INCLUDEPATH += /opt/multitaction-breakpad/include/breakpad
-  QMAKE_LIBDIR += /opt/multitaction-breakpad/lib/x86_64-linux-gnu
+  arch_triple = x86_64-linux-gnu
+  arm64 { arch_triple = aarch64-linux-gnu }
+  INCLUDEPATH += $${ARM64_ROOTFS}/opt/multitaction-breakpad/include/breakpad
+  QMAKE_LIBDIR += $${ARM64_ROOTFS}/opt/multitaction-breakpad/lib/$${arch_triple}
   LIBS += -lbreakpad -lbreakpad_client
 }
 

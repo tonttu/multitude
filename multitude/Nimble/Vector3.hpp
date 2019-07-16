@@ -35,7 +35,7 @@ namespace Nimble {
     T		x;										///< x-component of the vector
     T		y;										///< y-component of the vector
     T		z;										///< z-component of the vector
-    inline Vector3T()							   {}
+    inline Vector3T() = default;
     /// Constructs a vector initializing it to given values
     inline Vector3T(T cx, T cy, T cz) : x(cx), y(cy), z(cz) {}
     /// Constructs a vector using a 2d vector and a scalar component
