@@ -89,11 +89,36 @@ if (UNIX)
   pkg_check_modules(UDEV REQUIRED libudev)
 
   target_link_libraries(Radiant PRIVATE ${UDEV_LIBRARIES})
-endif (UNIX)
+elseif(WIN32)
+  list(APPEND SOURCES CrashHandlerCrashpad.cpp)
+
+  target_include_directories(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include)
+  target_include_directories(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include/third_party/mini_chromium/mini_chromium)
+
+  target_compile_definitions(Radiant PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+
+  find_package(Qt5 COMPONENTS Widgets PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
+  target_link_libraries(Radiant PRIVATE Qt5::Widgets)
+
+  target_link_libraries(Radiant PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib)
+
+  target_link_libraries(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
+
+endif()
 
 if (ENABLE_FOLLY)
   list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
-  target_link_libraries(Radiant PUBLIC /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
+
+  if(UNIX)
+    target_link_libraries(Radiant PUBLIC /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
+  elseif(WIN32)
+    find_package(folly CONFIG REQUIRED)
+    find_package(ZLIB REQUIRED)
+
+    target_link_libraries(Radiant PUBLIC Folly::folly Folly::folly_deps)
+
+    #target_include_directories(Radiant PUBLIC ${VCPKG_ROOT}/include)
+  endif()
 endif()
 
 set_target_properties(Radiant PROPERTIES SOURCES "${SOURCES}")
