@@ -22,8 +22,8 @@ namespace Patterns
       ~NotCopyable() noexcept {}
 
     private:
-      NotCopyable(const NotCopyable &);
-      const NotCopyable & operator = (const NotCopyable &);
+      NotCopyable(const NotCopyable &) = delete;
+      const NotCopyable & operator = (const NotCopyable &) = delete;
   };
 
 }
