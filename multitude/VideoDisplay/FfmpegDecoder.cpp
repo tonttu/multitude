@@ -1716,8 +1716,6 @@ namespace VideoDisplay
       for (auto it = m_d->m_decodedVideoFrames.begin(); it != m_d->m_decodedVideoFrames.end();) {
         VideoFrameFfmpeg & frame = **it;
 
-        /// @todo handle m_frameUnrefMightBlock somewhere, maybe use a custom shared_ptr deleter?
-
         if (frame.timestamp() < current->timestamp()) {
           it = m_d->m_decodedVideoFrames.erase(it);
           changed = true;
