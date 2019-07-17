@@ -157,6 +157,11 @@ namespace Valuable {
       return (m_master.value(layer) & m_flags) == m_flags ? 1 : 0;
     }
 
+    virtual QString asString(bool * const ok, Layer layer) const override
+    {
+      return asInt(ok, layer) ? "true" : "false";
+    }
+
     std::vector<FlagAliasT<T>*> & sources()
     {
       return m_sources;
@@ -488,6 +493,14 @@ namespace Valuable {
       }
       setValue(newValue, layer);
       return true;
+    }
+
+    virtual bool isValueDefinedOnLayer(Layer layer) const override
+    {
+      if (layer >= CURRENT_LAYER)
+        return true;
+
+      return m_masks[layer];
     }
 
     bool isFlagDefinedOnLayer(Radiant::FlagsT<T> flags, Layer layer) const
