@@ -1174,8 +1174,14 @@ namespace VideoDisplay
       std::shared_ptr<VideoFrameFfmpeg> frame;
       {
         Radiant::Guard g(m_decodedVideoFramesMutex);
-        while (m_running && (int)m_decodedVideoFrames.size() >= m_options.videoBufferFrames())
+        while (m_running && (int)m_decodedVideoFrames.size() >= m_options.videoBufferFrames()) {
+          {
+            Radiant::Guard g(m_seekRequestMutex);
+            if (m_seekRequest.type() != SEEK_NONE)
+              return nullptr;
+          }
           m_decodedVideoFramesCond.wait(m_decodedVideoFramesMutex, 100);
+        }
         if (m_running)
           frame = std::make_shared<VideoFrameFfmpeg>();
       }
@@ -1199,6 +1205,7 @@ namespace VideoDisplay
         continue;
       }
 
+      Radiant::Guard g(m_seekRequestMutex);
       if (m_seekRequest.type() != SEEK_NONE) break;
     }
     return nullptr;
@@ -1274,9 +1281,10 @@ namespace VideoDisplay
   std::shared_ptr<VideoFrameFfmpeg> FfmpegDecoder::D::firstReadyDecodedFrame()
   {
     Radiant::Guard g(m_decodedVideoFramesMutex);
-    if (m_decodedVideoFrames.empty())
-      return {};
-    return m_decodedVideoFrames.front();
+    for (auto & frame: m_decodedVideoFrames)
+      if (frame->timestamp().seekGeneration() == m_sync->seekGeneration())
+        return frame;
+    return {};
   }
 
   std::shared_ptr<VideoFrameFfmpeg> FfmpegDecoder::D::lastReadyDecodedFrame()
@@ -1284,7 +1292,9 @@ namespace VideoDisplay
     Radiant::Guard g(m_decodedVideoFramesMutex);
     if (m_decodedVideoFrames.empty())
       return {};
-    return m_decodedVideoFrames.back();
+    if (m_decodedVideoFrames.back()->timestamp().seekGeneration() == m_sync->seekGeneration())
+      return m_decodedVideoFrames.back();
+    return {};
   }
 
   std::shared_ptr<VideoFrameFfmpeg> FfmpegDecoder::D::playFrame(Radiant::TimeStamp presentTimestamp,
