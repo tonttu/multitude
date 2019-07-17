@@ -64,7 +64,7 @@ namespace
 namespace Luminous
 {
   static TextureGL::UploadMethod s_defaultUploadMethod = TextureGL::METHOD_TEXTURE;
-  static bool s_asyncUploadingEnabled = true;
+  static bool s_asyncUploadingEnabled = false;
 
   TextureGL::TextureGL(StateGL & state)
     : ResourceHandleGL(state)

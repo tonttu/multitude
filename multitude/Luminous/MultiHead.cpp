@@ -488,9 +488,9 @@ namespace Luminous
 #endif
               ),
       m_glFinish(this, "gl-finish", false),
-      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_BUFFER_MAP),
-      m_asyncTextureUpload(this, "async-texture-upload", true),
-      m_prefetchedVideoFrameCount(this, "prefetched-video-frame-count", 1),
+      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
+      m_asyncTextureUpload(this, "async-texture-upload", false),
+      m_prefetchedVideoFrameCount(this, "prefetched-video-frame-count", 0),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
   }
