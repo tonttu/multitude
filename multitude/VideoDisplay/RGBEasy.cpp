@@ -1,6 +1,7 @@
 #include "RGBEasy.hpp"
 
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Trace.hpp>
 
 #include <QtGlobal>
 #include <QRegularExpression>

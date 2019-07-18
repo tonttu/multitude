@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #ifndef VALUABLE_VALUE_VECTOR_HPP
@@ -168,7 +168,7 @@ namespace Valuable
   typedef AttributeT<Nimble::Vector4f> AttributeVector4f;
 
   template <class VectorType>
-  bool AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>::set(const StyleValue & value, Attribute::Layer layer)
+  bool AttributeT<VectorType, typename std::enable_if_t<IsVector<VectorType>::value>>::set(const StyleValue & value, Attribute::Layer layer)
   {
     if (value.size() != N || !value.isUniform() || !value.isNumber())
       return false;
@@ -186,7 +186,7 @@ namespace Valuable
   }
 
   template <class VectorType>
-  void AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>::eventProcess(const QByteArray & id,
+  void AttributeT<VectorType, typename std::enable_if_t<IsVector<VectorType>::value>>::eventProcess(const QByteArray & id,
     Radiant::BinaryData & data)
   {
     /// @todo this isn't how eventProcess should be used

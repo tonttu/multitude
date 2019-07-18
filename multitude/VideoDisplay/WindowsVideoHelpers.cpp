@@ -1,5 +1,7 @@
 #include "WindowsVideoHelpers.hpp"
 
+#include <tuple>
+
 namespace VideoDisplay
 {
 
