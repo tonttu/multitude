@@ -72,11 +72,14 @@ set(SOURCES
   ImageCodecSVG.cpp
   ScreenDetectorAMD.cpp
   ScreenDetectorNV.cpp
-  XRandR.cpp
-  Xinerama.cpp
 )
 
 if(UNIX)
+
+  list(APPEND SOURCES
+    XRandR.cpp
+    Xinerama.cpp
+  )
 
   if(ENABLE_PDF)
     target_include_directories(Luminous PRIVATE /opt/multitaction-pdfium2/include)
@@ -87,6 +90,18 @@ if(UNIX)
   find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
   target_link_libraries(Luminous PRIVATE Qt5::X11Extras)
   target_link_libraries(Luminous PRIVATE XNVCtrl Xrandr Xext Xinerama)
+elseif(WIN32)
+
+  list(APPEND SOURCES
+    GPUAffinity.cpp
+    DisplayConfigWin.cpp
+    DxInterop.cpp
+  )
+
+  target_include_directories(Luminous PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
+  target_link_libraries(Luminous PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
+
+  target_link_libraries(Luminous PRIVATE Opengl32.lib Dwmapi.lib)
 
 endif()
 
@@ -104,3 +119,6 @@ target_link_libraries(Luminous PUBLIC Valuable Nimble)
 target_link_libraries(Luminous PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
 target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk)
+
+find_package(lz4 CONFIG REQUIRED)
+target_link_libraries(Luminous PRIVATE lz4::lz4)

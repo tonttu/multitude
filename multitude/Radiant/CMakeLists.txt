@@ -90,7 +90,12 @@ if (UNIX)
 
   target_link_libraries(Radiant PRIVATE ${UDEV_LIBRARIES})
 elseif(WIN32)
-  list(APPEND SOURCES CrashHandlerCrashpad.cpp)
+  list(APPEND SOURCES
+    CrashHandlerCrashpad.cpp
+    DeviceUtilsWin.cpp
+    TraceWindowsDebugConsoleFilter.cpp
+    SystemCpuTimeWin32.cpp
+  )
 
   target_include_directories(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include)
   target_include_directories(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include/third_party/mini_chromium/mini_chromium)
@@ -100,7 +105,7 @@ elseif(WIN32)
   find_package(Qt5 COMPONENTS Widgets PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
   target_link_libraries(Radiant PRIVATE Qt5::Widgets)
 
-  target_link_libraries(Radiant PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib)
+  target_link_libraries(Radiant PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib)
 
   target_link_libraries(Radiant PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
 
