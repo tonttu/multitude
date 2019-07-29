@@ -31,6 +31,8 @@ namespace Luminous
     {"texture", Luminous::TextureGL::METHOD_TEXTURE},
     {"buffer-upload", Luminous::TextureGL::METHOD_BUFFER_UPLOAD},
     {"buffer-map", Luminous::TextureGL::METHOD_BUFFER_MAP},
+    {"buffer-map-nosync", Luminous::TextureGL::METHOD_BUFFER_MAP_NOSYNC},
+    {"buffer-map-nosync-orphan", Luminous::TextureGL::METHOD_BUFFER_MAP_NOSYNC_ORPHAN},
     {0,0}
   };
 
@@ -487,6 +489,8 @@ namespace Luminous
               ),
       m_glFinish(this, "gl-finish", false),
       m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
+      m_asyncTextureUpload(this, "async-texture-upload", false),
+      m_prefetchedVideoFrameCount(this, "prefetched-video-frame-count", 0),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {
   }
@@ -637,6 +641,16 @@ namespace Luminous
   void MultiHead::setTextureUploadMethod(TextureGL::UploadMethod method)
   {
     m_textureUploadMethod = method;
+  }
+
+  bool MultiHead::isAsyncTextureUploadEnabled() const
+  {
+    return m_asyncTextureUpload;
+  }
+
+  void MultiHead::setAsyncTextureUpload(bool enabled)
+  {
+    m_asyncTextureUpload = enabled;
   }
 
   bool MultiHead::deserialize(const Valuable::ArchiveElement & element)
@@ -963,4 +977,13 @@ namespace Luminous
     return true;
   }
 
+  int MultiHead::prefetchedVideoFrameCount() const
+  {
+    return m_prefetchedVideoFrameCount;
+  }
+
+  void MultiHead::setPrefetchedVideoFrameCount(int count)
+  {
+    m_prefetchedVideoFrameCount = count;
+  }
 }

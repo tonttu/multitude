@@ -19,13 +19,51 @@ namespace VideoDisplay
   ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
   VIDEODISPLAY_API void ffmpegInit();
 
+  struct AVFrameWrapper
+  {
+    AVFrameWrapper(const AVFrameWrapper & copied) = delete;
+    AVFrameWrapper & operator=(const AVFrameWrapper & copied) = delete;
+
+    AVFrameWrapper(AVFrameWrapper && moved)
+      : avframe(moved.avframe)
+      , referenced(moved.referenced)
+    {
+      moved.avframe = nullptr;
+      moved.referenced = false;
+    }
+
+    AVFrameWrapper & operator=(AVFrameWrapper && moved)
+    {
+      std::swap(avframe, moved.avframe);
+      std::swap(referenced, moved.referenced);
+      return *this;
+    }
+
+    AVFrameWrapper(AVFrame * frame = nullptr, bool referenced = false)
+      : avframe(frame)
+      , referenced(referenced)
+    {}
+
+    VIDEODISPLAY_API ~AVFrameWrapper();
+
+    AVFrame * avframe;
+    bool referenced;
+  };
+
+  struct DeallocatedFrames
+  {
+    std::vector<AVFrameWrapper> frames;
+    Radiant::Mutex mutex;
+  };
+
   class VideoFrameFfmpeg : public VideoFrame
   {
   public:
     ~VideoFrameFfmpeg();
 
-    bool referenced = false;
-    AVFrame* frame = nullptr;
+    std::weak_ptr<DeallocatedFrames> deallocatedFrames;
+    bool frameUnrefMightBlock = false;
+    AVFrameWrapper frame;
   };
 
   /// Audio/Video decoder implementation that uses Ffmpeg as a backend
@@ -62,9 +100,10 @@ namespace VideoDisplay
 
     virtual double duration() const OVERRIDE;
 
-    virtual VideoFrame * playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
-                                   PlayFlags flags) override;
-    virtual int releaseOldVideoFrames(const Timestamp & ts, bool * eof = nullptr) OVERRIDE;
+    virtual std::shared_ptr<VideoFrame> playFrame(Radiant::TimeStamp presentTimestamp, ErrorFlags & errors,
+                                                  PlayFlags flags) override;
+    virtual std::shared_ptr<VideoFrame> peekFrame(std::shared_ptr<VideoFrame> ref, int offset) override;
+    virtual bool isEof() const override;
 
     virtual Nimble::Matrix4f yuvMatrix() const OVERRIDE;
 

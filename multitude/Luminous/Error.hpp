@@ -26,7 +26,7 @@ namespace Luminous
   /// the current error code from OpenGL and displays it using Radiant::error.
   /// @param msg message prefix
   /// @param line line number
-  LUMINOUS_API void glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
+  LUMINOUS_API bool glErrorToString(const QString & msg = __FILE__, int line = __LINE__);
 }
 
 #endif

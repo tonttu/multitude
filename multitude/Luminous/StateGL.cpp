@@ -9,4 +9,8 @@ namespace Luminous
     return m_driver.opengl();
   }
 
+  void StateGL::addTask(std::function<void ()> task)
+  {
+    m_driver.addTask(std::move(task));
+  }
 }

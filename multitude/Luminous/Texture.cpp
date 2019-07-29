@@ -19,52 +19,52 @@ namespace Luminous
   class Texture::D
   {
   public:
-    /// Visual Studio 2010 doesn't null-initialize these (even though even the C++98 specs says it should *grmbl*)
-    D() 
-      : dimensions()
-      , width()
-      , height()
-      , depth()
-      , samples()
-      // This is set to a valid format to avoid errors even if no data is specified for the texture
-      , dataFormat(PixelFormat::rgbUByte())
-      , internalFormat()
-      , data()
-      , translucent()
-      , lineSizeBytes()
-      , dirtyRegions()
-      , m_minFilter(FILTER_LINEAR)
-      , m_magFilter(FILTER_LINEAR)
-      , m_borderColor(0, 0, 0, 0)
-      , m_mipmapsEnabled(false)
-      , m_paramsGeneration(0)
-    {
-      // Set default texture wrap modes
-      m_wrap[0] = WRAP_CLAMP;
-      m_wrap[1] = WRAP_CLAMP;
-      m_wrap[2] = WRAP_CLAMP;
-    }
+    void setData(uint8_t dimensions, unsigned int width, unsigned int height, unsigned int depth,
+                 PixelFormat dataFormat, std::shared_ptr<const void> && data, bool allowAsyncUpload);
 
-    uint8_t dimensions;
-    unsigned int width;
-    unsigned int height;
-    unsigned int depth;
-    unsigned int samples;
-    PixelFormat dataFormat;
-    int internalFormat;
-    const void * data;
-    bool translucent;
+  public:
+    uint8_t m_dimensions = 0;
+    unsigned int m_width = 0;
+    unsigned int m_height = 0;
+    unsigned int m_depth = 0;
+    unsigned int m_samples = 0;
+    // This is set to a valid format to avoid errors even if no data is specified for the texture
+    PixelFormat m_dataFormat {PixelFormat::rgbUByte()};
+    int m_internalFormat = 0;
+    std::shared_ptr<const void> m_data;
+    bool m_allowAsyncUpload = false;
+    bool m_translucent = false;
 
-    unsigned int lineSizeBytes;
+    unsigned int m_lineSizeBytes;
 
-    ContextArrayT<QRegion> dirtyRegions;
-    Filter m_minFilter, m_magFilter;
-    Wrap m_wrap[3];
-    Radiant::ColorPMA m_borderColor;
-    bool m_mipmapsEnabled;
+    ContextArrayT<QRegion> m_dirtyRegions;
+    Filter m_minFilter = FILTER_LINEAR;
+    Filter m_magFilter = FILTER_LINEAR;
+    Wrap m_wrap[3] { WRAP_CLAMP, WRAP_CLAMP, WRAP_CLAMP };
+    Radiant::ColorPMA m_borderColor {0, 0, 0, 0};
+    bool m_mipmapsEnabled = false;
     // Generation number for all glTexParameter-variables, min/magfilter, wrap, border
-    int m_paramsGeneration;
+    int m_paramsGeneration = 0;
   };
+
+
+  void Texture::D::setData(uint8_t dimensions, unsigned int width, unsigned int height, unsigned int depth,
+                           PixelFormat dataFormat, std::shared_ptr<const void> && data, bool allowAsyncUpload)
+  {
+    m_dimensions = dimensions;
+    m_width = width;
+    m_height = height;
+    m_depth = depth;
+    m_dataFormat = dataFormat;
+    m_data = std::move(data);
+    m_allowAsyncUpload = allowAsyncUpload;
+    m_translucent = dataFormat.hasAlpha();
+
+    for (QRegion & dirty: m_dirtyRegions)
+      dirty = QRegion();
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
 
   Texture::Texture()
     : RenderResource(RenderResource::Texture)
@@ -74,7 +74,6 @@ namespace Luminous
 
   Texture::~Texture()
   {
-    delete m_d;
   }
 
   Texture::Texture(const Texture & tex)
@@ -96,9 +95,8 @@ namespace Luminous
 
   Texture::Texture(Texture && tex)
     : RenderResource(std::move(tex))
-    , m_d(tex.m_d)
+    , m_d(std::move(tex.m_d))
   {
-    tex.m_d = nullptr;
   }
 
   Texture & Texture::operator=(Texture && tex)
@@ -110,70 +108,57 @@ namespace Luminous
 
   void Texture::setInternalFormat(int format)
   {
-    if(m_d->internalFormat == format)
+    if(m_d->m_internalFormat == format)
       return;
-    m_d->internalFormat = format;
+    m_d->m_internalFormat = format;
     invalidate();
   }
 
   int Texture::internalFormat() const
   {
-    return m_d->internalFormat;
+    return m_d->m_internalFormat;
   }
 
   void Texture::setData(unsigned int width, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 1;
-    m_d->width = width;
-    m_d->height = 1;
-    m_d->depth = 1;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
-    m_d->translucent = dataFormat.hasAlpha();
+    m_d->setData(1, width, 1, 1, dataFormat, std::shared_ptr<const void>(data, [](const void*){}), false);
     invalidate();
   }
 
   void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 2;
-    m_d->width = width;
-    m_d->height = height;
-    m_d->depth = 1;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
-    m_d->translucent = dataFormat.hasAlpha();
-    for (QRegion & dirty: m_d->dirtyRegions)
-      dirty = QRegion();
+    m_d->setData(2, width, height, 1, dataFormat, std::shared_ptr<const void>(data, [](const void*){}), false);
+    invalidate();
+  }
+
+  void Texture::setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, std::shared_ptr<const void> data)
+  {
+    m_d->setData(2, width, height, 1, dataFormat, std::move(data), true);
     invalidate();
   }
 
   void Texture::setData(unsigned int width, unsigned int height, unsigned int depth, const PixelFormat & dataFormat, const void * data)
   {
-    m_d->dimensions = 3;
-    m_d->width = width;
-    m_d->height = height;
-    m_d->depth = depth;
-    m_d->dataFormat = dataFormat;
-    m_d->data = data;
-    m_d->translucent = dataFormat.hasAlpha();
+    m_d->setData(3, width, height, depth, dataFormat, std::shared_ptr<const void>(data, [](const void*){}), false);
     invalidate();
   }
 
   void Texture::reset()
   {
-    m_d->dimensions = 0;
-    m_d->width = 0;
-    m_d->height = 0;
-    m_d->depth = 0;
-    m_d->samples = 0;
-    m_d->dataFormat = PixelFormat();
-    m_d->translucent = false;
-    m_d->data = nullptr;
+    m_d->m_dimensions = 0;
+    m_d->m_width = 0;
+    m_d->m_height = 0;
+    m_d->m_depth = 0;
+    m_d->m_samples = 0;
+    m_d->m_dataFormat = PixelFormat();
+    m_d->m_translucent = false;
+    m_d->m_data.reset();
+    m_d->m_allowAsyncUpload = false;
   }
 
   std::size_t Texture::dataSize() const
   {
-    auto comp = m_d->dataFormat.compression();
+    auto comp = m_d->m_dataFormat.compression();
     if(comp == PixelFormat::COMPRESSION_NONE)
       return lineSizeBytes() * height() * depth();
 
@@ -200,70 +185,70 @@ namespace Luminous
 
   void Texture::setLineSizeBytes(std::size_t size)
   {
-    if(m_d->lineSizeBytes == size)
+    if(m_d->m_lineSizeBytes == size)
       return;
-    m_d->lineSizeBytes = size;
+    m_d->m_lineSizeBytes = size;
     invalidate();
   }
 
   unsigned int Texture::lineSizeBytes() const
   {
-    return m_d->lineSizeBytes == 0 ? m_d->width * m_d->dataFormat.bytesPerPixel() : m_d->lineSizeBytes;
+    return m_d->m_lineSizeBytes == 0 ? m_d->m_width * m_d->m_dataFormat.bytesPerPixel() : m_d->m_lineSizeBytes;
   }
 
   bool Texture::isValid() const
   {
-    return m_d->dimensions >= 1 && m_d->dimensions <= 4;
+    return m_d->m_dimensions >= 1 && m_d->m_dimensions <= 4;
   }
 
-  uint8_t Texture::dimensions() const { return m_d->dimensions; }
-  unsigned int Texture::width() const { return m_d->width; }
-  unsigned int Texture::height() const { return m_d->height; }
-  unsigned int Texture::depth() const { return m_d->depth; }
-  const PixelFormat & Texture::dataFormat() const { return m_d->dataFormat; }
-  const void * Texture::data() const { return m_d->data;}
+  uint8_t Texture::dimensions() const { return m_d->m_dimensions; }
+  unsigned int Texture::width() const { return m_d->m_width; }
+  unsigned int Texture::height() const { return m_d->m_height; }
+  unsigned int Texture::depth() const { return m_d->m_depth; }
+  const PixelFormat & Texture::dataFormat() const { return m_d->m_dataFormat; }
+  std::shared_ptr<const void> Texture::data() const { return m_d->m_data;}
 
   QRegion Texture::dirtyRegion(unsigned int threadIndex) const
   {
-    assert(threadIndex < m_d->dirtyRegions.size());
-    return m_d->dirtyRegions[threadIndex];
+    assert(threadIndex < m_d->m_dirtyRegions.size());
+    return m_d->m_dirtyRegions[threadIndex];
   }
 
   QRegion Texture::takeDirtyRegion(unsigned int threadIndex) const
   {
-    assert(threadIndex < (unsigned) m_d->dirtyRegions.size());
+    assert(threadIndex < (unsigned) m_d->m_dirtyRegions.size());
     QRegion r;
-    std::swap(r, m_d->dirtyRegions[threadIndex]);
+    std::swap(r, m_d->m_dirtyRegions[threadIndex]);
     return r;
   }
 
   void Texture::addDirtyRect(const QRect & rect)
   {
     auto intersected = rect.intersected(QRect(0, 0, width(), height()));
-    for (QRegion & dirty: m_d->dirtyRegions)
+    for (QRegion & dirty: m_d->m_dirtyRegions)
       dirty += intersected;
   }
 
   unsigned int Texture::samples() const
   {
-    return m_d->samples;
+    return m_d->m_samples;
   }
 
   void Texture::setSamples(unsigned int samples)
   {
-    m_d->samples = samples;
+    m_d->m_samples = samples;
     invalidate();
   }
 
   bool Texture::translucent() const
   {
-    return m_d->translucent;
+    return m_d->m_translucent;
   }
 
   void Texture::setTranslucency(bool translucency)
   {
     /// This is only used for batch rendering sorting optimization, no need to invalidate()
-    m_d->translucent = translucency;
+    m_d->m_translucent = translucency;
   }
 
   Texture::Filter Texture::getMinFilter() const
@@ -340,4 +325,19 @@ namespace Luminous
     return m_d->m_paramsGeneration;
   }
 
+  Texture::DataInfo Texture::dataInfo() const
+  {
+    DataInfo info;
+    info.data = m_d->m_data;
+    info.dataSize = dataSize();
+    info.lineSizeBytes = lineSizeBytes();
+    info.dataFormat = dataFormat();
+    info.size.make(m_d->m_width, m_d->m_height, m_d->m_depth);
+    return info;
+  }
+
+  bool Texture::allowAsyncUpload() const
+  {
+    return m_d->m_allowAsyncUpload;
+  }
 }

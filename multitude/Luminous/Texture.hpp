@@ -11,8 +11,9 @@
 #if !defined (LUMINOUS_TEXTURE_HPP)
 #define LUMINOUS_TEXTURE_HPP
 
-#include "Luminous/Luminous.hpp"
-#include "Luminous/RenderResource.hpp"
+#include "Luminous.hpp"
+#include "PixelFormat.hpp"
+#include "RenderResource.hpp"
 
 #include <Radiant/Color.hpp>
 
@@ -57,6 +58,21 @@ namespace Luminous
       WRAP_BORDER
     };
 
+    struct DataInfo
+    {
+      /// See Texture::data
+      std::shared_ptr<const void> data;
+      /// See Texture::dataSize
+      std::size_t dataSize = 0;
+      /// Width, height and depth of the texture. Unused fields are set to 1 if
+      /// the texture dimension is less than three.
+      Nimble::Vector3i size{0, 0, 0};
+      /// See Texture::lineSizeBytes
+      uint32_t lineSizeBytes = 0;
+      /// See Texture::dataFormat
+      PixelFormat dataFormat;
+    };
+
   public:
     /// Construct a new texture
     LUMINOUS_API Texture();
@@ -98,6 +114,11 @@ namespace Luminous
     /// @param dataFormat data format
     /// @param data data pointer
     LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, const void * data);
+    /// Same as other setData calls, but uses shared_ptr for the texture data.
+    /// Texture and matching TextureGL objects now keep a reference to the
+    /// data as long as needed. Using shared_ptr instead of raw pointer allows
+    /// the use of asynchronous texture uploads in a separate upload thread.
+    LUMINOUS_API void setData(unsigned int width, unsigned int height, const PixelFormat & dataFormat, std::shared_ptr<const void> data);
     /// Set 3D texture data from memory.
     /// @param width width of the texture
     /// @param height height of the texture
@@ -143,7 +164,7 @@ namespace Luminous
     LUMINOUS_API const PixelFormat & dataFormat() const;
     /// Get the raw pointer to texture data.
     /// @return pointer to texture data
-    LUMINOUS_API const void * data() const;
+    LUMINOUS_API std::shared_ptr<const void> data() const;
 
     /// Mark a region of the texture as dirty. Dirty regions are used to
     /// determine which parts of the texture data must be uploaded to GPU
@@ -238,9 +259,16 @@ namespace Luminous
     /// @return generation number, starting from 0
     LUMINOUS_API int paramsGeneration() const;
 
+    /// See DataInfo
+    LUMINOUS_API DataInfo dataInfo() const;
+
+    /// Can the texture be uploaded asynchronously in a separate thread.
+    /// Returns true if the data was originally given as a shared_ptr.
+    LUMINOUS_API bool allowAsyncUpload() const;
+
   private:
     class D;
-    D * m_d;
+    std::unique_ptr<D> m_d;
   };
 }
 #endif // LUMINOUS_TEXTURE_HPP

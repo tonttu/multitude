@@ -26,8 +26,10 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, OpenGLAPI& opengl);
+    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
     LUMINOUS_API ~RenderDriverGL();
+
+    LUMINOUS_API void initGl(OpenGLAPI & opengl);
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
@@ -123,6 +125,10 @@ namespace Luminous
     LUMINOUS_API OpenGLAPI & opengl();
 
     LUMINOUS_API StateGL & stateGl();
+
+    /// Add a new task that is going to be executed on a different
+    /// thread with a shared OpenGL context. Used for GPU data transfers.
+    LUMINOUS_API void addTask(std::function<void()> task);
 
   private:
 

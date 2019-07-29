@@ -509,6 +509,9 @@ namespace Luminous {
     /// TextureGL::setDefaultUploadMethod instead.
     void setTextureUploadMethod(TextureGL::UploadMethod method);
 
+    bool isAsyncTextureUploadEnabled() const;
+    void setAsyncTextureUpload(bool enabled);
+
     /// Create a default fullscreen configuration for a single 1080p display
     void createFullHDConfig();
     void mergeConfiguration(const Luminous::MultiHead & source);
@@ -526,6 +529,9 @@ namespace Luminous {
     /// Converts operating system desktop coordinates to graphics coordinates.
     virtual GraphicsPoint desktopToGraphics(Nimble::Vector2f loc, int screenNumber = -1) const override;
 
+    int prefetchedVideoFrameCount() const;
+    void setPrefetchedVideoFrameCount(int count);
+
   private:
     virtual bool readElement(const Valuable::ArchiveElement & ce) override;
 
@@ -535,6 +541,8 @@ namespace Luminous {
     Valuable::AttributeBool m_vsync;
     Valuable::AttributeBool m_glFinish;
     Valuable::AttributeT<TextureGL::UploadMethod> m_textureUploadMethod;
+    Valuable::AttributeBool m_asyncTextureUpload;
+    Valuable::AttributeInt m_prefetchedVideoFrameCount;
     Valuable::AttributeVector2i m_layerSize;
 
     bool m_edited = false;
