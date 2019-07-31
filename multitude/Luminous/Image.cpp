@@ -88,19 +88,9 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
 
   Image::Image()
-      : m_width(0),
-      m_height(0),
-      m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN),
-      m_data(0),
-      m_generation(0)
   {}
 
   Image::Image(const Image& img)
-    : m_width(0)
-    , m_height(0)
-    , m_pixelFormat(PixelFormat::LAYOUT_UNKNOWN, PixelFormat::TYPE_UNKNOWN)
-    , m_data(nullptr)
-    , m_generation(0)
   {
     *this = img;
   }
@@ -117,8 +107,7 @@ namespace Luminous
 
   void Image::flipVertical()
   {
-    int bpp = m_pixelFormat.bytesPerPixel();
-    int linesize = m_width * bpp;
+    int linesize = lineSize();
 
     int n = m_height / 2;
 
@@ -285,8 +274,7 @@ namespace Luminous
       }
     }
 
-    if(m_texture)
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
+    updateTexture();
   }
 
   bool Image::copyResample(const Image & source, int w, int h)
@@ -433,8 +421,7 @@ namespace Luminous
 
       //write("some-with-a.png");
 
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
+      updateTexture();
 
       return true;
     }
@@ -489,8 +476,7 @@ namespace Luminous
 
       }
 
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
+      updateTexture();
 
       return true;
     }
@@ -527,8 +513,7 @@ namespace Luminous
         }
       }
 
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
+      updateTexture();
 
       return true;
     }
@@ -579,8 +564,7 @@ namespace Luminous
         }
       }
 
-      if(m_texture)
-        m_texture->setData(width(), height(), pixelFormat(), m_data);
+      updateTexture();
 
       return true;
     }
@@ -606,8 +590,14 @@ namespace Luminous
     // Copy image data
     allocate(img.m_width, img.m_height, img.m_pixelFormat);
 
-    unsigned int bytes = m_width * m_height * m_pixelFormat.numChannels();
-    memcpy(m_data, img.m_data, bytes);
+    if (img.lineSize() == lineSize()) {
+      unsigned int bytes = img.lineSize() * m_height;
+      memcpy(m_data, img.m_data, bytes);
+    } else {
+      int bytesPerLine = lineSize();
+      for (int y = 0; y < m_height; ++y)
+        memcpy(line(y), img.line(y), bytesPerLine);
+    }
 
     changed();
 
@@ -622,6 +612,7 @@ namespace Luminous
 
         // ...but make sure the data points to the new image
         tex.setData(width(), height(), pixelFormat(), m_data);
+        tex.setLineSizeBytes(m_lineSize);
 
       }
     } else {
@@ -636,16 +627,20 @@ namespace Luminous
   {
     m_width = img.m_width;
     m_height = img.m_height;
+    m_lineSize = img.m_lineSize;
     m_pixelFormat = img.m_pixelFormat;
     m_data = img.m_data;
+    m_externalData = img.m_externalData;
     m_generation = img.m_generation;
     m_texture = std::move(img.m_texture);
 
-    /// Invalidate the old
+    /// Invalidate the old image
     img.m_width = 0;
     img.m_height = 0;
+    img.m_lineSize = 0;
     img.m_pixelFormat = Luminous::PixelFormat();
     img.m_data = nullptr;
+    img.m_externalData = false;
     img.m_generation = 0;
 
     return *this;
@@ -654,7 +649,7 @@ namespace Luminous
   void Image::allocate(int width, int height, const PixelFormat & pf)
   {
     unsigned int bytes = width * height * pf.bytesPerPixel();
-    unsigned int mybytes = m_width * m_height * m_pixelFormat.bytesPerPixel();
+    unsigned int mybytes = lineSize() * m_height;
 
     if(width && height)
       assert(pf.numChannels() > 0);
@@ -666,19 +661,36 @@ namespace Luminous
     m_width = width;
     m_height = height;
     m_pixelFormat = pf;
+    m_lineSize = 0;
 
     if(bytes != mybytes) {
-      delete [] m_data;
+      if (!m_externalData)
+        delete [] m_data;
+      m_externalData = false;
       if(bytes)
         m_data = new unsigned char [bytes];
       else
-        m_data = 0;
+        m_data = nullptr;
     }
 
     changed();
 
-    if(m_texture)
-      m_texture->setData(m_width, m_height, pixelFormat(), m_data);
+    updateTexture();
+  }
+
+  void Image::setData(unsigned char * bytes, int width, int height, PixelFormat format, int lineSize)
+  {
+    if (m_data && !m_externalData)
+      delete [] m_data;
+
+    m_data = bytes;
+    m_externalData = true;
+    m_width = width;
+    m_height = height;
+    m_pixelFormat = format;
+    m_lineSize = lineSize;
+
+    updateTexture();
   }
   /*
   // Guess the filetype from the extension
@@ -733,8 +745,7 @@ namespace Luminous
       toPreMultipliedAlpha();
     }
 
-    if(m_texture)
-      m_texture->setData(width(), height(), pixelFormat(), m_data);
+    updateTexture();
 
     return true;
   }
@@ -788,8 +799,7 @@ namespace Luminous
 
     changed();
 
-    if(m_texture)
-      m_texture->setData(width, height, format, m_data);
+    updateTexture();
   }
 
   bool Image::setPixelFormat(const PixelFormat & format)
@@ -812,8 +822,10 @@ namespace Luminous
     }
 
     PixelFormat srcFormat = m_pixelFormat;
+    int srcLineSize = lineSize();
     uint8_t * src = m_data;
-    m_data = 0;
+    bool externalData = m_externalData;
+    m_data = nullptr;
 
     allocate(m_width, m_height, format);
 
@@ -822,7 +834,7 @@ namespace Luminous
 
 #define CONVERT(srcLayout, targetLayout)                                  \
     for(int y = 0; y < m_height; ++y) {                                   \
-      uint8_t * l = src + y * m_width * src_bpp;                          \
+      uint8_t * l = src + y * srcLineSize;                          \
       uint8_t * dest = bytes() + y * m_width * dest_bpp;                  \
       for(int x = 0; x < m_width; ++x) {                                  \
         convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,         \
@@ -837,7 +849,7 @@ namespace Luminous
       CONVERT(PixelFormat::LAYOUT_BGR, PixelFormat::LAYOUT_RGBA);
     }
 
-    if(src != m_data) delete [] src;
+    if(src != m_data && !externalData) delete [] src;
 
     // Check if the data needs to be converted. Need to override the
     // premultiplied alpha flag so that the conversion will not early out.
@@ -849,19 +861,21 @@ namespace Luminous
       toPostMultipliedAlpha();
     }
 
-    if(m_texture)
-      m_texture->setData(width(), height(), format, m_data);
+    updateTexture();
 
     return true;
   }
 
   void Image::clear()
   {
-    delete[] m_data;
-    m_data = 0;
+    if (!m_externalData)
+      delete[] m_data;
+    m_data = nullptr;
+    m_externalData = false;
 
     m_width = 0;
     m_height = 0;
+    m_lineSize = 0;
     m_pixelFormat = PixelFormat(PixelFormat::LAYOUT_UNKNOWN,
                                 PixelFormat::TYPE_UNKNOWN);
 
@@ -1006,10 +1020,19 @@ namespace Luminous
       if (!m_texture) {
         m_texture.reset(new Texture());
         m_texture->setData(width(), height(), pixelFormat(), m_data);
+        m_texture->setLineSizeBytes(m_lineSize);
       }
     }
 
     return *m_texture.get();
+  }
+
+  void Image::updateTexture()
+  {
+    if (m_texture) {
+      m_texture->setData(width(), height(), pixelFormat(), m_data);
+      m_texture->setLineSizeBytes(m_lineSize);
+    }
   }
 
   void Image::toPreMultipliedAlpha()
