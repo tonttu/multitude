@@ -58,7 +58,7 @@ namespace VideoDisplay
 
     // Don't fail even if RGB wouldn't be available
     if(!rgbDll.load()) {
-      Radiant::error("RGBEasyMonitor # %s", rgbDll.errorString().toUtf8().data());
+      Radiant::info("Datapath Vision support is disabled, %s", rgbDll.errorString().toUtf8().data());
       return;
     }
 
