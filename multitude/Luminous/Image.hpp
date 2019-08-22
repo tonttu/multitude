@@ -85,7 +85,7 @@ namespace Luminous
     { return Nimble::Size(m_width, m_height); }
     /// The number of bytes a single line in the image takes
     /// @return line size in bytes
-    int lineSize() const { return m_width * m_pixelFormat.bytesPerPixel(); }
+    int lineSize() const { return m_lineSize ? m_lineSize : m_width * m_pixelFormat.bytesPerPixel(); }
     /// Get a pointer to image data on specific line
     /// @param y line to query for
     /// @return pointer to beginning of the line
@@ -104,6 +104,12 @@ namespace Luminous
     /// @copydoc bytes
     const unsigned char * data() const { return bytes(); }
 
+    /// Set the data pointer without copying the actual data. The caller must
+    /// not delete the data while this Image object is still using it.
+    /// @param lineSize line size in bytes.
+    void setData(unsigned char * bytes, int width, int height,
+                 PixelFormat format, int lineSize);
+
     /// Get basic image information from a file. This function does not decode
     /// the actual image data, typically just the header.
     /// @param filename filename to query
@@ -120,7 +126,8 @@ namespace Luminous
     /// @return true if the image was successfully written
     bool write(const QString & filename) const;
 
-    /** Create an image object from data provided by the user.
+    /** Create an image object from data provided by the user. This function
+     *  will copy the data, use setData if you don't want that to happen.
     @param bytes pointer to image data
     @param width width of the image data
     @param height height of the image data
@@ -141,7 +148,7 @@ namespace Luminous
 
     /// Returns true if the image does not contain any data.
     /// @return true if the data is nullptr; otherwise false
-    bool isEmpty() const { return (m_data == 0); }
+    bool isEmpty() const { return (m_data == nullptr); }
 
     /// Flip the image upside down
     void flipVertical();
@@ -251,23 +258,28 @@ namespace Luminous
   protected:
 
     /// Width of the image in pixels
-    int m_width;
+    int m_width = 0;
     /// Height of the image in pixels
-    int m_height;
+    int m_height = 0;
+    /// Line size in bytes, or zero if the line size is calculated automatically
+    int m_lineSize = 0;
     /// Pixel format of the image data
     PixelFormat m_pixelFormat;
     /// Pointer to the raw image data
     /// @todo change to QByteArray to get copy-on-write
-    unsigned char* m_data;
+    unsigned char* m_data = nullptr;
+    /// If false, m_data is allocated by us - and will be deallocated by us as well.
+    bool m_externalData = false;
     /// Generation count of the image used to indicate changes in the image
     /// data to determine when associated textures should be updated.
-    size_t m_generation;
+    size_t m_generation = 0;
 
   private:
 
     /// Get a texture associated with this image and create it if it does not
     /// exists already.
     Texture & getTexture() const;
+    void updateTexture();
 
     mutable std::unique_ptr<Texture> m_texture;
     mutable Radiant::Mutex m_textureMutex;
