@@ -160,7 +160,8 @@ namespace Luminous
   Q_SIGNALS:
     void closed();
 
-  protected:
+  /// These are public so that UI tests can inject events
+  public:
     void exposeEvent(QExposeEvent* ev) override;
     void focusInEvent(QFocusEvent *ev) override;
     void focusOutEvent(QFocusEvent *ev) override;
