@@ -267,12 +267,6 @@ DSPNetwork::instance().send(control);
     /// @return Default sampley player object
     std::shared_ptr<ModuleSamplePlayer> samplePlayer();
 
-    /// @cond
-
-    ModuleSamplePlayer * javascriptSamplePlayer();
-
-    /// @endcond
-
     /// Finds an item that holds a module with given id
     /// @param id Module id, @see Module::id()
     /// @return Pointer to the item inside DSPNetwork or NULL

@@ -475,13 +475,6 @@ namespace Luminous
     /// @param style Stroke, fill and texturing options
     void drawQuad(const Nimble::Vector2 * v, const Nimble::Vector2 * uvs, const Style & style);
 
-    /// @cond
-
-    // Only for JavaScript. Do not use directly.
-    void javascriptDrawRect(const Nimble::Rectf& rect, const Style& style);
-
-    /// @endcond
-
     /// Draws text
     /// @param layout Text object to render
     /// @param location Text location in viewRect. Anything outside will be clipped.

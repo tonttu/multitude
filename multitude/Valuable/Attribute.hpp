@@ -40,10 +40,6 @@
 
 #include <functional>
 
-#ifdef CORNERSTONE_JS
-#include <Valuable/v8.hpp>
-#endif
-
 // new behavior: elements of array 'array' will be default initialized
 #if RADIANT_WINDOWS
 # if _MSC_VER >= 1310
@@ -138,7 +134,7 @@ namespace Valuable
     enum Layer {
       DEFAULT = 0,       ///< Default, usually set in the constructor
       STYLE,             ///< Set from a CSS file
-      USER,              ///< Set from a C++/JS code or by interaction / animators
+      USER,              ///< Set from a C++ code or by interaction / animators
       STYLE_IMPORTANT,   ///< !important rules from CSS file
 
       LAYER_COUNT,
@@ -311,15 +307,6 @@ namespace Valuable
     /// @sa removeListener
     long addListener(Node * listener, ListenerFunc func, int role = CHANGE_ROLE);
 
-#ifdef CORNERSTONE_JS
-    /// Adds a JavaScript listener that is invoked whenever the value is changed
-    /// @param func listener function
-    /// @param role when should the listener function be called
-    /// @return listener id that can be used to remove the listener with removeListener
-    /// @sa removeListener
-    long addListener(v8::Persistent<v8::Function> func, int role = CHANGE_ROLE);
-#endif
-
     /// Removes listeners from the listener list
     void removeListeners(int role = ALL_ROLES);
     /// Removes a listener from the listener list
@@ -429,17 +416,9 @@ namespace Valuable
       AttributeListener(ListenerFunc func_, int role_, Node * listener_ = 0)
         : func(func_), role(role_), listener(listener_) {}
 
-#ifdef CORNERSTONE_JS
-      AttributeListener(v8::Persistent<v8::Function> func_, int role_)
-        : func(), scriptFunc(func_), role(role_), listener(0) {}
-#endif
-
       AttributeListener() : func(), role(), listener() {}
 
       ListenerFunc func;
-#ifdef CORNERSTONE_JS
-      v8::Persistent<v8::Function> scriptFunc;
-#endif
       int role;
       Node * listener;
     };
@@ -676,18 +655,6 @@ namespace Valuable
 
   template <typename T, typename Select = void>
   class AttributeT;
-
-#ifdef CORNERSTONE_JS
-
-  /// @cond
-
-  /// @todo This should be removed and all v8 related things should be implemented
-  ///       the same way as Scripting::eventAddListener is implemented.
-  VALUABLE_API extern v8::Persistent<v8::Context> s_defaultV8Context;
-
-  /// @endcond
-
-#endif
 }
 
 #include "TransitionImpl.hpp"

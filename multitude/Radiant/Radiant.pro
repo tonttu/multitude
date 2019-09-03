@@ -175,7 +175,7 @@ enable-folly {
   SOURCES += BGThreadExecutor.cpp
 }
 
-LIBS += $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8
+LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
 LIBS += $$LIB_FOLLY
 
 linux-* {

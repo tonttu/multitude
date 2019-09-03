@@ -259,11 +259,6 @@ namespace Resonant {
     return player;
   }
 
-  ModuleSamplePlayer * DSPNetwork::javascriptSamplePlayer()
-  {
-    return samplePlayer().get();
-  }
-
   void DSPNetwork::dumpInfo(FILE *f)
   {
     Radiant::info("DSPNetwork::dumpInfo # %p", f);

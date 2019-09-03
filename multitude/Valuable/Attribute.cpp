@@ -25,10 +25,6 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
-#ifdef CORNERSTONE_JS
-  v8::Persistent<v8::Context> s_defaultV8Context;
-#endif
-
   Serializable::Serializable()
     : m_serializable(true)
   {}
@@ -255,17 +251,7 @@ namespace Valuable
     // copy of the containers this doesn't present a problem
     Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & CHANGE_ROLE) {
-        if(!l.func) {
-#ifdef CORNERSTONE_JS
-          /// @todo all of these v8 listeners should be implemented non-intrusive way,
-          ///       like with normal event listeners
-          v8::Locker lock;
-          v8::Context::Scope scope(s_defaultV8Context);
-          v8::HandleScope handle_scope;
-          /// @todo what is the correct receiver ("this" in the callback)?
-          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
-#endif
-        } else l.func();
+        l.func();
       }
     }
   }
@@ -278,15 +264,7 @@ namespace Valuable
     // copy of the containers this doesn't present a problem
     Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & DELETE_ROLE) {
-        if(!l.func) {
-#ifdef CORNERSTONE_JS
-          v8::Locker lock;
-          v8::Context::Scope scope(s_defaultV8Context);
-          v8::HandleScope handle_scope;
-          /// @todo what is the correct receiver ("this" in the callback)?
-          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
-#endif
-        } else l.func();
+        l.func();
       }
       if(l.listener) l.listener->m_attributeListening.remove(this);
     }
@@ -301,17 +279,7 @@ namespace Valuable
     // copy of the containers this doesn't present a problem
     Q_FOREACH(const AttributeListener & l, m_listeners) {
       if(l.role & HOST_CHANGE_ROLE) {
-        if(!l.func) {
-#ifdef CORNERSTONE_JS
-          /// @todo all of these v8 listeners should be implemented non-intrusive way,
-          ///       like with normal event listeners
-          v8::Locker lock;
-          v8::Context::Scope scope(s_defaultV8Context);
-          v8::HandleScope handle_scope;
-          /// @todo what is the correct receiver ("this" in the callback)?
-          l.scriptFunc->Call(s_defaultV8Context->Global(), 0, 0);
-#endif
-        } else l.func();
+        l.func();
       }
     }
   }
@@ -344,15 +312,6 @@ namespace Valuable
     return id;
   }
 
-#ifdef CORNERSTONE_JS
-  long Attribute::addListener(v8::Persistent<v8::Function> func, int role)
-  {
-    REQUIRE_THREAD(m_ownerThread);
-    long id = m_listenersId++;
-    m_listeners[id] = AttributeListener(func, role);
-    return id;
-  }
-#endif
   void Attribute::removeListeners(int role)
   {
     removeListener(0, role);

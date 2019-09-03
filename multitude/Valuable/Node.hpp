@@ -22,10 +22,6 @@
 #include <Radiant/ThreadChecks.hpp>
 #include <Radiant/Trace.hpp>
 
-#ifdef CORNERSTONE_JS
-#include <Valuable/v8.hpp>
-#endif
-
 #include <map>
 #include <set>
 #include <atomic>
@@ -202,24 +198,6 @@ namespace Valuable
       Attribute * vo = it->second;
       return vo->set(v);
     }
-
-#ifdef CORNERSTONE_JS
-    /// Set attribute value from JavaScript
-    /// @param name attribute name
-    /// @param v attribute value. Supported types: boolean, number, string,
-    ///          list of two, three or four numbers
-    /// @returns true if conversion from JavaScript was successful, and attribute value was set
-    bool setValue(const QByteArray & name, v8::Handle<v8::Value> v);
-
-    /// @cond
-
-    inline bool setValue(const QByteArray & name, const v8::Local<v8::Value> & v) {
-      return setValue(name, v8::Handle<v8::Value>(v));
-    }
-
-    /// @endcond
-
-#endif
 
     /// Saves this object (and its children) to an XML file
     bool saveToFileXML(const QString & filename, unsigned int opts = SerializationOptions::DEFAULTS) const;
@@ -457,16 +435,6 @@ namespace Valuable
     /// Returns set of all registered IN events
     const QSet<QByteArray> & eventInNames() const { return m_eventListenNames; }
 
-#ifdef CORNERSTONE_JS
-    /// Add a JavaScript attribute listener to attribute belonging this Node.
-    /// @param attribute Attribute name
-    /// @param func JavaScript function to call whenever attribute is changed/deleted
-    /// @param role when should the listener function be called
-    /// @returns listener id that can be used to remove the listener with Attribute::removeListener
-    long addListener(const QByteArray & attribute, v8::Persistent<v8::Function> func,
-                     int role = Attribute::CHANGE_ROLE);
-    using Attribute::addListener;
-#endif
     /// Triggers any pending AFTER_UPDATE-events.
     /// This is called automatically from MultiWidgets::Application every frame.
     /// If you don't have running application instance, or if you want to block

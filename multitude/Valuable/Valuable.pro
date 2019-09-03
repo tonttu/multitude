@@ -53,7 +53,6 @@ HEADERS += AttributeVector.hpp
 HEADERS += AttributeGrid.hpp
 HEADERS += XMLArchive.hpp
 HEADERS += State.hpp
-HEADERS += v8.hpp
 HEADERS += ListenerHolder.hpp
 HEADERS += AttributeSpline.hpp
 HEADERS += AttributeAsset.hpp
@@ -86,7 +85,7 @@ SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
 SOURCES += AttributeAsset.cpp
 
-LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_V8 $$LIB_PUNCTUAL
+LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_PUNCTUAL
 
 DEFINES += VALUABLE_EXPORT
 

@@ -291,9 +291,7 @@ namespace Radiant
   /// This class implements an intrusive pointer. Intrusive pointer is a light
   /// version of a shared pointer. The dynamically allocated object the pointer
   /// points to handles the reference counter. Thus the reference count is
-  /// stored in a single location and the pointer size is kept to a minimum. In
-  /// case of Cornerstone it also makes it possible to share objects between
-  /// C++ and JavaScript.
+  /// stored in a single location and the pointer size is kept to a minimum.
   template <typename T>
   class IntrusivePtr : public SafeBool< IntrusivePtr<T> >
   {
