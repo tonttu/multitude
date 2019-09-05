@@ -214,14 +214,40 @@ namespace Nimble
     for(size_t i = 0; i < 4; i++)
       vertex[i] = m.project(vertex[i]);
 
-    m_origin = 0.25f * std::accumulate(vertex.begin(), vertex.end(), Nimble::Vector2(0, 0));
-    m_axis0 = vertex[1] - vertex[0];
-    m_extent0 = 0.5f * m_axis0.length();
-    m_axis0.normalize();
+    /// We have now transformed all the four corners. Now calculate minimum
+    /// bounding rectangle for those points by taking one edge of the rectangle
+    /// as one axis. Calculate all four possibilities and use the smallest one.
+    float smallestArea = std::numeric_limits<float>::infinity();
 
-    m_axis1 = vertex[3] - vertex[0];
-    m_extent1 = 0.5f * m_axis1.length();
-    m_axis1.normalize();
+    for (int i = 0; i < 4; ++i) {
+      const Vector2f v01 = vertex[(i+1)%4] - vertex[i];
+      const Vector2f v02 = vertex[(i+2)%4] - vertex[i];
+      const Vector2f v03 = vertex[(i+3)%4] - vertex[i];
+
+      float d01 = v01.length();
+      Vector2f axis0 = v01 / d01;
+      Vector2f axis1 = axis0.perpendicular();
+      float d02 = dot(v02, axis0);
+      float d03 = dot(v03, axis0);
+      float max0 = std::max({0.f, d01, d02, d03});
+      float min0 = std::min({0.f, d01, d02, d03});
+
+      d01 = dot(v01, axis1);
+      d02 = dot(v02, axis1);
+      d03 = dot(v03, axis1);
+      float max1 = std::max({0.f, d01, d02, d03});
+      float min1 = std::min({0.f, d01, d02, d03});
+
+      float area = (max0 - min0) * (max1 - min1);
+      if (area < smallestArea) {
+        smallestArea = area;
+        m_axis0 = axis0;
+        m_axis1 = axis1;
+        m_extent0 = (max0 - min0) * 0.5f;
+        m_extent1 = (max1 - min1) * 0.5f;
+        m_origin = vertex[i] + axis0 * ((max0 + min0) * 0.5f) + axis1 * ((max1 + min1) * 0.5f);
+      }
+    }
   }
 
   Nimble::Rect Rectangle::boundingBox() const
