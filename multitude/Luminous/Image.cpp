@@ -579,9 +579,7 @@ namespace Luminous
 
   bool Image::hasAlpha() const
   {
-    return (m_pixelFormat.layout() == PixelFormat::LAYOUT_ALPHA) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RED_GREEN) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RGBA);
+    return m_pixelFormat.hasAlpha();
   }
 
   Image& Image::operator = (const Image& img)
