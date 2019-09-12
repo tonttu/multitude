@@ -346,7 +346,8 @@ namespace Luminous
         dest += 4;
       }
     } else {
-      Radiant::error("ImageCodecQT::write # Unsupported pixel format");
+      Radiant::error("ImageCodecQT::write # Unsupported pixel format %s",
+                     image.pixelFormat().toString().toUtf8().data());
     }
 
     // Radiant::info("File is almost written");
