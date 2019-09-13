@@ -287,7 +287,7 @@ namespace Luminous
           QMutexLocker g(&m_asyncUploadMutex);
           ++m_asyncUploadTasks;
         }
-        m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), dirty, compressedFormat, textureUnit] {
+        m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), dirty, compressedFormat] {
           m_state.opengl().glBindTexture(m_target, m_handle);
           GLERROR("TextureGL::upload2D # glBindTexture");
           upload2DImpl(tex, dirty, compressedFormat, mipmaps);

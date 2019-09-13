@@ -64,6 +64,9 @@ namespace Luminous
   template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_BGR> {
     static Type get(const Type * t, int i) { return i < 3 ? t[2-i] : convert_value<unsigned char, Type>(255); }
   };
+  template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_BGRA> {
+    static Type get(const Type * t, int i) { return t[i < 3 ? 2 - i : i]; }
+  };
   template <typename Type> struct get_data<Type, PixelFormat::LAYOUT_RED> {
     static Type get(const Type * t, int i) { return i < 3 ? t[0] : convert_value<unsigned char, Type>(255); }
   };
@@ -576,9 +579,7 @@ namespace Luminous
 
   bool Image::hasAlpha() const
   {
-    return (m_pixelFormat.layout() == PixelFormat::LAYOUT_ALPHA) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RED_GREEN) ||
-        (m_pixelFormat.layout() == PixelFormat::LAYOUT_RGBA);
+    return m_pixelFormat.hasAlpha();
   }
 
   Image& Image::operator = (const Image& img)
@@ -814,7 +815,8 @@ namespace Luminous
        (m_pixelFormat.layout() != PixelFormat::LAYOUT_ALPHA &&
         m_pixelFormat.layout() != PixelFormat::LAYOUT_RED &&
         m_pixelFormat.layout() != PixelFormat::LAYOUT_RGB &&
-        m_pixelFormat.layout() != PixelFormat::LAYOUT_BGR) ||
+        m_pixelFormat.layout() != PixelFormat::LAYOUT_BGR &&
+        m_pixelFormat.layout() != PixelFormat::LAYOUT_BGRA) ||
        format.layout() != PixelFormat::LAYOUT_RGBA) {
       Radiant::error("Image::setPixelFormat # unsupported conversion %s -> %s",
                      m_pixelFormat.toString().toUtf8().data(), format.toString().toUtf8().data());
@@ -826,15 +828,17 @@ namespace Luminous
     uint8_t * src = m_data;
     bool externalData = m_externalData;
     m_data = nullptr;
+    int h = m_height;
+    m_height = 0;
 
-    allocate(m_width, m_height, format);
+    allocate(m_width, h, format);
 
     int src_bpp = srcFormat.bytesPerPixel();
     int dest_bpp = format.bytesPerPixel();
 
 #define CONVERT(srcLayout, targetLayout)                                  \
-    for(int y = 0; y < m_height; ++y) {                                   \
-      uint8_t * l = src + y * srcLineSize;                          \
+    for(int y = 0; y < h; ++y) {                                          \
+      uint8_t * l = src + y * srcLineSize;                                \
       uint8_t * dest = bytes() + y * m_width * dest_bpp;                  \
       for(int x = 0; x < m_width; ++x) {                                  \
         convert<PixelFormat::TYPE_UBYTE, PixelFormat::TYPE_UBYTE,         \
@@ -845,6 +849,8 @@ namespace Luminous
 
     if (srcFormat.layout() == PixelFormat::LAYOUT_RGB) {
       CONVERT(PixelFormat::LAYOUT_RGB, PixelFormat::LAYOUT_RGBA);
+    } else if (srcFormat.layout() == PixelFormat::LAYOUT_BGRA) {
+      CONVERT(PixelFormat::LAYOUT_BGRA, PixelFormat::LAYOUT_RGBA);
     } else {
       CONVERT(PixelFormat::LAYOUT_BGR, PixelFormat::LAYOUT_RGBA);
     }
