@@ -535,7 +535,8 @@ namespace Valuable
     {
       if (layer >= CURRENT_LAYER) layer = currentLayer();
       bool top = layer >= m_currentLayer;
-      bool sendSignal = top && (m_currentValue != t || m_values[m_currentLayer] != t);
+      bool sendSignal = top && (differs(m_currentValue, t) ||
+                                (m_transition && differs(m_values[m_currentLayer], t)));
       if(top) m_currentLayer = layer;
       m_values[layer] = t;
       m_valueSet[layer] = true;
@@ -553,7 +554,7 @@ namespace Valuable
 
     virtual bool isChanged() const OVERRIDE
     {
-      return m_currentLayer > DEFAULT && value() != value(DEFAULT);
+      return m_currentLayer > DEFAULT && differs(value(), value(DEFAULT));
     }
 
     /// Unsets the value from a specific layer
@@ -568,7 +569,7 @@ namespace Valuable
         int l = int(layer) - 1;
         while(!m_valueSet[l]) --l;
         m_currentLayer = Layer(l);
-        if(m_values[l] != m_values[layer])
+        if(differs(m_values[l], m_values[layer]))
           this->emitChange();
       }
     }
@@ -628,7 +629,7 @@ namespace Valuable
 
     void setAnimatedValue(T t)
     {
-      if (m_currentValue != t) {
+      if (differs(m_currentValue, t)) {
         m_currentValue = t;
         Attribute::emitChange();
       }
@@ -663,6 +664,21 @@ namespace Valuable
       } else {
         m_currentValue = m_values[m_currentLayer];
         Attribute::emitChange();
+      }
+    }
+
+    inline bool differs(const T & a, const T & b) const
+    {
+      if constexpr(std::is_floating_point_v<T>) {
+        if constexpr(sizeof(T) == 8) {
+          return *reinterpret_cast<const uint64_t*>(&a) != *reinterpret_cast<const uint64_t*>(&b);
+        } else if constexpr(sizeof(T) == 4) {
+          return *reinterpret_cast<const uint32_t*>(&a) != *reinterpret_cast<const uint32_t*>(&b);
+        } else {
+          return memcmp(&a, &b, sizeof(T));
+        }
+      } else {
+        return a != b;
       }
     }
 
