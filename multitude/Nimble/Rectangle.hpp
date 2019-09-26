@@ -91,8 +91,9 @@ namespace Nimble {
       /// @return Bouding rectangle of the two input rectangles
       static Nimble::Rectangle merge(const Nimble::Rectangle & a, const Nimble::Rectangle & b);
 
-      /// Transforms the rectangle with the given matrix. If the matrix is not
-      /// orthogonal, the results are undefined.
+      /// Transforms the rectangle with the given matrix. This function
+      /// transforms all four corner points separately and then forms a bounding
+      /// box around then.
       /// @param m transformation matrix
       void transform(const Nimble::Matrix3 & m);
 
