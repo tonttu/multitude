@@ -60,6 +60,31 @@ namespace Radiant
     /// Elsewhere this returns: $HOME (/home/multi or /Users/multi)
     RADIANT_API QString localAppPath();
 
+    /// Returns path to user-specific local cache root dir for the given component.
+    /// Also creates the path if it doesn't exist to make sure the directory
+    /// is writable.
+    /// Component can be "pdf" or "mipmaps" etc.
+    /// Returns something like %LOCALAPPDATA%/MultiTaction/cache/<component>
+    /// or $HOME/MultiTaction/cache/<component>
+    RADIANT_API QString cacheRoot(const QString & component);
+
+    /// Builds a filename that can be used to write a cache of the given source.
+    /// @param source filename or similar that uniquely identifies the asset
+    ///        where the cache is based on. This could be for instance an
+    ///        absolute path to a PDF file.
+    /// @param options Optional extra string that is appended to the filename.
+    ///        This could be for instance a hash of some PDF rendering parameters.
+    /// @param suffix Optional file suffix without the dot.
+    /// @returns <cache root>/<beginning of source hash>/<source hash>.<options>.<suffix>
+    RADIANT_API QString cacheFileName(const QString & cacheRoot, const QString & source,
+                                      const QString & options = QString(),
+                                      const QString & suffix = QString());
+
+    /// Remove all matching cache files and directories from disk cache with
+    /// the given root and source. Returns all files and directories that were
+    /// removed.
+    RADIANT_API QStringList removeFromCache(const QString & cacheRoot, const QString & source);
+
     /// Open a dynamic library
     /// @param path Full path to plugin
     /// @returns Handle to plugin or nullptr if failed

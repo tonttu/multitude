@@ -153,6 +153,7 @@ SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
+SOURCES += PlatformUtils.cpp
 !mobile:SOURCES += CrashHandlerCommon.cpp
 !mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
