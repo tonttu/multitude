@@ -1,6 +1,7 @@
 #include "PDFManager.hpp"
 #include "Image.hpp"
 
+#include <Radiant/FileUtils.hpp>
 #include <Radiant/PlatformUtils.hpp>
 
 #include <Punctual/TaskWrapper.hpp>
@@ -35,6 +36,7 @@ namespace
     // Keep the manager alive while we are using pdfium
     Luminous::PDFManagerPtr manager;
     QString pdfAbsoluteFilePath;
+    Radiant::TimeStamp pdfModified;
     QString path;
     int pageNumber = 0;
     int pageCount = -1;
@@ -153,7 +155,9 @@ namespace
       QString targetFile = QString("%2/%1.%3").arg(batch.pageNumber, 5, 10, QChar('0')).
           arg(batch.path, opts.imageFormat);
       QFileInfo targetInfo(targetFile);
-      if (targetInfo.exists() && targetInfo.size() > 0) {
+
+      if (targetInfo.exists() && targetInfo.size() > 0 &&
+          Radiant::FileUtils::lastModified(targetFile) >= batch.pdfModified) {
         batch.promises[batch.pageNumber].setValue(std::move(targetFile));
         continue;
       }
@@ -502,12 +506,7 @@ namespace Luminous
   PDFManager::PDFManager()
     : m_d(new D())
   {
-    QString path = Radiant::PlatformUtils::localAppPath();
-    if (path.isEmpty())
-      path = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    path += "/MultiTaction/cornerstone/cache/pdfs";
-
-    m_d->m_defaultCachePath = path;
+    m_d->m_defaultCachePath = Radiant::PlatformUtils::cacheRoot("pdfs");
 
     FPDF_InitLibrary();
   }
@@ -601,19 +600,17 @@ namespace Luminous
     {
       if (batchConverter->path.isNull()) {
         batchConverter->pdfAbsoluteFilePath = QFileInfo(pdfFilename).absoluteFilePath();
+        batchConverter->pdfModified = Radiant::FileUtils::lastModified(
+            batchConverter->pdfAbsoluteFilePath);
 
         // Sha1 is used because it's really fast
-        QCryptographicHash hash(QCryptographicHash::Sha1);
-        QFile file(pdfFilename);
-        if (!file.open(QFile::ReadOnly))
-          return boost::make_unexpected(QString("Could not open input file %1: %2").
-                                        arg(file.fileName(), file.errorString()).toStdString());
-        hash.addData(file.readAll());
-        hash.addData((const char*)&opts.bgColor, sizeof(opts.bgColor));
-        hash.addData((const char*)&opts.resolution, sizeof(opts.resolution));
-        hash.addData(opts.imageFormat.toUtf8());
-        hash.addData(rendererVersion);
-        batchConverter->path = QString("%1/%2").arg(cacheRoot, hash.result().toHex().data());
+        QCryptographicHash optionsHash(QCryptographicHash::Sha1);
+        optionsHash.addData((const char*)&opts.bgColor, sizeof(opts.bgColor));
+        optionsHash.addData((const char*)&opts.resolution, sizeof(opts.resolution));
+        optionsHash.addData(opts.imageFormat.toUtf8());
+        optionsHash.addData(rendererVersion);
+        batchConverter->path = Radiant::PlatformUtils::cacheFileName(
+            cacheRoot, batchConverter->pdfAbsoluteFilePath, optionsHash.result().toHex());
 
         if (!QDir().mkpath(batchConverter->path))
           boost::make_unexpected(QString("Failed to create cache path %1").

@@ -402,7 +402,7 @@ namespace Luminous
 
     const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
     if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
-        Radiant::FileUtils::lastModified(filename) > origTs) {
+        Radiant::FileUtils::lastModified(filename) >= origTs) {
 
       if (!imageTex.image)
         imageTex.image.reset(new Image());
@@ -1214,47 +1214,19 @@ namespace Luminous
   QString Mipmap::cacheFileName(const QString & src, int level, const QString & suffix)
   {
     QFileInfo fi(src);
+    QString options;
+    if (level >= 0)
+      options = QString("%1").arg(level, 2, 10, QLatin1Char('0'));
 
-    // Compute a hash from the original image absolute path. Do not include
-    // timestamp or other information to this hash so that we can easily
-    // remove items from the cache. SHA1 seems to be the fastest somewhat
-    // reliable hash so it works here well.
-    //
-    // The cache filename doesn't need to include timestamp, since we compare
-    // the source file and cache file timestamps anyway when loading mipmaps.
-    // This way the old mipmap gets automatically rewritten if the source
-    // content changes.
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    hash.addData(fi.absoluteFilePath().toUtf8());
-
-    const QString hashTxt = hash.result().toHex();
-
-    // Avoid putting all mipmaps into the same folder (because of file system performance)
-    const QString prefix = hashTxt.left(2);
-    const QString postfix = level < 0 ? QString(".%1").arg(suffix) :
-        QString(".%1.%2").arg(level, 2, 10, QLatin1Char('0')).arg(suffix);
-
-    const QString fullPath = imageCachePath() + QString("/%1/%2%3").arg(prefix).arg(hashTxt).arg(postfix);
-
-    return fullPath;
+    return Radiant::PlatformUtils::cacheFileName(
+      imageCachePath(), fi.absoluteFilePath(), options, suffix);
   }
 
   static QString s_basePath;
   QString Mipmap::imageCachePath()
   {
     if (s_basePath.isEmpty()) {
-      MULTI_ONCE {
-        QString basePath = Radiant::PlatformUtils::localAppPath();
-        if (basePath.isEmpty())
-          basePath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-        basePath += QString("/MultiTaction/cache/mipmaps.%1").arg(s_imageCacheVersion);
-
-        if(!QDir().mkpath(basePath) || !QFileInfo(basePath).isWritable()) {
-          basePath = QString("%2/cornerstone.mipmaps.%1").arg(s_imageCacheVersion).arg(QDir::tempPath());
-          QDir().mkpath(basePath);
-        }
-        s_basePath = basePath;
-      }
+      MULTI_ONCE s_basePath = Radiant::PlatformUtils::cacheRoot(QString("mipmaps.%1").arg(s_imageCacheVersion));
     }
 
     return s_basePath;
@@ -1272,18 +1244,7 @@ namespace Luminous
 
   void Mipmap::removeFromCache(const QString & src)
   {
-    /// See Mipmap::cacheFileName
-    QFileInfo fi(src);
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    hash.addData(fi.absoluteFilePath().toUtf8());
-
-    const QString hashTxt = hash.result().toHex();
-    const QString prefix = hashTxt.left(2);
-
-    QDir deleteGlob(imageCachePath() + "/" + prefix,
-                    hashTxt + ".*", QDir::NoSort, QDir::Files);
-    for (const QFileInfo & mipmapFile: deleteGlob.entryInfoList())
-      QFile::remove(mipmapFile.absoluteFilePath().toUtf8().data());
+    Radiant::PlatformUtils::removeFromCache(imageCachePath(), QFileInfo(src).absoluteFilePath());
   }
 
   void Mipmap::startLoading(bool compressedMipmaps)
