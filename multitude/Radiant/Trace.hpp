@@ -182,6 +182,7 @@ namespace Radiant
 
     /// Effient way to print QString
     RADIANT_API void traceMsg(Severity s, const QString & text);
+    RADIANT_API void traceMsg(const QByteArray & module, Severity s, const QString & text);
 
     /// Display debug output
     /** This function calls trace to do the final work and it is
