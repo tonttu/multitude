@@ -183,6 +183,16 @@ namespace Radiant
       processMessage(msg);
     }
 
+    void traceMsg(const QByteArray & module, Severity s, const QString & text)
+    {
+      Message msg;
+      msg.module = module;
+      msg.severity = s;
+      msg.text = text;
+
+      processMessage(msg);
+    }
+
     void debug(const char * msg, ...)
     {
       va_list args;
