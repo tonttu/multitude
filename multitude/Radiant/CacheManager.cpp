@@ -1,6 +1,7 @@
 #include "BGThread.hpp"
 #include "CacheManager.hpp"
 #include "PlatformUtils.hpp"
+#include "Sleep.hpp"
 #include "Task.hpp"
 #include "Trace.hpp"
 
@@ -43,10 +44,50 @@ namespace
     QByteArray sourceHexHash;
   };
 
+  /// See https://sqlite.org/rescode.html
+  const char * s_sqliteBusyErrorCodes[] = {
+    "5",   // SQLITE_BUSY
+    "6",   // SQLITE_LOCKED
+    "261", // SQLITE_BUSY_RECOVERY
+    "262", // SQLITE_LOCKED_SHAREDCACHE
+    "517", // SQLITE_BUSY_SNAPSHOT
+    "518", // SQLITE_LOCKED_VTAB
+  };
+
+  /// Is the error something that can be retried
+  bool isBusy(const QSqlError & error)
+  {
+    QByteArray code = error.nativeErrorCode().toUtf8();
+    for (const char * test: s_sqliteBusyErrorCodes)
+      if (code == test)
+        return true;
+    return false;
+  }
+
+  template <typename ...Args>
+  bool execQuery(QSqlQuery & q, Args... args)
+  {
+    bool ok = q.exec(args...);
+    if (ok || !isBusy(q.lastError()))
+      return ok;
+
+    /// Retry for max 60 seconds
+    const double timeoutS = 60.0;
+    Radiant::Timer t;
+    for (int i = 0;; ++i) {
+      Radiant::Sleep::sleepMs(i);
+      ok = q.exec(args...);
+      if (ok || !isBusy(q.lastError()) || t.time() >= timeoutS)
+        return ok;
+    }
+
+    return false;
+  }
+
   QSqlQuery execOrThrow(QSqlDatabase & db, const QString & sql)
   {
     QSqlQuery q(db);
-    if (!q.exec(sql))
+    if (!execQuery(q, sql))
       throw std::runtime_error(("SQL query '" + sql + "' failed in SQLite DB '" + db.databaseName()
                                 + "': " + q.lastError().text()).toStdString());
     return q;
@@ -190,7 +231,7 @@ namespace Radiant
         for (const QByteArray & src: m_removed) {
           /// Need to use QString instead of QByteArray to encode the data as TEXT and not BLOB
           query.bindValue(0, QString::fromUtf8(src));
-          ok = query.exec();
+          ok = execQuery(query);
           if (!ok)
             Radiant::error("Failed to execute %s: %s", query.lastQuery().toUtf8().data(),
                            query.lastError().text().toUtf8().data());
@@ -208,7 +249,7 @@ namespace Radiant
       if (ok) {
         for (const QByteArray & src: m_added) {
           query.bindValue(0, QString::fromUtf8(src));
-          ok = query.exec();
+          ok = execQuery(query);
           if (!ok)
             Radiant::error("Failed to execute %s: %s", query.lastQuery().toUtf8().data(),
                            query.lastError().text().toUtf8().data());
