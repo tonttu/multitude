@@ -402,7 +402,7 @@ namespace Radiant
     QByteArrayList deleted;
     QByteArray prefix = sourcePrefix.toUtf8();
 
-    if (m_d->m_root.isEmpty() || sourcePrefix.isEmpty()) {
+    if (m_d->m_root.isEmpty()) {
       Radiant::error("CacheManager::removeFromCache # Can't have empty cacheRoot / source");
       return deleted;
     }
@@ -418,7 +418,7 @@ namespace Radiant
 
     /// If we call removeFromCache("/foo/img.png") and img.png had a mipmap cache
     /// from time before we had a cache database, we would still like to remove it.
-    if (it == m_d->m_cacheItems.end() || prefix != *it) {
+    if ((it == m_d->m_cacheItems.end() || prefix != *it) && !sourcePrefix.isEmpty()) {
       CachedSource c;
       if (onlyRemoveInvalidItems) {
         QDateTime dt = QFileInfo(sourcePrefix).lastModified();
