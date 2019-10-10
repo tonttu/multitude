@@ -91,6 +91,7 @@ HEADERS += TraceCrashHandlerFilter.hpp
 HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
 HEADERS += TimeTracker.hpp
+HEADERS += CacheManager.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
@@ -153,7 +154,7 @@ SOURCES += SymbolRegistry.cpp
 SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
-SOURCES += PlatformUtils.cpp
+SOURCES += CacheManager.cpp
 !mobile:SOURCES += CrashHandlerCommon.cpp
 !mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
@@ -257,6 +258,8 @@ win32 {
 
   DEFINES += _CRT_SECURE_NO_WARNINGS
 }
+
+QT += sql
 
 DEFINES += MULTITACTION_DEPENDENCY_PATH=$$cat($$PWD/../../MULTITACTION_DEPS)
 

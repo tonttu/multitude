@@ -1,6 +1,7 @@
 #include "PDFManager.hpp"
 #include "Image.hpp"
 
+#include <Radiant/CacheManager.hpp>
 #include <Radiant/FileUtils.hpp>
 #include <Radiant/PlatformUtils.hpp>
 
@@ -500,13 +501,14 @@ namespace Luminous
   class PDFManager::D
   {
   public:
+    std::shared_ptr<Radiant::CacheManager> m_cacheMgr = Radiant::CacheManager::instance();
     QString m_defaultCachePath;
   };
 
   PDFManager::PDFManager()
     : m_d(new D())
   {
-    m_d->m_defaultCachePath = Radiant::PlatformUtils::cacheRoot("pdfs");
+    m_d->m_defaultCachePath = m_d->m_cacheMgr->createCacheDir("pdfs");
 
     FPDF_InitLibrary();
   }
@@ -593,9 +595,9 @@ namespace Luminous
 
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.
-    QString cacheRoot = opts.cachePath.isEmpty() ? defaultCachePath() : opts.cachePath;
+    QString cachePath = opts.cachePath.isEmpty() ? defaultCachePath() : opts.cachePath;
     Punctual::WrappedTaskFunc<CachedPDFDocument> taskFunc =
-        [pdfFilename, opts, cacheRoot, maxPageCount, batchConverter]()
+        [pdfFilename, opts, cachePath, maxPageCount, batchConverter]()
         -> Punctual::WrappedTaskReturnType<CachedPDFDocument>
     {
       if (batchConverter->path.isNull()) {
@@ -609,8 +611,8 @@ namespace Luminous
         optionsHash.addData((const char*)&opts.resolution, sizeof(opts.resolution));
         optionsHash.addData(opts.imageFormat.toUtf8());
         optionsHash.addData(rendererVersion);
-        batchConverter->path = Radiant::PlatformUtils::cacheFileName(
-            cacheRoot, batchConverter->pdfAbsoluteFilePath, optionsHash.result().toHex());
+        batchConverter->path = batchConverter->manager->m_d->m_cacheMgr->cacheItem(
+              cachePath, batchConverter->pdfAbsoluteFilePath, optionsHash.result().toHex()).path;
 
         if (!QDir().mkpath(batchConverter->path))
           boost::make_unexpected(QString("Failed to create cache path %1").

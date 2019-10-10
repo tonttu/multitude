@@ -13,7 +13,8 @@
 
 #include "Luminous.hpp"
 
-#include "Radiant/Task.hpp"
+#include <Radiant/CacheManager.hpp>
+#include <Radiant/Task.hpp>
 
 #include <Nimble/Vector2.hpp>
 #include <Nimble/Matrix4.hpp>
@@ -145,20 +146,16 @@ namespace Luminous
     /// @param level Mipmap level, ignored if negative
     /// @param suffix File format of the cache file name, usually png or dds.
     /// @return cache filename
-    LUMINOUS_API static QString cacheFileName(const QString & src, int level,
-                                              const QString & suffix);
+    LUMINOUS_API static Radiant::CacheManager::CacheItem cacheItem(
+        Radiant::CacheManager & cacheMgr,
+        const QString & src, int level, const QString & suffix);
 
     /// Returns path to dir that contains all cached mipmaps
-    LUMINOUS_API static QString imageCachePath();
+    LUMINOUS_API static QString imageCachePath(Radiant::CacheManager & cacheMgr);
 
     /// Sets the image cache path. If the directory doesn't exist, it will be created
     /// @returns false if the cache directory can't be created
     LUMINOUS_API static bool setImageCachePath(const QString & path);
-
-    /// Remove all cached mipmaps from disk for the given file. Removes
-    /// the files synchronously, doesn't invalidate any existing
-    /// Luminous::Mipmaps that could still hold the data in memory.
-    LUMINOUS_API static void removeFromCache(const QString & src);
 
   private:
     Mipmap(const QString & filenameAbs);
