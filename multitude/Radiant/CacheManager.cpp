@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
+#include <QReadWriteLock>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -94,7 +95,8 @@ namespace
   }
 
   /// Note that this function is not thread-safe, but it's only called when
-  /// m_dbMutex is locked
+  /// initializing stuff or when syncing data to DB, never from two threads
+  /// at the same time.
   int threadIndex()
   {
     if (t_id == 0)
@@ -128,20 +130,25 @@ namespace Radiant
     void initializeDb();
     void sync();
     void save();
+    /// @param deletedFiles absolute paths to deleted cache files
+    /// @param deletedItems deleted source files that should be deleted from the DB
     void deleteFiles(const QStringList & cacheDirs,
                      const std::vector<CachedSource> & sources,
-                     QByteArrayList & deleted,
+                     QByteArrayList & deletedFiles,
                      bool onlyRemoveInvalidItems,
-                     bool & dbChanged);
+                     QByteArrayList & deletedItems);
 
   public:
-    Radiant::Mutex m_dbMutex;
     QString m_root;
-    std::set<QByteArray> m_cacheItems;
 
-    std::shared_ptr<Radiant::SingleShotTask> m_saveTask;
+    /// Protectes m_cacheItems, m_added and m_removed
+    QReadWriteLock m_itemLock;
+    std::set<QByteArray> m_cacheItems;
     std::unordered_set<QByteArray> m_added;
     std::unordered_set<QByteArray> m_removed;
+
+    Radiant::Mutex m_saveTaskLock;
+    std::shared_ptr<Radiant::FunctionTask> m_saveTask;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -170,7 +177,10 @@ namespace Radiant
 
   void CacheManager::D::initializeDb()
   {
-    m_cacheItems.clear();
+    {
+      QWriteLocker g(&m_itemLock);
+      m_cacheItems.clear();
+    }
     QSqlDatabase db = openDb();
 
     /// Version of the database. If the DB is older than that, we should
@@ -204,18 +214,29 @@ namespace Radiant
                 ))");
 
     q = execOrThrow(db, "SELECT source FROM cache_items");
+
+    QWriteLocker g(&m_itemLock);
     while (q.next())
       m_cacheItems.insert(q.value(0).toString().toUtf8());
   }
 
   void CacheManager::D::sync()
   {
+    Radiant::Guard g(m_saveTaskLock);
     if (!m_saveTask) {
       // m_saveTask is deleted in ~CacheManager, so it is safe to capture `this`
-      m_saveTask = std::make_shared<Radiant::SingleShotTask>([this] {
-        Radiant::Guard g(m_dbMutex);
+      m_saveTask = std::make_shared<Radiant::FunctionTask>([this] (Radiant::Task & task) {
         save();
-        m_saveTask.reset();
+
+        {
+          QWriteLocker g(&m_itemLock);
+          if (!m_added.empty() || !m_removed.empty())
+            return;
+
+          Radiant::Guard g2(m_saveTaskLock);
+          m_saveTask.reset();
+        }
+        task.setFinished();
       });
       Radiant::BGThread::instance()->addTask(m_saveTask);
     }
@@ -224,11 +245,17 @@ namespace Radiant
   void CacheManager::D::save()
   {
     QSqlDatabase db = openDb();
-    if (!m_removed.empty()) {
+    std::unordered_set<QByteArray> added, removed;
+    {
+      QWriteLocker g(&m_itemLock);
+      std::swap(added, m_added);
+      std::swap(removed, m_removed);
+    }
+    if (!removed.empty()) {
       QSqlQuery query(db);
       bool ok = query.prepare("DELETE FROM cache_items WHERE source = ?");
       if (ok) {
-        for (const QByteArray & src: m_removed) {
+        for (const QByteArray & src: removed) {
           /// Need to use QString instead of QByteArray to encode the data as TEXT and not BLOB
           query.bindValue(0, QString::fromUtf8(src));
           ok = execQuery(query);
@@ -240,14 +267,13 @@ namespace Radiant
         Radiant::error("Failed to execute %s: %s", query.lastQuery().toUtf8().data(),
                        query.lastError().text().toUtf8().data());
       }
-      m_removed.clear();
     }
 
-    if (!m_added.empty()) {
+    if (!added.empty()) {
       QSqlQuery query(db);
       bool ok = query.prepare("INSERT OR REPLACE INTO cache_items (source) VALUES (?)");
       if (ok) {
-        for (const QByteArray & src: m_added) {
+        for (const QByteArray & src: added) {
           query.bindValue(0, QString::fromUtf8(src));
           ok = execQuery(query);
           if (!ok)
@@ -258,25 +284,18 @@ namespace Radiant
         Radiant::error("Failed to execute %s: %s", query.lastQuery().toUtf8().data(),
                        query.lastError().text().toUtf8().data());
       }
-      m_added.clear();
     }
   }
 
   void CacheManager::D::deleteFiles(const QStringList & cacheDirs,
                                     const std::vector<CachedSource> & sources,
-                                    QByteArrayList & deleted,
+                                    QByteArrayList & deletedFiles,
                                     bool onlyRemoveInvalidItems,
-                                    bool & dbChanged)
+                                    QByteArrayList & deletedItems)
   {
-    /// onlyRemoveInvalidItems has two meanings here:
-    ///  1) If true, we check the source and cache timestamp and only remove
-    ///     the cache if the source is missing or if the source timestamp is
-    ///     newer than the cache
-    ///  2) If true, we also modify m_removed and m_cacheItems and update
-    ///     dbChanged accordingly. We need to do it here, since the caller
-    ///     couldn't have known which files will be deleted. If false, we
-    ///     can update m_removed and m_cacheItems more efficiently in the
-    ///     caller.
+    /// If onlyRemoveInvalidItems is true, we check the source and cache
+    /// timestamp and only remove the cache if the source is missing or
+    /// if the source timestamp is newer than the cache
     for (const CachedSource & c: sources) {
       bool sourceHasValidCacheItem = false;
       for (const QString & cacheDir: cacheDirs) {
@@ -302,7 +321,7 @@ namespace Radiant
                   continue;
                 }
 
-                deleted << cacheFile.toUtf8();
+                deletedFiles << cacheFile.toUtf8();
                 QFile::remove(cacheFile);
               }
 
@@ -316,7 +335,7 @@ namespace Radiant
                                  QDir::Files | QDir::NoSymLinks,
                                  QDirIterator::Subdirectories);
               while (dirIt.hasNext())
-                deleted << dirIt.next().toUtf8();
+                deletedFiles << dirIt.next().toUtf8();
               QDir(cacheEntry.absoluteFilePath()).removeRecursively();
             }
           } else {
@@ -325,19 +344,14 @@ namespace Radiant
               sourceHasValidCacheItem = true;
               continue;
             }
-            deleted << cacheEntry.absoluteFilePath().toUtf8();
+            deletedFiles << cacheEntry.absoluteFilePath().toUtf8();
             QFile::remove(cacheEntry.absoluteFilePath());
           }
         }
       }
 
-      if (onlyRemoveInvalidItems && !sourceHasValidCacheItem) {
-        dbChanged = true;
-        m_removed.insert(c.source);
-        auto it = m_cacheItems.find(c.source);
-        if (it != m_cacheItems.end())
-          m_cacheItems.erase(it);
-      }
+      if (!sourceHasValidCacheItem)
+        deletedItems << c.source;
     }
   }
 
@@ -353,15 +367,14 @@ namespace Radiant
 
   CacheManager::~CacheManager()
   {
-    std::shared_ptr<Radiant::SingleShotTask> saveTask;
+    std::shared_ptr<Radiant::FunctionTask> saveTask;
     {
-      Radiant::Guard g(m_d->m_dbMutex);
+      Radiant::Guard g(m_d->m_saveTaskLock);
       saveTask = std::move(m_d->m_saveTask);
     }
     if (saveTask)
       saveTask->runNow(true);
 
-    Radiant::Guard g(m_d->m_dbMutex);
     m_d->cleanDbConnections();
   }
 
@@ -372,8 +385,6 @@ namespace Radiant
 
   void CacheManager::setCacheRoot(const QString & cacheRoot)
   {
-    Radiant::Guard g(m_d->m_dbMutex);
-
     if (cacheRoot == this->cacheRoot())
       return;
 
@@ -422,10 +433,19 @@ namespace Radiant
 
     if (flags & FLAG_ADD_TO_DB) {
       QByteArray src = source.toUtf8();
-      Radiant::Guard g(m_d->m_dbMutex);
-      m_d->m_added.insert(src);
-      m_d->m_cacheItems.insert(src);
-      m_d->sync();
+
+      bool sync = false;
+      {
+        QReadLocker g(&m_d->m_itemLock);
+        if (!m_d->m_cacheItems.count(src)) {
+          g.unlock();
+          QWriteLocker g2(&m_d->m_itemLock);
+          m_d->m_cacheItems.insert(src);
+          sync = m_d->m_added.insert(src).second;
+        }
+      }
+      if (sync)
+        m_d->sync();
     }
 
     QDateTime cacheModified = QFileInfo(item.path).lastModified();
@@ -440,12 +460,13 @@ namespace Radiant
   {
     QCryptographicHash hash(QCryptographicHash::Sha1);
     std::vector<CachedSource> sources;
-    QByteArrayList deleted;
+    QByteArrayList deletedItems;
+    QByteArrayList deletedFiles;
     QByteArray prefix = sourcePrefix.toUtf8();
 
     if (m_d->m_root.isEmpty()) {
       Radiant::error("CacheManager::removeFromCache # Can't have empty cacheRoot / source");
-      return deleted;
+      return deletedFiles;
     }
 
     QStringList cacheDirs;
@@ -453,7 +474,7 @@ namespace Radiant
     for (QString component: root.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot))
       cacheDirs << QString("%1/%2").arg(m_d->m_root, component);
 
-    Radiant::Guard g(m_d->m_dbMutex);
+    QReadLocker g(&m_d->m_itemLock);
 
     auto it = m_d->m_cacheItems.lower_bound(prefix);
 
@@ -472,7 +493,6 @@ namespace Radiant
       sources.push_back(std::move(c));
     }
 
-    bool dbChanged = false;
     while (it != m_d->m_cacheItems.end()) {
       if (!it->startsWith(prefix))
         break;
@@ -489,17 +509,11 @@ namespace Radiant
       hash.addData(*it);
       c.sourceHexHash = hash.result().toHex();
 
-      if (onlyRemoveInvalidItems) {
-        ++it;
-      } else {
-        m_d->m_removed.insert(*it);
-        it = m_d->m_cacheItems.erase(it);
-        dbChanged = true;
-      }
       sources.push_back(std::move(c));
+      ++it;
     }
 
-    m_d->deleteFiles(cacheDirs, sources, deleted, onlyRemoveInvalidItems, dbChanged);
+    m_d->deleteFiles(cacheDirs, sources, deletedFiles, onlyRemoveInvalidItems, deletedItems);
 
     /// It's possible to have cached files of other cache files. For instance
     /// a PDF file as a source can have the individual PDF pages as images in
@@ -510,16 +524,14 @@ namespace Radiant
     /// if any of the deleted cache files had caches.
 
     sources.clear();
-    for (int i = 0, count = deleted.size(); i < count; ++i) {
-      const QByteArray & filename = deleted[i];
+    for (int i = 0, count = deletedFiles.size(); i < count; ++i) {
+      const QByteArray & filename = deletedFiles[i];
 
       it = m_d->m_cacheItems.find(filename);
       if (it == m_d->m_cacheItems.end())
         continue;
 
-      m_d->m_removed.insert(filename);
-      m_d->m_cacheItems.erase(it);
-      dbChanged = true;
+      deletedItems << filename;
 
       hash.reset();
       hash.addData(filename);
@@ -529,12 +541,24 @@ namespace Radiant
       sources.push_back(std::move(c));
     }
 
-    m_d->deleteFiles(cacheDirs, sources, deleted, false, dbChanged);
+    m_d->deleteFiles(cacheDirs, sources, deletedFiles, false, deletedItems);
 
-    if (dbChanged)
+    g.unlock();
+
+    if (!deletedItems.isEmpty()) {
+      {
+        QWriteLocker g2(&m_d->m_itemLock);
+        for (const QByteArray & src: deletedItems) {
+          m_d->m_removed.insert(src);
+          auto it = m_d->m_cacheItems.find(src);
+          if (it != m_d->m_cacheItems.end())
+            m_d->m_cacheItems.erase(it);
+        }
+      }
       m_d->sync();
+    }
 
-    return deleted;
+    return deletedFiles;
   }
 
   QByteArrayList CacheManager::clearCacheDir(const QString & cacheDir)
@@ -548,7 +572,7 @@ namespace Radiant
     }
 
     bool dbChanged = false;
-    Radiant::Guard g(m_d->m_dbMutex);
+    QWriteLocker g(&m_d->m_itemLock);
 
     QDir glob(cacheDir, "??", QDir::NoSort, QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     for (const QFileInfo & entry: glob.entryInfoList()) {
@@ -573,6 +597,7 @@ namespace Radiant
       }
       QDir(entry.absoluteFilePath()).removeRecursively();
     }
+    g.unlock();
 
     if (dbChanged)
       m_d->sync();
