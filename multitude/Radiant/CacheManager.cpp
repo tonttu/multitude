@@ -1,5 +1,6 @@
 #include "BGThread.hpp"
 #include "CacheManager.hpp"
+#include "LockFile.hpp"
 #include "PlatformUtils.hpp"
 #include "Sleep.hpp"
 #include "Task.hpp"
@@ -250,6 +251,11 @@ namespace Radiant
       QWriteLocker g(&m_itemLock);
       m_cacheItems.clear();
     }
+
+    /// If there are several Cornerstone apps starting at the same time, we need
+    /// to make sure the migrations are executed only by one of them
+    std::unique_ptr<LockFile> lock(new LockFile((m_root + "/lock").toUtf8().data()));
+
     QSqlDatabase db = openDb();
 
     /// Version of the database. If the DB is older than that, we should
@@ -291,6 +297,8 @@ namespace Radiant
 
       execOrThrow(db, "UPDATE db SET db_version = 1");
     }
+
+    lock.reset();
 
     q = execOrThrow(db, "SELECT source FROM cache_items");
 
