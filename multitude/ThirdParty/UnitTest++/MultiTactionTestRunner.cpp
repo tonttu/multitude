@@ -593,8 +593,6 @@ namespace UnitTest
 
   int runTests(int argc, char ** argv)
   {
-    auto app = new QCoreApplication(argc, argv);
-
     QStringList cmdLineArgs;
     for(int i = 0; i < argc; ++i) {
       cmdLineArgs << QString(argv[i]);
@@ -672,7 +670,6 @@ namespace UnitTest
     const QString exclude = parser.value("exclude");
     const int times = parser.value("times").toInt();
 
-    delete app;
     if(!single.isEmpty()) {
 
       if(!include.isEmpty() || !exclude.isEmpty()) {
