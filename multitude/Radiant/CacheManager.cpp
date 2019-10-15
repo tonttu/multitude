@@ -117,6 +117,75 @@ namespace
     }
     return basePath;
   }
+
+  void rmRf(const QString & path, uint64_t & files, uint64_t & bytes)
+  {
+    QDir dir(path);
+
+    for (const QFileInfo & fi: dir.entryInfoList(
+           QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+      if (fi.isFile()) {
+        int64_t tmp = fi.size();
+        const QString f = fi.absoluteFilePath();
+        if (dir.remove(fi.fileName())) {
+          if (tmp > 0)
+            bytes += tmp;
+          ++files;
+        }
+      } else if (fi.isDir()) {
+        rmRf(fi.absoluteFilePath(), files, bytes);
+      }
+    }
+    QDir().rmdir(path);
+  }
+
+  void deleteObsoleteCacheDir(const QString & path)
+  {
+    if (path.isEmpty())
+      return;
+
+    QFileInfo fi(path);
+    if (!fi.isAbsolute() || fi.isSymLink())
+      return;
+
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+    rmRf(path, files, bytes);
+
+    if (files > 0) {
+      Radiant::info("Removed %lld obsolete cache files from %s [%.1f MB]",
+                    static_cast<long long>(files), path.toUtf8().data(), bytes / 1024.0 / 1024.0);
+    }
+  }
+
+  void deleteObsoleteCaches()
+  {
+    /// PDF cache used in Canvus 1.7.3 and older
+    const QString pdfCache1 = Radiant::PlatformUtils::getModuleUserDataPath("CornerstonePDFPageCache", false);
+    deleteObsoleteCacheDir(pdfCache1);
+
+    /// PDF cache used in Cornerstone 2.7.x and older
+    const QString localAppPath = Radiant::PlatformUtils::localAppPath();
+    if (!localAppPath.isEmpty()) {
+      const QString pdfCache2 = localAppPath + "/MultiTaction/cornerstone/cache/pdfs";
+      deleteObsoleteCacheDir(pdfCache2);
+    }
+
+    const QString multiTouchDir = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false);
+    if (!multiTouchDir.isEmpty()) {
+      /// Video preview cache used in Cornerstone 2.7.x and older
+      const QString previewCache = multiTouchDir + "/previewcache";
+      deleteObsoleteCacheDir(previewCache);
+
+      /// Mipmap cache used in Cornerstone 2.0.3 and older
+      const QString mipmapCache1 = multiTouchDir + "/imagecache";
+      deleteObsoleteCacheDir(mipmapCache1);
+
+      /// Mipmap cache used in Cornerstone 2.0.4 .. 2.7.5
+      const QString mipmapCache2 = multiTouchDir + "/imagecache-1";
+      deleteObsoleteCacheDir(mipmapCache2);
+    }
+  }
 }
 
 namespace Radiant
@@ -185,7 +254,7 @@ namespace Radiant
 
     /// Version of the database. If the DB is older than that, we should
     /// run migrations
-    const int dbVersion = 0;
+    const int dbVersion = 1;
     /// Oldest version of the database code that we still support with this
     /// version of DB. If we do backwards-compatible changes, like add a new
     /// optional column, we can only increase dbVersion but keep dbCompatVersion
@@ -197,21 +266,31 @@ namespace Radiant
                 db_version INTEGER NOT NULL,
                 db_compat_version INTEGER NOT NULL))");
 
-    QSqlQuery q = execOrThrow(db, "SELECT db_compat_version FROM db");
+    int currentDbVersion = 0;
+    QSqlQuery q = execOrThrow(db, "SELECT db_version, db_compat_version FROM db");
     if (q.next()) {
-      int currentCompatVersion = q.value(0).toInt();
+      currentDbVersion = q.value(0).toInt();
+      const int currentCompatVersion = q.value(1).toInt();
       if (dbVersion < currentCompatVersion)
         throw std::runtime_error(QString("Cache DB '%3' is too new version %1, we only support version %2")
                                  .arg(currentCompatVersion).arg(dbVersion).arg(db.databaseName()).toStdString());
     } else {
       execOrThrow(db, QString("INSERT INTO db (db_version, db_compat_version) VALUES (%1, %2)")
-                  .arg(dbVersion).arg(dbCompatVersion));
+                  .arg(0).arg(dbCompatVersion));
     }
 
     execOrThrow(db,
                 R"(CREATE TABLE IF NOT EXISTS cache_items (
                 source TEXT PRIMARY KEY NOT NULL
                 ))");
+
+    if (currentDbVersion < 1) {
+      // Migration 1 is to delete all old caches, see Q9 in
+      // Canvus "Cache Management Specification" document
+      deleteObsoleteCaches();
+
+      execOrThrow(db, "UPDATE db SET db_version = 1");
+    }
 
     q = execOrThrow(db, "SELECT source FROM cache_items");
 
