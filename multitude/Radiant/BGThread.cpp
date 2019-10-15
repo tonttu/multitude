@@ -397,6 +397,12 @@ namespace Radiant
 
     stop();
   }
+
+  void BGThread::run(int number)
+  {
+    m_isShuttingDown = false;
+    ThreadPool::run(number);
+  }
 }
 
 DEFINE_SINGLETON(Radiant::BGThread);

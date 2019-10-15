@@ -120,6 +120,10 @@ namespace Radiant
     /// will be immediately cancelled and never executed.
     void shutdown();
 
+    /// Restarts BGThread if it shutdown() was called earlier and calls
+    /// Radiant::ThreadPool::run().
+    virtual void run(int number = 1) override;
+
   private:
     virtual void childLoop() OVERRIDE;
 
