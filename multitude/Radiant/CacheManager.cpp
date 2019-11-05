@@ -492,10 +492,12 @@ namespace Radiant
   }
 
   CacheManager::CacheItem CacheManager::cacheItem(
-      const QString & cacheDir, const QString & source,
+      const QString & cacheDir, const QString & sourceIn,
       const QString & options, const QString & suffix,
       CacheManager::CreateFlags flags)
   {
+    QString source = sourceIn;
+    source.replace('\\', '/');
     // Compute a hash from the original source. It might not be a file,
     // so we don't try to resolve it to an absolute path. Do not include
     // timestamp or other information to this hash so that we can easily
@@ -544,8 +546,11 @@ namespace Radiant
     return item;
   }
 
-  QByteArrayList CacheManager::removeFromCache(const QString & sourcePrefix, bool onlyRemoveInvalidItems)
+  QByteArrayList CacheManager::removeFromCache(const QString & sourcePrefixIn, bool onlyRemoveInvalidItems)
   {
+    QString sourcePrefix = sourcePrefixIn;
+    sourcePrefix.replace('\\', '/');
+
     QCryptographicHash hash(QCryptographicHash::Sha1);
     std::vector<CachedSource> sources;
     QByteArrayList deletedItems;
