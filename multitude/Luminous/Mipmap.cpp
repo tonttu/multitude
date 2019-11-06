@@ -251,8 +251,13 @@ namespace Luminous
 
     bool isLevelAvailable(unsigned int level) const;
 
+    Radiant::CacheManager::CacheItem cacheItem(
+        const QString & src, int level, const QString & suffix);
+
   public:
     Mipmap & m_mipmap;
+
+    std::shared_ptr<Radiant::CacheManager> m_cacheMgr = Radiant::CacheManager::instance();
 
     const QString m_filenameAbs;
     Nimble::Size m_nativeSize;
@@ -398,24 +403,22 @@ namespace Luminous
     }
 
     // Try loading a pre-generated smaller-scale mipmap
-    const QString filename = Mipmap::cacheFileName(m_filename, level, m_cacheFileFormat);
+    Radiant::CacheManager::CacheItem cacheItem = mipmap.m_d->cacheItem(
+          m_filename, level, m_cacheFileFormat);
 
-    const Radiant::TimeStamp origTs = Radiant::FileUtils::lastModified(m_filename);
-    if (origTs > Radiant::TimeStamp(0) && Radiant::FileUtils::fileReadable(filename) &&
-        Radiant::FileUtils::lastModified(filename) >= origTs) {
-
+    if (cacheItem.isValid) {
       if (!imageTex.image)
         imageTex.image.reset(new Image());
 
       Nimble::Size expectedSize = mipmap.mipmapSize(level);
-      if (!imageTex.image->read(filename, true)) {
+      if (!imageTex.image->read(cacheItem.path, true)) {
         Radiant::error("LoadImageTask::recursiveLoad # Could not read '%s' [mipmap level %d/%d of image %s, expected size: (%d, %d)]",
-                       filename.toUtf8().data(), level, mipmap.m_d->m_maxLevel,
+                       cacheItem.path.toUtf8().data(), level, mipmap.m_d->m_maxLevel,
                        m_filename.toUtf8().data(), expectedSize.width(), expectedSize.height());
       } else if (expectedSize != imageTex.image->size()) {
         // unexpected size (corrupted or just old image)
         Radiant::error("LoadImageTask::recursiveLoad # Cache image '%s'' size was (%d, %d), expected (%d, %d)",
-              filename.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
+                       cacheItem.path.toUtf8().data(), imageTex.image->width(), imageTex.image->height(),
                        expectedSize.width(), expectedSize.height());
       } else {
         return true;
@@ -444,8 +447,7 @@ namespace Luminous
       unlock(mipmap, level - 1);
     }
 
-    QDir().mkpath(Radiant::FileUtils::path(filename));
-    imageTex.image->write(filename);
+    imageTex.image->write(cacheItem.path);
 
     return true;
   }
@@ -564,17 +566,12 @@ namespace Luminous
     }
 
     if(mipmap.m_useCompressedMipmaps) {
-      mipmap.m_compressedMipmapFile = Luminous::Mipmap::cacheFileName(mipmap.m_filenameAbs, -1, "dds");
-      QFileInfo compressedMipmap(mipmap.m_compressedMipmapFile);
-      QDateTime compressedMipmapTs;
-      if(compressedMipmap.exists())
-        compressedMipmapTs = compressedMipmap.lastModified();
+      Radiant::CacheManager::CacheItem cacheItem = mipmap.cacheItem(mipmap.m_filenameAbs, -1, "dds");
+      mipmap.m_compressedMipmapFile = cacheItem.path;
+      if (cacheItem.isValid)
+        cacheItem.isValid = Luminous::Image::ping(mipmap.m_compressedMipmapFile, mipmap.m_compressedMipmapInfo);
 
-      if(compressedMipmapTs.isValid() && compressedMipmapTs < mipmap.m_fileModified) {
-        if(!Luminous::Image::ping(mipmap.m_compressedMipmapFile, mipmap.m_compressedMipmapInfo))
-          compressedMipmapTs = QDateTime();
-      }
-      if(!compressedMipmapTs.isValid()) {
+      if(!cacheItem.isValid) {
         mipmap.m_mipmapGenerator.reset(new MipMapGenerator(mipmap.m_filenameAbs, mipmap.m_compressedMipmapFile));
         auto weak = m_mipmap;
         mipmap.m_mipmapGenerator->setListener([=] (bool ok, const ImageInfo & imginfo) {
@@ -883,6 +880,11 @@ namespace Luminous
       return false;
 
     return true;
+  }
+
+  Radiant::CacheManager::CacheItem Mipmap::D::cacheItem(const QString & src, int level, const QString & suffix)
+  {
+    return Mipmap::cacheItem(*m_cacheMgr, src, level, suffix);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1210,23 +1212,22 @@ namespace Luminous
     return found;
   }
 
-  /// <cache path>/<beginning of file name hash>/<file name hash>.<mipmap level>.<suffix>
-  QString Mipmap::cacheFileName(const QString & src, int level, const QString & suffix)
+  Radiant::CacheManager::CacheItem Mipmap::cacheItem(
+      Radiant::CacheManager & cacheMgr, const QString & src, int level, const QString & suffix)
   {
     QFileInfo fi(src);
     QString options;
     if (level >= 0)
       options = QString("%1").arg(level, 2, 10, QLatin1Char('0'));
 
-    return Radiant::PlatformUtils::cacheFileName(
-      imageCachePath(), fi.absoluteFilePath(), options, suffix);
+    return cacheMgr.cacheItem(imageCachePath(cacheMgr), fi.absoluteFilePath(), options, suffix);
   }
 
   static QString s_basePath;
-  QString Mipmap::imageCachePath()
+  QString Mipmap::imageCachePath(Radiant::CacheManager & cacheMgr)
   {
     if (s_basePath.isEmpty()) {
-      MULTI_ONCE s_basePath = Radiant::PlatformUtils::cacheRoot(QString("mipmaps.%1").arg(s_imageCacheVersion));
+      MULTI_ONCE s_basePath = cacheMgr.createCacheDir(QString("mipmaps.%1").arg(s_imageCacheVersion));
     }
 
     return s_basePath;
@@ -1240,11 +1241,6 @@ namespace Luminous
     } else {
       return false;
     }
-  }
-
-  void Mipmap::removeFromCache(const QString & src)
-  {
-    Radiant::PlatformUtils::removeFromCache(imageCachePath(), QFileInfo(src).absoluteFilePath());
   }
 
   void Mipmap::startLoading(bool compressedMipmaps)

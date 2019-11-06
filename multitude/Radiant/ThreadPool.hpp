@@ -45,7 +45,7 @@ namespace Radiant {
     /// This function is thread-safe.
 
     /// @param number the target number of threads
-    void run(int number = 1);
+    virtual void run(int number = 1);
 
     /// Asks threads to stop. Doesn't work as expected if the childLoop()
     /// implementation doesn't use and obey running().
