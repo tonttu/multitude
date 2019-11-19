@@ -143,7 +143,7 @@ namespace Valuable
     /// Returns NULL if the iterator is not valid anymore. Can be used like
     /// for(it = foo.children(); it; ++it) {}
     /// @return true if the iterator is still valid
-    operator bool () const;
+    explicit operator bool () const;
 
     /// Returns the current child, or null element in case of an invalid iterator
     ArchiveElement operator * () const;
