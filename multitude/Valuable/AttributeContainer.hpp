@@ -162,6 +162,11 @@ namespace Valuable
     void setValue(const T & t) { m_container = t; }
     const T & value() const { return m_container; }
 
+    virtual QByteArray type() const override
+    {
+      return Radiant::StringUtils::type<T>();
+    }
+
   protected:
     AttributeContainerT() : m_clearOnDeserialize(true) {}
 

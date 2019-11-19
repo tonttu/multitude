@@ -541,7 +541,8 @@ namespace Valuable
       return ArchiveElement();
     }
 
-    elem.add("type", type());
+    if (QByteArray t = type(); !t.isEmpty())
+      elem.add("type", t);
 
     for(container::const_iterator it = m_attributes.begin(); it != m_attributes.end(); ++it) {
       Attribute * vo = it->second;

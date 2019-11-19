@@ -229,7 +229,8 @@ namespace Valuable
       return ArchiveElement();
 
     ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.data());
-    elem.add("type", type());
+    if (QByteArray t = type(); !t.isEmpty())
+      elem.add("type", t);
     elem.set(asString(nullptr, layer));
 
     return elem;
