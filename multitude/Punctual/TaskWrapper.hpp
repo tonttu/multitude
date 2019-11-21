@@ -107,7 +107,20 @@ namespace Punctual
       if(result->valid()) {
         m_promise.setValue(std::move(result->value()));
       } else {
-        m_promise.setException(folly::exception_wrapper(result->get_unexpected().value()));
+        /// folly::exception_wrapper will trigger a DFATAL error if we just
+        /// give it std::exception_ptr without a reference to the actual error
+        /// as well.
+        std::exception_ptr eptr = result->get_unexpected().value();
+        try {
+          std::rethrow_exception(eptr);
+        } catch (std::exception & error) {
+          m_promise.setException(folly::exception_wrapper(eptr, error));
+        } catch (...) {
+          /// Ideally we would do the same as folly::exception_wrapper(eptr) does:
+          /// folly::exception_wrapper(eptr, folly::exception_wrapper::Unknown())
+          /// but Unknown is a private class and can't be created from here.
+          m_promise.setException(std::exception());
+        }
       }
     }
   }
