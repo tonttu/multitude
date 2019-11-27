@@ -27,12 +27,13 @@
 
 #include <sys/stat.h>
 
+#include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
-#include <QDateTime>
-#include <QThread>
+#include <QRegularExpression>
 #include <QTemporaryFile>
+#include <QThread>
 
 #ifdef RADIANT_LINUX
 #include <errno.h>
@@ -448,6 +449,16 @@ namespace Radiant
     return lst[0] + "/" + name;
   }
 
+  QString FileUtils::cleanFilename(const QString & filename, const QString & replace, int maxLength)
+  {
+    // vfat forbidden characters (see vfat_bad_char in fs/fat/namei_vfat.c)
+    static thread_local QRegularExpression re(R"([\x01-\x19*?<>|":/\\]+)");
+    if (filename.isEmpty() || filename == "." || filename == "..")
+      return replace;
+    QString copy = filename;
+    return copy.replace(re, replace).left(maxLength);
+  }
+
   QString FileUtils::makeFilenameUnique(const QString &filename)
   {
     QFileInfo info(filename);
@@ -467,12 +478,7 @@ namespace Radiant
 
     QString path = info.path();
 
-    // vfat forbidden characters (see vfat_bad_char in fs/fat/namei_vfat.c)
-    QRegExp r("[\\x0001-\\x0019*?<>|\":/\\\\]+");
-    cleanFilename.replace(r, "-");
-    // It's a bit unclear what is the file size limit (in some cases 481?),
-    // but 256 seems like a good practical limit.
-    cleanFilename = cleanFilename.left(256);
+    cleanFilename = FileUtils::cleanFilename(cleanFilename);
 
     const QString dotSuffix = suffix.isEmpty() ? "" : QString(".%1").arg(suffix);
 

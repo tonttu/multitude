@@ -174,6 +174,19 @@ namespace Radiant
     /// @return Absolute file path to the file
     static QString resolvePath(const QString & source);
 
+    /// Cleans up the given string so that it can be used as a filename without
+    /// path. Replaces invalid character sequences with a single replace
+    /// string, which defaults to "-".
+    ///
+    /// Additionally truncates too long filenames to the given maximum
+    /// length. The actual limit depends on the platform and filesystem, but
+    /// 256 is a good practical limit.
+    ///
+    /// Examples: cleanFilename(".") == "-"
+    ///           cleanFilename("Foo/Bar\n") == "Foo-Bar-"
+    ///           cleanFilename("::Foo.txt", "", 3) == "Foo"
+    static QString cleanFilename(const QString & filename, const QString & replace = "-", int maxLength = 256);
+
     /**
      * @brief Ensures that the filename is unique
      *
