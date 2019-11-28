@@ -54,6 +54,6 @@ namespace Valuable
 
   QByteArray AttributeStringList::type() const
   {
-    return "stringlist";
+    return "list:string";
   }
 } // namespace Valuable

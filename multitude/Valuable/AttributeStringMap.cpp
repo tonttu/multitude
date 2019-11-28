@@ -68,6 +68,6 @@ namespace Valuable
 
   QByteArray AttributeStringMap::type() const
   {
-    return "stringmap";
+    return "map:string,string";
   }
 } // namespace Valuable
