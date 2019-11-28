@@ -121,6 +121,8 @@ namespace Valuable
             elem.add(e);
         }
       }
+      if(QByteArray t = type(); !t.isEmpty())
+        elem.add("type", t);
       return elem;
     }
 
