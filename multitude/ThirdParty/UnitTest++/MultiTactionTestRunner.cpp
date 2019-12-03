@@ -475,7 +475,7 @@ namespace UnitTest
       int index = 0;
       int exitCode = 0;
 
-      Radiant::BGThread bg;
+      Radiant::BGThread bg("BGThread test");
       if (flags & TestRunnerFlag::PARALLEL)
         bg.run(QThread::idealThreadCount() * 1.25);
       else

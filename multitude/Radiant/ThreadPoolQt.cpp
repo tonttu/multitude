@@ -31,9 +31,9 @@ namespace Radiant {
       Private & m_private;
 
     public:
-      T(Private & p) : m_private(p)
+      T(Private & p, const QString & threadName) : m_private(p)
       {
-        setObjectName("ThreadPool");
+        setObjectName(threadName);
       }
       virtual ~T() {}
 
@@ -59,7 +59,11 @@ namespace Radiant {
 
   public:
 
-    Private(ThreadPool & tp) : m_threadPool(tp) {}
+    Private(ThreadPool & tp, const QString & threadNamePrefix)
+      : m_threadPool(tp)
+      , m_threadNamePrefix(threadNamePrefix)
+    {}
+
     ~Private()
     {
       // But there really shouldn't be anybody else doing anything anymore!
@@ -87,7 +91,7 @@ namespace Radiant {
 
       // start new threads
       for(int i = current; i < number; ++i) {
-        T * t = new T(*this);
+        T * t = new T(*this, QString("%2:%1").arg(m_nextThreadIdx++).arg(m_threadNamePrefix));
         m_threads[t] = STARTING;
         t->start();
       }
@@ -136,12 +140,15 @@ namespace Radiant {
     std::mutex m_mutex;
     ThreadPool & m_threadPool;
     Threads m_threads;
+    QString m_threadNamePrefix;
+    int m_nextThreadIdx = 0;
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  ThreadPool::ThreadPool() : m_p(new Private(*this))
+  ThreadPool::ThreadPool(const QString & threadNamePrefix)
+    : m_p(new Private(*this, threadNamePrefix))
   {
   }
 

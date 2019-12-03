@@ -653,7 +653,8 @@ namespace Resonant {
   /////////////////////////////////////////////////////////////////////////////
 
   ModuleSamplePlayer::BGLoader::BGLoader(ModuleSamplePlayer * host)
-    : m_host(host)
+    : Thread("SamplePlayerBGLoader")
+    , m_host(host)
   {
     m_continue = true;
     run();

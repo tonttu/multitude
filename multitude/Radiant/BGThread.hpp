@@ -48,7 +48,7 @@ namespace Radiant
   {
     DECLARE_SINGLETON(BGThread);
   public:
-    BGThread();
+    BGThread(const QString & threadNamePrefix);
     virtual ~BGThread();
 
     /// Add a task to be executed

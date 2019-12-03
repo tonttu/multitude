@@ -49,7 +49,7 @@ namespace Radiant {
     /// method.
     /// @param name thread name
     /// @sa setName
-    Thread(const QString & name = "Radiant::Thread");
+    Thread(const QString & name);
 
     /// Destructor
     /** The thread must be stopped before this method is

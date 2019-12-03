@@ -46,7 +46,8 @@ namespace VideoDisplay
   {}
 
   AVDecoder::AVDecoder()
-    : m_d(new D())
+    : Thread("AVDecoder")
+    , m_d(new D())
   {
   }
 

@@ -28,7 +28,11 @@ namespace Radiant {
   class RADIANT_API LogThread : public Thread
   {
   public:
-    LogThread() : m_file(0), m_ready(false) {}
+    LogThread()
+      : Thread("LogThread")
+      , m_file(0)
+      , m_ready(false)
+    {}
 
     void add(const char * msg)
     {

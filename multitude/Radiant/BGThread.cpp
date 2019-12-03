@@ -34,8 +34,9 @@ namespace Radiant
     }
   }
 
-  BGThread::BGThread()
-    : m_idle(0)
+  BGThread::BGThread(const QString & threadNamePrefix)
+    : ThreadPool(threadNamePrefix)
+    , m_idle(0)
     , m_runningTasksCount(0)
     , m_isShuttingDown(false)
   {
@@ -405,4 +406,4 @@ namespace Radiant
   }
 }
 
-DEFINE_SINGLETON(Radiant::BGThread);
+DEFINE_SINGLETON2(Radiant::BGThread,,, "BGThread")

@@ -69,16 +69,16 @@
 
     This class is thread-safe. */
 #define DEFINE_SINGLETON(T)                                        \
-  DEFINE_SINGLETON2(T,,)
+  DEFINE_SINGLETON2(T,,,)
 
-#define DEFINE_SINGLETON2(T, INIT, INIT2)                          \
+#define DEFINE_SINGLETON2(T, INIT, INIT2, ARGS)                    \
   std::shared_ptr<T> T :: instance() {                             \
     std::shared_ptr<T> p = s_multiSingletonInstance.lock();        \
     if(!p) {                                                       \
       Radiant::Guard g(Radiant::s_singletonMutex);                 \
       p = s_multiSingletonInstance.lock();                         \
       if(p) return p;                                              \
-      p.reset(new T());                                            \
+      p.reset(new T(ARGS));                                        \
       INIT                                                         \
       s_multiSingletonInstance = p;                                \
       INIT2                                                        \

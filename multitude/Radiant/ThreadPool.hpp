@@ -30,7 +30,7 @@ namespace Radiant {
   public:
     /// Construct a thread pool class.
     /// The threads are NOT activated by this method.
-    ThreadPool();
+    ThreadPool(const QString & threadNamePrefix);
 
     /// @copydoc Thread::~Thread
     virtual ~ThreadPool();
