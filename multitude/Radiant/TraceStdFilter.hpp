@@ -29,6 +29,10 @@ namespace Radiant
       inline void setPrintThreadId(bool enabled) { m_printThreadId = enabled; }
       inline bool printThreadId() const { return m_printThreadId; }
 
+      /// If enabled, each log line will include a thread name
+      inline void setPrintThreadName(bool enabled) { m_printThreadName = enabled; }
+      inline bool printThreadName() const { return m_printThreadName; }
+
       /// Sets the application name to be used in debug output.
       ///
       /// Each output line will begin with the application name. This is handy
@@ -51,6 +55,7 @@ namespace Radiant
       bool m_stdoutIsTty = false;
       bool m_stderrIsTty = false;
       bool m_printThreadId = false;
+      bool m_printThreadName = false;
       QByteArray m_applicationName;
     };
   } // namespace Trace

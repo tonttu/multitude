@@ -1016,7 +1016,7 @@ namespace Valuable
   }
 
 #ifdef ENABLE_THREAD_CHECKS
-  void Node::setOwnerThread(Radiant::Thread::id_t owner)
+  void Node::setOwnerThread(Radiant::Thread::Id owner)
   {
     m_ownerThread = owner;
     for (auto attr: m_attributes) {

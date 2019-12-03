@@ -39,11 +39,18 @@ namespace Radiant {
 
     /// Thread id type.
     /** On most systems this is some kind of integer value. */
-    typedef void* id_t;
+    typedef void * Id;
 
     /// The id of the calling thread
     /// @return Id of the calling thread
-    static id_t myThreadId();
+    static Id currentThreadId();
+
+    /// Returns user-given thread name for the thread id
+    static QByteArray threadName(Id threadId);
+
+    /// Returns user-given thread name for the current thread. The same as
+    /// threadName(currentThreadId()) but potentially much faster on Windows.
+    static QByteArray currentThreadName();
 
     /// Construct a thread structure. The thread is NOT activated by this
     /// method.
@@ -59,9 +66,9 @@ namespace Radiant {
     before this function). */
     virtual ~Thread();
 
-    /// Set the thread name. The thread name can be used by some debuggers, for
-    /// example QtCreator. Useful for debugging purposes. Does not affect any
-    /// functionality.
+    /// Set the thread name. Needs to be called before the thread is started.
+    /// The thread name is used by Radiant::Trace, thread check code, debuggers,
+    /// crash dumps etc.
     /// @param name thread name
     void setName(const QString &name);
 
@@ -78,6 +85,9 @@ namespace Radiant {
     /// Check if the thread is running
     /// @returns true if the thread is running.
     bool isRunning() const;
+
+    /// Returns the wrapped QThread
+    QThread * qthread() const;
 
   protected:
     /// The actual contents of the thread. You need to override this to
@@ -101,7 +111,7 @@ namespace Radiant {
   template <typename T>
   class TLS
   {
-    typedef std::map<Thread::id_t, T> Map;
+    typedef std::map<Thread::Id, T> Map;
 
   public:
     /// Constructs TLS variable with default constructor
@@ -123,7 +133,7 @@ namespace Radiant {
     /// @return variable instance in calling thread
     T& get()
     {
-      Thread::id_t id = Thread::myThreadId();
+      Thread::Id id = Thread::currentThreadId();
       Radiant::Guard g(m_mutex);
       typename Map::iterator it = m_values.find(id);
       if(it == m_values.end()) {

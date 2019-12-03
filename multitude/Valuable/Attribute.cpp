@@ -402,7 +402,7 @@ namespace Valuable
   }
 
 #ifdef ENABLE_THREAD_CHECKS
-  void Attribute::setOwnerThread(Radiant::Thread::id_t owner)
+  void Attribute::setOwnerThread(Radiant::Thread::Id owner)
   {
     m_ownerThread = owner;
   }

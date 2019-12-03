@@ -354,7 +354,7 @@ namespace Valuable
     Attribute * ownerShorthand() const;
 
 #ifdef ENABLE_THREAD_CHECKS
-    virtual void setOwnerThread(Radiant::Thread::id_t owner);
+    virtual void setOwnerThread(Radiant::Thread::Id owner);
 #endif
 
 #ifdef MULTI_DOCUMENTER
@@ -429,7 +429,7 @@ namespace Valuable
 
 #ifdef ENABLE_THREAD_CHECKS
   public:
-    Radiant::Thread::id_t m_ownerThread = nullptr;
+    Radiant::Thread::Id m_ownerThread = nullptr;
 #endif
   };
 

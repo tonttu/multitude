@@ -87,6 +87,11 @@ namespace Radiant
         if (ret > 0) size -= ret, buffer += ret;
       }
 
+      if (m_printThreadName) {
+        ret = snprintf(buffer, size, "{%s} ", Thread::currentThreadName().data());
+        if (ret > 0) size -= ret, buffer += ret;
+      }
+
       if (m_applicationName.isEmpty()) {
         if (!msg.module.isEmpty()) {
           ret = snprintf(buffer, size, "%s> %s%s", msg.module.data(), color, s_prefixes[msg.severity]);

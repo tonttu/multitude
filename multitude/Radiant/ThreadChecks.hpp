@@ -2,49 +2,38 @@
 #define RADIANT_THREADCHECKS_HPP
 
 #include "Thread.hpp"
-
-#ifdef ENABLE_THREAD_CHECKS
 #include "Trace.hpp"
-#endif
 
 #include <QThread>
 
 namespace Radiant
 {
-  namespace ThreadInfo
+  namespace ThreadChecks
   {
-    RADIANT_API extern Thread::id_t mainThreadId;
+    RADIANT_API extern Thread::Id mainThreadId;
+
+    RADIANT_API void handleThreadError(const char * file, int line, Thread::Id expectedThread);
+
+    RADIANT_API Trace::Severity logLevel();
+    RADIANT_API void setLogLevel(Trace::Severity severity);
   }
 }
 
 #ifdef ENABLE_THREAD_CHECKS
-#define REQUIRE_THREAD_IMPL(file, line, thread, threadName) do { \
-    if (Radiant::Thread::myThreadId() != (thread)) { \
-      Radiant::fatal("%s:%d # Currently on thread '%s', expected %s", file, line, QThread::currentThread()->objectName().toUtf8().data(), threadName); \
-    } \
+#define REQUIRE_THREAD_IMPL(file, line, thread) do {                       \
+    if (auto t = (thread); t && Radiant::Thread::currentThreadId() != t)   \
+      Radiant::ThreadChecks::handleThreadError(file, line, t);             \
   } while (false)
-#define REQUIRE_THREAD_IMPL2(file, line, thread) do { \
-    if (auto t = thread) { \
-      if (Radiant::Thread::myThreadId() != t) { \
-        if (t == Radiant::ThreadInfo::mainThreadId) { \
-          Radiant::fatal("%s:%d # Currently on thread '%s', expected main thread", file, line, QThread::currentThread()->objectName().toUtf8().data()); \
-        } else { \
-          Radiant::fatal("%s:%d # Currently on thread '%s', expected thread id %p", file, line, QThread::currentThread()->objectName().toUtf8().data(), t); \
-        } \
-      } \
-    } \
-  } while (false)
-#define REQUIRE_SAME_THREAD_IMPL(file, line, threadVar) do { \
-  if (!threadVar) { \
-    threadVar = Radiant::Thread::myThreadId(); \
-  } else if (threadVar != Radiant::Thread::myThreadId()) { \
-    Radiant::fatal("%s:%d # Currently on thread '%s', expected thread id %p", file, line, QThread::currentThread()->objectName().toUtf8().data(), threadVar); \
-   } \
+#define REQUIRE_SAME_THREAD_IMPL(file, line, threadVar) do {               \
+  if (!threadVar)                                                          \
+    threadVar = Radiant::Thread::currentThreadId();                        \
+  else if (threadVar != Radiant::Thread::currentThreadId())                \
+    Radiant::ThreadChecks::handleThreadError(file, line, threadVar);       \
  } while (false)
-#define REQUIRE_THREAD(thread) REQUIRE_THREAD_IMPL2(__FILE__, __LINE__, thread)
-#define REQUIRE_MAIN_THREAD REQUIRE_THREAD_IMPL(__FILE__, __LINE__, Radiant::ThreadInfo::mainThreadId, "main thread")
-#define THREAD_CHECK_ID(thread) mutable Radiant::Thread::id_t thread = nullptr;
-#define THREAD_CHECK_ID_SELF(thread) mutable Radiant::Thread::id_t thread = Radiant::Thread::myThreadId();
+#define REQUIRE_THREAD(thread) REQUIRE_THREAD_IMPL(__FILE__, __LINE__, thread)
+#define REQUIRE_MAIN_THREAD REQUIRE_THREAD_IMPL(__FILE__, __LINE__, Radiant::ThreadChecks::mainThreadId)
+#define THREAD_CHECK_ID(thread) mutable Radiant::Thread::Id thread = nullptr;
+#define THREAD_CHECK_ID_SELF(thread) mutable Radiant::Thread::Id thread = Radiant::Thread::currentThreadId();
 #define REQUIRE_SAME_THREAD(threadVar) REQUIRE_SAME_THREAD_IMPL(__FILE__, __LINE__, threadVar)
 #else
 #define REQUIRE_THREAD(thread) do {} while (false)

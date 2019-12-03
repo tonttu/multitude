@@ -11,6 +11,9 @@
 #include "Thread.hpp"
 #include "Mutex.hpp"
 #include "Sleep.hpp"
+#include "StringUtils.hpp"
+#include "Trace.hpp"
+#include "ThreadChecks.hpp"
 
 #include <errno.h>
 #include <signal.h>
@@ -20,6 +23,11 @@
 
 #include <QThread>
 
+#ifdef RADIANT_WINDOWS
+#include <windows.h>
+#include <processthreadsapi.h>
+#endif
+
 namespace Radiant {
 
   bool Thread::m_threadDebug = false;
@@ -28,13 +36,22 @@ namespace Radiant {
   class Thread::D : public QThread 
   {
   public:
-	  D(Thread * t) : m_thread(t) {}
+    D(Thread * host) : m_host(host) {}
 
-	  virtual void run() {
-		m_thread->childLoop();
-	  }
+    virtual void run() {
+#ifdef RADIANT_WINDOWS
+      /// Qt only sets thread names to visual studio using vs-specific exceptions.
+      /// It doesn't set the thread name that is used by crash dumps and other
+      /// code. Fix that here. See more information about thread names in Windows:
+      /// https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
+      HRESULT res = SetThreadDescription(GetCurrentThread(), objectName().toStdWString().data());
+      if (FAILED(res))
+        Radiant::error("SetThreadDescription: %s", StringUtils::getLastErrorMessage().toUtf8().data());
+#endif
+      m_host->childLoop();
+    }
 
-	  Thread * m_thread;
+    Thread * m_host;
   };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,22 +67,68 @@ namespace Radiant {
   {
     assert(isRunning() == false);
 
-	  delete m_d;
+    delete m_d;
   }
 
   void Thread::setName(const QString & name)
   {
+    assert(isRunning() == false);
+
     m_d->setObjectName(name);
   }
 
-  Thread::id_t Thread::myThreadId()
+  Thread::Id Thread::currentThreadId()
   {
-    return reinterpret_cast<void*> (QThread::currentThread());
+#ifdef RADIANT_LINUX
+    return reinterpret_cast<Thread::Id>(pthread_self());
+#elif defined(RADIANT_WINDOWS)
+    return reinterpret_cast<Thread::Id>(GetCurrentThreadId());
+#else
+    return reinterpret_cast<Thread::Id>(QThread::currentThread());
+#endif
+  }
+
+  QByteArray Thread::threadName(Thread::Id threadId)
+  {
+    if (threadId == ThreadChecks::mainThreadId)
+      return "Main thread";
+#ifdef RADIANT_LINUX
+    char buffer[128];
+    if (pthread_getname_np(reinterpret_cast<pthread_t>(threadId), buffer, sizeof(buffer)) == 0)
+      return buffer;
+#elif defined(RADIANT_WINDOWS)
+    if (HANDLE handle = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, false, reinterpret_cast<DWORD>(threadId))) {
+      PWSTR data = nullptr;
+      HRESULT hr = GetThreadDescription(handle, &data);
+      CloseHandle(handle);
+      if (SUCCEEDED(hr) && *data) {
+        QByteArray name = QString::fromWCharArray(data).toUtf8();
+        LocalFree(data);
+        return name;
+      }
+    }
+#endif
+
+    return "#" + QByteArray::number(reinterpret_cast<qlonglong>(threadId));
+  }
+
+  QByteArray Thread::currentThreadName()
+  {
+#ifdef RADIANT_WINDOWS
+    PWSTR data = nullptr;
+    HRESULT hr = GetThreadDescription(GetCurrentThread(), &data);
+    if (SUCCEEDED(hr) && *data) {
+      QByteArray name = QString::fromWCharArray(data).toUtf8();
+      LocalFree(data);
+      return name;
+    }
+#endif
+    return threadName(currentThreadId());
   }
 
   void Thread::run()
   {
-	  m_d->start();
+    m_d->start();
   }
 
   bool Thread::waitEnd(int timeoutms)
@@ -79,5 +142,10 @@ namespace Radiant {
   bool Thread::isRunning() const
   {
     return m_d->isRunning();
+  }
+
+  QThread * Thread::qthread() const
+  {
+    return m_d;
   }
 }

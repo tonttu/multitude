@@ -547,7 +547,7 @@ namespace Valuable
     bool isBeingDestroyed() const { return m_isBeingDestroyed; }
 
 #ifdef ENABLE_THREAD_CHECKS
-    virtual void setOwnerThread(Radiant::Thread::id_t owner) override;
+    virtual void setOwnerThread(Radiant::Thread::Id owner) override;
 #endif
 
   protected:
