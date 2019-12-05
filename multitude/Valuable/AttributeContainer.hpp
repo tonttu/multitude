@@ -164,24 +164,30 @@ namespace Valuable
 
     virtual QByteArray type() const override
     {
-      return Radiant::StringUtils::type<T>();
+      return m_type.isNull() ? Radiant::StringUtils::type<T>() : m_type;
     }
 
   protected:
-    AttributeContainerT() : m_clearOnDeserialize(true) {}
+    AttributeContainerT(const QByteArray & type)
+      : m_clearOnDeserialize(true)
+      , m_type(type)
+    {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainerT(Node * host, const QByteArray & name)
+    AttributeContainerT(Node * host, const QByteArray & name, const QByteArray & type)
       : Attribute(host, name)
       , m_clearOnDeserialize(true)
+      , m_type(type)
     {}
 
     /// The actual container that this AttributeContainer wraps.
     T m_container;
 
     bool m_clearOnDeserialize;
+
+    QByteArray m_type;
   };
 
   /// Template class for all STL-like containers
@@ -202,13 +208,16 @@ namespace Valuable
   template<typename T> class AttributeContainer : public AttributeContainerT<T>
   {
   public:
-    AttributeContainer() {}
+    AttributeContainer(const QByteArray & type = QByteArray())
+      : AttributeContainerT<T>(type)
+    {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QByteArray & name)
-      : AttributeContainerT<T>(host, name)
+    /// @param type see Attribute::type
+    AttributeContainer(Node * host, const QByteArray & name, const QByteArray & type = QByteArray())
+      : AttributeContainerT<T>(host, name, type)
     {}
   };
 
@@ -222,13 +231,15 @@ namespace Valuable
     typedef AttributeContainerT<std::map<Key, T, Compare, Allocator> > Container;
 
     /// Constructs a new container
-    AttributeContainer() {}
+    AttributeContainer(const QByteArray & type = QByteArray())
+      : Container(type)
+    {}
 
     /// Constructs a new container
     /// @param host host object
     /// @param name name of the value
-    AttributeContainer(Node * host, const QByteArray & name)
-      : Container(host, name)
+    AttributeContainer(Node * host, const QByteArray & name, const QByteArray & type = QByteArray())
+      : Container(host, name, type)
     {}
 
     virtual bool deserialize(const ArchiveElement & element) OVERRIDE

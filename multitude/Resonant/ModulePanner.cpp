@@ -27,7 +27,7 @@ namespace Resonant {
 
   ModulePanner::ModulePanner(Mode mode)
       : Module(),
-      m_speakers(this, "speakers"),
+      m_speakers(this, "speakers", "vector:LoudSpeaker"),
       m_generation(0),
       m_maxRadius(this, "max-radius", 1500),
       m_rectangles(this, "rectangles"),

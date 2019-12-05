@@ -206,7 +206,7 @@ namespace Valuable
 
     virtual QByteArray type() const override
     {
-      return "enum";
+      return "enum:" + Radiant::StringUtils::type<T>();
     }
 
     static inline T interpolate(T a, T b, float m)

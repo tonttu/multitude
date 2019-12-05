@@ -275,9 +275,9 @@ namespace Valuable
     virtual bool set(const StyleValue & value, Layer layer = USER);
 
     /// Returns the type of the attribute or an empty string.
-    /// Example return values: "float", "vector2:int", "enum". This is mostly used
+    /// Example return values: "float", "vector2:int". This is mostly used
     /// for custom deserialization.
-    virtual QByteArray type() const { return QByteArray(); }
+    virtual QByteArray type() const = 0;
 
     virtual void copyValueFromLayer(Layer from, Layer to);
 
