@@ -637,7 +637,7 @@ namespace Valuable
            "widget1/color".
         */
 
-        const QByteArray & klass = Radiant::StringUtils::demangle(typeid(*obj).name());
+        const QByteArray & klass = Radiant::StringUtils::type(*obj);
 
 #ifdef RADIANT_DEBUG
           Radiant::fatal("Node::eventAddListener # %s (%s %p) doesn't accept event '%s'",
@@ -859,7 +859,7 @@ namespace Valuable
         /*warning("Node::eventProcess # %s (%s %p) doesn't accept event '%s'",
                   klass.c_str(), name().c_str(), this, id);*/
       } else {
-        const QByteArray klass = Radiant::StringUtils::demangle(typeid(*this).name());
+        const QByteArray klass = Radiant::StringUtils::type(*this);
         Radiant::warning("Node::eventProcess # %s (%s %p): unhandled event '%s'",
                 klass.data(), name().data(), this, id.data());
       }
@@ -893,7 +893,7 @@ namespace Valuable
     } else {
       m_eventSendNames.insert(id);
 #ifdef MULTI_DOCUMENTER
-      s_eventSendNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+      s_eventSendNames[Radiant::StringUtils::type(*this)].insert(id);
 #endif
     }
   }
@@ -905,7 +905,7 @@ namespace Valuable
     } else {
       m_eventListenNames.insert(id);
 #ifdef MULTI_DOCUMENTER
-      s_eventListenNames[Radiant::StringUtils::demangle(typeid(*this).name())].insert(id);
+      s_eventListenNames[Radiant::StringUtils::type(*this)].insert(id);
 #endif
     }
   }

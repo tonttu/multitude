@@ -10,7 +10,7 @@
 
 #include "StringUtils.hpp"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -49,6 +49,15 @@ namespace Radiant
         free(tmp);
         return ret;
       }
+#endif
+
+#ifdef _MSC_VER
+      if (strncmp(name, "class ", 6) == 0)
+        return name + 6;
+      if (strncmp(name, "struct ", 7) == 0)
+        return name + 7;
+      if (strncmp(name, "enum ", 5) == 0)
+        return name + 5;
 #endif
       return name;
     }
