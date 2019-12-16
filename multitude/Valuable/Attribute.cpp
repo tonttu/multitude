@@ -74,7 +74,7 @@ namespace Valuable
 #ifdef MULTI_DOCUMENTER
       doc.push_back(Doc());
       Doc & d = doc.back();
-      d.class_name = Radiant::StringUtils::demangle(typeid(*host).name());
+      d.class_name = Radiant::StringUtils::type(*host);
       d.vo = this;
       d.obj = host;
 #endif
@@ -229,7 +229,8 @@ namespace Valuable
       return ArchiveElement();
 
     ArchiveElement elem = archive.createElement(m_name.isEmpty() ? "Attribute" : m_name.data());
-    elem.add("type", type());
+    if (QByteArray t = type(); !t.isEmpty())
+      elem.add("type", t);
     elem.set(asString(nullptr, layer));
 
     return elem;
@@ -243,7 +244,7 @@ namespace Valuable
   void Attribute::setTransitionParameters(TransitionParameters)
   {
     Radiant::warning("Attribute::setTransitionParameters # Class %s (%s) doesn't support transition animations",
-                     Radiant::StringUtils::demangle(typeid(*this).name()).data(), name().data());
+                     Radiant::StringUtils::type(*this).data(), name().data());
   }
 
   void Attribute::emitChange()

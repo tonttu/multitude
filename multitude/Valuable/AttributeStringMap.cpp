@@ -65,4 +65,9 @@ namespace Valuable
     setValue(v.asMap(), layer);
     return true;
   }
+
+  QByteArray AttributeStringMap::type() const
+  {
+    return "map:string,string";
+  }
 } // namespace Valuable

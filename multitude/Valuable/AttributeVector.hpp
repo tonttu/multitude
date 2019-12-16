@@ -111,6 +111,12 @@ namespace Valuable
         return true;
       }
 
+      virtual QByteArray type() const override
+      {
+        return "vector" + QByteArray::number(N) + ':' +
+            Radiant::StringUtils::type<ElementType>();
+      }
+
       /// Returns the internal vector object as a constant reference.
       /// @return The wrapped vector value
       const VectorType & asVector() const { return value(); }

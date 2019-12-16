@@ -46,7 +46,7 @@ namespace Valuable
   /// example AttributeSize, AttributeLocation etc can be easily implemented using
   /// this as a base implementation.
   ///
-  /// for example AttributeTuple<Nimble::SizeF> is AttributeSizeF
+  /// For example AttributeSizeF inherits from AttributeTuple<Nimble::SizeF, AttributeT<Nimble::SizeF>>
   template <typename WrappedValue, typename AttributeType>
   class AttributeTuple : public Attribute
   {
@@ -83,6 +83,8 @@ namespace Valuable
     virtual bool set(const Nimble::Vector3f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const Nimble::Vector4f & v, Layer layer = USER, QList<ValueUnit> units = QList<ValueUnit>()) OVERRIDE;
     virtual bool set(const StyleValue& value, Layer layer = USER) override;
+
+    virtual QByteArray type() const override;
 
     inline void setValue(const WrappedValue & t, Layer layer = USER);
 
@@ -406,6 +408,12 @@ namespace Valuable
 
     endChangeTransaction();
     return ok;
+  }
+
+  template <typename T, typename A>
+  QByteArray AttributeTuple<T, A>::type() const
+  {
+    return Radiant::StringUtils::type<T>();
   }
 
   template <typename T, typename A>

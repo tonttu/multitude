@@ -66,6 +66,8 @@ namespace Valuable
 
     virtual bool set(const StyleValue & value, Layer layer = USER) OVERRIDE;
 
+    virtual QByteArray type() const override;
+
     /// Makes the string empty
     void clear();
 

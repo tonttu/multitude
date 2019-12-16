@@ -63,6 +63,12 @@ namespace Valuable
       return Radiant::StringUtils::toString(this->value(layer));
     }
 
+    virtual QByteArray type() const
+    {
+      return QByteArray("matrix") + QByteArray::number(MatrixType::rows()) + 'x' +
+          QByteArray::number(MatrixType::columns()) + ':' + Radiant::StringUtils::type<typename MatrixType::type>();
+    }
+
     // We don't really know how the matrix is being used, so we can't have
     // good interpolation code for it
     static inline MatrixType interpolate(MatrixType a, MatrixType b, float m)

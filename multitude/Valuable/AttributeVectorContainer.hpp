@@ -348,6 +348,11 @@ namespace Valuable
       return true;
     }
 
+    virtual QByteArray type() const override
+    {
+      return "vector:" + Radiant::StringUtils::type<T>();
+    }
+
   protected:
     container m_vector;
 

@@ -51,4 +51,9 @@ namespace Valuable
     }
     return false;
   }
+
+  QByteArray AttributeStringList::type() const
+  {
+    return "list:string";
+  }
 } // namespace Valuable

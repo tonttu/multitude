@@ -43,7 +43,7 @@ namespace Valuable {
 
     virtual bool deserialize(const Valuable::ArchiveElement& element) OVERRIDE;
     virtual Valuable::ArchiveElement serialize(Valuable::Archive& doc) const OVERRIDE;
-
+    virtual QByteArray type() const override;
 
     QByteArray serialize() const;
     bool deserialize(const QByteArray & str);

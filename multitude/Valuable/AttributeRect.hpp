@@ -47,6 +47,11 @@ namespace Valuable
       return Radiant::StringUtils::toString(this->value(layer));
     }
 
+    virtual QByteArray type() const override
+    {
+      return "rect:" + Radiant::StringUtils::type<decltype(RectType().width())>();
+    }
+
     static inline RectType interpolate(RectType a, RectType b, float m)
     {
       return m >= 0.5f ? b : a;
