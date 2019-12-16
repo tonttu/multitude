@@ -41,6 +41,8 @@ namespace
     QString path;
     int pageNumber = 0;
     int pageCount = -1;
+    int pageCountToConvert = -1;
+    bool clearedOldFiles = false;
     std::atomic<int> queuedTasks{0};
     std::vector<folly::Promise<QString>> promises;
   };
@@ -131,6 +133,27 @@ namespace
     return targetResolution;
   }
 
+  void clearOldFiles(BatchConverter & batch, const Luminous::PDFManager::PDFCachingOptions & opts)
+  {
+    QString targetFileGlob = QString("?????.%1").arg(opts.imageFormat);
+    QDir dir(batch.path);
+    for (QFileInfo & fi: dir.entryInfoList(QStringList() << targetFileGlob, QDir::Files, QDir::Unsorted)) {
+      bool ok = false;
+      int page = fi.fileName().left(5).toInt(&ok);
+      if (!ok)
+        continue;
+
+      if (page >= batch.pageCount) {
+        /// This file is probably from an older version of the file that had
+        /// more pages than the current one.
+        dir.remove(fi.fileName());
+      } else if (Radiant::FileUtils::lastModified(fi.absoluteFilePath()) < batch.pdfModified) {
+        /// This cached file is from an older version of the source file.
+        dir.remove(fi.fileName());
+      }
+    }
+  }
+
   void batchConvert(BatchConverterPtr batchPtr, const Luminous::PDFManager::PDFCachingOptions & opts)
   {
     BatchConverter & batch = *batchPtr;
@@ -146,13 +169,13 @@ namespace
       /// we were processing it. Just break all remaining promises.
       std::runtime_error error(QString("Could not open document %1.").
                                arg(batch.pdfAbsoluteFilePath).toStdString());
-      for (; batch.pageNumber < batch.pageCount; ++batch.pageNumber) {
+      for (; batch.pageNumber < batch.pageCountToConvert; ++batch.pageNumber) {
         batch.promises[batch.pageNumber].setException(error);
       }
       return;
     }
 
-    for (; batch.pageNumber < batch.pageCount; ++batch.pageNumber) {
+    for (; batch.pageNumber < batch.pageCountToConvert; ++batch.pageNumber) {
       QString targetFile = QString("%2/%1.%3").arg(batch.pageNumber, 5, 10, QChar('0')).
           arg(batch.path, opts.imageFormat);
       QFileInfo targetInfo(targetFile);
@@ -627,9 +650,10 @@ namespace Luminous
       if (!count.valid())
         return boost::make_unexpected(count.error());
 
-      batchConverter->pageCount = std::min<int>(maxPageCount, count.value());
+      batchConverter->pageCount = count.value();
+      batchConverter->pageCountToConvert = std::min<int>(maxPageCount, count.value());
 
-      batchConverter->promises.resize(batchConverter->pageCount);
+      batchConverter->promises.resize(batchConverter->pageCountToConvert);
 
       CachedPDFDocument doc;
       doc.cachePath = batchConverter->path;
@@ -640,6 +664,11 @@ namespace Luminous
         doc.pages.push_back(p.getFuture());
 
       Radiant::FunctionTask::executeInBGThread([batchConverter, opts] (Radiant::Task & task) {
+        if (!batchConverter->clearedOldFiles) {
+          clearOldFiles(*batchConverter, opts);
+          batchConverter->clearedOldFiles = true;
+        }
+
         if (batchConverter->queuedTasks.load() >= s_maxQueuedTasks) {
           task.scheduleFromNowSecs(0.1);
           return;
@@ -652,7 +681,7 @@ namespace Luminous
 
         batchConvert(batchConverter, opts);
         s_pdfiumMutex.unlock();
-        if (batchConverter->pageNumber >= batchConverter->pageCount)
+        if (batchConverter->pageNumber >= batchConverter->pageCountToConvert)
           task.setFinished();
         else if (batchConverter->queuedTasks.load() >= s_maxQueuedTasks)
           task.scheduleFromNowSecs(0.1);

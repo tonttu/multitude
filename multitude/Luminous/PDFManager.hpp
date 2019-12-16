@@ -219,8 +219,8 @@ namespace Luminous
     /// Set the default cache path used with renderDocumentToCacheDir
     void setDefaultCachePath(const QString & cachePath);
     /// The default cache path used with renderDocumentToCacheDir
-    /// On Windows this is initially %LOCALAPPDATA%/MultiTaction/cornerstone/cache/pdfs
-    /// and on other platforms $HOME/MultiTaction/cornerstone/cache/pdfs
+    /// On Windows this is initially %LOCALAPPDATA%/MultiTaction/cache/pdfs
+    /// and on other platforms $HOME/MultiTaction/cache/pdfs
     const QString & defaultCachePath() const;
 
     /// @param pdfFilename pdf filename
