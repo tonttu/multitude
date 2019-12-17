@@ -121,8 +121,9 @@ namespace Radiant
     RADIANT_API QString getLastErrorMessage();
 #endif
 
-    /// Demangle names used by the compiler
-    /// for example "N12MultiWidgets11ImageWidgetE" -> "MultiWidgets::ImageWidget"
+    /// Demangle names used by the compiler.
+    /// For example: "N12MultiWidgets11ImageWidgetE" -> "MultiWidgets::ImageWidget"
+    /// and "class Foo" -> "Foo".
     /// If the name can't be parsed, the original string is returned
     /// @param name Mangled symbol name
     /// @returns Demangled symbol name
@@ -132,6 +133,11 @@ namespace Radiant
     inline QByteArray type(const T & t)
     {
       return demangle(typeid(t).name());
+    }
+
+    inline QByteArray demangle(const std::type_info & typeinfo)
+    {
+      return demangle(typeinfo.name());
     }
 
     template <typename T>

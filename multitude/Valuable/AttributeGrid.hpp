@@ -62,6 +62,11 @@ namespace Valuable
       return m_grid;
     }
 
+    virtual QByteArray type() const override
+    {
+      return "grid:" + Radiant::StringUtils::type<T>();
+    }
+
   private:
     GridType m_grid;
   };

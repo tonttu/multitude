@@ -43,6 +43,11 @@ namespace Valuable
       return QString::number(ts.value());
     }
 
+    virtual QByteArray type() const override
+    {
+      return "timestamp";
+    }
+
     static inline Radiant::TimeStamp interpolate(Radiant::TimeStamp a, Radiant::TimeStamp b, float m)
     {
       return Radiant::TimeStamp(Nimble::Math::Roundf(a.value() * (1.0f - m) + b.value() * m));

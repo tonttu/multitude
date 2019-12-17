@@ -37,6 +37,8 @@ namespace Valuable
     virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
 
+    virtual QByteArray type() const override;
+
     static inline QStringList interpolate(QStringList a, QStringList b, float m)
     {
       return m >= 0.5f ? b : a;

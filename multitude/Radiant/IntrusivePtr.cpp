@@ -47,7 +47,7 @@ namespace Radiant
     // We can't just store type_info pointer, since when we read this data,
     // the dll that provided this type_info can already be unloaded
     if (map.name.isEmpty())
-      map.name = StringUtils::demangle(type.name());
+      map.name = StringUtils::demangle(type);
     map.links[intrusivePtr];
   }
 

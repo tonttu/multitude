@@ -270,9 +270,10 @@ namespace Valuable
     /// Sets the value of the object
     virtual bool set(const StyleValue & value, Layer layer = USER);
 
-    /// Get the type id of the attribute
-    /// @return type of the attribute
-    virtual QByteArray type() const { return QByteArray(); }
+    /// Returns the type of the attribute or an empty string.
+    /// Example return values: "float", "vector2:int". This is mostly used
+    /// for custom deserialization.
+    virtual QByteArray type() const = 0;
 
     virtual void copyValueFromLayer(Layer from, Layer to);
 
@@ -531,6 +532,11 @@ namespace Valuable
       return *this;
     }
 
+    virtual QByteArray type() const override
+    {
+      return Radiant::StringUtils::type<T>();
+    }
+
     virtual bool isChanged() const OVERRIDE
     {
       return m_currentLayer > DEFAULT && differs(value(), value(DEFAULT));
@@ -573,7 +579,8 @@ namespace Valuable
         return e;
       if (!name().isEmpty())
         e.setName(name());
-      e.add("type", type());
+      if (QByteArray t = type(); !t.isEmpty())
+        e.add("type", t);
       return e;
     }
 
