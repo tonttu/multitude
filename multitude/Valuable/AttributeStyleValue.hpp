@@ -74,6 +74,11 @@ namespace Valuable
       return value(layer).stringify();
     }
 
+    virtual QByteArray type() const override
+    {
+      return "stylevalue";
+    }
+
     static inline StyleValue interpolate(StyleValue a, StyleValue b, float m)
     {
       return m >= 0.5f ? b : a;

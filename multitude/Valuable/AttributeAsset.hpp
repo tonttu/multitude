@@ -31,6 +31,8 @@ namespace Valuable
     /// Compares whether the string points to the same asset
     bool operator==(const QString& that) const;
     bool operator!=(const QString& that) const;
+
+    virtual QByteArray type() const { return "asset"; }
   };
 
 }

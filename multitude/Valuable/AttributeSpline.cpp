@@ -97,6 +97,11 @@ namespace Valuable
     return elem;
   }
 
+  QByteArray AttributeSpline::type() const
+  {
+    return "spline";
+  }
+
   void AttributeSpline::setAsDefaults()
   {
     m_defaultPoints = m_points;

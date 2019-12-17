@@ -108,6 +108,11 @@ namespace Valuable
       }
     }
 
+    virtual QByteArray type() const override
+    {
+      return "size2:" + Radiant::StringUtils::type<ElementType>();
+    }
+
     using Base::setValue;
 
     bool setValue(const Nimble::SizeF & v, Attribute::Layer layer,

@@ -56,6 +56,11 @@ namespace Valuable
       return set(v, layer, units);
     }
 
+    virtual QByteArray type() const override
+    {
+      return "frame4:float";
+    }
+
     virtual int priv_t2r(int tupleIndex, int range) const OVERRIDE
     {
       if(tupleIndex != 3 || range != 3)

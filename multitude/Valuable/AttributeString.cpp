@@ -62,6 +62,11 @@ namespace Valuable
     return true;
   }
 
+  QByteArray AttributeString::type() const
+  {
+    return "string";
+  }
+
   QString AttributeString::operator+(const AttributeString & i) const
   {
     return value() + i.value();

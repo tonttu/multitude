@@ -400,6 +400,8 @@ namespace Valuable
 
     /// @endcond
 
+    virtual QByteArray type() const override { return "node"; }
+
     /// Generates a unique identifier
     /// @return New unique id
     static Uuid generateId();

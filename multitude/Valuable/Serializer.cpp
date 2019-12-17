@@ -18,7 +18,7 @@ namespace Valuable
   {
     QString tagName(const std::type_info & typeinfo)
     {
-      QString demangled = Radiant::StringUtils::demangle(typeinfo.name());
+      QString demangled = Radiant::StringUtils::demangle(typeinfo);
       QString tmp;
       QRegExp tagr("<[^<>]*>");
       /// Need to iterate, since nested template parameters need multiple replaces

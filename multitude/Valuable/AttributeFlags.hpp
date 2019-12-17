@@ -162,6 +162,11 @@ namespace Valuable {
       return asInt(ok, layer) ? "true" : "false";
     }
 
+    virtual QByteArray type() const override
+    {
+      return "flag";
+    }
+
     std::vector<FlagAliasT<T>*> & sources()
     {
       return m_sources;
@@ -493,6 +498,11 @@ namespace Valuable {
       }
       setValue(newValue, layer);
       return true;
+    }
+
+    virtual QByteArray type() const override
+    {
+      return "flags";
     }
 
     virtual bool isValueDefinedOnLayer(Layer layer) const override
