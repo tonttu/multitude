@@ -1170,45 +1170,40 @@ namespace VideoDisplay
   {
     AudioTransferPtr audioTransfer(m_audioTransfer);
 
-    while(m_running) {
-      std::shared_ptr<VideoFrameFfmpeg> frame;
-      {
-        Radiant::Guard g(m_decodedVideoFramesMutex);
-        while (m_running && (int)m_decodedVideoFrames.size() >= m_options.videoBufferFrames()) {
-          {
-            Radiant::Guard g(m_seekRequestMutex);
-            if (m_seekRequest.type() != SEEK_NONE)
-              return nullptr;
-          }
-          m_decodedVideoFramesCond.wait(m_decodedVideoFramesMutex, 100);
+    {
+      Radiant::Guard g(m_decodedVideoFramesMutex);
+      while (m_running && (int)m_decodedVideoFrames.size() >= m_options.videoBufferFrames()) {
+        {
+          Radiant::Guard g(m_seekRequestMutex);
+          if (m_seekRequest.type() != SEEK_NONE)
+            return nullptr;
         }
-        if (m_running)
-          frame = std::make_shared<VideoFrameFfmpeg>();
-      }
-      if (frame) {
-        frame->frameUnrefMightBlock = m_frameUnrefMightBlock;
-        frame->deallocatedFrames = m_deallocatedFrames;
-        auto & de = *m_deallocatedFrames;
-        Radiant::Guard g(de.mutex);
-        if (!de.frames.empty()) {
-          frame->frame = std::move(de.frames.front());
-          de.frames.erase(de.frames.begin());
-        }
-        return frame;
-      }
-      if(!m_running) break;
-      // if the video buffer is full, and audio buffer is almost empty,
-      // we need to resize the video buffer, otherwise we could starve.
-      if(audioTransfer && audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f &&
-         m_options.videoBufferFrames() < 40) {
-        m_options.setVideoBufferFrames(m_options.videoBufferFrames() + 1);
-        continue;
-      }
 
-      Radiant::Guard g(m_seekRequestMutex);
-      if (m_seekRequest.type() != SEEK_NONE) break;
+        // if the video buffer is full, and audio buffer is almost empty,
+        // we need to resize the video buffer, otherwise we could starve.
+        if (audioTransfer && audioTransfer->bufferStateSeconds() < m_options.audioBufferSeconds() * 0.15f &&
+            m_options.videoBufferFrames() < 40) {
+          m_options.setVideoBufferFrames(m_options.videoBufferFrames() + 1);
+          continue;
+        }
+
+        m_decodedVideoFramesCond.wait(m_decodedVideoFramesMutex, 100);
+      }
     }
-    return nullptr;
+
+    if (!m_running)
+      return nullptr;
+
+    std::shared_ptr<VideoFrameFfmpeg> frame = std::make_shared<VideoFrameFfmpeg>();
+    frame->frameUnrefMightBlock = m_frameUnrefMightBlock;
+    frame->deallocatedFrames = m_deallocatedFrames;
+    auto & de = *m_deallocatedFrames;
+    Radiant::Guard g(de.mutex);
+    if (!de.frames.empty()) {
+      frame->frame = std::move(de.frames.front());
+      de.frames.erase(de.frames.begin());
+    }
+    return frame;
   }
 
   void FfmpegDecoder::D::setFormat(VideoFrameFfmpeg & frame, const AVPixFmtDescriptor & fmtDescriptor,
