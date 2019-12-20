@@ -46,15 +46,18 @@ namespace Radiant
     enum InitFlags
     {
       /// No init flags defined
-      INIT_NO_FLAGS               = 0,
+      INIT_NO_FLAGS                 = 0,
 
       /// Process all messages that were sent before Trace was initialized.
       /// If not set, queued messages are just dropped.
-      PROCESS_QUEUED_MESSAGES     = 1 << 0,
+      INIT_PROCESS_QUEUED_MESSAGES  = 1 << 0,
 
       /// Create default filters that limit the messages based on their
       /// severity and print the messages to stdout / stderr
-      INITIALIZE_DEFAULT_FILTERS  = 1 << 1,
+      INIT_DEFAULT_FILTERS          = 1 << 1,
+
+      /// Install a Qt message handler to capture all QMessageLogger messages
+      INIT_QT_MESSAGE_HANDLER       = 1 << 2,
     };
     MULTI_FLAGS(InitFlags)
 
@@ -149,7 +152,7 @@ namespace Radiant
     /// messages are printed to stderr.
     /// This is typically called automatically by MultiWidgets::Application.
     RADIANT_API void initialize(Radiant::FlagsT<InitFlags> flags =
-        PROCESS_QUEUED_MESSAGES | INITIALIZE_DEFAULT_FILTERS);
+        INIT_PROCESS_QUEUED_MESSAGES | INIT_DEFAULT_FILTERS | INIT_QT_MESSAGE_HANDLER);
 
 
     /// Display useful output.

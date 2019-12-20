@@ -23,9 +23,67 @@ namespace Radiant
 {
   namespace Trace
   {
-    static std::multimap<float, Radiant::Trace::FilterPtr> s_filters;
-    static std::vector<Message> s_queue;
-    static bool s_initialized = false;
+    namespace
+    {
+      static std::multimap<float, Radiant::Trace::FilterPtr> s_filters;
+      static std::vector<Message> s_queue;
+      static bool s_initialized = false;
+
+      void qtMessageHandler(QtMsgType type, const QMessageLogContext & ctx, const QString & msg)
+      {
+        // By default Qt includes file/line/func in debug builds but not in
+        // release builds. To avoid extra string manipulation, just have two
+        // switches here.
+        if (ctx.file) {
+          const char * file = ctx.file ? ctx.file : "";
+          const char * func = ctx.function ? ctx.function : "";
+          const QByteArray & str = msg.toUtf8();
+          switch (type) {
+            case QtDebugMsg:
+              trace("Qt", DEBUG, "%s:%d [%s]: %s", file, ctx.line, func, str.data());
+              break;
+
+            case QtInfoMsg:
+              trace("Qt", INFO, "%s:%d [%s]: %s", file, ctx.line, func, str.data());
+              break;
+
+            case QtWarningMsg:
+              trace("Qt", WARNING, "%s:%d [%s]: %s", file, ctx.line, func, str.data());
+              break;
+
+            case QtCriticalMsg:
+              trace("Qt", FAILURE, "%s:%d [%s]: %s", file, ctx.line, func, str.data());
+              break;
+
+            case QtFatalMsg:
+              trace("Qt", FATAL, "%s:%d [%s]: %s", file, ctx.line, func, str.data());
+              break;
+          }
+        } else {
+          switch (type) {
+            case QtDebugMsg:
+              traceMsg("Qt", DEBUG, msg);
+              break;
+
+            case QtInfoMsg:
+              traceMsg("Qt", INFO, msg);
+              break;
+
+            case QtWarningMsg:
+              traceMsg("Qt", WARNING, msg);
+              break;
+
+            case QtCriticalMsg:
+              traceMsg("Qt", FAILURE, msg);
+              break;
+
+            case QtFatalMsg:
+              traceMsg("Qt", FATAL, msg);
+              break;
+          }
+        }
+      }
+    }
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -138,17 +196,21 @@ namespace Radiant
       decltype(s_queue) queue;
       std::swap(s_queue, queue);
 
-      if (flags & INITIALIZE_DEFAULT_FILTERS) {
+      if (flags & INIT_DEFAULT_FILTERS) {
         findOrCreateFilter<SeverityFilter>();
         findOrCreateFilter<StdFilter>();
       }
 
       s_initialized = true;
 
-      if (flags & PROCESS_QUEUED_MESSAGES) {
+      if (flags & INIT_PROCESS_QUEUED_MESSAGES) {
         for (Message & msg: queue) {
           processFilters(msg);
         }
+      }
+
+      if (flags & INIT_QT_MESSAGE_HANDLER) {
+        qInstallMessageHandler(qtMessageHandler);
       }
     }
 
