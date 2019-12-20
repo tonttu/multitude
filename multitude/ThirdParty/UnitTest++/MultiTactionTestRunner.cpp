@@ -657,7 +657,7 @@ namespace UnitTest
     if (flags & TestRunnerFlag::SILENT) {
       auto dropAllMessages = [] (const Radiant::Trace::Message &) { return true; };
       Radiant::Trace::addFilter(dropAllMessages, Radiant::Trace::Filter::ORDER_DEFAULT_FILTERS);
-      Radiant::Trace::initialize(Radiant::Trace::INIT_NO_FLAGS);
+      Radiant::Trace::initialize(Radiant::Trace::INIT_QT_MESSAGE_HANDLER);
     } else if (flags & TestRunnerFlag::VERBOSE) {
       Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
       Radiant::Trace::initialize();
