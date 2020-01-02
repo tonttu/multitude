@@ -6,6 +6,7 @@
 #include <functional>
 
 struct AVFrame;
+struct AVFormatContext;
 
 namespace VideoDisplay
 {
@@ -19,6 +20,10 @@ namespace VideoDisplay
   ///  * Initialize avcodec, avdevice, libavformat, avformat_network and avfilter
   VIDEODISPLAY_API void ffmpegInit();
 
+  typedef std::shared_ptr<AVFormatContext> AVFormatContextPtr;
+
+  /// Holds a single ffmpeg video frame and keeps the decoder context alive so
+  /// that the frame can freely be used and deleted.
   struct AVFrameWrapper
   {
     AVFrameWrapper(const AVFrameWrapper & copied) = delete;
@@ -27,6 +32,7 @@ namespace VideoDisplay
     AVFrameWrapper(AVFrameWrapper && moved)
       : avframe(moved.avframe)
       , referenced(moved.referenced)
+      , context(std::move(moved.context))
     {
       moved.avframe = nullptr;
       moved.referenced = false;
@@ -36,18 +42,23 @@ namespace VideoDisplay
     {
       std::swap(avframe, moved.avframe);
       std::swap(referenced, moved.referenced);
+      std::swap(context, moved.context);
       return *this;
     }
 
-    AVFrameWrapper(AVFrame * frame = nullptr, bool referenced = false)
+    AVFrameWrapper() = default;
+
+    AVFrameWrapper(AVFrame * frame, bool ref, AVFormatContextPtr ctx)
       : avframe(frame)
-      , referenced(referenced)
+      , referenced(ref)
+      , context(std::move(ctx))
     {}
 
     VIDEODISPLAY_API ~AVFrameWrapper();
 
-    AVFrame * avframe;
-    bool referenced;
+    AVFrame * avframe = nullptr;
+    bool referenced = false;
+    AVFormatContextPtr context;
   };
 
   struct DeallocatedFrames
