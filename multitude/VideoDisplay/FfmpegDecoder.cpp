@@ -168,7 +168,7 @@ namespace VideoDisplay
     AVPacket packet;
     AVFrame * frame;
 
-    AVFormatContext * formatContext;
+    AVFormatContextPtr formatContext;
 
     AVCodecContext * videoCodecContext;
     AVCodec * videoCodec;
@@ -658,7 +658,7 @@ namespace VideoDisplay
 
     setMapOptions(m_options.demuxerOptions(), &avoptions, errorMsg);
 
-    m_av.formatContext = avformat_alloc_context();
+    AVFormatContext * formatContext = avformat_alloc_context();
 
     // Interrupt blocking IO
     AVIOInterruptCB interruptCallback;
@@ -667,19 +667,29 @@ namespace VideoDisplay
       return running ? 0 : 1;
     };
     interruptCallback.opaque = &m_running;
-    m_av.formatContext->interrupt_callback = interruptCallback;
+    formatContext->interrupt_callback = interruptCallback;
 
-    int err = avformat_open_input(&m_av.formatContext, openTarget.toUtf8().data(),
+    // avformat_open_input will delete formatContext on error
+    int err = avformat_open_input(&formatContext, openTarget.toUtf8().data(),
                                   inputFormat, &avoptions);
     if(err != 0) {
       if (m_running)
         avError(QString("%1 Failed to open the source file").arg(errorMsg.data()), err);
       av_dict_free(&avoptions);
-      avformat_free_context(m_av.formatContext);
-      m_av.formatContext = nullptr;
       releaseExclusiveAccess();
       return false;
     }
+
+    m_av.formatContext = AVFormatContextPtr(formatContext, [hasExclusiveAccess = m_hasExclusiveAccess, ex = m_exclusiveAccess]
+                                            (AVFormatContext * self) {
+      avformat_close_input(&self);
+      if (hasExclusiveAccess) {
+        Radiant::Guard g(s_exclusiveAccessMutex);
+        s_exclusiveAccess.erase(ex);
+      }
+    });
+    // Exclusive access management was moved to the shared_ptr deleter
+    m_hasExclusiveAccess = false;
 
     {
       AVDictionaryEntry * it = nullptr;
@@ -694,12 +704,12 @@ namespace VideoDisplay
     // Retrieve stream information, avformat processes some stream data, so
     // this might take a while, and it might fail with some files (at least
     // with some mkv files), so we don't abort on error
-    err = avformat_find_stream_info(m_av.formatContext, nullptr);
+    err = avformat_find_stream_info(m_av.formatContext.get(), nullptr);
     if(err < 0)
       avError(QString("%1 Failed to find stream info").arg(errorMsg.data()), err);
 
     if(m_options.isVideoEnabled()) {
-      m_av.videoStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_VIDEO,
+      m_av.videoStreamIndex = av_find_best_stream(m_av.formatContext.get(), AVMEDIA_TYPE_VIDEO,
                                                   m_options.videoStreamIndex(), -1,
                                                   &m_av.videoCodec, 0);
       if(m_av.videoStreamIndex < 0) {
@@ -731,7 +741,7 @@ namespace VideoDisplay
     }
 
     if(m_options.isAudioEnabled()) {
-      m_av.audioStreamIndex = av_find_best_stream(m_av.formatContext, AVMEDIA_TYPE_AUDIO,
+      m_av.audioStreamIndex = av_find_best_stream(m_av.formatContext.get(), AVMEDIA_TYPE_AUDIO,
                                                   m_options.audioStreamIndex(), m_av.videoStreamIndex,
                                                   &m_av.audioCodec, 0);
       if(m_av.audioStreamIndex < 0) {
@@ -757,8 +767,7 @@ namespace VideoDisplay
 
     if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Didn't open any media streams", errorMsg.data());
-      avformat_close_input(&m_av.formatContext);
-      releaseExclusiveAccess();
+      m_av.formatContext.reset();
       return false;
     }
 
@@ -823,8 +832,7 @@ namespace VideoDisplay
 
     if(!m_av.videoCodec && !m_av.audioCodec) {
       Radiant::error("%s Failed to open any media stream codecs", errorMsg.data());
-      avformat_close_input(&m_av.formatContext);
-      releaseExclusiveAccess();
+      m_av.formatContext.reset();
       return false;
     }
 
@@ -994,8 +1002,7 @@ namespace VideoDisplay
     av_frame_free(&m_av.frame);
 
     // Close the video file
-    if(m_av.formatContext)
-      avformat_close_input(&m_av.formatContext);
+    m_av.formatContext.reset();
 
     m_av.videoCodec = nullptr;
     m_av.audioCodec = nullptr;
@@ -1006,8 +1013,6 @@ namespace VideoDisplay
       audioTransfer->shutdown();
       Resonant::DSPNetwork::markDone(audioTransfer);
     }
-
-    releaseExclusiveAccess();
   }
 
   bool FfmpegDecoder::D::seekToBeginning()
@@ -1015,14 +1020,14 @@ namespace VideoDisplay
     int err = 0;
     if(m_av.seekingSupported) {
       if(m_av.seekByBytes) {
-        err = avformat_seek_file(m_av.formatContext, -1,
+        err = avformat_seek_file(m_av.formatContext.get(), -1,
                                  std::numeric_limits<int64_t>::min(), 0,
                                  std::numeric_limits<int64_t>::max(),
                                  AVSEEK_FLAG_BYTE);
       } else {
         int64_t pos = m_av.formatContext->start_time == (int64_t) AV_NOPTS_VALUE
             ? 0 : m_av.formatContext->start_time;
-        err = avformat_seek_file(m_av.formatContext, -1,
+        err = avformat_seek_file(m_av.formatContext.get(), -1,
                                  std::numeric_limits<int64_t>::min(), pos,
                                  std::numeric_limits<int64_t>::max(), 0);
       }
@@ -1148,7 +1153,7 @@ namespace VideoDisplay
     } else {
       maxTs = pos;
     }
-    int err = avformat_seek_file(m_av.formatContext, -1, minTs, pos, maxTs,
+    int err = avformat_seek_file(m_av.formatContext.get(), -1, minTs, pos, maxTs,
                                  seekByBytes ? AVSEEK_FLAG_BYTE : AVSEEK_FLAG_BACKWARD);
     if(err < 0) {
       Radiant::error("%s Seek failed", errorMsg.data());
@@ -1427,6 +1432,7 @@ namespace VideoDisplay
           AVFrame & avframe = *videoFrame->frame.avframe;
           av_frame_ref(&avframe, m_av.frame);
           videoFrame->frame.referenced = true;
+          videoFrame->frame.context = m_av.formatContext;
 
           videoFrame->setIndex(m_index++);
 
@@ -1482,6 +1488,7 @@ namespace VideoDisplay
       AVFrame & avframe = *videoFrame->frame.avframe;
       av_frame_ref(&avframe, m_av.frame);
       videoFrame->frame.referenced = true;
+      videoFrame->frame.context = m_av.formatContext;
 
       videoFrame->setIndex(m_index++);
 
@@ -1951,7 +1958,7 @@ namespace VideoDisplay
       }
 
       if(eof == EofState::Normal) {
-        err = av_read_frame(av.formatContext, &av.packet);
+        err = av_read_frame(av.formatContext.get(), &av.packet);
       }
 
       if(err < 0) {
