@@ -144,7 +144,7 @@ namespace Nimble {
     inline void setHighY(const T highY) { m_high.y = highY; }
 
     /// Returns the center of the rectangle.
-    inline Vector2T<T> center() const { return (m_low + m_high) * (T) 0.5; }
+    inline Vector2T<T> center() const { return (m_low + m_high) / T(2); }
 
     /// Returns the vector between low and high corners
     inline Vector2T<T> span() const { return m_high - m_low; }
@@ -424,14 +424,6 @@ namespace Nimble {
   {
     return RectT<T>(clamp(that.low()), clamp(that.high()));
   }
-
-  /// @cond
-  template <>
-      inline Vector2T<int> RectT<int>::center() const
-  {
-    return (m_low + m_high) / 2;
-  }
-  /// @endcond
 
   template<class T>
   void RectT<T>::transform(const Matrix3T<T>& m)
