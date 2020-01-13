@@ -159,7 +159,7 @@ namespace Nimble {
       */
     int lowestNonEmpty() const
     {
-      for(int i = 1; i < N; i++) {
+      for(int i = 0; i < N; i++) {
         if(m_data[i])
           return i;
       }
