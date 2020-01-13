@@ -13,7 +13,7 @@
 
 #include "Export.hpp"
 
-#include <QString>
+#include <string.h>
 
 namespace Nimble {
 
@@ -214,8 +214,6 @@ namespace Nimble {
   typedef Histogram<unsigned int,256> Histogramu256;
   /// Histogram of 1024 unsigned integers
   typedef Histogram<unsigned int,1024> Histogramu1024;
-  /// Histogram of signed integers
-  typedef Histogram<int,256> Histogrami256;
 
   // This is needed on Windows
 #ifdef WIN32
@@ -223,7 +221,6 @@ namespace Nimble {
   template Histogram<unsigned int, 64>;
   template Histogram<unsigned int, 256>;
   template Histogram<unsigned int, 1024>;
-  template Histogram<int, 256>;
 #endif
 #endif
 
