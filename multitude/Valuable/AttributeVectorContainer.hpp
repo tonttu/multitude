@@ -2,7 +2,7 @@
 #define VALUABLE_ATTRIBUTEVECTORCONTAINER_HPP
 
 #include "Attribute.hpp"
-#include "Event.hpp"
+#include "AttributeEvent.hpp"
 
 namespace Valuable
 {
@@ -15,11 +15,11 @@ namespace Valuable
       : Attribute(parent, name)
     {}
 
-    EventListenerList & eventListenerList() { return m_eventListeners; }
-    const EventListenerList & eventListenerList() const { return m_eventListeners; }
+    AttributeEventListenerList & eventListenerList() { return m_eventListeners; }
+    const AttributeEventListenerList & eventListenerList() const { return m_eventListeners; }
 
   protected:
-    EventListenerList m_eventListeners;
+    AttributeEventListenerList m_eventListeners;
   };
 
   /// An attribute vector of immutable objects.
@@ -57,7 +57,7 @@ namespace Valuable
 
     ~AttributeVectorContainer()
     {
-      m_eventListeners.send(Event::Type::DELETED);
+      m_eventListeners.send(AttributeEvent::Type::DELETED);
     }
 
     // Copy vector contents, doesn't copy listeners or anything Attribute-specific
@@ -66,7 +66,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector = container.m_vector;
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
       return *this;
     }
@@ -76,7 +76,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector = vector;
       if (!wasEmpty || !empty())
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       return *this;
     }
 
@@ -85,7 +85,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector = std::move(vector);
       if (!wasEmpty || !empty())
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       return *this;
     }
 
@@ -97,8 +97,8 @@ namespace Valuable
       } else {
         m_vector = std::move(container.m_vector);
         container.m_vector.clear();
-        container.m_eventListeners.send(Event::Type::CHANGED);
-        m_eventListeners.send(Event::Type::CHANGED);
+        container.m_eventListeners.send(AttributeEvent::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
       return *this;
     }
@@ -108,7 +108,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector = list;
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
       return *this;
     }
@@ -119,7 +119,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector.assign(first, last);
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
     }
 
@@ -128,7 +128,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector.assign(n, t);
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
     }
 
@@ -137,7 +137,7 @@ namespace Valuable
       const bool wasEmpty = empty();
       m_vector.assign(list);
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
     }
 
@@ -190,7 +190,7 @@ namespace Valuable
     {
       const auto idx = m_vector.size();
       m_vector.emplace_back(std::forward<Args>(args)...);
-      m_eventListeners.send(Event::Type::ELEMENT_INSERTED, idx);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_INSERTED, idx);
     }
 
     template <typename Y>
@@ -198,14 +198,14 @@ namespace Valuable
     {
       const auto idx = m_vector.size();
       m_vector.push_back(std::forward<Y>(y));
-      m_eventListeners.send(Event::Type::ELEMENT_INSERTED, idx);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_INSERTED, idx);
     }
 
     void pop_back()
     {
       if (m_vector.empty()) return;
       m_vector.pop_back();
-      m_eventListeners.send(Event::Type::ELEMENT_ERASED, m_vector.size());
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_ERASED, m_vector.size());
     }
 
     template <class... Args>
@@ -215,7 +215,7 @@ namespace Valuable
       // const_iterator like specified in C++11. Work around it.
       const auto index = position - begin();
       const_iterator it = m_vector.emplace(m_vector.begin() + index, std::forward<Args>(args)...);
-      m_eventListeners.send(Event::Type::ELEMENT_INSERTED, index);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_INSERTED, index);
       return it;
     }
 
@@ -224,7 +224,7 @@ namespace Valuable
     {
       const auto index = position - begin();
       auto it = m_vector.insert(m_vector.begin() + index, std::forward<Y>(y));
-      m_eventListeners.send(Event::Type::ELEMENT_INSERTED, index);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_INSERTED, index);
       return it;
     }
 
@@ -233,7 +233,7 @@ namespace Valuable
     {
       const auto index = position - begin();
       auto it = m_vector.erase(m_vector.begin() + index);
-      m_eventListeners.send(Event::Type::ELEMENT_ERASED, index);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_ERASED, index);
       return it;
     }
 
@@ -243,8 +243,8 @@ namespace Valuable
         return;
       }
       m_vector.swap(other.m_vector);
-      other.m_eventListeners.send(Event::Type::CHANGED);
-      m_eventListeners.send(Event::Type::CHANGED);
+      other.m_eventListeners.send(AttributeEvent::Type::CHANGED);
+      m_eventListeners.send(AttributeEvent::Type::CHANGED);
     }
 
     void swap(container & other)
@@ -253,7 +253,7 @@ namespace Valuable
         return;
       }
       m_vector.swap(other);
-      m_eventListeners.send(Event::Type::CHANGED);
+      m_eventListeners.send(AttributeEvent::Type::CHANGED);
     }
 
     void clear() noexcept
@@ -262,7 +262,7 @@ namespace Valuable
         return;
       }
       m_vector.clear();
-      m_eventListeners.send(Event::Type::CHANGED);
+      m_eventListeners.send(AttributeEvent::Type::CHANGED);
     }
 
 
@@ -281,7 +281,7 @@ namespace Valuable
       if (dest == y) return;
 
       dest = std::forward<Y>(y);
-      m_eventListeners.send(Event::Type::ELEMENT_CHANGED, index);
+      m_eventListeners.send(AttributeEvent::Type::ELEMENT_CHANGED, index);
     }
 
 
@@ -289,13 +289,13 @@ namespace Valuable
 
     /// @copydoc EventListenerList::addListener
     template <class... Args>
-    EventListenerList::ListenerId addListener(Args&&... args)
+    AttributeEventListenerList::ListenerId addListener(Args&&... args)
     {
       return m_eventListeners.addListener(std::forward<Args>(args)...);
     }
 
     /// @copydoc EventListenerList::removeListener
-    bool removeListener(EventListenerList::ListenerId listener)
+    bool removeListener(AttributeEventListenerList::ListenerId listener)
     {
       return m_eventListeners.removeListener(listener);
     }
@@ -342,7 +342,7 @@ namespace Valuable
       }
 
       if (!wasEmpty || !empty()) {
-        m_eventListeners.send(Event::Type::CHANGED);
+        m_eventListeners.send(AttributeEvent::Type::CHANGED);
       }
 
       return true;
@@ -406,7 +406,7 @@ namespace Valuable
     {
       const auto index = position - Base::cbegin();
       auto it = Base::m_vector.erase(Base::m_vector.begin() + index);
-      Base::m_eventListeners.send(Event::Type::ELEMENT_ERASED, index);
+      Base::m_eventListeners.send(AttributeEvent::Type::ELEMENT_ERASED, index);
       return it;
     }
 

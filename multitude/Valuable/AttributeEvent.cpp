@@ -1,17 +1,17 @@
-#include "Event.hpp"
+#include "AttributeEvent.hpp"
 
 #include <set>
 
 namespace Valuable
 {
-  EventListenerList::ListenerId EventListenerList::addListener(Event::Types types, EventListenerFunc listener)
+  AttributeEventListenerList::ListenerId AttributeEventListenerList::addListener(AttributeEvent::Types types, EventListenerFunc listener)
   {
     auto id = m_nextListenerId++;
     m_eventListeners[id] = EventListener{types, listener};
     return id;
   }
 
-  bool EventListenerList::removeListener(ListenerId listener)
+  bool AttributeEventListenerList::removeListener(ListenerId listener)
   {
     if (m_eventListeners.erase(listener)) {
       ++m_nextListenerId;
@@ -20,7 +20,7 @@ namespace Valuable
     return false;
   }
 
-  void EventListenerList::send(Event::Type type, std::size_t index)
+  void AttributeEventListenerList::send(AttributeEvent::Type type, std::size_t index)
   {
     // Only call listeners that have lower listener id than this to exclude
     // listeners that were added during this function call
@@ -44,7 +44,7 @@ namespace Valuable
           // Need to take copy of the function, otherwise calling
           // Event::removeListener inside the lambda will crash the application
           auto func = it->second.func;
-          func(Event(this, it->first, type, index));
+          func(AttributeEvent(this, it->first, type, index));
 
           // If this event handler modified the listener list, our iterator has been invalidated
           // and we need to start from the beginning
