@@ -54,7 +54,7 @@ namespace Valuable
       node->eventRemoveListener(id);
     }
     for (const auto & pair: m_listeners) {
-      EventListenerList & list = *pair.first;
+      AttributeEventListenerList & list = *pair.first;
       const ListenerInfo & info = pair.second;
       list.removeListener(info.deleteListener);
       for (auto id: info.listeners) {
@@ -115,8 +115,8 @@ namespace Valuable
     m_eventListeners.erase(node);
   }
 
-  Event::ListenerId ListenerHolder::addListener(EventListenerList & list, Event::Types types,
-                                                EventListenerList::EventListenerFunc listener)
+  AttributeEvent::ListenerId ListenerHolder::addListener(AttributeEventListenerList & list, AttributeEvent::Types types,
+                                                AttributeEventListenerList::EventListenerFunc listener)
   {
     auto id = list.addListener(types, std::move(listener));
     auto key = &list;
@@ -126,7 +126,7 @@ namespace Valuable
     info.listeners.insert(id);
 
     if (info.deleteListener == 0) {
-      info.deleteListener = list.addListener(Event::Type::DELETED, [this, key] (Event) {
+      info.deleteListener = list.addListener(AttributeEvent::Type::DELETED, [this, key] (AttributeEvent) {
         Radiant::Guard guard(m_mutex);
         m_listeners.erase(key);
       });
@@ -134,7 +134,7 @@ namespace Valuable
     return id;
   }
 
-  bool ListenerHolder::removeListener(EventListenerList & list, Event::ListenerId listener)
+  bool ListenerHolder::removeListener(AttributeEventListenerList & list, AttributeEvent::ListenerId listener)
   {
     bool ok = list.removeListener(listener);
     auto key = &list;

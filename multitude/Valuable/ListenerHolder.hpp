@@ -3,7 +3,7 @@
 
 #include "Export.hpp"
 #include "Node.hpp"
-#include "Event.hpp"
+#include "AttributeEvent.hpp"
 #include "AttributeVectorContainer.hpp"
 
 #include <unordered_map>
@@ -85,23 +85,23 @@ namespace Valuable
     /// Add a new listeners to EventListenerList
     /// @param list Object that we are listening to
     /// See EventListenerList::addListener for more information about other parameters
-    Event::ListenerId addListener(EventListenerList & list, Event::Types types,
-                                  EventListenerList::EventListenerFunc listener);
+    AttributeEvent::ListenerId addListener(AttributeEventListenerList & list, AttributeEvent::Types types,
+                                  AttributeEventListenerList::EventListenerFunc listener);
 
     /// Add a new listeners to AttributeContainer
     /// @param container Container that we are listening to
     /// See EventListenerList::addListener for more information about other parameters
-    inline Event::ListenerId addListener(AttributeContainerBase & container, Event::Types types,
-                                         EventListenerList::EventListenerFunc listener)
+    inline AttributeEvent::ListenerId addListener(AttributeContainerBase & container, AttributeEvent::Types types,
+                                         AttributeEventListenerList::EventListenerFunc listener)
     {
       return addListener(container.eventListenerList(), types, std::move(listener));
     }
 
     /// Remove a listener from EventListenerList
-    bool removeListener(EventListenerList & list, Event::ListenerId listener);
+    bool removeListener(AttributeEventListenerList & list, AttributeEvent::ListenerId listener);
 
     /// Remove a listener from AttributeContainer
-    inline bool removeListener(AttributeContainerBase & container, Event::ListenerId listener)
+    inline bool removeListener(AttributeContainerBase & container, AttributeEvent::ListenerId listener)
     {
       return removeListener(container.eventListenerList(), listener);
     }
@@ -121,11 +121,11 @@ namespace Valuable
     /// All Listeners for one EventListenerList
     struct ListenerInfo
     {
-      Event::ListenerId deleteListener = 0;
-      std::set<Event::ListenerId> listeners;
+      AttributeEvent::ListenerId deleteListener = 0;
+      std::set<AttributeEvent::ListenerId> listeners;
     };
 
-    std::unordered_map<EventListenerList*, ListenerInfo> m_listeners;
+    std::unordered_map<AttributeEventListenerList*, ListenerInfo> m_listeners;
   };
 }
 

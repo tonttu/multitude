@@ -1,5 +1,4 @@
-#ifndef VALUABLE_EVENT_HPP
-#define VALUABLE_EVENT_HPP
+#pragma once
 
 #include "Export.hpp"
 
@@ -10,10 +9,10 @@
 
 namespace Valuable
 {
-  class EventListenerList;
+  class AttributeEventListenerList;
 
   /// Event that is sent to event listeners when Attribute changes
-  class Event
+  class AttributeEvent
   {
   public:
     /// Event type that also works as a bitmask
@@ -29,7 +28,7 @@ namespace Valuable
 
       ALL_EVENTS        = (uint32_t)-1
     };
-    typedef Radiant::FlagsT<Event::Type> Types;
+    typedef Radiant::FlagsT<AttributeEvent::Type> Types;
     typedef uint64_t ListenerId;
 
   public:
@@ -44,7 +43,7 @@ namespace Valuable
 
     /// @cond
 
-    Event(EventListenerList * listenerList, ListenerId listenerId, Type type, std::size_t index = 0)
+    AttributeEvent(AttributeEventListenerList * listenerList, ListenerId listenerId, Type type, std::size_t index = 0)
       : m_listenerList(listenerList)
       , m_listenerId(listenerId)
       , m_type(type)
@@ -54,33 +53,33 @@ namespace Valuable
     /// @endcond
 
   private:
-    EventListenerList * m_listenerList;
+    AttributeEventListenerList * m_listenerList;
     ListenerId m_listenerId;
     Type m_type;
     std::size_t m_index;
   };
-  MULTI_FLAGS(Event::Type);
+  MULTI_FLAGS(AttributeEvent::Type)
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   /// Utility class for distributing the changes in Attributes to the listeners
-  class VALUABLE_API EventListenerList
+  class VALUABLE_API AttributeEventListenerList
   {
   public:
-    typedef Event::ListenerId ListenerId;
-    typedef std::function<void(Event)> EventListenerFunc;
+    typedef AttributeEvent::ListenerId ListenerId;
+    typedef std::function<void(AttributeEvent)> EventListenerFunc;
 
   public:
-    EventListenerList() {}
-    ~EventListenerList() {}
+    AttributeEventListenerList() {}
+    ~AttributeEventListenerList() {}
 
     /// Adds a new event listener for selected event types. Can be called
     /// from an event listener callback.
     /// @param types event types to listen
     /// @param listener listener callback which is invoked when any of the events happen
     /// @returns listener id which can be used to remove the listener with removeListener
-    ListenerId addListener(Event::Types types, EventListenerFunc listener);
+    ListenerId addListener(AttributeEvent::Types types, EventListenerFunc listener);
 
     /// Remove an event listener. Can be called from an event listener callback
     /// @param listener Listener id returned by addListener
@@ -90,14 +89,14 @@ namespace Valuable
     /// Sends a new event to listeners. Can be called from an event listener callback
     /// @param type event type
     /// @param index see Event::index
-    void send(Event::Type type, std::size_t index = 0);
+    void send(AttributeEvent::Type type, std::size_t index = 0);
 
   private:
     ListenerId m_nextListenerId = 1;
 
     struct EventListener
     {
-      Event::Types types;
+      AttributeEvent::Types types;
       EventListenerFunc func;
     };
 
@@ -107,11 +106,9 @@ namespace Valuable
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  void Event::removeListener()
+  void AttributeEvent::removeListener()
   {
     m_listenerList->removeListener(m_listenerId);
   }
 
 } // namespace Valuable
-
-#endif // VALUABLE_EVENT_HPP

@@ -20,7 +20,7 @@ HEADERS += Archive.hpp \
     SimpleExpressionLink.hpp \
     AttributeTuple.hpp \
     AttributeVectorContainer.hpp \
-    Event.hpp \
+    AttributeEvent.hpp \
     GraphicsCoordinates.hpp \
     WeakAttributePtr.hpp \
     WeakNodePtr.hpp
@@ -64,7 +64,7 @@ SOURCES += Archive.cpp \
     TransitionManager.cpp \
     SimpleExpression.cpp \
     SimpleExpressionLink.cpp \
-    Event.cpp \
+    AttributeEvent.cpp \
     GraphicsCoordinates.cpp
 SOURCES += CmdParser.cpp
 SOURCES += ConfigDocument.cpp
