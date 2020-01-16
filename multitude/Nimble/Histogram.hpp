@@ -13,7 +13,7 @@
 
 #include "Export.hpp"
 
-#include <string.h>
+#include <cstring>
 
 namespace Nimble {
 
@@ -43,7 +43,7 @@ namespace Nimble {
     ~Histogram() {}
 
     /// Sets all histogram bins to zero
-    void clear() { memset(m_data, 0, sizeof(m_data)); m_count = 0; }
+    void clear() { std::memset(m_data, 0, sizeof(m_data)); m_count = 0; }
 
     /// Adds the histogram bin "index" by one
     void put(int index) { m_data[index]++; m_count++; }
