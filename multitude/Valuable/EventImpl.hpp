@@ -99,6 +99,14 @@ namespace Valuable
         return true;
       }
     }
+
+    for (auto it = d.newListeners.begin(); it != d.newListeners.end(); ++it) {
+      if (it->id == id) {
+        d.newListeners.erase(it);
+        return true;
+      }
+    }
+
     return false;
   }
 
