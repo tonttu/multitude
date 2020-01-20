@@ -16,46 +16,62 @@
 #include <sys/file.h>
 #include <unistd.h>
 
-
 namespace Radiant
 {
-  class LockFile_Impl
+  class LockFile::D
   {
   public:
-    LockFile_Impl(const char * filename)
-    {
-      m_fd = open(filename, O_CREAT | O_CLOEXEC, 0644);
-      m_locked = (flock(m_fd, LOCK_EX | LOCK_NB) == 0);
-    }
+    D(const QString & filename)
+      : m_filename(filename)
+    {}
 
-    ~LockFile_Impl()
-    {
-      flock(m_fd, LOCK_UN);
-      close(m_fd);
-    }
-
-    bool isLocked() const
-    {
-      return m_locked;
-    }
-  private:
-    int m_fd;
-    bool m_locked;
+  public:
+    QString m_filename;
+    int m_fd = -1;
   };
 
-  LockFile::LockFile(const char * filename)
+  LockFile::LockFile(const QString & filename, bool block)
+    : m_d(new D(filename))
   {
-    m_impl = new LockFile_Impl(filename);
+    lock(block);
   }
 
   LockFile::~LockFile()
   {
-    delete m_impl;
+    unlock();
   }
 
   bool LockFile::isLocked() const
   {
-    return m_impl->isLocked();
+    return m_d->m_fd >= 0;
+  }
+
+  bool LockFile::lock(bool block)
+  {
+    if (isLocked())
+      return true;
+
+    int op = LOCK_EX;
+    if (!block)
+      op |= LOCK_NB;
+
+    m_d->m_fd = open(m_d->m_filename.toUtf8().data(), O_CREAT | O_CLOEXEC, 0644);
+    if (flock(m_d->m_fd, op) == 0) {
+      return true;
+    } else {
+      close(m_d->m_fd);
+      m_d->m_fd = -1;
+      return false;
+    }
+  }
+
+  void LockFile::unlock()
+  {
+    if (m_d->m_fd >= 0) {
+      flock(m_d->m_fd, LOCK_UN);
+      close(m_d->m_fd);
+      m_d->m_fd = -1;
+    }
   }
 }
 

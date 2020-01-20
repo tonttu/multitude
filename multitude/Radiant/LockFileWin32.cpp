@@ -18,40 +18,70 @@
 
 namespace Radiant
 {
-  class LockFile_Impl
+  class LockFile::D
   {
   public:
-    LockFile_Impl(const char * filename)
-    {
-      m_fd = CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    }
+    D(const QString & filename)
+      : m_filename(filename)
+    {}
 
-    ~LockFile_Impl()
-    {
-      CloseHandle(m_fd);
-    }
-
-    bool isLocked() const
-    {
-      return (m_fd != INVALID_HANDLE_VALUE);
-    }
-  private:
-    HANDLE m_fd;
+  public:
+    QString m_filename;
+    HANDLE m_fd = INVALID_HANDLE_VALUE;
   };
 
-  LockFile::LockFile(const char * filename)
+  LockFile::LockFile(const QString & filename, bool block)
+    : m_d(new D(filename))
   {
-    m_impl = new LockFile_Impl(filename);
+    lock(block);
   }
 
   LockFile::~LockFile()
   {
-    delete m_impl;
+    unlock();
   }
 
   bool LockFile::isLocked() const
   {
-    return m_impl->isLocked();
+    return m_d->m_fd != INVALID_HANDLE_VALUE;
+  }
+
+  bool LockFile::lock(bool block)
+  {
+    if (isLocked())
+      return true;
+
+    m_d->m_fd = CreateFileA(m_d->m_filename.toUtf8().data(),
+                            GENERIC_READ | GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            nullptr,
+                            OPEN_ALWAYS,
+                            FILE_ATTRIBUTE_NORMAL,
+                            nullptr);
+
+    if (m_d->m_fd == INVALID_HANDLE_VALUE)
+      return false;
+
+    DWORD flags = LOCKFILE_EXCLUSIVE_LOCK;
+    if (!block)
+      flags |= LOCKFILE_FAIL_IMMEDIATELY;
+
+    OVERLAPPED overlapped{};
+    if (LockFileEx(m_d->m_fd, flags, 0, 1, 0, &overlapped)) {
+      return true;
+    } else {
+      CloseHandle(m_d->m_fd);
+      m_d->m_fd = INVALID_HANDLE_VALUE;
+      return false;
+    }
+  }
+
+  void LockFile::unlock()
+  {
+    if (m_d->m_fd != INVALID_HANDLE_VALUE) {
+      CloseHandle(m_d->m_fd);
+      m_d->m_fd = INVALID_HANDLE_VALUE;
+    }
   }
 }
 

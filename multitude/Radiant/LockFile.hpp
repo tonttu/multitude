@@ -8,10 +8,13 @@
  * 
  */
 
-#if !defined (RADIANT_LOCKFILE_HPP)
-#define RADIANT_LOCKFILE_HPP
+#pragma once
 
-#include "Radiant/Export.hpp"
+#include "Export.hpp"
+
+#include <QString>
+
+#include <memory>
 
 namespace Radiant
 {
@@ -24,7 +27,8 @@ namespace Radiant
     /// No other operations should be done on this file
     /// If the file doesn't exist it is created.
     /// @param filename Filename of lockfile
-    LockFile(const char * filename);
+    /// @block If true, the constructor will wait until the lock is acquired or an error is triggered
+    LockFile(const QString & filename, bool block);
 
     /// Releases the lock
     ~LockFile();
@@ -33,8 +37,14 @@ namespace Radiant
     /// @returns true if the file was succesfully locked for exclusive use
     bool isLocked() const;
 
+    /// Locks the file, returns true if locking succeeded or if the file was already locked.
+    bool lock(bool block);
+
+    /// Releases the lock
+    void unlock();
+
   private:
-    class LockFile_Impl * m_impl;
+    class D;
+    std::unique_ptr<D> m_d;
   };
 }
-#endif // RADIANT_LOCKFILE_HPP

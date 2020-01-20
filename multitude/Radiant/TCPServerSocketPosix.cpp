@@ -8,10 +8,11 @@
  * 
  */
 
-#include "TCPServerSocket.hpp"
-#include "TCPSocket.hpp"
+#include "LockFile.hpp"
 #include "SocketUtilPosix.hpp"
 #include "SocketWrapper.hpp"
+#include "TCPServerSocket.hpp"
+#include "TCPSocket.hpp"
 #include "Trace.hpp"
 
 #include <Nimble/Math.hpp>
@@ -20,7 +21,6 @@
 #include <stdio.h>
 
 #include <QDir>
-#include <QLockFile>
 #include <QTextStream>
 
 namespace Radiant
@@ -182,9 +182,7 @@ namespace Radiant
 
   int TCPServerSocket::randomOpenTCPPort()
   {
-    QLockFile lock(QDir::tempPath() + "/.cornerstone-random-tcp-port.lock");
-    if (!lock.lock())
-      Radiant::error("TCPServerSocket::randomOpenTCPPort # Lock failed, error code: %d", lock.error());
+    Radiant::LockFile lock(QDir::tempPath() + "/.cornerstone-random-tcp-port.lock", true);
 
     QFile file(QDir::tempPath() + "/.cornerstone-random-tcp-port");
     if (!file.open(QFile::ReadWrite)) {

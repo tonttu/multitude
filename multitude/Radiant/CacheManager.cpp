@@ -1,5 +1,6 @@
 #include "BGThread.hpp"
 #include "CacheManager.hpp"
+#include "LockFile.hpp"
 #include "PlatformUtils.hpp"
 #include "Sleep.hpp"
 #include "Task.hpp"
@@ -10,7 +11,6 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFileInfo>
-#include <QLockFile>
 #include <QReadWriteLock>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -254,8 +254,7 @@ namespace Radiant
 
     /// If there are several Cornerstone apps starting at the same time, we need
     /// to make sure the migrations are executed only by one of them
-    QLockFile lock(m_root + "/lock");
-    lock.lock();
+    Radiant::LockFile lock(m_root + "/lock", true);
 
     QSqlDatabase db = openDb();
 
