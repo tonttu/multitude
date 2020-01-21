@@ -1199,7 +1199,8 @@ namespace Luminous
     if (bytesRead != size) {
       Radiant::error("CompressedImage::loadImage # Failed to read image");
       delete[] m_d->ptr;
-      m_d->ptr = 0;
+      m_d->ptr = nullptr;
+      return false;
     }
     m_d->size = size;
 
