@@ -280,13 +280,16 @@ bool ImageCodecDDS::writeMipmaps(const QString & filename, PixelFormat::Compress
   }
 
   Radiant::Directory::mkdirRecursive(Radiant::FileUtils::path(filename));
-  QFile file(filename);
+  QSaveFile file(filename);
   if(file.open(QFile::WriteOnly)) {
     file.write(reinterpret_cast<const char*>(&header), sizeof(header));
     file.write(reinterpret_cast<const char*>(&dxt[0]), dxt.size());
-    return true;
+    if (file.commit())
+      return true;
+    Radiant::error("ImageCodecDDS::writeMipmaps # Failed to write to '%s'", filename.toUtf8().data());
+    return false;
   } else {
-    Radiant::error("ImageCodecDDS::writeMipmaps # Failed to open target file %s", filename.toUtf8().data());
+    Radiant::error("ImageCodecDDS::writeMipmaps # Failed to open target file '%s'", filename.toUtf8().data());
     return false;
   }
 }

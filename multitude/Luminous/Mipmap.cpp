@@ -180,13 +180,15 @@ namespace Luminous
   {
   public:
     LoadCompressedImageTask(Luminous::MipmapPtr mipmap, MipmapLevel & tex,
-                            Radiant::Priority priority, const QString & filename, int level);
+                            Radiant::Priority priority, const QString & filename, int level,
+                            bool removeAndRetryOnError);
 
   protected:
     virtual void doTask() OVERRIDE;
 
   private:
     MipmapLevel & m_tex;
+    bool m_removeAndRetryOnError;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -457,9 +459,10 @@ namespace Luminous
 
   LoadCompressedImageTask::LoadCompressedImageTask(
       Luminous::MipmapPtr mipmap, MipmapLevel & tex, Radiant::Priority priority,
-      const QString & filename, int level)
+      const QString & filename, int level, bool removeAndRetryOnError)
     : LoadImageTask(mipmap, priority, filename, level, "dds")
     , m_tex(tex)
+    , m_removeAndRetryOnError(removeAndRetryOnError)
   {}
 
   void LoadCompressedImageTask::doTask()
@@ -473,8 +476,23 @@ namespace Luminous
     std::unique_ptr<Luminous::CompressedImage> im(new Luminous::CompressedImage);
     if(!im->read(m_filename, m_level)) {
       Radiant::error("LoadCompressedImageTask::doTask # Could not read %s level %d", m_filename.toUtf8().data(), m_level);
-      m_tex.lastUsed = LoadError;
-      setState(*mipmap, Valuable::STATE_ERROR);
+      bool error = false;
+      if (m_removeAndRetryOnError) {
+        Radiant::info("Removing corrupted mipmap file %s", m_filename.toUtf8().data());
+        if (QFile::remove(m_filename)) {
+          m_tex.lastUsed = New;
+          mipmap->startLoading(true);
+        } else {
+          Radiant::error("Failed to remove corrupted mipmap file %s", m_filename.toUtf8().data());
+          error = true;
+        }
+      } else {
+        error = true;
+      }
+      if (error) {
+        m_tex.lastUsed = LoadError;
+        setState(*mipmap, Valuable::STATE_ERROR);
+      }
     } else {
       m_tex.texture.setData(im->width(), im->height(), im->compression(), im->data());
       m_tex.cimage = std::move(im);
@@ -836,11 +854,11 @@ namespace Luminous
               if(m_useCompressedMipmaps) {
                 task = std::make_shared<LoadCompressedImageTask>(m_mipmap.shared_from_this(), imageTex,
                                                                  m_loadingPriority + priorityChange,
-                                                                 m_compressedMipmapFile, level);
+                                                                 m_compressedMipmapFile, level, true);
               } else if(m_sourceInfo.pf.compression() != PixelFormat::COMPRESSION_NONE) {
                 task = std::make_shared<LoadCompressedImageTask>(m_mipmap.shared_from_this(), imageTex,
                                                                  m_loadingPriority + priorityChange,
-                                                                 m_filenameAbs, level);
+                                                                 m_filenameAbs, level, false);
               } else {
                 task = std::make_shared<LoadImageTask>(m_mipmap.shared_from_this(),
                                                        m_loadingPriority + priorityChange,
