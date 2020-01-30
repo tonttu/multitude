@@ -227,8 +227,10 @@ namespace VideoDisplay
     bool open();
     void close();
 
+    /// m_decodedVideoFramesMutex needs to be locked before calling either of these functions
     void setSeekGeneration(int generation);
     bool increaseSeekGeneration();
+
     bool seekToBeginning();
     bool seek(SeekRequest req, int seekRequestGeneration);
 
@@ -271,6 +273,8 @@ namespace VideoDisplay
     double m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     // m_sync activeSeekGeneration will be set to this once the seeking is finished
     int m_seekRequestGeneration = 0;
+    /// If this mutex is locked at the same time with m_decodedVideoFramesMutex,
+    /// the latter needs to be locked first
     Radiant::Mutex m_seekRequestMutex;
 
     AVDecoder::Options m_options;
@@ -1054,11 +1058,8 @@ namespace VideoDisplay
 
   void FfmpegDecoder::D::setSeekGeneration(int generation)
   {
-    {
-      Radiant::Guard g(m_decodedVideoFramesMutex);
-      m_sync->setSeekGeneration(generation);
-      m_decodedVideoFrames.clear();
-    }
+    m_sync->setSeekGeneration(generation);
+    m_decodedVideoFrames.clear();
     m_decodedVideoFramesCond.wakeAll();
   }
 
@@ -1080,8 +1081,10 @@ namespace VideoDisplay
 
     if(req.value() <= std::numeric_limits<double>::epsilon()) {
       bool ok = seekToBeginning();
-      if(ok)
+      if(ok) {
+        Radiant::Guard g(m_decodedVideoFramesMutex);
         setSeekGeneration(seekRequestGeneration);
+      }
       return ok;
     }
 
@@ -1164,7 +1167,10 @@ namespace VideoDisplay
       avcodec_flush_buffers(m_av.audioCodecContext);
     if(m_av.videoCodecContext)
       avcodec_flush_buffers(m_av.videoCodecContext);
-    setSeekGeneration(seekRequestGeneration);
+    {
+      Radiant::Guard g(m_decodedVideoFramesMutex);
+      setSeekGeneration(seekRequestGeneration);
+    }
     m_av.nextPts = m_av.startPts;
     m_av.nextPtsTb = m_av.startPtsTb;
 
@@ -1352,9 +1358,11 @@ namespace VideoDisplay
           m_host->seek(SeekRequest(ts.pts() + 0.5f, SEEK_BY_SECONDS));
       } else {
         /// If we are behind more than one second, it's time to resynchronize
-        if ((ts.pts() - ret->timestamp().pts()) > maxDiff)
+        if ((ts.pts() - ret->timestamp().pts()) > maxDiff) {
+          Radiant::Guard g(m_decodedVideoFramesMutex);
           if (increaseSeekGeneration())
             m_sync->sync(presentTimestamp, ret->timestamp());
+        }
       }
     }
     errors |= ERROR_VIDEO_FRAME_BUFFER_UNDERRUN;
