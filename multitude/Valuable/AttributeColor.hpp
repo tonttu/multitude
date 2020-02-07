@@ -102,7 +102,7 @@ namespace Valuable
       return QString("rgba_pma(%1, %2, %3, %4)").arg(c.r*255).arg(c.g*255).arg(c.b*255).arg(c.a);
     }
 
-    virtual QByteArray type() const { return "color"; }
+    virtual QByteArray type() const override { return "color"; }
 
     /// Converts the value object to color
     Radiant::ColorPMA asColor() const { return value(); }

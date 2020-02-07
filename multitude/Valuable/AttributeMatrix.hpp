@@ -63,7 +63,7 @@ namespace Valuable
       return Radiant::StringUtils::toString(this->value(layer));
     }
 
-    virtual QByteArray type() const
+    virtual QByteArray type() const override
     {
       return QByteArray("matrix") + QByteArray::number(MatrixType::rows()) + 'x' +
           QByteArray::number(MatrixType::columns()) + ':' + Radiant::StringUtils::type<typename MatrixType::type>();

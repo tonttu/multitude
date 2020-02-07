@@ -33,7 +33,7 @@ namespace Valuable
       : Attribute(host, name)
     {}
 
-    virtual bool deserialize(const Valuable::ArchiveElement&)
+    virtual bool deserialize(const Valuable::ArchiveElement&) override
     {
       return false;
     }
