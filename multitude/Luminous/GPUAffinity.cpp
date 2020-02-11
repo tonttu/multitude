@@ -84,7 +84,7 @@ namespace Luminous
   std::vector<uint32_t> GPUAffinity::gpusForDesktopArea(QRect desktop) const
   {
     std::vector<uint32_t> out;
-    std::vector<QRect> areas = gpuDesktopAreas();
+    std::vector<QRegion> areas = gpuDesktopAreas();
     for (uint32_t i = 0; i < areas.size(); ++i) {
       if (areas[i].intersects(desktop)) {
         out.push_back(i);
@@ -94,9 +94,9 @@ namespace Luminous
     return out;
   }
 
-  std::vector<QRect> GPUAffinity::gpuDesktopAreas() const
+  std::vector<QRegion> GPUAffinity::gpuDesktopAreas() const
   {
-    std::vector<QRect> out(m_d->gpus.size());
+    std::vector<QRegion> out(m_d->gpus.size());
     for (size_t i = 0; i < out.size(); ++i) {
       const D::Gpu & gpu = m_d->gpus[i];
       for (const D::GPU_DEVICE & device: gpu.devices) {

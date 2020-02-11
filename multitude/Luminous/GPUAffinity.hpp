@@ -11,6 +11,7 @@
 #include <QString>
 #include <QStringList>
 #include <QRect>
+#include <QRegion>
 
 namespace Luminous
 {
@@ -24,7 +25,7 @@ namespace Luminous
 
     bool isSupported() const;
     std::vector<uint32_t> gpusForDesktopArea(QRect desktop) const;
-    std::vector<QRect> gpuDesktopAreas() const;
+    std::vector<QRegion> gpuDesktopAreas() const;
     QString gpuName(uint32_t index) const;
     QStringList displayGdiDeviceNames(uint32_t gpuIndex) const;
 
