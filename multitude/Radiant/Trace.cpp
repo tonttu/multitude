@@ -13,6 +13,8 @@
 #include "TraceSeverityFilter.hpp"
 #include "TraceStdFilter.hpp"
 
+#include <Radiant/CallStack.hpp>
+
 #ifdef RADIANT_UNIX
 #include <unistd.h>
 #endif
@@ -82,6 +84,10 @@ namespace Radiant
               break;
           }
         }
+
+        // Trying to find what causes https://redmine.multitaction.com/issues/16343
+        if (msg.contains("Timers cannot be stopped"))
+          Radiant::CallStack().print();
       }
     }
 
