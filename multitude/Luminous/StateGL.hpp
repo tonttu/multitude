@@ -34,7 +34,7 @@ namespace Luminous
     /// Constructor
     /// @param threadIndex render thread index
     /// @param driver render driver to use
-    inline StateGL(unsigned int threadIndex, RenderDriverGL & driver);
+    LUMINOUS_API StateGL(unsigned int threadIndex, RenderDriverGL & driver);
 
     /// Sets the current program object.
     /// @param handle handle to the program object
@@ -121,52 +121,43 @@ namespace Luminous
     Radiant::TimeStamp frameTime() const { return m_frameTime; }
 
     /// Return the OpenGL API for the associated render driver
-    /// @todo inline would be nice, but circular dependencies don't allow it
-    LUMINOUS_API OpenGLAPI& opengl();
+    inline OpenGLAPI & opengl() { assert(m_opengl); return *m_opengl; }
+    /// Returns OpenGL 4.5 API, if supported
+    inline OpenGLAPI45 * opengl45() { return m_opengl45; }
 
     LUMINOUS_API void addTask(std::function<void()> task);
 
+    LUMINOUS_API void initGl();
+
   private:
     /// Currently bound shader program
-    GLuint m_currentProgram;
+    GLuint m_currentProgram = 0;
 
     /// Currently bound vertex array object
-    GLuint m_currentVertexArray;
+    GLuint m_currentVertexArray = 0;
 
     const unsigned int m_threadIndex;
 
     /// Uploaded bytes this frame
-    int64_t m_uploadedBytes;
-    int64_t m_uploadLimit;
-    int64_t m_uploadMargin;
-    int64_t m_updateFrequency;
+    int64_t m_uploadedBytes = 0;
+    int64_t m_uploadLimit = 0;
+    int64_t m_uploadMargin = 0;
+    int64_t m_updateFrequency = 60;
 
     RenderDriverGL & m_driver;
 
-    GLuint m_currentReadFrameBuffer;
-    GLuint m_currentDrawFrameBuffer;
+    GLuint m_currentReadFrameBuffer = 0;
+    GLuint m_currentDrawFrameBuffer = 0;
 
-    int m_currentTextureUnit;
+    int m_currentTextureUnit = 0;
 
     Radiant::TimeStamp m_frameTime;
+
+    OpenGLAPI * m_opengl = nullptr;
+    OpenGLAPI45 * m_opengl45 = nullptr;
   };
 
   /////////////////////////////////////////////////////////////////////////////
-
-  StateGL::StateGL(unsigned int threadIndex, RenderDriverGL &driver)
-    : m_currentProgram(0)
-    , m_currentVertexArray(0)
-    , m_threadIndex(threadIndex)
-    , m_uploadedBytes(0)
-    , m_uploadLimit(0)
-    , m_uploadMargin(0)
-    , m_updateFrequency(60)
-    , m_driver(driver)
-    , m_currentReadFrameBuffer(0)
-    , m_currentDrawFrameBuffer(0)
-    , m_currentTextureUnit(0)
-  {
-  }
 
   bool StateGL::setProgram(GLuint handle)
   {

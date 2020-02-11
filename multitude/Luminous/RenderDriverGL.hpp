@@ -29,7 +29,7 @@ namespace Luminous
     LUMINOUS_API RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
     LUMINOUS_API ~RenderDriverGL();
 
-    LUMINOUS_API void initGl(OpenGLAPI & opengl);
+    LUMINOUS_API void initGl(OpenGLAPI & opengl, OpenGLAPI45 * opengl45);
 
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil) OVERRIDE;
     LUMINOUS_API virtual void draw(PrimitiveType type, unsigned int offset, unsigned int primitives) OVERRIDE;
@@ -123,6 +123,7 @@ namespace Luminous
     LUMINOUS_API unsigned int gpuId() const OVERRIDE;
 
     LUMINOUS_API OpenGLAPI & opengl();
+    LUMINOUS_API OpenGLAPI45 * opengl45();
 
     LUMINOUS_API StateGL & stateGl();
 

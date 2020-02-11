@@ -204,6 +204,7 @@ namespace Luminous
     unsigned int m_gpuId;
 
     OpenGLAPI * m_opengl = nullptr;
+    OpenGLAPI45 * m_opengl45 = nullptr;
 
     std::unique_ptr<Worker> m_worker;
 
@@ -576,9 +577,11 @@ namespace Luminous
     delete m_d;
   }
 
-  void RenderDriverGL::initGl(OpenGLAPI & opengl)
+  void RenderDriverGL::initGl(OpenGLAPI & opengl, OpenGLAPI45 * opengl45)
   {
     m_d->m_opengl = &opengl;
+    m_d->m_opengl45 = opengl45;
+    m_d->m_stateGL.initGl();
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
         m_d->m_worker->start();
@@ -1106,7 +1109,13 @@ namespace Luminous
 
   OpenGLAPI & RenderDriverGL::opengl()
   {
+    assert(m_d->m_opengl);
     return *m_d->m_opengl;
+  }
+
+  OpenGLAPI45 * RenderDriverGL::opengl45()
+  {
+    return m_d->m_opengl45;
   }
 
   StateGL & RenderDriverGL::stateGl()

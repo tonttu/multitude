@@ -140,10 +140,4 @@ namespace Luminous
     if (printVersion)
       Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
   }
-
-  std::pair<int, int> requestedOpenGLVersion()
-  {
-    return std::make_pair(4, 1);
-  }
-
 }
