@@ -188,6 +188,9 @@ win32 {
   LIBS += -lUser32
   LIBS += -lDwmapi
   LIBS += -lshell32
+  LIBS += -lDxgi
+  LIBS += -lD3D11
+  LIBS += -lWindowsApp
 
   HEADERS += GPUAffinity.hpp
   SOURCES += GPUAffinity.cpp
@@ -197,6 +200,9 @@ win32 {
 
   HEADERS += DxInterop.hpp
   SOURCES += DxInterop.cpp
+
+  HEADERS += DxSharedTexture.hpp
+  SOURCES += DxSharedTexture.cpp
 }
 
 !macx:!arm64 {
@@ -249,6 +255,5 @@ win32:CONFIG(debug,debug|release) {
 } else {
   LIBS += -llz4
 }
-
 
 include(../../library.pri)
