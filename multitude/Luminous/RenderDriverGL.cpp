@@ -51,18 +51,19 @@
 namespace Luminous
 {
   /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
-  class Worker : public QThread
+  class Worker : public Radiant::Thread
   {
   public:
-    Worker(QScreen * screen, const QSurfaceFormat & format)
-      : m_surface(screen)
+    Worker(const QString & threadName, QScreen * screen, const QSurfaceFormat & format)
+      : Thread(threadName)
+      , m_surface(screen)
     {
       m_surface.setFormat(format);
       m_surface.create();
 
       m_context.setScreen(screen);
       m_context.setFormat(format);
-      m_context.moveToThread(this);
+      m_context.moveToThread(qthread());
     }
 
     bool init(QOpenGLContext & shared)
@@ -78,7 +79,7 @@ namespace Luminous
     {
       m_running = false;
       m_tasksCond.wakeAll();
-      wait();
+      waitEnd();
     }
 
     void addTask(std::function<void()> task)
@@ -91,10 +92,10 @@ namespace Luminous
     }
 
   private:
-    virtual void run() override
+    virtual void childLoop() override
     {
       if (!m_context.makeCurrent(&m_surface)) {
-        Radiant::info("%s: Failed to make OpenGL context current", objectName().toUtf8().data());
+        Radiant::info("%s: Failed to make OpenGL context current", currentThreadName().data());
         return;
       }
 
@@ -567,8 +568,7 @@ namespace Luminous
   RenderDriverGL::RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
     : m_d(new RenderDriverGL::D(threadIndex, *this))
   {
-    m_d->m_worker = std::make_unique<Worker>(screen, format);
-    m_d->m_worker->setObjectName(QString("GL worker #%1").arg(threadIndex));
+    m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format);
   }
 
   RenderDriverGL::~RenderDriverGL()
@@ -581,7 +581,7 @@ namespace Luminous
     m_d->m_opengl = &opengl;
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
-        m_d->m_worker->start();
+        m_d->m_worker->run();
         return;
       }
     }
