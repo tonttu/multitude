@@ -19,14 +19,7 @@
 #if RADIANT_DEBUG
 # define GLERROR_TOSTR2(num) #num
 # define GLERROR_TOSTR(num) GLERROR_TOSTR2(num)
-
-#ifdef LUMINOUS_EXPORT
-// Do not have the namespace when used inside Luminous. See #8944.
-# define GLERROR(txt) glErrorToString(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt, __LINE__)
-#else
-# define GLERROR(txt) Luminous::glErrorToString(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt, __LINE__)
-#endif
-
+# define GLERROR(txt) ::Luminous::glErrorToString(__FILE__ ":" GLERROR_TOSTR(__LINE__) ": " txt, __LINE__)
 #else
 # define GLERROR(txt)
 #endif

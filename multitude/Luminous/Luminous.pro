@@ -88,6 +88,7 @@ HEADERS += BezierSplineTesselator.hpp
 HEADERS += BezierSplineRenderer.hpp
 HEADERS += BezierSpline.hpp
 HEADERS += BezierSplineEraser.hpp
+HEADERS += GfxDriver.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
@@ -171,7 +172,8 @@ LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
     $$LIB_NIMBLE \
-    $$LIB_PATTERNS
+    $$LIB_PATTERNS \
+    $$LIB_FOLLY
 
 HEADERS += ImageCodecQT.hpp
 HEADERS += ImageCodecSVG.hpp
@@ -235,7 +237,6 @@ enable-pdf {
     INCLUDEPATH += /opt/multitaction-pdfium2/include
     QMAKE_LIBDIR += /opt/multitaction-pdfium2/lib
     LIBS += -lmultitaction-pdfium2
-    LIBS += $$LIB_FOLLY
   }
 
 
@@ -244,7 +245,7 @@ enable-pdf {
     LIBS += -lpdfium
   }
 
-  win32:LIBS += -lpdfium $$LIB_FOLLY
+  win32:LIBS += -lpdfium
 
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp

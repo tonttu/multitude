@@ -13,16 +13,28 @@
 
 #include "Radiant/Platform.hpp"
 
+#include <folly/executors/ManualExecutor.h>
+
 namespace Luminous
 {
   /// Select the correct renderdriver for this particular platform
-  std::shared_ptr<RenderDriver> RenderDriver::createInstance(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
+  std::shared_ptr<RenderDriver> RenderDriver::createInstance(GfxDriver & gfxDriver, unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
   {
 #if defined (RADIANT_WINDOWS) || defined (RADIANT_LINUX) || defined (RADIANT_OSX)
-    return std::make_shared<RenderDriverGL>(threadIndex, screen, format);
+    return std::make_shared<RenderDriverGL>(gfxDriver, threadIndex, screen, format);
 #else
 #   error "createRenderDriver: Unsupported platform"
 #endif
+  }
+
+  RenderDriver::RenderDriver(GfxDriver & gfxDriver, int threadIndex)
+    : m_gfxDriver(gfxDriver)
+    , m_threadIndex(threadIndex)
+    , m_afterFlush(new folly::ManualExecutor())
+  {}
+
+  RenderDriver::~RenderDriver()
+  {
   }
 }
 

@@ -48,6 +48,8 @@
 
 #include <QOffscreenSurface>
 
+#include <folly/executors/ManualExecutor.h>
+
 namespace Luminous
 {
   /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
@@ -136,7 +138,6 @@ namespace Luminous
       : m_driver(driver)
       , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
-      , m_threadIndex(threadIndex)
       , m_frame(0)
       , m_fps(0.0)
       , m_gpuId(static_cast<unsigned int>(-1))
@@ -194,8 +195,6 @@ namespace Luminous
     typedef std::vector<RenderResource::Id> ReleaseQueue;
     ReleaseQueue m_releaseQueue;
     ReleaseQueue m_releaseQueueTmp;
-
-    unsigned int m_threadIndex;
 
     /// Render statistics
     Radiant::Timer m_frameTimer;  // Time since begin of frame
@@ -571,8 +570,10 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
-    : m_d(new RenderDriverGL::D(threadIndex, *this))
+  RenderDriverGL::RenderDriverGL(GfxDriver & gfxDriver, unsigned int threadIndex,
+                                 QScreen * screen, const QSurfaceFormat & format)
+    : RenderDriver(gfxDriver, threadIndex)
+    , m_d(new RenderDriverGL::D(threadIndex, *this))
   {
     m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format);
   }
@@ -939,6 +940,8 @@ namespace Luminous
       m_d->m_opengl->glBindVertexArray(0);
       GLERROR("RenderDriverGL::flush # glBindVertexArray");
     }
+
+    afterFlush().run();
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)

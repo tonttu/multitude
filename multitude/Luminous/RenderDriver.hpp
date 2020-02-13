@@ -34,14 +34,68 @@
 #include <Nimble/Matrix3.hpp>
 #include <Nimble/Matrix4.hpp>
 
+namespace folly
+{
+  class ManualExecutor;
+}
+
 namespace Luminous
 {
+  class GfxDriver;
 
   /// The base class for different render drivers.
   class RenderDriver : public Patterns::NotCopyable
   {
   public:
-    virtual ~RenderDriver() {}
+    struct GpuInfo
+    {
+      /// Name of the GPU, for example "GeForce GTX 970"
+      QByteArray name;
+      /// GPU index
+      int gpu = -1;
+      /// PCI domain number
+      int pciDomain = -1;
+      /// PCI bus number
+      int pciBus = -1;
+      /// PCI device number
+      int pciDevice = -1;
+      /// PCI function number
+      int pciFunction = -1;
+      /// Link width, for example 16
+      int link = -1;
+      /// Link speed in MT/s, for example 8000
+      int speed = -1;
+      /// The NUMA node this GPU is attached to, or -1
+      int numaNode = -1;
+      /// If this GPU belongs to NUMA node, this is a list of logical CPU cores
+      /// belonging to the same NUMA node.
+      std::vector<int> cpuList;
+
+#ifdef RADIANT_WINDOWS
+      LUID dxgiAdapterLuid;
+#endif
+
+      inline QByteArray busId() const
+      {
+        char buffer[128];
+        int dev = std::max(0, pciDevice);
+        int func = std::max(0, pciFunction);
+        if (pciDomain >= 0) {
+          // https://wiki.xen.org/wiki/Bus:Device.Function_(BDF)_Notation
+          // This format also matches what NVML uses
+          snprintf(buffer, sizeof(buffer), "%08x:%02x:%02x.%x", pciDomain, pciBus, dev, func);
+        } else if (pciBus >= 0) {
+          snprintf(buffer, sizeof(buffer), "%02x:%02x.%x", pciBus, dev, func);
+        } else {
+          return QByteArray();
+        }
+        return buffer;
+      }
+    };
+
+  public:
+    RenderDriver(GfxDriver & gfxDriver, int threadIndex);
+    virtual ~RenderDriver();
 
     // Clear the current framebuffer
     LUMINOUS_API virtual void clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil) = 0;
@@ -119,18 +173,36 @@ namespace Luminous
     LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 
     // Driver factory
-    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
+    LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(
+        GfxDriver & gfxDriver, unsigned int threadIndex,
+        QScreen * screen, const QSurfaceFormat & format);
 
     /// Set the GPU id for the driver
     LUMINOUS_API virtual void setGPUId(unsigned int gpuId) = 0;
     /// Get the GPU id for the driver, returns -1 if GPU id is not available
     LUMINOUS_API virtual unsigned int gpuId() const = 0;
 
+    folly::ManualExecutor & afterFlush() { return *m_afterFlush; }
+
+    const GpuInfo & gpuInfo() const { return m_gpuInfo; }
+    void setGpuInfo(const GpuInfo & gpuInfo) { m_gpuInfo = gpuInfo; }
+
+    unsigned int threadIndex() const { return m_threadIndex; }
+
+    const GfxDriver & gfxDriver() const { return m_gfxDriver; }
+    GfxDriver & gfxDriver() { return m_gfxDriver; }
+
   private:
     // Not exported, should only be used by the render manager
     friend class RenderManager;
     // Marks a resource as deleted, queuing it for removal on GPU
     virtual void releaseResource(RenderResource::Id id) = 0;
+
+  private:
+    std::unique_ptr<folly::ManualExecutor> m_afterFlush;
+    GpuInfo m_gpuInfo;
+    GfxDriver & m_gfxDriver;
+    unsigned int m_threadIndex;
   };
 }
 

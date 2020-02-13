@@ -12,6 +12,8 @@
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 
+#include "DxInterop.hpp"
+
 #include "RenderContext.hpp"
 
 #include "Error.hpp"
@@ -350,6 +352,8 @@ namespace Luminous
                                     std::numeric_limits<float>::lowest(),
                                     std::numeric_limits<float>::max(),
                                     std::numeric_limits<float>::max()};
+
+    DxInterop m_dxInteropApi;
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1453,6 +1457,13 @@ namespace Luminous
   void RenderContext::setAudioPanningArea(const Nimble::Rect & area)
   {
     m_data->m_audioPanningArea = area;
+  }
+
+  DxInterop * RenderContext::dxInteropApi()
+  {
+    if (!m_data->m_dxInteropApi.init())
+      return nullptr;
+    return &m_data->m_dxInteropApi;
   }
 
   //////////////////////////////////////////////////////////////////////////
