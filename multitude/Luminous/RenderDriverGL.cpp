@@ -193,6 +193,7 @@ namespace Luminous
     // Resources to be released
     typedef std::vector<RenderResource::Id> ReleaseQueue;
     ReleaseQueue m_releaseQueue;
+    ReleaseQueue m_releaseQueueTmp;
 
     unsigned int m_threadIndex;
 
@@ -310,14 +311,18 @@ namespace Luminous
   /// Cleanup any queued-for-deletion or expired resources
   void RenderDriverGL::D::removeResources()
   {
-    Radiant::Guard g(RenderManager::resourceLock());
-    removeResource(m_vertexArrays, m_releaseQueue);
-    removeBufferResource(m_buffers, m_releaseQueue);
-    removeResource(m_textures, m_releaseQueue);
+    {
+      Radiant::Guard g(RenderManager::resourceLock());
+      std::swap(m_releaseQueueTmp, m_releaseQueue);
+    }
+
+    removeResource(m_vertexArrays, m_releaseQueueTmp);
+    removeBufferResource(m_buffers, m_releaseQueueTmp);
+    removeResource(m_textures, m_releaseQueueTmp);
     removeResource(m_programs);
-    removeResource(m_renderBuffers, m_releaseQueue);
-    removeResource(m_frameBuffers, m_releaseQueue);
-    m_releaseQueue.clear();
+    removeResource(m_renderBuffers, m_releaseQueueTmp);
+    removeResource(m_frameBuffers, m_releaseQueueTmp);
+    m_releaseQueueTmp.clear();
   }
 
   void RenderDriverGL::D::setState(const RenderState & state)
