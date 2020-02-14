@@ -153,7 +153,7 @@ namespace Luminous
       ret << QString("Fan %1%").arg(value);
 
     if (m_nvml->m_d->nvmlDeviceGetTemperature(m_dev, NVML_TEMPERATURE_GPU, &value) == NVML_SUCCESS)
-      ret << QString("Temperature %1%2").arg(value).arg("⁰C");
+      ret << QString("Temperature %1 C").arg(value);
 
     return ret;
   }
