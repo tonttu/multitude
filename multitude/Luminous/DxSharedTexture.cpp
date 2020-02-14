@@ -170,6 +170,8 @@ namespace Luminous
 
     int m_ownerThreadIndex = -1;
 
+    bool m_shareHandleSet = false;
+
     /// Protects m_refs, m_acquired and m_lastUsed
     Radiant::Mutex m_refsMutex;
     int m_refs = 0;
@@ -361,7 +363,7 @@ namespace Luminous
       m_d->m_ownerThreadIndex = currentThreadIndex;
     }
 
-    if (m_d->m_ownerThreadIndex == currentThreadIndex) {
+    if (m_d->m_ownerThreadIndex == currentThreadIndex || true) {
       if (!ctx.interopDev) {
         ctx.interopDev = ctx.dxInteropApi.wglDXOpenDeviceNV(m_d->m_dev.Get());
         if (ctx.interopDev == nullptr) {
@@ -377,10 +379,13 @@ namespace Luminous
       if (!ctx.interopTex) {
         /// @todo this shouldn't be needed anymore according to the spec, but
         /// wglDXRegisterObjectNV will fail without this
-        if (!ctx.dxInteropApi.wglDXSetResourceShareHandleNV(m_d->m_dxTex.Get(), m_d->m_sharedHandle.get())) {
-          GLERROR("wglDXSetResourceShareHandleNV");
-          Radiant::error("DxSharedTexture # wglDXSetResourceShareHandleNV failed");
-          return nullptr;
+        if (!m_d->m_shareHandleSet) {
+          if (!ctx.dxInteropApi.wglDXSetResourceShareHandleNV(m_d->m_dxTex.Get(), m_d->m_sharedHandle.get())) {
+            GLERROR("wglDXSetResourceShareHandleNV");
+            Radiant::error("DxSharedTexture # wglDXSetResourceShareHandleNV failed");
+            return nullptr;
+          }
+          m_d->m_shareHandleSet = true;
         }
 
         ctx.interopTex = ctx.dxInteropApi.wglDXRegisterObjectNV(
