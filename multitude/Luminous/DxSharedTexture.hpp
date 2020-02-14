@@ -27,7 +27,7 @@ namespace Luminous
 
     Nimble::SizeI size() const;
 
-    const Luminous::Texture * texture(RenderContext & r);
+    const Luminous::Texture * texture(RenderContext & r, bool copyIfNeeded, std::weak_ptr<DxSharedTexture> weak);
 
   private:
     class D;

@@ -25,10 +25,25 @@ bool operator==(const LUID & l, const LUID & r)
 
 namespace
 {
+  using WglCopyImageSubDataNV = BOOL (WINAPI *)(
+    HGLRC hSrcRC, GLuint srcName, GLenum srcTarget, GLint srcLevel,
+    GLint srcX, GLint srcY, GLint srcZ,
+    HGLRC hDstRC, GLuint dstName, GLenum dstTarget, GLint dstLevel,
+    GLint dstX, GLint dstY, GLint dstZ,
+    GLsizei width, GLsizei height, GLsizei depth);
+
   QByteArray comErrorStr(HRESULT res)
   {
     return QString::fromStdWString(_com_error(res).ErrorMessage()).toUtf8();
   }
+
+  enum class CopyStatus
+  {
+    None,
+    Copying,
+    Finished,
+    Failed
+  };
 
   struct Context
   {
@@ -36,6 +51,21 @@ namespace
     HANDLE interopDev = nullptr;
     HANDLE interopTex = nullptr;
     folly::Executor * executor = nullptr;
+    WglCopyImageSubDataNV wglCopyImageSubDataNV = nullptr;
+
+    std::atomic<CopyStatus> copyStatus{CopyStatus::None};
+
+    Context() = default;
+    Context(Context &&) = default;
+    Context & operator=(Context &&) = default;
+    Context(const Context & c)
+      : dxInteropApi(c.dxInteropApi)
+      , interopDev(c.interopDev)
+      , interopTex(c.interopTex)
+      , executor(c.executor)
+      , wglCopyImageSubDataNV(c.wglCopyImageSubDataNV)
+      , copyStatus(c.copyStatus.load())
+    {}
 
     void release();
   };
@@ -295,7 +325,7 @@ namespace Luminous
     return Nimble::SizeI(m_d->m_tex.width(), m_d->m_tex.height());
   }
 
-  const Texture * DxSharedTexture::texture(RenderContext & r)
+  const Texture * DxSharedTexture::texture(RenderContext & r, bool copyIfNeeded, std::weak_ptr<DxSharedTexture> weak)
   {
     {
       Radiant::Guard g(m_d->m_refsMutex);
@@ -303,8 +333,8 @@ namespace Luminous
     }
 
     Context & ctx = *m_d->m_ctx;
-    if (ctx.interopTex)
-      &m_d->m_tex;
+    if (ctx.interopTex || ctx.copyStatus == CopyStatus::Finished)
+      return &m_d->m_tex;
 
     if (!ctx.dxInteropApi.isInitialized()) {
       if (auto api = r.dxInteropApi())
@@ -323,13 +353,15 @@ namespace Luminous
       }
     }
 
+    unsigned int currentThreadIndex = r.renderDriver().threadIndex();
+
     if (m_d->m_ownerThreadIndex < 0) {
       // This adapter might not support OpenGL affinity extensions, so we just
       // hope for the best.
-      m_d->m_ownerThreadIndex = r.renderDriver().threadIndex();
+      m_d->m_ownerThreadIndex = currentThreadIndex;
     }
 
-    if (m_d->m_ownerThreadIndex == r.renderDriver().threadIndex()) {
+    if (m_d->m_ownerThreadIndex == currentThreadIndex) {
       if (!ctx.interopDev) {
         ctx.interopDev = ctx.dxInteropApi.wglDXOpenDeviceNV(m_d->m_dev.Get());
         if (ctx.interopDev == nullptr) {
@@ -367,10 +399,52 @@ namespace Luminous
           return nullptr;
         }
       }
+    } else if (!copyIfNeeded) {
+      return nullptr;
     } else {
-      r.renderDriver().gfxDriver().renderDriver(m_d->m_ownerThreadIndex).afterFlush().add([] {
-        /// @todo WGL_NV_copy_image
-        // shared from this?
+      auto expected = CopyStatus::None;
+      if (!ctx.copyStatus.compare_exchange_strong(expected, CopyStatus::Copying))
+        return ctx.copyStatus == CopyStatus::Finished ? &m_d->m_tex : nullptr;
+
+      HGLRC targetContext = wglGetCurrentContext();
+      GLuint target = r.handle(m_d->m_tex).handle();
+      auto & gfx = r.renderDriver().gfxDriver();
+      auto * srcRenderContext = &gfx.renderContext(m_d->m_ownerThreadIndex);
+
+      gfx.renderDriver(m_d->m_ownerThreadIndex).afterFlush().add(
+            [r = srcRenderContext, target, weak, currentThreadIndex, targetContext] {
+        std::shared_ptr<DxSharedTexture> self = weak.lock();
+        if (!self)
+          return;
+
+        auto & wglCopyImageSubDataNV = self->m_d->m_ctx->wglCopyImageSubDataNV;
+        if (!wglCopyImageSubDataNV) {
+          PROC proc = wglGetProcAddress("wglCopyImageSubDataNV");
+          if (!proc) {
+            self->m_d->m_ctx[currentThreadIndex].copyStatus = CopyStatus::Failed;
+            return;
+          }
+          wglCopyImageSubDataNV = reinterpret_cast<WglCopyImageSubDataNV>(proc);
+        }
+
+        const Texture * tex = self->texture(*r, false, weak);
+        if (!tex || !targetContext) {
+          self->m_d->m_ctx[currentThreadIndex].copyStatus = CopyStatus::Failed;
+          return;
+        }
+
+        Luminous::TextureGL & src = r->handle(*tex);
+
+        self->ref(r->frameTime());
+        BOOL ok = wglCopyImageSubDataNV(0, src.handle(), GL_TEXTURE_2D, 0,
+                                        0, 0, 0,
+                                        targetContext, target, GL_TEXTURE_2D, 0,
+                                        0, 0, 0,
+                                        self->m_d->m_tex.width(), self->m_d->m_tex.height(), 1);
+        self->unref();
+        /// @todo sync object?
+        GLERROR("wglCopyImageSubDataNV");
+        self->m_d->m_ctx[currentThreadIndex].copyStatus = ok ? CopyStatus::Finished : CopyStatus::Failed;
       });
     }
 
@@ -467,12 +541,21 @@ namespace Luminous
     if (m_d->m_textures.empty())
       return nullptr;
 
-    DxSharedTexture & tex = *m_d->m_textures.back();
-    tex.ref(r.frameTime());
-    r.renderDriver().afterFlush().add([tex = m_d->m_textures.back()] () mutable {
-      tex->unref();
-      tex.reset();
-    });
-    return tex.texture(r);
+    bool first = true;
+    for (auto it = m_d->m_textures.rbegin(); it != m_d->m_textures.rend(); ++it) {
+      std::shared_ptr<DxSharedTexture> & dx = *it;
+      const Texture * tex = dx->texture(r, first, dx);
+      first = false;
+      if (tex) {
+        dx->ref(r.frameTime());
+        r.renderDriver().afterFlush().add([dx] () mutable {
+          dx->unref();
+          dx.reset();
+        });
+        return tex;
+      }
+    }
+
+    return nullptr;
   }
 }
