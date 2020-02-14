@@ -12,8 +12,6 @@
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 
-#include "DxInterop.hpp"
-
 #include "RenderContext.hpp"
 
 #include "Error.hpp"
@@ -37,6 +35,10 @@
 #include <Radiant/Mutex.hpp>
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Thread.hpp>
+
+#ifdef RADIANT_WINDOWS
+#include "DxInterop.hpp"
+#endif
 
 #include <tuple>
 #include <vector>
@@ -353,7 +355,9 @@ namespace Luminous
                                     std::numeric_limits<float>::max(),
                                     std::numeric_limits<float>::max()};
 
+#ifdef RADIANT_WINDOWS
     DxInterop m_dxInteropApi;
+#endif
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1459,12 +1463,14 @@ namespace Luminous
     m_data->m_audioPanningArea = area;
   }
 
+#ifdef RADIANT_WINDOWS
   DxInterop * RenderContext::dxInteropApi()
   {
     if (!m_data->m_dxInteropApi.init())
       return nullptr;
     return &m_data->m_dxInteropApi;
   }
+#endif
 
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API

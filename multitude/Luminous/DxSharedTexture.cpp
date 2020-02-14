@@ -233,6 +233,7 @@ namespace Luminous
     D3D11_TEXTURE2D_DESC desc;
     dxTex->GetDesc(&desc);
 
+    m_d->m_tex.setExpiration(0);
     m_d->m_tex.setData(desc.Width, desc.Height, Luminous::PixelFormat::rgbaUByte(),
                        nullptr);
     m_d->m_dxTex = std::move(dxTex);

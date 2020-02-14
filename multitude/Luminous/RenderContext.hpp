@@ -668,8 +668,10 @@ namespace Luminous
     const Nimble::Rect & audioPanningArea() const;
     void setAudioPanningArea(const Nimble::Rect & area);
 
+#ifdef RADIANT_WINDOWS
     /// Returns initialized DxInterop API, or nullptr if it is not supported
     DxInterop * dxInteropApi();
+#endif
 
   private:
 
