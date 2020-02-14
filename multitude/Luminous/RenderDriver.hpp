@@ -199,10 +199,10 @@ namespace Luminous
     virtual void releaseResource(RenderResource::Id id) = 0;
 
   private:
-    std::unique_ptr<folly::ManualExecutor> m_afterFlush;
     GpuInfo m_gpuInfo;
     GfxDriver & m_gfxDriver;
     unsigned int m_threadIndex;
+    std::unique_ptr<folly::ManualExecutor> m_afterFlush;
   };
 }
 
