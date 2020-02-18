@@ -28,7 +28,8 @@ namespace Luminous
     int m_openglIndex = -1;
 
     mutable QMutex m_sampleMutex;
-    Nvml::DeviceQuery::Sample m_latestSample;
+    Nvml::DeviceQuery::Sample m_mergedSample;
+    bool m_mergeSample = false;
     std::thread m_pollThread;
     std::atomic<bool> m_running{true};
   };
@@ -118,7 +119,14 @@ namespace Luminous
       sample.memUtilization = utilization.memory / 100.0f;
       {
         QMutexLocker g(&m_sampleMutex);
-        m_latestSample = sample;
+        if (!m_mergeSample) {
+          m_mergedSample = sample;
+          m_mergeSample = true;
+        } else {
+          m_mergedSample.gpuUtilization = std::max(m_mergedSample.gpuUtilization, sample.gpuUtilization);
+          m_mergedSample.memUtilization = std::max(m_mergedSample.memUtilization, sample.memUtilization);
+          m_mergedSample.pcieRxThroughputKBs = std::max(m_mergedSample.pcieRxThroughputKBs, sample.pcieRxThroughputKBs);
+        }
       }
 
       nvmlEventData_t data;
@@ -187,10 +195,11 @@ namespace Luminous
     m_d->m_pollThread.join();
   }
 
-  Nvml::DeviceQuery::Sample Nvml::DeviceQuery::latestSample() const
+  Nvml::DeviceQuery::Sample Nvml::DeviceQuery::takePeakSample()
   {
     QMutexLocker g(&m_d->m_sampleMutex);
-    return m_d->m_latestSample;
+    m_d->m_mergeSample = false;
+    return m_d->m_mergedSample;
   }
 
   Nvml::D::D()

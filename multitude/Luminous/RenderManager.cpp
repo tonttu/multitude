@@ -23,7 +23,7 @@ namespace Luminous
 {
   static RADIANT_TLS(unsigned) t_threadIndex = 0;
 
-  typedef std::map<RenderResource::Id, RenderResource *> ResourceMap;
+  typedef std::unordered_map<RenderResource::Id, RenderResource *> ResourceMap;
 
   namespace {
     ResourceMap s_resourceMap;

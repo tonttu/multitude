@@ -32,7 +32,7 @@ namespace Luminous
       DeviceQuery(std::shared_ptr<Nvml> nvml, nvmlDevice_t dev, int openglIndex);
       ~DeviceQuery();
 
-      Sample latestSample() const;
+      Sample takePeakSample();
 
     private:
       class D;
