@@ -35,7 +35,7 @@ namespace
               Valuable::Node::ListenerFuncBd func_,
               const Radiant::BinaryData & data_)
       : sender(sender_)
-      , func2(func_)
+      , func2(std::move(func_))
       , target(target_)
       , data(data_)
     {}
@@ -43,7 +43,7 @@ namespace
     QueueItem(Valuable::Node * sender_,  Valuable::Node * target_,
               Valuable::Node::ListenerFuncVoid func_)
       : sender(sender_)
-      , func(func_)
+      , func(std::move(func_))
       , func2()
       , target(target_)
     {}
@@ -146,14 +146,14 @@ namespace
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
                   Valuable::Node::ListenerFuncVoid func, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, std::move(func))), once);
   }
 
   void queueEvent(Valuable::Node * sender, Valuable::Node * target,
                   Valuable::Node::ListenerFuncBd func,
                   const Radiant::BinaryData & data, void * once)
   {
-    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, func, data)), once);
+    queueEvent(std::unique_ptr<QueueItem>(new QueueItem(sender, target, std::move(func), data)), once);
   }
 }
 
@@ -586,7 +586,7 @@ namespace Valuable
         debugValuable("Widget::eventAddListener # Already got item %s -> %s (%p)",
                       from.data(), to.data(), obj);
       } else {
-        m_elisteners.push_back(vp);
+        m_elisteners.push_back(std::move(vp));
         obj->eventAddSource(this);
       }
     }
@@ -602,14 +602,14 @@ namespace Valuable
     const QByteArray from = validateEvent(fromIn);
 
     ValuePass vp(++m_listenersId);
-    vp.m_func = func;
+    vp.m_func = std::move(func);
     vp.m_from = from;
     vp.m_type = listenerType;
 
     {
       Radiant::Guard g(m_eventsMutex);
       // No duplicate check, since there is no way to compare std::function objects
-      m_elisteners.push_back(vp);
+      m_elisteners.push_back(std::move(vp));
     }
     return vp.m_listenerId;
   }
@@ -622,7 +622,7 @@ namespace Valuable
     const QByteArray from = validateEvent(eventId);
 
     ValuePass vp(++m_listenersId);
-    vp.m_func = func;
+    vp.m_func = std::move(func);
     vp.m_from = from;
     vp.m_type = listenerType;
     vp.m_listener = dstNode;
@@ -632,7 +632,7 @@ namespace Valuable
 
     {
       Radiant::Guard g(m_eventsMutex);
-      m_elisteners.push_back(vp);
+      m_elisteners.push_back(std::move(vp));
     }
     return vp.m_listenerId;
   }
@@ -645,7 +645,7 @@ namespace Valuable
     const QByteArray from = validateEvent(eventId);
 
     ValuePass vp(++m_listenersId);
-    vp.m_func2 = func;
+    vp.m_func2 = std::move(func);
     vp.m_from = from;
     vp.m_type = listenerType;
     vp.m_listener = dstNode;
@@ -655,7 +655,7 @@ namespace Valuable
 
     {
       Radiant::Guard g(m_eventsMutex);
-      m_elisteners.push_back(vp);
+      m_elisteners.push_back(std::move(vp));
     }
     return vp.m_listenerId;
   }
@@ -669,14 +669,14 @@ namespace Valuable
     const QByteArray from = validateEvent(fromIn);
 
     ValuePass vp(++m_listenersId);
-    vp.m_func2 = func;
+    vp.m_func2 = std::move(func);
     vp.m_from = from;
     vp.m_type = listenerType;
 
     {
       Radiant::Guard g(m_eventsMutex);
       // No duplicate check, since there is no way to compare std::function objects
-      m_elisteners.push_back(vp);
+      m_elisteners.push_back(std::move(vp));
     }
     return vp.m_listenerId;
   }
@@ -949,7 +949,7 @@ namespace Valuable
 
   void Node::invokeAfterUpdate(Node::ListenerFuncVoid function)
   {
-    queueEvent(nullptr, nullptr, function, nullptr);
+    queueEvent(nullptr, nullptr, std::move(function), nullptr);
   }
 
   void Node::eventSend(const QByteArray & id, Radiant::BinaryData & bd)
