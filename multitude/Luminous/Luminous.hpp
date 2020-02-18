@@ -17,6 +17,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <QOpenGLFunctions_4_1_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 #define debugLuminous(...) (Radiant::trace("Luminous", Radiant::Trace::DEBUG, __VA_ARGS__))
 
@@ -31,12 +32,15 @@
 namespace Luminous
 {
   /// Returns the OpenGL Core API version that is used by Cornerstone.
+  /// This is the preferred version, while the version used by OpenGLAPI
+  /// typedef is the minimum version.
   /// @return OpenGL version in major/minor format
-  LUMINOUS_API std::pair<int,int> requestedOpenGLVersion();
+  inline std::pair<int,int> preferredOpenGLVersion() { return {4, 5}; }
 
-  /// This class will provide the OpenGL API that is used by Cornerstone. It
-  /// must match the version defined in @ref requestedOpenGLVersion
+  /// This class will provide the minimum OpenGL API that is used by Cornerstone.
   typedef QOpenGLFunctions_4_1_Core OpenGLAPI;
+  /// OpenGL 4.5 is used for additional optional functionality.
+  typedef QOpenGLFunctions_4_5_Core OpenGLAPI45;
 
   /** Initializes the Luminous library.
       In practice this function initializes image codecs.
