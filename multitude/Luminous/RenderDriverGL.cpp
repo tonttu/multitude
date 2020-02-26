@@ -101,6 +101,9 @@ namespace Luminous
         return;
       }
 
+      Radiant::Timer totalTimer;
+      double workingTime = 0;
+
       while (m_running) {
         std::function<void()> task;
         {
@@ -115,7 +118,20 @@ namespace Luminous
           m_tasks.erase(m_tasks.begin());
         }
 
+#if 0
+        Radiant::Timer workingTimer;
         task();
+        workingTime += workingTimer.time();
+        if (totalTimer.time() >= 1.0) {
+          Radiant::info("%s utilization: %.1f%%", qthread()->objectName().toUtf8().data(),
+                        workingTime / totalTimer.start() * 100.0);
+          workingTime = 0;
+        }
+#else
+        (void)totalTimer;
+        (void)workingTime;
+        task();
+#endif
       }
     }
 

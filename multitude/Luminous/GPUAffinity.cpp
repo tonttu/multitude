@@ -1,6 +1,13 @@
+#include "DisplayConfigWin.hpp"
 #include "GPUAffinity.hpp"
 
-#include <Windows.h>
+#include <comdef.h>
+#include <dxgi1_2.h>
+#include <wrl.h>
+
+#include <Radiant/Trace.hpp>
+
+#include <QSettings>
 
 namespace Luminous
 {
@@ -136,4 +143,45 @@ namespace Luminous
     return ret;
   }
 
+  QStringList GPUAffinity::adapterInstanceIds(uint32_t gpuIndex) const
+  {
+    QStringList ret;
+    QStringList gdiNames = displayGdiDeviceNames(gpuIndex);
+    if (gdiNames.isEmpty())
+      return ret;
+
+    try {
+      DisplayConfigWin cfg = DisplayConfigWin::currentConfig();
+
+      for (const DisplayConfigWin::Output & output: cfg.outputs) {
+        if (gdiNames.contains(output.sourceGdiDeviceName)) {
+          QString instanceId = cfg.cleanInstanceId(output.adapterDevicePath);
+          if (!ret.contains(instanceId))
+            ret << instanceId;
+        }
+      }
+    } catch (std::exception & error) {
+      Radiant::error("Failed to read display config: %s", error.what());
+    }
+    return ret;
+  }
+
+  std::vector<LUID> GPUAffinity::dxgiAdapterLuids(uint32_t gpuIndex) const
+  {
+    std::vector<LUID> ret;
+    for (const QString & instanceId: adapterInstanceIds(gpuIndex)) {
+      QSettings enumSettings("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\" + instanceId + "\\Device Parameters", QSettings::NativeFormat);
+      QString videoId = enumSettings.value("VideoID").toString();
+      if (videoId.isEmpty())
+        continue;
+
+      QSettings dxSettings("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\DirectX\\" + videoId, QSettings::NativeFormat);
+      qulonglong luid = dxSettings.value("AdapterLuid").toULongLong();
+      if (luid) {
+        LUID l{luid & 0xFFFFFFFF, (luid >> 32) & 0xFFFFFFFF};
+        ret.push_back(l);
+      }
+    }
+    return ret;
+  }
 } // namespace Luminous

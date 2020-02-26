@@ -77,6 +77,15 @@ namespace Luminous
     /// Returns multi-sampling count or zero if this is not a multi-sampled texture
     inline int samples() const { return m_samples; }
 
+    inline int generation() const { return m_generation; }
+    inline void setGeneration(int generation) { m_generation = generation; }
+
+    inline GLenum target() const { return m_target; }
+    inline void setTarget(GLenum target) { m_target = target; }
+
+    inline int paramsGeneration() const { return m_paramsGeneration; }
+    inline void setParamsGeneration(int generation) { m_paramsGeneration = generation; }
+
     LUMINOUS_API static UploadMethod defaultUploadMethod();
     LUMINOUS_API static void setDefaultUploadMethod(UploadMethod method);
 

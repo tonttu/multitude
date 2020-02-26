@@ -205,6 +205,10 @@ win32 {
 
   HEADERS += DxSharedTexture.hpp
   SOURCES += DxSharedTexture.cpp
+
+  INCLUDEPATH += $$CORNERSTONE_DEPS_PATH/manual/cuda/include
+  LIBS += -L$$CORNERSTONE_DEPS_PATH/manual/cuda/lib
+  LIBS += -lcudart_static
 }
 
 !macx:!arm64 {
