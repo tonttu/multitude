@@ -381,11 +381,11 @@ namespace Luminous
 
     if (++m_copyRef == 1)
       CUDA_CHECK(cudaGraphicsMapResources(1, &m_cudaTex, m_cudaStream));
+    m_devMutex.unlock();
 
     cudaArray_t srcArray;
     CUDA_CHECK(cudaGraphicsSubResourceGetMappedArray(&srcArray, m_cudaTex, 0, 0));
 
-    m_devMutex.unlock();
     CUDA_CHECK(cudaSetDevice(ctx.cudaDev));
 
     if (!ctx.cudaStream)
@@ -404,6 +404,7 @@ namespace Luminous
 
     m_devMutex.lock();
     if (m_pinnedCopyFrameNum < m_frameNum) {
+      m_devMutex.unlock();
       CUDA_CHECK(cudaSetDevice(m_ownerCudaDev));
 
       if (!m_copyData) {
@@ -423,6 +424,7 @@ namespace Luminous
 
       CUDA_CHECK(cudaSetDevice(ctx.cudaDev));
 
+      m_devMutex.lock();
       m_pinnedCopyFrameNum = m_frameNum.load();
     }
     m_devMutex.unlock();
@@ -606,6 +608,8 @@ namespace Luminous
 
   DxSharedTexture::~DxSharedTexture()
   {
+    /// @todo destroy D in bg thread, for instance cudaFreeHost might be slow
+
     for (Context & ctx: m_d->m_ctx) {
       if (ctx.cudaStream) {
         /// @todo should this be done in ~Context?
