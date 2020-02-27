@@ -236,8 +236,11 @@ namespace Luminous
     for (auto it = m_textureAttachments.begin(); it != m_textureAttachments.end(); ++it) {
       GLenum attachment = it.key();
       Texture * texture = RenderManager::getResource<Luminous::Texture>(it.value());
-      if (texture)
-        attach(attachment, m_state.driver().handle(*texture));
+      if (texture) {
+        auto & texgl = m_state.driver().handle(*texture);
+        texgl.upload(*texture, 0, TextureGL::UPLOAD_SYNC);
+        attach(attachment, texgl);
+      }
     }
 
     for (auto it = m_renderBufferAttachments.begin(); it != m_renderBufferAttachments.end(); ++it) {

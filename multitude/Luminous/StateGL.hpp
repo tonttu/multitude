@@ -56,39 +56,6 @@ namespace Luminous
     /// @return render thread index
     inline unsigned int threadIndex() const;
 
-    /// Get the number of bytes available for uploading content to the GPU.
-    /// This limit is used to spread heavy upload operations across multiple
-    /// rendering frames to avoid stalling the application.
-    /// @return number of bytes available
-    inline int64_t availableUploadBytes() const;
-
-    /// Set the maximum and minimum number of bytes per second for uploading content to the GPU.
-    /// @param limit maximum number of bytes to upload per second
-    /// @param margin minimum number of bytes to upload per second
-    inline void setUploadLimits(int64_t limit, int64_t margin);
-
-    /// Set the target update frequency. This is only used to calculate
-    /// frame-based upload limits
-    /// @param fps target frames per second
-    inline void setUpdateFrequency(int64_t fps);
-
-    /// Get the maximum number of bytes per second used for uploading content to the GPU
-    /// @return number of bytes per second
-    inline int64_t uploadLimit() const;
-
-    /// Get the minimum number of bytes per second used for uploading content to the GPU
-    /// @return number of bytes per second
-    inline int64_t uploadMargin() const;
-
-    /// Consume the given amount of bytes from the upload budget. This function
-    /// decreases the upload budget by the given amount.
-    /// @param bytes number of bytes to consume
-    /// @sa availableUploadBytes
-    inline void consumeUploadBytes(int64_t bytes);
-    /// Sets the number of available upload bytes to zero.
-    /// @sa consumeUploadBytes
-    inline void clearUploadedBytes();
-
     /// Get the render driver associated with this state
     /// @return render driver
     inline RenderDriverGL & driver() { return m_driver; }
@@ -138,12 +105,6 @@ namespace Luminous
 
     const unsigned int m_threadIndex;
 
-    /// Uploaded bytes this frame
-    int64_t m_uploadedBytes = 0;
-    int64_t m_uploadLimit = 0;
-    int64_t m_uploadMargin = 0;
-    int64_t m_updateFrequency = 60;
-
     RenderDriverGL & m_driver;
 
     GLuint m_currentReadFrameBuffer = 0;
@@ -186,43 +147,6 @@ namespace Luminous
   unsigned int StateGL::threadIndex() const
   {
     return m_threadIndex;
-  }
-
-  int64_t StateGL::availableUploadBytes() const
-  {
-    // Return the available number of bytes for this frame.
-    return std::max(uploadMargin()/m_updateFrequency, (uploadLimit()/m_updateFrequency - m_uploadedBytes));
-  }
-
-  void StateGL::setUploadLimits(int64_t limit, int64_t margin)
-  {
-    m_uploadLimit = limit;
-    m_uploadMargin = margin;
-  }
-
-  void StateGL::setUpdateFrequency(int64_t fps)
-  {
-    m_updateFrequency = fps;
-  }
-
-  int64_t StateGL::uploadLimit() const
-  {
-    return m_uploadLimit;
-  }
-
-  int64_t StateGL::uploadMargin() const
-  {
-    return m_uploadMargin;
-  }
-
-  void StateGL::consumeUploadBytes(int64_t bytes)
-  {
-    m_uploadedBytes += bytes;
-  }
-
-  void StateGL::clearUploadedBytes()
-  {
-    m_uploadedBytes = 0;
   }
 
   bool StateGL::setFramebuffer(GLenum target, GLuint handle)

@@ -109,15 +109,9 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
 
-    LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
-    LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
-    LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) OVERRIDE;
-
     LUMINOUS_API int uniformBufferOffsetAlignment() const OVERRIDE;
 
     LUMINOUS_API bool setupSwapGroup(int group, int screen) OVERRIDE;
-
-    LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
 
     LUMINOUS_API void setGPUId(unsigned int gpuId) OVERRIDE;
     LUMINOUS_API unsigned int gpuId() const OVERRIDE;
@@ -126,6 +120,8 @@ namespace Luminous
     LUMINOUS_API OpenGLAPI45 * opengl45();
 
     LUMINOUS_API StateGL & stateGl();
+
+    LUMINOUS_API BufferGL & uploadBuffer(uint32_t size);
 
     /// Add a new task that is going to be executed on a different
     /// thread with a shared OpenGL context. Used for GPU data transfers.

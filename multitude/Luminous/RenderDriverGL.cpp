@@ -52,6 +52,12 @@
 
 namespace Luminous
 {
+  struct UploadBuffer
+  {
+    std::vector<BufferGL> buffers;
+    uint32_t nextIdx = 0;
+  };
+
   /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
   class Worker : public Radiant::Thread
   {
@@ -189,6 +195,8 @@ namespace Luminous
     RenderBufferList m_renderBuffers;
     FrameBufferList m_frameBuffers;
 
+    std::array<UploadBuffer, 2> m_uploadBuffers;
+
     RenderState m_state;
 
     // Stack of active frame buffers
@@ -305,7 +313,6 @@ namespace Luminous
 
   void RenderDriverGL::D::resetStatistics()
   {
-    m_stateGL.clearUploadedBytes();
     m_frameTimer.start();
   }
 
@@ -348,7 +355,7 @@ namespace Luminous
     for(std::size_t t = 0; t < state.textures.size(); ++t) {
       if(!state.textures[t]) break;
       else {
-        state.textures[t]->sync(static_cast<int>(t));
+        state.textures[t]->bind(static_cast<int>(t));
       }
     }
 
@@ -496,7 +503,7 @@ namespace Luminous
 
         translucent |= texture->translucent();
         textureGL = &m_driver.handle(*texture);
-        textureGL->upload(*texture, unit);
+        textureGL->upload(*texture, unit, TextureGL::UPLOAD_SYNC);
 
         m_state.textures[unit++] = textureGL;
       }
@@ -604,6 +611,17 @@ namespace Luminous
     m_d->m_opengl = &opengl;
     m_d->m_opengl45 = opengl45;
     m_d->m_stateGL.initGl();
+
+    /// @todo There numbers are totally arbitrary. The idea is to have several
+    /// buffer buckets or pools of different size buffers. In this naive
+    /// implementation, we have two buckets, index 0 for everything less than
+    /// 1MB and index 1 for 1 MB and larger. We want to have several buffers,
+    /// since it seems to be slow to reuse the buffer while it is in use.
+    for (int i = 0; i < 32; ++i)
+      m_d->m_uploadBuffers[0].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
+    for (int i = 0; i < 4; ++i)
+      m_d->m_uploadBuffers[1].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
+
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
         m_d->m_worker->run();
@@ -688,11 +706,6 @@ namespace Luminous
     if(it == m_d->m_textures.end()) {
       it = m_d->m_textures.emplace(texture.resourceId(), m_d->m_stateGL).first;
       it->second.setExpirationSeconds(texture.expiration());
-    }
-
-    /// @todo avoid bind somehow?
-    if (texture.isValid()) {
-      it->second.upload(texture, 0);
     }
 
     return it->second;
@@ -1070,21 +1083,6 @@ namespace Luminous
     }
   }
 
-  int64_t RenderDriverGL::uploadLimit() const
-  {
-    return m_d->m_stateGL.uploadLimit();
-  }
-
-  int64_t RenderDriverGL::uploadMargin() const
-  {
-    return m_d->m_stateGL.uploadMargin();
-  }
-
-  void RenderDriverGL::setUploadLimits(int64_t limit, int64_t margin)
-  {
-    m_d->m_stateGL.setUploadLimits(limit,margin);
-  }
-
   int RenderDriverGL::uniformBufferOffsetAlignment() const
   {
     int alignment;
@@ -1093,11 +1091,6 @@ namespace Luminous
       return alignment;
     Radiant::warning("RenderDriverGL::uniformBufferOffsetAlignment # Unable to get uniform buffer offset alignment: defaulting to 256");
     return 256;
-  }
-
-  void RenderDriverGL::setUpdateFrequency(float fps)
-  {
-    m_d->m_stateGL.setUpdateFrequency(Nimble::Math::Round(fps));
   }
 
   void RenderDriverGL::setGPUId(unsigned int gpuId)
@@ -1145,6 +1138,15 @@ namespace Luminous
   StateGL & RenderDriverGL::stateGl()
   {
     return m_d->m_stateGL;
+  }
+
+  BufferGL & RenderDriverGL::uploadBuffer(uint32_t size)
+  {
+    /// @todo these upload buffers don't work with the worker thread, since
+    /// there's no synchronization. Worker thread could maybe have its own pools?
+    int bucket = size >= 1024*1024 ? 1 : 0;
+    UploadBuffer & b = m_d->m_uploadBuffers[bucket];
+    return b.buffers[b.nextIdx++ % b.buffers.size()];
   }
 
   void RenderDriverGL::addTask(std::function<void()> task)

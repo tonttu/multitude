@@ -60,6 +60,8 @@ namespace Luminous
     /// @sa expired
     inline void setExpirationSeconds(unsigned int secs);
 
+    inline int expirationSeconds() const { return m_expirationSeconds; }
+
     /// Get the raw OpenGL handle for the resource
     /// @return raw OpenGL handle
     GLuint handle() const { return m_handle; }

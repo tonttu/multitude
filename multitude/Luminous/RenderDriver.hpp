@@ -165,15 +165,9 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) = 0;
 
-    LUMINOUS_API virtual int64_t uploadLimit() const = 0;
-    LUMINOUS_API virtual int64_t uploadMargin() const = 0;
-    LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) = 0;
-
     LUMINOUS_API virtual int uniformBufferOffsetAlignment() const = 0;
 
     LUMINOUS_API virtual bool setupSwapGroup(int group, int screen) = 0;
-
-    LUMINOUS_API virtual void setUpdateFrequency(float fps) = 0;
 
     // Driver factory
     LUMINOUS_API static std::shared_ptr<RenderDriver> createInstance(

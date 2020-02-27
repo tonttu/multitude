@@ -124,11 +124,6 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector4f>("vertex_color");
       m_splineShader.setVertexDescription(desc);
-
-      // Fetch GPU upload limits from the window configuration
-      uint64_t limit = win->uploadLimit();
-      uint64_t margin = win->uploadMargin();
-      renderDriver.setUploadLimits( limit, margin );
     }
 
     ~Internal()
