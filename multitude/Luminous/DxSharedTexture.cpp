@@ -836,7 +836,7 @@ namespace Luminous
 
     Luminous::TextureGL & texgl = r.handle(m_d->m_tex);
     bool registerTex = texgl.generation() == 0;
-    texgl.upload(m_d->m_tex, 0, Luminous::TextureGL::UPLOAD_DEFAULT);
+    texgl.upload(m_d->m_tex, 0);
 
     ctx.cudaCopying = COPY_STATUS_STARTED;
 
