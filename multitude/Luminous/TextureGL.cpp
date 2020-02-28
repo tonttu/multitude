@@ -254,7 +254,7 @@ namespace Luminous
       }
     }
 
-    if (m_useAsyncUpload && (m_target || !(flags & UPLOAD_ASYNC))) {
+    if (m_useAsyncUpload && (m_target == 0 || !(flags & UPLOAD_ASYNC))) {
       // Finish all pending uploads
       QMutexLocker g(&m_asyncUploadMutex);
       while (m_asyncUploadTasks > 0)
@@ -327,17 +327,19 @@ namespace Luminous
       // Don't upload anything, just check if there are any pending uploads
       if (m_useAsyncUpload && (flags & UPLOAD_ASYNC)) {
         QMutexLocker g(&m_asyncUploadMutex);
-        if (m_asyncUploadTasks > 0)
+        if (m_asyncUploadTasks > 0) {
           uploadedEverything = false;
-        while (!m_fences.empty()) {
-          GLsync sync = m_fences.front();
-          GLenum r = m_state.opengl().glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
-          if (r == GL_ALREADY_SIGNALED || r == GL_CONDITION_SATISFIED) {
-            m_state.opengl().glDeleteSync(sync);
-            m_fences.erase(m_fences.begin());
-          } else {
-            uploadedEverything = false;
-            break;
+        } else {
+          while (!m_fences.empty()) {
+            GLsync sync = m_fences.front();
+            GLenum r = m_state.opengl().glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+            if (r == GL_ALREADY_SIGNALED || r == GL_CONDITION_SATISFIED) {
+              m_state.opengl().glDeleteSync(sync);
+              m_fences.erase(m_fences.begin());
+            } else {
+              uploadedEverything = false;
+              break;
+            }
           }
         }
       }
