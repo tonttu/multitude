@@ -205,8 +205,12 @@ namespace Radiant
 
       return result;
     }
-  }
 
+    void setCpuAffinity(const std::vector<int> &)
+    {
+      Radiant::error("setCpuAffinity # not implemented");
+    }
+  }
 }
 
 #endif

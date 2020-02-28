@@ -34,6 +34,7 @@
 #include <Radiant/VectorAllocator.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
+#include <Radiant/PlatformUtils.hpp>
 
 #include <cassert>
 #include <map>
@@ -624,6 +625,11 @@ namespace Luminous
 
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
+        if (!gpuInfo().cpuList.empty()) {
+          addTask([list = gpuInfo().cpuList] {
+            Radiant::PlatformUtils::setCpuAffinity(list);
+          });
+        }
         m_d->m_worker->run();
         return;
       }

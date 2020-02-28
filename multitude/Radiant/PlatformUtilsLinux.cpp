@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -300,6 +301,18 @@ namespace Radiant
         result << i;
 
       return result;
+    }
+
+    void setCpuAffinity(const std::vector<int> & cpuList)
+    {
+      cpu_set_t mask;
+      CPU_ZERO(&mask);
+      for (int cpu: cpuList) {
+        CPU_SET(cpu, &mask);
+      }
+      if (sched_setaffinity(0, sizeof(mask), &mask) != 0) {
+        Radiant::error("setCpuAffinity # sched_setaffinity failed: %s", strerror(errno));
+      }
     }
   }
 }

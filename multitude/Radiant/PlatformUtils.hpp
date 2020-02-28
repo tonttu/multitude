@@ -14,6 +14,7 @@
 #include "Platform.hpp"
 
 #include <cstdint>
+#include <vector>
 
 #include <QString>
 
@@ -166,6 +167,9 @@ namespace Radiant
     /// Get the command-line arguments for the current process
     /// @return list of command-line arguments including executable name as first argument
     RADIANT_API QStringList getCommandLine();
+
+    /// Sets running thread CPU affinity to the given logical CPUs
+    RADIANT_API void setCpuAffinity(const std::vector<int> & cpuList);
   }
 }
 
