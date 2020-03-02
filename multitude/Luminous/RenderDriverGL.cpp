@@ -196,7 +196,7 @@ namespace Luminous
     RenderBufferList m_renderBuffers;
     FrameBufferList m_frameBuffers;
 
-    std::array<UploadBuffer, 2> m_uploadBuffers;
+    std::map<Radiant::Thread::Id, std::array<UploadBuffer, 2>> m_uploadBuffers;
 
     RenderState m_state;
 
@@ -612,16 +612,6 @@ namespace Luminous
     m_d->m_opengl = &opengl;
     m_d->m_opengl45 = opengl45;
     m_d->m_stateGL.initGl();
-
-    /// @todo There numbers are totally arbitrary. The idea is to have several
-    /// buffer buckets or pools of different size buffers. In this naive
-    /// implementation, we have two buckets, index 0 for everything less than
-    /// 1MB and index 1 for 1 MB and larger. We want to have several buffers,
-    /// since it seems to be slow to reuse the buffer while it is in use.
-    for (int i = 0; i < 32; ++i)
-      m_d->m_uploadBuffers[0].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
-    for (int i = 0; i < 4; ++i)
-      m_d->m_uploadBuffers[1].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
 
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
@@ -1148,10 +1138,22 @@ namespace Luminous
 
   BufferGL & RenderDriverGL::uploadBuffer(uint32_t size)
   {
-    /// @todo these upload buffers don't work with the worker thread, since
-    /// there's no synchronization. Worker thread could maybe have its own pools?
+    static thread_local Radiant::Thread::Id tid = Radiant::Thread::currentThreadId();
+    auto & uploadBuffers = m_d->m_uploadBuffers[tid];
+    if (uploadBuffers[0].buffers.empty()) {
+      /// @todo There numbers are totally arbitrary. The idea is to have several
+      /// buffer buckets or pools of different size buffers. In this naive
+      /// implementation, we have two buckets, index 0 for everything less than
+      /// 1MB and index 1 for 1 MB and larger. We want to have several buffers,
+      /// since it seems to be slow to reuse the buffer while it is in use.
+      for (int i = 0; i < 16; ++i)
+        uploadBuffers[0].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
+      for (int i = 0; i < 4; ++i)
+        uploadBuffers[1].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
+    }
+
     int bucket = size >= 1024*1024 ? 1 : 0;
-    UploadBuffer & b = m_d->m_uploadBuffers[bucket];
+    UploadBuffer & b = uploadBuffers[bucket];
     return b.buffers[b.nextIdx++ % b.buffers.size()];
   }
 

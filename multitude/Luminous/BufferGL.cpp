@@ -118,7 +118,6 @@ namespace Luminous
 
   void BufferGL::upload(Buffer::Type type, int offset, std::size_t length, const void * data)
   {
-    touch();
     bind(type);
     if (length + offset > m_size)
       m_size = length + offset;
@@ -130,7 +129,6 @@ namespace Luminous
 
   void * BufferGL::map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access)
   {
-    touch();
     bind(type);
 
     if (length + offset > m_size)
@@ -149,7 +147,6 @@ namespace Luminous
 
   void BufferGL::unmap(Buffer::Type type, int offset, std::size_t length)
   {
-    touch();
     bind(type);
 
     if(length != std::size_t(-1) && (m_mappedAccess & Buffer::MAP_FLUSH_EXPLICIT)) {
