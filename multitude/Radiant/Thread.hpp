@@ -124,7 +124,7 @@ namespace Radiant {
     TLS(const  TLS & t)
     {
       Radiant::Guard g1(m_mutex);
-      Radiant::Guard g2(m_mutex);
+      Radiant::Guard g2(t.m_mutex);
       m_default = t.m_default;
       m_values = t.m_values;
     }
