@@ -125,6 +125,7 @@ namespace Luminous
 
     /// Add a new task that is going to be executed on a different
     /// thread with a shared OpenGL context. Used for GPU data transfers.
+    /// @todo use folly::Executor here instead
     LUMINOUS_API void addTask(std::function<void()> task);
 
   private:
