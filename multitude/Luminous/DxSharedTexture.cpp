@@ -349,8 +349,13 @@ namespace Luminous
         m_dxTex->GetDesc(&desc);
         desc.BindFlags = 0;
         desc.MiscFlags = 0;
-        if (FAILED(m_dev->CreateTexture2D(&desc, nullptr, &m_copy)))
-          abort();
+        HRESULT res = m_dev->CreateTexture2D(&desc, nullptr, &m_copy);
+        if (FAILED(res)) {
+          Radiant::error("DxSharedTexture # CreateTexture2D failed: %s", comErrorStr(res).data());
+          ctx.copying = false;
+          unref(ctx);
+          return;
+        }
       }
 
       if (m_dxCopyFrameNum < m_frameNum) {
@@ -373,9 +378,21 @@ namespace Luminous
       Radiant::Guard g(m_devMutex);
       if (m_ownerCudaDev < 0) {
         ComPtr<IDXGIDevice> dxgiDev;
-        if (FAILED(m_dev->QueryInterface(IID_PPV_ARGS(&dxgiDev)))) abort();
+        HRESULT res = m_dev->QueryInterface(IID_PPV_ARGS(&dxgiDev));
+        if (FAILED(res)) {
+          Radiant::error("DxSharedTexture # QueryInterface IDXGIDevice failed: %s",
+                         comErrorStr(res).data());
+          ctx.copying = false;
+          return;
+        }
         ComPtr<IDXGIAdapter> adapter;
-        if (FAILED(dxgiDev->GetAdapter(&adapter))) abort();
+        res = dxgiDev->GetAdapter(&adapter);
+        if (FAILED(res)) {
+          Radiant::error("DxSharedTexture # GetAdapter failed: %s",
+                         comErrorStr(res).data());
+          ctx.copying = false;
+          return;
+        }
 
         CUDA_CHECK(cudaD3D11GetDevice(&m_ownerCudaDev, adapter.Get()));
       }
