@@ -22,7 +22,13 @@ namespace Luminous
     , m_allocatedSize(0)
     , m_generation(0)
   {    
-    m_state.opengl().glGenBuffers(1, &m_handle);
+    /// glCreateBuffers needs to be used instead of glGenBuffers when using
+    /// glNamedBufferStorage, since glGenBuffers doesn't actually create
+    /// buffers, just their names.
+    if (auto gl = m_state.opengl45())
+      gl->glCreateBuffers(1, &m_handle);
+    else
+      m_state.opengl().glGenBuffers(1, &m_handle);
   }
 
   BufferGL::BufferGL(StateGL & state, Buffer::Usage usage)
@@ -32,7 +38,10 @@ namespace Luminous
     , m_allocatedSize(0)
     , m_generation(0)
   {
-    m_state.opengl().glGenBuffers(1, &m_handle);
+    if (auto gl = m_state.opengl45())
+      gl->glCreateBuffers(1, &m_handle);
+    else
+      m_state.opengl().glGenBuffers(1, &m_handle);
   }
 
   BufferGL::~BufferGL()
@@ -47,12 +56,22 @@ namespace Luminous
     , m_size(t.m_size)
     , m_allocatedSize(t.m_allocatedSize)
     , m_generation(t.m_generation)
+    , m_mappedAccess(t.m_mappedAccess)
   {
+    t.m_size = 0;
+    t.m_allocatedSize = 0;
+    t.m_mappedAccess.clear();
   }
 
   BufferGL & BufferGL::operator=(BufferGL && t)
   {
     ResourceHandleGL::operator=(std::move(t));
+    std::swap(m_usage, t.m_usage);
+    std::swap(m_size, t.m_size);
+    std::swap(m_allocatedSize, t.m_allocatedSize);
+    std::swap(m_generation, t.m_generation);
+    std::swap(m_mappedAccess, t.m_mappedAccess);
+
     return *this;
   }
 
@@ -122,7 +141,7 @@ namespace Luminous
     if (length + offset > m_size)
       m_size = length + offset;
     if (m_allocatedSize < m_size)
-      allocate(type);
+      allocate(type, m_size);
     m_state.opengl().glBufferSubData(type, offset, length, data);
     GLERROR("BufferGL::upload # glBufferSubData");
   }
@@ -134,13 +153,13 @@ namespace Luminous
     if (length + offset > m_size)
       m_size = length + offset;
     if(m_allocatedSize < m_size)
-      allocate(type);
+      allocate(type, m_size);
 
-    m_mappedAccess = access;
-
-    void * data = m_state.opengl().glMapBufferRange(type, offset, length, access.asInt());
+    void * data = m_state.opengl().glMapBufferRange(type, 0, m_allocatedSize, access.asInt());
     GLERROR("BufferGL::map # glMapBufferRange");
-    assert(data);
+
+    if (data)
+      m_mappedAccess = access;
 
     return data;
   }
@@ -160,12 +179,24 @@ namespace Luminous
     m_mappedAccess.clear();
   }
 
-  void BufferGL::allocate(Buffer::Type type)
+  bool BufferGL::allocateImmutable(size_t size, GLbitfield flags)
+  {
+    touch();
+    if (auto gl = m_state.opengl45()) {
+      gl->glNamedBufferStorage(m_handle, size, nullptr, flags);
+      GLERROR("BufferGL::allocateImmutable # glNamedBufferStorage");
+      m_allocatedSize = size;
+      return true;
+    }
+    return false;
+  }
+
+  void BufferGL::allocate(Buffer::Type type, size_t size)
   {
     touch();
 
-    m_state.opengl().glBufferData(type, m_size, nullptr, m_usage);
+    m_state.opengl().glBufferData(type, size, nullptr, m_usage);
     GLERROR("BufferGL::allocate # glBufferData");
-    m_allocatedSize = m_size;
+    m_allocatedSize = size;
   }
 }

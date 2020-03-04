@@ -53,19 +53,15 @@
 
 namespace Luminous
 {
-  struct UploadBuffer
-  {
-    std::vector<BufferGL> buffers;
-    uint32_t nextIdx = 0;
-  };
-
   /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
   class Worker : public Radiant::Thread
   {
   public:
-    Worker(const QString & threadName, QScreen * screen, const QSurfaceFormat & format)
+    Worker(const QString & threadName, QScreen * screen, const QSurfaceFormat & format,
+           folly::ManualExecutor & executor)
       : Thread(threadName)
       , m_surface(screen)
+      , m_executor(executor)
     {
       m_surface.setFormat(format);
       m_surface.create();
@@ -87,17 +83,9 @@ namespace Luminous
     ~Worker()
     {
       m_running = false;
-      m_tasksCond.wakeAll();
+      // wake up the thread
+      m_executor.add([] {});
       waitEnd();
-    }
-
-    void addTask(std::function<void()> task)
-    {
-      {
-        QMutexLocker g(&m_tasksMutex);
-        m_tasks.push_back(std::move(task));
-      }
-      m_tasksCond.notify_one();
     }
 
   private:
@@ -109,35 +97,23 @@ namespace Luminous
       }
 
       Radiant::Timer totalTimer;
-      double workingTime = 0;
+      double idleTime = 0;
 
       while (m_running) {
-        std::function<void()> task;
-        {
-          QMutexLocker g(&m_tasksMutex);
-          while (m_tasks.empty() && m_running)
-            m_tasksCond.wait(&m_tasksMutex);
-
-          if (!m_running)
-            return;
-
-          task = std::move(m_tasks.front());
-          m_tasks.erase(m_tasks.begin());
-        }
-
 #if 0
-        Radiant::Timer workingTimer;
-        task();
-        workingTime += workingTimer.time();
+        Radiant::Timer idleTimer;
+        m_executor.wait();
+        idleTime += idleTimer.time();
+        m_executor.run();
         if (totalTimer.time() >= 1.0) {
           Radiant::info("%s utilization: %.1f%%", qthread()->objectName().toUtf8().data(),
-                        workingTime / totalTimer.start() * 100.0);
-          workingTime = 0;
+                        (1.0 - idleTime / totalTimer.start()) * 100.0);
+          idleTime = 0;
         }
 #else
         (void)totalTimer;
-        (void)workingTime;
-        task();
+        (void)idleTime;
+        m_executor.makeProgress();
 #endif
       }
     }
@@ -146,9 +122,7 @@ namespace Luminous
     QOffscreenSurface m_surface;
     QOpenGLContext m_context;
 
-    std::vector<std::function<void()>> m_tasks;
-    QMutex m_tasksMutex;
-    QWaitCondition m_tasksCond;
+    folly::ManualExecutor & m_executor;
     std::atomic<bool> m_running{true};
   };
 
@@ -161,6 +135,7 @@ namespace Luminous
       : m_driver(driver)
       , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
+      , m_uploadBuffers(m_stateGL)
       , m_frame(0)
       , m_fps(0.0)
       , m_gpuId(static_cast<unsigned int>(-1))
@@ -196,7 +171,8 @@ namespace Luminous
     RenderBufferList m_renderBuffers;
     FrameBufferList m_frameBuffers;
 
-    std::map<Radiant::Thread::Id, std::array<UploadBuffer, 2>> m_uploadBuffers;
+    size_t m_uploadBuffersTargetSize = 0;
+    UploadBufferPool m_uploadBuffers;
 
     RenderState m_state;
 
@@ -233,6 +209,10 @@ namespace Luminous
     OpenGLAPI45 * m_opengl45 = nullptr;
 
     std::unique_ptr<Worker> m_worker;
+    folly::ManualExecutor m_workerExecutor;
+
+    bool m_supportsGL_NVX_gpu_memory_info = false;
+    bool m_supportsGL_ATI_meminfo = false;
 
   public:
 
@@ -599,7 +579,7 @@ namespace Luminous
     : RenderDriver(gfxDriver, threadIndex)
     , m_d(new RenderDriverGL::D(threadIndex, *this))
   {
-    m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format);
+    m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format, worker());
   }
 
   RenderDriverGL::~RenderDriverGL()
@@ -613,10 +593,20 @@ namespace Luminous
     m_d->m_opengl45 = opengl45;
     m_d->m_stateGL.initGl();
 
+    m_d->m_supportsGL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
+    m_d->m_supportsGL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
+
+    /// If 15% of memory is reserved for uploads, P4000/RTX4000 will have
+    /// enough preallocated buffers so that Canvus performance tests using
+    /// real customer data run jank-free.
+    const double fractionOfMemoryToReserveForUploads = 0.15;
+    m_d->m_uploadBuffersTargetSize = fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024;
+    m_d->m_uploadBuffers.preallocate(m_d->m_uploadBuffersTargetSize);
+
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
         if (!gpuInfo().cpuList.empty()) {
-          addTask([list = gpuInfo().cpuList] {
+          worker().add([list = gpuInfo().cpuList] {
             Radiant::PlatformUtils::setCpuAffinity(list);
           });
         }
@@ -649,6 +639,11 @@ namespace Luminous
   {
     m_d->resetStatistics();
     m_d->removeResources();
+    if ((m_d->m_frame % 30) == 0) {
+      worker().add([this] {
+        m_d->m_uploadBuffers.release(m_d->m_uploadBuffersTargetSize, 2 * m_d->m_uploadBuffersTargetSize);
+      });
+    }
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
     //m_d->m_stateGL.setProgram(0);
@@ -660,6 +655,8 @@ namespace Luminous
 
   void RenderDriverGL::postFrame()
   {
+    if (!m_d->m_worker)
+      worker().run();
     m_d->updateStatistics();
   }
 
@@ -1099,6 +1096,71 @@ namespace Luminous
     return m_d->m_gpuId;
   }
 
+  GLint RenderDriverGL::availableGPUMemory() const
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if (m_d->m_supportsGL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    if (m_d->m_supportsGL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  GLint RenderDriverGL::maximumGPUMemory() const
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if (m_d->m_supportsGL_NVX_gpu_memory_info) {
+      m_d->m_stateGL.opengl().glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    /// @todo this just returns the currently available memory, not total
+    if (m_d->m_supportsGL_ATI_meminfo) {
+      m_d->m_stateGL.opengl().glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  void RenderDriverGL::skipFrameAndReleaseResources()
+  {
+    ++m_d->m_frame;
+    m_d->m_stateGL.setFrameTime(Radiant::TimeStamp::currentTime());
+    m_d->removeResources();
+    m_d->m_uploadBuffers.release(0, 0);
+  }
+
+  bool RenderDriverGL::isOpenGLExtensionSupported(const QByteArray & name) const
+  {
+    // Query number of available extensions
+    GLint extensionCount = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionCount);
+
+    // Check if requested extension is available
+    for (int i = 0; i < extensionCount; ++i) {
+      const char* extensionName = reinterpret_cast<const char*>(
+            m_d->m_stateGL.opengl().glGetStringi(GL_EXTENSIONS, i));
+
+      if (name == extensionName)
+        return true;
+    }
+
+    return false;
+  }
+
   bool RenderDriverGL::setupSwapGroup(int group, int screen)
   {
     SwapGroups groups(screen);
@@ -1136,33 +1198,9 @@ namespace Luminous
     return m_d->m_stateGL;
   }
 
-  BufferGL & RenderDriverGL::uploadBuffer(uint32_t size)
+  UploadBufferRef RenderDriverGL::uploadBuffer(uint32_t size)
   {
-    static thread_local Radiant::Thread::Id tid = Radiant::Thread::currentThreadId();
-    auto & uploadBuffers = m_d->m_uploadBuffers[tid];
-    if (uploadBuffers[0].buffers.empty()) {
-      /// @todo There numbers are totally arbitrary. The idea is to have several
-      /// buffer buckets or pools of different size buffers. In this naive
-      /// implementation, we have two buckets, index 0 for everything less than
-      /// 1MB and index 1 for 1 MB and larger. We want to have several buffers,
-      /// since it seems to be slow to reuse the buffer while it is in use.
-      for (int i = 0; i < 16; ++i)
-        uploadBuffers[0].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
-      for (int i = 0; i < 4; ++i)
-        uploadBuffers[1].buffers.emplace_back(m_d->m_stateGL, Buffer::DYNAMIC_DRAW);
-    }
-
-    int bucket = size >= 1024*1024 ? 1 : 0;
-    UploadBuffer & b = uploadBuffers[bucket];
-    return b.buffers[b.nextIdx++ % b.buffers.size()];
-  }
-
-  void RenderDriverGL::addTask(std::function<void()> task)
-  {
-    if (m_d->m_worker)
-      m_d->m_worker->addTask(std::move(task));
-    else
-      task();
+    return m_d->m_uploadBuffers.allocate(size);
   }
 }
 

@@ -110,7 +110,8 @@ namespace Luminous
     void upload2DImpl(const Texture::DataInfo& texture, const QRegion & region, bool compressedFormat, bool mipmapsEnabled);
     void upload3D(const Texture & texture, int textureUnit);
     void uploadData(const PixelFormat & dataFormat, const char * data,
-                    const QRect & destRect, unsigned int bytes);
+                    const QRect & destRect, unsigned int bytes,
+                    UploadMethod method);
     bool updateParams(const Texture & texture);
 
   private:

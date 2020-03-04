@@ -92,8 +92,6 @@ namespace Luminous
     /// Returns OpenGL 4.5 API, if supported
     inline OpenGLAPI45 * opengl45() { return m_opengl45; }
 
-    LUMINOUS_API void addTask(std::function<void()> task);
-
     LUMINOUS_API void initGl();
 
   private:

@@ -179,7 +179,20 @@ namespace Luminous
     /// Get the GPU id for the driver, returns -1 if GPU id is not available
     LUMINOUS_API virtual unsigned int gpuId() const = 0;
 
+    /// Returns approximate of currently available GPU memory
+    /// @return approximate of available GPU memory in kilobytes
+    LUMINOUS_API virtual GLint availableGPUMemory() const = 0;
+
+    /// Returns approximate of total available GPU memory
+    /// @return approximate of total GPU memory in kilobytes
+    LUMINOUS_API virtual GLint maximumGPUMemory() const = 0;
+
+    /// Should be called when the application is minimized or otherwise
+    /// inactive to try to release all GPU resources
+    LUMINOUS_API virtual void skipFrameAndReleaseResources() = 0;
+
     folly::ManualExecutor & afterFlush() { return *m_afterFlush; }
+    folly::ManualExecutor & worker() { return *m_worker; }
 
     const GpuInfo & gpuInfo() const { return m_gpuInfo; }
     void setGpuInfo(const GpuInfo & gpuInfo) { m_gpuInfo = gpuInfo; }
@@ -200,6 +213,7 @@ namespace Luminous
     GfxDriver & m_gfxDriver;
     unsigned int m_threadIndex;
     std::unique_ptr<folly::ManualExecutor> m_afterFlush;
+    std::unique_ptr<folly::ManualExecutor> m_worker;
   };
 }
 

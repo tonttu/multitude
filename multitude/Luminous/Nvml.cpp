@@ -74,7 +74,7 @@ namespace Luminous
 
   void Nvml::DeviceQuery::D::run()
   {
-    char buffer[256];
+    char buffer[256]{};
     QString name = QString("GPU %1").arg(m_openglIndex);
 
     QStringList specs;

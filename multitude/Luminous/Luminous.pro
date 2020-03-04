@@ -89,6 +89,7 @@ HEADERS += BezierSplineRenderer.hpp
 HEADERS += BezierSpline.hpp
 HEADERS += BezierSplineEraser.hpp
 HEADERS += GfxDriver.hpp
+HEADERS += UploadBuffer.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
@@ -163,6 +164,7 @@ SOURCES += BezierSplineBuilder.cpp
 SOURCES += BezierSplineTesselator.cpp
 SOURCES += BezierSplineRenderer.cpp
 SOURCES += BezierSpline.cpp
+SOURCES += UploadBuffer.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH

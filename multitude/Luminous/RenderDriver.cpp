@@ -31,6 +31,7 @@ namespace Luminous
     : m_gfxDriver(gfxDriver)
     , m_threadIndex(threadIndex)
     , m_afterFlush(new folly::ManualExecutor())
+    , m_worker(new folly::ManualExecutor())
   {}
 
   RenderDriver::~RenderDriver()

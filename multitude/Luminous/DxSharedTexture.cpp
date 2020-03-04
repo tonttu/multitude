@@ -213,7 +213,7 @@ namespace Luminous
       : m_host(host)
     {}
 
-    void startCopy(RenderContext & r, Context & ctx, GLuint handle, bool registerTex);
+    void startCopy(folly::Executor * worker, Context & ctx, GLuint handle, bool registerTex);
 
     bool ref(Context & ctx);
     void unref(Context & ctx);
@@ -339,7 +339,7 @@ namespace Luminous
   ///  * Allocate memory for handle on the destination GPU using OpenGL
   ///  * Map handle to CUDA
   ///  * Perform memory copy between the CUDA objects
-  void DxSharedTexture::D::startCopy(Luminous::RenderContext & r, Context & ctx, GLuint handle, bool registerTex)
+  void DxSharedTexture::D::startCopy(folly::Executor * worker, Context & ctx, GLuint handle, bool registerTex)
   {
     {
       Radiant::Guard g(m_devMutex);
@@ -477,12 +477,13 @@ namespace Luminous
     {
       std::shared_ptr<DxSharedTexture> self;
       Context * ctx;
-      RenderContext * r;
+      folly::Executor * worker;
     };
 
     CUDA_CHECK(cudaStreamAddCallback(ctx.cudaStream, [] (cudaStream_t, cudaError_t, void * userData) {
       auto cb = static_cast<CbParams*>(userData);
-      cb->r->stateGl().addTask([cb] {
+
+      cb->worker->add([cb] {
         CUDA_CHECK(cudaSetDevice(cb->ctx->cudaDev));
         CUDA_CHECK(cudaGraphicsUnmapResources(1, &cb->ctx->cudaTex, cb->ctx->cudaStream));
 
@@ -493,7 +494,7 @@ namespace Luminous
         }
         delete cb;
       });
-    }, new CbParams{m_host.shared_from_this(), &ctx, &r}, 0));
+    }, new CbParams{m_host.shared_from_this(), &ctx, worker}, 0));
   }
 
   bool DxSharedTexture::D::ref(Context & ctx)
@@ -869,9 +870,9 @@ namespace Luminous
     bool registerTex = texgl.generation() == 0;
     texgl.upload(m_d->m_tex, 0, TextureGL::UPLOAD_SYNC);
 
-    r.stateGl().addTask([weak = std::weak_ptr<DxSharedTexture>(shared_from_this()), &r, &ctx, handle = texgl.handle(), registerTex] {
+    r.renderDriver().worker().add([weak = std::weak_ptr<DxSharedTexture>(shared_from_this()), worker=&r.renderDriver().worker(), &ctx, handle = texgl.handle(), registerTex] {
       if (auto self = weak.lock())
-        self->m_d->startCopy(r, ctx, handle, registerTex);
+        self->m_d->startCopy(worker, ctx, handle, registerTex);
     });
 
     return nullptr;

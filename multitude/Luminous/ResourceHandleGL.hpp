@@ -34,6 +34,7 @@ namespace Luminous
     /// Constructor
     /// @param state OpenGL state of the graphics driver
     inline ResourceHandleGL(StateGL & state);
+    inline ~ResourceHandleGL();
     /// Move constructor
     /// @param r resource handle to move
     inline ResourceHandleGL(ResourceHandleGL && r);
@@ -66,6 +67,13 @@ namespace Luminous
     /// @return raw OpenGL handle
     GLuint handle() const { return m_handle; }
 
+    /// Increase external usage count. expired() will always return false if
+    /// there are active references to the object. Call this if you plan to
+    /// use the object in a worker thread. Always call unref() later if you
+    /// call ref().
+    inline void ref() { ++m_externalRefs; }
+    inline void unref() { --m_externalRefs; }
+
   protected:
     /// OpenGL state owned by the graphics driver
     StateGL & m_state;
@@ -75,6 +83,7 @@ namespace Luminous
   private:
     Radiant::TimeStamp m_lastUsed;
     unsigned int m_expirationSeconds;
+    std::atomic<int> m_externalRefs{0};
 
   private:
     ResourceHandleGL(const ResourceHandleGL &);
@@ -89,6 +98,15 @@ namespace Luminous
     , m_lastUsed(state.frameTime())
   {}
 
+  ResourceHandleGL::~ResourceHandleGL()
+  {
+#ifdef RADIANT_DEBUG
+    if (m_externalRefs > 0) {
+      Radiant::error("~ResourceHandleGL called while the objects is in use");
+    }
+#endif
+  }
+
   ResourceHandleGL::ResourceHandleGL(ResourceHandleGL && r)
     : m_state(r.m_state)
     , m_handle(r.m_handle)
@@ -96,13 +114,23 @@ namespace Luminous
     , m_expirationSeconds(r.m_expirationSeconds)
   {
     r.m_handle = 0;
+#ifdef RADIANT_DEBUG
+    if (r.m_externalRefs > 0 || m_externalRefs > 0) {
+      Radiant::error("ResourceHandleGL move constructor called while one of the objects is in use");
+    }
+#endif
   }
 
   ResourceHandleGL & ResourceHandleGL::operator=(ResourceHandleGL && r)
   {
     std::swap(m_handle, r.m_handle);
-    m_lastUsed = r.m_lastUsed;
-    m_expirationSeconds = r.m_expirationSeconds;
+    std::swap(m_lastUsed, r.m_lastUsed);
+    std::swap(m_expirationSeconds, r.m_expirationSeconds);
+#ifdef RADIANT_DEBUG
+    if (r.m_externalRefs > 0 || m_externalRefs > 0) {
+      Radiant::error("ResourceHandleGL move assignment operator called while one of the objects is in use");
+    }
+#endif
     return *this;
   }
 
@@ -113,6 +141,9 @@ namespace Luminous
 
   bool ResourceHandleGL::expired() const
   {
+    if (m_externalRefs > 0)
+      return false;
+
     if(m_expirationSeconds > 0) {
       auto elapsedSeconds = (m_state.frameTime() - m_lastUsed).seconds();
       return elapsedSeconds > m_expirationSeconds;

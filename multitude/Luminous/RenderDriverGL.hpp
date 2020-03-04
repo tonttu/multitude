@@ -18,6 +18,7 @@
 #include "Luminous/BufferGL.hpp"
 #include "Luminous/VertexArrayGL.hpp"
 #include "Luminous/FrameBufferGL.hpp"
+#include "UploadBuffer.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -116,20 +117,21 @@ namespace Luminous
     LUMINOUS_API void setGPUId(unsigned int gpuId) OVERRIDE;
     LUMINOUS_API unsigned int gpuId() const OVERRIDE;
 
+    LUMINOUS_API virtual GLint availableGPUMemory() const override;
+    LUMINOUS_API virtual GLint maximumGPUMemory() const override;
+
+    LUMINOUS_API virtual void skipFrameAndReleaseResources() override;
+
+    LUMINOUS_API bool isOpenGLExtensionSupported(const QByteArray & name) const;
+
     LUMINOUS_API OpenGLAPI & opengl();
     LUMINOUS_API OpenGLAPI45 * opengl45();
 
     LUMINOUS_API StateGL & stateGl();
 
-    LUMINOUS_API BufferGL & uploadBuffer(uint32_t size);
-
-    /// Add a new task that is going to be executed on a different
-    /// thread with a shared OpenGL context. Used for GPU data transfers.
-    /// @todo use folly::Executor here instead
-    LUMINOUS_API void addTask(std::function<void()> task);
+    LUMINOUS_API UploadBufferRef uploadBuffer(uint32_t size);
 
   private:
-
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
 
     class D;

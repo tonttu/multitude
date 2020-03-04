@@ -13,6 +13,8 @@
 #include "Texture.hpp"
 #include "TextureGL.hpp"
 
+#include <folly/executors/ManualExecutor.h>
+
 #include <QVector>
 
 #include <cassert>
@@ -352,7 +354,8 @@ namespace Luminous
           QMutexLocker g(&m_asyncUploadMutex);
           ++m_asyncUploadTasks;
         }
-        m_state.addTask([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat] {
+        ref();
+        m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat] {
           m_state.opengl().glBindTexture(m_target, m_handle);
           GLERROR("TextureGL::upload2D # glBindTexture");
           upload2DImpl(tex, toUpload, compressedFormat, mipmaps);
@@ -363,6 +366,7 @@ namespace Luminous
             m_fences.push_back(fence);
           }
           m_asyncUploadCond.wakeAll();
+          unref();
         });
         uploadedEverything = false;
       } else {
@@ -411,7 +415,7 @@ namespace Luminous
         auto data = static_cast<const char *>(texture.data.get()) + offset;
 
         uploadData(texture.dataFormat, data, rect,
-                   rect.height() * lineSizeBytes);
+                   rect.height() * lineSizeBytes, s_defaultUploadMethod);
       }
     }
     if (mipmapsEnabled) {
@@ -520,33 +524,43 @@ namespace Luminous
   }
 
   void TextureGL::uploadData(const PixelFormat & dataFormat, const char * data,
-                             const QRect & destRect, unsigned int bytes)
+                             const QRect & destRect, unsigned int bytes,
+                             UploadMethod method)
   {
-    if (s_defaultUploadMethod == METHOD_TEXTURE) {
+    if (method == METHOD_TEXTURE) {
       m_state.opengl().glTexSubImage2D(GL_TEXTURE_2D, 0, destRect.left(), destRect.top(),
                                        destRect.width(), destRect.height(),
                                        dataFormat.layout(), dataFormat.type(), data);
       GLERROR("TextureGL::uploadData # glTexSubImage2D");
     } else {
-      BufferGL & buffer = m_state.driver().uploadBuffer(bytes);
+      UploadBufferRef buffer = m_state.driver().uploadBuffer(bytes);
 
-      if (s_defaultUploadMethod == METHOD_BUFFER_UPLOAD) {
-        buffer.upload(Buffer::UNPACK, 0, bytes, data);
-      } else if (s_defaultUploadMethod == METHOD_BUFFER_MAP ||
-                 s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC ||
-                 s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN) {
-        Radiant::FlagsT<Buffer::MapAccess> flags = Buffer::MAP_WRITE;
-        if (s_defaultUploadMethod == METHOD_BUFFER_MAP ||
-            s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
-          flags |= Buffer::MAP_INVALIDATE_BUFFER;
-        if (s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC ||
-            s_defaultUploadMethod == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
-          flags |= Buffer::MAP_UNSYNCHRONIZED;
-        void * target = buffer.map(Buffer::UNPACK, 0, bytes, flags);
-        memcpy(target, data, bytes);
-        buffer.unmap(Buffer::UNPACK, 0, bytes);
+      if (method == METHOD_BUFFER_UPLOAD) {
+        buffer->upload(Buffer::UNPACK, 0, bytes, data);
+      } else if (method == METHOD_BUFFER_MAP ||
+                 method == METHOD_BUFFER_MAP_NOSYNC ||
+                 method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN) {
+        if (void * target = buffer.persistentMapping()) {
+          memcpy(target, data, bytes);
+          buffer->bind(Buffer::UNPACK);
+        } else {
+          Radiant::FlagsT<Buffer::MapAccess> flags = Buffer::MAP_WRITE;
+          if (method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
+            flags |= Buffer::MAP_INVALIDATE_BUFFER;
+          if (method == METHOD_BUFFER_MAP_NOSYNC ||
+              method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
+            flags |= Buffer::MAP_UNSYNCHRONIZED;
+          target = buffer->map(Buffer::UNPACK, 0, bytes, flags);
+          if (!target) {
+            m_state.opengl().glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+            uploadData(dataFormat, data, destRect, bytes, METHOD_TEXTURE);
+            return;
+          }
+          memcpy(target, data, bytes);
+          buffer->unmap(Buffer::UNPACK, 0, bytes);
+        }
       } else {
-        Radiant::error("TextureGL::uploadData # Unknown upload method %d", s_defaultUploadMethod);
+        Radiant::error("TextureGL::uploadData # Unknown upload method %d", method);
         return;
       }
 
