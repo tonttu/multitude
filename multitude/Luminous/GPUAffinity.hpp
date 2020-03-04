@@ -13,8 +13,6 @@
 #include <QRect>
 #include <QRegion>
 
-#include <Windows.h>
-
 namespace Luminous
 {
   /// Wrapper for WGL_NV_gpu_affinity extension
@@ -31,7 +29,6 @@ namespace Luminous
     QString gpuName(uint32_t index) const;
     QStringList displayGdiDeviceNames(uint32_t gpuIndex) const;
     QStringList adapterInstanceIds(uint32_t gpuIndex) const;
-    std::vector<LUID> dxgiAdapterLuids(uint32_t gpuIndex) const;
 
   private:
     class D;

@@ -32,6 +32,7 @@
 #include <Nimble/Matrix4.hpp>
 #include <memory>
 #include <Radiant/VectorAllocator.hpp>
+#include <Radiant/Semaphore.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 #include <Radiant/PlatformUtils.hpp>
@@ -530,13 +531,17 @@ namespace Luminous
   {
     auto it = std::begin(container);
     while (it != std::end(container)) {
-      const auto & handle = it->second;
+      auto & handle = it->second;
       // First, check if resource has been deleted
       // If not, we can check if it has expired
       if(std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) !=
          std::end(releaseQueue) || handle.expired()) {
-        // Remove from container
-        it = container.erase(it);
+        if (handle.hasExternalRefs()) {
+          handle.setExpired(true);
+          ++it;
+        } else {
+          it = container.erase(it);
+        }
       } else ++it;
     }
   }
@@ -584,6 +589,15 @@ namespace Luminous
 
   RenderDriverGL::~RenderDriverGL()
   {
+    if (m_d->m_worker) {
+      Radiant::Semaphore s;
+      worker().add([this, &s] {
+        afterFlush().drain();
+        s.release();
+      });
+      s.acquire();
+    }
+
     delete m_d;
   }
 

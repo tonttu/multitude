@@ -71,13 +71,6 @@ namespace Luminous
       /// belonging to the same NUMA node.
       std::vector<int> cpuList;
 
-#ifdef RADIANT_WINDOWS
-      /// DXGI / D3D adapter LUID, valid if GPU affinity is used
-      LUID dxgiAdapterLuid;
-      /// CUDA device, valid if GPU affinity is used
-      int cudaDev = -1;
-#endif
-
       inline QByteArray busId() const
       {
         char buffer[128];

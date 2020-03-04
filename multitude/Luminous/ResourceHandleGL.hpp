@@ -55,6 +55,10 @@ namespace Luminous
     /// @sa touch
     inline bool expired() const;
 
+    inline bool hasExternalRefs() const { return m_externalRefs != 0; }
+
+    inline void setExpired(bool expired) { m_manuallyExpired = expired; }
+
     /// Set the expiration time in seconds for the resource.
     /// @param secs expiration time in seconds
     /// @sa touch
@@ -84,6 +88,7 @@ namespace Luminous
     Radiant::TimeStamp m_lastUsed;
     unsigned int m_expirationSeconds;
     std::atomic<int> m_externalRefs{0};
+    bool m_manuallyExpired = false;
 
   private:
     ResourceHandleGL(const ResourceHandleGL &);
@@ -143,6 +148,9 @@ namespace Luminous
   {
     if (m_externalRefs > 0)
       return false;
+
+    if (m_manuallyExpired)
+      return true;
 
     if(m_expirationSeconds > 0) {
       auto elapsedSeconds = (m_state.frameTime() - m_lastUsed).seconds();

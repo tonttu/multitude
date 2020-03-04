@@ -7,8 +7,6 @@
 
 #include <Radiant/Trace.hpp>
 
-#include <QSettings>
-
 namespace Luminous
 {
   // https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions#Windows
@@ -162,25 +160,6 @@ namespace Luminous
       }
     } catch (std::exception & error) {
       Radiant::error("Failed to read display config: %s", error.what());
-    }
-    return ret;
-  }
-
-  std::vector<LUID> GPUAffinity::dxgiAdapterLuids(uint32_t gpuIndex) const
-  {
-    std::vector<LUID> ret;
-    for (const QString & instanceId: adapterInstanceIds(gpuIndex)) {
-      QSettings enumSettings("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Enum\\" + instanceId + "\\Device Parameters", QSettings::NativeFormat);
-      QString videoId = enumSettings.value("VideoID").toString();
-      if (videoId.isEmpty())
-        continue;
-
-      QSettings dxSettings("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\DirectX\\" + videoId, QSettings::NativeFormat);
-      qulonglong luid = dxSettings.value("AdapterLuid").toULongLong();
-      if (luid) {
-        LUID l{luid & 0xFFFFFFFF, (luid >> 32) & 0xFFFFFFFF};
-        ret.push_back(l);
-      }
     }
     return ret;
   }
