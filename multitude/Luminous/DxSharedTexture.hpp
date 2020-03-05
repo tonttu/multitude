@@ -21,8 +21,7 @@ namespace Luminous
   ///
   /// Requires:
   ///  * Windows 10 (for CompareObjectHandles)
-  ///  * DirectX 11.1
-  ///  * CUDA 9.0 (nvidia driver 384.81 or newer) for copying data between GPUs
+  ///  * DirectX 11.3
   ///  * WGL_NV_DX_interop OpenGL extension for using the texture in OpenGL
   class LUMINOUS_API DxSharedTexture : public std::enable_shared_from_this<DxSharedTexture>
   {
