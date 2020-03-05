@@ -148,7 +148,7 @@ namespace Radiant
   //////////////////////////////////////////////////////////////////////
 
   SingleShotTask::SingleShotTask(std::function<void ()> func)
-    : m_func(func)
+    : m_func(std::move(func))
   {}
 
   void SingleShotTask::doTask()
@@ -159,7 +159,7 @@ namespace Radiant
 
   void SingleShotTask::run(double delay, std::function<void ()> func)
   {
-    auto task = std::make_shared<SingleShotTask>(func);
+    auto task = std::make_shared<SingleShotTask>(std::move(func));
     if (delay != 0.0) {
       task->scheduleFromNowSecs(delay);
     }
