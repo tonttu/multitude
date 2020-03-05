@@ -52,8 +52,8 @@ namespace Luminous
     /// Size of the shared texture, can't change during the lifetime of this object.
     Nimble::SizeI size() const;
 
-    /// Returns true if the texture is ready on the given render thread. Also
-    /// finalizes finished copy operations.
+    /// Returns true if the texture is ready or permanently failed on the given
+    /// render thread.
     bool checkStatus(unsigned int renderThreadIndex);
 
     /// @see DxSharedTextureBag::texture

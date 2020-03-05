@@ -718,7 +718,7 @@ namespace Luminous
   {
     Context & ctx = m_d->m_ctx[renderThreadIndex];
     if (ctx.failed)
-      return false;
+      return true;
 
     if (ctx.interopTex) {
       if (!m_d->m_acquired)
@@ -774,47 +774,42 @@ namespace Luminous
         /// up. We need to copy the texture manually.
         ctx.access = ACCESS_COPY;
       } else {
-        ctx.access = ACCESS_DX;
+        /// This shouldn't be needed anymore according to the spec, but
+        /// wglDXRegisterObjectNV will fail without this
+        if (!m_d->m_shareHandleSet) {
+          if (ctx.dxInteropApi.wglDXSetResourceShareHandleNV(m_d->m_dxTex.Get(), m_d->m_sharedHandle.get())) {
+            m_d->m_shareHandleSet = true;
+          } else {
+            ctx.access = ACCESS_COPY;
+          }
+        }
+      }
+
+      if (ctx.access == ACCESS_UNKNOWN) {
+        Luminous::TextureGL & texGl = r.handle(m_d->m_tex);
+
+        ctx.interopTex = ctx.dxInteropApi.wglDXRegisterObjectNV(
+              ctx.interopDev, m_d->m_dxTex.Get(), texGl.handle(),
+              GL_TEXTURE_2D, WGL_ACCESS_READ_ONLY_NV);
+
+        if (ctx.interopTex) {
+          /// Make sure TextureGL::upload() will be no-op and won't mess with
+          /// the interop texture.
+          texGl.setGeneration(m_d->m_tex.generation());
+          texGl.setParamsGeneration(m_d->m_tex.paramsGeneration());
+          texGl.setTarget(GL_TEXTURE_2D);
+
+          ctx.glExecutor = &r.renderDriver().afterFlush();
+
+          ctx.access = ACCESS_DX;
+        } else {
+          ctx.access = ACCESS_COPY;
+        }
       }
     }
 
     if (ctx.access == ACCESS_DX) {
-      ctx.glExecutor = &r.renderDriver().afterFlush();
       m_d->m_lastUsed = r.frameTime().value();
-      Luminous::TextureGL & texGl = r.handle(m_d->m_tex);
-
-      /// Make sure TextureGL::upload() will be no-op and won't mess with
-      /// the interop texture.
-      texGl.setGeneration(m_d->m_tex.generation());
-      texGl.setParamsGeneration(m_d->m_tex.paramsGeneration());
-      texGl.setTarget(GL_TEXTURE_2D);
-
-      m_d->m_devMutex.lock();
-      /// This shouldn't be needed anymore according to the spec, but
-      /// wglDXRegisterObjectNV will fail without this
-      if (!m_d->m_shareHandleSet) {
-        if (!ctx.dxInteropApi.wglDXSetResourceShareHandleNV(m_d->m_dxTex.Get(), m_d->m_sharedHandle.get())) {
-          m_d->m_devMutex.unlock();
-          GLERROR("wglDXSetResourceShareHandleNV");
-          Radiant::error("DxSharedTexture # wglDXSetResourceShareHandleNV failed");
-          ctx.failed = true;
-          return nullptr;
-        }
-        m_d->m_shareHandleSet = true;
-      }
-
-      ctx.interopTex = ctx.dxInteropApi.wglDXRegisterObjectNV(
-            ctx.interopDev, m_d->m_dxTex.Get(), texGl.handle(),
-            GL_TEXTURE_2D, WGL_ACCESS_READ_ONLY_NV);
-      m_d->m_devMutex.unlock();
-
-      if (ctx.interopTex == nullptr) {
-        GLERROR("wglDXRegisterObjectNV");
-        Radiant::error("DxSharedTexture # wglDXRegisterObjectNV failed");
-        ctx.failed = true;
-        return nullptr;
-      }
-
       if (m_d->ref(ctx)) {
         ctx.glExecutor->add([dx = shared_from_this(), &ctx] () mutable {
           dx->m_d->unref(ctx);

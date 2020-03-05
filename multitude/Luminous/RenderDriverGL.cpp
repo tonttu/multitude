@@ -682,12 +682,43 @@ namespace Luminous
 
   void RenderDriverGL::deInitialize()
   {
-    m_d->m_programs.clear();
-    m_d->m_textures.clear();
-    m_d->m_buffers.clear();
-    m_d->m_vertexArrays.clear();
-    m_d->m_renderBuffers.clear();
-    m_d->m_frameBuffers.clear();
+    for (auto it = m_d->m_programs.begin(); it != m_d->m_programs.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_programs.erase(it);
+    }
+    for (auto it = m_d->m_textures.begin(); it != m_d->m_textures.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_textures.erase(it);
+    }
+    for (auto it = m_d->m_buffers.begin(); it != m_d->m_buffers.end();) {
+      if (it->second->hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_buffers.erase(it);
+    }
+    for (auto it = m_d->m_vertexArrays.begin(); it != m_d->m_vertexArrays.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_vertexArrays.erase(it);
+    }
+    for (auto it = m_d->m_renderBuffers.begin(); it != m_d->m_renderBuffers.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_renderBuffers.erase(it);
+    }
+    for (auto it = m_d->m_frameBuffers.begin(); it != m_d->m_frameBuffers.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_frameBuffers.erase(it);
+    }
+    m_d->m_uploadBuffers.release(0, 0);
 
     while(!m_d->m_fboStack.empty())
       m_d->m_fboStack.pop();
