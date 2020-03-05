@@ -4,6 +4,7 @@
 #include "RenderContext.hpp"
 #include "ResourceHandleGL.hpp"
 #include "GfxDriver.hpp"
+#include "RenderDriverGL.hpp"
 
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Task.hpp>
@@ -15,14 +16,10 @@
 #include <QReadWriteLock>
 
 #include <dxgi.h>
-#include <d3d11_1.h>
+#include <d3d11_3.h>
 
 #include <comdef.h>
 #include <wrl.h>
-
-#include <cuda_runtime_api.h>
-#include <cuda_d3d11_interop.h>
-#include <cuda_gl_interop.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -60,19 +57,8 @@ namespace
     return QString::fromStdWString(_com_error(res).ErrorMessage()).toUtf8();
   }
 
-  bool cudaCheck(cudaError_t error, const char * cmd, const char * file, int line)
-  {
-    if (error == cudaSuccess)
-      return true;
-
-    Radiant::error("CUDA error %s:%d: %s: %s", file, line, cmd, cudaGetErrorString(error));
-    return false;
-  }
-
-#define CUDA_CHECK(cmd) cudaCheck(cmd, #cmd, __FILE__, __LINE__)
-
   /// Creates a device from the same adapter that owns sharedHandle
-  ComPtr<ID3D11Device1> createDevice(HANDLE sharedHandle)
+  ComPtr<ID3D11Device3> createDevice(HANDLE sharedHandle)
   {
     ComPtr<IDXGIFactory2> dxgiFactory;
 
@@ -127,15 +113,15 @@ namespace
       return nullptr;
     }
 
-    ComPtr<ID3D11Device1> dev1;
-    res = dev->QueryInterface(IID_PPV_ARGS(&dev1));
+    ComPtr<ID3D11Device3> dev3;
+    res = dev->QueryInterface(IID_PPV_ARGS(&dev3));
     if (FAILED(res)) {
-      Radiant::error("DxSharedTexture # QueryInterface ID3D11Device1 failed: %s",
+      Radiant::error("DxSharedTexture # QueryInterface ID3D11Device3 failed: %s",
                      comErrorStr(res).data());
       return nullptr;
     }
 
-    return dev1;
+    return dev3;
   }
 }
 
@@ -169,29 +155,24 @@ namespace Luminous
     /// than zero, the texture is locked with wglDXLockObjectsNV
     int glRefs = 0;
 
-    /// If this GPU doesn't belong to D::m_dev, the texture data for this
-    /// GPU is copied with CUDA to this texture.
-    cudaGraphicsResource_t cudaTex = nullptr;
+    RenderDriverGL * renderDriver = nullptr;
     /// Matching GL texture for D::m_tex. If this is non-null, we have called
     /// glTex->ref() to keep it alive.
     TextureGL * glTex = nullptr;
-    /// Status of ongoing DX / CUDA copy tasks
+    /// Status of ongoing DX / OGL copy tasks
     /// Protected with D::m_refMutex
     bool copying = false;
-    /// Frame number of cudaTex
+    /// Frame number of glTex
     /// Protected with D::m_refMutex
     uint64_t copyFrameNum = 0;
-    /// CUDA stream where copying and OpenGL interop happens.
-    cudaStream_t cudaStream = nullptr;
-    /// CUDA device that matches this GPU
-    int cudaDev = -1;
+    /// OpenGL sync object for glTex after copying
+    GLsync copyFence = nullptr;
 
-    /// Set to true if either DX-GL or CUDA-GL interop failed for this GPU.
+    /// Set to true if DX-GL interop or something else failed for this GPU.
     /// Invalidates the whole DxSharedTexture object for this context and
     /// there is no recovery. Practically all reasons for any errors are
     /// something that would happen again later, so this practically just
-    /// stops flooding the same error message every frame (like CUDA is
-    /// not supported).
+    /// stops flooding the same error message every frame.
     std::atomic<bool> failed{false};
 
     ThreadAccess access = ACCESS_UNKNOWN;
@@ -209,10 +190,11 @@ namespace Luminous
       std::swap(interopTex, c.interopTex);
       std::swap(glExecutor, c.glExecutor);
       std::swap(glRefs, c.glRefs);
-      std::swap(cudaTex, c.cudaTex);
+      std::swap(glTex, c.glTex);
       std::swap(copying, c.copying);
       std::swap(copyFrameNum, c.copyFrameNum);
-      std::swap(cudaStream, c.cudaStream);
+      std::swap(copyFence, c.copyFence);
+      std::swap(access, c.access);
       bool f = failed;
       failed = c.failed.load();
       c.failed = f;
@@ -232,7 +214,8 @@ namespace Luminous
       : m_host(host)
     {}
 
-    void startCopy(folly::Executor * worker, Context & ctx);
+    void startCopy(Context & ctx);
+    void finishCopy(Context & ctx, UploadBufferRef * buffer);
 
     bool ref(Context & ctx);
     void unref(Context & ctx);
@@ -244,13 +227,13 @@ namespace Luminous
   public:
     DxSharedTexture & m_host;
 
-    /// Lock this when using m_dev or any interop functions in GL/CUDA
+    /// Lock this when using m_dev or any interop functions in GL
     /// associated with m_dev.
     Radiant::Mutex m_devMutex;
     /// Protects ctx.copying, copyFrameNum, m_acquired, m_release, m_refs
     Radiant::Mutex m_refMutex;
     /// The device that owns the shared texture.
-    ComPtr<ID3D11Device1> m_dev;
+    ComPtr<ID3D11Device3> m_dev;
     /// Copy of the shared handle received from DX application
     std::shared_ptr<void> m_sharedHandle;
     /// wglDXSetResourceShareHandleNV needs to be called exactly once, but
@@ -268,36 +251,26 @@ namespace Luminous
     std::atomic<uint64_t> m_frameNum{0};
 
     /// We need to make a copy of m_dxTex on the same GPU before being able to
-    /// share it with CUDA.
+    /// map it.
     ComPtr<ID3D11Texture2D> m_copy;
     /// Frame number of m_copy (compare to m_frameNumber)
     std::atomic<uint64_t> m_dxCopyFrameNum{0};
 
-    /// Pinned memory where we copy data from m_copy
-    std::shared_ptr<void> m_copyData;
-    /// Frame number of m_copyData (compare to m_frameNumber)
-    std::atomic<uint64_t> m_pinnedCopyFrameNum{0};
-    /// Protects m_copyData and m_pinnedCopyFrameNum
-    Radiant::Mutex m_pinnedCopyFrameMutex;
-
     /// Texture with the correct size and pixel format, but empty data pointer.
     /// Some of the TextureGL instances might be using DX interop extension and
-    /// others CUDA interop extension.
+    /// others just standalone OpenGL texture.
     Luminous::Texture m_tex;
 
     /// Per-render thread data
     ContextArrayT<Context> m_ctx;
 
-    /// CUDA dev that matches m_dev
-    int m_ownerCudaDev = -1;
-    /// m_copy in CUDA
-    cudaGraphicsResource_t m_cudaTex = nullptr;
-    /// Copy stream, used for DtoH copies
-    cudaStream_t m_cudaStream = nullptr;
-    /// Synchronize DtoH copy event between m_cudaStream and several ctx.cudaStream
-    std::array<cudaEvent_t, 16> m_copyEvents{};
-    /// Nonzero if m_cudaTex is mapped. Protected by m_devMutex.
+    /// Nonzero if m_copy is mapped. Protected by m_devMutex.
     int m_copyRef = 0;
+    /// m_copy mapped, null if m_copyRef is zero.
+    D3D11_MAPPED_SUBRESOURCE m_copyMapped{};
+    /// Used to synchronize m_dxTex -> m_copy task so that we don't need to
+    /// wait with m_devMutex locked.
+    std::shared_ptr<void> m_copyEvent;
 
     /// Number of m_dxTex users (render operations in the same context or copy
     /// operation to m_copy). When this goes back to zero, and m_release is true,
@@ -317,25 +290,17 @@ namespace Luminous
 
   Context::~Context()
   {
-    if (cudaStream) {
-      CUDA_CHECK(cudaSetDevice(cudaDev));
-      CUDA_CHECK(cudaStreamDestroy(cudaStream));
-    }
-
-    if (glExecutor && (cudaTex || glTex)) {
-      glExecutor->add([cudaDev=cudaDev, cudaTex=cudaTex, glTex=glTex] {
-        if (cudaTex) {
-          CUDA_CHECK(cudaSetDevice(cudaDev));
-          CUDA_CHECK(cudaGraphicsUnregisterResource(cudaTex));
-        }
-        if (glTex) {
+    if (glExecutor && (glTex || (renderDriver && copyFence))) {
+      glExecutor->add([glTex=glTex, copyFence=copyFence, renderDriver=renderDriver] {
+        if (copyFence && renderDriver)
+          renderDriver->opengl().glDeleteSync(copyFence);
+        if (glTex)
           glTex->unref();
-        }
       });
     }
     if (glExecutor && interopTex) {
-      glExecutor->add([interopDev=this->interopDev, interopTex=this->interopTex,
-                      dxInteropApi=this->dxInteropApi] {
+      glExecutor->add([interopDev=interopDev, interopTex=interopTex,
+                      dxInteropApi=dxInteropApi] {
         if (!dxInteropApi.wglDXUnregisterObjectNV(interopDev, interopTex)) {
           GLERROR("wglDXUnregisterObjectNV");
           Radiant::error("DxSharedTexture # wglDXUnregisterObjectNV failed");
@@ -351,23 +316,29 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
 
-  /// Copy D3D texture 'm_dxTex' to OpenGL texture 'handle' on a different GPU using CUDA.
+  /// Copy D3D texture 'm_dxTex' to OpenGL texture 'handle' on a different GPU.
   ///  * First make a copy of m_dxTex to a temporary m_copy DX texture on the
-  ///    source GPU, since CUDA - DX interop code doesn't work with shared textures
-  ///  * Map m_copy to CUDA
+  ///    source GPU since the DX interop texture can't be mapped.
+  ///  * Map m_copy
   ///  * Allocate memory for handle on the destination GPU using OpenGL
-  ///  * Map handle to CUDA
-  ///  * Perform memory copy between the CUDA objects
-  void DxSharedTexture::D::startCopy(folly::Executor * worker, Context & ctx)
+  ///  * Upload mapped m_copy to the target texture using a temporary upload buffer
+
+  /// This is executed in a random bg thread
+  void DxSharedTexture::D::startCopy(Context & ctx)
   {
+    ComPtr<ID3D11DeviceContext3> deviceCtx;
+
     {
       Radiant::Guard g(m_devMutex);
+      m_dev->GetImmediateContext3(&deviceCtx);
 
       if (!m_copy) {
         D3D11_TEXTURE2D_DESC desc;
         m_dxTex->GetDesc(&desc);
         desc.BindFlags = 0;
         desc.MiscFlags = 0;
+        desc.Usage = D3D11_USAGE_STAGING;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         HRESULT res = m_dev->CreateTexture2D(&desc, nullptr, &m_copy);
         if (FAILED(res)) {
           Radiant::error("DxSharedTexture # CreateTexture2D failed: %s", comErrorStr(res).data());
@@ -377,141 +348,83 @@ namespace Luminous
         }
       }
 
-      if (m_dxCopyFrameNum < m_frameNum) {
-        if (m_copyRef) {
-          CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_cudaTex, m_cudaStream));
-          m_copyRef = 0;
-        }
+      if (!m_copyEvent) {
+        std::shared_ptr<void> copyEvent(CreateEventA(nullptr, true, false, nullptr), &CloseHandle);
+        m_copyEvent = std::move(copyEvent);
+      }
 
-        ComPtr<ID3D11DeviceContext1> deviceCtx;
-        m_dev->GetImmediateContext1(&deviceCtx);
+      if (m_dxCopyFrameNum < m_frameNum) {
         deviceCtx->CopyResource(m_copy.Get(), m_dxTex.Get());
         m_dxCopyFrameNum = m_frameNum.load();
+
+        ResetEvent(m_copyEvent.get());
+        deviceCtx->Flush1(D3D11_CONTEXT_TYPE_COPY, m_copyEvent.get());
       }
+      ctx.copyFrameNum = m_frameNum.load();
     }
 
     // We don't need the original texture anymore
     unref(ctx);
 
+    WaitForSingleObject(m_copyEvent.get(), INFINITE);
+
     {
       Radiant::Guard g(m_devMutex);
-      if (m_ownerCudaDev < 0) {
-        ComPtr<IDXGIDevice> dxgiDev;
-        HRESULT res = m_dev->QueryInterface(IID_PPV_ARGS(&dxgiDev));
+      if (++m_copyRef == 1) {
+        HRESULT res = deviceCtx->Map(m_copy.Get(), 0, D3D11_MAP_READ, 0, &m_copyMapped);
         if (FAILED(res)) {
-          Radiant::error("DxSharedTexture # QueryInterface IDXGIDevice failed: %s",
-                         comErrorStr(res).data());
-          ctx.copying = false;
+          Radiant::error("DxSharedTexture # Map failed: %s", comErrorStr(res).data());
+          --m_copyRef;
+          ctx.failed = true;
           return;
         }
-        ComPtr<IDXGIAdapter> adapter;
-        res = dxgiDev->GetAdapter(&adapter);
-        if (FAILED(res)) {
-          Radiant::error("DxSharedTexture # GetAdapter failed: %s",
-                         comErrorStr(res).data());
-          ctx.copying = false;
-          return;
-        }
-
-        CUDA_CHECK(cudaD3D11GetDevice(&m_ownerCudaDev, adapter.Get()));
       }
-
-      CUDA_CHECK(cudaSetDevice(m_ownerCudaDev));
-      if (!m_cudaStream)
-        CUDA_CHECK(cudaStreamCreateWithFlags(&m_cudaStream, cudaStreamNonBlocking));
-      if (!m_cudaTex)
-        CUDA_CHECK(cudaGraphicsD3D11RegisterResource(&m_cudaTex, m_copy.Get(),
-                                                     cudaGraphicsRegisterFlagsNone));
-
-      if (++m_copyRef == 1)
-        CUDA_CHECK(cudaGraphicsMapResources(1, &m_cudaTex, m_cudaStream));
     }
 
-    cudaArray_t srcArray;
-    CUDA_CHECK(cudaGraphicsSubResourceGetMappedArray(&srcArray, m_cudaTex, 0, 0));
-
-    CUDA_CHECK(cudaSetDevice(ctx.cudaDev));
-
-    if (!ctx.cudaStream)
-      CUDA_CHECK(cudaStreamCreateWithFlags(&ctx.cudaStream, cudaStreamNonBlocking));
-
-    if (!ctx.cudaTex)
-      CUDA_CHECK(cudaGraphicsGLRegisterImage(&ctx.cudaTex, ctx.glTex->handle(), GL_TEXTURE_2D,
-                                             cudaGraphicsRegisterFlagsWriteDiscard));
-
-
-    CUDA_CHECK(cudaGraphicsMapResources(1, &ctx.cudaTex, ctx.cudaStream));
-
-    cudaArray_t targetArray;
-    CUDA_CHECK(cudaGraphicsSubResourceGetMappedArray(&targetArray, ctx.cudaTex, 0, 0));
-
-    const int linew = m_tex.width() * 4;
-    const size_t pieces = std::min<size_t>(m_copyEvents.size(), m_tex.height());
-
-    m_pinnedCopyFrameMutex.lock();
-    if (m_pinnedCopyFrameNum < m_frameNum) {
-      CUDA_CHECK(cudaSetDevice(m_ownerCudaDev));
-
-      if (!m_copyData) {
-        void * data = nullptr;
-        CUDA_CHECK(cudaHostAlloc(&data, m_tex.width() * 4 * m_tex.height(), cudaHostAllocDefault));
-        std::shared_ptr<void> ptr(data, &cudaFreeHost);
-        m_copyData = std::move(ptr);
-      }
-
-      if (!m_copyEvents[0])
-        for (auto & e: m_copyEvents)
-          CUDA_CHECK(cudaEventCreateWithFlags(&e, cudaEventDisableTiming));
-
-      int line = 0;
-      for (size_t i = 0; i < pieces; ++i) {
-        int line2 = (i+1) * m_tex.height() / pieces;
-        CUDA_CHECK(cudaMemcpy2DFromArrayAsync(
-                     (char*)m_copyData.get() + linew * line, linew, srcArray, 0, line,
-                     linew, line2 - line, cudaMemcpyDeviceToHost, m_cudaStream));
-        CUDA_CHECK(cudaEventRecord(m_copyEvents[i], m_cudaStream));
-        line = line2;
-      }
-
-      CUDA_CHECK(cudaSetDevice(ctx.cudaDev));
-
-      m_pinnedCopyFrameNum = m_frameNum.load();
-    }
-    m_pinnedCopyFrameMutex.unlock();
-
-    int line = 0;
-    for (size_t i = 0; i < pieces; ++i) {
-      int line2 = (i+1) * m_tex.height() / pieces;
-      CUDA_CHECK(cudaStreamWaitEvent(ctx.cudaStream, m_copyEvents[i], 0));
-      CUDA_CHECK(cudaMemcpy2DToArrayAsync(
-                   targetArray, 0, line, (char*)m_copyData.get() + linew * line,
-                   linew, linew, line2-line,
-                   cudaMemcpyHostToDevice, ctx.cudaStream));
-      line = line2;
-    }
-
-    struct CbParams
-    {
-      std::shared_ptr<DxSharedTexture> self;
-      Context * ctx;
-      folly::Executor * worker;
-    };
-
-    CUDA_CHECK(cudaStreamAddCallback(ctx.cudaStream, [] (cudaStream_t, cudaError_t, void * userData) {
-      auto cb = static_cast<CbParams*>(userData);
-
-      cb->worker->add([cb] {
-        CUDA_CHECK(cudaSetDevice(cb->ctx->cudaDev));
-        CUDA_CHECK(cudaGraphicsUnmapResources(1, &cb->ctx->cudaTex, cb->ctx->cudaStream));
-
+    auto self = m_host.shared_from_this();
+    ctx.renderDriver->worker().add([self, this, &ctx, deviceCtx] {
+      UploadBufferRef * buffer = new UploadBufferRef(ctx.renderDriver->uploadBuffer(
+                                                       m_copyMapped.RowPitch * m_tex.height()));
+      Radiant::SingleShotTask::run([self, this, &ctx, buffer, deviceCtx] {
+        memcpy(buffer->persistentMapping(), m_copyMapped.pData, m_copyMapped.RowPitch * m_tex.height());
         {
-          Radiant::Guard g(cb->self->m_d->m_refMutex);
-          cb->ctx->copying = false;
-          cb->ctx->copyFrameNum = cb->self->m_d->m_frameNum;
+          Radiant::Guard g(m_devMutex);
+          if (--m_copyRef == 0)
+            deviceCtx->Unmap(m_copy.Get(), 0);
         }
-        delete cb;
+        ctx.renderDriver->worker().add([self, this, &ctx, buffer] () mutable {
+          finishCopy(ctx, buffer);
+        });
       });
-    }, new CbParams{m_host.shared_from_this(), &ctx, worker}, 0));
+    });
+  }
+
+  void DxSharedTexture::D::finishCopy(Context & ctx, UploadBufferRef * buffer)
+  {
+    // Set proper alignment
+    int alignment = 8;
+    while (m_copyMapped.RowPitch % alignment)
+      alignment >>= 1;
+
+    OpenGLAPI & gl = ctx.renderDriver->opengl();
+    gl.glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+    gl.glPixelStorei(GL_UNPACK_ROW_LENGTH, m_copyMapped.RowPitch / 4);
+
+    (*buffer)->bind(Buffer::UNPACK);
+
+    gl.glBindTexture(GL_TEXTURE_2D, ctx.glTex->handle());
+    gl.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_tex.width(), m_tex.height(),
+                       m_tex.dataFormat().layout(), m_tex.dataFormat().type(),
+                       nullptr);
+
+    delete buffer;
+
+    gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    auto fence = gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    Radiant::Guard g(m_refMutex);
+    ctx.copyFence = fence;
   }
 
   bool DxSharedTexture::D::ref(Context & ctx)
@@ -579,29 +492,13 @@ namespace Luminous
     : m_d(new D(*this))
   {
     m_d->m_tex.setExpiration(0);
-
-    /// Initialize all CUDA devices, otherwise the application freezes for
-    /// ~200ms when a cuda stream is created on a new device.
-    MULTI_ONCE {
-      Radiant::SingleShotTask::run([] {
-        int count = 0;
-        CUDA_CHECK(cudaGetDeviceCount(&count));
-        for (int dev = 0; dev < count; ++dev) {
-          CUDA_CHECK(cudaSetDevice(dev));
-          cudaSetDeviceFlags(cudaDeviceMapHost | cudaDeviceScheduleYield);
-          cudaStream_t stream;
-          CUDA_CHECK(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
-          CUDA_CHECK(cudaStreamDestroy(stream));
-        }
-      });
-    }
   }
 
   std::shared_ptr<DxSharedTexture> DxSharedTexture::create(void * sharedHandle)
   {
     assert(sharedHandle);
 
-    ComPtr<ID3D11Device1> dev = createDevice(sharedHandle);
+    ComPtr<ID3D11Device3> dev = createDevice(sharedHandle);
     if (!dev)
       return nullptr;
 
@@ -657,21 +554,6 @@ namespace Luminous
 
   DxSharedTexture::~DxSharedTexture()
   {
-    /// @todo destroy D in bg thread, for instance cudaFreeHost might be slow
-
-    if (m_d->m_ownerCudaDev >= 0) {
-      CUDA_CHECK(cudaSetDevice(m_d->m_ownerCudaDev));
-      if (m_d->m_copyRef)
-        CUDA_CHECK(cudaGraphicsUnmapResources(1, &m_d->m_cudaTex, m_d->m_cudaStream));
-      for (auto e: m_d->m_copyEvents)
-        if (e)
-          cudaEventDestroy(e);
-      if (m_d->m_cudaTex)
-        CUDA_CHECK(cudaGraphicsUnregisterResource(m_d->m_cudaTex));
-      if (m_d->m_cudaStream)
-        CUDA_CHECK(cudaStreamDestroy(m_d->m_cudaStream));
-    }
-
     m_d->release(true);
   }
 
@@ -727,7 +609,7 @@ namespace Luminous
     }
 
     Radiant::Guard g(m_d->m_refMutex);
-    return ctx.copyFrameNum == m_d->m_frameNum;
+    return !ctx.copying && ctx.copyFrameNum == m_d->m_frameNum;
   }
 
   const Texture * DxSharedTexture::texture(RenderContext & r, bool copyIfNeeded)
@@ -824,18 +706,12 @@ namespace Luminous
     // The shared texture is on wrong GPU. Check if we have a copy or if we
     // should start making one.
 
-    if (ctx.cudaDev < 0) {
-      unsigned int count = 0;
-      std::array<int, 8> devices{};
-      CUDA_CHECK(cudaGLGetDevices(&count, devices.data(), devices.size(), cudaGLDeviceListAll));
-      if (count > 0)
-        ctx.cudaDev = devices[0];
-    }
-
-    if (ctx.cudaDev < 0) {
-      Radiant::error("DxSharedTexture # Failed to find correct CUDA device");
-      ctx.failed = true;
-      return false;
+    if (!ctx.renderDriver) {
+      ctx.renderDriver = dynamic_cast<RenderDriverGL*>(&r.renderDriver());
+      if (!ctx.renderDriver) {
+        ctx.failed = true;
+        return nullptr;
+      }
     }
 
     m_d->m_lastUsed = r.frameTime().value();
@@ -843,8 +719,18 @@ namespace Luminous
     {
       Radiant::Guard g(m_d->m_refMutex);
 
-      if (ctx.copying)
+      if (ctx.copying) {
+        if (ctx.copyFence) {
+          GLenum e = r.glClientWaitSync(ctx.copyFence, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+          if (e == GL_ALREADY_SIGNALED || e == GL_CONDITION_SATISFIED) {
+            r.glDeleteSync(ctx.copyFence);
+            ctx.copyFence = nullptr;
+            ctx.copying = false;
+            return &m_d->m_tex;
+          }
+        }
         return nullptr;
+      }
 
       if (ctx.copyFrameNum == m_d->m_frameNum)
         return &m_d->m_tex;
@@ -872,10 +758,8 @@ namespace Luminous
       ctx.glTex->ref();
     }
 
-    std::weak_ptr<DxSharedTexture> weak(shared_from_this());
-    r.renderDriver().worker().add([weak, worker=&r.renderDriver().worker(), &ctx] {
-      if (auto self = weak.lock())
-        self->m_d->startCopy(worker, ctx);
+    Radiant::SingleShotTask::run([self=shared_from_this(), &ctx] {
+      self->m_d->startCopy(ctx);
     });
 
     return nullptr;

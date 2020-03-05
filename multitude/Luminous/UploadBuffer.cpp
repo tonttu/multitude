@@ -5,6 +5,8 @@
 
 #include <boost/container/flat_map.hpp>
 
+#define TRACK_ALLOCATIONS
+
 namespace Luminous
 {
   class UploadBuffer
@@ -118,6 +120,10 @@ namespace Luminous
     m_d->m_totalSize += reservedSize;
     auto buffer = std::make_unique<UploadBuffer>(m_d->m_stateGl, reservedSize, true);
     auto it = m_d->m_buffers.emplace(reservedSize, std::move(buffer));
+#ifdef TRACK_ALLOCATIONS
+    Radiant::info("UploadBufferPool::allocate # %.1f kB [new pool size: %.2f MB]",
+                  reservedSize / 1024.0, m_d->m_totalSize / 1024.0 / 1024.0);
+#endif
     return it->second.get();
   }
 
@@ -143,6 +149,11 @@ namespace Luminous
         m_d->m_buffers.emplace(nextAllocation, std::move(buffer));
         m_d->m_totalSize += nextAllocation;
         toAllocate -= nextAllocation;
+
+#ifdef TRACK_ALLOCATIONS
+        Radiant::info("UploadBufferPool::preallocate # %.1f kB [new pool size: %.2f MB]",
+                      nextAllocation / 1024.0, m_d->m_totalSize / 1024.0 / 1024.0);
+#endif
       }
       nextAllocation <<= 1;
     }
@@ -165,6 +176,10 @@ namespace Luminous
             continue;
 
           if (b->m_buffer.expired() || (i == 1 && m_d->m_totalSize > maxSize)) {
+#ifdef TRACK_ALLOCATIONS
+            Radiant::info("UploadBufferPool::release # %.1f kB [new pool size: %.2f MB]",
+                          it->first / -1024.0, m_d->m_totalSize / 1024.0 / 1024.0);
+#endif
             m_d->m_totalSize -= it->first;
             toRelease.push_back(std::move(b));
             it = m_d->m_buffers.erase(it);
