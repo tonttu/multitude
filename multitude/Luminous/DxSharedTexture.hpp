@@ -35,7 +35,7 @@ namespace Luminous
     ~DxSharedTexture();
 
     /// The original texture has been updated. Calls AcquireSync(1).
-    void acquire();
+    void acquire(uint32_t activeThreads);
 
     /// Schedules ReleaseSync(0) to be done immediately after the texture is
     /// not being used by anyone. If the texture is not in use, will call

@@ -557,7 +557,7 @@ namespace Luminous
     m_d->release(true);
   }
 
-  void DxSharedTexture::acquire()
+  void DxSharedTexture::acquire(uint32_t activeThreads)
   {
     assert(!m_d->m_acquired);
     assert(m_d->m_lock);
@@ -572,7 +572,22 @@ namespace Luminous
     m_d->m_acquired = true;
     ++m_d->m_frameNum;
 
-    /// @todo copy automatically to all active GPUs
+    if (activeThreads) {
+      auto self = shared_from_this();
+      Radiant::Guard g(m_d->m_refMutex);
+      for (uint32_t t = 0; t < 32; ++t) {
+        if (activeThreads & (1 << t)) {
+          Context & ctx = m_d->m_ctx[t];
+          if (ctx.glTex && !ctx.copying) {
+            ctx.copying = true;
+            ++m_d->m_refs;
+            Radiant::SingleShotTask::run([self, &ctx] {
+              self->m_d->startCopy(ctx);
+            });
+          }
+        }
+      }
+    }
   }
 
   bool DxSharedTexture::release()
@@ -686,6 +701,8 @@ namespace Luminous
           ctx.access = ACCESS_DX;
         } else {
           ctx.access = ACCESS_COPY;
+          ctx.dxInteropApi.wglDXCloseDeviceNV(ctx.interopDev);
+          ctx.interopDev = nullptr;
         }
       }
     }
@@ -794,21 +811,25 @@ namespace Luminous
     const Radiant::TimeStamp now = Radiant::TimeStamp::currentTime();
     const double timeout = 3.0; // seconds
 
-    std::vector<unsigned int> activeThreads;
+    uint32_t activeThreads = 0;
     for (unsigned int idx = 0; idx < m_rendered.size(); ++idx) {
       if (m_rendered[idx]) {
-        activeThreads.push_back(idx);
+        activeThreads |= (1 << idx);
         m_rendered[idx] -= 1;
       }
     }
 
     for (size_t i = m_textures.size() - 1;;) {
-      const bool canRelease = activeThreads.empty() && i != m_textures.size() - 1;
+      const bool canRelease = activeThreads == 0 && i != m_textures.size() - 1;
       DxSharedTexture & tex = *m_textures[i];
 
-      for (auto it2 = activeThreads.begin(); it2 != activeThreads.end();) {
-        if (tex.checkStatus(*it2)) {
-          it2 = activeThreads.erase(it2);
+      for (uint32_t it2 = 0; it2 < 32;) {
+        if (activeThreads & (1 << it2)) {
+          if (tex.checkStatus(it2)) {
+            activeThreads = activeThreads & ~(1 << it2);
+          } else {
+            ++it2;
+          }
         } else {
           ++it2;
         }
@@ -845,13 +866,18 @@ namespace Luminous
 
   bool DxSharedTextureBag::addSharedHandle(void * sharedHandle)
   {
+    uint32_t activeThreads = 0;
+    for (unsigned int idx = 0; idx < m_d->m_rendered.size(); ++idx)
+      if (m_d->m_rendered[idx])
+        activeThreads |= (1 << idx);
+
     bool found = false;
     m_d->m_texturesLock.lockForWrite();
     for (auto it = m_d->m_textures.begin(); it != m_d->m_textures.end(); ++it) {
       if (CompareObjectHandles((*it)->sharedHandle(), sharedHandle)) {
         std::shared_ptr<DxSharedTexture> tex = std::move(*it);
         m_d->m_textures.erase(it);
-        tex->acquire();
+        tex->acquire(activeThreads);
         found = true;
         // Put the latest texture to back
         m_d->m_textures.push_back(std::move(tex));
