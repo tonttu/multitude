@@ -5,7 +5,7 @@
 
 #include <boost/container/flat_map.hpp>
 
-#define TRACK_ALLOCATIONS
+// #define TRACK_ALLOCATIONS
 
 namespace Luminous
 {

@@ -1,8 +1,13 @@
 #pragma once
 
+#include "Image.hpp"
 #include "Texture.hpp"
 
 #include <Nimble/Size.hpp>
+
+#include <folly/futures/Future.h>
+
+#include <memory>
 
 namespace Luminous
 {
@@ -26,16 +31,25 @@ namespace Luminous
   class LUMINOUS_API DxSharedTexture : public std::enable_shared_from_this<DxSharedTexture>
   {
   public:
+    struct MappedImage
+    {
+      /// Image that uses mapped D3D11 texture pointer. Release the image as
+      /// soon as possible to avoid stalling the rendering pipeline.
+      std::shared_ptr<Luminous::Image> image;
+      uint64_t frameNum = 0;
+    };
+
+  public:
     /// Creates a new DxSharedTexture that wraps the given D3D NT HANDLE
     /// shared texture. Returns nullptr if something fails. Calls AcquireSync(1).
-    static std::shared_ptr<DxSharedTexture> create(void * sharedHandle);
+    static std::shared_ptr<DxSharedTexture> create(void * sharedHandle, uint64_t frameNumber);
 
     /// Destroys the texture and schedules all reserved OpenGL resources to be
     /// deleted in their own respective rendering threads.
     ~DxSharedTexture();
 
     /// The original texture has been updated. Calls AcquireSync(1).
-    void acquire(uint32_t activeThreads);
+    void acquire(uint32_t activeThreads, uint64_t frameNumber);
 
     /// Schedules ReleaseSync(0) to be done immediately after the texture is
     /// not being used by anyone. If the texture is not in use, will call
@@ -51,6 +65,8 @@ namespace Luminous
     /// Size of the shared texture, can't change during the lifetime of this object.
     Nimble::SizeI size() const;
 
+    uint64_t frameNumber() const;
+
     /// Returns true if the texture is ready or permanently failed on the given
     /// render thread.
     bool checkStatus(unsigned int renderThreadIndex);
@@ -60,6 +76,9 @@ namespace Luminous
     ///        it's not already being copied, a new copy operation is started
     ///        if this is true.
     const Luminous::Texture * texture(RenderContext & r, bool copyIfNeeded);
+
+    /// Maps the texture to host memory
+    folly::Future<MappedImage> image();
 
   private:
     DxSharedTexture();
@@ -90,6 +109,11 @@ namespace Luminous
     /// asynchronous copy operation between GPUs, if the latest texture
     /// is not available on this GPU.
     const Luminous::Texture * texture(RenderContext & r);
+
+    /// @param frameNum The returned frame number will be greater or equal
+    /// the given value. The future returned from this function will not
+    /// be fulfilled until the requested frame is ready.
+    folly::Future<DxSharedTexture::MappedImage> latestImage(uint64_t minFrameNum);
 
     /// Finishes pending asynchronous copy operations and deletes unused textures.
     static void clean();

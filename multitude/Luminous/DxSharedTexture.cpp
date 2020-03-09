@@ -214,10 +214,18 @@ namespace Luminous
       : m_host(host)
     {}
 
+    /// @param deviceCtx [out]
+    bool copyDxTexture(ComPtr<ID3D11DeviceContext3> & deviceCtx);
+    /// @param deviceCtx [in]
+    bool mapCopy(ComPtr<ID3D11DeviceContext3> & deviceCtx);
     void startCopy(Context & ctx);
     void finishCopy(Context & ctx, UploadBufferRef * buffer);
 
+    DxSharedTexture::MappedImage image();
+
+    bool ref();
     bool ref(Context & ctx);
+    void unref();
     void unref(Context & ctx);
 
     // Returns false if force was false and the texture is still in use
@@ -316,6 +324,84 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
 
+  bool DxSharedTexture::D::copyDxTexture(ComPtr<ID3D11DeviceContext3> & deviceCtx)
+  {
+    Radiant::Guard g(m_devMutex);
+    m_dev->GetImmediateContext3(&deviceCtx);
+
+    if (!m_copy) {
+      D3D11_TEXTURE2D_DESC desc;
+      m_dxTex->GetDesc(&desc);
+      desc.BindFlags = 0;
+      desc.MiscFlags = 0;
+      desc.Usage = D3D11_USAGE_STAGING;
+      desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+      HRESULT res = m_dev->CreateTexture2D(&desc, nullptr, &m_copy);
+      if (FAILED(res)) {
+        Radiant::error("DxSharedTexture # CreateTexture2D failed: %s", comErrorStr(res).data());
+        return false;
+      }
+    }
+
+    if (!m_copyEvent) {
+      std::shared_ptr<void> copyEvent(CreateEventA(nullptr, true, false, nullptr), &CloseHandle);
+      m_copyEvent = std::move(copyEvent);
+    }
+
+    if (m_dxCopyFrameNum < m_frameNum) {
+      deviceCtx->CopyResource(m_copy.Get(), m_dxTex.Get());
+      m_dxCopyFrameNum = m_frameNum.load();
+
+      ResetEvent(m_copyEvent.get());
+      deviceCtx->Flush1(D3D11_CONTEXT_TYPE_COPY, m_copyEvent.get());
+    }
+    return true;
+  }
+
+  bool DxSharedTexture::D::mapCopy(ComPtr<ID3D11DeviceContext3> & deviceCtx)
+  {
+    Radiant::Guard g(m_devMutex);
+    if (++m_copyRef == 1) {
+      HRESULT res = deviceCtx->Map(m_copy.Get(), 0, D3D11_MAP_READ, 0, &m_copyMapped);
+      if (FAILED(res)) {
+        Radiant::error("DxSharedTexture # Map failed: %s", comErrorStr(res).data());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  DxSharedTexture::MappedImage DxSharedTexture::D::image()
+  {
+    if (!ref())
+      throw std::runtime_error("Failed to lock the shared texture");
+
+    ComPtr<ID3D11DeviceContext3> deviceCtx;
+    if (!copyDxTexture(deviceCtx)) {
+      unref();
+      throw std::runtime_error("Failed to copy the shared texture");
+    }
+
+    WaitForSingleObject(m_copyEvent.get(), INFINITE);
+
+    if (!mapCopy(deviceCtx)) {
+      throw std::runtime_error("Failed to map the shared texture");
+      return MappedImage();
+    }
+
+    std::shared_ptr<Luminous::Image> img(new Luminous::Image(), [self=m_host.shared_from_this(), this] (Luminous::Image * img) {
+      unref();
+      delete img;
+    });
+    auto data = static_cast<unsigned char*>(m_copyMapped.pData);
+    /// Flip the y-axis by setting the image data to point to the last line
+    /// of the image, and specifying a negative line size.
+    img->setData(data + (m_tex.height() - 1) * m_copyMapped.RowPitch,
+                 m_tex.width(), m_tex.height(),
+                 m_tex.dataFormat(), -static_cast<int>(m_copyMapped.RowPitch));
+    return {img, m_dxCopyFrameNum};
+  }
+
   /// Copy D3D texture 'm_dxTex' to OpenGL texture 'handle' on a different GPU.
   ///  * First make a copy of m_dxTex to a temporary m_copy DX texture on the
   ///    source GPU since the DX interop texture can't be mapped.
@@ -327,58 +413,24 @@ namespace Luminous
   void DxSharedTexture::D::startCopy(Context & ctx)
   {
     ComPtr<ID3D11DeviceContext3> deviceCtx;
-
-    {
-      Radiant::Guard g(m_devMutex);
-      m_dev->GetImmediateContext3(&deviceCtx);
-
-      if (!m_copy) {
-        D3D11_TEXTURE2D_DESC desc;
-        m_dxTex->GetDesc(&desc);
-        desc.BindFlags = 0;
-        desc.MiscFlags = 0;
-        desc.Usage = D3D11_USAGE_STAGING;
-        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        HRESULT res = m_dev->CreateTexture2D(&desc, nullptr, &m_copy);
-        if (FAILED(res)) {
-          Radiant::error("DxSharedTexture # CreateTexture2D failed: %s", comErrorStr(res).data());
-          ctx.copying = false;
-          unref(ctx);
-          return;
-        }
-      }
-
-      if (!m_copyEvent) {
-        std::shared_ptr<void> copyEvent(CreateEventA(nullptr, true, false, nullptr), &CloseHandle);
-        m_copyEvent = std::move(copyEvent);
-      }
-
-      if (m_dxCopyFrameNum < m_frameNum) {
-        deviceCtx->CopyResource(m_copy.Get(), m_dxTex.Get());
-        m_dxCopyFrameNum = m_frameNum.load();
-
-        ResetEvent(m_copyEvent.get());
-        deviceCtx->Flush1(D3D11_CONTEXT_TYPE_COPY, m_copyEvent.get());
-      }
-      ctx.copyFrameNum = m_frameNum.load();
+    if (!copyDxTexture(deviceCtx)) {
+      ctx.failed = true;
+      ctx.copying = false;
+      unref(ctx);
+      return;
     }
+
+    ctx.copyFrameNum = m_frameNum.load();
 
     // We don't need the original texture anymore
     unref(ctx);
 
     WaitForSingleObject(m_copyEvent.get(), INFINITE);
 
-    {
-      Radiant::Guard g(m_devMutex);
-      if (++m_copyRef == 1) {
-        HRESULT res = deviceCtx->Map(m_copy.Get(), 0, D3D11_MAP_READ, 0, &m_copyMapped);
-        if (FAILED(res)) {
-          Radiant::error("DxSharedTexture # Map failed: %s", comErrorStr(res).data());
-          --m_copyRef;
-          ctx.failed = true;
-          return;
-        }
-      }
+    if (!mapCopy(deviceCtx)) {
+      ctx.failed = true;
+      ctx.copying = false;
+      return;
     }
 
     auto self = m_host.shared_from_this();
@@ -392,7 +444,7 @@ namespace Luminous
           if (--m_copyRef == 0)
             deviceCtx->Unmap(m_copy.Get(), 0);
         }
-        ctx.renderDriver->worker().add([self, this, &ctx, buffer] () mutable {
+        ctx.renderDriver->worker().add([self, this, &ctx, buffer] {
           finishCopy(ctx, buffer);
         });
       });
@@ -427,14 +479,28 @@ namespace Luminous
     ctx.copyFence = fence;
   }
 
+  bool DxSharedTexture::D::ref()
+  {
+    Radiant::Guard g(m_refMutex);
+    if (!m_acquired)
+      return false;
+    ++m_refs;
+    return true;
+  }
+
+  void DxSharedTexture::D::unref()
+  {
+    Radiant::Guard g(m_refMutex);
+    if (--m_refs > 0 || !m_release)
+      return;
+
+    release(false);
+  }
+
   bool DxSharedTexture::D::ref(Context & ctx)
   {
-    {
-      Radiant::Guard g(m_refMutex);
-      if (!m_acquired)
-        return false;
-      ++m_refs;
-    }
+    if (!ref())
+      return false;
 
     if (ctx.interopTex && ++ctx.glRefs == 1) {
       Radiant::Guard g(m_devMutex);
@@ -456,11 +522,7 @@ namespace Luminous
       }
     }
 
-    Radiant::Guard g(m_refMutex);
-    if (--m_refs > 0 || !m_release)
-      return;
-
-    release(false);
+    unref();
   }
 
   bool DxSharedTexture::D::release(bool force)
@@ -494,7 +556,7 @@ namespace Luminous
     m_d->m_tex.setExpiration(0);
   }
 
-  std::shared_ptr<DxSharedTexture> DxSharedTexture::create(void * sharedHandle)
+  std::shared_ptr<DxSharedTexture> DxSharedTexture::create(void * sharedHandle, uint64_t frameNumber)
   {
     assert(sharedHandle);
 
@@ -548,7 +610,7 @@ namespace Luminous
     self->m_d->m_lock = std::move(lock);
     self->m_d->m_sharedHandle = std::move(copyPtr);
     self->m_d->m_acquired = true;
-    ++self->m_d->m_frameNum;
+    self->m_d->m_frameNum = frameNumber;
     return self;
   }
 
@@ -557,7 +619,7 @@ namespace Luminous
     m_d->release(true);
   }
 
-  void DxSharedTexture::acquire(uint32_t activeThreads)
+  void DxSharedTexture::acquire(uint32_t activeThreads, uint64_t frameNumber)
   {
     assert(!m_d->m_acquired);
     assert(m_d->m_lock);
@@ -570,7 +632,7 @@ namespace Luminous
     }
 
     m_d->m_acquired = true;
-    ++m_d->m_frameNum;
+    m_d->m_frameNum = frameNumber;
 
     if (activeThreads) {
       auto self = shared_from_this();
@@ -609,6 +671,11 @@ namespace Luminous
   Nimble::SizeI DxSharedTexture::size() const
   {
     return Nimble::SizeI(m_d->m_tex.width(), m_d->m_tex.height());
+  }
+
+  uint64_t DxSharedTexture::frameNumber() const
+  {
+    return m_d->m_frameNum;
   }
 
   bool DxSharedTexture::checkStatus(unsigned int renderThreadIndex)
@@ -782,17 +849,32 @@ namespace Luminous
     return nullptr;
   }
 
+  folly::Future<DxSharedTexture::MappedImage> DxSharedTexture::image()
+  {
+    auto promise = std::make_shared<folly::Promise<MappedImage>>();
+    auto future = promise->getFuture();
+    Radiant::SingleShotTask::run([self=shared_from_this(), promise] {
+      promise->setWith([self] { return self->m_d->image(); });
+    });
+    return future;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   class DxSharedTextureBag::D
   {
   public:
     void cleanOldTextures();
+    void checkPromises(DxSharedTexture & tex);
 
   public:
     QReadWriteLock m_texturesLock;
     std::vector<std::shared_ptr<DxSharedTexture>> m_textures;
     Luminous::ContextArrayT<int> m_rendered;
+    uint64_t m_frameNum = 0;
+
+    Radiant::Mutex m_promisesMutex;
+    std::vector<std::pair<uint64_t, std::shared_ptr<folly::Promise<DxSharedTexture::MappedImage>>>> m_promises;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -849,6 +931,23 @@ namespace Luminous
     m_texturesLock.unlock();
   }
 
+  void DxSharedTextureBag::D::checkPromises(DxSharedTexture & tex)
+  {
+    Radiant::Guard g(m_promisesMutex);
+    for (auto it = m_promises.begin(); it != m_promises.end();) {
+      if (m_frameNum >= it->first) {
+        tex.image().thenValue([promise=it->second] (DxSharedTexture::MappedImage img) {
+          promise->setValue(std::move(img));
+        }).thenError<std::exception>([promise=it->second] (const std::exception & err) {
+          promise->setException(err);
+        });
+        it = m_promises.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   DxSharedTextureBag::DxSharedTextureBag()
@@ -877,7 +976,8 @@ namespace Luminous
       if (CompareObjectHandles((*it)->sharedHandle(), sharedHandle)) {
         std::shared_ptr<DxSharedTexture> tex = std::move(*it);
         m_d->m_textures.erase(it);
-        tex->acquire(activeThreads);
+        tex->acquire(activeThreads, ++m_d->m_frameNum);
+        m_d->checkPromises(*tex);
         found = true;
         // Put the latest texture to back
         m_d->m_textures.push_back(std::move(tex));
@@ -887,7 +987,8 @@ namespace Luminous
     m_d->m_texturesLock.unlock();
 
     if (!found) {
-      if (auto tex = DxSharedTexture::create(sharedHandle)) {
+      if (auto tex = DxSharedTexture::create(sharedHandle, ++m_d->m_frameNum)) {
+        m_d->checkPromises(*tex);
         m_d->m_texturesLock.lockForWrite();
         m_d->m_textures.push_back(std::move(tex));
         m_d->m_texturesLock.unlock();
@@ -933,6 +1034,26 @@ namespace Luminous
 
     m_d->m_texturesLock.unlock();
     return nullptr;
+  }
+
+  folly::Future<DxSharedTexture::MappedImage> DxSharedTextureBag::latestImage(uint64_t minFrameNum)
+  {
+    m_d->m_texturesLock.lockForRead();
+    if (!m_d->m_textures.empty() && m_d->m_textures.back()->frameNumber() >= minFrameNum) {
+      auto future = m_d->m_textures.back()->image();
+      m_d->m_texturesLock.unlock();
+      return future;
+    }
+
+    auto promise = std::make_shared<folly::Promise<DxSharedTexture::MappedImage>>();
+    auto future = promise->getFuture();
+    {
+      Radiant::Guard g(m_d->m_promisesMutex);
+      m_d->m_promises.push_back({minFrameNum, std::move(promise)});
+    }
+
+    m_d->m_texturesLock.unlock();
+    return future;
   }
 
   void DxSharedTextureBag::clean()
