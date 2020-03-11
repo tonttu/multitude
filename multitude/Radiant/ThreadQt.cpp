@@ -26,6 +26,31 @@
 #ifdef RADIANT_WINDOWS
 #include <windows.h>
 #include <processthreadsapi.h>
+
+namespace
+{
+  typedef HRESULT (WINAPI * SetThreadDescriptionFn)(HANDLE hThread, PCWSTR lpThreadDescription);
+  typedef HRESULT (WINAPI * GetThreadDescriptionFn)(HANDLE hThread, PWSTR* ppszThreadDescription);
+  SetThreadDescriptionFn setThreadDescription = nullptr;
+  GetThreadDescriptionFn getThreadDescription = nullptr;
+  bool s_initialized = false;
+
+  /// Load these functions dynamically, since apparently Windows 2016 server
+  /// doesn't have them [1], even though the documentation says it should [2].
+  /// 1: https://redmine.multitaction.com/issues/16358
+  /// 2: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreaddescription
+  void initializeThreadDescriptionFunctions()
+  {
+    if (s_initialized)
+      return;
+    setThreadDescription = reinterpret_cast<SetThreadDescriptionFn>(
+          GetProcAddress(GetModuleHandleA("Kernel32"), "SetThreadDescription"));
+    getThreadDescription = reinterpret_cast<GetThreadDescriptionFn>(
+          GetProcAddress(GetModuleHandleA("Kernel32"), "GetThreadDescription"));
+    s_initialized = true;
+  }
+}
+
 #endif
 
 namespace Radiant {
@@ -44,9 +69,12 @@ namespace Radiant {
       /// It doesn't set the thread name that is used by crash dumps and other
       /// code. Fix that here. See more information about thread names in Windows:
       /// https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
-      HRESULT res = SetThreadDescription(GetCurrentThread(), objectName().toStdWString().data());
-      if (FAILED(res))
-        Radiant::error("SetThreadDescription: %s", StringUtils::getLastErrorMessage().toUtf8().data());
+      initializeThreadDescriptionFunctions();
+      if (setThreadDescription) {
+        HRESULT res = setThreadDescription(GetCurrentThread(), objectName().toStdWString().data());
+        if (FAILED(res))
+          Radiant::error("SetThreadDescription: %s", StringUtils::getLastErrorMessage().toUtf8().data());
+      }
 #endif
       m_host->childLoop();
     }
@@ -97,14 +125,17 @@ namespace Radiant {
     if (pthread_getname_np(reinterpret_cast<pthread_t>(threadId), buffer, sizeof(buffer)) == 0)
       return buffer;
 #elif defined(RADIANT_WINDOWS)
-    if (HANDLE handle = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, false, reinterpret_cast<DWORD>(threadId))) {
-      PWSTR data = nullptr;
-      HRESULT hr = GetThreadDescription(handle, &data);
-      CloseHandle(handle);
-      if (SUCCEEDED(hr) && *data) {
-        QByteArray name = QString::fromWCharArray(data).toUtf8();
-        LocalFree(data);
-        return name;
+    initializeThreadDescriptionFunctions();
+    if (getThreadDescription) {
+      if (HANDLE handle = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, false, reinterpret_cast<DWORD>(threadId))) {
+        PWSTR data = nullptr;
+        HRESULT hr = getThreadDescription(handle, &data);
+        CloseHandle(handle);
+        if (SUCCEEDED(hr) && data) {
+          QByteArray name = QString::fromWCharArray(data).toUtf8();
+          LocalFree(data);
+          return name;
+        }
       }
     }
 #endif
@@ -115,12 +146,15 @@ namespace Radiant {
   QByteArray Thread::currentThreadName()
   {
 #ifdef RADIANT_WINDOWS
-    PWSTR data = nullptr;
-    HRESULT hr = GetThreadDescription(GetCurrentThread(), &data);
-    if (SUCCEEDED(hr) && *data) {
-      QByteArray name = QString::fromWCharArray(data).toUtf8();
-      LocalFree(data);
-      return name;
+    initializeThreadDescriptionFunctions();
+    if (getThreadDescription) {
+      PWSTR data = nullptr;
+      HRESULT hr = getThreadDescription(GetCurrentThread(), &data);
+      if (SUCCEEDED(hr) && data) {
+        QByteArray name = QString::fromWCharArray(data).toUtf8();
+        LocalFree(data);
+        return name;
+      }
     }
 #endif
     return threadName(currentThreadId());
