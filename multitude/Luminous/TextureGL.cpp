@@ -270,6 +270,7 @@ namespace Luminous
 
     m_dirtyRegion2D += texture.takeDirtyRegion(m_state.threadIndex());
 
+    bool created = m_target == 0;
     if(m_target == 0) {
       // Mark the whole texture dirty
       m_dirtyRegion2D = QRegion(0, 0, texture.width(), texture.height());
@@ -355,11 +356,18 @@ namespace Luminous
           ++m_asyncUploadTasks;
         }
         ref();
-        m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat] {
+        GLsync createFence = nullptr;
+        if (created)
+          createFence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat, createFence, created] {
+          if (created) {
+            m_state.opengl().glWaitSync(createFence, 0, 0);
+            m_state.opengl().glDeleteSync(createFence);
+          }
           m_state.opengl().glBindTexture(m_target, m_handle);
           GLERROR("TextureGL::upload2D # glBindTexture");
           upload2DImpl(tex, toUpload, compressedFormat, mipmaps);
-          auto fence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+          GLsync fence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
           {
             QMutexLocker g(&m_asyncUploadMutex);
             --m_asyncUploadTasks;
