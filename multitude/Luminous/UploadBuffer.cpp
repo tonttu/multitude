@@ -7,6 +7,12 @@
 
 // #define TRACK_ALLOCATIONS
 
+#ifdef RADIANT_MACOS
+#define GL_DYNAMIC_STORAGE_BIT            0x0100
+#define GL_MAP_PERSISTENT_BIT             0x0040
+#define GL_MAP_COHERENT_BIT               0x0080
+#endif
+
 namespace Luminous
 {
   class UploadBuffer
