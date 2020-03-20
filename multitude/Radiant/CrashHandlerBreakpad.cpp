@@ -145,10 +145,10 @@ namespace Radiant
       return p;
     }
 
-    QString makeDump()
+    QString makeDump(bool uploadDump)
     {
       if (s_exceptionHandler) {
-        s_simulatingCrash = SIMULATING_CRASH;
+        s_simulatingCrash = uploadDump ? 0 : SIMULATING_CRASH;
         bool ok = s_exceptionHandler->WriteMinidump();
         s_simulatingCrash = 0;
         if (ok)
