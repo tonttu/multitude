@@ -359,9 +359,9 @@ namespace Luminous
         GLsync createFence = nullptr;
         if (created)
           createFence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-        m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat, createFence, created] {
-          if (created) {
-            m_state.opengl().glWaitSync(createFence, 0, 0);
+        m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat, createFence] {
+          if (createFence) {
+            m_state.opengl().glWaitSync(createFence, 0, GL_TIMEOUT_IGNORED);
             m_state.opengl().glDeleteSync(createFence);
           }
           m_state.opengl().glBindTexture(m_target, m_handle);
