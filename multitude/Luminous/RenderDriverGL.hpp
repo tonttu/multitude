@@ -18,6 +18,7 @@
 #include "Luminous/BufferGL.hpp"
 #include "Luminous/VertexArrayGL.hpp"
 #include "Luminous/FrameBufferGL.hpp"
+#include "UploadBuffer.hpp"
 
 #include <Radiant/Flags.hpp>
 
@@ -26,7 +27,7 @@ namespace Luminous
   class RenderDriverGL : public RenderDriver
   {
   public:
-    LUMINOUS_API RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
+    LUMINOUS_API RenderDriverGL(GfxDriver & gfxDriver, unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format);
     LUMINOUS_API ~RenderDriverGL();
 
     LUMINOUS_API void initGl(OpenGLAPI & opengl, OpenGLAPI45 * opengl45);
@@ -109,30 +110,28 @@ namespace Luminous
                                    Luminous::ClearMask mask = Luminous::CLEARMASK_COLOR_DEPTH,
                                    Luminous::Texture::Filter filter = Luminous::Texture::FILTER_NEAREST) OVERRIDE;
 
-    LUMINOUS_API virtual int64_t uploadLimit() const OVERRIDE;
-    LUMINOUS_API virtual int64_t uploadMargin() const OVERRIDE;
-    LUMINOUS_API virtual void setUploadLimits(int64_t limit, int64_t margin) OVERRIDE;
-
     LUMINOUS_API int uniformBufferOffsetAlignment() const OVERRIDE;
 
     LUMINOUS_API bool setupSwapGroup(int group, int screen) OVERRIDE;
 
-    LUMINOUS_API void setUpdateFrequency(float fps) OVERRIDE;
-
     LUMINOUS_API void setGPUId(unsigned int gpuId) OVERRIDE;
     LUMINOUS_API unsigned int gpuId() const OVERRIDE;
+
+    LUMINOUS_API virtual GLint availableGPUMemory() const override;
+    LUMINOUS_API virtual GLint maximumGPUMemory() const override;
+
+    LUMINOUS_API virtual void skipFrameAndReleaseResources() override;
+
+    LUMINOUS_API bool isOpenGLExtensionSupported(const QByteArray & name) const;
 
     LUMINOUS_API OpenGLAPI & opengl();
     LUMINOUS_API OpenGLAPI45 * opengl45();
 
     LUMINOUS_API StateGL & stateGl();
 
-    /// Add a new task that is going to be executed on a different
-    /// thread with a shared OpenGL context. Used for GPU data transfers.
-    LUMINOUS_API void addTask(std::function<void()> task);
+    LUMINOUS_API UploadBufferRef uploadBuffer(uint32_t size);
 
   private:
-
     virtual void releaseResource(RenderResource::Id id) OVERRIDE;
 
     class D;

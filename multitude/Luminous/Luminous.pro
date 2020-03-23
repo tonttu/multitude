@@ -88,6 +88,8 @@ HEADERS += BezierSplineTesselator.hpp
 HEADERS += BezierSplineRenderer.hpp
 HEADERS += BezierSpline.hpp
 HEADERS += BezierSplineEraser.hpp
+HEADERS += GfxDriver.hpp
+HEADERS += UploadBuffer.hpp
 
 SOURCES += ImageCodecDDS.cpp \
     GPUAssociation.cpp \
@@ -162,6 +164,7 @@ SOURCES += BezierSplineBuilder.cpp
 SOURCES += BezierSplineTesselator.cpp
 SOURCES += BezierSplineRenderer.cpp
 SOURCES += BezierSpline.cpp
+SOURCES += UploadBuffer.cpp
 
 # Link in Squish statically
 LIBS += $$LIB_SQUISH
@@ -171,7 +174,8 @@ LIBS += $$LIB_RADIANT \
     $$LIB_OPENGL \
     $$LIB_VALUABLE \
     $$LIB_NIMBLE \
-    $$LIB_PATTERNS
+    $$LIB_PATTERNS \
+    $$LIB_FOLLY
 
 HEADERS += ImageCodecQT.hpp
 HEADERS += ImageCodecSVG.hpp
@@ -188,6 +192,9 @@ win32 {
   LIBS += -lUser32
   LIBS += -lDwmapi
   LIBS += -lshell32
+  LIBS += -lDxgi
+  LIBS += -lD3D11
+  LIBS += -lWindowsApp
 
   HEADERS += GPUAffinity.hpp
   SOURCES += GPUAffinity.cpp
@@ -197,6 +204,9 @@ win32 {
 
   HEADERS += DxInterop.hpp
   SOURCES += DxInterop.cpp
+
+  HEADERS += DxSharedTexture.hpp
+  SOURCES += DxSharedTexture.cpp
 }
 
 !macx:!arm64 {
@@ -229,7 +239,6 @@ enable-pdf {
     INCLUDEPATH += /opt/multitaction-pdfium2/include
     QMAKE_LIBDIR += /opt/multitaction-pdfium2/lib
     LIBS += -lmultitaction-pdfium2
-    LIBS += $$LIB_FOLLY
   }
 
 
@@ -238,7 +247,7 @@ enable-pdf {
     LIBS += -lpdfium
   }
 
-  win32:LIBS += -lpdfium $$LIB_FOLLY
+  win32:LIBS += -lpdfium
 
   HEADERS += PDFManager.hpp
   SOURCES += PDFManager.cpp
@@ -249,6 +258,5 @@ win32:CONFIG(debug,debug|release) {
 } else {
   LIBS += -llz4
 }
-
 
 include(../../library.pri)

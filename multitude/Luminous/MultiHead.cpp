@@ -309,8 +309,6 @@ namespace Luminous
       m_resizable(this, "resizable", false),
       m_resizeable(this, "resizeable", &m_resizable),
       m_fsaaSamplesPerPixel(this, "fsaa-samples", -1),
-      m_uploadLimit(this, "gpu-upload-limit", ((int64_t)4) << 36),
-      m_uploadMargin(this, "gpu-upload-margin", ((int64_t)128<<12)),
       m_directRendering(this, "direct-rendering", true),
       m_screennumber(this, "screennumber", -1),
       m_gpuAffinityMask(this, "gpu-affinity-mask", 0),
@@ -488,8 +486,8 @@ namespace Luminous
 #endif
               ),
       m_glFinish(this, "gl-finish", false),
-      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_TEXTURE),
-      m_asyncTextureUpload(this, "async-texture-upload", false),
+      m_textureUploadMethod(this, "texture-upload-method", s_uploadMethods, TextureGL::METHOD_BUFFER_MAP),
+      m_asyncTextureUpload(this, "async-texture-upload", true),
       m_prefetchedVideoFrameCount(this, "prefetched-video-frame-count", 0),
       m_layerSize(this, "layer-size", Nimble::Vector2i(0, 0))
   {

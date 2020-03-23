@@ -37,6 +37,9 @@ namespace Luminous
     /// @param t buffer to move
     LUMINOUS_API BufferGL & operator=(BufferGL && t);
 
+    BufferGL(const BufferGL &) = delete;
+    BufferGL & operator=(const BufferGL &) = delete;
+
     /// Bind the buffer to the specified type
     /// @param type type to bind to
     LUMINOUS_API void bind(Buffer::Type type);
@@ -74,7 +77,10 @@ namespace Luminous
 
     /// @cond
 
-    LUMINOUS_API void allocate(Buffer::Type type);
+    LUMINOUS_API bool allocateImmutable(size_t size, GLbitfield flags);
+    LUMINOUS_API void allocate(Buffer::Type type, size_t size);
+
+    inline size_t allocatedSize() const { return m_allocatedSize; }
 
     /// @endcond
 

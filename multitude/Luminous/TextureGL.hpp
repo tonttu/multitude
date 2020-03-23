@@ -43,6 +43,16 @@ namespace Luminous
       METHOD_BUFFER_MAP_NOSYNC_ORPHAN,
     };
 
+    enum UploadFlag
+    {
+      /// No special flags, upload everything immediately
+      UPLOAD_SYNC  = 0,
+      /// Only start uploading data in a background thread, or check if the
+      /// uploading is finished
+      UPLOAD_ASYNC = 1 << 0,
+    };
+    typedef Radiant::FlagsT<UploadFlag> UploadFlags;
+
   public:
     /// Constructor
     /// @param state OpenGL state
@@ -67,15 +77,26 @@ namespace Luminous
     /// Upload texture data from CPU object
     /// @param texture texture to upload from
     /// @param textureUnit Texture unit, starting from 0
-    LUMINOUS_API void upload(const Texture & texture, int textureUnit);
+    /// @returns true if all data was uploaded.
+    ///          Can be non-true only if UPLOAD_ASYNC was given.
+    LUMINOUS_API bool upload(const Texture & texture, int textureUnit, UploadFlags flags);
     /// Bind the texture to the given texture unit
     /// @param textureUnit texture unit to bind to
     inline void bind(int textureUnit);
 
-    inline void sync(int textureUnit);
+    LUMINOUS_API bool isUploaded(Texture & texture);
 
     /// Returns multi-sampling count or zero if this is not a multi-sampled texture
     inline int samples() const { return m_samples; }
+
+    inline int generation() const { return m_generation; }
+    inline void setGeneration(int generation) { m_generation = generation; }
+
+    inline GLenum target() const { return m_target; }
+    inline void setTarget(GLenum target) { m_target = target; }
+
+    inline int paramsGeneration() const { return m_paramsGeneration; }
+    inline void setParamsGeneration(int generation) { m_paramsGeneration = generation; }
 
     LUMINOUS_API static UploadMethod defaultUploadMethod();
     LUMINOUS_API static void setDefaultUploadMethod(UploadMethod method);
@@ -85,12 +106,12 @@ namespace Luminous
 
   private:
     void upload1D(const Texture & texture, int textureUnit);
-    void upload2D(const Texture & texture, int textureUnit);
+    bool upload2D(const Texture & texture, int textureUnit, UploadFlags flags);
     void upload2DImpl(const Texture::DataInfo& texture, const QRegion & region, bool compressedFormat, bool mipmapsEnabled);
     void upload3D(const Texture & texture, int textureUnit);
     void uploadData(const PixelFormat & dataFormat, const char * data,
-                    unsigned int destOffset, const QRect & destRect,
-                    unsigned int bytes);
+                    const QRect & destRect, unsigned int bytes,
+                    UploadMethod method);
     bool updateParams(const Texture & texture);
 
   private:
@@ -105,8 +126,6 @@ namespace Luminous
     Texture::Filter m_minFilter, m_magFilter;
     Texture::Wrap m_wrap[3];
     Radiant::ColorPMA m_borderColor;
-
-    std::unique_ptr<BufferGL> m_uploadBuffer;
 
     bool m_useAsyncUpload = true;
     int m_asyncUploadTasks = 0;
@@ -132,26 +151,6 @@ namespace Luminous
     GLERROR("TextureGL::bind # glBindTexture");
 
     touch();
-  }
-
-  void TextureGL::sync(int textureUnit)
-  {
-    bind(textureUnit);
-    while (true) {
-      QMutexLocker g(&m_asyncUploadMutex);
-      if (!m_fences.empty()) {
-        GLsync sync = m_fences.front();
-        m_fences.erase(m_fences.begin());
-        g.unlock();
-        m_state.opengl().glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
-        m_state.opengl().glDeleteSync(sync);
-        g.relock();
-      }
-      if (m_asyncUploadTasks > 0)
-        m_asyncUploadCond.wait(&m_asyncUploadMutex);
-      if (m_fences.empty() && m_asyncUploadTasks == 0)
-        break;
-    }
   }
 }
 

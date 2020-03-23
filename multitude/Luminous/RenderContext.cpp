@@ -36,6 +36,10 @@
 #include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Thread.hpp>
 
+#ifdef RADIANT_WINDOWS
+#include "DxInterop.hpp"
+#endif
+
 #include <tuple>
 #include <vector>
 
@@ -66,8 +70,6 @@ namespace Luminous
         , m_useOffScreenFrameBuffer(false)
         , m_finalFrameBuffer(FrameBuffer::WINDOW)
         , m_postProcessFilters(0)
-        , m_supports_GL_NVX_gpu_memory_info(false)
-        , m_supports_GL_ATI_meminfo(false)
     {
       // Reset render call count
       m_renderCalls.push(0);
@@ -120,11 +122,6 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector4f>("vertex_color");
       m_splineShader.setVertexDescription(desc);
-
-      // Fetch GPU upload limits from the window configuration
-      uint64_t limit = win->uploadLimit();
-      uint64_t margin = win->uploadMargin();
-      renderDriver.setUploadLimits( limit, margin );
     }
 
     ~Internal()
@@ -340,9 +337,6 @@ namespace Luminous
 
     std::stack<const Luminous::FrameBuffer*, std::vector<const Luminous::FrameBuffer*> > m_frameBufferStack;
 
-    bool m_supports_GL_NVX_gpu_memory_info;
-    bool m_supports_GL_ATI_meminfo;
-
     Radiant::TimeStamp m_frameTime;
     unsigned int m_maxTextureSize = 1024;
 
@@ -350,6 +344,10 @@ namespace Luminous
                                     std::numeric_limits<float>::lowest(),
                                     std::numeric_limits<float>::max(),
                                     std::numeric_limits<float>::max()};
+
+#ifdef RADIANT_WINDOWS
+    DxInterop m_dxInteropApi;
+#endif
   };
 
   ///////////////////////////////////////////////////////////////////
@@ -1374,60 +1372,22 @@ namespace Luminous
     return m_data->m_driverGL->handle(vao, program);
   }
 
-  bool RenderContext::isOpenGLExtensionSupported(const QByteArray& name)
+  bool RenderContext::isOpenGLExtensionSupported(const QByteArray & name)
   {
-    // Query number of available extensions
-    GLint extensionCount = 0;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionCount);
-
-    // Check if requested extension is available
-    for(int i = 0; i < extensionCount; ++i) {
-      const char* extensionName = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
-
-      if(name == extensionName)
-        return true;
-    }
+    if (m_data->m_driverGL)
+      return m_data->m_driverGL->isOpenGLExtensionSupported(name);
 
     return false;
   }
 
   GLint RenderContext::availableGPUMemory()
   {
-    GLint result[4] = {0};
-
-#ifndef RADIANT_OSX
-    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
-      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
-      return result[0];
-    }
-
-    if(m_data->m_supports_GL_ATI_meminfo) {
-      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
-      return result[0];
-    }
-#endif
-
-    return result[0];
+    return m_data->m_driver.availableGPUMemory();
   }
 
   GLint RenderContext::maximumGPUMemory()
   {
-    GLint result[4] = {0};
-
-#ifndef RADIANT_OSX
-    if(m_data->m_supports_GL_NVX_gpu_memory_info) {
-      glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
-      return result[0];
-    }
-
-    /// @todo this just returns the currently available memory, not total
-    if(m_data->m_supports_GL_ATI_meminfo) {
-      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
-      return result[0];
-    }
-#endif
-
-    return result[0];
+    return m_data->m_driver.maximumGPUMemory();
   }
 
   Radiant::TimeStamp RenderContext::frameTime() const
@@ -1454,6 +1414,15 @@ namespace Luminous
   {
     m_data->m_audioPanningArea = area;
   }
+
+#ifdef RADIANT_WINDOWS
+  DxInterop * RenderContext::dxInteropApi()
+  {
+    if (!m_data->m_dxInteropApi.init())
+      return nullptr;
+    return &m_data->m_dxInteropApi;
+  }
+#endif
 
   //////////////////////////////////////////////////////////////////////////
   // Deferred mode API
@@ -1945,8 +1914,6 @@ namespace Luminous
   {
     m_data->initialize();
 
-    m_data->m_supports_GL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
-    m_data->m_supports_GL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
     int maxSize = 1024;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
     m_data->m_maxTextureSize = maxSize;

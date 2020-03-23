@@ -81,7 +81,7 @@ namespace
 
     /// Only one of the image types is defined at once
     std::unique_ptr<Luminous::CompressedImage> cimage;
-    std::unique_ptr<Luminous::Image> image;
+    std::shared_ptr<Luminous::Image> image;
 
     Luminous::Texture texture;
 
@@ -366,9 +366,10 @@ namespace Luminous
 
     bool ok = recursiveLoad(mipmap, imageTex, level);
     if (ok) {
+      std::shared_ptr<const void> data(imageTex.image->data(), [img = imageTex.image] (const void*) {});
       /// @todo use Image::texture
       imageTex.texture.setData(imageTex.image->width(), imageTex.image->height(),
-                               imageTex.image->pixelFormat(), imageTex.image->data());
+                               imageTex.image->pixelFormat(), std::move(data));
       imageTex.texture.setLineSizeBytes(0);
       int now = frameTime();
       if (m_level == level) {

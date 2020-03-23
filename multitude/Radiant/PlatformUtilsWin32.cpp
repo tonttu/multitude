@@ -440,6 +440,16 @@ namespace Radiant
       return result;
     }
 
+    void setCpuAffinity(const std::vector<int> & cpuList)
+    {
+      DWORD_PTR mask = 0;
+      for (int cpu: cpuList)
+        mask |= (DWORD_PTR(1) << cpu);
+      if (SetThreadAffinityMask(GetCurrentThread(), mask) == 0) {
+        Radiant::error("setCpuAffinity # SetThreadAffinityMask: %s",
+                       Radiant::StringUtils::getLastErrorMessage().toUtf8().data());
+      }
+    }
   }  // namespace PlatformUtils
 }  // namespace Radiant
 

@@ -28,6 +28,7 @@ namespace Luminous
     std::vector<QRegion> gpuDesktopAreas() const;
     QString gpuName(uint32_t index) const;
     QStringList displayGdiDeviceNames(uint32_t gpuIndex) const;
+    QStringList adapterInstanceIds(uint32_t gpuIndex) const;
 
   private:
     class D;

@@ -1,6 +1,11 @@
+#include "DisplayConfigWin.hpp"
 #include "GPUAffinity.hpp"
 
-#include <Windows.h>
+#include <comdef.h>
+#include <dxgi1_2.h>
+#include <wrl.h>
+
+#include <Radiant/Trace.hpp>
 
 namespace Luminous
 {
@@ -136,4 +141,26 @@ namespace Luminous
     return ret;
   }
 
+  QStringList GPUAffinity::adapterInstanceIds(uint32_t gpuIndex) const
+  {
+    QStringList ret;
+    QStringList gdiNames = displayGdiDeviceNames(gpuIndex);
+    if (gdiNames.isEmpty())
+      return ret;
+
+    try {
+      DisplayConfigWin cfg = DisplayConfigWin::currentConfig();
+
+      for (const DisplayConfigWin::Output & output: cfg.outputs) {
+        if (gdiNames.contains(output.sourceGdiDeviceName)) {
+          QString instanceId = cfg.cleanInstanceId(output.adapterDevicePath);
+          if (!ret.contains(instanceId))
+            ret << instanceId;
+        }
+      }
+    } catch (std::exception & error) {
+      Radiant::error("Failed to read display config: %s", error.what());
+    }
+    return ret;
+  }
 } // namespace Luminous

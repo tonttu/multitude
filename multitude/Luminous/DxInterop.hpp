@@ -30,6 +30,8 @@ namespace Luminous
     /// @returns false if the extension is not supported
     bool init();
 
+    bool isInitialized() const { return m_initialized; }
+
     BOOL (WINAPI * wglDXSetResourceShareHandleNV)(void *dxObject, HANDLE shareHandle) = nullptr;
     HANDLE (WINAPI * wglDXOpenDeviceNV)(void *dxDevice) = nullptr;
     BOOL (WINAPI * wglDXCloseDeviceNV)(HANDLE hDevice) = nullptr;

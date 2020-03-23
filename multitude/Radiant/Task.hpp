@@ -229,7 +229,7 @@ namespace Radiant
     virtual void doTask() OVERRIDE;
 
     /// Executes the given function exactly once in BGThread
-    static void run(std::function<void ()> func) { run(0, func); }
+    static void run(std::function<void ()> func) { run(0, std::move(func)); }
     /// Executes the given function exactly once in BGThread after given delay
     /// @param delayS delay in seconds
     static void run(double delayS, std::function<void ()> func);

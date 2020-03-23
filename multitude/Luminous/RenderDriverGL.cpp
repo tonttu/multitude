@@ -32,8 +32,10 @@
 #include <Nimble/Matrix4.hpp>
 #include <memory>
 #include <Radiant/VectorAllocator.hpp>
+#include <Radiant/Semaphore.hpp>
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
+#include <Radiant/PlatformUtils.hpp>
 
 #include <cassert>
 #include <map>
@@ -48,15 +50,19 @@
 
 #include <QOffscreenSurface>
 
+#include <folly/executors/ManualExecutor.h>
+
 namespace Luminous
 {
   /// Auxiliary thread with a shared OpenGL context, used to implement RenderDriverGL::addTask
   class Worker : public Radiant::Thread
   {
   public:
-    Worker(const QString & threadName, QScreen * screen, const QSurfaceFormat & format)
+    Worker(const QString & threadName, QScreen * screen, const QSurfaceFormat & format,
+           folly::ManualExecutor & executor)
       : Thread(threadName)
       , m_surface(screen)
+      , m_executor(executor)
     {
       m_surface.setFormat(format);
       m_surface.create();
@@ -78,17 +84,9 @@ namespace Luminous
     ~Worker()
     {
       m_running = false;
-      m_tasksCond.wakeAll();
+      // wake up the thread
+      m_executor.add([] {});
       waitEnd();
-    }
-
-    void addTask(std::function<void()> task)
-    {
-      {
-        QMutexLocker g(&m_tasksMutex);
-        m_tasks.push_back(std::move(task));
-      }
-      m_tasksCond.notify_one();
     }
 
   private:
@@ -99,21 +97,25 @@ namespace Luminous
         return;
       }
 
+      Radiant::Timer totalTimer;
+      double idleTime = 0;
+
       while (m_running) {
-        std::function<void()> task;
-        {
-          QMutexLocker g(&m_tasksMutex);
-          while (m_tasks.empty() && m_running)
-            m_tasksCond.wait(&m_tasksMutex);
-
-          if (!m_running)
-            return;
-
-          task = std::move(m_tasks.front());
-          m_tasks.erase(m_tasks.begin());
+#if 0
+        Radiant::Timer idleTimer;
+        m_executor.wait();
+        idleTime += idleTimer.time();
+        m_executor.run();
+        if (totalTimer.time() >= 1.0) {
+          Radiant::info("%s utilization: %.1f%%", qthread()->objectName().toUtf8().data(),
+                        (1.0 - idleTime / totalTimer.start()) * 100.0);
+          idleTime = 0;
         }
-
-        task();
+#else
+        (void)totalTimer;
+        (void)idleTime;
+        m_executor.makeProgress();
+#endif
       }
     }
 
@@ -121,9 +123,7 @@ namespace Luminous
     QOffscreenSurface m_surface;
     QOpenGLContext m_context;
 
-    std::vector<std::function<void()>> m_tasks;
-    QMutex m_tasksMutex;
-    QWaitCondition m_tasksCond;
+    folly::ManualExecutor & m_executor;
     std::atomic<bool> m_running{true};
   };
 
@@ -136,7 +136,7 @@ namespace Luminous
       : m_driver(driver)
       , m_stateGL(threadIndex, driver)
       , m_currentBuffer(0)
-      , m_threadIndex(threadIndex)
+      , m_uploadBuffers(m_stateGL)
       , m_frame(0)
       , m_fps(0.0)
       , m_gpuId(static_cast<unsigned int>(-1))
@@ -172,6 +172,9 @@ namespace Luminous
     RenderBufferList m_renderBuffers;
     FrameBufferList m_frameBuffers;
 
+    size_t m_uploadBuffersTargetSize = 0;
+    UploadBufferPool m_uploadBuffers;
+
     RenderState m_state;
 
     // Stack of active frame buffers
@@ -195,8 +198,6 @@ namespace Luminous
     ReleaseQueue m_releaseQueue;
     ReleaseQueue m_releaseQueueTmp;
 
-    unsigned int m_threadIndex;
-
     /// Render statistics
     Radiant::Timer m_frameTimer;  // Time since begin of frame
     uint64_t m_frame;             // Current frame number
@@ -209,6 +210,10 @@ namespace Luminous
     OpenGLAPI45 * m_opengl45 = nullptr;
 
     std::unique_ptr<Worker> m_worker;
+    folly::ManualExecutor m_workerExecutor;
+
+    bool m_supportsGL_NVX_gpu_memory_info = false;
+    bool m_supportsGL_ATI_meminfo = false;
 
   public:
 
@@ -290,7 +295,6 @@ namespace Luminous
 
   void RenderDriverGL::D::resetStatistics()
   {
-    m_stateGL.clearUploadedBytes();
     m_frameTimer.start();
   }
 
@@ -333,7 +337,7 @@ namespace Luminous
     for(std::size_t t = 0; t < state.textures.size(); ++t) {
       if(!state.textures[t]) break;
       else {
-        state.textures[t]->sync(static_cast<int>(t));
+        state.textures[t]->bind(static_cast<int>(t));
       }
     }
 
@@ -481,7 +485,7 @@ namespace Luminous
 
         translucent |= texture->translucent();
         textureGL = &m_driver.handle(*texture);
-        textureGL->upload(*texture, unit);
+        textureGL->upload(*texture, unit, TextureGL::UPLOAD_SYNC);
 
         m_state.textures[unit++] = textureGL;
       }
@@ -527,13 +531,17 @@ namespace Luminous
   {
     auto it = std::begin(container);
     while (it != std::end(container)) {
-      const auto & handle = it->second;
+      auto & handle = it->second;
       // First, check if resource has been deleted
       // If not, we can check if it has expired
       if(std::find( std::begin(releaseQueue), std::end(releaseQueue), it->first) !=
          std::end(releaseQueue) || handle.expired()) {
-        // Remove from container
-        it = container.erase(it);
+        if (handle.hasExternalRefs()) {
+          handle.setExpired(true);
+          ++it;
+        } else {
+          it = container.erase(it);
+        }
       } else ++it;
     }
   }
@@ -571,14 +579,25 @@ namespace Luminous
 
   //////////////////////////////////////////////////////////////////////////
   //
-  RenderDriverGL::RenderDriverGL(unsigned int threadIndex, QScreen * screen, const QSurfaceFormat & format)
-    : m_d(new RenderDriverGL::D(threadIndex, *this))
+  RenderDriverGL::RenderDriverGL(GfxDriver & gfxDriver, unsigned int threadIndex,
+                                 QScreen * screen, const QSurfaceFormat & format)
+    : RenderDriver(gfxDriver, threadIndex)
+    , m_d(new RenderDriverGL::D(threadIndex, *this))
   {
-    m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format);
+    m_d->m_worker = std::make_unique<Worker>(QString("GL worker #%1").arg(threadIndex), screen, format, worker());
   }
 
   RenderDriverGL::~RenderDriverGL()
   {
+    if (m_d->m_worker) {
+      Radiant::Semaphore s;
+      worker().add([this, &s] {
+        afterFlush().drain();
+        s.release();
+      });
+      s.acquire();
+    }
+
     delete m_d;
   }
 
@@ -587,8 +606,27 @@ namespace Luminous
     m_d->m_opengl = &opengl;
     m_d->m_opengl45 = opengl45;
     m_d->m_stateGL.initGl();
+
+    m_d->m_supportsGL_ATI_meminfo = isOpenGLExtensionSupported("GL_ATI_meminfo");
+    m_d->m_supportsGL_NVX_gpu_memory_info = isOpenGLExtensionSupported("GL_NVX_gpu_memory_info");
+
+    /// If 15% of memory is reserved for uploads, P4000/RTX4000 will have
+    /// enough preallocated buffers so that Canvus performance tests using
+    /// real customer data run jank-free.
+    const double fractionOfMemoryToReserveForUploads = 0.15;
+    const double maxReservedMemoryGB = 1.2;
+    m_d->m_uploadBuffersTargetSize = std::min(
+          fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024,
+          maxReservedMemoryGB * 1024 * 1024 * 1024);
+    m_d->m_uploadBuffers.preallocate(m_d->m_uploadBuffersTargetSize);
+
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
+        if (!gpuInfo().cpuList.empty()) {
+          worker().add([list = gpuInfo().cpuList] {
+            Radiant::PlatformUtils::setCpuAffinity(list);
+          });
+        }
         m_d->m_worker->run();
         return;
       }
@@ -618,6 +656,11 @@ namespace Luminous
   {
     m_d->resetStatistics();
     m_d->removeResources();
+    if ((m_d->m_frame % 30) == 0) {
+      worker().add([this] {
+        m_d->m_uploadBuffers.release(m_d->m_uploadBuffersTargetSize, 2 * m_d->m_uploadBuffersTargetSize);
+      });
+    }
 
     /// @todo Currently the RenderContext invalidates this cache every frame, even if it's not needed
     //m_d->m_stateGL.setProgram(0);
@@ -629,6 +672,8 @@ namespace Luminous
 
   void RenderDriverGL::postFrame()
   {
+    if (!m_d->m_worker)
+      worker().run();
     m_d->updateStatistics();
   }
 
@@ -640,12 +685,43 @@ namespace Luminous
 
   void RenderDriverGL::deInitialize()
   {
-    m_d->m_programs.clear();
-    m_d->m_textures.clear();
-    m_d->m_buffers.clear();
-    m_d->m_vertexArrays.clear();
-    m_d->m_renderBuffers.clear();
-    m_d->m_frameBuffers.clear();
+    for (auto it = m_d->m_programs.begin(); it != m_d->m_programs.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_programs.erase(it);
+    }
+    for (auto it = m_d->m_textures.begin(); it != m_d->m_textures.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_textures.erase(it);
+    }
+    for (auto it = m_d->m_buffers.begin(); it != m_d->m_buffers.end();) {
+      if (it->second->hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_buffers.erase(it);
+    }
+    for (auto it = m_d->m_vertexArrays.begin(); it != m_d->m_vertexArrays.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_vertexArrays.erase(it);
+    }
+    for (auto it = m_d->m_renderBuffers.begin(); it != m_d->m_renderBuffers.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_renderBuffers.erase(it);
+    }
+    for (auto it = m_d->m_frameBuffers.begin(); it != m_d->m_frameBuffers.end();) {
+      if (it->second.hasExternalRefs())
+        ++it;
+      else
+        it = m_d->m_frameBuffers.erase(it);
+    }
+    m_d->m_uploadBuffers.release(0, 0);
 
     while(!m_d->m_fboStack.empty())
       m_d->m_fboStack.pop();
@@ -671,11 +747,6 @@ namespace Luminous
     if(it == m_d->m_textures.end()) {
       it = m_d->m_textures.emplace(texture.resourceId(), m_d->m_stateGL).first;
       it->second.setExpirationSeconds(texture.expiration());
-    }
-
-    /// @todo avoid bind somehow?
-    if (texture.isValid()) {
-      it->second.upload(texture, 0);
     }
 
     return it->second;
@@ -939,6 +1010,8 @@ namespace Luminous
       m_d->m_opengl->glBindVertexArray(0);
       GLERROR("RenderDriverGL::flush # glBindVertexArray");
     }
+
+    afterFlush().run();
   }
 
   void RenderDriverGL::releaseResource(RenderResource::Id id)
@@ -1051,21 +1124,6 @@ namespace Luminous
     }
   }
 
-  int64_t RenderDriverGL::uploadLimit() const
-  {
-    return m_d->m_stateGL.uploadLimit();
-  }
-
-  int64_t RenderDriverGL::uploadMargin() const
-  {
-    return m_d->m_stateGL.uploadMargin();
-  }
-
-  void RenderDriverGL::setUploadLimits(int64_t limit, int64_t margin)
-  {
-    m_d->m_stateGL.setUploadLimits(limit,margin);
-  }
-
   int RenderDriverGL::uniformBufferOffsetAlignment() const
   {
     int alignment;
@@ -1076,11 +1134,6 @@ namespace Luminous
     return 256;
   }
 
-  void RenderDriverGL::setUpdateFrequency(float fps)
-  {
-    m_d->m_stateGL.setUpdateFrequency(Nimble::Math::Round(fps));
-  }
-
   void RenderDriverGL::setGPUId(unsigned int gpuId)
   {
     m_d->m_gpuId = gpuId;
@@ -1089,6 +1142,71 @@ namespace Luminous
   unsigned int RenderDriverGL::gpuId() const
   {
     return m_d->m_gpuId;
+  }
+
+  GLint RenderDriverGL::availableGPUMemory() const
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if (m_d->m_supportsGL_NVX_gpu_memory_info) {
+      glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    if (m_d->m_supportsGL_ATI_meminfo) {
+      glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  GLint RenderDriverGL::maximumGPUMemory() const
+  {
+    GLint result[4] = {0};
+
+#ifndef RADIANT_OSX
+    if (m_d->m_supportsGL_NVX_gpu_memory_info) {
+      m_d->m_stateGL.opengl().glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, result);
+      return result[0];
+    }
+
+    /// @todo this just returns the currently available memory, not total
+    if (m_d->m_supportsGL_ATI_meminfo) {
+      m_d->m_stateGL.opengl().glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, result);
+      return result[0];
+    }
+#endif
+
+    return result[0];
+  }
+
+  void RenderDriverGL::skipFrameAndReleaseResources()
+  {
+    ++m_d->m_frame;
+    m_d->m_stateGL.setFrameTime(Radiant::TimeStamp::currentTime());
+    m_d->removeResources();
+    m_d->m_uploadBuffers.release(0, 0);
+  }
+
+  bool RenderDriverGL::isOpenGLExtensionSupported(const QByteArray & name) const
+  {
+    // Query number of available extensions
+    GLint extensionCount = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionCount);
+
+    // Check if requested extension is available
+    for (int i = 0; i < extensionCount; ++i) {
+      const char* extensionName = reinterpret_cast<const char*>(
+            m_d->m_stateGL.opengl().glGetStringi(GL_EXTENSIONS, i));
+
+      if (name == extensionName)
+        return true;
+    }
+
+    return false;
   }
 
   bool RenderDriverGL::setupSwapGroup(int group, int screen)
@@ -1128,12 +1246,9 @@ namespace Luminous
     return m_d->m_stateGL;
   }
 
-  void RenderDriverGL::addTask(std::function<void()> task)
+  UploadBufferRef RenderDriverGL::uploadBuffer(uint32_t size)
   {
-    if (m_d->m_worker)
-      m_d->m_worker->addTask(std::move(task));
-    else
-      task();
+    return m_d->m_uploadBuffers.allocate(size);
   }
 }
 
