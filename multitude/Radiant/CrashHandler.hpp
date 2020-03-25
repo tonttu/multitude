@@ -89,8 +89,9 @@ namespace Radiant
     RADIANT_API size_t attachmentMaxSize();
 
     /// Create a minidump immediately without crashing
+    /// @param uploadDump if true, the crash dump is uploaded to the server (if configured)
     /// @returns absolute file path to the dump file
-    RADIANT_API QString makeDump();
+    RADIANT_API QString makeDump(bool uploadDump = false);
     RADIANT_API void reloadSignalHandlers();
     /// Get default path to store minidump files
     RADIANT_API QString defaultMinidumpPath();

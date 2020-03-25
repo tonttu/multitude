@@ -132,7 +132,7 @@ namespace Radiant
       return path + "/CrashDumps";
     }
 
-    QString makeDump()
+    QString makeDump(bool uploadDump)
     {
       if (s_client) {
         std::set<crashpad::UUID> all;
@@ -147,7 +147,7 @@ namespace Radiant
           all.insert(r.uuid);
 
         crashpad::Settings * settings = s_database->GetSettings();
-        settings->SetUploadsEnabled(false);
+        settings->SetUploadsEnabled(uploadDump);
         CRASHPAD_SIMULATE_CRASH();
         settings->SetUploadsEnabled(true);
 
