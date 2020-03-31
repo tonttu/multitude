@@ -1,13 +1,13 @@
 include(../../cornerstone.pri)
 
 HEADERS += \
-    TaskScheduler.hpp \
     Export.hpp \
     TaskWrapper.hpp \
-    Helpers.hpp
+    Helpers.hpp \
+    Executors.hpp
 
 SOURCES += \
-    TaskScheduler.cpp
+    Executors.cpp
 
 LIBS += $$LIB_FOLLY $$LIB_RADIANT
 

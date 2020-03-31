@@ -20,7 +20,7 @@
 #include <memory>
 
 #ifdef ENABLE_PUNCTUAL
-#include <Punctual/TaskScheduler.hpp>
+#include <Punctual/Executors.hpp>
 #endif
 
 #include <algorithm>
@@ -864,10 +864,7 @@ namespace Valuable
   int Node::processQueue()
   {
 #ifdef ENABLE_PUNCTUAL
-    /// Which should be first?
-    auto exec = Punctual::TaskScheduler::instance()->afterUpdate();
-    /// @todo should we have some 'max' parameter for manual executor?
-    exec->run();
+    Punctual::afterUpdate()->run();
 #endif
 
     {
