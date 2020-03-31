@@ -1,74 +1,139 @@
 namespace Valuable
 {
+  /// VS2017 doesn't support TLS variables at DLL interface, but using this
+  /// workaround getter function on Linux causes ~7% time increase in
+  /// ValuableEventTestSimple benchmark, so we use the faster implementation
+  /// on Linux since we can.
+#ifdef RADIANT_WINDOWS
+  VALUABLE_API uint32_t & removeCurrentEventListenerCounter();
+#else
+  VALUABLE_API extern thread_local uint32_t t_removeCurrentEventListenerCounter;
+#define removeCurrentEventListenerCounter() t_removeCurrentEventListenerCounter
+#endif
+
   template <typename... Args>
   struct Event<Args...>::Listener
   {
-    Listener(int id_, Cb cb_, folly::Executor * executor_, Valuable::Node * receiver_)
-      : id(id_)
-      , cb(std::move(cb_))
-      , executor(executor_)
+    Listener(int id_, Cb cb_, folly::Executor * executor_, Valuable::Node * receiver_, EventFlags flags_)
+      : executor(executor_)
       , receiver(receiver_)
+      , id(id_)
+      , flags(flags_)
       , hasReceiver(receiver_ != nullptr)
+      , cb(std::move(cb_))
     {}
 
-    int id;
-    Cb cb;
+    Listener(Listener && l)
+      : executor(l.executor)
+      , receiver(std::move(l.receiver))
+      , id(l.id)
+      , flags(l.flags)
+      , hasReceiver(l.hasReceiver)
+      , valid(l.valid.load())
+      , cb(std::move(l.cb))
+    {}
+
+    Listener & operator=(Listener && l)
+    {
+      executor = l.executor;
+      receiver = std::move(l.receiver);
+      id = l.id;
+      flags = l.flags;
+      hasReceiver = l.hasReceiver;
+      valid = l.valid.load();
+      cb = std::move(l.cb);
+      return *this;
+    }
+
     folly::Executor * executor;
     Valuable::WeakNodePtrT<Valuable::Node> receiver;
+    int id;
+    EventFlags flags;
     bool hasReceiver;
     // Set to false if removeListener was called while the event was raised
-    bool valid = true;
+    std::atomic<bool> valid{true};
+    Cb cb;
   };
 
   template <typename... Args>
   struct Event<Args...>::D
   {
+    /// Creates m_d if needed
+    static Event<Args...>::D & get(Event<Args...> & e)
+    {
+      auto d = e.m_d.load();
+      if (d)
+        return *d;
+      auto d2 = new typename Event<Args...>::D();
+      for (;;) {
+        if (e.m_d.compare_exchange_strong(d, d2)) {
+          return *d2;
+        } else {
+          d = e.m_d.load();
+          // someone else created this faster than us
+          if (d) {
+            delete d2;
+            return *d;
+          }
+        }
+      }
+    }
+
+    /// This mutex protects all member variables here. Additionally if 'raising'
+    /// is non-zero, 'listeners' can be read and their atomic member variables
+    /// can be also written.
+    QMutex mutex;
     std::vector<Listener> listeners;
     std::vector<Listener> newListeners;
     int raising = 0;
     int nextId = 0;
 
-    bool addedDuringraise:1;
-    bool removedDuringRaise:1;
-    bool removeCurrentListener:1;
-
-    D()
-      : addedDuringraise(false)
-      , removedDuringRaise(false)
-      , removeCurrentListener(false)
-    {}
+    bool addedDuringRaise = false;
+    bool removedDuringRaise = false;
   };
 
 
   template <typename... Args>
+  Event<Args...>::~Event()
+  {
+    delete m_d.load();
+  }
+
+  template <typename... Args>
   int Event<Args...>::addListener(Cb cb)
   {
-    return addListener(nullptr, nullptr, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, nullptr, nullptr, std::move(cb));
   }
 
   template <typename... Args>
   int Event<Args...>::addListener(Valuable::Node * receiver, Cb cb)
   {
-    return addListener(receiver, nullptr, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, receiver, nullptr, std::move(cb));
   }
 
   template <typename... Args>
   int Event<Args...>::addListener(folly::Executor * executor, Cb cb)
   {
-    return addListener(nullptr, executor, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, nullptr, executor, std::move(cb));
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(Valuable::Node * receiver, folly::Executor * executor, Cb cb)
+  int Event<Args...>::addListener(EventFlags flags, Cb cb)
   {
-    if (!m_d)
-      m_d.reset(new D());
-    int id = m_d->nextId++;
-    if (m_d->raising) {
-      m_d->newListeners.emplace_back(id, std::move(cb), executor, receiver);
-      m_d->addedDuringraise = true;
+    return addListener(flags, nullptr, nullptr, std::move(cb));
+  }
+
+  template <typename... Args>
+  int Event<Args...>::addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Cb cb)
+  {
+    D & d = D::get(*this);
+    QMutexLocker g(&d.mutex);
+    int id = d.nextId++;
+    if (d.raising) {
+      d.newListeners.emplace_back(id, std::move(cb), executor, receiver, flags);
+      d.addedDuringRaise = true;
     } else {
-      m_d->listeners.emplace_back(id, std::move(cb), executor, receiver);
+      d.listeners.emplace_back(id, std::move(cb), executor, receiver, flags);
     }
     return id;
   }
@@ -76,34 +141,39 @@ namespace Valuable
   template <typename... Args>
   void Event<Args...>::removeCurrentListener()
   {
-    if (!m_d)
-      return;
-    m_d->removeCurrentListener = true;
+    ++removeCurrentEventListenerCounter();
   }
 
   template <typename... Args>
   bool Event<Args...>::removeListener(int id)
   {
-    if (!m_d)
+    D * d = m_d.load();
+    if (!d)
       return false;
 
-    D & d = *m_d;
-    for (auto it = d.listeners.begin(); it != d.listeners.end(); ++it) {
-      if (it->id == id) {
-        if (d.raising) {
-          it->valid = false;
-          d.removedDuringRaise = true;
-        } else {
-          d.listeners.erase(it);
+    // Do not delete the callback function while holding the lock
+    Cb deleted;
+    {
+      QMutexLocker g(&d->mutex);
+      for (auto it = d->listeners.begin(); it != d->listeners.end(); ++it) {
+        if (it->id == id) {
+          if (d->raising) {
+            it->valid = false;
+            d->removedDuringRaise = true;
+          } else {
+            deleted = std::move(it->cb);
+            d->listeners.erase(it);
+          }
+          return true;
         }
-        return true;
       }
-    }
 
-    for (auto it = d.newListeners.begin(); it != d.newListeners.end(); ++it) {
-      if (it->id == id) {
-        d.newListeners.erase(it);
-        return true;
+      for (auto it = d->newListeners.begin(); it != d->newListeners.end(); ++it) {
+        if (it->id == id) {
+          deleted = std::move(it->cb);
+          d->newListeners.erase(it);
+          return true;
+        }
       }
     }
 
@@ -113,21 +183,30 @@ namespace Valuable
   template <typename... Args>
   void Event<Args...>::raise(Args... args)
   {
-    if (!m_d)
+    D * d = m_d.load();
+    if (!d)
       return;
 
-    D & d = *m_d;
-    ++d.raising;
+    QMutexLocker g(&d->mutex);
+    ++d->raising;
 
-    // Don't use iterators, since they could be invalidated if a listener adds a new listener
-    for (size_t i = 0, size = d.listeners.size(); i < size;) {
-      Listener& l = d.listeners[i];
-      if (!l.valid) {
-        ++i;
+    /// Unlock the mutex while raising the event. We have set 'raising' to non-zero,
+    /// so listeners is not modified, and all writes happen to tls or atomic
+    /// variables. Calling raise / addListener recursively from a listener callback
+    /// is also safe.
+    d->mutex.unlock();
+
+    bool removed = false;
+    for (Listener & l: d->listeners) {
+      if (l.flags & EventFlag::SINGLE_SHOT) {
+        if (l.valid.exchange(false) == false)
+          continue;
+        removed = true;
+      } else if (!l.valid)
         continue;
-      }
 
-      d.removeCurrentListener = false;
+      uint32_t & counter = removeCurrentEventListenerCounter();
+      uint32_t beforeCounter = counter;
       if (l.executor) {
         if (l.hasReceiver) {
           if (*l.receiver) {
@@ -136,48 +215,87 @@ namespace Valuable
                 cb(args...);
             });
           } else {
-            d.removeCurrentListener = true;
+            removed = true;
+            l.valid = false;
           }
         } else {
           l.executor->add(std::bind(l.cb, args...));
         }
       } else {
         if (l.hasReceiver) {
-          if (*l.receiver)
+          if (*l.receiver) {
             l.cb(args...);
-          else
-            d.removeCurrentListener = true;
+          } else {
+            removed = true;
+            l.valid = false;
+          }
         } else {
           l.cb(args...);
         }
       }
 
-      if (d.removeCurrentListener) {
-        d.listeners.erase(d.listeners.begin() + i);
-        --size;
-      } else {
-        ++i;
+      if (counter != beforeCounter) {
+        removed = true;
+        l.valid = false;
+        counter = beforeCounter;
       }
     }
 
-    if (--d.raising == 0) {
-      if (d.removedDuringRaise) {
-        for (auto it = d.listeners.begin(); it != d.listeners.end();) {
+    d->mutex.lock();
+    if (removed && !d->removedDuringRaise)
+      d->removedDuringRaise = true;
+
+    // If there are more than one thread busy-looping raise(), it's possible
+    // that 'raising' never reaches zero and new listeners won't get added.
+    // That's not expected use case for this class, so we ignore the problem.
+    if (--d->raising == 0) {
+      if (d->removedDuringRaise) {
+        d->removedDuringRaise = false;
+        for (auto it = d->listeners.begin(); it != d->listeners.end();) {
           if (it->valid)
             ++it;
           else
-            it = d.listeners.erase(it);
+            it = d->listeners.erase(it);
         }
-        d.removedDuringRaise = false;
       }
 
-      if (d.addedDuringraise) {
-        d.listeners.insert(d.listeners.end(),
-                           std::make_move_iterator(d.newListeners.begin()),
-                           std::make_move_iterator(d.newListeners.end()));
-        d.newListeners.clear();
-        d.addedDuringraise = false;
+      if (d->addedDuringRaise) {
+        d->addedDuringRaise = false;
+        d->listeners.insert(d->listeners.end(),
+                            std::make_move_iterator(d->newListeners.begin()),
+                            std::make_move_iterator(d->newListeners.end()));
+        d->newListeners.clear();
       }
     }
+  }
+
+  template <typename... Args>
+  uint32_t Event<Args...>::listenerCount() const
+  {
+    D * d = m_d.load();
+    if (!d)
+      return 0;
+
+    uint32_t count = 0;
+    QMutexLocker g(&d->mutex);
+    for (const Listener & l: d->listeners)
+      if (l.valid)
+        ++count;
+    count += d->newListeners.size();
+    return count;
+  }
+
+  template <typename... Args>
+  Event<Args...>::Event(Event && e)
+    : m_d(e.m_d.exchange(nullptr))
+  {}
+
+  template <typename... Args>
+  Event<Args...> & Event<Args...>::operator=(Event && e)
+  {
+    D * old = m_d.exchange(nullptr);
+    m_d = e.m_d.exchange(nullptr);
+    delete old;
+    return *this;
   }
 }
