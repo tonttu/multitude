@@ -33,10 +33,10 @@ namespace Valuable
    * called more than once even when multiple threads call raise() at the same
    * time.
    *
-   * The event object is lazily initialized. Creating an event just initilizes
+   * The event object is lazily initialized. Creating an event just initializes
    * m_d pointer to zero. Raising an event and destroying an event that doesn't
    * have any listeners does nothing else than just one atomic pointer read.
-   * The object is properly initialized only when a first listener is added.
+   * The object is properly initialized only when the first listener is added.
    *
    * Examples:
    *
@@ -68,7 +68,7 @@ namespace Valuable
   class Event
   {
   public:
-    using Cb = std::function<void(Args...)>;
+    using Callback = std::function<void(Args...)>;
 
     /// Creates a uninitialized event, no memory allocation takes place
     Event() = default;
@@ -78,24 +78,24 @@ namespace Valuable
     ~Event();
 
     /// Add a listener, return a listener id that can be used with removeListener.
-    int addListener(Cb cb);
+    int addListener(Callback callback);
 
     /// @param receiver if not null, the listener is not called if the receiver is deleted.
     /// It's not safe to delete the receiver node while raise() is being
     /// called in another thread.
-    int addListener(Valuable::Node * receiver, Cb cb);
+    int addListener(Valuable::Node * receiver, Callback callback);
 
     /// @param executor if not null, the listener is called through this executor.
-    int addListener(folly::Executor * executor, Cb cb);
+    int addListener(folly::Executor * executor, Callback callback);
 
     /// Add a listener with flags.
-    int addListener(EventFlags flags, Cb cb);
+    int addListener(EventFlags flags, Callback callback);
 
     /// Add a listener with flags, executor and receiver object. Using both
     /// receiver and executor is only safe if the receiver is deleted only in
     /// the executor thread or if the receiver is deleted before the event is
     /// raised. Both receiver and executor can be null.
-    int addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Cb cb);
+    int addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Callback callback);
 
     /// Meant to be called from a event listener to delete the active listener.
     /// Doesn't work with listeners that use custom executors. Works properly

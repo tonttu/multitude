@@ -14,13 +14,13 @@ namespace Valuable
   template <typename... Args>
   struct Event<Args...>::Listener
   {
-    Listener(int id_, Cb cb_, folly::Executor * executor_, Valuable::Node * receiver_, EventFlags flags_)
+    Listener(int id_, Callback callback_, folly::Executor * executor_, Valuable::Node * receiver_, EventFlags flags_)
       : executor(executor_)
       , receiver(receiver_)
       , id(id_)
       , flags(flags_)
       , hasReceiver(receiver_ != nullptr)
-      , cb(std::move(cb_))
+      , callback(std::move(callback_))
     {}
 
     Listener(Listener && l)
@@ -30,7 +30,7 @@ namespace Valuable
       , flags(l.flags)
       , hasReceiver(l.hasReceiver)
       , valid(l.valid.load())
-      , cb(std::move(l.cb))
+      , callback(std::move(l.callback))
     {}
 
     Listener & operator=(Listener && l)
@@ -41,7 +41,7 @@ namespace Valuable
       flags = l.flags;
       hasReceiver = l.hasReceiver;
       valid = l.valid.load();
-      cb = std::move(l.cb);
+      callback = std::move(l.callback);
       return *this;
     }
 
@@ -52,7 +52,7 @@ namespace Valuable
     bool hasReceiver;
     // Set to false if removeListener was called while the event was raised
     std::atomic<bool> valid{true};
-    Cb cb;
+    Callback callback;
   };
 
   template <typename... Args>
@@ -65,17 +65,14 @@ namespace Valuable
       if (d)
         return *d;
       auto d2 = new typename Event<Args...>::D();
-      for (;;) {
-        if (e.m_d.compare_exchange_strong(d, d2)) {
-          return *d2;
-        } else {
-          d = e.m_d.load();
-          // someone else created this faster than us
-          if (d) {
-            delete d2;
-            return *d;
-          }
-        }
+      if (e.m_d.compare_exchange_strong(d, d2)) {
+        return *d2;
+      } else {
+        // someone else created m_d faster than us
+        delete d2;
+        d = e.m_d.load();
+        assert(d);
+        return *d;
       }
     }
 
@@ -100,40 +97,40 @@ namespace Valuable
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(Cb cb)
+  int Event<Args...>::addListener(Callback callback)
   {
-    return addListener(EventFlag::NO_FLAGS, nullptr, nullptr, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, nullptr, nullptr, std::move(callback));
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(Valuable::Node * receiver, Cb cb)
+  int Event<Args...>::addListener(Valuable::Node * receiver, Callback callback)
   {
-    return addListener(EventFlag::NO_FLAGS, receiver, nullptr, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, receiver, nullptr, std::move(callback));
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(folly::Executor * executor, Cb cb)
+  int Event<Args...>::addListener(folly::Executor * executor, Callback callback)
   {
-    return addListener(EventFlag::NO_FLAGS, nullptr, executor, std::move(cb));
+    return addListener(EventFlag::NO_FLAGS, nullptr, executor, std::move(callback));
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(EventFlags flags, Cb cb)
+  int Event<Args...>::addListener(EventFlags flags, Callback callback)
   {
-    return addListener(flags, nullptr, nullptr, std::move(cb));
+    return addListener(flags, nullptr, nullptr, std::move(callback));
   }
 
   template <typename... Args>
-  int Event<Args...>::addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Cb cb)
+  int Event<Args...>::addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Callback callback)
   {
     D & d = D::get(*this);
     QMutexLocker g(&d.mutex);
     int id = d.nextId++;
     if (d.raising) {
-      d.newListeners.emplace_back(id, std::move(cb), executor, receiver, flags);
+      d.newListeners.emplace_back(id, std::move(callback), executor, receiver, flags);
       d.addedDuringRaise = true;
     } else {
-      d.listeners.emplace_back(id, std::move(cb), executor, receiver, flags);
+      d.listeners.emplace_back(id, std::move(callback), executor, receiver, flags);
     }
     return id;
   }
@@ -152,7 +149,7 @@ namespace Valuable
       return false;
 
     // Do not delete the callback function while holding the lock
-    Cb deleted;
+    Callback deleted;
     {
       QMutexLocker g(&d->mutex);
       for (auto it = d->listeners.begin(); it != d->listeners.end(); ++it) {
@@ -161,7 +158,7 @@ namespace Valuable
             it->valid = false;
             d->removedDuringRaise = true;
           } else {
-            deleted = std::move(it->cb);
+            deleted = std::move(it->callback);
             d->listeners.erase(it);
           }
           return true;
@@ -170,7 +167,7 @@ namespace Valuable
 
       for (auto it = d->newListeners.begin(); it != d->newListeners.end(); ++it) {
         if (it->id == id) {
-          deleted = std::move(it->cb);
+          deleted = std::move(it->callback);
           d->newListeners.erase(it);
           return true;
         }
@@ -210,27 +207,27 @@ namespace Valuable
       if (l.executor) {
         if (l.hasReceiver) {
           if (*l.receiver) {
-            l.executor->add([receiver = l.receiver, cb = l.cb, args...] {
+            l.executor->add([receiver = l.receiver, callback = l.callback, args...] {
               if (*receiver)
-                cb(args...);
+                callback(args...);
             });
           } else {
             removed = true;
             l.valid = false;
           }
         } else {
-          l.executor->add(std::bind(l.cb, args...));
+          l.executor->add(std::bind(l.callback, args...));
         }
       } else {
         if (l.hasReceiver) {
           if (*l.receiver) {
-            l.cb(args...);
+            l.callback(args...);
           } else {
             removed = true;
             l.valid = false;
           }
         } else {
-          l.cb(args...);
+          l.callback(args...);
         }
       }
 
