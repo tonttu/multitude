@@ -36,7 +36,7 @@ namespace Valuable
    * onChange.addListener(&node, [] { code; });
    *
    * // Custom executor
-   * onChange.addListener(Punctual::TaskScheduler::instance()->beforeInput(), [] { code; });
+   * onChange.addListener(Punctual::beforeInput(), [] { code; });
    */
   template <typename... Args>
   class Event
