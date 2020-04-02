@@ -87,7 +87,6 @@ SOURCES += State.cpp
 SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
 SOURCES += AttributeAsset.cpp
-SOURCES += Event.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_PUNCTUAL
 

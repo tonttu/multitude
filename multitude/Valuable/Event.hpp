@@ -52,9 +52,6 @@ namespace Valuable
    * onWidgetCreated.addListener([] (Nimble::Vector2f, WidgetPtr) { code; });
    * onWidgetCreated.raise({1, 2}, WidgetPtr());
    *
-   * // Remove listener dynamically inside the listener.
-   * onChange.addListener([] { if (code) Event<>::removeCurrentListener(); });
-   *
    * // Call this listener only once, even if the event was raised from
    * // multiple threads
    * onChange.addListener(EventFlag::SINGLE_SHOT, [] { code; });
@@ -123,12 +120,6 @@ namespace Valuable
     int addListener(EventFlags flags, folly::Executor * executor, Callback callback);
     int addListener(EventFlags flags, std::weak_ptr<void> receiver, Callback callback);
     int addListener(EventFlags flags, std::weak_ptr<void> receiver, folly::Executor * executor, Callback callback);
-
-    /// Meant to be called from a event listener to delete the active listener.
-    /// Doesn't work with listeners that use custom executors. Works properly
-    /// even if raise() is called recursively or from multiple threads at the
-    /// same time.
-    static void removeCurrentListener();
 
     /// Remove a previously added listener. Can be called inside a listener
     /// callback, even from the listener that is going to be removed.

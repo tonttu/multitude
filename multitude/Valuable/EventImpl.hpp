@@ -1,16 +1,5 @@
 namespace Valuable
 {
-  /// VS2017 doesn't support TLS variables at DLL interface, but using this
-  /// workaround getter function on Linux causes ~7% time increase in
-  /// ValuableEventTestSimple benchmark, so we use the faster implementation
-  /// on Linux since we can.
-#ifdef RADIANT_WINDOWS
-  VALUABLE_API uint32_t & removeCurrentEventListenerCounter();
-#else
-  VALUABLE_API extern thread_local uint32_t t_removeCurrentEventListenerCounter;
-#define removeCurrentEventListenerCounter() t_removeCurrentEventListenerCounter
-#endif
-
   template <typename... Args>
   struct Event<Args...>::Listener
   {
@@ -171,12 +160,6 @@ namespace Valuable
   }
 
   template <typename... Args>
-  void Event<Args...>::removeCurrentListener()
-  {
-    ++removeCurrentEventListenerCounter();
-  }
-
-  template <typename... Args>
   bool Event<Args...>::removeListener(int id)
   {
     D * d = m_d.load();
@@ -293,8 +276,6 @@ namespace Valuable
       } else if (!l.valid)
         continue;
 
-      uint32_t & counter = removeCurrentEventListenerCounter();
-      uint32_t beforeCounter = counter;
       if (l.executor) {
         if (l.hasReceiver) {
           if (auto ref = l.receiver.lock()) {
@@ -320,12 +301,6 @@ namespace Valuable
         } else {
           l.callback(args...);
         }
-      }
-
-      if (counter != beforeCounter) {
-        removed = true;
-        l.valid = false;
-        counter = beforeCounter;
       }
     }
 
