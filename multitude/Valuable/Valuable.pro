@@ -58,6 +58,7 @@ HEADERS += AttributeSpline.hpp
 HEADERS += AttributeAsset.hpp
 HEADERS += Event.hpp
 HEADERS += EventImpl.hpp
+HEADERS += Reference.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \

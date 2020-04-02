@@ -1,6 +1,8 @@
 #pragma once
 
-#include "WeakNodePtr.hpp"
+#include "Export.hpp"
+
+#include <Radiant/Flags.hpp>
 
 #include <folly/Executor.h>
 
@@ -57,9 +59,29 @@ namespace Valuable
    * // multiple threads
    * onChange.addListener(EventFlag::SINGLE_SHOT, [] { code; });
    *
-   * // Binding the listener lifetime to Valuable::Node lifetime
+   * // Binding the listener lifetime to any std::shared_ptr. The listener is
+   * // not called if the shared pointer is deleted. If the shared pointer is
+   * // alive, then it's also kept alive during the callback call, so this is
+   * // thread-safe, regardless of where the receiver is deleted.
+   * onChange.addListener(weak_from_this(), [this] { this->code; });
+   *
+   * // Binding the listener lifetime to Valuable::Node lifetime. Since
+   * // Valuable::Node lifetime is not managed through this internal sharedPtr,
+   * // this is not thread-safe if Node is deleted in a different thread
+   * // from where the callback is called.
    * Valuable::Node node;
-   * onChange.addListener(&node, [] { code; });
+   * onChange.addListener(node.sharedPtr(), [] { code; });
+   *
+   * // Binding the listener lifetime to a specific Reference object. If your
+   * // event receiver is not a Valuable::Node or shared_ptr, you can use this
+   * // for explicit listener lifetime management. The listeners are valid as
+   * // long as the Reference object is alive.
+   * Valuable::Reference listeners;
+   * onChange.addListener(listeners.weak(), [] { code; });
+   *
+   * // Listeners with receivers can also be explicitly removed
+   * onChange.removeListeners(weak_from_this());
+   * onChange.removeListeners(listeners.weak());
    *
    * // Custom executor
    * onChange.addListener(Punctual::TaskScheduler::instance()->beforeInput(), [] { code; });
@@ -80,22 +102,27 @@ namespace Valuable
     /// Add a listener, return a listener id that can be used with removeListener.
     int addListener(Callback callback);
 
-    /// @param receiver if not null, the listener is not called if the receiver is deleted.
-    /// It's not safe to delete the receiver node while raise() is being
-    /// called in another thread.
-    int addListener(Valuable::Node * receiver, Callback callback);
-
     /// @param executor if not null, the listener is called through this executor.
     int addListener(folly::Executor * executor, Callback callback);
 
+    /// @param receiver the listener is not called if the receiver is deleted.
+    /// See the class documentation for examples and how to use this with
+    /// Valuable::Node and Valuable::Reference. Note that if receiver is nullptr
+    /// or points to a object that has already been deleted, the callback is
+    /// never called.
+    ///
+    /// If the receiver object gets deleted, it doesn't automatically delete
+    /// the listener, it just won't get called anymore. The listener, including
+    /// the callback function with everything it has captured, will get deleted
+    /// properly next time raise() is called, or when removeListener(s) is called.
+    int addListener(std::weak_ptr<void> receiver, Callback callback);
+    int addListener(std::weak_ptr<void> receiver, folly::Executor * executor, Callback callback);
+
     /// Add a listener with flags.
     int addListener(EventFlags flags, Callback callback);
-
-    /// Add a listener with flags, executor and receiver object. Using both
-    /// receiver and executor is only safe if the receiver is deleted only in
-    /// the executor thread or if the receiver is deleted before the event is
-    /// raised. Both receiver and executor can be null.
-    int addListener(EventFlags flags, Valuable::Node * receiver, folly::Executor * executor, Callback callback);
+    int addListener(EventFlags flags, folly::Executor * executor, Callback callback);
+    int addListener(EventFlags flags, std::weak_ptr<void> receiver, Callback callback);
+    int addListener(EventFlags flags, std::weak_ptr<void> receiver, folly::Executor * executor, Callback callback);
 
     /// Meant to be called from a event listener to delete the active listener.
     /// Doesn't work with listeners that use custom executors. Works properly
@@ -107,6 +134,16 @@ namespace Valuable
     /// callback, even from the listener that is going to be removed.
     /// @returns false if listener with the given id was not found.
     bool removeListener(int id);
+
+    /// Remove all listeners with the given receiver. Can be called inside
+    /// a listener callback, even from the listener that is going to be removed.
+    /// This is a template function so that there's no need to copy/convert the
+    /// receiver to std::weak_ptr<void>.
+    /// @returns the number of listeners removed
+    template <typename T>
+    int removeListeners(const std::weak_ptr<T> & receiver);
+    template <typename T>
+    int removeListeners(const std::shared_ptr<T> & receiver);
 
     /// Raise / trigger the event.
     void raise(Args... args);

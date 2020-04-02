@@ -552,6 +552,16 @@ namespace Valuable
     virtual void setOwnerThread(Radiant::Thread::Id owner) override;
 #endif
 
+    /// Gets a dummy shared pointer with a dummy deleter to this object.
+    /// Keeping this shared_ptr instance alive doesn't keep this object alive,
+    /// since Node lifetime is handled manually. This just provides a
+    /// convenient way to track the Node lifetime, implement WeakNodePtrT and
+    /// also makes it possible to use Node as the event receiver in
+    /// Valuable::Event listener.
+    ///
+    /// This function is thread-safe.
+    std::shared_ptr<Valuable::Node> sharedPtr();
+
   protected:
     /// Sets 'isBeginDestroyed' flag to true and removes all event listeners
     /// to this object. This is set at least in Widget::preDestroy and
@@ -636,11 +646,7 @@ namespace Valuable
 
     QMap<QByteArray, QByteArray> m_deprecatedEventCompatibility;
 
-    // Used to implement WeakNodePtrT. We use an empty deleter with the
-    // shared_ptr so it doesn't have any unwanted side-effects
-    const std::shared_ptr<Valuable::Node> & sharedPtr();
     std::shared_ptr<Node> m_self;
-    template <typename T> friend class WeakNodePtrT;
   };
 
   typedef Valuable::AttributeT<Node::Uuid> AttributeUuid;
