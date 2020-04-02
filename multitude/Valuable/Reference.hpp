@@ -1,0 +1,46 @@
+#pragma once
+
+#include <memory>
+
+namespace Valuable
+{
+  /// Thread-safe wrapper for lazily-created dummy shared_ptr. This can be used
+  /// with Valuable::Event class as a listener owner. It basically serves the
+  /// same purpose as Valuable::ListenerHolder, but this one is lightweight.
+  ///
+  /// Example:
+  ///
+  /// struct MyClass
+  /// {
+  ///   Valuable::Reference listeners;
+  ///   void init()
+  ///   {
+  ///     // this will get invalidated automatically when 'listeners' is destroyed.
+  ///     onSomeEvent.addListener(listeners.weak(), callback);
+  ///   }
+  /// };
+  class Reference
+  {
+  public:
+    inline std::weak_ptr<void> weak();
+
+  private:
+    std::shared_ptr<void> m_ref;
+  };
+
+  ///////////////////////////////////////////////////////////////////////////////
+
+  std::weak_ptr<void> Reference::weak()
+  {
+    std::shared_ptr<void> ptr = std::atomic_load(&m_ref);
+    if (ptr)
+      return ptr;
+
+    std::shared_ptr<void> newPtr(this, [] (void *) {});
+    if (std::atomic_compare_exchange_strong(&m_ref, &ptr, newPtr)) {
+      return newPtr;
+    } else {
+      return ptr;
+    }
+  }
+}

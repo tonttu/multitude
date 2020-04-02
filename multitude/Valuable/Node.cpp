@@ -1044,11 +1044,22 @@ namespace Valuable
     m_attributes[now] = vo;
   }
 
-  const std::shared_ptr<Node> & Node::sharedPtr()
+
+  std::shared_ptr<Node> Node::sharedPtr()
   {
-    if (!m_self && !m_isBeingDestroyed)
-      m_self.reset(this, [] (Node*) {});
-    return m_self;
+    if (m_isBeingDestroyed)
+      return nullptr;
+
+    std::shared_ptr<Node> ptr = std::atomic_load(&m_self);
+    if (ptr)
+      return ptr;
+
+    std::shared_ptr<Node> newPtr(this, [] (Node *) {});
+    if (std::atomic_compare_exchange_strong(&m_self, &ptr, newPtr)) {
+      return newPtr;
+    } else {
+      return ptr;
+    }
   }
 
   bool Node::readElement(const ArchiveElement &)
