@@ -859,6 +859,27 @@ namespace Luminous
     return future;
   }
 
+  bool DxSharedTexture::isSupported()
+  {
+    if (!isDxInteropSupported())
+      return false;
+
+    ComPtr<ID3D11Device> dev;
+    D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1 };
+    HRESULT res = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
+                                    0, featureLevels, 1,
+                                    D3D11_SDK_VERSION, &dev, nullptr, nullptr);
+    if (FAILED(res))
+      return false;
+
+    ComPtr<ID3D11Device3> dev3;
+    res = dev->QueryInterface(IID_PPV_ARGS(&dev3));
+    if (FAILED(res))
+      return false;
+
+    return true;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   class DxSharedTextureBag::D
