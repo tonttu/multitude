@@ -23,10 +23,6 @@
 #include "ImageCodecQT.hpp"
 #include "ImageCodecCS.hpp"
 
-#ifdef RADIANT_WINDOWS
-#include "DxInterop.hpp"
-#endif
-
 #include <QImageWriter>
 #include <QImageReader>
 #include <QCoreApplication>
@@ -41,7 +37,6 @@ namespace Luminous
 {
   Radiant::Mutex s_glVersionMutex;
   OpenGLVersion s_glVersion;
-  bool s_dxInteropSupported = false;
 
   static bool s_luminousInitialized = false;
 
@@ -130,11 +125,6 @@ namespace Luminous
     const char * glsl = (char *)opengl.glGetString(GL_SHADING_LANGUAGE_VERSION);
     const char * renderer = (const char *) opengl.glGetString(GL_RENDERER);
 
-    bool dxInteropSupported = false;
-#ifdef RADIANT_WINDOWS
-    dxInteropSupported = DxInterop().init();
-#endif
-
     bool printVersion = false;
     // Store the OpenGL information so it can be included in breakpad reports
     {
@@ -144,17 +134,10 @@ namespace Luminous
       s_glVersion.version = glver ? QByteArray(glver) : QByteArray();
       s_glVersion.glsl = glsl ? QByteArray(glsl) : QByteArray();
       s_glVersion.renderer = renderer ? QByteArray(renderer) : QByteArray();
-      s_dxInteropSupported = dxInteropSupported;
       printVersion = oldGlVersion != s_glVersion;
     }
 
     if (printVersion)
       Radiant::info("OpenGL vendor: %s, Version: %s, Renderer: %s, GLSL: %s", glvendor, glver, renderer, glsl);
-  }
-
-  bool isDxInteropSupported()
-  {
-    Radiant::Guard g(s_glVersionMutex);
-    return s_dxInteropSupported;
   }
 }

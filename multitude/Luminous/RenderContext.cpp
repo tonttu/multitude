@@ -1418,6 +1418,13 @@ namespace Luminous
 #ifdef RADIANT_WINDOWS
   DxInterop * RenderContext::dxInteropApi()
   {
+    // It seems that this extension doesn't work with Intel, or there is
+    // something wrong with DxSharedTexture, but for now we just disable
+    // this extension on all Intel GPUs. See
+    // https://redmine.multitaction.com/issues/16376 for more information.
+    if (Luminous::glVersion().vendor == "Intel")
+      return nullptr;
+
     if (!m_data->m_dxInteropApi.init())
       return nullptr;
     return &m_data->m_dxInteropApi;

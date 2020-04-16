@@ -88,10 +88,6 @@ namespace Luminous
   /// in initLuminous. This is thread-safe function.
   LUMINOUS_API OpenGLVersion glVersion();
 
-  /// Returns true if WGL_NV_DX_interop is supported. This returns valid value
-  /// after initOpenGL is called.
-  LUMINOUS_API bool isDxInteropSupported();
-
   //////////////////////////////////////////////////////////////////////////
 
   /// Primitive type used for rendering

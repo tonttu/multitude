@@ -725,11 +725,11 @@ namespace Luminous
       if (auto api = r.dxInteropApi()) {
         ctx.dxInteropApi = *api;
       } else {
-        Radiant::error("DxSharedTexture # WGL_NV_DX_interop is not supported");
-        ctx.failed = true;
-        return nullptr;
+        ctx.access = ACCESS_COPY;
       }
+    }
 
+    if (ctx.access == ACCESS_UNKNOWN) {
       Radiant::Guard g(m_d->m_devMutex);
       ctx.interopDev = ctx.dxInteropApi.wglDXOpenDeviceNV(m_d->m_dev.Get());
       if (ctx.interopDev == nullptr) {
@@ -861,9 +861,6 @@ namespace Luminous
 
   bool DxSharedTexture::isSupported()
   {
-    if (!isDxInteropSupported())
-      return false;
-
     ComPtr<ID3D11Device> dev;
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1 };
     HRESULT res = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,

@@ -27,7 +27,9 @@ namespace Luminous
   /// Requires:
   ///  * Windows 10 (for CompareObjectHandles)
   ///  * DirectX 11.3
-  ///  * WGL_NV_DX_interop2 OpenGL extension for using the texture in OpenGL
+  ///  * WGL_NV_DX_interop2 OpenGL extension for using the texture in OpenGL.
+  ///    This is an optional requirement, if not supported, we use fallback
+  ///    method by copying the data using asynchronous transfers.
   class LUMINOUS_API DxSharedTexture : public std::enable_shared_from_this<DxSharedTexture>
   {
   public:
@@ -80,9 +82,7 @@ namespace Luminous
     /// Maps the texture to host memory
     folly::Future<MappedImage> image();
 
-    /// Returns true if the current system supports DX 11.3 and WGL_NV_DX_interop2.
-    /// This function only returns valid results after Luminous::initOpenGL has
-    /// been called.
+    /// Returns true if the current system supports DX 11.3.
     static bool isSupported();
 
   private:
