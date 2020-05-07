@@ -13,19 +13,28 @@
 #include "Export.hpp"
 #include "Defines.hpp"
 
-#include <sstream>
 #include <QString>
-#include <typeinfo>
+
+#include <memory>
+#include <sstream>
+#include <stdlib.h>
 #include <type_traits>
 #include <typeinfo>
-
-#include <stdlib.h>
+#include <typeinfo>
 
 /// Use atof and atod from assimp
 #include "fast_atof.h"
 
 namespace Radiant
 {
+  /// is_specialization<std::vector<int>, std::vector>::value == true
+  /// https://stackoverflow.com/a/28796458
+  template <typename Test, template<typename...> class Ref>
+  struct is_specialization : std::false_type {};
+
+  template <template<typename...> class Ref, typename... Args>
+  struct is_specialization<Ref<Args...>, Ref>: std::true_type {};
+
   /// StringUtils is a collection of string manipulation functions.
   namespace StringUtils
   {
@@ -39,25 +48,24 @@ namespace Radiant
     /// @returns Value as a string
     /// @tparam T Type of the value to convert
     template<class T>
-    inline typename std::enable_if<!std::is_enum<T>::value, QString>::type toString(const T & x)
+    inline QString toString(const T & x)
     {
-      std::ostringstream os;
-      os << x;
-      return QString::fromUtf8(os.str().c_str());
+      if constexpr(is_specialization<T, std::shared_ptr>::value ||
+                   is_specialization<T, std::unique_ptr>::value ||
+                   std::is_pointer<T>::value) {
+        return x ? toString(*x) : "<null>";
+      } else if constexpr(std::is_enum_v<T>) {
+        std::ostringstream os;
+        os << long(x);
+        return QString::fromStdString(os.str());
+      } else if constexpr(std::is_same_v<T, bool>) {
+        return x ? "1" : "0";
+      } else {
+        std::ostringstream os;
+        os << x;
+        return QString::fromStdString(os.str());
+      }
     }
-
-    template <typename T>
-    inline typename std::enable_if<std::is_enum<T>::value, QString>::type toString(const T & x)
-    {
-      std::ostringstream os;
-      os << long(x);
-      return QString::fromUtf8(os.str().c_str());
-    }
-
-    /// Convert boolean to string
-    /// @param b boolean to convert
-    /// @return "1" or "0"
-    template <> inline QString toString<bool>(const bool & b) { return b ? "1" : "0"; }
 
     /// @cond
     template <typename T> MULTI_ATTR_DEPRECATED("stringify will be removed in Cornerstone 2.1, use toString instead",
