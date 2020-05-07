@@ -353,6 +353,19 @@ namespace Valuable
       return "vector:" + Radiant::StringUtils::type<T>();
     }
 
+    virtual QString asString(bool * const ok, Layer) const override
+    {
+      if (ok)
+        *ok = true;
+      QString out;
+      for (size_t i = 0; i < m_vector.size(); ++i) {
+        if (i != 0)
+          out += ", ";
+        out += Radiant::StringUtils::toString(m_vector[i]);
+      }
+      return out;
+    }
+
   protected:
     container m_vector;
 
