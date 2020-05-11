@@ -236,7 +236,7 @@ namespace Radiant
     }
 
     const QMap<QByteArray, Radiant::Color> & c = colors();
-    auto it = c.find(color);
+    auto it = c.find(color.toLower());
     if (it == c.end())
       return false;
 
