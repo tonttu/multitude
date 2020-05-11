@@ -256,6 +256,8 @@ namespace Radiant
       std::lock_guard<std::mutex> g(m_mutexWait);
       m_runningTasks.erase(task);
       --m_runningTasksCount;
+      if (m_isShuttingDown)
+        task->m_host = nullptr;
 
       auto it = m_removeQueue.find(task);
       if (it != m_removeQueue.end()) {
@@ -377,12 +379,15 @@ namespace Radiant
       std::lock_guard<std::mutex> g(m_mutexWait);
 
       // Cancel all tasks
-      for(auto & task : m_taskQueue)
+      for(auto & task : m_taskQueue) {
         task.second->setCanceled();
+        task.second->m_host = nullptr;
+      }
 
-
-      for(auto & task : m_reserved)
+      for(auto & task : m_reserved) {
         task->setCanceled();
+        task->m_host = nullptr;
+      }
 
       for (auto & task: m_runningTasks)
         task->setCanceled();

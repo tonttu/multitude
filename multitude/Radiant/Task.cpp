@@ -61,13 +61,13 @@ namespace Radiant
 
   void Task::runNow(bool finish)
   {
-    if (m_state == DONE || isCanceled())
+    if (m_state == DONE)
       return;
 
     auto mutex = sharedMutex(this);
     Radiant::Guard g(*mutex);
 
-    if (m_state == DONE || isCanceled())
+    if (m_state == DONE)
       return;
 
     // Must make a copy, since m_host might get cleared if the task completes
@@ -75,7 +75,7 @@ namespace Radiant
     if (host)
       host->removeTask(shared_from_this(), false, true);
 
-    if (m_state == WAITING) {
+    if (m_state == WAITING && !isCanceled()) {
       initialize();
       m_state = RUNNING;
     }
