@@ -193,6 +193,12 @@ enum class TestRunnerFlag
 MULTI_FLAGS(TestRunnerFlag)
 typedef Radiant::FlagsT<TestRunnerFlag> TestRunnerFlags;
 
+struct RunOptions
+{
+  TestRunnerFlags flags;
+  QStringList wrapper;
+};
+
 namespace UnitTest
 {
   namespace
@@ -292,10 +298,10 @@ namespace UnitTest
     }
 
     int runOneTest(int index, int count, const UnitTest::Test* const test, QString xmlOutput,
-                   const char *procName, TestRunnerFlags flags)
+                   const char *procName, RunOptions options)
     {
       QProcess process;
-      if (flags & TestRunnerFlag::PRINT_ONLY_FAILURES) {
+      if (options.flags & TestRunnerFlag::PRINT_ONLY_FAILURES) {
         process.setProcessChannelMode(QProcess::MergedChannels);
       } else {
         process.setProcessChannelMode(QProcess::ForwardedChannels);
@@ -305,8 +311,8 @@ namespace UnitTest
       singleArg += "/";
       singleArg += test->m_details.testName;
 
-      if (flags & TestRunnerFlag::SILENT) newArgs << "-s";
-      if (flags & TestRunnerFlag::VERBOSE) newArgs << "-v";
+      if (options.flags & TestRunnerFlag::SILENT) newArgs << "-s";
+      if (options.flags & TestRunnerFlag::VERBOSE) newArgs << "-v";
 
       newArgs << "--single" << singleArg << xmlOutput;
       if (QFile::exists(xmlOutput))
@@ -315,10 +321,18 @@ namespace UnitTest
       printf("%d/%d: Running test %s/%s\n",
              index, count, test->m_details.suiteName, test->m_details.testName);
 
+      QString command;
+      if (options.wrapper.isEmpty()) {
+        command = procName;
+      } else {
+        command = options.wrapper[0];
+        newArgs = (options.wrapper.mid(1) << procName) + newArgs;
+      }
+
       // If the test crashes or hangs, get an estimate of the time used with a timer
       Radiant::Timer timer;
 
-      process.start(procName, newArgs, QProcess::ReadOnly);
+      process.start(command, newArgs, QProcess::ReadOnly);
       process.waitForStarted();
       bool finished = process.waitForFinished(15 * 60 * 1000);
       const double time = timer.time();
@@ -373,7 +387,7 @@ namespace UnitTest
                test->m_details.suiteName, test->m_details.testName, error.toUtf8().data(),
                time, errorDetails.isEmpty() ? "" : ":\n", errorDetails.toUtf8().data());
 
-        if (flags & TestRunnerFlag::PRINT_ONLY_FAILURES)
+        if (options.flags & TestRunnerFlag::PRINT_ONLY_FAILURES)
           printf("Application output:\n%s\n", process.readAll().replace("\r\n", "\n").data());
 
         // We remove time stat for a failed test to force it to run first next time
@@ -462,7 +476,7 @@ namespace UnitTest
     }
 
     int runTests(const std::vector<const UnitTest::Test*>& toRun, QString xmlOutput, const char *procName,
-                 TestRunnerFlags flags)
+                 RunOptions options)
     {
       Radiant::Timer timer;
       int count = static_cast<int>(toRun.size());
@@ -476,7 +490,7 @@ namespace UnitTest
       int exitCode = 0;
 
       Radiant::BGThread bg("BGThread test");
-      if (flags & TestRunnerFlag::PARALLEL)
+      if (options.flags & TestRunnerFlag::PARALLEL)
         bg.run(QThread::idealThreadCount() * 1.25);
       else
         bg.run(1);
@@ -490,7 +504,7 @@ namespace UnitTest
         // run the test in a subprocess. Creating a MultiWidgets::Application after one
         // has been destroyed does not work properly.
         auto func = [=, &exitCode, &domMutex, &dom, &sem] (Radiant::Task & task) {
-          int procExitCode = runOneTest(index, count, test, tmpXmlOutput, procName, flags);
+          int procExitCode = runOneTest(index, count, test, tmpXmlOutput, procName, options);
 
           if(procExitCode != 0)
             exitCode = procExitCode;
@@ -576,7 +590,7 @@ namespace UnitTest
       return vector;
     }
 
-    int runTests(const QString & match, const QString & exclude, QString xmlOutput, const char *procName, TestRunnerFlags flags, int times)
+    int runTests(const QString & match, const QString & exclude, QString xmlOutput, const char *procName, RunOptions options, int times)
     {
       std::vector<const UnitTest::Test*> toRun = repeat(filterTests(match, exclude), times);
 
@@ -586,7 +600,7 @@ namespace UnitTest
         return 1;
       }
 
-      return runTests(toRun, xmlOutput, procName, flags);
+      return runTests(toRun, xmlOutput, procName, options);
     }
 
   }  // unnamed namespace
@@ -623,10 +637,20 @@ namespace UnitTest
 
     QCommandLineOption timesOption("times", "Repeat the tests multiple times, doesn't work with --single", "NUMBER");
 
-    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s, printOnlyFailuresOptions, parallel, timesOption });
+    QCommandLineOption wrapperOption("wrapper", "Run all tests through this wrapper command (for instance valgrind, gdb...)."
+                                     " Specify multiple times to give arguments to the wrapper command", "COMMANDS");
+
+    QCommandLineOption helpOption({"h", "help"}, "Show this help");
+
+    parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s,
+                       printOnlyFailuresOptions, parallel, timesOption, helpOption, wrapperOption });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
-    parser.addHelpOption();
     parser.process(cmdLineArgs);
+
+    if (parser.isSet(helpOption)) {
+      QCoreApplication app(argc, argv);
+      parser.showHelp();
+    }
 
     QStringList positional = parser.positionalArguments();
     if (positional.size() > 1) {
@@ -643,27 +667,29 @@ namespace UnitTest
       return listTests();
     }
 
-    TestRunnerFlags flags;
+    RunOptions options;
     if (parser.isSet(s))
-      flags |= TestRunnerFlag::SILENT;
+      options.flags |= TestRunnerFlag::SILENT;
     if (parser.isSet(v))
-      flags |= TestRunnerFlag::VERBOSE;
+      options.flags |= TestRunnerFlag::VERBOSE;
     if (parser.isSet(printOnlyFailuresOptions))
-      flags |= TestRunnerFlag::PRINT_ONLY_FAILURES;
+      options.flags |= TestRunnerFlag::PRINT_ONLY_FAILURES;
 
     if (parser.isSet(parallel))
-      flags |= TestRunnerFlag::PARALLEL;
+      options.flags |= TestRunnerFlag::PARALLEL;
 
-    if (flags & TestRunnerFlag::SILENT) {
+    if (options.flags & TestRunnerFlag::SILENT) {
       auto dropAllMessages = [] (const Radiant::Trace::Message &) { return true; };
       Radiant::Trace::addFilter(dropAllMessages, Radiant::Trace::Filter::ORDER_DEFAULT_FILTERS);
       Radiant::Trace::initialize(Radiant::Trace::INIT_QT_MESSAGE_HANDLER);
-    } else if (flags & TestRunnerFlag::VERBOSE) {
+    } else if (options.flags & TestRunnerFlag::VERBOSE) {
       Radiant::Trace::findOrCreateFilter<Radiant::Trace::SeverityFilter>()->setMinimumSeverityLevel(Radiant::Trace::DEBUG);
       Radiant::Trace::initialize();
     } else {
       Radiant::Trace::initialize();
     }
+
+    options.wrapper = parser.values(wrapperOption);
 
     const QString single = parser.value("single");
     const QString include = parser.value("match");
@@ -692,7 +718,7 @@ namespace UnitTest
       }
       return runSingleTest(name, suite, xmlOutput);
     } else {
-      return runTests(include, exclude, xmlOutput, argv[0], flags, times);
+      return runTests(include, exclude, xmlOutput, argv[0], options, times);
     }
   }
 
