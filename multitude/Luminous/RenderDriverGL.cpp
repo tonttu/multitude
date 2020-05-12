@@ -589,7 +589,7 @@ namespace Luminous
 
   RenderDriverGL::~RenderDriverGL()
   {
-    if (m_d->m_worker) {
+    if (m_d->m_worker && m_d->m_worker->isRunning()) {
       Radiant::Semaphore s;
       worker().add([this, &s] {
         afterFlush().drain();
