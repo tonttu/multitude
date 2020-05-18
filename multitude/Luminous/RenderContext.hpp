@@ -358,8 +358,16 @@ namespace Luminous
     void popFrameBuffer();
 
     typedef uint64_t ObjectMask;
-    void pushBlockObjects(ObjectMask objectMask);
+    /// Pushes an object mask to the block object stack. If a bit is set to 1,
+    /// any widgets that have the same bit set in their object mask will not be
+    /// rendered.
+    /// @param reset if set to true, the effective object mask after calling
+    ///        this function is the mask given as a parameter. If false, the
+    ///        given objectMask is added to the current mask with a logical OR
+    ///        operation.
+    void pushBlockObjects(ObjectMask objectMask, bool reset);
     void popBlockObjects();
+    ObjectMask blockObjectMask() const;
     bool blockObject(ObjectMask mask) const;
 
     //////////////////////////////////////////////////////////////////////////
@@ -1153,10 +1161,10 @@ namespace Luminous
   class BlockObjectsGuard : public Patterns::NotCopyable
   {
   public:
-    BlockObjectsGuard(Luminous::RenderContext & r, RenderContext::ObjectMask mask)
+    BlockObjectsGuard(Luminous::RenderContext & r, RenderContext::ObjectMask mask, bool reset)
       : m_rc(&r)
     {
-      r.pushBlockObjects(mask);
+      r.pushBlockObjects(mask, reset);
     }
 
     ~BlockObjectsGuard() { if (m_rc) m_rc->popBlockObjects(); }

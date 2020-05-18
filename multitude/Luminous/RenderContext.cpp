@@ -1587,9 +1587,12 @@ namespace Luminous
     m_data->m_driverGL->popFrameBuffer();
   }
 
-  void RenderContext::pushBlockObjects(ObjectMask objectMask)
+  void RenderContext::pushBlockObjects(ObjectMask objectMask, bool reset)
   {
-    m_data->m_blockObjectsStack.push(objectMask);
+    if (reset || m_data->m_blockObjectsStack.empty())
+      m_data->m_blockObjectsStack.push(objectMask);
+    else
+      m_data->m_blockObjectsStack.push(objectMask | m_data->m_blockObjectsStack.top());
   }
 
   void RenderContext::popBlockObjects()
@@ -1597,11 +1600,16 @@ namespace Luminous
     m_data->m_blockObjectsStack.pop();
   }
 
+  RenderContext::ObjectMask RenderContext::blockObjectMask() const
+  {
+    return m_data->m_blockObjectsStack.empty()
+        ? ObjectMask(0)
+        : m_data->m_blockObjectsStack.top();
+  }
+
   bool RenderContext::blockObject(RenderContext::ObjectMask mask) const
   {
-    if(m_data->m_blockObjectsStack.empty())
-      return false;
-    return (m_data->m_blockObjectsStack.top() & mask) != 0;
+    return blockObjectMask() & mask;
   }
 
   void RenderContext::beginFrame(Radiant::TimeStamp frameTime, unsigned int frameNumber)
