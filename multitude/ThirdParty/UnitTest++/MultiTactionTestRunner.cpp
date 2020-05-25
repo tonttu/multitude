@@ -35,7 +35,32 @@
 #include <DbgHelp.h>
 #endif
 
-namespace {
+namespace
+{
+  class RadiantTraceReporter : public UnitTest::TestReporter
+  {
+  private:
+    virtual void ReportTestStart(UnitTest::TestDetails const &)
+    {}
+
+    virtual void ReportFailure(UnitTest::TestDetails const & test, char const * failure)
+    {
+      Radiant::error("%s:%d: Failure in %s: %s", test.filename, test.lineNumber, test.testName, failure);
+    }
+
+    virtual void ReportTestFinish(UnitTest::TestDetails const &, float)
+    {}
+
+    virtual void ReportSummary(int totalTestCount, int failedTestCount, int failureCount, float secondsElapsed)
+    {
+      if (failureCount > 0)
+        Radiant::error("%d out of %d tests failed (%d failures).", failedTestCount, totalTestCount, failureCount);
+      else
+        Radiant::info("Success: %d tests passed.", totalTestCount);
+
+      Radiant::info("Test time: %.2f seconds.", secondsElapsed);
+    }
+  };
 
 #ifdef RADIANT_LINUX
 
@@ -545,7 +570,7 @@ namespace UnitTest
     {
       std::unique_ptr<std::ofstream> xmlStream;
       std::unique_ptr<UnitTest::CompositeTestReporter> reporter{new UnitTest::CompositeTestReporter()};
-      reporter->AddReporter(new UnitTest::TestReporterStdout());
+      reporter->AddReporter(new RadiantTraceReporter());
       if(!xmlOutput.isEmpty()) {
         xmlStream.reset(new std::ofstream(xmlOutput.toUtf8().data()));
         reporter->AddReporter(new UnitTest::XmlTestReporter(*xmlStream));
