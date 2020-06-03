@@ -59,6 +59,7 @@ HEADERS += AttributeAsset.hpp
 HEADERS += Event.hpp
 HEADERS += EventImpl.hpp
 HEADERS += Reference.hpp
+HEADERS += NodeListener.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
