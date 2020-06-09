@@ -419,11 +419,13 @@ namespace Luminous
       for(const QRect & rect : region.rects()) {
         const int lineSizeBytes = texture.lineSizeBytes;
 
-        auto offset = rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
-        auto data = static_cast<const char *>(texture.data.get()) + offset;
+        const int offset = rect.left() * bytesPerPixel + rect.top() * lineSizeBytes;
+        const char * data = static_cast<const char *>(texture.data.get()) + offset;
+        /// @todo We are copying full lines even if the rectangle is not the
+        ///       same width as the image.
+        const int bytes = rect.height() * lineSizeBytes - rect.left() * bytesPerPixel;
 
-        uploadData(texture.dataFormat, data, rect,
-                   rect.height() * lineSizeBytes, s_defaultUploadMethod);
+        uploadData(texture.dataFormat, data, rect, bytes, s_defaultUploadMethod);
       }
     }
     if (mipmapsEnabled) {
