@@ -67,6 +67,8 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
+  thread_local bool s_forceNewestFrame = false;
+
   RADIANT_TLS(const VideoDisplay::FfmpegDecoder::LogHandler *) s_logHandler = nullptr;
 
   void libavLog(void *, int level, const char * fmt, va_list vl)
@@ -94,6 +96,13 @@ namespace
       Radiant::info("Video decoder: %s", msg.toUtf8().data());
     } else if(level >= AV_LOG_WARNING) {
       Radiant::warning("Video decoder: %s", msg.toUtf8().data());
+
+      /// When decoding RTSP streams, it's possible that we have too many frames
+      /// in buffer and that we are not consuming packets fast enough from RTP.
+      /// Try to recover from this by clearing the buffer.
+      if (msg.contains("max delay reached. need to consume packet"))
+        s_forceNewestFrame = true;
+
     } else if(level >= AV_LOG_ERROR) {
       /// max_analyze_duration and first timestamps "errors" happen with some
       /// files and those situations are handled in our decoder once the first
@@ -267,6 +276,7 @@ namespace VideoDisplay
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
 
+    bool m_forceNewestFrame = false;
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
     double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
@@ -1312,12 +1322,15 @@ namespace VideoDisplay
 
     /// If we are doing real-time seeking, we don't have a video frame buffer
     /// and we don't care about av-sync, just show the latest frame we have decoded
-    const bool useNewestFrame = m_realTimeSeeking || (flags & PLAY_FLAG_NO_BUFFERING);
+    const bool useNewestFrame = m_realTimeSeeking || (flags & PLAY_FLAG_NO_BUFFERING)
+        || m_forceNewestFrame;
 
     if (useNewestFrame) {
       std::shared_ptr<VideoFrameFfmpeg> frame = lastReadyDecodedFrame();
-      if (frame)
+      if (frame) {
+        m_forceNewestFrame = false;
         m_sync->sync(presentTimestamp, frame->timestamp());
+      }
       return frame;
     }
 
@@ -1614,6 +1627,18 @@ namespace VideoDisplay
 
               if (m_seekRequest.type() != SEEK_NONE) return false;
 
+              if (m_av.videoCodec && m_av.decodedAudioBufferSamples < 44100*6) {
+                Radiant::Guard g(m_decodedVideoFramesMutex);
+                if (m_decodedVideoFrames.size() <= 1) {
+                  // If the audio sample rate is low, or the stream has huge
+                  // audio packets, we might get stuck here while we are
+                  // having video buffer underrun. Increase the audio buffer
+                  // size and try again.
+                  m_av.decodedAudioBufferSamples += 22050;
+                  continue;
+                }
+              }
+
               Radiant::Sleep::sleepSome(0.01);
               // Make sure that we don't get stuck with a file that doesn't
               // have video frames in the beginning
@@ -1637,6 +1662,15 @@ namespace VideoDisplay
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!m_running) return gotFrames;
+
+            if (m_av.videoCodec && m_av.decodedAudioBufferSamples < 44100*6) {
+              Radiant::Guard g(m_decodedVideoFramesMutex);
+              if (m_decodedVideoFrames.size() <= 1) {
+                m_av.decodedAudioBufferSamples += 22050;
+                continue;
+              }
+            }
+
             Radiant::Sleep::sleepSome(0.01);
           }
 
@@ -1827,6 +1861,23 @@ namespace VideoDisplay
     return m_d->m_options.source();
   }
 
+  BufferState FfmpegDecoder::bufferState() const
+  {
+    BufferState b;
+    {
+      Radiant::Guard g(m_d->m_decodedVideoFramesMutex);
+      b.decodedVideoFrames = m_d->m_decodedVideoFrames.size();
+    }
+    b.decodedVideoFrameBufferSize = m_d->m_options.videoBufferFrames();
+    if (m_d->m_av.audioCodecContext)
+      b.decodedAudioBufferSizeSeconds = (float)m_d->m_av.decodedAudioBufferSamples /
+          m_d->m_av.audioCodecContext->sample_rate;
+
+    if (AudioTransferPtr audioTransfer = m_d->m_audioTransfer)
+      b.decodedAudioSeconds = audioTransfer->bufferStateSeconds();
+    return b;
+  }
+
   void FfmpegDecoder::audioTransferDeleted()
   {
     close();
@@ -1967,6 +2018,10 @@ namespace VideoDisplay
 
       if(eof == EofState::Normal) {
         err = av_read_frame(av.formatContext.get(), &av.packet);
+        if (s_forceNewestFrame) {
+          m_d->m_forceNewestFrame = true;
+          s_forceNewestFrame = false;
+        }
       }
 
       if(err < 0) {
