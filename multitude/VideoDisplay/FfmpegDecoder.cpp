@@ -1614,6 +1614,18 @@ namespace VideoDisplay
 
               if (m_seekRequest.type() != SEEK_NONE) return false;
 
+              if (m_av.videoCodec && m_av.decodedAudioBufferSamples < 44100*6) {
+                Radiant::Guard g(m_decodedVideoFramesMutex);
+                if (m_decodedVideoFrames.size() <= 1) {
+                  // If the audio sample rate is low, or the stream has huge
+                  // audio packets, we might get stuck here while we are
+                  // having video buffer underrun. Increase the audio buffer
+                  // size and try again.
+                  m_av.decodedAudioBufferSamples += 22050;
+                  continue;
+                }
+              }
+
               Radiant::Sleep::sleepSome(0.01);
               // Make sure that we don't get stuck with a file that doesn't
               // have video frames in the beginning
@@ -1637,6 +1649,15 @@ namespace VideoDisplay
                   m_av.decodedAudioBufferSamples - m_av.frame->nb_samples);
             if(decodedAudioBuffer) break;
             if(!m_running) return gotFrames;
+
+            if (m_av.videoCodec && m_av.decodedAudioBufferSamples < 44100*6) {
+              Radiant::Guard g(m_decodedVideoFramesMutex);
+              if (m_decodedVideoFrames.size() <= 1) {
+                m_av.decodedAudioBufferSamples += 22050;
+                continue;
+              }
+            }
+
             Radiant::Sleep::sleepSome(0.01);
           }
 
