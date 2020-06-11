@@ -190,7 +190,7 @@ namespace Luminous
     size_t m_ignoreWindowStateChangesUntil = 1;
 
     /// For QWindowLock
-    Radiant::Mutex m_windowChangeMutex;
+    Radiant::Mutex m_windowChangeMutex{true};
 
 #ifdef RADIANT_WINDOWS
     std::vector<POINTER_INFO> m_pointerInfo;
