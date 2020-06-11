@@ -1848,6 +1848,23 @@ namespace VideoDisplay
     return m_d->m_options.source();
   }
 
+  BufferState FfmpegDecoder::bufferState() const
+  {
+    BufferState b;
+    {
+      Radiant::Guard g(m_d->m_decodedVideoFramesMutex);
+      b.decodedVideoFrames = m_d->m_decodedVideoFrames.size();
+    }
+    b.decodedVideoFrameBufferSize = m_d->m_options.videoBufferFrames();
+    if (m_d->m_av.audioCodecContext)
+      b.decodedAudioBufferSizeSeconds = (float)m_d->m_av.decodedAudioBufferSamples /
+          m_d->m_av.audioCodecContext->sample_rate;
+
+    if (AudioTransferPtr audioTransfer = m_d->m_audioTransfer)
+      b.decodedAudioSeconds = audioTransfer->bufferStateSeconds();
+    return b;
+  }
+
   void FfmpegDecoder::audioTransferDeleted()
   {
     close();

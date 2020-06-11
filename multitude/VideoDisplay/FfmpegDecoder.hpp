@@ -77,6 +77,14 @@ namespace VideoDisplay
     AVFrameWrapper frame;
   };
 
+  struct BufferState
+  {
+    int decodedVideoFrames = 0;
+    int decodedVideoFrameBufferSize = 0;
+    float decodedAudioSeconds = 0;
+    float decodedAudioBufferSizeSeconds = 0;
+  };
+
   /// Audio/Video decoder implementation that uses Ffmpeg as a backend
   class FfmpegDecoder : public AVDecoder
   {
@@ -122,6 +130,8 @@ namespace VideoDisplay
     virtual bool setAudioGain(float gain) OVERRIDE;
 
     virtual QString source() const override;
+
+    VIDEODISPLAY_API BufferState bufferState() const;
 
     /// @cond
 
