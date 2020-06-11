@@ -67,6 +67,8 @@ namespace
 
   RADIANT_TLS(const char *) s_src = nullptr;
 
+  thread_local bool s_forceNewestFrame = false;
+
   RADIANT_TLS(const VideoDisplay::FfmpegDecoder::LogHandler *) s_logHandler = nullptr;
 
   void libavLog(void *, int level, const char * fmt, va_list vl)
@@ -94,6 +96,13 @@ namespace
       Radiant::info("Video decoder: %s", msg.toUtf8().data());
     } else if(level >= AV_LOG_WARNING) {
       Radiant::warning("Video decoder: %s", msg.toUtf8().data());
+
+      /// When decoding RTSP streams, it's possible that we have too many frames
+      /// in buffer and that we are not consuming packets fast enough from RTP.
+      /// Try to recover from this by clearing the buffer.
+      if (msg.contains("max delay reached. need to consume packet"))
+        s_forceNewestFrame = true;
+
     } else if(level >= AV_LOG_ERROR) {
       /// max_analyze_duration and first timestamps "errors" happen with some
       /// files and those situations are handled in our decoder once the first
@@ -267,6 +276,7 @@ namespace VideoDisplay
     MyAV m_av;
     PtsCorrectionContext m_ptsCorrection;
 
+    bool m_forceNewestFrame = false;
     bool m_realTimeSeeking;
     SeekRequest m_seekRequest;
     double m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
@@ -1312,12 +1322,15 @@ namespace VideoDisplay
 
     /// If we are doing real-time seeking, we don't have a video frame buffer
     /// and we don't care about av-sync, just show the latest frame we have decoded
-    const bool useNewestFrame = m_realTimeSeeking || (flags & PLAY_FLAG_NO_BUFFERING);
+    const bool useNewestFrame = m_realTimeSeeking || (flags & PLAY_FLAG_NO_BUFFERING)
+        || m_forceNewestFrame;
 
     if (useNewestFrame) {
       std::shared_ptr<VideoFrameFfmpeg> frame = lastReadyDecodedFrame();
-      if (frame)
+      if (frame) {
+        m_forceNewestFrame = false;
         m_sync->sync(presentTimestamp, frame->timestamp());
+      }
       return frame;
     }
 
@@ -2005,6 +2018,10 @@ namespace VideoDisplay
 
       if(eof == EofState::Normal) {
         err = av_read_frame(av.formatContext.get(), &av.packet);
+        if (s_forceNewestFrame) {
+          m_d->m_forceNewestFrame = true;
+          s_forceNewestFrame = false;
+        }
       }
 
       if(err < 0) {
