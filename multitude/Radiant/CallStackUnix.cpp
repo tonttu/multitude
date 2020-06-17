@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <sys/wait.h>
 #endif
 
 #include <cassert>
@@ -105,8 +106,10 @@ namespace
         close(m_read);
       if (m_write)
         close(m_write);
-      if (m_addr2linePid)
+      if (m_addr2linePid) {
         kill(m_addr2linePid, SIGTERM);
+        waitpid(m_addr2linePid, nullptr, 0);
+      }
     }
 
     QString fileAndLine(intptr_t ptr)
