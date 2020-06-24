@@ -725,9 +725,11 @@ namespace Valuable
   void Node::setBeingDestroyed()
   {
     if (!m_isBeingDestroyed) {
+      // Set this flag first, otherwise destructors in some of the deleted listeners
+      // might trigger events that cause this function to be called recursively.
+      m_isBeingDestroyed = true;
       m_self.reset();
       internalRemoveListeners();
-      m_isBeingDestroyed = true;
     }
   }
 
