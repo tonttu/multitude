@@ -185,25 +185,25 @@ namespace Luminous
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @return number of pages. If operation failed contains
-    ///         std::runtime_exception with error message
+    ///         std::exception with error message
     folly::Future<size_t> queryPageCount(const QString& pdfAbsoluteFilePath);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
-    /// @param pageNumber page to render
+    /// @param pageNumber page to render. Page indexing starts from zero.
     /// @param resolution Target resolution of the rendered result. Actual result
     ///                   can be smaller as the aspect ratio is preserved
     /// @return QImage containing rendered page. If operation failed contains
-    ///         std::runtime_exception with error message
+    ///         std::exception with error message
     folly::Future<QImage> renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
                                      const Nimble::SizeI& resolution, QRgb color = 0x00FFFFFF);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
-    /// @param pageNumber page to render
+    /// @param pageNumber page to render. Page indexing starts from zero.
     /// @param pageAbsoluteFilePath file path for the rendered result
     /// @param resolution Target resolution of the rendered result. Actual result
     ///                   can be smaller as the aspect ratio is preserved
     /// @return is fulfilled when operation is done. If operation failed contains
-    ///         std::runtime_exception with error message
+    ///         std::exception with error message
     folly::Future<folly::Unit> renderPageToFile(const QString& pdfAbsoluteFilePath,
                                                 int pageNumber,
                                                 const QString& pageAbsoluteFilePath,
@@ -211,9 +211,9 @@ namespace Luminous
                                                 QRgb color = 0x00FFFFFF);
 
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
-    /// @param pageNumber number of pdf-page
+    /// @param pageNumber number of pdf-page. Page indexing starts from zero.
     /// @return page size in points where single point is ~0.3528mm. If operation
-    ///         failed contains std::runtime_exception with error message
+    ///         failed contains std::exception with error message
     folly::Future<Nimble::SizeF> getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber);
 
     /// Set the default cache path used with renderDocumentToCacheDir
