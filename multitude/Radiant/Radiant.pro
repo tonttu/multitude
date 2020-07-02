@@ -92,6 +92,7 @@ HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
 HEADERS += TimeTracker.hpp
 HEADERS += CacheManager.hpp
+enable-secret-store:HEADERS += SecretStore.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
@@ -155,6 +156,7 @@ SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
 SOURCES += CacheManager.cpp
+enable-secret-store:SOURCES += SecretStoreLinux.cpp
 !mobile:SOURCES += CrashHandlerCommon.cpp
 !mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
@@ -178,7 +180,7 @@ enable-folly {
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
-LIBS += $$LIB_FOLLY
+LIBS += $$LIB_FOLLY $$LIB_PUNCTUAL
 
 linux-* {
   LIBS += -lX11
@@ -197,6 +199,11 @@ linux-* {
   INCLUDEPATH += $${ARM64_ROOTFS}/opt/multitaction-breakpad/include/breakpad
   QMAKE_LIBDIR += $${ARM64_ROOTFS}/opt/multitaction-breakpad/lib/$${arch_triple}
   LIBS += -lbreakpad -lbreakpad_client
+
+  enable-secret-store {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libsecret-1
+  }
 }
 
 macx {
