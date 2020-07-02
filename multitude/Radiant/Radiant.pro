@@ -92,6 +92,7 @@ HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
 HEADERS += TimeTracker.hpp
 HEADERS += CacheManager.hpp
+HEADERS += OnDemandExecutor.hpp
 enable-secret-store:HEADERS += SecretStore.hpp
 
 SOURCES += Mime.cpp \
@@ -156,7 +157,13 @@ SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
 SOURCES += CacheManager.cpp
-enable-secret-store:SOURCES += SecretStoreLinux.cpp
+SOURCES += OnDemandExecutor.cpp
+
+enable-secret-store {
+  linux*:SOURCES += SecretStoreLinux.cpp
+  win32:SOURCES += SecretStoreWin32.cpp
+}
+
 !mobile:SOURCES += CrashHandlerCommon.cpp
 !mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
@@ -180,7 +187,7 @@ enable-folly {
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
-LIBS += $$LIB_FOLLY $$LIB_PUNCTUAL
+LIBS += $$LIB_FOLLY
 
 linux-* {
   LIBS += -lX11
@@ -264,6 +271,8 @@ win32 {
   QMAKE_LFLAGS += /ignore:4099
 
   DEFINES += _CRT_SECURE_NO_WARNINGS
+
+  enable-secret-store: LIBS += -lCrypt32
 }
 
 QT += sql

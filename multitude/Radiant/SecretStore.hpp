@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Export.hpp"
+#include "Flags.hpp"
 
 #include <folly/futures/Future.h>
 
@@ -8,11 +9,24 @@
 
 namespace Radiant
 {
-  /// Wrapper for libsecret / CryptProtectData
+  /// Password manager that encrypts secrets in the active user session.
   class RADIANT_API SecretStore
   {
   public:
-    SecretStore();
+    enum Flag
+    {
+      FLAG_NONE      = 0,
+      /// If set, SecretStore can open native dialogs (to ask confirmation or password)
+      /// if needed.
+      FLAG_ALLOW_UI  = 1 << 0
+    };
+    typedef FlagsT<Flag> Flags;
+
+  public:
+    /// On Windows the encrypted secrets are stored in
+    /// Computer\HKEY_CURRENT_USER\Software\<organization>\<application>\secrets.
+    /// On Linux these are ignored.
+    SecretStore(const QString & organization, const QString & application, Flags flags = FLAG_NONE);
     ~SecretStore();
 
     /// Finds an existing secret from the store. A secret is identified by a

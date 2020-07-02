@@ -1,6 +1,6 @@
 #include "SecretStore.hpp"
 
-#include <Punctual/OnDemandExecutor.hpp>
+#include <Radiant/OnDemandExecutor.hpp>
 
 #include <libsecret/secret.h>
 
@@ -20,7 +20,8 @@ namespace Radiant
     // it would only work if we had a browser open, and even then the callbacks
     // would be called in CEF main thread, which is not what we want.
     SecretService * m_service = nullptr;
-    std::unique_ptr<Punctual::OnDemandExecutor> m_executor{new Punctual::OnDemandExecutor()};
+    std::unique_ptr<Radiant::OnDemandExecutor> m_executor{new Radiant::OnDemandExecutor()};
+    SecretStore::Flags m_flags;
   };
 
   SecretService * SecretStore::D::service()
@@ -41,9 +42,11 @@ namespace Radiant
 
   /////////////////////////////////////////////////////////////////////////////
 
-  SecretStore::SecretStore()
+  SecretStore::SecretStore(const QString & /*organization*/, const QString & /*application*/, Flags flags)
     : m_d(new D())
-  {}
+  {
+    m_d->m_flags = flags;
+  }
 
   SecretStore::~SecretStore()
   {

@@ -1,6 +1,6 @@
 #include "OnDemandExecutor.hpp"
 
-namespace Punctual
+namespace Radiant
 {
   void OnDemandExecutor::add(folly::Func func)
   {

@@ -7,13 +7,13 @@
 #include <queue>
 #include <thread>
 
-namespace Punctual
+namespace Radiant
 {
   /// Executor that spawns a thread when needed, and joins the thread when
   /// there is nothing to do. Meant for executors that rarely have anything
   /// to do but could have long-lasting operations that need to run in
   /// a sequence.
-  class PUNCTUAL_API OnDemandExecutor : public folly::SequencedExecutor
+  class RADIANT_API OnDemandExecutor : public folly::SequencedExecutor
   {
   public:
     virtual void add(folly::Func func) override;

@@ -4,12 +4,10 @@ HEADERS += \
     Export.hpp \
     TaskWrapper.hpp \
     Helpers.hpp \
-    Executors.hpp \
-    OnDemandExecutor.hpp
+    Executors.hpp
 
 SOURCES += \
-    Executors.cpp \
-    OnDemandExecutor.cpp
+    Executors.cpp
 
 LIBS += $$LIB_FOLLY $$LIB_RADIANT
 
