@@ -1,4 +1,5 @@
 #include "SecretStore.hpp"
+#include "Trace.hpp"
 
 #include <Radiant/OnDemandExecutor.hpp>
 
