@@ -6,6 +6,32 @@
 
 namespace Radiant
 {
+  namespace
+  {
+    // This function is called when the keyring is locked and libsecret wants to
+    // open a new native dialog, which we wanted to disable. Create a dummy task
+    // and finish it.
+    void promptAsyncOverride(SecretService * service,
+                             SecretPrompt *,
+                             const GVariantType *,
+                             GCancellable * cancellable,
+                             GAsyncReadyCallback callback,
+                             gpointer userData)
+    {
+      GTask * task = g_task_new(G_OBJECT(service), cancellable, callback, userData);
+      g_task_return_pointer(task, nullptr, nullptr);
+      g_object_unref(task);
+    }
+
+    GVariant * promptFinishOverride(SecretService *,
+                                    GAsyncResult *,
+                                    GError ** error)
+    {
+      *error = g_error_new_literal(secret_error_get_quark(), G_FILE_ERROR_FAILED, "Keyring is locked");
+      return nullptr;
+    }
+  }
+
   class SecretStore::D
   {
   public:
@@ -37,6 +63,15 @@ namespace Radiant
 
       throw std::runtime_error("SecretStore service failed");
     }
+
+    if (!(m_flags & SecretStore::FLAG_ALLOW_UI)) {
+      SecretServiceClass * klass = SECRET_SERVICE_GET_CLASS(m_service);
+      if (klass) {
+        klass->prompt_async = &promptAsyncOverride;
+        klass->prompt_finish = &promptFinishOverride;
+      }
+    }
+
     return m_service;
   }
 
@@ -77,8 +112,10 @@ namespace Radiant
         return ret;
       }
 
-      if (error && error->message)
+      if (error && error->message) {
+        Radiant::error("SecretStore # %s", error->message);
         throw std::runtime_error(error->message);
+      }
 
       throw std::runtime_error("Not found");
     });
