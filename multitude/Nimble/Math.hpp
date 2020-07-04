@@ -35,18 +35,18 @@ namespace Nimble {
   namespace Math
   {
     /// Pi
-    const double PI         = 3.1415926535897931;
+    constexpr double PI         = 3.1415926535897931;
     /// Pi times two
-    const double TWO_PI     = 6.2831853071795862;
+    constexpr double TWO_PI     = 6.2831853071795862;
     /// Pi divided by two
-    const double HALF_PI    = 1.57079632679489660;
+    constexpr double HALF_PI    = 1.57079632679489660;
     /// Pi divided by four
-    const double QUARTER_PI = 0.78539816339744828;
+    constexpr double QUARTER_PI = 0.78539816339744828;
 
     /// Square root of two
-    const double SQRT2      = 1.41421356237309514547;
+    constexpr double SQRT2      = 1.41421356237309514547;
     /// Square root of two divided by two
-    const double SQRT2_PER2 = 0.70710678118654757273;
+    constexpr double SQRT2_PER2 = 0.70710678118654757273;
 
     /// Returns the inverse square root
     inline float InvSqrt(float v) { return 1.0f / std::sqrt(v); }
