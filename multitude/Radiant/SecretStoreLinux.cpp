@@ -37,6 +37,7 @@ namespace Radiant
   {
   public:
     SecretService * service();
+    GHashTable * createAttrs(QByteArray & key);
 
   public:
     // We are using a custom worker thread and synchronous versions of libsecret
@@ -49,6 +50,8 @@ namespace Radiant
     SecretService * m_service = nullptr;
     std::unique_ptr<Radiant::OnDemandExecutor> m_executor{new Radiant::OnDemandExecutor()};
     SecretStore::Flags m_flags;
+    QByteArray m_organization;
+    QByteArray m_application;
   };
 
   SecretService * SecretStore::D::service()
@@ -76,11 +79,22 @@ namespace Radiant
     return m_service;
   }
 
+  GHashTable * SecretStore::D::createAttrs(QByteArray & key)
+  {
+    GHashTable * attrs = g_hash_table_new(g_str_hash, g_str_equal);
+    g_hash_table_insert(attrs, const_cast<char*>("organization"), m_organization.data());
+    g_hash_table_insert(attrs, const_cast<char*>("application"), m_application.data());
+    g_hash_table_insert(attrs, const_cast<char*>("key"), key.data());
+    return attrs;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
-  SecretStore::SecretStore(const QString & /*organization*/, const QString & /*application*/, Flags flags)
+  SecretStore::SecretStore(const QString & organization, const QString & application, Flags flags)
     : m_d(new D())
   {
+    m_d->m_organization = organization.toUtf8();
+    m_d->m_application = application.toUtf8();
     m_d->m_flags = flags;
   }
 
@@ -91,15 +105,13 @@ namespace Radiant
       g_object_unref(m_d->m_service);
   }
 
-  folly::Future<QString> SecretStore::secret(const QString & key, const QString & value)
+  folly::Future<QString> SecretStore::secret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key, value] {
+    return folly::via(m_d->m_executor.get(), [this, key] {
       SecretService * srv = m_d->service();
 
       QByteArray keyStr = key.toUtf8();
-      QByteArray valueStr = value.toUtf8();
-      GHashTable * attrs = g_hash_table_new(g_str_hash, g_str_equal);
-      g_hash_table_insert(attrs, keyStr.data(), valueStr.data());
+      GHashTable * attrs = m_d->createAttrs(keyStr);
 
       GError * error = nullptr;
       SecretValue * secretValue = secret_service_lookup_sync(srv, nullptr, attrs, nullptr, &error);
@@ -123,15 +135,13 @@ namespace Radiant
   }
 
   folly::Future<folly::Unit> SecretStore::setSecret(
-      const QString & label, const QString & key, const QString & value, const QString & secret)
+      const QString & label, const QString & key, const QString & secret)
   {
-    return folly::via(m_d->m_executor.get(), [this, label, key, value, secret] {
+    return folly::via(m_d->m_executor.get(), [this, label, key, secret] {
       SecretService * srv = m_d->service();
 
       QByteArray keyStr = key.toUtf8();
-      QByteArray valueStr = value.toUtf8();
-      GHashTable * attrs = g_hash_table_new(g_str_hash, g_str_equal);
-      g_hash_table_insert(attrs, keyStr.data(), valueStr.data());
+      GHashTable * attrs = m_d->createAttrs(keyStr);
 
       SecretValue * secretValue = secret_value_new(secret.toUtf8().data(), -1, "text/plain");
 
@@ -151,15 +161,13 @@ namespace Radiant
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key, const QString & value)
+  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key, value] {
+    return folly::via(m_d->m_executor.get(), [this, key] {
       SecretService * srv = m_d->service();
 
       QByteArray keyStr = key.toUtf8();
-      QByteArray valueStr = value.toUtf8();
-      GHashTable * attrs = g_hash_table_new(g_str_hash, g_str_equal);
-      g_hash_table_insert(attrs, keyStr.data(), valueStr.data());
+      GHashTable * attrs = m_d->createAttrs(keyStr);
 
       GError * error = nullptr;
       secret_service_clear_sync(srv, nullptr, attrs, nullptr, &error);

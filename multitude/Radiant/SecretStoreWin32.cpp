@@ -75,14 +75,14 @@ namespace Radiant
     m_d->m_executor.reset();
   }
 
-  folly::Future<QString> SecretStore::secret(const QString & key, const QString & value)
+  folly::Future<QString> SecretStore::secret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key, value] {
+    return folly::via(m_d->m_executor.get(), [this, key] {
       QSettings settings(m_d->m_organization, m_d->m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
-        if (settings.value(key).toString() == value) {
+        if (settings.value("key").toString() == key) {
           QByteArray data = settings.value("secret").toByteArray();
           return m_d->decrypt(data);
         }
@@ -93,9 +93,9 @@ namespace Radiant
   }
 
   folly::Future<folly::Unit> SecretStore::setSecret(
-      const QString & label, const QString & key, const QString & value, const QString & secret)
+      const QString & label, const QString & key, const QString & secret)
   {
-    return folly::via(m_d->m_executor.get(), [this, label, key, value, secret] {
+    return folly::via(m_d->m_executor.get(), [this, label, key, secret] {
       QSettings settings(m_d->m_organization, m_d->m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
@@ -103,11 +103,11 @@ namespace Radiant
         // Since QSettings can't delete array items, there can be empty
         // children after clearSecret. Reuse those items here.
         if (settings.childKeys().isEmpty() && settings.childGroups().isEmpty()) {
-          settings.setValue(key, value);
+          settings.setValue("key", key);
           settings.setValue("secret", m_d->crypt(label, secret));
           return;
         }
-        if (settings.value(key).toString() == value) {
+        if (settings.value("key").toString() == key) {
           settings.setValue("secret", m_d->crypt(label, secret));
           return;
         }
@@ -116,20 +116,20 @@ namespace Radiant
 
       settings.beginWriteArray("secrets", size + 1);
       settings.setArrayIndex(size);
-      settings.setValue(key, value);
+      settings.setValue("key", key);
       settings.setValue("secret", m_d->crypt(label, secret));
       settings.endArray();
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key, const QString & value)
+  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key, value] {
+    return folly::via(m_d->m_executor.get(), [this, key] {
       QSettings settings(m_d->m_organization, m_d->m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
-        if (settings.value(key).toString() == value) {
+        if (settings.value("key").toString() == key) {
           // QSettings can't actually remove array items properly, we can
           // just make items empty
           settings.remove("");
