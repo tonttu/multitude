@@ -92,6 +92,8 @@ HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
 HEADERS += TimeTracker.hpp
 HEADERS += CacheManager.hpp
+HEADERS += OnDemandExecutor.hpp
+enable-secret-store:HEADERS += SecretStore.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
@@ -155,6 +157,13 @@ SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
 SOURCES += CacheManager.cpp
+SOURCES += OnDemandExecutor.cpp
+
+enable-secret-store {
+  linux*:SOURCES += SecretStoreLinux.cpp
+  win32:SOURCES += SecretStoreWin32.cpp
+}
+
 !mobile:SOURCES += CrashHandlerCommon.cpp
 !mobile:SOURCES += TraceCrashHandlerFilter.cpp
 
@@ -197,6 +206,11 @@ linux-* {
   INCLUDEPATH += $${ARM64_ROOTFS}/opt/multitaction-breakpad/include/breakpad
   QMAKE_LIBDIR += $${ARM64_ROOTFS}/opt/multitaction-breakpad/lib/$${arch_triple}
   LIBS += -lbreakpad -lbreakpad_client
+
+  enable-secret-store {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libsecret-1
+  }
 }
 
 macx {
@@ -257,6 +271,8 @@ win32 {
   QMAKE_LFLAGS += /ignore:4099
 
   DEFINES += _CRT_SECURE_NO_WARNINGS
+
+  enable-secret-store: LIBS += -lCrypt32
 }
 
 QT += sql
