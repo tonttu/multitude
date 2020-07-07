@@ -56,11 +56,20 @@ namespace
 
   boost::expected<size_t> queryPageCount(const QString& pdfAbsoluteFilePath)
   {
-    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), NULL);
-    if(!doc)
+    QFile file(pdfAbsoluteFilePath);
+    if (!file.open(QFile::ReadOnly)) {
       return boost::make_unexpected(
-            std::runtime_error(QString("Could not open document %1.").
+            std::runtime_error(QString("Could not open document %1: %2.").
+                               arg(pdfAbsoluteFilePath, file.errorString()).toStdString()));
+    }
+
+    QByteArray data = file.readAll();
+    FPDF_DOCUMENT doc = FPDF_LoadMemDocument(data.data(), data.size(), nullptr);
+    if(!doc) {
+      return boost::make_unexpected(
+            std::runtime_error(QString("Could not open document %1 [1].").
                                arg(pdfAbsoluteFilePath).toStdString()));
+    }
 
     int pageCount = FPDF_GetPageCount(doc);
     FPDF_CloseDocument(doc);
@@ -71,10 +80,18 @@ namespace
   renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
              const Nimble::SizeI& resolution, QRgb color)
   {
-    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), NULL);
+    QFile file(pdfAbsoluteFilePath);
+    if (!file.open(QFile::ReadOnly)) {
+      return boost::make_unexpected(
+            std::runtime_error(QString("Could not open document %1: %2.").
+                               arg(pdfAbsoluteFilePath, file.errorString()).toStdString()));
+    }
+
+    QByteArray data = file.readAll();
+    FPDF_DOCUMENT doc = FPDF_LoadMemDocument(data.data(), data.size(), nullptr);
     if(!doc) {
       return boost::make_unexpected(
-            std::runtime_error(QString("Could not open document %1.").
+            std::runtime_error(QString("Could not open document %1 [1].").
                                arg(pdfAbsoluteFilePath).toStdString()));
     }
 
@@ -112,10 +129,18 @@ namespace
   boost::expected<Nimble::SizeF>
   getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
   {
-    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), NULL);
+    QFile file(pdfAbsoluteFilePath);
+    if (!file.open(QFile::ReadOnly)) {
+      return boost::make_unexpected(
+            std::runtime_error(QString("Could not open document %1: %2.").
+                               arg(pdfAbsoluteFilePath, file.errorString()).toStdString()));
+    }
+
+    QByteArray data = file.readAll();
+    FPDF_DOCUMENT doc = FPDF_LoadMemDocument(data.data(), data.size(), nullptr);
     if(!doc) {
       return boost::make_unexpected(
-            std::runtime_error(QString("Could not open document %1.").
+            std::runtime_error(QString("Could not open document %1 [1].").
                                arg(pdfAbsoluteFilePath).toStdString()));
     }
 
@@ -163,11 +188,18 @@ namespace
     const double maxWorkTime = 1.0;
     Radiant::Timer timer;
 
-    FPDF_DOCUMENT doc = FPDF_LoadDocument(batch.pdfAbsoluteFilePath.toUtf8().data(), NULL);
+    QFile file(batch.pdfAbsoluteFilePath);
+    QByteArray data;
+    FPDF_DOCUMENT doc = nullptr;
+    if (file.open(QFile::ReadOnly)) {
+      data = file.readAll();
+      doc = FPDF_LoadMemDocument(data.data(), data.size(), nullptr);
+    }
+
     if (!doc) {
       /// This really shouldn't happen, unless someone deleted the file while
       /// we were processing it. Just break all remaining promises.
-      std::runtime_error error(QString("Could not open document %1.").
+      std::runtime_error error(QString("Could not open document %1. [4]").
                                arg(batch.pdfAbsoluteFilePath).toStdString());
       for (; batch.pageNumber < batch.pageCountToConvert; ++batch.pageNumber) {
         batch.promises[batch.pageNumber].setException(error);
@@ -707,7 +739,7 @@ namespace Luminous
   {
     std::lock_guard<std::mutex> guard(s_pdfiumMutex);
 
-    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toUtf8().data(), 0);
+    FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toLocal8Bit().data(), nullptr);
     if (!doc)
       return nullptr;
     return std::make_shared<PDFDocumentImpl>(doc, s_multiSingletonInstance.lock());
