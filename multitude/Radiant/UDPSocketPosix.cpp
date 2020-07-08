@@ -8,16 +8,22 @@
  * 
  */
 
+#include "LockFile.hpp"
 #include "UDPSocket.hpp"
 #include "SocketWrapper.hpp"
 #include "SocketUtilPosix.hpp"
 #include "Trace.hpp"
+
+#include <Nimble/Math.hpp>
 
 #include <sys/types.h>
 
 #ifdef RADIANT_LINUX
 #include <sys/ioctl.h>
 #endif
+
+#include <QDir>
+#include <QTextStream>
 
 namespace Radiant
 {
@@ -258,4 +264,53 @@ namespace Radiant
   }
 
 #endif
+
+  int UDPSocket::randomOpenUDPPort()
+  {
+    Radiant::LockFile lock(QDir::tempPath() + "/.cornerstone-random-udp-port.lock", true);
+
+    QFile file(QDir::tempPath() + "/.cornerstone-random-udp-port");
+    if (!file.open(QFile::ReadWrite)) {
+      Radiant::error("UDPSocket::randomOpenUDPPort # Failed to open %s: %s",
+                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
+      return 0;
+    }
+
+    // The file holds the next port available
+    uint32_t port = 0;
+    QTextStream(&file) >> port;
+
+    // Use the IANA registered ports range (1024-49151) excluding the
+    // ephemeral port range used by linux (32768-61000), since these ports
+    // are most likely not used by anyone on the system between the time
+    // this function returns and the port is actually opened.
+    const uint32_t minPort = 1024;
+    const uint32_t maxPort = 32767;
+
+    port = Nimble::Math::Clamp(port, minPort, maxPort);
+    uint32_t nextPort;
+    for (int i = 0;; ++i) {
+      nextPort = (port + 1 - minPort) % (maxPort - minPort + 1) + minPort;
+
+      int fd = 0;
+      QString errStr;
+      SocketUtilPosix::bindOrConnectSocket(fd, "0.0.0.0", port, errStr,
+                                           true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (errStr.isEmpty()) {
+        SocketWrapper::close(fd);
+        break;
+      }
+
+      if (i > 40000) {
+        Radiant::error("UDPSocket::randomOpenUDPPort # Failed to find open port");
+        return 0;
+      }
+      port = nextPort;
+    }
+
+    QTextStream stream(&file);
+    stream.seek(0);
+    stream << nextPort;
+    return port;
+  }
 }
