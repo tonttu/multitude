@@ -49,7 +49,7 @@ namespace Valuable
   {
     QStringList tmp;
     for(int i = 1; i < argc; ++i)
-      tmp << argv[i];
+      tmp << QString::fromLocal8Bit(argv[i]);
 
     QStringList out = parseAndStore(tmp, opts);
 
