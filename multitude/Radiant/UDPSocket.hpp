@@ -107,6 +107,11 @@ namespace Radiant
     int fd() const;
 #endif
 
+    /// Returns an UDP port that can be used for listening incoming connections.
+    /// This is useful for unit tests.
+    /// @sa TCPServerSocket::randomOpenTCPPort
+    static int randomOpenUDPPort();
+
   private:
     class D;
     D * m_d;
