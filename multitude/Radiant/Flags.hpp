@@ -127,7 +127,7 @@ namespace Radiant
     /// you better have a real good reason to do so.
     /// @param i integers to convert from
     /// @return converted flags
-    static FlagsT<Enum> fromInt(Int i) { return FlagsT<Enum>(i); }
+    static FlagsT<Enum, Int> fromInt(Int i) { return FlagsT<Enum, Int>(i); }
 
     bool operator<(const FlagsT & t) const { return m_value < t.m_value; }
 
