@@ -14,9 +14,8 @@ namespace Radiant
     {
     public:
       template<class Arg>
-      FuncTask(Arg && func, int8_t priority, std::function<void()> && killFn)
+      FuncTask(Arg && func, int8_t priority)
         : m_func(std::forward<Arg>(func))
-	, m_kill(killFn)
       {
         float lowPriority = Task::PRIORITY_LOW;
         float normalPriority = Task::PRIORITY_NORMAL;
@@ -35,14 +34,11 @@ namespace Radiant
       {
         if(m_func)
           m_func();
-        if(m_kill)
-          m_kill();
         setFinished();
       }
 
     private:
       Func m_func;
-      std::function<void()> m_kill;
     };
   }  // unnamed namespace
 
@@ -54,7 +50,7 @@ namespace Radiant
 
     void addWithPriority(Func func, int8_t priority)
     {
-      auto taskPtr = std::make_shared<FuncTask>(std::move(func), priority, nullptr);
+      auto taskPtr = std::make_shared<FuncTask>(std::move(func), priority);
       m_bgThread->addTask(taskPtr);
     }
 
