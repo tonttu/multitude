@@ -162,6 +162,7 @@ SOURCES += OnDemandExecutor.cpp
 enable-secret-store {
   linux*:SOURCES += SecretStoreLinux.cpp
   win32:SOURCES += SecretStoreWin32.cpp
+  macx:SOURCES += SecretStoreDummy.cpp
 }
 
 !mobile:SOURCES += CrashHandlerCommon.cpp

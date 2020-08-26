@@ -73,7 +73,7 @@ namespace Valuable
         }, Node::AFTER_UPDATE);
 
         node->eventAddListenerBd("attribute-removed", owner,
-                                 [this, node, name, depth] (Radiant::BinaryData & bd) {
+                                 [this, name, depth] (Radiant::BinaryData & bd) {
           QByteArray attrName = bd.read<QByteArray>();
           if (name != attrName)
             return;
