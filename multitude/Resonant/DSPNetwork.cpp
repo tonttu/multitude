@@ -190,7 +190,7 @@ namespace Resonant {
 
   void DSPNetwork::markDone(ModulePtr module)
   {
-    auto self = s_multiSingletonInstance.lock();
+    auto self = weakInstance().lock();
     if (!self)
       return;
 

@@ -178,7 +178,7 @@ namespace Luminous
     nvmlDevice_t dev = nullptr;
     if (m_d->nvmlDeviceGetHandleByPciBusId &&
         m_d->nvmlDeviceGetHandleByPciBusId(busId.data(), &dev) == NVML_SUCCESS)
-      return std::make_shared<DeviceQuery>(s_multiSingletonInstance.lock(), dev, openglIndex);
+      return std::make_shared<DeviceQuery>(weakInstance().lock(), dev, openglIndex);
     return nullptr;
   }
 
