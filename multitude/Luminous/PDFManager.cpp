@@ -576,7 +576,7 @@ namespace Luminous
   folly::Future<size_t> PDFManager::queryPageCount(const QString& pdfAbsoluteFilePath)
   {
     // Keep PDFManager alive while we are using pdfium
-    auto manager = s_multiSingletonInstance.lock();
+    auto manager = weakInstance().lock();
     Punctual::WrappedTaskFunc<size_t> taskFunc = [pdfAbsoluteFilePath, manager] ()
       -> Punctual::WrappedTaskReturnType<size_t>
     {
@@ -594,7 +594,7 @@ namespace Luminous
                                                int pageNumber, const Nimble::SizeI& resolution,
                                                QRgb color)
   {
-    auto manager = s_multiSingletonInstance.lock();
+    auto manager = weakInstance().lock();
     std::function<Punctual::WrappedTaskReturnType<QImage>(void)> taskFunc =
       [pdfAbsoluteFilePath, pageNumber, resolution, color, manager]()
         -> Punctual::WrappedTaskReturnType<QImage>
@@ -628,7 +628,7 @@ namespace Luminous
   folly::Future<Nimble::SizeF>
   PDFManager::getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
   {
-    auto manager = s_multiSingletonInstance.lock();
+    auto manager = weakInstance().lock();
     Punctual::WrappedTaskFunc<Nimble::SizeF> taskFunc =
       [pdfAbsoluteFilePath, pageNumber, manager]()
         -> Punctual::WrappedTaskReturnType<Nimble::SizeF>
@@ -646,7 +646,7 @@ namespace Luminous
       const QString & pdfFilename, const PDFCachingOptions & opts, int maxPageCount)
   {
     BatchConverterPtr batchConverter { new BatchConverter() };
-    batchConverter->manager = s_multiSingletonInstance.lock();
+    batchConverter->manager = weakInstance().lock();
 
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.
@@ -742,7 +742,7 @@ namespace Luminous
     FPDF_DOCUMENT doc = FPDF_LoadDocument(pdfAbsoluteFilePath.toLocal8Bit().data(), nullptr);
     if (!doc)
       return nullptr;
-    return std::make_shared<PDFDocumentImpl>(doc, s_multiSingletonInstance.lock());
+    return std::make_shared<PDFDocumentImpl>(doc, weakInstance().lock());
   }
 #endif // #if !defined(__APPLE__)
 

@@ -126,7 +126,7 @@ namespace VideoDisplay
 
   std::unique_ptr<Source> MWCapture::createSource(const VideoInput & videoInput, const AudioInput & audioInput)
   {
-    return std::make_unique<MWCaptureSource>(s_multiSingletonInstance, videoInput, audioInput);
+    return std::make_unique<MWCaptureSource>(weakInstance(), videoInput, audioInput);
   }
 
   DEFINE_SINGLETON(MWCapture)

@@ -58,7 +58,9 @@
     things down.
 
     Then to actually use the singleton, you just call the instance() method
-    which returns a shared pointer.
+    which returns a shared pointer. The instance is created lazily and
+    destroyed once the last reference to it dies. It can be recreated if
+    instance() is called after the previous instance was removed.
 
     @code
     // Do something with the singleton
@@ -67,7 +69,16 @@
     ptr->doSomething();
     @endcode
 
-    This class is thread-safe. */
+    There is also a static weakInstance() function that returns the internal
+    weak_ptr used to store the instance. This can be used to check if there is
+    an instance without actually creating one, for example:
+
+    @code
+    if (auto instance = MyClass::weakInstance().lock())
+      instance->stuff();
+    @endcode
+
+    This API is thread-safe. */
 #define DEFINE_SINGLETON(T)                                        \
   DEFINE_SINGLETON2(T,,,)
 
@@ -91,6 +102,7 @@
 /// libraries. The macro needs one more parameter.
 #define DECLARE_SINGLETON(T)                                       \
   public: static std::shared_ptr<T> instance();                    \
+  static inline std::weak_ptr<T> weakInstance() { return s_multiSingletonInstance; } \
   private: static std::weak_ptr<T> s_multiSingletonInstance
 
 namespace Radiant {
