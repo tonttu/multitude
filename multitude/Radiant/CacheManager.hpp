@@ -3,7 +3,7 @@
 #include "Flags.hpp"
 #include "Singleton.hpp"
 
-#include <QStringList>
+#include <QByteArrayList>
 
 namespace Radiant
 {

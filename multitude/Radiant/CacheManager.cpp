@@ -2,6 +2,7 @@
 #include "CacheManager.hpp"
 #include "LockFile.hpp"
 #include "PlatformUtils.hpp"
+#include "QByteArrayHash.hpp"
 #include "Sleep.hpp"
 #include "Task.hpp"
 #include "Trace.hpp"
@@ -21,18 +22,6 @@
 #include <set>
 #include <string_view>
 #include <unordered_set>
-
-namespace std
-{
-  template <>
-  struct hash<QByteArray>
-  {
-    size_t operator()(const QByteArray & x) const
-    {
-      return std::hash<std::string_view>()(std::string_view(x.data(), x.size()));
-    }
-  };
-}
 
 namespace
 {
