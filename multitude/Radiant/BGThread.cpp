@@ -241,6 +241,15 @@ namespace Radiant
 
       bool done = (task->state() == Task::DONE || task->isCanceled());
       if (done) {
+        /// @todo there is no thread-safe way to add the task back to BGThread
+        /// if doTask() was just finished with DONE state. However, by clearing
+        /// m_host before calling calling canceled/finished allows those
+        /// functions to add the task back to the queue.
+        ///
+        /// That is still not thread-safe, since access to m_runningTasks might
+        /// be interleaved wrong, but sometimes it might be acceptable, since
+        /// it will only potentially break removeTask.
+        task->m_host = nullptr;
         if (task->isCanceled()) {
           // Task is canceled: notify the task
           task->canceled();
@@ -249,8 +258,6 @@ namespace Radiant
           // Task is completed: notify the task
           task->finished();
         }
-
-        task->m_host = nullptr;
       }
 
       std::lock_guard<std::mutex> g(m_mutexWait);
