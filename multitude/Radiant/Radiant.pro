@@ -94,6 +94,7 @@ HEADERS += TimeTracker.hpp
 HEADERS += CacheManager.hpp
 HEADERS += OnDemandExecutor.hpp
 enable-secret-store:HEADERS += SecretStore.hpp
+HEADERS += QByteArrayHash.hpp
 
 SOURCES += Mime.cpp \
     ThreadChecks.cpp \
