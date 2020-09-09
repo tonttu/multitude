@@ -23,6 +23,9 @@ namespace Valuable
   {
   public:
     inline std::weak_ptr<void> weak();
+    /// Invalidate the reference and all listeners bound to it, next call to
+    /// weak() will recreate a new one.
+    inline void reset();
 
   private:
     std::shared_ptr<void> m_ref;
@@ -42,5 +45,10 @@ namespace Valuable
     } else {
       return ptr;
     }
+  }
+
+  void Reference::reset()
+  {
+    std::atomic_store(&m_ref, std::shared_ptr<void>{});
   }
 }
