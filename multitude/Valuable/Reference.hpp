@@ -26,6 +26,8 @@ namespace Valuable
     /// Invalidate the reference and all listeners bound to it, next call to
     /// weak() will recreate a new one.
     inline void reset();
+    /// Returns false once weak() has been called, until reset() is called.
+    inline bool isNull() const;
 
   private:
     std::shared_ptr<void> m_ref;
@@ -50,5 +52,10 @@ namespace Valuable
   void Reference::reset()
   {
     std::atomic_store(&m_ref, std::shared_ptr<void>{});
+  }
+
+  bool Reference::isNull() const
+  {
+    return std::atomic_load(&m_ref) == nullptr;
   }
 }
