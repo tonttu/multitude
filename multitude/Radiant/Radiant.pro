@@ -92,7 +92,6 @@ HEADERS += fast_atof.h
 HEADERS += VectorAllocator.hpp
 HEADERS += TimeTracker.hpp
 HEADERS += CacheManager.hpp
-HEADERS += OnDemandExecutor.hpp
 enable-secret-store:HEADERS += SecretStore.hpp
 HEADERS += QByteArrayHash.hpp
 
@@ -158,7 +157,6 @@ SOURCES += SetupSearchPaths.cpp
 SOURCES += Version.cpp
 SOURCES += VersionString.cpp
 SOURCES += CacheManager.cpp
-SOURCES += OnDemandExecutor.cpp
 
 enable-secret-store {
   linux*:SOURCES += SecretStoreLinux.cpp
@@ -184,8 +182,11 @@ linux*:SOURCES += DeviceMonitor.cpp
 enable-folly {
   HEADERS += ThreadPoolExecutor.hpp
   HEADERS += BGThreadExecutor.hpp
+  HEADERS += OnDemandExecutor.hpp
+
   SOURCES += ThreadPoolExecutor.cpp
   SOURCES += BGThreadExecutor.cpp
+  SOURCES += OnDemandExecutor.cpp
 }
 
 LIBS += $$LIB_NIMBLE $$LIB_PATTERNS
