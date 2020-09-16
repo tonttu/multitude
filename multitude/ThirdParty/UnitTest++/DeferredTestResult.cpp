@@ -15,8 +15,8 @@ namespace UnitTest
 
    DeferredTestFailure::DeferredTestFailure(int lineNumber_, const char* failureStr_)
       : lineNumber(lineNumber_)
+      , failureStr(failureStr_)
    {
-      UNIITEST_NS_QUAL_STD(strcpy)(failureStr, failureStr_);
    }
 
    DeferredTestResult::DeferredTestResult()
