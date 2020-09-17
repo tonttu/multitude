@@ -18,7 +18,7 @@ namespace UnitTest
       DeferredTestFailure(int lineNumber_, const char* failureStr_);
 
       int lineNumber;
-      char failureStr[1024];
+      std::string failureStr;
    };
 
 }

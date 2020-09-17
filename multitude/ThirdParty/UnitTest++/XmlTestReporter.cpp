@@ -118,7 +118,7 @@ namespace UnitTest {
            it != result.failures.end();
            ++it)
       {
-         string const escapedMessage = XmlEscape(std::string(it->failureStr));
+         string const escapedMessage = XmlEscape(it->failureStr);
          string const message = BuildFailureMessage(result.failureFile, it->lineNumber, escapedMessage);
 
          os << "<failure" << " message=\"" << message << "\"" << "/>";
