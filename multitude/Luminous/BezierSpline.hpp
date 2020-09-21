@@ -90,7 +90,7 @@ namespace Luminous
       Luminous::CubicBezierCurve curve(path[idx], path[idx+1]);
       curve.intersections2D(curveIntersections, shape, sizeToleranceSqr);
 
-      for (const Nimble::Rangef r: curveIntersections) {
+      for (const Nimble::Rangef& r: curveIntersections) {
         if (!splineIntersections.empty()) {
           SplineRange & prev = splineIntersections.back();
           if (prev.rightIdx + 1 == idx && prev.rightT == 1.f && r.low() == 0.f) {
