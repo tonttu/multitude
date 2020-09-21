@@ -120,6 +120,9 @@ namespace Radiant
     /// will be immediately cancelled and never executed.
     void shutdown();
 
+    /// Stops all threads once all tasks have been executed.
+    void stopWhenDone();
+
     /// Restarts BGThread if it shutdown() was called earlier and calls
     /// Radiant::ThreadPool::run().
     virtual void run(int number = 1) override;
@@ -156,6 +159,7 @@ namespace Radiant
     std::condition_variable m_removeCond;
 
     bool m_isShuttingDown;
+    bool m_stopWhenDone = false;
   };
 
 }
