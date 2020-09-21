@@ -314,6 +314,8 @@ namespace Radiant
       }
 
       if(nextTask == m_taskQueue.end()) {
+        if (m_stopWhenDone)
+          return nullptr;
         ++m_idle;
         m_idleWait.wait(lock);
         --m_idle;
@@ -409,6 +411,15 @@ namespace Radiant
     reserved.clear();
 
     stop();
+  }
+
+  void BGThread::stopWhenDone()
+  {
+    {
+      std::unique_lock<std::mutex> lock(m_mutexWait);
+      m_stopWhenDone = true;
+    }
+    m_idleWait.notify_all();
   }
 
   void BGThread::run(int number)
