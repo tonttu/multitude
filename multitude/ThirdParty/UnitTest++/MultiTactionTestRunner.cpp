@@ -222,6 +222,7 @@ struct RunOptions
 {
   TestRunnerFlags flags;
   QStringList wrapper;
+  double timeoutSeconds = 5*60.0;
 };
 
 namespace UnitTest
@@ -359,7 +360,7 @@ namespace UnitTest
 
       process.start(command, newArgs, QProcess::ReadOnly);
       process.waitForStarted();
-      bool finished = process.waitForFinished(15 * 60 * 1000);
+      bool finished = process.waitForFinished(options.timeoutSeconds * 1000.0);
       const double time = timer.time();
 
       QString error, errorDetails;
@@ -665,10 +666,13 @@ namespace UnitTest
     QCommandLineOption wrapperOption("wrapper", "Run all tests through this wrapper command (for instance valgrind, gdb...)."
                                      " Specify multiple times to give arguments to the wrapper command", "COMMANDS");
 
+    QCommandLineOption timeoutOption("timeout", "Timeout for individual tests, in seconds.", "NUMBER");
+
     QCommandLineOption helpOption({"h", "help"}, "Show this help");
 
     parser.addOptions({singleOption, listOption, matchOption, excludeOption, v, s,
-                       printOnlyFailuresOptions, parallel, timesOption, helpOption, wrapperOption });
+                       printOnlyFailuresOptions, parallel, timesOption, helpOption,
+                       wrapperOption, timeoutOption });
     parser.addPositionalArgument("xmlFile", "XML file for the test status output");
     parser.process(cmdLineArgs);
 
@@ -715,6 +719,9 @@ namespace UnitTest
     }
 
     options.wrapper = parser.values(wrapperOption);
+
+    if (parser.isSet(timeoutOption))
+      options.timeoutSeconds = parser.value(timeoutOption).toDouble();
 
     const QString single = parser.value("single");
     const QString include = parser.value("match");
