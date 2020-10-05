@@ -15,7 +15,6 @@
 #include <Luminous/RenderDriver.hpp>
 #include <Luminous/Transformer.hpp>
 #include <Luminous/Style.hpp>
-#include <Luminous/RenderContext.hpp>
 #include <Luminous/Export.hpp>
 #include <Luminous/VertexArray.hpp>
 #include <Luminous/Buffer.hpp>
@@ -502,6 +501,18 @@ namespace Luminous
     /// @param flags Will text layout be dynamic or static
     void drawText(const QString & text, const Nimble::Rectf & rect, const TextStyle & style, TextFlags flags = TextStatic);
 
+    /// Draws a rectangle or a border with rounded corners.
+    /// @param rect bounding box of the rectangle we are rendering
+    /// @param radii Border radius for each quadrant (top-left, top-right, bottom-right and bottom-left)
+    /// @param range Rendered distance range from the outside edge. For instance
+    ///              range [0, 10] would render 10 pixel wide border right at the
+    ///              outer edge, [20, 30] would also render 10 pixel border, but
+    ///              from 20 pixels from the outside edge. [0, max-corner-radius]
+    ///              renders a solid rounded rectangle.
+    /// @param style Only the fill color is used
+    void drawRoundedRect(const Nimble::Rectf & rect, const Nimble::Vector4f & radii,
+                         const Nimble::Vector2f & range, Luminous::Style & style);
+
     /// Adds the render counter by one
     /// The render counter is used to track how many objects have been rendered since the counter was
     /// last reset. This can be useful for checking that object culling works as intended.
@@ -831,6 +842,7 @@ namespace Luminous
 
     const Program & fontShader() const;
     const Program & splineShader() const;
+    const Program & roundedRectShader() const;
 
     Luminous::StateGL & stateGl();
 

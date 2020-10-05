@@ -122,6 +122,15 @@ namespace Luminous
       desc.addAttribute<Nimble::Vector2f>("vertex_position");
       desc.addAttribute<Nimble::Vector4f>("vertex_color");
       m_splineShader.setVertexDescription(desc);
+
+      m_roundedRectShader.loadShader("cornerstone:Luminous/GLSL150/rounded-rect.vs", Luminous::Shader::Vertex);
+      m_roundedRectShader.loadShader("cornerstone:Luminous/GLSL150/rounded-rect.fs", Luminous::Shader::Fragment);
+      desc = Luminous::VertexDescription();
+      desc.addAttribute<Nimble::Vector2f>("vertex_position");
+      desc.addAttribute<Nimble::Vector2>("vertex_uv");
+      m_roundedRectShader.setVertexDescription(desc);
+      m_roundedRectShader.setSampleShading(1.f);
+      m_roundedRectShader.setTranslucency(true);
     }
 
     ~Internal()
@@ -275,6 +284,7 @@ namespace Luminous
     Program m_trilinearTexShader;
     Program m_fontShader;
     Program m_splineShader;
+    Program m_roundedRectShader;
 
     std::array<Image, 128+1> m_dashedLineImages;
 
@@ -1267,6 +1277,93 @@ namespace Luminous
     }
   }
 
+  void RenderContext::drawRoundedRect(
+      const Nimble::Rectf & rect, const Nimble::Vector4f & radii,
+      const Nimble::Vector2f & range, Style & style)
+  {
+    const float ymax = rect.height() / rect.width();
+
+    // If we are rendering a border, try to minimize the fragment shader usage
+    // by rendering a rectangle with a hole in it.
+    constexpr float a = 1.0 - 1.0 / Nimble::Math::SQRT2;
+    constexpr float a2 = 1.0 / Nimble::Math::SQRT2;
+
+    Nimble::Rectf inside {
+      rect.low().x + std::max(range[1], std::max(radii[0], radii[3]) * a + range[1] * a2),
+      rect.low().y + std::max(range[1], std::max(radii[0], radii[1]) * a + range[1] * a2),
+      rect.high().x - std::max(range[1], std::max(radii[1], radii[2]) * a + range[1] * a2),
+      rect.high().y - std::max(range[1], std::max(radii[2], radii[3]) * a + range[1] * a2)
+    };
+
+    // To avoid cutoff in anti-aliasing, add half pixel padding to the area
+    // we are rendering.
+    const float epsilon = 0.5f / approximateScaling();
+    inside.shrink(epsilon);
+
+    RenderBuilder<BasicVertexUV, RoundedRectUniformBlock> b;
+    if (inside.isEmpty()) {
+      b = drawPrimitiveT<BasicVertexUV, RoundedRectUniformBlock>(
+            PRIMITIVE_TRIANGLE_STRIP, 0, 4, roundedRectShader(), style.fillColor(), 1.f, style);
+
+      b.vertex[0].location = rect.low();
+      b.vertex[0].texCoord = {0.f, 0.f};
+
+      b.vertex[1].location = rect.highLow();
+      b.vertex[1].texCoord = {1.f, 0.f};
+
+      b.vertex[2].location = rect.lowHigh();
+      b.vertex[2].texCoord = {0.f, ymax};
+
+      b.vertex[3].location = rect.high();
+      b.vertex[3].texCoord = {1.f, ymax};
+    } else {
+      b = drawPrimitiveT<BasicVertexUV, RoundedRectUniformBlock>(
+            PRIMITIVE_TRIANGLE_STRIP, 0, 10, roundedRectShader(), style.fillColor(), 1.f, style);
+
+      Nimble::Rectf insideUvs {
+        (inside.low().x - rect.low().x) / rect.width(),
+        (inside.low().y - rect.low().y) / rect.height() * ymax,
+        (inside.high().x - rect.low().x) / rect.width(),
+        (inside.high().y - rect.low().y) / rect.height() * ymax,
+      };
+
+      // Using the same vertex ordering as Widget::renderBorder. That function
+      // has some helpful ascii art to explain this better.
+      b.vertex[0].location = inside.low();
+      b.vertex[0].texCoord = insideUvs.low();
+
+      b.vertex[1].location = rect.low();
+      b.vertex[1].texCoord = {0.f, 0.f};
+
+      b.vertex[2].location = inside.highLow();
+      b.vertex[2].texCoord = insideUvs.highLow();
+
+      b.vertex[3].location = rect.highLow();
+      b.vertex[3].texCoord = {1.f, 0.f};
+
+      b.vertex[4].location = inside.high();
+      b.vertex[4].texCoord = insideUvs.high();
+
+      b.vertex[5].location = rect.high();
+      b.vertex[5].texCoord = {1.f, ymax};
+
+      b.vertex[6].location = inside.lowHigh();
+      b.vertex[6].texCoord = insideUvs.lowHigh();
+
+      b.vertex[7].location = rect.lowHigh();
+      b.vertex[7].texCoord = {0.f, ymax};
+
+      b.vertex[8].location = inside.low();
+      b.vertex[8].texCoord = insideUvs.low();
+
+      b.vertex[9].location = rect.low();
+      b.vertex[9].texCoord.make(0, 0);
+    }
+    b.uniform->radii = radii / rect.width();
+    b.uniform->range = range / rect.width();
+    b.uniform->yCenter = ymax * 0.5f;
+  }
+
   Nimble::Size RenderContext::contextSize() const
   {
     return m_data->contextSize();
@@ -1520,6 +1617,11 @@ namespace Luminous
   const Program & RenderContext::splineShader() const
   {
     return m_data->m_splineShader;
+  }
+
+  const Program & RenderContext::roundedRectShader() const
+  {
+    return m_data->m_roundedRectShader;
   }
 
   StateGL & RenderContext::stateGl()

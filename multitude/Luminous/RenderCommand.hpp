@@ -144,6 +144,21 @@ namespace Luminous
     float depth;
   };
 /// @endcond
+
+  struct RoundedRectUniformBlock
+  {
+    /// Projection matrix for the geometry. Transforms vertices from world to clip coordinates.
+    Nimble::Matrix4f projMatrix;
+    /// Model matrix for the geometry. Transforms vertices from model to world coordinates.
+    Nimble::Matrix4f modelMatrix;
+    /// Color of the vertices.
+    Radiant::ColorPMA color;
+    Nimble::Vector4f radii;
+    Nimble::Vector2f range;
+    float yCenter;
+    /// Depth of the vertices.
+    float depth;
+  };
 }
 
 #endif // LUMINOUS_RENDERCOMMAND_HPP
