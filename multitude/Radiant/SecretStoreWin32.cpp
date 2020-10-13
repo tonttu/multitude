@@ -5,24 +5,36 @@
 
 #include <QSettings>
 
+#include <optional>
+
 #include <dpapi.h>
 
 namespace Radiant
 {
-  class SecretStore::D
+  class SecretStoreWindows : public SecretStore
   {
   public:
-    QString decrypt(QByteArray data);
-    QByteArray crypt(const QString & data, const QString & label);
+    SecretStoreWindows(const QString & organization, const QString & application, Flags flags);
+    ~SecretStoreWindows();
+
+    virtual folly::Future<QString> secret(const QString & key) override;
+    virtual folly::Future<folly::Unit> setSecret(
+        const QString & label, const QString & key, const QString & secret) override;
+    virtual folly::Future<folly::Unit> clearSecret(const QString & key) override;
+
+    std::optional<QString> decrypt(QByteArray data);
+    std::optional<QByteArray> crypt(const QString & data, const QString & label);
 
   public:
     std::unique_ptr<Radiant::OnDemandExecutor> m_executor{new Radiant::OnDemandExecutor()};
     QString m_organization;
     QString m_application;
     SecretStore::Flags m_flags;
+
+    std::unique_ptr<SecretStore> m_fallback;
   };
 
-  QString SecretStore::D::decrypt(QByteArray data)
+  std::optional<QString> SecretStoreWindows::decrypt(QByteArray data)
   {
     DATA_BLOB in;
     DATA_BLOB out;
@@ -36,11 +48,11 @@ namespace Radiant
     } else {
       Radiant::error("CryptUnprotectData failed: %s",
                      StringUtils::getLastErrorMessage().toUtf8().data());
-      throw std::runtime_error("SecretStore failed to decrypt data");
+      return {};
     }
   }
 
-  QByteArray SecretStore::D::crypt(const QString & description, const QString & data)
+  std::optional<QByteArray> SecretStoreWindows::crypt(const QString & description, const QString & data)
   {
     QByteArray str = data.toUtf8();
     DATA_BLOB in;
@@ -56,35 +68,42 @@ namespace Radiant
     } else {
       Radiant::error("CryptProtectData failed: %s",
                      StringUtils::getLastErrorMessage().toUtf8().data());
-      throw std::runtime_error("SecretStore failed to encrypt data");
+      return {};
     }
   }
 
-  /////////////////////////////////////////////////////////////////////////////
+  SecretStoreWindows::SecretStoreWindows(const QString & organization, const QString & application, Flags flags)
+    : m_organization(organization)
+    , m_application(application)
+    , m_flags(flags)
+  {}
 
-  SecretStore::SecretStore(const QString & organization, const QString & application, Flags flags)
-    : m_d(new D())
+  SecretStoreWindows::~SecretStoreWindows()
   {
-    m_d->m_organization = organization;
-    m_d->m_application = application;
-    m_d->m_flags = flags;
+    m_executor.reset();
   }
 
-  SecretStore::~SecretStore()
+  folly::Future<QString> SecretStoreWindows::secret(const QString & key)
   {
-    m_d->m_executor.reset();
-  }
+    if (m_fallback)
+      return m_fallback->secret(key);
 
-  folly::Future<QString> SecretStore::secret(const QString & key)
-  {
-    return folly::via(m_d->m_executor.get(), [this, key] {
-      QSettings settings(m_d->m_organization, m_d->m_application);
+    return folly::via(m_executor.get(), [this, key] () -> folly::Future<QString> {
+      QSettings settings(m_organization, m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
         if (settings.value("key").toString() == key) {
           QByteArray data = settings.value("secret").toByteArray();
-          return m_d->decrypt(data);
+          std::optional<QString> plain = decrypt(data);
+          if (plain)
+            return *plain;
+          if (m_flags & FLAG_USE_FALLBACK) {
+            if (!m_fallback)
+              m_fallback = SecretStore::createFallback(m_organization, m_application);
+            return m_fallback->secret(key);
+          }
+          throw std::runtime_error("SecretStore failed to decrypt data");
         }
       }
       settings.endArray();
@@ -92,11 +111,24 @@ namespace Radiant
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::setSecret(
+  folly::Future<folly::Unit> SecretStoreWindows::setSecret(
       const QString & label, const QString & key, const QString & secret)
   {
-    return folly::via(m_d->m_executor.get(), [this, label, key, secret] {
-      QSettings settings(m_d->m_organization, m_d->m_application);
+    if (m_fallback)
+      return m_fallback->setSecret(label, key, secret);
+
+    return folly::via(m_executor.get(), [this, label, key, secret] () -> folly::Future<folly::Unit> {
+      std::optional<QByteArray> encrypted = crypt(label, secret);
+      if (!encrypted) {
+        if (m_flags & FLAG_USE_FALLBACK) {
+          if (!m_fallback)
+            m_fallback = SecretStore::createFallback(m_organization, m_application);
+          return m_fallback->setSecret(label, key, secret);
+        }
+        throw std::runtime_error("SecretStore failed to encrypt data");
+      }
+
+      QSettings settings(m_organization, m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
@@ -104,12 +136,12 @@ namespace Radiant
         // children after clearSecret. Reuse those items here.
         if (settings.childKeys().isEmpty() && settings.childGroups().isEmpty()) {
           settings.setValue("key", key);
-          settings.setValue("secret", m_d->crypt(label, secret));
-          return;
+          settings.setValue("secret", *encrypted);
+          return folly::Unit{};
         }
         if (settings.value("key").toString() == key) {
-          settings.setValue("secret", m_d->crypt(label, secret));
-          return;
+          settings.setValue("secret", *encrypted);
+          return folly::Unit{};
         }
       }
       settings.endArray();
@@ -117,15 +149,18 @@ namespace Radiant
       settings.beginWriteArray("secrets", size + 1);
       settings.setArrayIndex(size);
       settings.setValue("key", key);
-      settings.setValue("secret", m_d->crypt(label, secret));
+      settings.setValue("secret", *encrypted);
       settings.endArray();
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key)
+  folly::Future<folly::Unit> SecretStoreWindows::clearSecret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key] {
-      QSettings settings(m_d->m_organization, m_d->m_application);
+    if (m_fallback)
+      return m_fallback->clearSecret(key);
+
+    return folly::via(m_executor.get(), [this, key] {
+      QSettings settings(m_organization, m_application);
       int size = settings.beginReadArray("secrets");
       for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
@@ -138,5 +173,11 @@ namespace Radiant
       }
       settings.endArray();
     });
+  }
+
+  std::unique_ptr<SecretStore> SecretStore::create(
+      const QString & organization, const QString & application, Flags flags)
+  {
+    return std::make_unique<SecretStoreWindows>(organization, application, flags);
   }
 }
