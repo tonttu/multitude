@@ -3,41 +3,26 @@
 
 #include <Radiant/OnDemandExecutor.hpp>
 
+#include <boost/expected/expected.hpp>
+
 #include <libsecret/secret.h>
 
 namespace Radiant
 {
-  namespace
-  {
-    // This function is called when the keyring is locked and libsecret wants to
-    // open a new native dialog, which we wanted to disable. Create a dummy task
-    // and finish it.
-    void promptAsyncOverride(SecretService * service,
-                             SecretPrompt *,
-                             const GVariantType *,
-                             GCancellable * cancellable,
-                             GAsyncReadyCallback callback,
-                             gpointer userData)
-    {
-      GTask * task = g_task_new(G_OBJECT(service), cancellable, callback, userData);
-      g_task_return_pointer(task, nullptr, nullptr);
-      g_object_unref(task);
-    }
-
-    GVariant * promptFinishOverride(SecretService *,
-                                    GAsyncResult *,
-                                    GError ** error)
-    {
-      *error = g_error_new_literal(secret_error_get_quark(), G_FILE_ERROR_FAILED, "Keyring is locked");
-      return nullptr;
-    }
-  }
-
-  class SecretStore::D
+  class SecretStoreLinux : public SecretStore
   {
   public:
-    SecretService * service();
+    SecretStoreLinux(const QString & organization, const QString & application, Flags flags);
+    ~SecretStoreLinux();
+
+    virtual folly::Future<QString> secret(const QString & key) override;
+    virtual folly::Future<folly::Unit> setSecret(
+        const QString & label, const QString & key, const QString & secret) override;
+    virtual folly::Future<folly::Unit> clearSecret(const QString & key) override;
+
+    boost::expected<SecretService *, QString> service();
     GHashTable * createAttrs(QByteArray & key);
+    void initFallback(const char * error);
 
   public:
     // We are using a custom worker thread and synchronous versions of libsecret
@@ -48,38 +33,71 @@ namespace Radiant
     // it would only work if we had a browser open, and even then the callbacks
     // would be called in CEF main thread, which is not what we want.
     SecretService * m_service = nullptr;
+    SecretCollection * m_collection = nullptr;
+
     std::unique_ptr<Radiant::OnDemandExecutor> m_executor{new Radiant::OnDemandExecutor()};
-    SecretStore::Flags m_flags;
     QByteArray m_organization;
     QByteArray m_application;
+    Flags m_flags;
+
+    // If this is defined, we had a non-recoverable error and are using
+    // fallback store instead.
+    std::unique_ptr<SecretStore> m_fallback;
   };
 
-  SecretService * SecretStore::D::service()
+  boost::expected<SecretService *, QString> SecretStoreLinux::service()
   {
-    if (m_service)
-      return m_service;
+    if (m_fallback)
+      return boost::make_unexpected(QString());
 
     GError * error = nullptr;
-    m_service = secret_service_get_sync(SECRET_SERVICE_NONE, nullptr, &error);
     if (!m_service) {
-      if (error && error->message)
-        throw std::runtime_error(error->message);
-
-      throw std::runtime_error("SecretStore service failed");
+      m_service = secret_service_get_sync(SECRET_SERVICE_NONE, nullptr, &error);
+      if (!m_service) {
+        if (error && error->message)
+          return boost::make_unexpected(error->message);
+        return boost::make_unexpected("SecretStore # failed to open secret service");
+      }
     }
 
-    if (!(m_flags & SecretStore::FLAG_ALLOW_UI)) {
-      SecretServiceClass * klass = SECRET_SERVICE_GET_CLASS(m_service);
-      if (klass) {
-        klass->prompt_async = &promptAsyncOverride;
-        klass->prompt_finish = &promptFinishOverride;
+    if (!m_collection) {
+      m_collection = secret_collection_for_alias_sync(
+            m_service, SECRET_COLLECTION_DEFAULT,
+            SECRET_COLLECTION_LOAD_ITEMS, nullptr, &error);
+      if (!m_collection) {
+        if (error && error->message)
+          return boost::make_unexpected(error->message);
+        return boost::make_unexpected("SecretStore # failed to open default collection");
       }
+    }
+
+    if (secret_collection_get_locked(m_collection)) {
+      if (m_flags & SecretStore::FLAG_ALLOW_UI) {
+        GList * objects = g_list_append(nullptr, m_collection);
+        GList * unlocked = nullptr;
+
+        secret_service_unlock_sync(m_service, objects, nullptr, &unlocked, &error);
+
+        bool ok = g_list_length(unlocked) == 1;
+        g_list_free(objects);
+        g_list_free(unlocked);
+
+        if (ok) {
+          return m_service;
+        } else {
+          if (error && error->message)
+            return boost::make_unexpected(error->message);
+          return boost::make_unexpected("SecretStore # failed to unlock secret store");
+        }
+      }
+
+      return boost::make_unexpected("SecretStore # secret store is locked");
     }
 
     return m_service;
   }
 
-  GHashTable * SecretStore::D::createAttrs(QByteArray & key)
+  GHashTable * SecretStoreLinux::createAttrs(QByteArray & key)
   {
     GHashTable * attrs = g_hash_table_new(g_str_hash, g_str_equal);
     g_hash_table_insert(attrs, const_cast<char*>("organization"), m_organization.data());
@@ -88,33 +106,50 @@ namespace Radiant
     return attrs;
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-
-  SecretStore::SecretStore(const QString & organization, const QString & application, Flags flags)
-    : m_d(new D())
+  void SecretStoreLinux::initFallback(const char * error)
   {
-    m_d->m_organization = organization.toUtf8();
-    m_d->m_application = application.toUtf8();
-    m_d->m_flags = flags;
+    if (!m_fallback) {
+      Radiant::info("SecretStore # %s - falling back to a secondary secret store", error);
+      m_fallback = SecretStore::createFallback(m_organization, m_application);
+    }
   }
 
-  SecretStore::~SecretStore()
+  SecretStoreLinux::SecretStoreLinux(const QString & organization, const QString & application, Flags flags)
+    : m_organization(organization.toUtf8())
+    , m_application(application.toUtf8())
+    , m_flags(flags)
   {
-    m_d->m_executor.reset();
-    if (m_d->m_service)
-      g_object_unref(m_d->m_service);
   }
 
-  folly::Future<QString> SecretStore::secret(const QString & key)
+  SecretStoreLinux::~SecretStoreLinux()
   {
-    return folly::via(m_d->m_executor.get(), [this, key] {
-      SecretService * srv = m_d->service();
+    m_executor.reset();
+    if (m_collection)
+      g_object_unref(m_collection);
+    if (m_service)
+      g_object_unref(m_service);
+  }
+
+  folly::Future<QString> SecretStoreLinux::secret(const QString & key)
+  {
+    if (m_fallback)
+      return m_fallback->secret(key);
+
+    return folly::via(m_executor.get(), [this, key] () -> folly::Future<QString> {
+      auto srv = service();
+      if (!srv) {
+        if (m_flags & FLAG_USE_FALLBACK) {
+          initFallback(srv.error().toUtf8().data());
+          return m_fallback->secret(key);
+        }
+        throw std::runtime_error(srv.error().toStdString());
+      }
 
       QByteArray keyStr = key.toUtf8();
-      GHashTable * attrs = m_d->createAttrs(keyStr);
+      GHashTable * attrs = createAttrs(keyStr);
 
       GError * error = nullptr;
-      SecretValue * secretValue = secret_service_lookup_sync(srv, nullptr, attrs, nullptr, &error);
+      SecretValue * secretValue = secret_service_lookup_sync(*srv, nullptr, attrs, nullptr, &error);
       g_hash_table_unref(attrs);
 
       if (secretValue) {
@@ -125,34 +160,42 @@ namespace Radiant
         return ret;
       }
 
-      if (error && error->message) {
-        Radiant::error("SecretStore # %s", error->message);
+      if (error && error->message)
         throw std::runtime_error(error->message);
-      }
 
       throw std::runtime_error("Not found");
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::setSecret(
+  folly::Future<folly::Unit> SecretStoreLinux::setSecret(
       const QString & label, const QString & key, const QString & secret)
   {
-    return folly::via(m_d->m_executor.get(), [this, label, key, secret] {
-      SecretService * srv = m_d->service();
+    if (m_fallback)
+      return m_fallback->setSecret(label, key, secret);
+
+    return folly::via(m_executor.get(), [this, label, key, secret] () -> folly::Future<folly::Unit> {
+      auto srv = service();
+      if (!srv) {
+        if (m_flags & FLAG_USE_FALLBACK) {
+          initFallback(srv.error().toUtf8().data());
+          return m_fallback->setSecret(label, key, secret);
+        }
+        throw std::runtime_error(srv.error().toStdString());
+      }
 
       QByteArray keyStr = key.toUtf8();
-      GHashTable * attrs = m_d->createAttrs(keyStr);
+      GHashTable * attrs = createAttrs(keyStr);
 
       SecretValue * secretValue = secret_value_new(secret.toUtf8().data(), -1, "text/plain");
 
       GError * error = nullptr;
-      bool ok = secret_service_store_sync(srv, nullptr, attrs, nullptr, label.toUtf8().data(),
+      bool ok = secret_service_store_sync(*srv, nullptr, attrs, nullptr, label.toUtf8().data(),
                                           secretValue, nullptr, &error);
       secret_value_unref(secretValue);
       g_hash_table_unref(attrs);
 
       if (ok)
-        return;
+        return folly::Unit();
 
       if (error && error->message)
         throw std::runtime_error(error->message);
@@ -161,20 +204,38 @@ namespace Radiant
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key)
+  folly::Future<folly::Unit> SecretStoreLinux::clearSecret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [this, key] {
-      SecretService * srv = m_d->service();
+    if (m_fallback)
+      return m_fallback->clearSecret(key);
+
+    return folly::via(m_executor.get(), [this, key] () -> folly::Future<folly::Unit> {
+      auto srv = service();
+      if (!srv) {
+        if (m_flags & FLAG_USE_FALLBACK) {
+          initFallback(srv.error().toUtf8().data());
+          return m_fallback->clearSecret(key);
+        }
+        throw std::runtime_error(srv.error().toStdString());
+      }
 
       QByteArray keyStr = key.toUtf8();
-      GHashTable * attrs = m_d->createAttrs(keyStr);
+      GHashTable * attrs = createAttrs(keyStr);
 
       GError * error = nullptr;
-      secret_service_clear_sync(srv, nullptr, attrs, nullptr, &error);
+      secret_service_clear_sync(*srv, nullptr, attrs, nullptr, &error);
       g_hash_table_unref(attrs);
 
       if (error && error->message)
         throw std::runtime_error(error->message);
+
+      return folly::Unit();
     });
+  }
+
+  std::unique_ptr<SecretStore> SecretStore::create(
+      const QString & organization, const QString & application, Flags flags)
+  {
+    return std::make_unique<SecretStoreLinux>(organization, application, flags);
   }
 }

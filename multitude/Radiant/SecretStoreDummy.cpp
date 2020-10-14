@@ -80,24 +80,29 @@ namespace Radiant
     }
   }
 
-  class SecretStore::D
+  class SecretStoreDummy : public SecretStore
   {
   public:
+    SecretStoreDummy(const QString & organization, const QString & application);
+
+    virtual folly::Future<QString> secret(const QString & key) override;
+    virtual folly::Future<folly::Unit> setSecret(
+        const QString & label, const QString & key, const QString & secret) override;
+    virtual folly::Future<folly::Unit> clearSecret(const QString & key) override;
+
     const QString organization;
     const QString application;
     std::shared_ptr<BGThreadExecutor> m_executor = BGThreadExecutor::instance();
   };
 
-  SecretStore::SecretStore(const QString & organization, const QString & application, Flags)
-    : m_d(new D{organization, application})
+  SecretStoreDummy::SecretStoreDummy(const QString & org, const QString & app)
+    : organization(org)
+    , application(app)
   {}
 
-  SecretStore::~SecretStore()
-  {}
-
-  folly::Future<QString> SecretStore::secret(const QString & key)
+  folly::Future<QString> SecretStoreDummy::secret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [org = m_d->organization, app = m_d->application, key] {
+    return folly::via(m_executor.get(), [org = organization, app = application, key] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       if (settings.contains(key)) {
         return QString::fromUtf8(decrypt(settings.value(key).toByteArray()));
@@ -107,20 +112,35 @@ namespace Radiant
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::setSecret(
+  folly::Future<folly::Unit> SecretStoreDummy::setSecret(
       const QString &, const QString & key, const QString & secret)
   {
-    return folly::via(m_d->m_executor.get(), [org = m_d->organization, app = m_d->application, key, secret] {
+    return folly::via(m_executor.get(), [org = organization, app = application, key, secret] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       settings.setValue(key, encrypt(secret.toUtf8()));
     });
   }
 
-  folly::Future<folly::Unit> SecretStore::clearSecret(const QString & key)
+  folly::Future<folly::Unit> SecretStoreDummy::clearSecret(const QString & key)
   {
-    return folly::via(m_d->m_executor.get(), [org = m_d->organization, app = m_d->application, key] {
+    return folly::via(m_executor.get(), [org = organization, app = application, key] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       settings.remove(key);
     });
   }
+
+  std::unique_ptr<SecretStore> SecretStore::createFallback(const QString & organization, const QString & application)
+  {
+    return std::make_unique<SecretStoreDummy>(organization, application);
+  }
+
+#if !defined(RADIANT_WINDOWS) && !defined(RADIANT_LINUX)
+  std::unique_ptr<SecretStore> SecretStore::create(
+      const QString & organization, const QString & application, Flags flags)
+  {
+    if (flags & FLAG_USE_FALLBACK)
+      return createFallback(organization, application);
+    return nullptr;
+  }
+#endif
 }
