@@ -217,7 +217,8 @@ namespace Luminous
     /// @param deviceCtx [out]
     bool copyDxTexture(ComPtr<ID3D11DeviceContext3> & deviceCtx);
     /// @param deviceCtx [in]
-    bool mapCopy(ComPtr<ID3D11DeviceContext3> & deviceCtx);
+    bool mapCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx);
+    void unrefCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx);
     void startCopy(Context & ctx);
     void finishCopy(Context & ctx, UploadBufferRef * buffer);
 
@@ -358,17 +359,25 @@ namespace Luminous
     return true;
   }
 
-  bool DxSharedTexture::D::mapCopy(ComPtr<ID3D11DeviceContext3> & deviceCtx)
+  bool DxSharedTexture::D::mapCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx)
   {
     Radiant::Guard g(m_devMutex);
     if (++m_copyRef == 1) {
       HRESULT res = deviceCtx->Map(m_copy.Get(), 0, D3D11_MAP_READ, 0, &m_copyMapped);
       if (FAILED(res)) {
         Radiant::error("DxSharedTexture # Map failed: %s", comErrorStr(res).data());
+        --m_copyRef;
         return false;
       }
     }
     return true;
+  }
+
+  void DxSharedTexture::D::unrefCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx)
+  {
+    Radiant::Guard g(m_devMutex);
+    if (--m_copyRef == 0)
+      deviceCtx->Unmap(m_copy.Get(), 0);
   }
 
   DxSharedTexture::MappedImage DxSharedTexture::D::image()
@@ -382,6 +391,8 @@ namespace Luminous
       throw std::runtime_error("Failed to copy the shared texture");
     }
 
+    unref();
+
     WaitForSingleObject(m_copyEvent.get(), INFINITE);
 
     if (!mapCopy(deviceCtx)) {
@@ -389,8 +400,8 @@ namespace Luminous
       return MappedImage();
     }
 
-    std::shared_ptr<Luminous::Image> img(new Luminous::Image(), [self=m_host.shared_from_this(), this] (Luminous::Image * img) {
-      unref();
+    std::shared_ptr<Luminous::Image> img(new Luminous::Image(), [self=m_host.shared_from_this(), this, deviceCtx] (Luminous::Image * img) {
+      unrefCopy(deviceCtx);
       delete img;
     });
     auto data = static_cast<unsigned char*>(m_copyMapped.pData);
@@ -439,11 +450,7 @@ namespace Luminous
                                                        m_copyMapped.RowPitch * m_tex.height()));
       Radiant::SingleShotTask::run([self, this, &ctx, buffer, deviceCtx] {
         memcpy(buffer->persistentMapping(), m_copyMapped.pData, m_copyMapped.RowPitch * m_tex.height());
-        {
-          Radiant::Guard g(m_devMutex);
-          if (--m_copyRef == 0)
-            deviceCtx->Unmap(m_copy.Get(), 0);
-        }
+        unrefCopy(deviceCtx);
         ctx.renderDriver->worker().add([self, this, &ctx, buffer] {
           finishCopy(ctx, buffer);
         });
