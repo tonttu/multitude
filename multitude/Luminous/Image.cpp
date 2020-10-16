@@ -17,6 +17,7 @@
 
 #include <Nimble/Math.hpp>
 
+#include <Radiant/PlatformUtils.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <algorithm>
@@ -647,7 +648,7 @@ namespace Luminous
     return *this;
   }
 
-  void Image::allocate(int width, int height, const PixelFormat & pf)
+  bool Image::allocate(int width, int height, const PixelFormat & pf)
   {
     unsigned int bytes = width * height * pf.bytesPerPixel();
     unsigned int mybytes = lineSize() * m_height;
@@ -668,15 +669,29 @@ namespace Luminous
       if (!m_externalData)
         delete [] m_data;
       m_externalData = false;
-      if(bytes)
-        m_data = new unsigned char [bytes];
-      else
+      if(bytes) {
+        try {
+          m_data = new unsigned char [bytes];
+        } catch (const std::bad_alloc & error) {
+          Radiant::error("Image::allocate # bad_alloc with %dx%d image (%u bytes): %s",
+                         width, height, bytes, error.what());
+          Radiant::error(" process memory usage: %.1f GB",
+                         Radiant::PlatformUtils::processMemoryUsage() / 1e9);
+          Radiant::PlatformUtils::MemInfo m = Radiant::PlatformUtils::memInfo();
+          Radiant::error(" total physical memory: %.1f GB", m.memTotalKB / 1e6);
+          Radiant::error(" available physical memory: %.1f GB", m.memAvailableKB / 1e6);
+          allocate(0, 0, pf);
+          return false;
+        }
+      } else {
         m_data = nullptr;
+      }
     }
 
     changed();
 
     updateTexture();
+    return true;
   }
 
   void Image::setData(unsigned char * bytes, int width, int height, PixelFormat format, int lineSize)
@@ -786,11 +801,11 @@ namespace Luminous
     return ok;
   }
 
-  void Image::fromData(const unsigned char * bytes, int width, int height,
+  bool Image::fromData(const unsigned char * bytes, int width, int height,
                        PixelFormat format)
   {
-
-    allocate(width, height, format);
+    if (!allocate(width, height, format))
+      return false;
     unsigned pixels = width * height;
     unsigned nbytes = pixels * format.bytesPerPixel();
 
@@ -801,6 +816,7 @@ namespace Luminous
     changed();
 
     updateTexture();
+    return true;
   }
 
   bool Image::setPixelFormat(const PixelFormat & format)
