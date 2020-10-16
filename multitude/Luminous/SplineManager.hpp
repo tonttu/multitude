@@ -209,7 +209,7 @@ namespace Luminous {
     void setPoints(const std::array<Nimble::Vector2f, 4> & points);
 
     /// Control point count
-    size_t count() const;
+    int count() const;
 
     /// Returns all controls points in this curve
     const std::array<Nimble::Vector2f, 4> & points() const;

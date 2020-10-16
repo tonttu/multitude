@@ -54,7 +54,7 @@ namespace Luminous {
     LUMINOUS_API TextLayout(TextLayout && t);
     LUMINOUS_API TextLayout & operator=(TextLayout && t);
 
-    LUMINOUS_API size_t groupCount() const;
+    LUMINOUS_API int groupCount() const;
     LUMINOUS_API Texture * texture(int groupIndex) const;
     LUMINOUS_API const std::vector<Item> & items(int groupIndex) const;
     LUMINOUS_API const Group & group(int groupIndex) const;

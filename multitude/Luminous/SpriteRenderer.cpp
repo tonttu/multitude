@@ -151,7 +151,7 @@ namespace Luminous {
 
     bool transparent = m_d->m_texture["tex"]->dataFormat().hasAlpha();
 
-    auto b = rc.render<Sprite, D::SpriteUniform>(transparent, Luminous::PRIMITIVE_POINT, 0, spriteCount(), 1.f,
+    auto b = rc.render<Sprite, D::SpriteUniform>(transparent, Luminous::PRIMITIVE_POINT, 0, static_cast<int>(spriteCount()), 1.f,
                                                   m_d->m_varray, m_d->m_program, &m_d->m_texture);
     b.uniform->velocityScale = m_d->m_velocityScale;
     b.uniform->depth = b.depth;

@@ -420,8 +420,8 @@ namespace Resonant {
       int m_finishCounter;
 
       // -1 means downmix all channels to mono
-      size_t m_sampleChannel;
-      size_t m_targetChannel;
+      int m_sampleChannel;
+      int m_targetChannel;
       bool     m_loop;
       std::shared_ptr<Sample> m_sample;
       unsigned m_position;

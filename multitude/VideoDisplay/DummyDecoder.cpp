@@ -116,10 +116,10 @@ namespace VideoDisplay
 
   Nimble::Matrix4f DummyDecoder::yuvMatrix() const
   {
-    return Nimble::Matrix4f(1.16438,         0,   1.59602, -0.871071,
-                            1.16438, -0.391769, -0.812973,  0.529312,
-                            1.16438,   2.01723,         0,  -1.08167,
-                                  0,         0,         0,         1);
+    return Nimble::Matrix4f(1.16438f,        0.f,   1.59602f, -0.871071f,
+                            1.16438f, -0.391769f, -0.812973f,  0.529312f,
+                            1.16438f,   2.01723f,        0.f,  -1.08167f,
+                                 0.f,        0.f,        0.f,        1.f);
   }
 
   QString DummyDecoder::source() const

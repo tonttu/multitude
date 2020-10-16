@@ -1209,7 +1209,7 @@ namespace Luminous
     if(!ignoreVerticalAlign)
       renderLocation.y += layout.verticalOffset();
 
-    for (size_t g = 0; g < layout.groupCount(); ++g) {
+    for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid()) {
@@ -1285,8 +1285,8 @@ namespace Luminous
 
     // If we are rendering a border, try to minimize the fragment shader usage
     // by rendering a rectangle with a hole in it.
-    constexpr float a = 1.0 - 1.0 / Nimble::Math::SQRT2;
-    constexpr float a2 = 1.0 / Nimble::Math::SQRT2;
+    constexpr float a = static_cast<float>(1.0 - 1.0 / Nimble::Math::SQRT2);
+    constexpr float a2 = static_cast<float>(1.0 / Nimble::Math::SQRT2);
 
     Nimble::Rectf inside {
       rect.low().x + std::max(range[1], std::max(radii[0], radii[3]) * a + range[1] * a2),
@@ -1561,7 +1561,7 @@ namespace Luminous
 
   const Texture & RenderContext::dashedLineTexture(float dashPortion) const
   {
-    const unsigned int w = m_data->m_dashedLineImages.size() - 1;
+    const unsigned int w = static_cast<unsigned int>(m_data->m_dashedLineImages.size()) - 1;
     // Round up to make sure that when this is used to render dashed borders,
     // the texture doesn't stop before bottom or right edges.
     const unsigned int idx = std::min<unsigned int>(w, std::max<int>(0, std::ceil(dashPortion * w)));
@@ -1778,7 +1778,7 @@ namespace Luminous
       }
 
       if (neededBufferCount > fbos.size()) {
-        blitFrame = std::min<unsigned int>(m_data->m_frameNumber, m_data->m_frameNumber + 1 - fbos.size());
+        blitFrame = std::min(m_data->m_frameNumber, m_data->m_frameNumber + 1 - static_cast<unsigned int>(fbos.size()));
         m_data->resizeOffScreenFrameBuffers(neededBufferCount);
       }
 

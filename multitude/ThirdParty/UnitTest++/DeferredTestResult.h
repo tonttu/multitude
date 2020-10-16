@@ -11,11 +11,11 @@
 namespace UnitTest
 {
 
-   class UNITTEST_LINKAGE DeferredTestFailure
+   class DeferredTestFailure
    {
    public:
-      DeferredTestFailure();
-      DeferredTestFailure(int lineNumber_, const char* failureStr_);
+      UNITTEST_LINKAGE DeferredTestFailure();
+      UNITTEST_LINKAGE DeferredTestFailure(int lineNumber_, const char* failureStr_);
 
       int lineNumber;
       std::string failureStr;
@@ -23,17 +23,15 @@ namespace UnitTest
 
 }
 
-UNITTEST_STDVECTOR_LINKAGE(UnitTest::DeferredTestFailure);
-
 namespace UnitTest
 {
 
-   class UNITTEST_LINKAGE DeferredTestResult
+   class DeferredTestResult
    {
    public:
-      DeferredTestResult();
-      DeferredTestResult(char const* suite, char const* test);
-      ~DeferredTestResult();
+      UNITTEST_LINKAGE DeferredTestResult();
+      UNITTEST_LINKAGE DeferredTestResult(char const* suite, char const* test);
+      UNITTEST_LINKAGE ~DeferredTestResult();
 
       std::string suiteName;
       std::string testName;

@@ -33,7 +33,7 @@ namespace Luminous
           | GL_MAP_UNSYNCHRONIZED_BIT;
 
       if (m_buffer.allocateImmutable(size, allocateFlags)) {
-        m_mapped = stateGl.opengl45()->glMapNamedBufferRange(m_buffer.handle(), 0, size, mapFlags);
+        m_mapped = stateGl.opengl45()->glMapNamedBufferRange(m_buffer.handle(), 0, static_cast<GLsizei>(size), mapFlags);
       } else {
         m_buffer.bind(Buffer::UNPACK);
         m_buffer.allocate(Buffer::UNPACK, size);

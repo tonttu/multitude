@@ -60,7 +60,7 @@ namespace Luminous
     do {
       s_contextArraysChanged = false;
       for (auto it = s_contextArrays.begin(), end = s_contextArrays.end(); it != end; ++it) {
-        (*it)->resize(s_drivers.size());
+        (*it)->resize(static_cast<unsigned int>(s_drivers.size()));
         if (s_contextArraysChanged)
           break;
       }
@@ -114,7 +114,7 @@ namespace Luminous
 
   unsigned int RenderManager::driverCount()
   {
-    return s_drivers.size();
+    return static_cast<unsigned int>(s_drivers.size());
   }
 
   int RenderManager::frameTime()

@@ -151,6 +151,7 @@ namespace Radiant
       settings.setValue("key", key);
       settings.setValue("secret", *encrypted);
       settings.endArray();
+      return folly::Unit{};
     });
   }
 

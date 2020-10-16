@@ -183,7 +183,7 @@ namespace Luminous
     }
   }
 
-  void Texture::setLineSizeBytes(std::size_t size)
+  void Texture::setLineSizeBytes(unsigned int size)
   {
     if(m_d->m_lineSizeBytes == size)
       return;

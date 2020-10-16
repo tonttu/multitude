@@ -183,7 +183,7 @@ namespace Luminous
   {
     touch();
     if (auto gl = m_state.opengl45()) {
-      gl->glNamedBufferStorage(m_handle, size, nullptr, flags);
+      gl->glNamedBufferStorage(m_handle, static_cast<GLsizei>(size), nullptr, flags);
       GLERROR("BufferGL::allocateImmutable # glNamedBufferStorage");
       m_allocatedSize = size;
       return true;

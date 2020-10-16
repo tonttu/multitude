@@ -168,9 +168,9 @@ namespace Luminous
     return *this;
   }
 
-  size_t TextLayout::groupCount() const
+  int TextLayout::groupCount() const
   {
-    return m_d->m_groups.size();
+    return static_cast<int>(m_d->m_groups.size());
   }
 
   Texture * TextLayout::texture(int groupIndex) const

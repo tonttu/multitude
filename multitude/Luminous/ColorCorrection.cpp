@@ -228,7 +228,7 @@ namespace Luminous
     bd.writeVector3Float32(brightness());
     for (int c = 0; c < 3; ++c) {
       const std::vector<Nimble::Vector2f> & tmp = m_d->m_splines[c]->points();
-      bd.writeInt32(tmp.size());
+      bd.writeInt32(static_cast<int>(tmp.size()));
       bd.writeBlob(tmp.empty() ? 0 : &tmp[0], int(tmp.size() * sizeof(tmp[0])));
     }
   }

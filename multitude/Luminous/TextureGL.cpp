@@ -285,7 +285,8 @@ namespace Luminous
       GLenum intFormat = internalFormat(texture);
       if(compressedFormat) {
         m_state.opengl().glCompressedTexImage2D(GL_TEXTURE_2D, 0, intFormat, texture.width(),
-                                                texture.height(), 0, texture.dataSize(), texture.data().get());
+                                                texture.height(), 0, static_cast<GLsizei>(texture.dataSize()),
+                                                texture.data().get());
         GLERROR("TextureGL::upload # glCompressedTexImage2D");
         m_dirtyRegion2D = QRegion();
       }
@@ -400,7 +401,8 @@ namespace Luminous
     /// @todo glCompressedTexImage2D, probably needs some alignment
     if(compressedFormat) {
       m_state.opengl().glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.size.x, texture.size.y,
-                                                 texture.dataFormat.compression(), texture.dataSize, texture.data.get());
+                                                 texture.dataFormat.compression(), static_cast<GLsizei>(texture.dataSize),
+                                                 texture.data.get());
       GLERROR("TextureGL::upload # glCompressedTexSubImage2D");
     } else {
       const int lineSizeBytes = texture.lineSizeBytes;

@@ -300,7 +300,7 @@ namespace Valuable
       m_intermediatePoints[0] = m_points.front();
       m_intermediatePoints[1] = m_points.front();
     }
-    for (int i = 1, s = m_points.size(); i < s; ++i) {
+    for (std::size_t i = 1, s = m_points.size(); i < s; ++i) {
       const Nimble::Vector2f prev = m_points[i-1];
       const Nimble::Vector2f p = m_points[i];
       const Nimble::Vector2f next = i == s - 1 ? m_points.back() : m_points[i+1];

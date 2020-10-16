@@ -207,6 +207,9 @@ win32 {
 
   HEADERS += DxSharedTexture.hpp
   SOURCES += DxSharedTexture.cpp
+
+  # pdfium doesn't have all debug symbols. We don't care
+  QMAKE_LFLAGS += /ignore:4099
 }
 
 !macx:!arm64 {

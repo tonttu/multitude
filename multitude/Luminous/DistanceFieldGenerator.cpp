@@ -92,7 +92,7 @@ retry:
         // transform row y,
         // write result to column y of rowTransformed
         generalDistanceTransform1d(&f[y * stride],
-                                   &rowTransformed[y], h, w,
+                                   &rowTransformed[y], h, static_cast<int>(w),
                                    locs.data(), ranges.data());
       }
 
@@ -101,7 +101,7 @@ retry:
         // write result to column x of output
         generalDistanceTransform1d(&rowTransformed[x * h],
                                    &output[x],
-                                   w, h,
+                                   w, static_cast<int>(h),
                                    locs.data(), ranges.data());
       }
     }
@@ -112,7 +112,7 @@ retry:
                     const Nimble::Vector2f & scale)
     {
       const int theight = target.height(), twidth = target.width();
-      const float toInt = (uint64_t(1) << (sizeof(T) * 8)) - 1;
+      const float toInt = static_cast<float>((uint64_t(1) << (sizeof(T) * 8)) - 1);
 
       for (int ty = 0; ty < theight; ++ty) {
         T * line = reinterpret_cast<T*>(target.line(ty));
@@ -164,7 +164,7 @@ retry:
           orig.data(),
           swidth,
           res.data(),
-          swidth, sheight,
+          static_cast<size_t>(swidth), static_cast<size_t>(sheight),
           rowTransformed, locs, ranges
           );
 

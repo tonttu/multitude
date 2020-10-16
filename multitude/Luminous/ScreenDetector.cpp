@@ -76,7 +76,7 @@ QString getGDIDeviceNameFromSource(LUID adapterId, UINT32 sourceId) {
     // Query for the information
     QueryDisplayConfig(QDC_ALL_PATHS, &num_of_paths, displayPaths, &num_of_modes, displayModes, NULL);
 
-    for (int i = 0; i < num_of_paths; i++) {
+    for (unsigned int i = 0; i < num_of_paths; i++) {
        if(displayPaths[i].flags & DISPLAYCONFIG_PATH_ACTIVE)
        {
          LUID sluid = displayPaths[i].sourceInfo.adapterId;

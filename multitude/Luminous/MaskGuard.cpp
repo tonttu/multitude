@@ -42,7 +42,7 @@ namespace Luminous
 
       m_rc->popClipMaskStack();
 
-      int depth = static_cast<size_t>(m_rc->currentClipMaskDepth());
+      int depth = static_cast<int>(m_rc->currentClipMaskDepth());
 
       // Setup stencil mode to clear the mask
       m_rc->setRenderBuffers(false, false, true);

@@ -10,20 +10,18 @@
 
 #include <vector>
 
-UNITTEST_STDVECTOR_LINKAGE(UnitTest::DeferredTestResult);
-
 namespace UnitTest
 {
 
-   class UNITTEST_LINKAGE DeferredTestReporter : public TestReporter
+   class DeferredTestReporter : public TestReporter
    {
    public:
-      virtual void ReportTestStart(TestDetails const& details);
-      virtual void ReportFailure(TestDetails const& details, char const* failure);
-      virtual void ReportTestFinish(TestDetails const& details, float secondsElapsed);
+      UNITTEST_LINKAGE virtual void ReportTestStart(TestDetails const& details);
+      UNITTEST_LINKAGE virtual void ReportFailure(TestDetails const& details, char const* failure);
+      UNITTEST_LINKAGE virtual void ReportTestFinish(TestDetails const& details, float secondsElapsed);
 
       typedef std::vector< DeferredTestResult > DeferredTestResultList;
-      DeferredTestResultList& GetResults();
+      UNITTEST_LINKAGE DeferredTestResultList& GetResults();
 
    private:
       DeferredTestResultList m_results;
