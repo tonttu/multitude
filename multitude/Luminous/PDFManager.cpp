@@ -54,7 +54,7 @@ namespace
   /// small number and the conversion is not as efficient as it could be.
   static const int s_maxQueuedTasks = 4;
 
-  boost::expected<size_t> queryPageCount(const QString& pdfAbsoluteFilePath)
+  boost::expected<int> queryPageCount(const QString& pdfAbsoluteFilePath)
   {
     QFile file(pdfAbsoluteFilePath);
     if (!file.open(QFile::ReadOnly)) {
@@ -127,7 +127,7 @@ namespace
   }
 
   boost::expected<Nimble::SizeF>
-  getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
+  getPageSize(const QString& pdfAbsoluteFilePath, int pageNumber)
   {
     QFile file(pdfAbsoluteFilePath);
     if (!file.open(QFile::ReadOnly)) {
@@ -573,12 +573,12 @@ namespace Luminous
     FPDF_DestroyLibrary();
   }
 
-  folly::Future<size_t> PDFManager::queryPageCount(const QString& pdfAbsoluteFilePath)
+  folly::Future<int> PDFManager::queryPageCount(const QString& pdfAbsoluteFilePath)
   {
     // Keep PDFManager alive while we are using pdfium
     auto manager = weakInstance().lock();
-    Punctual::WrappedTaskFunc<size_t> taskFunc = [pdfAbsoluteFilePath, manager] ()
-      -> Punctual::WrappedTaskReturnType<size_t>
+    Punctual::WrappedTaskFunc<int> taskFunc = [pdfAbsoluteFilePath, manager] ()
+      -> Punctual::WrappedTaskReturnType<int>
     {
       if(!s_pdfiumMutex.try_lock()) {
         return Punctual::NotReadyYet();
@@ -587,7 +587,7 @@ namespace Luminous
       s_pdfiumMutex.unlock();
       return count;
     };
-    return Punctual::createWrappedTask<size_t>(std::move(taskFunc));
+    return Punctual::createWrappedTask<int>(std::move(taskFunc));
   }
 
   folly::Future<QImage> PDFManager::renderPage(const QString& pdfAbsoluteFilePath,
@@ -626,7 +626,7 @@ namespace Luminous
 
 
   folly::Future<Nimble::SizeF>
-  PDFManager::getPageSize(const QString& pdfAbsoluteFilePath, size_t pageNumber)
+  PDFManager::getPageSize(const QString& pdfAbsoluteFilePath, int pageNumber)
   {
     auto manager = weakInstance().lock();
     Punctual::WrappedTaskFunc<Nimble::SizeF> taskFunc =
@@ -683,7 +683,7 @@ namespace Luminous
         return boost::make_unexpected(count.error());
 
       batchConverter->pageCount = count.value();
-      batchConverter->pageCountToConvert = std::min<int>(maxPageCount, count.value());
+      batchConverter->pageCountToConvert = std::min(maxPageCount, count.value());
 
       batchConverter->promises.resize(batchConverter->pageCountToConvert);
 

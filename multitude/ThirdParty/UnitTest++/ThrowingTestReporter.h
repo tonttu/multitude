@@ -7,7 +7,7 @@ namespace UnitTest {
 
    // A TestReporter that throws when ReportFailure is called. Otherwise it
    // forwards the calls to a decorated TestReporter
-   class ThrowingTestReporter : public TestReporter
+   class UNITTEST_LINKAGE ThrowingTestReporter : public TestReporter
    {
    public:
       explicit ThrowingTestReporter(TestReporter* reporter);

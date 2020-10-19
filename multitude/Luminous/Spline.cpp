@@ -159,7 +159,7 @@ namespace Luminous {
 
     if(m_active < 0 || m_active >= (int)m_paths.size()) {
       m_paths.resize(m_paths.size()+1);
-      m_active = m_paths.size() -1;
+      m_active = static_cast<int>(m_paths.size()) -1;
     }
 
     auto & path = m_paths[m_active];
@@ -212,7 +212,7 @@ namespace Luminous {
         if (m_active == (int)i)
           m_active = -1;
         else if (m_active == int(m_paths.size()) -1)
-          m_active = i;
+          m_active = static_cast<int>(i);
         std::swap(m_paths[i], m_paths.back());
         m_paths.resize(m_paths.size()-1);
         --i;

@@ -549,7 +549,7 @@ namespace UnitTest
 
         bg.addTask(std::make_shared<Radiant::FunctionTask>(func));
       }
-      sem.acquire(toRun.size());
+      sem.acquire(static_cast<int>(toRun.size()));
 
       if (!xmlOutput.isEmpty()) {
         QFile output(xmlOutput);

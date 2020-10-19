@@ -2,7 +2,10 @@
 
 #include <Radiant/Thread.hpp>
 
+#pragma warning(push)
+#pragma warning(disable:4091)
 #include <LibMWCapture/MWCapture.h>
+#pragma warning(pop)
 
 namespace
 {

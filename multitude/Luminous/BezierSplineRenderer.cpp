@@ -282,8 +282,8 @@ namespace Luminous
       levelGpu.depth = mipmap.stroke.depth;
       levelGpu.cpuGeneration = mipmap.cpuGeneration;
 
-      const uint32_t bufferSize = gpuContext.buffer.size();
-      const uint32_t vertexCount = level.triangleStrip.size();
+      const uint32_t bufferSize = static_cast<uint32_t>(gpuContext.buffer.size());
+      const uint32_t vertexCount = static_cast<uint32_t>(level.triangleStrip.size());
 
       if (levelGpu.bufferOffset + levelGpu.vertexCount == bufferSize) {
         // This is the last item in the buffer, we can just replace it
@@ -694,12 +694,12 @@ namespace Luminous
     auto builder = r.multiDrawArrays<BasicUniformBlock>(
           m_d->m_translucentStrokes > 0 || r.opacity() < 0.9999f,
           m_d->m_opts.renderAsLineStrip ? PRIMITIVE_LINE_STRIP : PRIMITIVE_TRIANGLE_STRIP,
-          view.renderables.size(),
+          static_cast<int>(view.renderables.size()),
           gpuContext.vertexArray,
           r.splineShader());
 
     uint32_t renderedVertices = 0;
-    for (uint32_t idx = 0, count = view.renderables.size(); idx < count; ++idx) {
+    for (uint32_t idx = 0, count = static_cast<uint32_t>(view.renderables.size()); idx < count; ++idx) {
       StrokeMipmapGpu & mipmapLevelGpu = view.renderables[idx];
       builder.offsets[idx] = mipmapLevelGpu.bufferOffset;
       builder.counts[idx] = mipmapLevelGpu.vertexCount;
@@ -716,9 +716,9 @@ namespace Luminous
     builder.uniform->modelMatrix = r.transform().transposed();
 
     if (auto stats = m_d->m_opts.stats.get()) {
-      stats->renderedStrokes += view.renderables.size();
+      stats->renderedStrokes += static_cast<uint32_t>(view.renderables.size());
       stats->renderedVertices += renderedVertices;
-      stats->totalStrokes += m_d->m_mipmaps.size();
+      stats->totalStrokes += static_cast<uint32_t>(m_d->m_mipmaps.size());
     }
   }
 }

@@ -330,7 +330,7 @@ namespace Resonant
 
     Stream & stream = m_streams[streamnum];
 
-    const int sourceChannels = m_channels.size();
+    const int sourceChannels = static_cast<int>(m_channels.size());
     const int targetChannels = stream.outParams.channelCount;
 
     int remaining = s_framesPerBuffer;
@@ -512,7 +512,7 @@ namespace Resonant
     for (size_t streamnum = 0, streams = m_d->m_streams.size(); streamnum < streams; ++streamnum) {
       D::Stream & s = m_d->m_streams[streamnum];
       s.host = m_d.get();
-      s.streamNum = streamnum;
+      s.streamNum = static_cast<int>(streamnum);
       channels = devices[streamnum].second;
 
       const PaDeviceInfo * info = Pa_GetDeviceInfo(s.outParams.device);

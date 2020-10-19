@@ -144,7 +144,7 @@ namespace
     }
     else {
       for (int i = m_pointsPerCurve; i >= 0; i--) {
-        curve.set(m_pointsPerCurve - i, m_data.points[index - i]);
+        curve.set(m_pointsPerCurve - i, m_data.points[static_cast<int>(index) - i]);
       }
     }
     // Stroke bounds doesn't include stroke width, only the control points.
@@ -164,7 +164,7 @@ namespace
     for (size_t i = 0; i < m_curves.size(); i++) {
       Luminous::BezierCurve curve = m_curves[i];
       // transform the curve to normalized eraser coordinates for easier calculations
-      for (size_t j = 0; j < curve.count(); j++) {
+      for (int j = 0; j < curve.count(); j++) {
         curve.set(j, transformer.project(curve[j]));
       }
       Nimble::Rectf curveBounds = curve.bounds();
@@ -198,7 +198,7 @@ namespace
               take = true;
 
             if (take) {
-              for(size_t ind = 0; ind < left.count(); ++ind)
+              for(int ind = 0; ind < left.count(); ++ind)
                 extraEnd.append(left[ind]);
             }
             take = !take;
@@ -218,7 +218,7 @@ namespace
 
             // add last segment to next curve if end point is not erased
             if (!(std::abs(curve[m_pointsPerCurve].x) <= 1 && std::abs(curve[m_pointsPerCurve].y) <= 1))
-              for(size_t ind = 0; ind < right.count(); ++ind)
+              for(int ind = 0; ind < right.count(); ++ind)
                 extraStartNext.append(right[ind]);
           }
         }
@@ -235,8 +235,8 @@ namespace
       }
       else {
         if (low < 0)
-          low = i * (m_pointsPerCurve);
-        high = (i + 1) * (m_pointsPerCurve);
+          low = static_cast<int>(i) * (m_pointsPerCurve);
+        high = (static_cast<int>(i) + 1) * (m_pointsPerCurve);
       }
     }
     // save the current continuous segment as a new stroke
@@ -291,7 +291,7 @@ namespace
               take = true;
 
             if (take) {
-              for(size_t ind = 0; ind < left.count(); ++ind)
+              for(int ind = 0; ind < left.count(); ++ind)
                 extraEnd.append(left[ind]);
             }
             take = !take;
@@ -311,7 +311,7 @@ namespace
 
             // add last segment to next curve if end point is not erased
             if (!eraser.contains(Nimble::Vector2f(curve[m_pointsPerCurve].x,curve[m_pointsPerCurve].y)))
-              for(size_t ind = 0; ind < right.count(); ++ind)
+              for(int ind = 0; ind < right.count(); ++ind)
                 extraStartNext.append(right[ind]);
           }
         }
@@ -328,8 +328,8 @@ namespace
       }
       else {
         if (low < 0)
-          low = i * (m_pointsPerCurve);
-        high = (i + 1) * (m_pointsPerCurve);
+          low = static_cast<int>(i) * (m_pointsPerCurve);
+        high = (static_cast<int>(i) + 1) * (m_pointsPerCurve);
       }
     }
     // save the current continuous segment as a new stroke
@@ -421,9 +421,9 @@ namespace Luminous
       set(i, points[i]);
   }
 
-  size_t BezierCurve::count() const
+  int BezierCurve::count() const
   {
-    return m_controlPoints.size();
+    return static_cast<int>(m_controlPoints.size());
   }
 
   const std::array<Nimble::Vector2f, 4> & BezierCurve::points() const
@@ -746,20 +746,20 @@ namespace Luminous
           m_vertices.resize(index);
         }
 
-        int offset = m_vertices.size();
+        int offset = static_cast<int>(m_vertices.size());
         recalculate(stroke);
         if (m_renderBatches.empty() || !m_renderBatches.back().finished) {
           m_renderBatches.emplace_back();
           m_renderBatches.back().finished = true;
           m_renderBatches.back().offset = offset;
         }
-        m_renderBatches.back().vertexCount += m_vertices.size() - offset;
+        m_renderBatches.back().vertexCount += static_cast<int>(m_vertices.size()) - offset;
         m_bounds.expand(stroke.m_bounds);
         maxWidth = std::max(maxWidth, stroke.m_data.width);
       } else {
         if (m_renderBatches.empty() || m_renderBatches.back().finished)
           m_renderBatches.emplace_back();
-        unfinishedStrokes.push_back({strokePtr, m_renderBatches.size() - 1});
+        unfinishedStrokes.push_back({strokePtr, static_cast<int>(m_renderBatches.size()) - 1});
       }
     }
 
@@ -772,11 +772,11 @@ namespace Luminous
       SplineInternal & stroke = *p.first;
       RenderBatch & rb = m_renderBatches[p.second];
 
-      int offset = m_vertices.size();
+      int offset = static_cast<int>(m_vertices.size());
       recalculate(stroke);
       if (rb.offset == -1)
         rb.offset = offset;
-      rb.vertexCount += m_vertices.size() - offset;
+      rb.vertexCount += static_cast<int>(m_vertices.size()) - offset;
       m_bounds.expand(stroke.m_bounds);
       maxWidth = std::max(maxWidth, stroke.m_data.width);
     }
@@ -794,7 +794,7 @@ namespace Luminous
 
   void SplineManager::D::recalculate(SplineInternal & stroke)
   {
-    stroke.m_bakedIndex = m_vertices.size();
+    stroke.m_bakedIndex = static_cast<int>(m_vertices.size());
 
     // use cached stroke data if available
     if (stroke.m_finished && !stroke.m_vertices.empty()) {
@@ -805,12 +805,12 @@ namespace Luminous
       }
       m_vertices.insert(m_vertices.end(), stroke.m_vertices.begin(), stroke.m_vertices.end());
       stroke.m_baked = true;
-      stroke.m_bakedIndexEnd = m_vertices.size();
+      stroke.m_bakedIndexEnd = static_cast<int>(m_vertices.size());
       return;
     }
 
     Points points;
-    int offset = m_vertices.size();
+    int offset = static_cast<int>(m_vertices.size());
 
     // first point
     points.push_back(stroke.m_curves[0][0]);
@@ -895,7 +895,7 @@ namespace Luminous
     if (stroke.m_finished) {
       stroke.m_vertices.assign(m_vertices.begin() + offset, m_vertices.end());
       stroke.m_baked = true;
-      stroke.m_bakedIndexEnd = m_vertices.size();
+      stroke.m_bakedIndexEnd = static_cast<int>(m_vertices.size());
     } else {
       stroke.m_baked = false;
     }

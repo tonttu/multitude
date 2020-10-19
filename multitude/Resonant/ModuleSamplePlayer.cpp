@@ -276,9 +276,9 @@ namespace Resonant {
 
     // Radiant::info("avail = %u", avail);
 
-    if(m_targetChannel >= host->channels()) {
+    if(m_targetChannel >= static_cast<int>(host->channels())) {
       Radiant::error("ModuleSamplePlayer::SampleVoice::synthesize # channel count exceeded for %s "
-                     "%ld >= %ld", m_sample->name().toUtf8().data(),
+                     "%d >= %ld", m_sample->name().toUtf8().data(),
                      m_targetChannel, host->channels());
       m_state = INACTIVE;
       return false;
@@ -515,7 +515,7 @@ namespace Resonant {
     m_startGain = m_gain;
 
     debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
-                  "rp = %.3f, ss = %ld, ts = %ld", this, m_gain.value(), m_relPitch.value(),
+                  "rp = %.3f, ss = %d, ts = %d", this, m_gain.value(), m_relPitch.value(),
                   m_sampleChannel, m_targetChannel);
   }
 

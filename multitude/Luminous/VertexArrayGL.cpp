@@ -124,7 +124,8 @@ namespace Luminous
 
         GLenum normalized = (attr.normalized ? GL_TRUE : GL_FALSE);
 
-        m_state.opengl().glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(), reinterpret_cast<GLvoid *>(attr.offset));
+        m_state.opengl().glVertexAttribPointer(location, attr.count, attr.type, normalized, description.vertexSize(),
+                                               reinterpret_cast<GLvoid *>(static_cast<intptr_t>(attr.offset)));
         GLERROR("VertexArrayGL::setVertexDescription # glVertexAttribPointer");
 
         m_state.opengl().glEnableVertexAttribArray(location);

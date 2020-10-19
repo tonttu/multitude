@@ -281,7 +281,8 @@ namespace Luminous
 
   void CommandDrawBuffers::execute()
   {
-    m_opengl.glDrawBuffers( m_buffers.size(), reinterpret_cast<GLenum *>(m_buffers.data()));
+    m_opengl.glDrawBuffers(static_cast<GLsizei>(m_buffers.size()),
+                           reinterpret_cast<GLenum *>(m_buffers.data()));
     GLERROR("CommandDrawBuffers::execute # glDrawBuffers");
   }
 }

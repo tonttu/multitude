@@ -1866,7 +1866,7 @@ namespace VideoDisplay
     BufferState b;
     {
       Radiant::Guard g(m_d->m_decodedVideoFramesMutex);
-      b.decodedVideoFrames = m_d->m_decodedVideoFrames.size();
+      b.decodedVideoFrames = static_cast<int>(m_d->m_decodedVideoFrames.size());
     }
     b.decodedVideoFrameBufferSize = m_d->m_options.videoBufferFrames();
     if (m_d->m_av.audioCodecContext)

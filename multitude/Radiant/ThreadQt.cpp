@@ -110,7 +110,7 @@ namespace Radiant {
 #ifdef RADIANT_LINUX
     return reinterpret_cast<Thread::Id>(pthread_self());
 #elif defined(RADIANT_WINDOWS)
-    return reinterpret_cast<Thread::Id>(GetCurrentThreadId());
+    return reinterpret_cast<Thread::Id>(static_cast<intptr_t>(GetCurrentThreadId()));
 #else
     return reinterpret_cast<Thread::Id>(QThread::currentThread());
 #endif
@@ -127,7 +127,8 @@ namespace Radiant {
 #elif defined(RADIANT_WINDOWS)
     initializeThreadDescriptionFunctions();
     if (getThreadDescription) {
-      if (HANDLE handle = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, false, reinterpret_cast<DWORD>(threadId))) {
+      if (HANDLE handle = OpenThread(THREAD_QUERY_LIMITED_INFORMATION, false,
+                                     static_cast<DWORD>(reinterpret_cast<intptr_t>(threadId)))) {
         PWSTR data = nullptr;
         HRESULT hr = getThreadDescription(handle, &data);
         CloseHandle(handle);

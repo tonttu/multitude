@@ -161,5 +161,5 @@ namespace VideoDisplay
     return src;
   }
 
-  DEFINE_SINGLETON2(RGBEasyLib, , p->m_weak = p;)
+  DEFINE_SINGLETON2(RGBEasyLib, , p->m_weak = p;,)
 }

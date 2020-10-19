@@ -188,7 +188,7 @@ namespace Radiant
     /// @returns number of elements written, less than count if the buffer fills up
     int write(const T* input, int count)
     {
-      const int capacity = m_buffer.size();
+      const int capacity = static_cast<int>(m_buffer.size());
       count = std::min<int>(count, capacity - m_size);
 
       const int part1 = std::min(count, capacity - m_writer);

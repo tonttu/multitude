@@ -30,7 +30,7 @@ namespace Resonant {
     // Store decibels to delay buffer:
     insample = std::abs(insample);
 
-    if(insample < 1e-10) insample = 1e-10;
+    if(insample < 1e-10f) insample = 1e-10f;
 
     float insampleLog = std::max<float>(std::log(insample), thresholdLog);
 

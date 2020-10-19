@@ -38,7 +38,7 @@ namespace Luminous
     {
       /// Maximum system memory usage we allow before starting to release memory.
       /// Value is between 0 and 1, relative to the maximum physical memory.
-      float maxMemoryUsage = 0.85;
+      float maxMemoryUsage = 0.85f;
       /// Regardless of other settings, always try to keep at least this amount of
       /// available memory.
       uint64_t minAvailableMemoryMB = 1024;

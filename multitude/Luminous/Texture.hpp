@@ -137,7 +137,7 @@ namespace Luminous
     /// Set the texture line size in bytes. Zero means that the rows are
     /// contiguous in memory.
     /// @param size size of one line in bytes
-    LUMINOUS_API void setLineSizeBytes(std::size_t size);
+    LUMINOUS_API void setLineSizeBytes(unsigned int size);
     /// Get the texture line size in bytes
     /// @return line size in bytes
     LUMINOUS_API unsigned int lineSizeBytes() const;

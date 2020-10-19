@@ -502,7 +502,7 @@ namespace Resonant {
   void ModulePanner::updateChannelCount()
   {
     if (*m_operatingMode == RADIAL) {
-      m_channelCount = m_speakers->size();
+      m_channelCount = static_cast<unsigned int>(m_speakers->size());
     } else if (*m_operatingMode == RECTANGLES || *m_operatingMode == STEREO_ZONES) {
       m_channelCount = 0;
       for (const SoundRectangle * rect: *m_rectangles)

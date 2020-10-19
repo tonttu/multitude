@@ -259,7 +259,8 @@ namespace Luminous
     void newRenderQueueSegment(PipelineCommand * cmd)
     {
       /// @todo Maybe look into a pool allocator to improve performance. Should profile more
-      m_masterRenderQueue.emplace_back(cmd, m_opaqueQueue.size(), m_translucentQueue.size());
+      m_masterRenderQueue.emplace_back(cmd, static_cast<unsigned int>(m_opaqueQueue.size()),
+                                       static_cast<unsigned int>(m_translucentQueue.size()));
     }
 
 #if 0
@@ -414,13 +415,13 @@ namespace Luminous
 
     if (cmd.indexed) {
       // Draw using the index buffer
-      m_opengl->glDrawElementsBaseVertex(cmd.primitiveType, cmd.primitiveCount, GL_UNSIGNED_INT,
+      m_opengl->glDrawElementsBaseVertex(cmd.primitiveType, static_cast<GLsizei>(cmd.primitiveCount), GL_UNSIGNED_INT,
                                         (GLvoid *)((sizeof(uint) * cmd.indexOffset)), cmd.vertexOffset);
       GLERROR("RenderDriverGL::render # glDrawElementsBaseVertex");
     }
     else {
       // Draw non-indexed
-      m_opengl->glDrawArrays(cmd.primitiveType, cmd.vertexOffset, cmd.primitiveCount);
+      m_opengl->glDrawArrays(cmd.primitiveType, cmd.vertexOffset, static_cast<GLsizei>(cmd.primitiveCount));
       GLERROR("RenderDriverGL::render # glDrawArrays");
     }
 
@@ -458,8 +459,8 @@ namespace Luminous
                                               const std::map<QByteArray,const Texture *> * textures,
                                               const std::map<QByteArray, ShaderUniform> * uniforms)
   {
-    cmd.samplersBegin = cmd.samplersEnd = m_samplers.size();
-    cmd.uniformsBegin = cmd.uniformsEnd = m_uniforms.size();
+    cmd.samplersBegin = cmd.samplersEnd = static_cast<unsigned int>(m_samplers.size());
+    cmd.uniformsBegin = cmd.uniformsEnd = static_cast<unsigned int>(m_uniforms.size());
 
     m_state.program = &m_driver.handle(shader);
     m_state.vertexArray = &m_driver.handle(vertexArray, m_state.program);
@@ -877,7 +878,7 @@ namespace Luminous
                                                       const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     RenderCommandIndex idx;
-    idx.renderCommandIndex = m_d->m_renderCommands.size();
+    idx.renderCommandIndex = static_cast<unsigned int>(m_d->m_renderCommands.size());
     m_d->m_renderCommands.emplace_back();
     RenderCommand & cmd = m_d->m_renderCommands.back();
 
@@ -903,7 +904,7 @@ namespace Luminous
       const std::map<QByteArray, ShaderUniform> * uniforms)
   {
     RenderCommandIndex idx;
-    idx.multiDrawCommandIndex = m_d->m_MultiDrawCommands.size();
+    idx.multiDrawCommandIndex = static_cast<unsigned int>(m_d->m_MultiDrawCommands.size());
     m_d->m_MultiDrawCommands.emplace_back();
     MultiDrawCommand & cmd = m_d->m_MultiDrawCommands.back();
     cmd.offsets = m_d->m_multiDrawArrays.allocate(drawCount);
