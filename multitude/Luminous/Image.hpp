@@ -67,7 +67,8 @@ namespace Luminous
     /// @param width width in pixels
     /// @param height height in pixels
     /// @param pf pixel format
-    void allocate(int width, int height, const PixelFormat & pf);
+    /// @returns false if memory allocation fails
+    bool allocate(int width, int height, const PixelFormat & pf);
 
     /// Get the aspect ratio (width / height) of the image
     /// @return aspect ratio
@@ -131,8 +132,9 @@ namespace Luminous
     @param bytes pointer to image data
     @param width width of the image data
     @param height height of the image data
-    @param format pixel format of the image data*/
-    void fromData(const unsigned char * bytes, int width, int height,
+    @param format pixel format of the image data
+    @returns false if memory allocation fails */
+    bool fromData(const unsigned char * bytes, int width, int height,
           PixelFormat format);
 
     /// Returns the pixel format of the image
