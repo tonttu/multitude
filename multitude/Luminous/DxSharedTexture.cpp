@@ -33,6 +33,26 @@ namespace
   Radiant::Mutex s_allDxTextureBagsMutex;
   std::unordered_set<Luminous::DxSharedTextureBag*> s_allDxTextureBags;
 
+  /// Creating and deleting ID3D11Device3 typically takes ~10-30 ms, or makes
+  /// the next render() take that much longer in driver synchronization code.
+  /// This means that resizing a browser widget can seriously hurt the
+  /// application performance.
+  ///
+  /// DxSharedTexture::D::~D will add its used device here, and
+  /// DxSharedTexture::create will attempt to reuse it if possible. If nobody
+  /// wants to use the device in s_sharedDevicesTimeoutSecs seconds,
+  /// DxSharedTextureBag::clean properly deletes it.
+  struct SharedDevice
+  {
+    Radiant::Timer lastUsed;
+    LUID adapterLuid{};
+    ComPtr<ID3D11Device3> dev;
+  };
+
+  Radiant::Mutex s_sharedDevicesMutex;
+  std::vector<SharedDevice> s_sharedDevices;
+  const double s_sharedDevicesTimeoutSecs = 5.0;
+
 // This is for debugging synchronization with CEF
 #if 0
   Radiant::Mutex s_acquireStatsMutex;
@@ -58,7 +78,7 @@ namespace
   }
 
   /// Creates a device from the same adapter that owns sharedHandle
-  ComPtr<ID3D11Device3> createDevice(HANDLE sharedHandle)
+  ComPtr<ID3D11Device3> createDevice(HANDLE sharedHandle, LUID & adapterLuid)
   {
     ComPtr<IDXGIFactory2> dxgiFactory;
 
@@ -69,12 +89,22 @@ namespace
       return nullptr;
     }
 
-    LUID adapterLuid{};
     res = dxgiFactory->GetSharedResourceAdapterLuid(sharedHandle, &adapterLuid);
     if (FAILED(res)) {
       Radiant::error("DxSharedTexture # GetSharedResourceAdapterLuid failed: %s",
                      comErrorStr(res).data());
       return nullptr;
+    }
+
+    {
+      Radiant::Guard g(s_sharedDevicesMutex);
+      for (auto it = s_sharedDevices.begin(); it != s_sharedDevices.end(); ++it) {
+        if (it->adapterLuid == adapterLuid) {
+          ComPtr<ID3D11Device3> dev = std::move(it->dev);
+          s_sharedDevices.erase(it);
+          return dev;
+        }
+      }
     }
 
     IDXGIAdapter * it = nullptr;
@@ -214,6 +244,18 @@ namespace Luminous
       : m_host(host)
     {}
 
+    ~D()
+    {
+      release(true);
+      if (m_dev) {
+        Radiant::Guard g(s_sharedDevicesMutex);
+        s_sharedDevices.emplace_back();
+        SharedDevice & adapter = s_sharedDevices.back();
+        adapter.dev = std::move(m_dev);
+        adapter.adapterLuid = m_adapterLuid;
+      }
+    }
+
     /// @param deviceCtx [out]
     bool copyDxTexture(ComPtr<ID3D11DeviceContext3> & deviceCtx);
     /// @param deviceCtx [in]
@@ -243,6 +285,8 @@ namespace Luminous
     Radiant::Mutex m_refMutex;
     /// The device that owns the shared texture.
     ComPtr<ID3D11Device3> m_dev;
+    /// Luid for m_dev
+    LUID m_adapterLuid{};
     /// Copy of the shared handle received from DX application
     std::shared_ptr<void> m_sharedHandle;
     /// wglDXSetResourceShareHandleNV needs to be called exactly once, but
@@ -567,7 +611,8 @@ namespace Luminous
   {
     assert(sharedHandle);
 
-    ComPtr<ID3D11Device3> dev = createDevice(sharedHandle);
+    LUID adapterLuid{};
+    ComPtr<ID3D11Device3> dev = createDevice(sharedHandle, adapterLuid);
     if (!dev)
       return nullptr;
 
@@ -618,12 +663,12 @@ namespace Luminous
     self->m_d->m_sharedHandle = std::move(copyPtr);
     self->m_d->m_acquired = true;
     self->m_d->m_frameNum = frameNumber;
+    self->m_d->m_adapterLuid = adapterLuid;
     return self;
   }
 
   DxSharedTexture::~DxSharedTexture()
   {
-    m_d->release(true);
   }
 
   void DxSharedTexture::acquire(uint32_t activeThreads, uint64_t frameNumber)
@@ -1083,8 +1128,19 @@ namespace Luminous
 
   void DxSharedTextureBag::clean()
   {
-    Radiant::Guard g(s_allDxTextureBagsMutex);
-    for (DxSharedTextureBag * t: s_allDxTextureBags)
-      t->m_d->cleanOldTextures();
+    {
+      Radiant::Guard g(s_allDxTextureBagsMutex);
+      for (DxSharedTextureBag * t: s_allDxTextureBags)
+        t->m_d->cleanOldTextures();
+    }
+    {
+      Radiant::Guard g(s_sharedDevicesMutex);
+      for (auto it = s_sharedDevices.begin(); it != s_sharedDevices.end();) {
+        if (it->lastUsed.time() > s_sharedDevicesTimeoutSecs)
+          it = s_sharedDevices.erase(it);
+        else
+          ++it;
+      }
+    }
   }
 }
