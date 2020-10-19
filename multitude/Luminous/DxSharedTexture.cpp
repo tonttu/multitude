@@ -178,6 +178,8 @@ namespace Luminous
     Luminous::DxInterop dxInteropApi;
     HANDLE interopDev = nullptr;
     HANDLE interopTex = nullptr;
+    /// Lock when deleting interopDev or interopTex
+    std::shared_ptr<Radiant::Mutex> devMutex;
     /// GL stuff needs to run in a specific thread. This is an executor for
     /// the correct render thread. Used to delete GL resources in ~Context()
     folly::Executor * glExecutor = nullptr;
@@ -218,6 +220,7 @@ namespace Luminous
       std::swap(dxInteropApi, c.dxInteropApi);
       std::swap(interopDev, c.interopDev);
       std::swap(interopTex, c.interopTex);
+      std::swap(devMutex, c.devMutex);
       std::swap(glExecutor, c.glExecutor);
       std::swap(glRefs, c.glRefs);
       std::swap(glTex, c.glTex);
@@ -280,7 +283,7 @@ namespace Luminous
 
     /// Lock this when using m_dev or any interop functions in GL
     /// associated with m_dev.
-    Radiant::Mutex m_devMutex;
+    std::shared_ptr<Radiant::Mutex> m_devMutex{new Radiant::Mutex()};
     /// Protects ctx.copying, copyFrameNum, m_acquired, m_release, m_refs
     Radiant::Mutex m_refMutex;
     /// The device that owns the shared texture.
@@ -353,7 +356,8 @@ namespace Luminous
     }
     if (glExecutor && interopTex) {
       glExecutor->add([interopDev=interopDev, interopTex=interopTex,
-                      dxInteropApi=dxInteropApi] {
+                      dxInteropApi=dxInteropApi, mutex=devMutex] {
+        Radiant::Guard g(*mutex);
         if (!dxInteropApi.wglDXUnregisterObjectNV(interopDev, interopTex)) {
           GLERROR("wglDXUnregisterObjectNV");
           Radiant::error("DxSharedTexture # wglDXUnregisterObjectNV failed");
@@ -371,7 +375,7 @@ namespace Luminous
 
   bool DxSharedTexture::D::copyDxTexture(ComPtr<ID3D11DeviceContext3> & deviceCtx)
   {
-    Radiant::Guard g(m_devMutex);
+    Radiant::Guard g(*m_devMutex);
     m_dev->GetImmediateContext3(&deviceCtx);
 
     if (!m_copy) {
@@ -405,7 +409,7 @@ namespace Luminous
 
   bool DxSharedTexture::D::mapCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx)
   {
-    Radiant::Guard g(m_devMutex);
+    Radiant::Guard g(*m_devMutex);
     if (++m_copyRef == 1) {
       HRESULT res = deviceCtx->Map(m_copy.Get(), 0, D3D11_MAP_READ, 0, &m_copyMapped);
       if (FAILED(res)) {
@@ -419,7 +423,7 @@ namespace Luminous
 
   void DxSharedTexture::D::unrefCopy(const ComPtr<ID3D11DeviceContext3> & deviceCtx)
   {
-    Radiant::Guard g(m_devMutex);
+    Radiant::Guard g(*m_devMutex);
     if (--m_copyRef == 0)
       deviceCtx->Unmap(m_copy.Get(), 0);
   }
@@ -554,7 +558,7 @@ namespace Luminous
       return false;
 
     if (ctx.interopTex && ++ctx.glRefs == 1) {
-      Radiant::Guard g(m_devMutex);
+      Radiant::Guard g(*m_devMutex);
       if (!ctx.dxInteropApi.wglDXLockObjectsNV(ctx.interopDev, 1, &ctx.interopTex)) {
         GLERROR("wglDXLockObjectsNV");
         Radiant::error("DxSharedTexture # wglDXLockObjectsNV failed");
@@ -566,7 +570,7 @@ namespace Luminous
   void DxSharedTexture::D::unref(Context & ctx)
   {
     if (ctx.interopTex && --ctx.glRefs == 0) {
-      Radiant::Guard g(m_devMutex);
+      Radiant::Guard g(*m_devMutex);
       if (!ctx.dxInteropApi.wglDXUnlockObjectsNV(ctx.interopDev, 1, &ctx.interopTex)) {
         GLERROR("wglDXUnlockObjectsNV");
         Radiant::error("DxSharedTexture # wglDXUnlockObjectsNV failed");
@@ -776,13 +780,14 @@ namespace Luminous
     if (ctx.access == ACCESS_UNKNOWN) {
       if (auto api = r.dxInteropApi()) {
         ctx.dxInteropApi = *api;
+        ctx.devMutex = m_d->m_devMutex;
       } else {
         ctx.access = ACCESS_COPY;
       }
     }
 
     if (ctx.access == ACCESS_UNKNOWN) {
-      Radiant::Guard g(m_d->m_devMutex);
+      Radiant::Guard g(*m_d->m_devMutex);
       ctx.interopDev = ctx.dxInteropApi.wglDXOpenDeviceNV(m_d->m_dev.Get());
       if (ctx.interopDev == nullptr) {
         /// Most likely this failed because m_dev and current OpenGL contexts
