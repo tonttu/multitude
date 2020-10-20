@@ -1148,4 +1148,10 @@ namespace Luminous
       }
     }
   }
+
+  void DxSharedTextureBag::shutdown()
+  {
+    Radiant::Guard g(s_sharedDevicesMutex);
+    s_sharedDevices.clear();
+  }
 }

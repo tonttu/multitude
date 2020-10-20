@@ -123,6 +123,9 @@ namespace Luminous
     /// Finishes pending asynchronous copy operations and deletes unused textures.
     static void clean();
 
+    /// Clears all cached D3D11 resources
+    static void shutdown();
+
   private:
     class D;
     std::unique_ptr<D> m_d;
