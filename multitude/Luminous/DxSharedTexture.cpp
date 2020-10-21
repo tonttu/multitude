@@ -47,6 +47,12 @@ namespace
     Radiant::Timer lastUsed;
     LUID adapterLuid{};
     ComPtr<ID3D11Device3> dev;
+    /// Even if the DxSharedTexture no longer uses this device, there might be
+    /// still operations queued in afterFlush executor that still use the
+    /// device. We need to make sure the mutex used there is the same one we
+    /// are going to use with this device, so if DxSharedTexture decides to use
+    /// this device, this is assigned to D::m_dev.
+    std::shared_ptr<Radiant::Mutex> devMutex;
   };
 
   Radiant::Mutex s_sharedDevicesMutex;
@@ -78,7 +84,7 @@ namespace
   }
 
   /// Creates a device from the same adapter that owns sharedHandle
-  ComPtr<ID3D11Device3> createDevice(HANDLE sharedHandle, LUID & adapterLuid)
+  ComPtr<ID3D11Device3> createDevice(HANDLE sharedHandle, LUID & adapterLuid, std::shared_ptr<Radiant::Mutex> & devMutex)
   {
     ComPtr<IDXGIFactory2> dxgiFactory;
 
@@ -101,6 +107,7 @@ namespace
       for (auto it = s_sharedDevices.begin(); it != s_sharedDevices.end(); ++it) {
         if (it->adapterLuid == adapterLuid) {
           ComPtr<ID3D11Device3> dev = std::move(it->dev);
+          devMutex = std::move(it->devMutex);
           s_sharedDevices.erase(it);
           return dev;
         }
@@ -151,6 +158,7 @@ namespace
       return nullptr;
     }
 
+    devMutex = std::make_shared<Radiant::Mutex>();
     return dev3;
   }
 }
@@ -255,6 +263,7 @@ namespace Luminous
         s_sharedDevices.emplace_back();
         SharedDevice & adapter = s_sharedDevices.back();
         adapter.dev = std::move(m_dev);
+        adapter.devMutex = std::move(m_devMutex);
         adapter.adapterLuid = m_adapterLuid;
       }
     }
@@ -283,7 +292,7 @@ namespace Luminous
 
     /// Lock this when using m_dev or any interop functions in GL
     /// associated with m_dev.
-    std::shared_ptr<Radiant::Mutex> m_devMutex{new Radiant::Mutex()};
+    std::shared_ptr<Radiant::Mutex> m_devMutex;
     /// Protects ctx.copying, copyFrameNum, m_acquired, m_release, m_refs
     Radiant::Mutex m_refMutex;
     /// The device that owns the shared texture.
@@ -616,7 +625,8 @@ namespace Luminous
     assert(sharedHandle);
 
     LUID adapterLuid{};
-    ComPtr<ID3D11Device3> dev = createDevice(sharedHandle, adapterLuid);
+    std::shared_ptr<Radiant::Mutex> devMutex;
+    ComPtr<ID3D11Device3> dev = createDevice(sharedHandle, adapterLuid, devMutex);
     if (!dev)
       return nullptr;
 
@@ -633,11 +643,15 @@ namespace Luminous
     std::shared_ptr<void> copyPtr(copy, &CloseHandle);
 
     ComPtr<ID3D11Texture2D> dxTex;
-    HRESULT res = dev->OpenSharedResource1(copy, IID_PPV_ARGS(&dxTex));
-    if (FAILED(res)) {
-      Radiant::error("DxSharedTexture # OpenSharedResource1 failed: %s",
-                     comErrorStr(res).data());
-      return nullptr;
+    HRESULT res;
+    {
+      Radiant::Guard g(*devMutex);
+      res = dev->OpenSharedResource1(copy, IID_PPV_ARGS(&dxTex));
+      if (FAILED(res)) {
+        Radiant::error("DxSharedTexture # OpenSharedResource1 failed: %s",
+                       comErrorStr(res).data());
+        return nullptr;
+      }
     }
 
     ComPtr<IDXGIKeyedMutex> lock;
@@ -663,6 +677,7 @@ namespace Luminous
     self->m_d->m_tex.setData(desc.Width, desc.Height, Luminous::PixelFormat::rgbaUByte(), nullptr);
     self->m_d->m_dxTex = std::move(dxTex);
     self->m_d->m_dev = std::move(dev);
+    self->m_d->m_devMutex = std::move(devMutex);
     self->m_d->m_lock = std::move(lock);
     self->m_d->m_sharedHandle = std::move(copyPtr);
     self->m_d->m_acquired = true;
