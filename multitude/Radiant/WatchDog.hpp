@@ -15,6 +15,7 @@
 #include <Radiant/Singleton.hpp>
 #include <Radiant/Mutex.hpp>
 #include <Radiant/Thread.hpp>
+#include <Radiant/Timer.hpp>
 
 #include <map>
 #include <functional>
@@ -90,12 +91,10 @@ namespace Radiant {
 
     virtual void childLoop();
 
-    class Item
+    struct Item
     {
-    public:
-      Item() : m_check(true) {}
-      volatile bool m_check;
-      QByteArray m_name;
+      Timer lastAlive;
+      QByteArray name;
     };
 
     typedef std::map<void *, Item> container;
