@@ -53,24 +53,25 @@ namespace Radiant {
   void WatchDog::hostIsAlive(void * key, const QByteArray & name)
   {
     Radiant::Guard g(m_mutex);
-    m_items[key].m_check = true;
-    m_items[key].m_name = name;
+    auto it = m_items.find(key);
+    if (it == m_items.end()) {
+      m_items[key].name = name;
+    } else {
+      it->second.lastAlive.start();
+    }
   }
 
   void WatchDog::forgetHost(void * key)
   {
     Radiant::Guard g(m_mutex);
-
-    container::iterator it = m_items.find(key);
-    if(it != m_items.end())
-      m_items.erase(it);
+    m_items.erase(key);
   }
-
 
   void WatchDog::childLoop()
   {
+    double nextInterval = m_intervalSeconds;
     while(m_continue) {
-      int n = (int) ceilf(m_intervalSeconds * 10.0f);
+      int n = (int) ceilf(std::max(1.0, nextInterval) * 10.0f);
 
       // If paused, just sleep and try again
       if(m_paused) {
@@ -79,21 +80,21 @@ namespace Radiant {
       }
 
       /* A single long sleep might get interrupted by system calls and
-	 return early. The method below should be more robust. */
+       * return early. The method below should be more robust. */
 
       for(int i = 0; i < n && m_continue && !m_paused; i++)
         Radiant::Sleep::sleepMs(100);
 
       QStringList errorItems;
-      if(isEnabled())
-      {
+      nextInterval = m_intervalSeconds;
+      if (isEnabled()) {
         Radiant::Guard g(m_mutex);
         for(container::iterator it = m_items.begin(); it != m_items.end(); ++it) {
           Item & item = it->second;
-          if(item.m_check == false)
-            errorItems << QString::fromUtf8(item.m_name);
-
-          item.m_check = false;
+          double timeRemaining = m_intervalSeconds - item.lastAlive.time();
+          if (timeRemaining <= 0)
+            errorItems << QString::fromUtf8(item.name);
+          nextInterval = std::min(nextInterval, timeRemaining);
         }
       }
 
@@ -102,9 +103,8 @@ namespace Radiant {
 
       if(!errorItems.isEmpty() && m_continue) {
         error("WATCHDOG: THE APPLICATION HAS BEEN UNRESPONSIVE FOR %.0f\n"
-              "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.\n"
-              "TO DISABLE THIS FEATURE, DISABLE THE WATCHDOG WITH:\n\n"
-              "export NO_WATCHDOG=1\n", (float) m_intervalSeconds);
+              "SECONDS. IT HAS PROBABLY LOCKED, SHUTTING DOWN NOW.",
+              (float) m_intervalSeconds);
         error("WATCHDOG: Unresponsive items: %s", errorItems.join(", ").toUtf8().data());
 
         std::map<long, std::function<void()>> listeners;
