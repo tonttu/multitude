@@ -1,6 +1,7 @@
 include(../setup.pri)
 
 HEADERS += TempFailureRetry.hpp \
+    IniFile.hpp \
     ThreadChecks.hpp \
     TraceDuplicateFilter.hpp \
     TraceStdFilter.hpp \
@@ -97,6 +98,7 @@ HEADERS += QByteArrayHash.hpp
 HEADERS += Blake3.hpp
 
 SOURCES += Mime.cpp \
+    IniFile.cpp \
     ThreadChecks.cpp \
     TraceDuplicateFilter.cpp \
     TraceStdFilter.cpp \
