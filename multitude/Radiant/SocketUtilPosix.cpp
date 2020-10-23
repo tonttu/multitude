@@ -52,6 +52,7 @@ namespace Radiant {
                                            int family, int socktype,
                                            int protocol, int flags)
   {
+    SocketWrapper::startup();
     struct addrinfo hints;
     struct addrinfo * result;
 
