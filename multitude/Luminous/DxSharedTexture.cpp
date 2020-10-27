@@ -7,6 +7,7 @@
 #include "RenderDriverGL.hpp"
 
 #include <Radiant/Mutex.hpp>
+#include <Radiant/Sleep.hpp>
 #include <Radiant/Task.hpp>
 #include <Radiant/StringUtils.hpp>
 
@@ -136,6 +137,8 @@ namespace
 #ifdef RADIANT_DEBUG
     flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+    if (getenv("CORNERSTONE_DEBUG_DX"))
+      flags |= D3D11_CREATE_DEVICE_DEBUG;
 
     /// CEF and DxSharedTexture use D3D11_RESOURCE_MISC_SHARED_NTHANDLE type
     /// shared textures that require D3D 11.1
@@ -603,7 +606,11 @@ namespace Luminous
 
     m_acquired = false;
     updateAcquireStats(m_sharedHandle.get(), -1);
-    HRESULT res = m_lock->ReleaseSync(0);
+    HRESULT res;
+    {
+      Radiant::Guard g(*m_devMutex);
+      res = m_lock->ReleaseSync(0);
+    }
     if (res != 0) {
       Radiant::error("DxSharedTexture # ReleaseSync failed: %s [0x%x]",
                      comErrorStr(res).data(), res);
@@ -696,7 +703,17 @@ namespace Luminous
     assert(m_d->m_lock);
 
     updateAcquireStats(m_d->m_sharedHandle.get(), 1);
-    HRESULT res = m_d->m_lock->AcquireSync(1, INFINITE);
+    HRESULT res;
+    for (int i = 0;; ++i) {
+      {
+        Radiant::Guard g(*m_d->m_devMutex);
+        res = m_d->m_lock->AcquireSync(1, 0);
+      }
+      if (res == WAIT_TIMEOUT)
+        Radiant::Sleep::sleepUs(std::min(1000, i * 10));
+      else
+        break;
+    }
     if (res != 0) {
       Radiant::error("DxSharedTexture # AcquireSync failed: %s", comErrorStr(res).data());
       return;
