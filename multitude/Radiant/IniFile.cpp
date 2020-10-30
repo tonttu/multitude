@@ -353,41 +353,56 @@ namespace Radiant
 
   IniFile & IniFile::operator=(const IniFile & other)
   {
+    if (&other == this)
+      return *this;
+
     m_d.reset(new D());
     m_d->m_newline = other.m_d->m_newline;
     m_d->m_lines = other.m_d->m_lines;
-    m_d->m_sections.reserve(other.m_d->m_sections.size());
+    m_d->m_sections = other.m_d->m_sections;
 
-    std::map<const Line*, std::list<Line>::iterator> map;
-    for (auto from = other.m_d->m_lines.begin(), end = other.m_d->m_lines.end(), to = m_d->m_lines.begin();; ++from, ++to) {
-      map[&*from] = to;
-      if (from == end)
-        break;
-    }
+    // We copied m_sections, but the copy now contains list iterators (aka
+    // pointers) that point to other.m_d->m_lines instead of this->m_d->m_lines.
+    // We need to rewrite all the iterators.
+    //
+    // We do this by creating a map that maps iterators from
+    // other.m_d->m_lines to the new m_d->m_lines. This map doesn't contain
+    // other.m_d->m_lines.end(), since we can't safely perform comparison
+    // for that.
 
-    for (const Section & old: other.m_d->m_sections) {
-      m_d->m_sections.emplace_back();
-      Section & s = m_d->m_sections.back();
+    using ListIt = std::list<Line>::iterator;
+    struct ListCmp
+    {
+      bool operator()(const ListIt & l, const ListIt & r) const
+      {
+        // These iterators are all valid non-end iterators
+        return &*l < &*r;
+      }
+    };
 
-      s.name = old.name;
-      s.nameLower = old.nameLower;
+    std::map<ListIt, ListIt, ListCmp> map;
+    auto mapIterator = [this, &map] (ListIt & it) {
+      auto mapIt = map.find(it);
+      if (mapIt == map.end()) {
+        // the only iterator not part of map is the end iterator
+        it = m_d->m_lines.end();
+      } else {
+        it = mapIt->second;
+      }
+    };
 
-      for (const LineRange & oldLr: old.lines) {
-        LineRange lr{map[&*oldLr.begin], map[&*oldLr.end]};
-        s.lines.push_back(lr);
+    for (auto from = other.m_d->m_lines.begin(), end = other.m_d->m_lines.end(), to = m_d->m_lines.begin(); from != end; ++from, ++to)
+      map[from] = to;
+
+    for (Section & s: m_d->m_sections) {
+      for (LineRange & lr: s.lines) {
+        mapIterator(lr.begin);
+        mapIterator(lr.end);
       }
 
-      for (auto & p: old.values) {
-        std::vector<Value> & values = s.values[p.first];
-        for (const Value & oldValue: p.second) {
-          values.emplace_back();
-          Value & v = values.back();
-          v.key = oldValue.key;
-          v.value = oldValue.value;
-          v.commented = oldValue.commented;
-          v.line = map[&*oldValue.line];
-        }
-      }
+      for (auto & p: s.values)
+        for (Value & v: p.second)
+          mapIterator(v.line);
     }
 
     return *this;
