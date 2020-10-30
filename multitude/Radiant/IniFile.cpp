@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QFileInfo>
 
 namespace Radiant
 {
@@ -345,6 +346,63 @@ namespace Radiant
   IniFile::~IniFile()
   {}
 
+  IniFile::IniFile(const IniFile & other)
+  {
+    operator=(other);
+  }
+
+  IniFile & IniFile::operator=(const IniFile & other)
+  {
+    m_d.reset(new D());
+    m_d->m_newline = other.m_d->m_newline;
+    m_d->m_lines = other.m_d->m_lines;
+    m_d->m_sections.reserve(other.m_d->m_sections.size());
+
+    std::map<const Line*, std::list<Line>::iterator> map;
+    for (auto from = other.m_d->m_lines.begin(), end = other.m_d->m_lines.end(), to = m_d->m_lines.begin();; ++from, ++to) {
+      map[&*from] = to;
+      if (from == end)
+        break;
+    }
+
+    for (const Section & old: other.m_d->m_sections) {
+      m_d->m_sections.emplace_back();
+      Section & s = m_d->m_sections.back();
+
+      s.name = old.name;
+      s.nameLower = old.nameLower;
+
+      for (const LineRange & oldLr: old.lines) {
+        LineRange lr{map[&*oldLr.begin], map[&*oldLr.end]};
+        s.lines.push_back(lr);
+      }
+
+      for (auto & p: old.values) {
+        std::vector<Value> & values = s.values[p.first];
+        for (const Value & oldValue: p.second) {
+          values.emplace_back();
+          Value & v = values.back();
+          v.key = oldValue.key;
+          v.value = oldValue.value;
+          v.commented = oldValue.commented;
+          v.line = map[&*oldValue.line];
+        }
+      }
+    }
+
+    return *this;
+  }
+
+  IniFile::IniFile(IniFile && other)
+    : m_d(std::move(other.m_d))
+  {}
+
+  IniFile & IniFile::operator=(IniFile && other)
+  {
+    std::swap(m_d, other.m_d);
+    return *this;
+  }
+
   bool IniFile::parseFile(const QString & filename)
   {
     QFile file(filename);
@@ -406,14 +464,27 @@ namespace Radiant
 
   bool IniFile::writeToFile(const QString & filename)
   {
+    QByteArray data = writeData();
+
     QSaveFile file(filename);
     if (!file.open(QSaveFile::WriteOnly)) {
+      QFileInfo fi(filename);
+      if (fi.exists() && fi.isWritable()) {
+        // QSaveFile fails if there are no write permissions to the directory,
+        // but if we have write permissions to the file, we most likely can do
+        // a non-atomic write there.
+        QFile file2(filename);
+        if (file2.open(QFile::WriteOnly)) {
+          file2.write(data);
+          return true;
+        }
+      }
       Radiant::error("IniFile # Failed to open %s for writing: %s", filename.toUtf8().data(),
-                     file.errorString().toUtf8().data());
+                    file.errorString().toUtf8().data());
       return false;
     }
 
-    file.write(writeData());
+    file.write(data);
     if (!file.commit()) {
       Radiant::error("IniFile # Failed to save to %s: %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());

@@ -17,6 +17,12 @@ namespace Radiant
     IniFile();
     ~IniFile();
 
+    IniFile(const IniFile & other);
+    IniFile & operator=(const IniFile & other);
+
+    IniFile(IniFile && other);
+    IniFile & operator=(IniFile && other);
+
     /// Reads and parses a file. Can merge keys from duplicate sections.
     /// Triggers a warning if you define the same key in multiple places,
     /// but doesn't fail parsing. Returns false on parse error.
