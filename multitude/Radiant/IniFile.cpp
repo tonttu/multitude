@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QFileInfo>
 
 namespace Radiant
 {
@@ -345,6 +346,78 @@ namespace Radiant
   IniFile::~IniFile()
   {}
 
+  IniFile::IniFile(const IniFile & other)
+  {
+    operator=(other);
+  }
+
+  IniFile & IniFile::operator=(const IniFile & other)
+  {
+    if (&other == this)
+      return *this;
+
+    m_d.reset(new D());
+    m_d->m_newline = other.m_d->m_newline;
+    m_d->m_lines = other.m_d->m_lines;
+    m_d->m_sections = other.m_d->m_sections;
+
+    // We copied m_sections, but the copy now contains list iterators (aka
+    // pointers) that point to other.m_d->m_lines instead of this->m_d->m_lines.
+    // We need to rewrite all the iterators.
+    //
+    // We do this by creating a map that maps iterators from
+    // other.m_d->m_lines to the new m_d->m_lines. This map doesn't contain
+    // other.m_d->m_lines.end(), since we can't safely perform comparison
+    // for that.
+
+    using ListIt = std::list<Line>::iterator;
+    struct ListCmp
+    {
+      bool operator()(const ListIt & l, const ListIt & r) const
+      {
+        // These iterators are all valid non-end iterators
+        return &*l < &*r;
+      }
+    };
+
+    std::map<ListIt, ListIt, ListCmp> map;
+    auto mapIterator = [this, &map] (ListIt & it) {
+      auto mapIt = map.find(it);
+      if (mapIt == map.end()) {
+        // the only iterator not part of map is the end iterator
+        it = m_d->m_lines.end();
+      } else {
+        it = mapIt->second;
+      }
+    };
+
+    for (auto from = other.m_d->m_lines.begin(), end = other.m_d->m_lines.end(), to = m_d->m_lines.begin(); from != end; ++from, ++to)
+      map[from] = to;
+
+    for (Section & s: m_d->m_sections) {
+      for (LineRange & lr: s.lines) {
+        mapIterator(lr.begin);
+        mapIterator(lr.end);
+      }
+
+      for (auto & p: s.values)
+        for (Value & v: p.second)
+          mapIterator(v.line);
+    }
+
+    return *this;
+  }
+
+  IniFile::IniFile(IniFile && other)
+    : m_d(std::move(other.m_d))
+  {}
+
+  IniFile & IniFile::operator=(IniFile && other)
+  {
+    std::swap(m_d, other.m_d);
+    return *this;
+  }
+
   bool IniFile::parseFile(const QString & filename)
   {
     QFile file(filename);
@@ -406,14 +479,27 @@ namespace Radiant
 
   bool IniFile::writeToFile(const QString & filename)
   {
+    QByteArray data = writeData();
+
     QSaveFile file(filename);
     if (!file.open(QSaveFile::WriteOnly)) {
+      QFileInfo fi(filename);
+      if (fi.exists() && fi.isWritable()) {
+        // QSaveFile fails if there are no write permissions to the directory,
+        // but if we have write permissions to the file, we most likely can do
+        // a non-atomic write there.
+        QFile file2(filename);
+        if (file2.open(QFile::WriteOnly)) {
+          file2.write(data);
+          return true;
+        }
+      }
       Radiant::error("IniFile # Failed to open %s for writing: %s", filename.toUtf8().data(),
-                     file.errorString().toUtf8().data());
+                    file.errorString().toUtf8().data());
       return false;
     }
 
-    file.write(writeData());
+    file.write(data);
     if (!file.commit()) {
       Radiant::error("IniFile # Failed to save to %s: %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());
