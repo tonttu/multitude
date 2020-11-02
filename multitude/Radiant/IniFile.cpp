@@ -381,14 +381,14 @@ namespace Radiant
     };
 
     std::map<ListIt, ListIt, ListCmp> map;
-    auto mapIterator = [this, &map] (ListIt & it) {
-      auto mapIt = map.find(it);
-      if (mapIt == map.end()) {
-        // the only iterator not part of map is the end iterator
+    auto mapIterator = [this, &map, &other] (ListIt & it) {
+      if (it == other.m_d->m_lines.end()) {
         it = m_d->m_lines.end();
-      } else {
-        it = mapIt->second;
+        return;
       }
+      auto mapIt = map.find(it);
+      assert(mapIt != map.end());
+      it = mapIt->second;
     };
 
     for (auto from = other.m_d->m_lines.begin(), end = other.m_d->m_lines.end(), to = m_d->m_lines.begin(); from != end; ++from, ++to)
