@@ -62,6 +62,10 @@ namespace Email
     mimeMessage->setSender(new ::EmailAddress(message.sender().address, message.sender().name));
     mimeMessage->setSubject(message.subject());
 
+    // Set reply-to field
+    if (auto replyTo = message.replyTo())
+      mimeMessage->setReplyTo(new::EmailAddress(replyTo.value().address, replyTo.value().name));
+
     // Add recipients
     Q_FOREACH(const Address & address, message.recipients(Message::RecipientType::To))
       mimeMessage->addRecipient(new ::EmailAddress(address.address, address.name), MimeMessage::To);
