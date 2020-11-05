@@ -8,6 +8,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 
 namespace Email
 {
@@ -77,6 +78,18 @@ namespace Email
     /// Address of the email sender
     const Address& sender() const { return m_sender; }
 
+    /// Set address to reply to
+    /// @param address to send replies to
+    void setReplyTo(const Address& address);
+
+    /// An address to which replies should be sent.
+    /// Can be used when sender cannot receive replies.
+    /// @note RFC5322 section 3.6.2 specifies the "Reply-To" field as optional
+    /// list of one or more addresses. The method assumes only single address,
+    /// due to inernal class that eventually constructs the final message
+    /// taking only single address for reply-to.
+    const std::optional<Address> replyTo() const { return m_replyTo; }
+
     /// Set email subject
     /// @param subject subject of the email
     void setSubject(const QString& subject);
@@ -122,6 +135,7 @@ namespace Email
     QList<Address> recipientListByType(RecipientType type) const;
 
     Address m_sender;
+    std::optional<Address> m_replyTo;
     QString m_subject;
     QString m_content;
     QList<Address> m_recipientsTo;

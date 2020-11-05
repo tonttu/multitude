@@ -23,6 +23,11 @@ namespace Email
     m_sender = address;
   }
 
+  void Message::setReplyTo(const Address& address)
+  {
+    m_replyTo = address;
+  }
+
   void Message::setSubject(const QString& subject)
   {
     m_subject = subject;
