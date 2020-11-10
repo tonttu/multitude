@@ -13,6 +13,8 @@
 #include <Valuable/AttributeString.hpp>
 #include <Valuable/Node.hpp>
 
+#include <QSslError>
+
 #include <memory>
 
 namespace Email
@@ -46,6 +48,7 @@ namespace Email
       QString username;
       QString password;
       bool ignoreSslErrors;
+      QList<QSslError> sslErrorsToIgnore;
 
       float connectionTimeout;
       float responseTimeout;
@@ -96,6 +99,12 @@ namespace Email
     bool ignoreSslErrors() const;
     void setIgnoreSslErrors(bool ignore);
 
+    /// Sets specific SSL errors to ignore
+    /// @note if list is not empty the Sender::ignoreSslErrors is ignored
+    /// @note if QSslError object doesn't have certificate then error is
+    /// ignored based on QSslError::SslError value.
+    QList<QSslError> ignoredSslErrors() const;
+    void setIgnoredSslErrors(const QList<QSslError> &errors);
 
     QString emailSenderName() const;
     void setEmailSenderName(const QString& senderName);
@@ -137,6 +146,7 @@ namespace Email
     Valuable::AttributeInt m_smtpPort;
     Valuable::AttributeT<EncryptionType> m_encryptionType;
     Valuable::AttributeBool m_ignoreSslErrors;
+    QList<QSslError> m_sslErrorsToIgnore;
 
     // Email settings
     Valuable::AttributeString m_emailSenderName;

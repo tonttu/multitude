@@ -72,6 +72,7 @@ namespace Email
     s.username = m_smtpUsername;
     s.password = m_smtpPassword;
     s.ignoreSslErrors = m_ignoreSslErrors;
+    s.sslErrorsToIgnore = m_sslErrorsToIgnore;
     s.connectionTimeout = m_connectionTimeout;
     s.responseTimeout = m_responseTimeout;
     s.sendTimeout = m_sendMessageTimeout;
@@ -155,6 +156,16 @@ namespace Email
   void Sender::setIgnoreSslErrors(bool ignore)
   {
     m_ignoreSslErrors = ignore;
+  }
+
+  QList<QSslError> Sender::ignoredSslErrors() const
+  {
+    return m_sslErrorsToIgnore;
+  }
+
+  void Sender::setIgnoredSslErrors(const QList<QSslError> & errors)
+  {
+    m_sslErrorsToIgnore = errors;
   }
 
   QString Sender::emailSenderName() const

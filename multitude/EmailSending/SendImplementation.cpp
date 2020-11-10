@@ -181,15 +181,39 @@ namespace Email
       auto ignore = job.settings.ignoreSslErrors;
       // Qt's signal handling syntax is horrible with overloaded functions
       connect(ssl, static_cast<void(QSslSocket::*)(const QList<QSslError> &)>(&QSslSocket::sslErrors),
-              [ssl, ignore] (const QList<QSslError> &errors) {
-        if (ignore) {
+              [ssl, ignore, errorsToIgnore = job.settings.sslErrorsToIgnore] (const QList<QSslError> &errors) {
+        QSet<QSslError> errorsSet = errors.toSet();
+        // Ignore all errors
+        if (errorsToIgnore.isEmpty() && ignore) {
           ssl->ignoreSslErrors();
           for (const auto & error : errors)
             Radiant::warning("SMTP: Ignored an SSL error (%s)", error.errorString().toUtf8().data());
+          return;
+        } else if (!errorsToIgnore.isEmpty()) {
+          QSet<QSslError> canNotBeIgnored;
+          for (const auto & e : errors) {
+            bool found = std::any_of(errorsToIgnore.begin(), errorsToIgnore.end(), [receivedError = e](const QSslError & e){
+              if (e.certificate().isNull())
+                return receivedError.error() == e.error();
+              return receivedError == e;
+            });
+            if (!found) {
+              canNotBeIgnored << e;
+            }
+          }
+
+          if (canNotBeIgnored.isEmpty())
+            ssl->ignoreSslErrors();
+
+          QSet<QSslError> canBeIgnored = errorsSet.subtract(canNotBeIgnored);
+          for (const auto & error : canBeIgnored)
+            Radiant::warning("SMTP: Ignored an SSL error (%s)", error.errorString().toUtf8().data());
+
+          errorsSet = canNotBeIgnored;
         }
-        else {
-          for (const auto & error : errors)
-            Radiant::error("SMTP: SSL error (%s)", error.errorString().toUtf8().data());
+
+        for (const auto & error : errorsSet) {
+          Radiant::error("SMTP: SSL error (%s)", error.errorString().toUtf8().data());
         }
       });
     }
