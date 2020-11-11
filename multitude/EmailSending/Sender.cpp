@@ -73,6 +73,7 @@ namespace Email
     s.password = m_smtpPassword;
     s.ignoreSslErrors = m_ignoreSslErrors;
     s.sslErrorsToIgnore = m_sslErrorsToIgnore;
+    s.proxy = m_proxy;
     s.connectionTimeout = m_connectionTimeout;
     s.responseTimeout = m_responseTimeout;
     s.sendTimeout = m_sendMessageTimeout;
@@ -166,6 +167,16 @@ namespace Email
   void Sender::setIgnoredSslErrors(const QList<QSslError> & errors)
   {
     m_sslErrorsToIgnore = errors;
+  }
+
+  std::optional<QNetworkProxy> Sender::networkProxy() const
+  {
+    return m_proxy;
+  }
+
+  void Sender::setNetworkProxy(const QNetworkProxy & proxy)
+  {
+    m_proxy = proxy;
   }
 
   QString Sender::emailSenderName() const

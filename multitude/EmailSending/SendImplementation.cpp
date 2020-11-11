@@ -166,6 +166,8 @@ namespace Email
 
     int port = connectionPort(job.settings);
     SmtpClient smtp(job.settings.host, port, type);
+    if (job.settings.proxy.has_value())
+      smtp.getSocket()->setProxy(job.settings.proxy.value());
 
     connect(&smtp, SIGNAL(smtpError(SmtpClient::SmtpError)), this, SLOT(smtpError(SmtpClient::SmtpError)), Qt::DirectConnection);
 

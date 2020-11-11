@@ -33,6 +33,7 @@ SmtpClient::SmtpClient(const QString & host, int port, ConnectionType connection
     sendMessageTimeout(60000)
 {
     setConnectionType(connectionType);
+    assert(socket);
 
     this->host = host;
     this->port = port;

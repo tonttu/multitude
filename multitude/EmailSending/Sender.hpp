@@ -14,6 +14,7 @@
 #include <Valuable/Node.hpp>
 
 #include <QSslError>
+#include <QNetworkProxy>
 
 #include <memory>
 
@@ -49,6 +50,7 @@ namespace Email
       QString password;
       bool ignoreSslErrors;
       QList<QSslError> sslErrorsToIgnore;
+      std::optional<QNetworkProxy> proxy;
 
       float connectionTimeout;
       float responseTimeout;
@@ -106,6 +108,9 @@ namespace Email
     QList<QSslError> ignoredSslErrors() const;
     void setIgnoredSslErrors(const QList<QSslError> &errors);
 
+    std::optional<QNetworkProxy> networkProxy() const;
+    void setNetworkProxy(const QNetworkProxy & proxy);
+
     QString emailSenderName() const;
     void setEmailSenderName(const QString& senderName);
 
@@ -147,6 +152,7 @@ namespace Email
     Valuable::AttributeT<EncryptionType> m_encryptionType;
     Valuable::AttributeBool m_ignoreSslErrors;
     QList<QSslError> m_sslErrorsToIgnore;
+    std::optional<QNetworkProxy> m_proxy;
 
     // Email settings
     Valuable::AttributeString m_emailSenderName;
