@@ -55,7 +55,11 @@ namespace Radiant
       bool m_stdoutIsTty = false;
       bool m_stderrIsTty = false;
       bool m_printThreadId = false;
+#ifdef RADIANT_DEBUG
+      bool m_printThreadName = true;
+#else
       bool m_printThreadName = false;
+#endif
       QByteArray m_applicationName;
     };
   } // namespace Trace
