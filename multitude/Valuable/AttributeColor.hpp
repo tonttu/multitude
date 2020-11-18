@@ -201,7 +201,7 @@ namespace Valuable
       if (ok)
         *ok = true;
       Radiant::Color c = value(layer);
-      return QString("rgba(%1, %2, %3, %4)").arg(c.r*255, c.g*255, c.b*255, c.a);
+      return QString("rgba(%1, %2, %3, %4)").arg(c.r*255).arg(c.g*255).arg(c.b*255).arg(c.a);
     }
 
     /// Converts the value object to color
