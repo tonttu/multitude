@@ -130,7 +130,7 @@ namespace Luminous
   void RenderManager::updateFrameTime()
   {
     s_lastFrameTime = s_frameTime;
-    s_frameTime = s_timer.time() * 10;
+    s_frameTime = static_cast<int>(s_timer.time() * 10);
   }
 
   void RenderManager::setThreadIndex(unsigned idx)

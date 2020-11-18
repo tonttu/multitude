@@ -289,16 +289,16 @@ namespace Luminous
             }
             if (info.penMask & PEN_MASK_ROTATION) {
               flags |= Radiant::PenEvent::FLAG_ROTATION;
-              te.setRotation(Nimble::Math::degToRad(info.rotation));
+              te.setRotation(Nimble::Math::degToRad(static_cast<float>(info.rotation)));
             }
             Nimble::Vector2f tilt{0, 0};
             if (info.penMask & PEN_MASK_TILT_X) {
               flags |= Radiant::PenEvent::FLAG_TILT_X;
-              tilt.x = Nimble::Math::degToRad(info.tiltX);
+              tilt.x = Nimble::Math::degToRad(static_cast<float>(info.tiltX));
             }
             if (info.penMask & PEN_MASK_TILT_Y) {
               flags |= Radiant::PenEvent::FLAG_TILT_Y;
-              tilt.y = Nimble::Math::degToRad(info.tiltY);
+              tilt.y = Nimble::Math::degToRad(static_cast<float>(info.tiltY));
             }
             if (info.penFlags & PEN_FLAG_BARREL) {
               flags |= Radiant::PenEvent::FLAG_BARREL;

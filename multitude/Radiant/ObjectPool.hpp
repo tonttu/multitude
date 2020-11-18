@@ -17,7 +17,7 @@ namespace Radiant
 
     /// Fill the pool with new objects
     /// @returns number of objects created
-    virtual int fill() = 0;
+    virtual std::size_t fill() = 0;
     virtual void clear() = 0;
 
     RADIANT_API static std::pair<std::size_t, std::size_t> fillAll();
@@ -39,7 +39,7 @@ namespace Radiant
   public:
     inline ObjectPoolT(std::size_t size, FactoryFunc factory);
 
-    inline virtual int fill() OVERRIDE;
+    inline virtual std::size_t fill() OVERRIDE;
     inline virtual void clear() OVERRIDE;
 
     inline T get();
@@ -59,7 +59,7 @@ namespace Radiant
   }
 
   template <typename T>
-  int ObjectPoolT<T>::fill()
+  std::size_t ObjectPoolT<T>::fill()
   {
     std::size_t created = 0;
     std::size_t size;

@@ -430,7 +430,7 @@ namespace Luminous {
 
     /// Returns the size of the total display in graphics pixels
     Nimble::SizeF size()
-    { return Nimble::SizeF(width(), height()); }
+    { return Nimble::SizeI(width(), height()).cast<float>(); }
 
     /// Total width of the display area, in graphics pixels.
     int width();
