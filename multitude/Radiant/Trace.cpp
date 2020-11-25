@@ -15,6 +15,8 @@
 
 #include <Radiant/CallStack.hpp>
 
+#include <QReadWriteLock>
+
 #ifdef RADIANT_UNIX
 #include <unistd.h>
 #endif
@@ -27,9 +29,10 @@ namespace Radiant
   {
     namespace
     {
-      static std::multimap<float, Radiant::Trace::FilterPtr> s_filters;
-      static std::vector<Message> s_queue;
-      static bool s_initialized = false;
+      QReadWriteLock s_filtersLock;
+      std::multimap<float, Radiant::Trace::FilterPtr> s_filters;
+      std::vector<Message> s_queue;
+      bool s_initialized = false;
 
       void qtMessageHandler(QtMsgType type, const QMessageLogContext & ctx, const QString & msg)
       {
@@ -112,6 +115,7 @@ namespace Radiant
 
     static void processFilters(Message & msg)
     {
+      QReadLocker g(&s_filtersLock);
       for (auto & p: s_filters) {
         Filter & filter = *p.second;
         if (filter.trace(msg)) {
@@ -171,6 +175,7 @@ namespace Radiant
 
     void addFilter(const FilterPtr & filter)
     {
+      QWriteLocker g(&s_filtersLock);
       s_filters.insert(std::make_pair(filter->order(), filter));
     }
 
@@ -183,6 +188,7 @@ namespace Radiant
 
     bool removeFilter(const FilterPtr & filter)
     {
+      QWriteLocker g(&s_filtersLock);
       for (auto it = s_filters.begin(), end = s_filters.end(); it != end; ++it) {
         if (it->second == filter) {
           s_filters.erase(it);
@@ -194,6 +200,7 @@ namespace Radiant
 
     std::multimap<float, FilterPtr> filters()
     {
+      QReadLocker g(&s_filtersLock);
       return s_filters;
     }
 
