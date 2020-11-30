@@ -536,9 +536,9 @@ namespace Nimble {
   template <class T> Matrix4T<T> Matrix4T<T>::ortho3D
     (T left, T right, T bottom, T top, T zNear, T zFar)
   {
-    Matrix4T m1 = makeScale(Nimble::Vector3T<T>(1.0 / (right - left),
-      1.0 / (top - bottom),
-      1.0 / (zFar - zNear)));
+    Matrix4T m1 = makeScale(Nimble::Vector3T<T>(T(1.0) / (right - left),
+      T(1.0) / (top - bottom),
+      T(1.0) / (zFar - zNear)));
     Matrix4T m2 = makeTranslation(Nimble::Vector3T<T>(-left, -bottom, -zNear));
 
     Matrix4T m3 = makeScale(Nimble::Vector3T<T>(2, 2, 2));

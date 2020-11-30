@@ -522,7 +522,9 @@ namespace Luminous
 
   float TextStyle::fontPixelSize() const
   {
-    return m_font.pixelSize() < 0 ? TextLayout::pointToPixelSize(m_font.pointSizeF()) : m_font.pixelSize();
+    return m_font.pixelSize() < 0
+        ? TextLayout::pointToPixelSize(static_cast<float>(m_font.pointSizeF()))
+        : static_cast<float>(m_font.pixelSize());
   }
 }
 #endif // LUMINOUS_STYLE_HPP

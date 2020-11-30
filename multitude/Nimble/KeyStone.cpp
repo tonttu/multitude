@@ -138,7 +138,7 @@ namespace Nimble {
     if(m_useCenterShift) {
       float dist = (res - m_dpyCenter).length();
       if(dist < m_centerShiftSpan) {
-        float weight = 0.5f + 0.5f * cosf(Math::PI * dist / m_centerShiftSpan);
+        float weight = 0.5f + 0.5f * cosf(static_cast<float>(Math::PI) * dist / m_centerShiftSpan);
         Nimble::Vector2f move = powf(weight, 1.0f) * m_centerShift;
         res += move;
       }
@@ -235,10 +235,10 @@ namespace Nimble {
 
   void KeyStone::getCornerOrdering(int indices[4])
   {
-    indices[0] = closestCorner(Nimble::Vector2(0, 0));
-    indices[1] = closestCorner(Nimble::Vector2(m_width, 0));
-    indices[2] = closestCorner(Nimble::Vector2(m_width, m_height));
-    indices[3] = closestCorner(Nimble::Vector2(0, m_height));
+    indices[0] = closestCorner(Nimble::Vector2(0.f, 0.f));
+    indices[1] = closestCorner(Nimble::Vector2(static_cast<float>(m_width), 0.f));
+    indices[2] = closestCorner(Nimble::Vector2(static_cast<float>(m_width), static_cast<float>(m_height)));
+    indices[3] = closestCorner(Nimble::Vector2(0.f, static_cast<float>(m_height)));
   }
 
   void KeyStone::addExtra(int index, float v)
@@ -298,7 +298,7 @@ namespace Nimble {
     if(center) {
       float dist = (*center - m_dpyCenter).length();
 
-      float weight = 0.5f + 0.5f * cosf(Math::PI * dist / m_centerShiftSpan);
+      float weight = 0.5f + 0.5f * cosf(static_cast<float>(Math::PI) * dist / m_centerShiftSpan);
       rcnorm = backToNorm.project(*center - weight * m_centerShift);
 
       printf("rcnorm = %f %f dpyc = %f %f\n",

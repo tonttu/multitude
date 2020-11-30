@@ -62,7 +62,7 @@ namespace Valuable
       {
         if (layer >= Attribute::CURRENT_LAYER) layer = Base::currentLayer();
         if (m_exprs[layer]) m_exprs[layer].reset();
-        Base::setValue(v, layer);
+        Base::setValue(static_cast<T>(v), layer);
         return true;
       }
       /// @copydoc set

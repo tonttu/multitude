@@ -450,15 +450,19 @@ namespace Resonant {
 
       //Radiant::info("ModuleRectPanner::computeGain # SPEAKER (%f,%f) source is inside rectangle (%d,%d) (%d,%d)", ls->m_location.x(), ls->m_location.y(), r->location().x, r->location().y, r->size().x, r->size().y);
 
-      Nimble::Vector2 tmp(r->location().x, r->location().y);
+      Nimble::Vector2 tmp(static_cast<float>(r->location().x), static_cast<float>(r->location().y));
       Nimble::Vector2 local = srcLocation - tmp;
+
+      const float fade = static_cast<float>(r->fade());
+      const float w = static_cast<float>(r->size().x);
+      const float h = static_cast<float>(r->size().y);
 
       // Compute gain in y direction
       Nimble::LinearInterpolator<float> iy;
-      iy.addKey(-r->fade(), 0.f);
+      iy.addKey(-fade, 0.f);
       iy.addKey(0.f, 1.f);
-      iy.addKey(r->size().y, 1.f);
-      iy.addKey(r->size().y + r->fade(), 0.f);
+      iy.addKey(h, 1.f);
+      iy.addKey(h + fade, 0.f);
 
       float gainY = iy.interpolate(local.y);
 
@@ -466,23 +470,23 @@ namespace Resonant {
       Nimble::LinearInterpolator<float> ix;
 
       if (r->leftChannel() == r->rightChannel()) {
-        ix.addKey(-r->fade(), 0.f);
+        ix.addKey(-fade, 0.f);
         ix.addKey(0.f, 1.f);
-        ix.addKey(r->size().x, 1.f);
-        ix.addKey(r->size().x + r->fade(), 0.f);
+        ix.addKey(w, 1.f);
+        ix.addKey(w + fade, 0.f);
       } else {
         if (r->leftChannel() == (int)outputChannel) {
           // Left channel
-          ix.addKey(-r->fade(), 0.f);
+          ix.addKey(-fade, 0.f);
           ix.addKey(0.f, 1.f);
-          ix.addKey(r->size().x, 1.f - r->stereoPan());
-          ix.addKey(r->size().x + r->fade(), 0.f);
+          ix.addKey(w, 1.f - r->stereoPan());
+          ix.addKey(w + fade, 0.f);
         } else {
           // Right channel
-          ix.addKey(-r->fade(), 0.f);
+          ix.addKey(-fade, 0.f);
           ix.addKey(0.f, 1.f - r->stereoPan());
-          ix.addKey(r->size().x, 1.f);
-          ix.addKey(r->size().x + r->fade(), 0.f);
+          ix.addKey(w, 1.f);
+          ix.addKey(w + fade, 0.f);
         }
       }
 

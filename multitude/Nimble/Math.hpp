@@ -68,8 +68,10 @@ namespace Nimble {
 
     /// Converts degrees into radians
     inline double degToRad(const double degrees) { return (degrees * PI / 180.0); }
+    inline float degToRad(const float degrees) { return (degrees * static_cast<float>(PI) / 180.0f); }
     /// Converts radians to degrees
     inline double radToDeg(const double radians) { return (radians * 180.0 / PI); }
+    inline float radToDeg(const float radians) { return (radians * 180.0f / static_cast<float>(PI)); }
 
     /// Checks if the given value if finite
     inline bool isFinite(float v)

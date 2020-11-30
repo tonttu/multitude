@@ -464,7 +464,7 @@ namespace Resonant {
         m_noteId = data.readInt32(& ok);
       else if(strcmp(name, "playhead-seconds") == 0) {
         float seconds = data.readFloat32( & ok);
-        m_position = seconds * 44100.0;
+        m_position = static_cast<unsigned int>(seconds * 44100.0);
         m_dpos = m_position;
       }
       else {
@@ -626,7 +626,7 @@ namespace Resonant {
   void ModuleSamplePlayer::SampleVoice::stop(float fadeTime, float sampleRate)
   {
     m_gain.setTarget(0, fadeTime * sampleRate);
-    m_finishCounter = fadeTime * sampleRate;
+    m_finishCounter = static_cast<int>(fadeTime * sampleRate);
     m_stopped = true;
   }
 

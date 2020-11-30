@@ -174,8 +174,12 @@ namespace Valuable
       return false;
 
     VectorType vector;
-    for (int i = 0; i < N; ++i)
-      vector[i] = value.asFloat(i);
+    for (int i = 0; i < N; ++i) {
+      if constexpr(std::is_floating_point_v<ElementType>)
+        vector[i] = value.asFloat(i);
+      else
+        vector[i] = value.asInt(i);
+    }
 
     this->setValue(vector, layer);
     return true;
