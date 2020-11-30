@@ -60,6 +60,10 @@ namespace Radiant
         return QString::fromStdString(os.str());
       } else if constexpr(std::is_same_v<T, bool>) {
         return x ? "1" : "0";
+      } else if constexpr(std::is_same_v<T, QString>) {
+        return x;
+      } else if constexpr(std::is_same_v<T, QByteArray>) {
+        return QString::fromUtf8(x);
       } else {
         std::ostringstream os;
         os << x;

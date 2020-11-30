@@ -9,6 +9,8 @@
 #include <QSaveFile>
 #include <QFileInfo>
 
+#include <unordered_map>
+
 namespace Radiant
 {
   namespace
