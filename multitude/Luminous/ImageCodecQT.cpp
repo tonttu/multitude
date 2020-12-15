@@ -43,6 +43,9 @@ namespace Luminous
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
       case QImage::Format_Grayscale16:
 #endif
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+      case QImage::Format_BGR888:
+#endif
       case QImage::Format_Grayscale8:
       case QImage::Format_RGB32:
       case QImage::Format_RGB16:

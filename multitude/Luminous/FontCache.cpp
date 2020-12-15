@@ -24,6 +24,7 @@
 #include <QRawFont>
 #include <QDir>
 #include <QPainter>
+#include <QPainterPath>
 #include <QSettings>
 #include <QThread>
 
