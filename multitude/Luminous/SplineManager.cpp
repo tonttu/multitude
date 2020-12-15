@@ -768,7 +768,7 @@ namespace Luminous
       m_vertices.resize(index);
     }
 
-    for (const auto p: unfinishedStrokes) {
+    for (const auto & p: unfinishedStrokes) {
       SplineInternal & stroke = *p.first;
       RenderBatch & rb = m_renderBatches[p.second];
 

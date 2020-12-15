@@ -16,6 +16,25 @@ namespace Punctual
       folly::Executor * executor,
       bool stopOnError);
 
+  /// Newer folly (which is in use on macOS) changed how collectAll works, so
+  /// our code relying on old behaviour needs to use folly::collectAllUnsafe.
+  /// However, this function is not available on our folly version on Ubuntu
+  /// and Windows, so use this wrapper instead.
+  /// Folly also doesn't seem to have any kind of version macro.
+#ifdef RADIANT_MACOS
+  template <class T>
+  inline auto collectAllUnsafe(T && c) -> decltype(folly::collectAllUnsafe(c))
+  {
+    return folly::collectAllUnsafe(std::forward<T>(c));
+  }
+#else
+  template <class T>
+  inline auto collectAllUnsafe(T && c) -> decltype(folly::collectAll(c))
+  {
+    return folly::collectAll(std::forward<T>(c));
+  }
+#endif
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 

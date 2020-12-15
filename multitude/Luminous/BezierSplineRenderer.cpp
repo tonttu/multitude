@@ -41,7 +41,11 @@ namespace Luminous
       , triangleStrip(o.triangleStrip)
     {}
 
-    StrokeMipmap(StrokeMipmap && m) = delete;
+    StrokeMipmap(StrokeMipmap && m)
+      : ready(m.ready.load())
+      , triangleStrip(std::move(m.triangleStrip))
+    {}
+
     StrokeMipmap & operator=(const StrokeMipmap &) = delete;
     StrokeMipmap & operator=(StrokeMipmap &&) = delete;
 
