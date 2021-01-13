@@ -94,10 +94,10 @@ namespace VideoDisplay
       return nullptr;
 
     Timestamp ts = m_d->m_sync.map(presentTimestamp);
-    uint64_t frameNum = ts.pts() * m_d->m_fps;
+    uint64_t frameNum = static_cast<uint64_t>(ts.pts() * m_d->m_fps);
 
     auto & frame = m_d->m_frames[frameNum % m_d->m_frames.size()];
-    frame->setIndex(frameNum);
+    frame->setIndex(static_cast<int>(frameNum));
     return frame;
   }
 

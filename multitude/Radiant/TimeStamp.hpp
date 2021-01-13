@@ -136,7 +136,7 @@ namespace Radiant {
     {
       type integral = static_cast<type>(s);
       double fract = s - integral;
-      return TimeStamp((integral * FRACTIONS_PER_SECOND) + (fract * FRACTIONS_PER_SECOND));
+      return TimeStamp((integral * FRACTIONS_PER_SECOND) + static_cast<type>(fract * FRACTIONS_PER_SECOND));
     }
 
     /// Create a TimeStamp with the given number of minutes

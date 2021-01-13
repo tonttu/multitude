@@ -197,7 +197,8 @@ namespace Radiant
   }
 
   Color::Color(const QColor & c)
-    : ColorBase(c.redF(), c.greenF(), c.blueF(), c.alphaF())
+    : ColorBase(static_cast<float>(c.redF()), static_cast<float>(c.greenF()),
+                static_cast<float>(c.blueF()), static_cast<float>(c.alphaF()))
   {}
 
   void Color::setHSVA(float h, float s, float v, float a)

@@ -379,11 +379,11 @@ namespace VideoDisplay
         // Only consider video+audio pairs with positive score. Use negative
         // scores in tmp as a lazy way to set up comparisons..
         if (score > 0)
-          tmp.push_back(std::make_tuple(-score, video, audio));
+          tmp.push_back(std::make_tuple(-score, static_cast<int>(video), static_cast<int>(audio)));
       }
       // Maybe the video source doesn't have any audio source, add that
       // option there as well.
-      tmp.push_back(std::make_tuple(0, video, -1));
+      tmp.push_back(std::make_tuple(0.f, static_cast<int>(video), -1));
     }
 
     std::sort(tmp.begin(), tmp.end());

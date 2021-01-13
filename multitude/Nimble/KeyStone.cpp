@@ -449,7 +449,7 @@ namespace Nimble {
     for (int y=0; y < (int) m_limits.size(); ++y) {
       if (!m_limits[y][1])
         continue;
-      m_boundsROI.expand(Nimble::Rect(Nimble::Vector2(m_limits[y][0], y), Nimble::Vector2(m_limits[y][0]+m_limits[y][1], y)));
+      m_boundsROI.expand(Nimble::Recti(m_limits[y][0], y, m_limits[y][0]+m_limits[y][1], y).cast<float>());
     }
 
     updated();

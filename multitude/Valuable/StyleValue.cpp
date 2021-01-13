@@ -195,7 +195,7 @@ namespace Valuable
     case TYPE_INT:
       return m_data.m_int;
     case TYPE_FLOAT:
-      return m_data.m_float;
+      return static_cast<int>(m_data.m_float);
     default:
       Radiant::error("StyleValue::Component::asInt # cannot convert %s to int", typeName());
       return 0;
@@ -208,7 +208,7 @@ namespace Valuable
     case TYPE_FLOAT:
       return m_data.m_float;
     case TYPE_INT:
-      return m_data.m_int;
+      return static_cast<float>(m_data.m_int);
     default:
       Radiant::error("StyleValue::Component::asFloat # cannot convert %s to float", typeName());
       return 0.f;

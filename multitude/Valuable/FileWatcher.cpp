@@ -212,7 +212,7 @@ namespace Valuable
 
       // Rescedule to the next event
       if(!m_delayedEvents.isEmpty()) {
-        int millis = (min - now).milliseconds();
+        int millis = static_cast<int>((min - now).milliseconds());
         assert(millis >= 0);
         m_delayTimer.singleShot(millis, this, SLOT(sendDelayedEvents()));
       }

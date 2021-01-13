@@ -58,7 +58,7 @@ namespace Radiant {
     m_summerTime = (tms.tm_isdst == 0) ? false : true;
 
     TimeStamp fract = TimeStamp(t.fractions());
-    m_microsecond = fract.secondsD() * 1000000.0;
+    m_microsecond = static_cast<int>(fract.secondsD() * 1000000.0);
   }
 
   DateTime::~DateTime()

@@ -126,7 +126,7 @@ namespace Valuable
   {
     const std::vector<Nimble::Vector2>::iterator high =
         std::upper_bound(m_points.begin(), m_points.end(), x, &cmpx);
-    int idx = high - m_points.begin();
+    int idx = static_cast<int>(high - m_points.begin());
     m_points.insert(high, Nimble::Vector2f(x, y));
     update(true);
     return idx;
@@ -173,7 +173,7 @@ namespace Valuable
       return 0;
     }
 
-    const int lowidx = high - m_points.begin() - 1;
+    const int lowidx = static_cast<int>(high - m_points.begin() - 1);
     const Nimble::Vector2f p1 = *(high - 1);
     const Nimble::Vector2f p3 = *high;
     if (x - p1.x < p3.x - x) {
@@ -199,7 +199,7 @@ namespace Valuable
     if (high == m_points.begin())
       return m_points.front().y;
 
-    const int lowidx = high - m_points.begin() - 1;
+    const int lowidx = static_cast<int>(high - m_points.begin() - 1);
     const Nimble::Vector2f p0 = *(high - 1);
     const Nimble::Vector2f p1 = m_intermediatePoints[lowidx*2+1];
     const Nimble::Vector2f p2 = m_intermediatePoints[lowidx*2+2];

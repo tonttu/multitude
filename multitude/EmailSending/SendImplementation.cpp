@@ -175,9 +175,9 @@ namespace Email
     smtp.setPassword(job.settings.password);
 
     // convert timeout values from seconds to milliseconds
-    smtp.setConnectionTimeout(job.settings.connectionTimeout * 1000.f);
-    smtp.setResponseTimeout(job.settings.responseTimeout * 1000.f);
-    smtp.setSendMessageTimeout(job.settings.sendTimeout * 1000.f);
+    smtp.setConnectionTimeout(static_cast<int>(job.settings.connectionTimeout * 1000.f));
+    smtp.setResponseTimeout(static_cast<int>(job.settings.responseTimeout * 1000.f));
+    smtp.setSendMessageTimeout(static_cast<int>(job.settings.sendTimeout * 1000.f));
 
     if (auto ssl = dynamic_cast<QSslSocket*>(smtp.getSocket())) {
       auto ignore = job.settings.ignoreSslErrors;
