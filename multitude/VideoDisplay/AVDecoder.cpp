@@ -140,7 +140,7 @@ namespace VideoDisplay
     Radiant::Timer t;
     for (auto weak: s_decoders) {
       if (auto decoder = weak.lock()) {
-        bool ok = decoder->waitEnd(std::max<int>(1, (maxWaitTimeS - t.time()) * 1000));
+        bool ok = decoder->waitEnd(std::max(1, static_cast<int>((maxWaitTimeS - t.time()) * 1000)));
         if (!ok) {
           Radiant::error("AVDecoder::shutdown # %s %s didn't close in %.1lf seconds, giving up",
                          Radiant::StringUtils::type(*decoder).data(),

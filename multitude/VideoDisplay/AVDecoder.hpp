@@ -376,8 +376,8 @@ namespace VideoDisplay
     struct VideoStreamHints
     {
       /// Preferred min and max framerate
-      float minFps = 29;
-      float maxFps = 121;
+      double minFps = 29;
+      double maxFps = 121;
 
       /// Preferred min and max resolution
       Nimble::SizeI minResolution { 1900, 0 };

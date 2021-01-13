@@ -82,7 +82,7 @@ namespace Radiant {
     if(!ret) {
       millsecs = 0;
     } else {
-      unsigned int diff = timer.time()*1000;
+      unsigned int diff = static_cast<unsigned int>(timer.time()*1000.0);
       if(diff > millsecs) millsecs = 0;
       else millsecs -= diff;
     }

@@ -182,7 +182,7 @@ namespace Nimble {
       c += m_points[i];
     }
 
-    return c / m_points.size();
+    return c / static_cast<float>(m_points.size());
   }
 
   // Just brute force

@@ -20,3 +20,10 @@ CONFIG(release, debug|release) {
     $$installFiles(/include/ThirdParty/$$TARGET_WITHOUT_VERSION, EXPORT_HEADERS)
   }
 }
+
+# SMTPEmail library exports lots of container members which really isn't
+# a good practise, but fine for us since we don't mix libraries with different
+# compiler versions or build flags.
+*msvc* {
+  QMAKE_CXXFLAGS += -wd4251
+}

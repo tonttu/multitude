@@ -139,7 +139,7 @@ namespace Nimble {
     /// @param radius The radius of the circle
     inline Nimble::Vector2f randVecOnCircle(float radius = 1.0f)
     {
-      float a = rand0X(Math::TWO_PI);
+      float a = rand0X(static_cast<float>(Math::TWO_PI));
       return Nimble::Vector2f(cosf(a) * radius, sinf(a) * radius);
     }
 
@@ -156,7 +156,7 @@ namespace Nimble {
     {
       // see http://mathworld.wolfram.com/SpherePointPicking.html
       float fi = acos(rand0X(2.f) - 1);
-      float theta = rand0X(Nimble::Math::TWO_PI);
+      float theta = rand0X(static_cast<float>(Nimble::Math::TWO_PI));
 
       float sinfi = sin(fi);
       Nimble::Vector3f v(cos(theta)*sinfi, sin(theta)*sinfi, cos(fi));

@@ -903,7 +903,7 @@ namespace VideoDisplay
 
     // Size of the decoded audio buffer, in samples (~44100 samples means one second buffer)
     m_av.decodedAudioBufferSamples = m_av.audioCodecContext ?
-          m_options.audioBufferSeconds() * m_av.audioCodecContext->sample_rate : 0;
+          static_cast<int>(m_options.audioBufferSeconds() * m_av.audioCodecContext->sample_rate) : 0;
 
     m_av.needFlushAtEof = (m_av.audioCodec && (m_av.audioCodec->capabilities & AV_CODEC_CAP_DELAY)) ||
         (m_av.videoCodec && (m_av.videoCodec->capabilities & AV_CODEC_CAP_DELAY));
@@ -928,7 +928,7 @@ namespace VideoDisplay
     }
 
     if(m_av.audioCodec) {
-      int channelLayout = av_get_channel_layout(m_options.channelLayout());
+      uint64_t channelLayout = av_get_channel_layout(m_options.channelLayout());
       AudioTransferPtr audioTransfer = std::make_shared<AudioTransfer>(
             m_host, av_get_channel_layout_nb_channels(channelLayout), m_sync);
 
@@ -1113,14 +1113,14 @@ namespace VideoDisplay
     int64_t pos = 0;
     if(!seekByBytes) {
       if(req.type() == SEEK_BY_SECONDS) {
-        pos = req.value() * AV_TIME_BASE;
+        pos = static_cast<int64_t>(req.value() * AV_TIME_BASE);
         if (req.flags() & SEEK_FLAG_ACCURATE) {
           m_exactVideoSeekRequestPts = m_exactAudioSeekRequestPts = req.value();
         }
       } else {
         assert(req.type() == SEEK_RELATIVE);
         if(m_av.formatContext->duration > 0) {
-          pos = req.value() * m_av.formatContext->duration;
+          pos = static_cast<int64_t>(req.value() * m_av.formatContext->duration);
         } else {
           if(m_av.formatContext->iformat->flags & AVFMT_NO_BYTE_SEEK) {
             Radiant::error("%s Seek failed, couldn't get the content duration"
@@ -1137,7 +1137,7 @@ namespace VideoDisplay
 
     if(seekByBytes) {
       if(req.type() == SEEK_BY_BYTES) {
-        pos = req.value();
+        pos = static_cast<int64_t>(req.value());
       } else if(req.type() == SEEK_BY_SECONDS) {
         int64_t size = avio_size(m_av.formatContext->pb);
         if(m_av.formatContext->duration <= 0 || size <= 0) {
@@ -1146,7 +1146,7 @@ namespace VideoDisplay
           return false;
         }
         // This is just a guess, since there is no byte size and time 1:1 mapping
-        pos = size * req.value() / m_av.duration;
+        pos = static_cast<int64_t>(size * req.value() / m_av.duration);
 
       } else {
         assert(req.type() == SEEK_RELATIVE);
@@ -1156,7 +1156,7 @@ namespace VideoDisplay
                          errorMsg.data());
           return false;
         }
-        pos = req.value() * size;
+        pos = static_cast<int64_t>(req.value() * size);
       }
     }
 
@@ -1824,7 +1824,7 @@ namespace VideoDisplay
     }*/
     // a and b scale the y value from [l, h] -> [0, 1]
     const float a = 255.0f/(h-l);
-    const float b = l/255.0;
+    const float b = l/255.0f;
 
     const float c[4] = {  coeffs[0]/65536.0f, -coeffs[2]/65536.0f,
                          -coeffs[3]/65536.0f,  coeffs[1]/65536.0f };

@@ -131,7 +131,7 @@ namespace VideoDisplay
     /// samples to sync audio, make sure we always have at least
     /// m_minAllowedBufferSamples samples in the buffer.
     int m_minMeasuredBufferSamples = 0;
-    int m_minAllowedBufferSamples = 0.020 * s_sampleRate;
+    int m_minAllowedBufferSamples = static_cast<int>(0.020 * s_sampleRate);
 
     /// Set to true to force process() to perform syncing by dropping or
     /// skipping samples.
@@ -271,12 +271,12 @@ namespace VideoDisplay
 
     if (averageLatency < 0) {
       // Wait to increase latency (which is now negative)
-      return -averageLatency * s_sampleRate;
+      return static_cast<int>(-averageLatency * s_sampleRate);
     }
 
     if (averageLatency > 0) {
       // Drop samples to reduce latency
-      int samplesToDrop = averageLatency * s_sampleRate;
+      int samplesToDrop = static_cast<int>(averageLatency * s_sampleRate);
       // We need to check that we don't drop too many samples so that we would
       // run out of buffer.
       int maxSamplesAllowedtoDrop = m_minMeasuredBufferSamples - m_minAllowedBufferSamples;
@@ -382,7 +382,7 @@ namespace VideoDisplay
         // We could take the gain into account in the preprocessing stage,
         // in another thread with more resources, but then changing gain
         // would have a noticeably latency
-        const float gain = m_d->m_seeking ? m_d->m_gain * 0.35 : m_d->m_gain;
+        const float gain = m_d->m_seeking ? m_d->m_gain * 0.35f : m_d->m_gain;
         if(std::abs(gain - 1.0f) < 1e-5f) {
           for(int channel = 0; channel < m_d->m_channels; ++channel)
             memcpy(out[channel] + processed, decodedBuffer->data(channel) + offset, samples * sizeof(float));
@@ -446,7 +446,7 @@ namespace VideoDisplay
       /// If the buffer is full, remove any old samples that couldn't be played anyway.
       /// This fixes stalling issues if the buffer is full because of audio playback issues.
       if (m_d->m_seeking) {
-        int remove = m_d->m_samplesInBuffers.load() - m_d->m_maxAllowedAverageLatency * s_sampleRate;
+        int remove = m_d->m_samplesInBuffers.load() - static_cast<int>(m_d->m_maxAllowedAverageLatency * s_sampleRate);
         if (remove > 0) {
           Radiant::Guard g(m_d->m_decodedBuffersMutex);
           m_d->dropOldSamples(remove);

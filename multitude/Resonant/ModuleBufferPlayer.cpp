@@ -18,7 +18,7 @@ namespace Resonant
     std::vector<Radiant::BlockRingBuffer<float>> m_buffers;
 
     // Configurable maximum latency (in frames)
-    int m_maxLatency = 0.020 * s_sampleRate;
+    int m_maxLatency = static_cast<int>(0.020 * s_sampleRate);
 
     // Measured minimum latency == extra buffer size
     int m_minLatency = 0;
@@ -42,7 +42,7 @@ namespace Resonant
   void ModuleBufferPlayer::setChannelCount(int channelCount)
   {
     m_d->m_channelCount = channelCount;
-    m_d->m_buffers.resize(m_d->m_channelCount, s_bufferSizeSecs * s_sampleRate);
+    m_d->m_buffers.resize(m_d->m_channelCount, static_cast<int>(s_bufferSizeSecs * s_sampleRate));
   }
 
   int ModuleBufferPlayer::channelCount() const
@@ -67,12 +67,12 @@ namespace Resonant
 
   void ModuleBufferPlayer::setMaxLatency(float secs)
   {
-    m_d->m_maxLatency = std::round(secs * s_sampleRate);
+    m_d->m_maxLatency = static_cast<int>(std::round(secs * s_sampleRate));
   }
 
   float ModuleBufferPlayer::maxLatency() const
   {
-    return m_d->m_maxLatency / s_sampleRate;
+    return static_cast<float>(m_d->m_maxLatency) / s_sampleRate;
   }
 
   bool ModuleBufferPlayer::prepare(int & channelsIn, int & channelsOut)
@@ -121,7 +121,7 @@ namespace Resonant
       if (std::abs(gain-1.0) < 0.001f) {
         int size = input.read(output, n);
         if (size < n) {
-          std::fill_n(output + size, n - size, 0);
+          std::fill_n(output + size, n - size, 0.f);
 #ifdef BUFFER_WARNINGS
           Radiant::warning("ModuleBufferPlayer::process # Buffer underrun (%d frames)", n - size);
 #endif
@@ -131,7 +131,7 @@ namespace Resonant
         // fill the output with zeroes. If we wouldn't consume the buffer,
         // there would be old data there when we set gain back to non-zero
         input.consume(std::min(n, input.size()));
-        std::fill_n(output, n, 0);
+        std::fill_n(output, n, 0.f);
       } else {
         int remaining = n;
 
@@ -149,7 +149,7 @@ namespace Resonant
         }
 
         if (remaining > 0) {
-          std::fill_n(output, remaining, 0);
+          std::fill_n(output, remaining, 0.f);
 #ifdef BUFFER_WARNINGS
           Radiant::warning("ModuleBufferPlayer::process # Buffer underrun (%d frames)", remaining);
 #endif

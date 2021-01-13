@@ -306,14 +306,14 @@ namespace Resonant {
           float mix = 0;
           for (const float * end = src + chans; src < end; ++src)
             mix += *src;
-          *b1++ += mix * onePerChans * gain;
+          *b1++ += mix * onePerChans * static_cast<float>(gain.value());
           gain.update();
         }
       } else {
         const float * src = m_sample->buf(m_position) + sampleChannel;
 
         for(unsigned i = 0; i < avail; i++) {
-          *b1++ += *src * gain;
+          *b1++ += *src * static_cast<float>(gain.value());
           src += chans;
           gain.update();
         }
@@ -363,7 +363,7 @@ namespace Resonant {
       }
 
       m_dpos = dpos;
-      m_position = dpos;
+      m_position = static_cast<unsigned>(dpos);
 
       m_relPitch = pitch;
       more = dpos < dmax;
@@ -507,12 +507,12 @@ namespace Resonant {
       m_state = sample ? PLAYING : WAITING_FOR_SAMPLE;
 
     if(m_info) {
-      m_info->m_playHeadPosition = m_dpos;
+      m_info->m_playHeadPosition = static_cast<float>(m_dpos);
       if(sample)
         m_info->m_sampleLengthSeconds = sample->frames() / 44100.0f;
     }
 
-    m_startGain = m_gain;
+    m_startGain = static_cast<float>(m_gain.value());
 
     debugResonant("ModuleSamplePlayer::SampleVoice::init # %p Playing gain = %.3f "
                   "rp = %.3f, ss = %d, ts = %d", this, m_gain.value(), m_relPitch.value(),
@@ -582,7 +582,7 @@ namespace Resonant {
       /// @todo Do not hard-code the sample-rate
       float sampleRate = 44100.0f;
 
-      int interpolationSamples = interpolationTimeSeconds * sampleRate;
+      int interpolationSamples = static_cast<int>(interpolationTimeSeconds * sampleRate);
 
       if(gain >= 0.0f) {
         m_gain.setTarget(gain, interpolationSamples);
@@ -599,7 +599,7 @@ namespace Resonant {
         // Half of the time goes to fade-out, the other half to fade-in
         interpolationSamples /= 2;
 
-        m_startPosition = playheadSeconds * sampleRate;
+        m_startPosition = static_cast<unsigned>(playheadSeconds * sampleRate);
         m_autoRestartAfterStop = true;
         m_startFadeInDurationSamples = interpolationSamples;
 
@@ -625,7 +625,7 @@ namespace Resonant {
 
   void ModuleSamplePlayer::SampleVoice::stop(float fadeTime, float sampleRate)
   {
-    m_gain.setTarget(0, fadeTime * sampleRate);
+    m_gain.setTarget(0, static_cast<unsigned>(fadeTime * sampleRate));
     m_finishCounter = static_cast<int>(fadeTime * sampleRate);
     m_stopped = true;
   }

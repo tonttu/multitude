@@ -5,7 +5,7 @@ namespace VideoDisplay
   static Radiant::Mutex s_warnMutex;
   static std::set<QString> s_warned;
 
-  static bool isValidFps(float fps, const AVDecoder::VideoStreamHints & hints)
+  static bool isValidFps(double fps, const AVDecoder::VideoStreamHints & hints)
   {
     return fps >= hints.minFps && fps <= hints.maxFps;
   }
@@ -216,7 +216,7 @@ namespace VideoDisplay
         /// There are some limitations on how large numbers you can have in fractions
         /// in ffmpeg, so we have a patch in place that increases that value to 1e7 so that
         /// we can give accurate values here.
-        uint64_t frameInt = std::round(1e7 / format.fps);
+        uint64_t frameInt = static_cast<uint64_t>(std::round(1e7 / format.fps));
         avOptions.setDemuxerOption("framerate", QString("10000000:%1").arg(frameInt));
       } else {
         avOptions.setDemuxerOption("framerate", QString::number(format.fps));

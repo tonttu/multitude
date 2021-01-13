@@ -16,7 +16,8 @@ namespace Radiant
 {
   PenEvent::PenEvent(QTabletEvent & event)
   {
-    m_location.make(event.hiResGlobalX(), event.hiResGlobalY());
+    m_location.make(static_cast<float>(event.hiResGlobalX()),
+                    static_cast<float>(event.hiResGlobalY()));
     if (event.type() == QEvent::TabletPress) {
       m_type = TYPE_DOWN;
     } else if (event.type() == QEvent::TabletMove) {
@@ -24,6 +25,6 @@ namespace Radiant
     } else if (event.type() == QEvent::TabletRelease) {
       m_type = TYPE_UP;
     }
-    m_pressure = event.pressure();
+    m_pressure = static_cast<float>(event.pressure());
   }
 }

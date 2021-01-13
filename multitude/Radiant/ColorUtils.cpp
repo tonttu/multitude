@@ -134,7 +134,7 @@ namespace Radiant
 
         for(int i = 0; i < 3; ++i) {
           unsigned char & v = img.m_planes[0].m_data[offset++];
-          v = static_cast<unsigned char> (Nimble::Math::Clamp<int>(v * rgbCoeff[i], 0, 255));
+          v = static_cast<unsigned char> (Nimble::Math::Clamp(static_cast<int>(v * rgbCoeff[i]), 0, 255));
         }
       }
     }
