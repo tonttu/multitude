@@ -23,11 +23,13 @@
 
 #include <bitset>
 
+#include <boost/container/flat_map.hpp>
+
 namespace Valuable {
 
   /// This struct is used to define the name strings for flags so they can be
   /// referenced from CSS.
-  struct FlagNames
+  struct FlagName
   {
     /// Name of the flag
     const char * name;
@@ -35,6 +37,94 @@ namespace Valuable {
     long value;
     /// Should we create an alias for this flag so that you can write "name: value" in CSS
     bool createAlias;
+  };
+
+  struct FlagNames
+  {
+    FlagNames(std::initializer_list<FlagName> l)
+    {
+      m_flags.reserve(l.size());
+      for (const FlagName & n: l) {
+        if (!n.name)
+          break;
+        FlagData & d = m_flags[QByteArray(n.name).toLower()];
+        if (n.createAlias && n.value)
+          d.aliasIdx = 0;
+        d.flags = n.value;
+      }
+
+      std::map<uint64_t, int32_t> aliases;
+      std::map<uint64_t, int32_t> bits;
+      for (auto & p: m_flags) {
+        const QByteArray & name = p.first;
+        FlagData & flag = p.second;
+
+        if (flag.aliasIdx == 0) {
+          int32_t idx = m_aliases.size();
+          m_aliases.emplace_back();
+          Alias & alias = m_aliases.back();
+          alias.name = name;
+          alias.flags = flag.flags;
+
+          flag.aliasIdx = idx;
+          flag.linkIdx = idx;
+          aliases[flag.flags] = idx;
+
+          std::bitset<64> bitset(flag.flags);
+          if (bitset.count() == 1) {
+            if (bits.find(flag.flags) == bits.end())
+              bits[flag.flags] = idx;
+          }
+        }
+      }
+
+      // mark some of the aliases to be shorthands, for example this would
+      // mark "input-translate-xy" to be a shorhand for "input-translate-x" and "...-y"
+      for (auto & p: m_flags) {
+        FlagData & flag = p.second;
+
+        if (flag.aliasIdx == -1) {
+          auto it = aliases.find(flag.flags);
+          if (it != aliases.end())
+            flag.linkIdx = it->second;
+          continue;
+        }
+
+        std::bitset<64> bitset(flag.flags);
+        Alias & alias = m_aliases[flag.aliasIdx];
+        alias.sourcesBegin = alias.sourcesEnd = m_sources.size();
+        for (std::size_t i = 0; i < bitset.size(); ++i) {
+          if (!bitset[i])
+            continue;
+
+          const uint64_t t = static_cast<uint64_t>(1) << i;
+          auto it = bits.find(t);
+          if (it == bits.end() || it->second == flag.aliasIdx)
+            break;
+          m_sources.push_back(it->second);
+          alias.sourcesEnd = m_sources.size();
+        }
+      }
+    }
+
+    struct FlagData
+    {
+      uint64_t flags = 0;
+      int32_t aliasIdx = -1;
+      int32_t linkIdx = -1;
+    };
+
+    struct Alias
+    {
+      QByteArray name;
+      uint64_t flags = 0;
+      uint32_t sourcesBegin = 0;
+      uint32_t sourcesEnd = 0;
+    };
+
+    boost::container::flat_map<QByteArray, FlagData> m_flags;
+    std::vector<Alias> m_aliases;
+    std::vector<int32_t> m_sources;
   };
 
   class FlagAlias : public Attribute
@@ -56,10 +146,11 @@ namespace Valuable {
   {
   public:
     FlagAliasT(Node * parent, AttributeT<Radiant::FlagsT<T>> & master,
-               const QByteArray & name, Radiant::FlagsT<T> flags)
-      : FlagAlias(parent, name),
+               const FlagNames::Alias & data)
+      : FlagAlias(parent, data.name),
         m_master(master),
-        m_flags(flags)
+        m_flags(Radiant::FlagsT<T>::fromInt(data.flags)),
+        m_data(data)
     {
     }
 
@@ -120,11 +211,11 @@ namespace Valuable {
     virtual bool handleShorthand(const Valuable::StyleValue & value,
                                  Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
     {
-      if (m_sources.empty())
+      if (m_data.sourcesBegin == m_data.sourcesEnd)
         return false;
 
-      for (auto source: m_sources)
-        expanded[source] = value;
+      for (uint32_t idx = m_data.sourcesBegin, e = m_data.sourcesEnd; idx < e; ++idx)
+        expanded[&m_master.m_aliases[idx]] = value;
 
       return true;
     }
@@ -132,12 +223,6 @@ namespace Valuable {
     virtual bool isValueDefinedOnLayer(Layer layer) const OVERRIDE
     {
       return m_master.isFlagDefinedOnLayer(m_flags, layer);
-    }
-
-    void setSources(std::vector<FlagAliasT<T>*> sources)
-    {
-      m_sources = sources;
-      setSerializable(sources.empty());
     }
 
     virtual int asInt(bool * const ok, Layer layer) const OVERRIDE
@@ -157,17 +242,12 @@ namespace Valuable {
       return "flag";
     }
 
-    std::vector<FlagAliasT<T>*> & sources()
-    {
-      return m_sources;
-    }
-
   private:
     friend class AttributeT<Radiant::FlagsT<T>>;
 
     AttributeT<Radiant::FlagsT<T>> & m_master;
     const Radiant::FlagsT<T> m_flags;
-    std::vector<FlagAliasT<T>*> m_sources;
+    const FlagNames::Alias & m_data;
   };
 
   /**
@@ -221,77 +301,28 @@ namespace Valuable {
   {
   public:
     typedef typename Flags::Enum T;
-    AttributeT(Node * parent, const QByteArray & name, const FlagNames * names,
+    AttributeT(Node * parent, const QByteArray & name, const FlagNames & data,
                Flags v = Flags())
       : Attribute(parent, name)
+      , m_data(data)
     {
       m_masks[DEFAULT] = ~Flags();
       m_values[DEFAULT] = v;
       m_cache = v;
 
-      assert(names);
-
-      std::map<Flags, FlagAliasT<T>*> aliases;
-      std::map<T, FlagAliasT<T>*> bits;
-      for (const FlagNames * it = names; it->name; ++it) {
-        auto flag = Flags::fromInt(it->value);
-        auto & d = m_flags[QByteArray(it->name).toLower()];
-        d.flags = flag;
-        if (parent && it->value && it->createAlias) {
-          d.alias = new FlagAliasT<T>(parent, *this, it->name, flag);
-          d.link = d.alias;
-          aliases[flag] = d.alias;
-
-          std::bitset<sizeof(T)*8> bitset(it->value);
-          if (bitset.count() == 1) {
-            const T t = T(it->value);
-            if (bits.find(t) == bits.end())
-              bits[t] = d.alias;
-          }
-        }
+      m_aliases.reserve(m_data.m_aliases.size());
+      for (const FlagNames::Alias & a: m_data.m_aliases) {
+        m_aliases.emplace_back(parent, *this, a);
+        if (a.sourcesBegin == a.sourcesEnd)
+          m_aliases.back().setOwnerShorthand(this);
       }
 
-      // mark some of the aliases to be shorthands, for example this would
-      // mark "input-translate-xy" to be a shorhand for "input-translate-x" and "...-y"
-      for (auto & d: m_flags) {
-        if (!d.alias) {
-          auto it = aliases.find(d.flags);
-          if (it != aliases.end())
-            d.link = it->second;
-          continue;
-        }
-        std::bitset<sizeof(T)*8> bitset(d.alias->flags().asInt());
-        bool found = true;
-        std::vector<FlagAliasT<T>*> sources;
-        for (std::size_t i = 0; i < bitset.size(); ++i) {
-          if (!bitset[i])
-            continue;
-
-          const T t = T(1 << i);
-          auto it = bits.find(t);
-          if (it == bits.end() || it->second == d.alias) {
-            found = false;
-            break;
-          }
-          sources.push_back(it->second);
-        }
-
-        if (found)
-          d.alias->setSources(sources);
-
-        if (sources.empty())
-          d.alias->setOwnerShorthand(this);
-      }
-
-      if (!aliases.empty())
+      if (!m_aliases.empty())
         setSerializable(false);
     }
 
     virtual ~AttributeT()
     {
-      for (auto & flag: m_flags) {
-        delete flag.alias;
-      }
     }
 
     AttributeT & operator=(const Flags & b) { setValue(b, USER); return *this; }
@@ -445,9 +476,9 @@ namespace Valuable {
       } else {
         Flags newValue;
         for (auto str: tmp.split(QRegExp("\\s+"), QString::SkipEmptyParts)) {
-          auto it = m_flags.find(str.toUtf8().toLower());
-          if (it == m_flags.end()) return false;
-          newValue |= it->flags;
+          auto it = m_data.m_flags.find(str.toLatin1().toLower());
+          if (it == m_data.m_flags.end()) return false;
+          newValue |= Flags::fromInt(it->second.flags);
         }
         *this = newValue;
       }
@@ -482,9 +513,9 @@ namespace Valuable {
 
       Flags newValue;
       for(const auto & var : v.components()) {
-        auto it = m_flags.find(var.asKeyword().toLower());
-        if (it == m_flags.end()) return false;
-        newValue |= it->flags;
+        auto it = m_data.m_flags.find(var.asKeyword().toLower());
+        if (it == m_data.m_flags.end()) return false;
+        newValue |= Flags::fromInt(it->second.flags);
       }
       setValue(newValue, layer);
       return true;
@@ -527,30 +558,31 @@ namespace Valuable {
       // If CSS parser could order components to some order and m_flags would
       // be in the same order, we could iterate them with two iterators
       // without need to have two passes.
-      for (auto it = m_flags.begin(); it != m_flags.end(); ++it) {
-        auto alias = it->link;
-        if (!alias || !alias->sources().empty())
+      for (uint32_t idx = 0, s = m_data.m_aliases.size(); idx < s; ++idx) {
+        const FlagNames::Alias & a = m_data.m_aliases[idx];
+        if (a.sourcesBegin != a.sourcesEnd)
           continue;
 
-        expanded[alias] = 0;
+        expanded[&m_aliases[idx]] = 0;
       }
 
       for (const auto & var: value.components()) {
-        auto it = m_flags.find(var.asKeyword().toLower());
+        auto it = m_data.m_flags.find(var.asKeyword().toLower());
         /// this is not a flag, probably a typo in CSS file
-        if (it == m_flags.end())
+        if (it == m_data.m_flags.end())
           return false;
-        if (!it->flags)
+        const FlagNames::FlagData & d = it->second;
+        if (!d.flags)
           continue;
-        if (!it->link)
+        if (d.linkIdx < 0)
           return false;
 
-        auto & sources = it->link->sources();
-        if (sources.empty()) {
-          expanded[it->link] = 1;
+        const FlagNames::Alias & a = m_data.m_aliases[d.linkIdx];
+        if (a.sourcesBegin == a.sourcesEnd) {
+          expanded[&m_aliases[d.linkIdx]] = 1;
         } else {
-          for (auto s: sources)
-            expanded[s] = 1;
+          for (uint32_t idx = a.sourcesBegin; idx < a.sourcesEnd; ++idx)
+            expanded[&m_aliases[m_data.m_sources[idx]]] = 1;
         }
       }
 
@@ -558,26 +590,29 @@ namespace Valuable {
     }
 
   private:
+    friend class FlagAliasT<T>;
 
-    QString stringify(Flags v) const
+    QString stringify(Flags value) const
     {
       // All matching flags sorted by their popcount and their location in the
       // original array to optimize the string representation.
       // For example motion-x and motion-y will become motion-xy, since motion-xy
       // has a higher popcount than motion-x / -y
-      std::multimap<int, std::pair<QByteArray, Flags> > flags;
+      std::multimap<int, std::pair<QByteArray, uint64_t>> flags;
+
+      uint64_t v = value.asInt();
 
       int i = 0;
-      for (auto it = m_flags.begin(); it != m_flags.end(); ++it, ++i) {
-        if ((v & it->flags) == it->flags) {
-          std::bitset<sizeof(T)*8> bitset(it->flags.asInt());
-          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it.key(), it->flags)));
+      for (auto it = m_data.m_flags.begin(); it != m_data.m_flags.end(); ++it, ++i) {
+        if ((v & it->second.flags) == it->second.flags) {
+          std::bitset<sizeof(T)*8> bitset(it->second.flags);
+          flags.insert(std::make_pair(i-1024*int(bitset.count()), std::make_pair(it->first, it->second.flags)));
         }
       }
 
       QStringList flagLst;
       for (auto p: flags) {
-        Flags v2 = p.second.second;
+        uint64_t v2 = p.second.second;
         if ((v2 & v) == v2) {
           // If we have bits on that aren't actual enums (or the string version
           // is missing), v might still have some bits enabled, but v2 might be
@@ -602,25 +637,18 @@ namespace Valuable {
       m_cache = value(Layer(LAYER_COUNT - 1), Layer(0));
       Flags changedBits = before ^ m_cache;
       if (changedBits) {
-        for (auto & d: m_flags)
-          if (d.alias && (d.flags & changedBits))
-            d.alias->emitChange();
+        for (auto & alias: m_aliases)
+          if (alias.m_flags & changedBits)
+            alias.emitChange();
         emitChange();
       }
     }
 
-    struct FlagData
-    {
-      FlagData() : flags(), alias(nullptr), link(nullptr) {}
-      Flags flags;
-      FlagAliasT<T> * alias;
-      FlagAliasT<T> * link;
-    };
-
     Flags m_cache;
     Flags m_values[LAYER_COUNT];
     Flags m_masks[LAYER_COUNT];
-    QMap<QByteArray, FlagData> m_flags;
+    const FlagNames & m_data;
+    std::vector<FlagAliasT<T>> m_aliases;
   };
 }
 
