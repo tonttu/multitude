@@ -37,16 +37,6 @@ namespace Valuable {
     bool createAlias;
   };
 
-  /// This struct is used to define the name strings for enum values so they
-  /// can be referenced from CSS.
-  struct EnumNames
-  {
-    /// Name of the flag
-    const char * name;
-    /// Value of the value
-    long value;
-  };
-
   class FlagAlias : public Attribute
   {
   public:

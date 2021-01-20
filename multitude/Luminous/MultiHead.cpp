@@ -27,13 +27,12 @@
 
 namespace Luminous
 {
-  Valuable::EnumNames s_uploadMethods[] = {
+  Valuable::EnumNames s_uploadMethods = {
     {"texture", Luminous::TextureGL::METHOD_TEXTURE},
     {"buffer-upload", Luminous::TextureGL::METHOD_BUFFER_UPLOAD},
     {"buffer-map", Luminous::TextureGL::METHOD_BUFFER_MAP},
     {"buffer-map-nosync", Luminous::TextureGL::METHOD_BUFFER_MAP_NOSYNC},
     {"buffer-map-nosync-orphan", Luminous::TextureGL::METHOD_BUFFER_MAP_NOSYNC_ORPHAN},
-    {0,0}
   };
 
   MultiHead::Area::Area()

@@ -14,13 +14,42 @@
 #include "AttributeNumeric.hpp"
 #include "AttributeFlags.hpp"
 
+#include <boost/container/flat_map.hpp>
+
 namespace Valuable
 {
+  struct EnumName
+  {
+    /// Name of the flag
+    const char * name;
+    /// Value of the value
+    int value;
+  };
+
+  /// This struct is used to define the name strings for enum values so they
+  /// can be referenced from CSS.
+  struct EnumNames
+  {
+    EnumNames() = default;
+    EnumNames(std::initializer_list<EnumName> l)
+    {
+      values.reserve(l.size());
+      for (const EnumName & n: l) {
+        if (!n.name)
+          break;
+        values[QByteArray(n.name).toLower()] = n.value;
+      }
+    }
+
+    boost::container::flat_map<QByteArray, int> values;
+  };
+
   class AttributeEnum
   {
   public:
-    AttributeEnum() : m_allowIntegers(false) {}
-    virtual ~AttributeEnum() {}
+    AttributeEnum(const EnumNames & names)
+      : m_enumValues(names) {}
+    ~AttributeEnum() {}
 
     void setAllowIntegers(bool allow)
     {
@@ -32,12 +61,11 @@ namespace Valuable
       return m_allowIntegers;
     }
 
-    const QMap<QString, int> & enumValues() const { return m_enumValues; }
+    const EnumNames & enumValues() const { return m_enumValues; }
 
   protected:
-    /// @todo int might be too small
-    QMap<QString, int> m_enumValues;
-    bool m_allowIntegers;
+    const EnumNames & m_enumValues;
+    bool m_allowIntegers = false;
   };
 
   /**
@@ -105,14 +133,11 @@ namespace Valuable
     using Base::operator =;
     using Base::value;
 
-    AttributeT(Node * host, const QByteArray & name, const EnumNames * names,
+    AttributeT(Node * host, const QByteArray & name, const EnumNames & names,
                   const T & v)
       : Base(host, name, v),
-        AttributeEnum()
+        AttributeEnum(names)
     {
-      for (const EnumNames * it = names; it && it->name; ++it) {
-        m_enumValues[QString(it->name).toLower()] = it->value;
-      }
     }
 
     /// Converts the enum value to integer if integers are allowed
@@ -129,8 +154,8 @@ namespace Valuable
         this->setValue(T(v), layer);
         return true;
       } else {
-        for (int enumValue: m_enumValues) {
-          if (enumValue == v) {
+        for (auto & p: m_enumValues.values) {
+          if (p.second == v) {
             this->setValue(T(v), layer);
             return true;
           }
@@ -145,11 +170,11 @@ namespace Valuable
       if (unit != Attribute::VU_UNKNOWN)
         return false;
 
-      auto it = m_enumValues.find(v.toLower());
-      if (it == m_enumValues.end())
+      auto it = m_enumValues.values.find(v.toLatin1().toLower());
+      if (it == m_enumValues.values.end())
         return false;
 
-      this->setValue(T(*it), layer);
+      this->setValue(T(it->second), layer);
       return true;
     }
 
@@ -161,21 +186,21 @@ namespace Valuable
       if (v.unit(0) != Attribute::VU_UNKNOWN)
         return false;
 
-      auto it = m_enumValues.find(v.asString().toLower());
-      if (it == m_enumValues.end())
+      auto it = m_enumValues.values.find(v.asKeyword().toLower());
+      if (it == m_enumValues.values.end())
         return false;
 
-      this->setValue(T(*it), layer);
+      this->setValue(T(it->second), layer);
       return true;
     }
 
     virtual void eventProcess(const QByteArray &, Radiant::BinaryData & data) OVERRIDE
     {
-      QString str;
+      QByteArray str;
       if (data.readString(str)) {
-        auto it = m_enumValues.find(str.toLower());
-        if (it != m_enumValues.end())
-          this->setValue(T(*it));
+        auto it = m_enumValues.values.find(str.toLower());
+        if (it != m_enumValues.values.end())
+          this->setValue(T(it->second));
       }
     }
 
@@ -185,10 +210,9 @@ namespace Valuable
         *ok = true;
 
       T v = value(layer);
-      for (auto it = m_enumValues.begin(); it != m_enumValues.end(); ++it) {
-        if (*it == (int)v)
-          return it.key();
-      }
+      for (auto & p: m_enumValues.values)
+        if (p.second == (int)v)
+          return QString::fromLatin1(p.first);
       return QString::number((int)v);
     }
 
