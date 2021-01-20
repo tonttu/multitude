@@ -104,7 +104,7 @@ namespace Valuable
 
 
 
-    QString elementName(int tupleIndex, QString baseName) const;
+    QByteArray elementName(int tupleIndex, const QByteArray & baseName) const;
 
     /// This function changes index used in in tuple to the index in the given range:
     /// [0, range-1] in WrappedValue or similar (most notably Nimble::Vectors).
@@ -122,7 +122,7 @@ namespace Valuable
 
   protected:
     /// CRTP implementation. override in subclass
-    static QString priv_elementName(int tupleIndex, QString baseName);
+    static QByteArray priv_elementName(int tupleIndex, const QByteArray & baseName);
     virtual int priv_t2r(int tupleIndex, int range) const;
     virtual ElementType priv_unwrap(const WrappedValue& v, int index) const;
     /// This needs to be always overriden
@@ -141,16 +141,16 @@ namespace Valuable
 
 
   template <typename T, typename A>
-  QString AttributeTuple<T, A>::elementName(int tupleIndex, QString baseName) const
+  QByteArray AttributeTuple<T, A>::elementName(int tupleIndex, const QByteArray & baseName) const
   {
     return A::priv_elementName(tupleIndex, baseName);
   }
 
   template <typename T, typename A>
-  QString AttributeTuple<T, A>::priv_elementName(int tupleIndex, QString baseName)
+  QByteArray AttributeTuple<T, A>::priv_elementName(int tupleIndex, const QByteArray & baseName)
   {
     static const char *suffixes[] = {"-x", "-y", "-z", "-w"};
-    return baseName.append(suffixes[tupleIndex]);
+    return baseName + suffixes[tupleIndex];
   }
 
   template <typename T, typename A>
@@ -209,7 +209,7 @@ namespace Valuable
   {
     for(int i = 0; i < N; ++i) {
       ElementType e = unwrap(v, t2r(i));
-      m_values[i] = new AttributeT<ElementType>(host, elementName(i, name).toUtf8(), e);
+      m_values[i] = new AttributeT<ElementType>(host, elementName(i, name), e);
     }
 
     for(int i = 0; i < N; ++i) {

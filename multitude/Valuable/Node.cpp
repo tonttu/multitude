@@ -174,12 +174,12 @@ namespace Valuable
       : Attribute(),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(nullptr, "id", generateId()),
+      m_id(nullptr, QByteArrayLiteral("id"), generateId()),
       m_listenersId(0)
   {
-    eventAddOut("attribute-added");
-    eventAddOut("attribute-removed");
-    addAttribute("id", &m_id);
+    eventAddOut(QByteArrayLiteral("attribute-added"));
+    eventAddOut(QByteArrayLiteral("attribute-removed"));
+    addAttribute(QByteArrayLiteral("id"), &m_id);
   }
 
   Node::Node(Node * host, const QByteArray & name)
@@ -189,9 +189,9 @@ namespace Valuable
       m_id(nullptr, "id", generateId()),
       m_listenersId(0)
   {
-    eventAddOut("attribute-added");
-    eventAddOut("attribute-removed");
-    addAttribute("id", &m_id);
+    eventAddOut(QByteArrayLiteral("attribute-added"));
+    eventAddOut(QByteArrayLiteral("attribute-removed"));
+    addAttribute(QByteArrayLiteral("id"), &m_id);
   }
 
   Node::~Node() noexcept

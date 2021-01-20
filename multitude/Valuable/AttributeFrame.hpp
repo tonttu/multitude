@@ -43,10 +43,10 @@ namespace Valuable
     {
     }
 
-    static QString priv_elementName(int tupleIndex, QString baseName)
+    static QByteArray priv_elementName(int tupleIndex, const QByteArray & baseName)
     {
       static const char* suffixes[] = {"-top", "-right", "-bottom", "-left"};
-      return baseName.append(suffixes[tupleIndex]);
+      return baseName + suffixes[tupleIndex];
     }
 
     bool set(const Nimble::Frame4f& frame, AttributeType::Layer layer,
