@@ -334,6 +334,7 @@ namespace Valuable
   bool Node::addAttribute(const QByteArray & cname, Attribute * const attribute)
   {
     REQUIRE_THREAD(m_ownerThread);
+#ifdef RADIANT_DEBUG
     // Check attributes
     if(m_attributes.find(cname) != m_attributes.end()) {
       Radiant::error(
@@ -342,6 +343,7 @@ namespace Valuable
           cname.data(), m_name.data());
       return false;
     }
+#endif
 
     // Unlink host if necessary
     Node * host = attribute->host();
@@ -352,7 +354,8 @@ namespace Valuable
     }
 
     // Change the attribute name
-    attribute->setName(cname);
+    if (attribute->name() != cname)
+      attribute->setName(cname);
 
     /// m_attributes[cname] = attribute; would iterate m_attributes again,
     /// optimize the insertion by adding the new attribute directly to the
@@ -817,33 +820,35 @@ namespace Valuable
 
   void Node::eventAddOut(const QByteArray & id)
   {
+#ifdef RADIANT_DEBUG
     if (m_eventSendNames.contains(id)) {
       Radiant::warning("Node::eventAddOut # Trying to register event '%s' that is already registered", id.data());
-    } else {
-      m_eventSendNames.insert(id);
-#ifdef MULTI_DOCUMENTER
-      s_eventSendNames[Radiant::StringUtils::type(*this)].insert(id);
-#endif
+      return;
     }
+#endif
+    m_eventSendNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+    s_eventSendNames[Radiant::StringUtils::type(*this)].insert(id);
+#endif
   }
 
   void Node::eventAddIn(const QByteArray &id)
   {
+#ifdef RADIANT_DEBUG
     if (m_eventListenNames.contains(id)) {
       Radiant::warning("Node::eventAddIn # Trying to register duplicate event handler for event '%s'", id.data());
-    } else {
-      m_eventListenNames.insert(id);
-#ifdef MULTI_DOCUMENTER
-      s_eventListenNames[Radiant::StringUtils::type(*this)].insert(id);
-#endif
+      return;
     }
+#endif
+    m_eventListenNames.insert(id);
+#ifdef MULTI_DOCUMENTER
+    s_eventListenNames[Radiant::StringUtils::type(*this)].insert(id);
+#endif
   }
 
   void Node::eventRemoveOut(const QByteArray & eventId)
   {
-    if (m_eventSendNames.contains(eventId)) {
-      m_eventSendNames.remove(eventId);
-    } else {
+    if (!m_eventSendNames.remove(eventId)) {
       Radiant::warning("Node::eventRemoveOut # Couldn't find event '%s'", eventId.data());
     }
 
@@ -851,9 +856,7 @@ namespace Valuable
 
   void Node::eventRemoveIn(const QByteArray & messageId)
   {
-    if (m_eventListenNames.contains(messageId)) {
-      m_eventListenNames.remove(messageId);
-    } else {
+    if (!m_eventListenNames.remove(messageId)) {
       Radiant::warning("Node::eventRemoveIn # Couldn't find event '%s'", messageId.data());
     }
   }
