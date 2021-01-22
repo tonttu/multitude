@@ -177,8 +177,6 @@ namespace Valuable
       m_id(nullptr, QByteArrayLiteral("id"), generateId()),
       m_listenersId(0)
   {
-    eventAddOut(QByteArrayLiteral("attribute-added"));
-    eventAddOut(QByteArrayLiteral("attribute-removed"));
     addAttribute(QByteArrayLiteral("id"), &m_id);
   }
 
@@ -189,8 +187,6 @@ namespace Valuable
       m_id(nullptr, "id", generateId()),
       m_listenersId(0)
   {
-    eventAddOut(QByteArrayLiteral("attribute-added"));
-    eventAddOut(QByteArrayLiteral("attribute-removed"));
     addAttribute(QByteArrayLiteral("id"), &m_id);
   }
 
@@ -366,7 +362,7 @@ namespace Valuable
     attribute->setOwnerThread(m_ownerThread);
 #endif
     attribute->m_host  = this;
-    eventSend("attribute-added", cname);
+    onAttributeAdded.raise(attribute);
     attributeAdded(attribute);
 
     attribute->emitHostChange();
@@ -383,7 +379,7 @@ namespace Valuable
         attribute->setOwnerThread(nullptr);
 #endif
         attribute->m_host = nullptr;
-        eventSend("attribute-removed", attribute->name());
+        onAttributeRemoved.raise(attribute);
         attributeRemoved(attribute);
         if(emitChange)
           attribute->emitHostChange();

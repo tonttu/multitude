@@ -3,6 +3,8 @@
 #include "Node.hpp"
 #include "Event.hpp"
 
+#include <Punctual/Executors.hpp>
+
 namespace Valuable
 {
   /// Helper class for monitoring when a Node gets (re)created and when any of
@@ -61,21 +63,18 @@ namespace Valuable
         m_listenerOwners.emplace_back(new Node());
         Node * owner = m_listenerOwners.back().get();
 
-        node->eventAddListenerBd("attribute-added", owner,
-                                 [this, node, path, name, depth] (Radiant::BinaryData & bd) {
-          QByteArray attrName = bd.read<QByteArray>();
-          if (name != attrName)
+        node->onAttributeAdded.addListener(owner->sharedPtr(), Punctual::afterUpdate(),
+                                           [this, node, path, name, depth] (Valuable::Attribute * attr) {
+          if (name != attr->name())
             return;
 
-          Node * child = dynamic_cast<Node*>(node->attribute(attrName));
+          Node * child = dynamic_cast<Node*>(attr);
           if (child)
             monitor(child, path, depth + 1);
         }, Node::AFTER_UPDATE);
 
-        node->eventAddListenerBd("attribute-removed", owner,
-                                 [this, name, depth] (Radiant::BinaryData & bd) {
-          QByteArray attrName = bd.read<QByteArray>();
-          if (name != attrName)
+        node->onAttributeRemoved.addListener(owner->sharedPtr(), [this, name, depth] (Valuable::Attribute * attr) {
+          if (name != attr->name())
             return;
 
           m_listenerOwners.resize(depth + 1);
@@ -100,10 +99,8 @@ namespace Valuable
       m_listenerOwners.emplace_back(new Node());
       Node * owner = m_listenerOwners.back().get();
 
-      node->eventAddListenerBd("attribute-added", owner,
-                               [this, result, owner] (Radiant::BinaryData & bd) {
-        QByteArray attrName = bd.read<QByteArray>();
-        auto attr = result->attribute(attrName);
+      node->onAttributeAdded.addListener(owner->sharedPtr(), Punctual::afterUpdate(),
+                                         [this, result, owner] (Valuable::Attribute * attr) {
         if (attr) {
           attr->addListener(owner, [this, result] {
             onChange.raise(result);
@@ -112,7 +109,7 @@ namespace Valuable
         }
       }, Node::AFTER_UPDATE);
 
-      node->eventAddListener("attribute-removed", owner, [this, result] {
+      node->onAttributeRemoved.addListener(owner->sharedPtr(), [this, result] (auto) {
         onChange.raise(result);
       });
 

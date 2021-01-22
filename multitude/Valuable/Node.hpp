@@ -22,6 +22,8 @@
 #include <Radiant/ThreadChecks.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <Valuable/Event.hpp>
+
 #include <map>
 #include <set>
 #include <atomic>
@@ -42,6 +44,10 @@ namespace Valuable
   /// @todo Examples
   class VALUABLE_API Node : public Attribute, public Patterns::NotCopyable
   {
+  public:
+    Valuable::Event<Attribute*> onAttributeAdded;
+    Valuable::Event<Attribute*> onAttributeRemoved;
+
   public:
     /// Unique identifier type
     typedef int64_t Uuid;
