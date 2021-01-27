@@ -44,7 +44,7 @@ namespace UnitTest {
       UT_CATCH(std::exception, e,
       {
          MemoryOutStream stream;
-         stream << "Unhandled exception: " << e.what();
+         stream << "Unhandled exception " << typeid(e).name() << ": " << e.what();
          CurrentTest::Results()->OnTestFailure(details, stream.GetText());
       })
       UT_CATCH_ALL
