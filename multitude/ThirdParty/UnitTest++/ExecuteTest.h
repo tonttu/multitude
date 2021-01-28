@@ -18,6 +18,8 @@
 #include "Posix/SignalTranslator.h"
 #endif
 
+#include <typeinfo>
+
 namespace UnitTest {
 
    template< typename T >
