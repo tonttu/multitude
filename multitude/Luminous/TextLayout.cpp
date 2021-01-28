@@ -101,7 +101,7 @@ namespace Luminous
         if (glyphCache->isEmpty())
           continue;
 
-        const Nimble::Vector2f location = Nimble::Vector2f(positions[i].x(), positions[i].y()) +
+        const Nimble::Vector2f location = Nimble::Vector2d(positions[i].x(), positions[i].y()).cast<float>() +
             layoutLocation + glyphCache->location() * scale;
         const Nimble::Vector2f & size = glyphCache->size() * scale;
 

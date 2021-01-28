@@ -140,7 +140,8 @@ namespace Luminous
       m_d->doc().setTextWidth(maximumSize().width());
       // trigger relayout in Qt
       QSizeF size = m_d->doc().documentLayout()->documentSize();
-      nonConst->setBoundingBox(Nimble::Rectf(0, 0, size.width(), size.height()));
+      nonConst->setBoundingBox(Nimble::Rectf(0, 0, static_cast<float>(size.width()),
+                                             static_cast<float>(size.height())));
 
       nonConst->setLayoutReady(true);
       nonConst->clearGlyphs();
@@ -161,7 +162,7 @@ namespace Luminous
       /// we have automatically wrapped lines, these are different
       const int lineCount = textLayout->lineCount();
 
-      const Nimble::Vector2f layoutLocation(rect.left(), rect.top());
+      const Nimble::Vector2f layoutLocation(static_cast<float>(rect.left()), static_cast<float>(rect.top()));
       for (auto it = block.begin(), end = block.end(); it != end; ++it) {
         const QTextFragment frag = it.fragment();
         if (!frag.isValid())
@@ -200,22 +201,22 @@ namespace Luminous
         const bool rtl = block.layout()->textOption().textDirection() == Qt::RightToLeft;
 
         QTextLayout textLayout(m_d->m_listBullet, block.charFormat().font());
-        float size = TextLayout::pointToPixelSize(textLayout.font().pointSizeF());
+        float size = TextLayout::pointToPixelSize(static_cast<float>(textLayout.font().pointSizeF()));
 
         textLayout.beginLayout();
         QTextLine line = textLayout.createLine();
-        int indent = m_d->doc().indentWidth() * fmt.indent();
+        int indent = static_cast<int>(m_d->doc().indentWidth() * fmt.indent());
         line.setLineWidth(size);
         line.setPosition(QPointF(0, 0));
         textLayout.endLayout();
         QRectF bullet = textLayout.boundingRect();
 
         Nimble::Vector2f loc;
-        loc.y = rect.top() - bullet.top();
+        loc.y = static_cast<float>(rect.top() - bullet.top());
         if (rtl) {
-          loc.x = rect.right() + bullet.right() * 1.5;
+          loc.x = static_cast<float>(rect.right() + bullet.right() * 1.5);
         } else {
-          loc.x = rect.left() + indent - bullet.right() * 1.5;
+          loc.x = static_cast<float>(rect.left() + indent - bullet.right() * 1.5);
         }
 
         Q_FOREACH (const QGlyphRun & glyphRun, textLayout.glyphRuns())
