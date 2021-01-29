@@ -18,22 +18,24 @@ namespace Radiant
   class KeyEvent::D
   {
   public:
-    D(QKeyEvent * qKeyEvent)
+    D(QKeyEvent * qKeyEvent, Source source)
       : m_event(qKeyEvent)
+      , m_source(source)
     {}
 
     std::unique_ptr<QKeyEvent> m_event;
+    Source m_source;
   };
 
-  KeyEvent::KeyEvent(const QKeyEvent & e)
+  KeyEvent::KeyEvent(const QKeyEvent & e, Source source)
     : m_d(new D(new QKeyEvent(e.type(), e.key(), e.modifiers(), e.nativeScanCode(),
                               e.nativeVirtualKey(), e.nativeModifiers(), e.text(),
-                              e.isAutoRepeat(), e.count())))
+                              e.isAutoRepeat(), e.count()), source))
   {
   }
 
-  KeyEvent::KeyEvent(int key, QEvent::Type type, Qt::KeyboardModifiers modifiers, const QString & text, bool autorep)
-    : m_d(new D(new QKeyEvent(type, key, modifiers, text, autorep)))
+  KeyEvent::KeyEvent(int key, Source source, QEvent::Type type, Qt::KeyboardModifiers modifiers, const QString & text, bool autorep)
+    : m_d(new D(new QKeyEvent(type, key, modifiers, text, autorep), source))
   {
   }
 
@@ -41,14 +43,19 @@ namespace Radiant
   {
   }
 
-  KeyEvent KeyEvent::createKeyPress(int key, bool isautorepeat)
+  KeyEvent::Source KeyEvent::source() const
   {
-    return KeyEvent(key, QEvent::KeyPress, Qt::NoModifier, QString(), isautorepeat);
+    return m_d->m_source;
   }
 
-  KeyEvent KeyEvent::createKeyRelease(int key)
+  KeyEvent KeyEvent::createKeyPress(int key, Source source, bool isautorepeat)
   {
-    return KeyEvent(key, QEvent::KeyRelease, Qt::NoModifier);
+    return KeyEvent(key, source, QEvent::KeyPress, Qt::NoModifier, QString(), isautorepeat);
+  }
+
+  KeyEvent KeyEvent::createKeyRelease(int key, Source source)
+  {
+    return KeyEvent(key, source, QEvent::KeyRelease, Qt::NoModifier);
   }
 
   VirtualKeyCode KeyEvent::convertToVirtualKeyCode(int key)
