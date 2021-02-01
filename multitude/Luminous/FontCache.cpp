@@ -295,10 +295,10 @@ namespace Luminous
       return &s_emptyGlyph;
     }
 
-    const QRectF br = path.boundingRect();
+    const Nimble::Rectf br = path.boundingRect();
 
     const float glyphSize = std::max(br.width(), br.height());
-    const float distanceFieldSize = glyphSize + 2.0 * s_padding;
+    const float distanceFieldSize = glyphSize + 2.0f * s_padding;
     const float hiresSize = std::min((float)s_maxHiresSize, s_maxHiresSize * glyphSize / s_distanceFieldPixelSize);
     const float hiresPadding = hiresSize * s_padding / distanceFieldSize;
     const float hiresFactor = hiresSize / distanceFieldSize;
@@ -306,8 +306,8 @@ namespace Luminous
     const float hiresContentSize = hiresSize - hiresPadding * 2.0f;
     const float hiresContentScale = hiresContentSize / glyphSize;
 
-    const Nimble::Vector2f translate(hiresPadding - br.left() * hiresContentScale,
-                                     hiresPadding - br.top() * hiresContentScale);
+    const Nimble::Vector2f translate(hiresPadding - br.low().x * hiresContentScale,
+                                     hiresPadding - br.low().y * hiresContentScale);
 
     const Nimble::Vector2i sdfSize(Nimble::Math::Round(br.width() + 2.0f * s_padding),
                                    Nimble::Math::Round(br.height() + 2.0f * s_padding));
@@ -352,13 +352,13 @@ namespace Luminous
 
     Image sdf;
     sdf.allocate(sdfSize.x, sdfSize.y, s_pixelFormat);
-    DistanceFieldGenerator::generate(m_src, srcSize, sdf, hiresPadding);
+    DistanceFieldGenerator::generate(m_src, srcSize, sdf, static_cast<int>(hiresPadding));
 
     FontCache::Glyph * glyph = makeGlyph(sdf);
     glyph->setSize(Nimble::Vector2f(2.0f * s_padding + br.width(),
                                     2.0f * s_padding + br.height()));
-    glyph->setLocation(Nimble::Vector2f(br.left() - s_padding,
-                                        br.top() - s_padding));
+    glyph->setLocation(Nimble::Vector2f(br.low().x - s_padding,
+                                        br.low().y - s_padding));
 
     if(!s_persistGlyphs)
       return glyph;
@@ -450,8 +450,8 @@ namespace Luminous
       if (loadImage(img, p.second.src)) {
         FontCache::Glyph * glyph = makeGlyph(img);
         assert(glyph);
-        glyph->setLocation(Nimble::Vector2f(p.second.rect.left(), p.second.rect.top()));
-        glyph->setSize(Nimble::Vector2f(p.second.rect.width(), p.second.rect.height()));
+        glyph->setLocation(Nimble::Vector2d(p.second.rect.left(), p.second.rect.top()).cast<float>());
+        glyph->setSize(Nimble::Vector2d(p.second.rect.width(), p.second.rect.height()).cast<float>());
 
         Radiant::Guard g(m_cache.m_cacheMutex);
         m_cache.m_cache[p.first] = glyph;
@@ -609,7 +609,7 @@ namespace Luminous
     /// * Same problem with QRawFont::fromFont, even when using the original QFont
     ///   with it
 
-    const float scaleFactor = s_distanceFieldPixelSize / rawFont.pixelSize();
+    const float scaleFactor = static_cast<float>(s_distanceFieldPixelSize / rawFont.pixelSize());
     for (int i = 0; i < path.elementCount(); ++i) {
       const QPainterPath::Element & e = path.elementAt(i);
       path.setElementPositionAt(i, e.x * scaleFactor, e.y * scaleFactor);

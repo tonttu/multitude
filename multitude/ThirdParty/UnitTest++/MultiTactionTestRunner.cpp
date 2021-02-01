@@ -360,7 +360,7 @@ namespace UnitTest
 
       process.start(command, newArgs, QProcess::ReadOnly);
       process.waitForStarted();
-      bool finished = process.waitForFinished(options.timeoutSeconds * 1000.0);
+      bool finished = process.waitForFinished(static_cast<int>(options.timeoutSeconds * 1000.0));
       const double time = timer.time();
 
       QString error, errorDetails;
@@ -464,7 +464,7 @@ namespace UnitTest
       int tests = root.attribute("tests").toInt();
       int failures = root.attribute("failures").toInt();
 
-      int secs = time;
+      int secs = static_cast<int>(time);
       int mins = secs / 60;
       secs = secs % 60;
       printf("Ran %d test%s in %d min %d s\n", tests, tests == 1 ? "" : "s", mins, secs);
@@ -517,7 +517,7 @@ namespace UnitTest
 
       Radiant::BGThread bg("BGThread test");
       if (options.flags & TestRunnerFlag::PARALLEL)
-        bg.run(QThread::idealThreadCount() * 1.25);
+        bg.run(static_cast<int>(QThread::idealThreadCount() * 1.25));
       else
         bg.run(1);
 
@@ -562,7 +562,7 @@ namespace UnitTest
         output.write(dom.toString().toUtf8());
       }
 
-      printTestReport(dom, timer.time());
+      printTestReport(dom, static_cast<float>(timer.time()));
 
       return exitCode;
     }

@@ -236,12 +236,12 @@ namespace Nimble {
 
       Matrix4T<T> camera = makeTranslation(Vector3T<T>(0, 0, -dist));
 
-      Matrix4T<T> window(width*0.5, 0, 0, 0.0 + width*0.5,
-                         0, height * 0.5, 0, 0.0+height*0.5,
+      Matrix4T<T> window(width*T(0.5), 0, 0, width*T(0.5),
+                         0, height * T(0.5), 0, height*T(0.5),
                          0, 0, 1, 0,
                          0, 0, 0, 1);
 
-      Matrix4T<T> view = makeTranslation(Vector3T<T>(-width*.5, -height*.5, 0));
+      Matrix4T<T> view = makeTranslation(Vector3T<T>(-width*T(.5), -height*T(.5), 0));
 
       return window * projection * camera * view;
     }

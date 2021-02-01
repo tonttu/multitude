@@ -247,7 +247,7 @@ namespace Luminous
     m_layout.setFont(font);
 
     QFontMetricsF fontMetrics(font);
-    const float leading = fontMetrics.leading();
+    const float leading = static_cast<float>(fontMetrics.leading());
 
     m_boundingBox = QRectF();
     m_layout.beginLayout();
@@ -263,7 +263,7 @@ namespace Luminous
       if (forceHeight)
         y += height;
       else
-        y += line.height() * heightFactor;
+        y += static_cast<float>(line.height()) * heightFactor;
       y += leading;
 
       m_boundingBox |= line.naturalTextRect();
@@ -396,7 +396,8 @@ namespace Luminous
   float SimpleTextLayout::fontPixelSize() const
   {
     const QFont f = font();
-    return f.pixelSize() < 0 ? pointToPixelSize(f.pointSizeF()) : f.pixelSize();
+    return f.pixelSize() < 0 ? pointToPixelSize(static_cast<float>(f.pointSizeF()))
+                             : static_cast<float>(f.pixelSize());
   }
 
   void SimpleTextLayout::setFontPixelSize(float pixelSize)
@@ -516,11 +517,11 @@ namespace Luminous
       // We need to avoid calling bounding box here, becourse it calls generateInternal
       nonConst->setBoundingBox(m_d->m_boundingBox);
 
-      float contentHeigth = m_d->m_boundingBox.height();
+      float contentHeigth = static_cast<float>(m_d->m_boundingBox.height());
       if(m_d->m_layout.text().isEmpty()) {
         QTextLine line = m_d->m_layout.lineAt(0);
         if(line.isValid())
-          contentHeigth = line.height();
+          contentHeigth = static_cast<float>(line.height());
       }
 
       auto align = m_d->m_layout.textOption().alignment();
@@ -543,7 +544,8 @@ namespace Luminous
     nonConst->clearGlyphs();
 
     bool missingGlyphs = false;
-    const Nimble::Vector2f layoutLocation(m_d->m_layout.position().x(), m_d->m_layout.position().y());
+    const Nimble::Vector2f layoutLocation(static_cast<float>(m_d->m_layout.position().x()),
+                                          static_cast<float>(m_d->m_layout.position().y()));
 
     Q_FOREACH (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
       missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);

@@ -117,8 +117,8 @@ namespace Luminous
 
   void MultiHead::Area::setGraphicsGeometry(int x, int y, int w, int h)
   {
-    m_graphicsLocation = Nimble::Vector2f(x, y);
-    m_graphicsSize = Nimble::Vector2f(w, h);
+    m_graphicsLocation = Nimble::Vector2f(static_cast<float>(x), static_cast<float>(y));
+    m_graphicsSize = Nimble::Vector2f(static_cast<float>(w), static_cast<float>(h));
   }
 
   // @setter seams
@@ -173,7 +173,7 @@ namespace Luminous
 
     loc.x -= m_location[0];
     loc.y -= (windowheight - m_size[1] - m_location[1]);
-    loc.descale(Nimble::Vector2f(m_size->x, m_size->y));
+    loc.descale(m_size->cast<float>());
     loc.y = 1.0f - loc.y;
 
     bool dontCare = false;
@@ -210,7 +210,7 @@ namespace Luminous
     isInside = ok;
 
     loc.y = 1.0f - loc.y;
-    loc.scale(Nimble::Vector2f(m_size->x, m_size->y));
+    loc.scale(m_size->cast<float>());
     loc.y += (windowheight - m_size[1] - m_location[1]);
     loc.x += m_location[0];
 
@@ -408,7 +408,7 @@ namespace Luminous
 
   QPointF MultiHead::Window::windowToGraphics(QPointF loc, bool &convOk) const
   {
-    Nimble::Vector2 nloc(loc.x(), loc.y());
+    Nimble::Vector2 nloc(static_cast<float>(loc.x()), static_cast<float>(loc.y()));
     nloc = windowToGraphics(nloc, convOk);
     return QPointF(nloc.x, nloc.y);
   }
@@ -562,7 +562,7 @@ namespace Luminous
   Rect MultiHead::layerSize() const
   {
     if (m_layerSize->length()) {
-      return Nimble::Rect(0, 0, m_layerSize.x(), m_layerSize.y());
+      return Nimble::Rect(0, 0, static_cast<float>(m_layerSize.x()), static_cast<float>(m_layerSize.y()));
     }
     else return graphicsBounds();
   }
@@ -799,9 +799,9 @@ namespace Luminous
         /// the window size at least half of the size of the screen.
         QPoint p(w.location().x, w.location().y);
         QRect rect = full ? desktop->screenGeometry(p) : desktop->availableGeometry(p);
-        Nimble::Vector2f edge = (full ? 0.f : 0.1f) * Nimble::Vector2f(rect.width(), rect.height());
-        Nimble::Size size(std::max<int>(rect.width() / 2, rect.right() + 1 - edge.x - w.location().x),
-                          std::max<int>(rect.height() / 2, rect.bottom() + 1 - edge.y - w.location().y));
+        Nimble::Vector2f edge = (full ? 0.f : 0.1f) * Nimble::Vector2i(rect.width(), rect.height()).cast<float>();
+        Nimble::Size size(std::max(rect.width() / 2, static_cast<int>(rect.right() + 1.f - edge.x - w.location().x)),
+                          std::max(rect.height() / 2, static_cast<int>(rect.bottom() + 1.f - edge.y - w.location().y)));
         w.setSize(size);
       } else if (!hasLocation && hasSize) {
         /// If user has given a window size but not location, just place the

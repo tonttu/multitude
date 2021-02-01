@@ -49,12 +49,13 @@ namespace Nimble {
 
     /// Convert QRectF to Nimble::RectT
     inline RectT(const QRectF & qrect)
-      : m_low(qrect.left(), qrect.top()), m_high(qrect.right(), qrect.bottom()) {}
+      : m_low(static_cast<T>(qrect.left()), static_cast<T>(qrect.top()))
+      , m_high(static_cast<T>(qrect.right()), static_cast<T>(qrect.bottom())) {}
 
     /// Convert QRect to Nimble::RectT
     inline RectT(const QRect & qrect)
-      : m_low(qrect.left(), qrect.top()),
-        m_high(qrect.left()+qrect.width(), qrect.top()+qrect.height()) {}
+      : m_low(static_cast<T>(qrect.left()), static_cast<T>(qrect.top()))
+      , m_high(static_cast<T>(qrect.left()+qrect.width()), static_cast<T>(qrect.top()+qrect.height())) {}
 
     /// Constructs a rectangle and initializes it to the given points
     inline RectT(const Vector2T<T> & low, const Vector2T<T> & high)
