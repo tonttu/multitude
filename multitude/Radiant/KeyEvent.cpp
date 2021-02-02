@@ -34,7 +34,7 @@ namespace Radiant
   {
   }
 
-  KeyEvent::KeyEvent(int key, Source source, QEvent::Type type, Qt::KeyboardModifiers modifiers, const QString & text, bool autorep)
+  KeyEvent::KeyEvent(int key, QEvent::Type type, Qt::KeyboardModifiers modifiers, const QString & text, Source source,  bool autorep)
     : m_d(new D(new QKeyEvent(type, key, modifiers, text, autorep), source))
   {
   }
@@ -50,12 +50,12 @@ namespace Radiant
 
   KeyEvent KeyEvent::createKeyPress(int key, Source source, bool isautorepeat)
   {
-    return KeyEvent(key, source, QEvent::KeyPress, Qt::NoModifier, QString(), isautorepeat);
+    return KeyEvent(key, QEvent::KeyPress, Qt::NoModifier, QString(), source, isautorepeat);
   }
 
   KeyEvent KeyEvent::createKeyRelease(int key, Source source)
   {
-    return KeyEvent(key, source, QEvent::KeyRelease, Qt::NoModifier);
+    return KeyEvent(key, QEvent::KeyRelease, Qt::NoModifier, QString(), source);
   }
 
   VirtualKeyCode KeyEvent::convertToVirtualKeyCode(int key)
