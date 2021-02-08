@@ -200,6 +200,7 @@ namespace Nimble {
     { m_low.x -= v; m_low.y -= v; m_high.x += v; m_high.y += v; }
     /// Increases the size of the rectangle with the argument frame
     inline void grow(const Frame4f & b);
+    inline void shrink(const Frame4f & b);
 
     /// Returns one quarter of the rectangle.
     /// @param row The row of the quarter (0-1)
@@ -307,6 +308,13 @@ namespace Nimble {
   {
     m_low -= b.leftTop().cast<T>();
     m_high += b.rightBottom().cast<T>();
+  }
+
+  template <class T>
+  void RectT<T>::shrink(const Frame4f & b)
+  {
+    m_low += b.leftTop().cast<T>();
+    m_high -= b.rightBottom().cast<T>();
   }
 
   template <class T>
