@@ -548,7 +548,8 @@ namespace Luminous
                                           static_cast<float>(m_d->m_layout.position().y()));
 
     Q_FOREACH (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
-      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun);
+      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
+                                                m_d->m_layout.font().stretch());
 
     nonConst->setGlyphsReady(!missingGlyphs);
   }

@@ -52,7 +52,7 @@ namespace Luminous
 
     LUMINOUS_API float pixelSize() const;
 
-    LUMINOUS_API static FontCache & acquire(const QRawFont & rawFont);
+    LUMINOUS_API static FontCache & acquire(const QRawFont & rawFont, int stretch);
 
     LUMINOUS_API static int generation();
 
@@ -80,7 +80,7 @@ namespace Luminous
     /// @endcond
 
   private:
-    FontCache(const QRawFont & rawFont);
+    FontCache(const QRawFont & rawFont, int stretch);
 
   private:
     class GlyphGenerator;

@@ -176,7 +176,8 @@ namespace Luminous
           QList<QGlyphRun> glyphs = line.glyphRuns(pos, frag.length());
 
           for (const QGlyphRun & glyphRun: glyphs)
-            missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun, &format);
+            missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
+                                                      format.fontStretch(), &format);
         }
       }
     }
@@ -220,7 +221,7 @@ namespace Luminous
         }
 
         Q_FOREACH (const QGlyphRun & glyphRun, textLayout.glyphRuns())
-          missingGlyphs |= nonConst->generateGlyphs(loc, glyphRun);
+          missingGlyphs |= nonConst->generateGlyphs(loc, glyphRun, block.charFormat().fontStretch());
       }
     }
 

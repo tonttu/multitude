@@ -20,6 +20,7 @@
 
 #include <Radiant/BGThread.hpp>
 #include <Radiant/PlatformUtils.hpp>
+#include <Radiant/CacheManager.hpp>
 
 #include <QRawFont>
 #include <QDir>
@@ -49,9 +50,9 @@ namespace
   // space character etc
   static Luminous::FontCache::Glyph s_emptyGlyph;
 
-  QString makeKey(const QRawFont & rawFont)
+  QString makeKey(const QRawFont & rawFont, int stretch)
   {
-    return QString("%3!%4!%1!%2").arg(rawFont.weight()).
+    return QString("%4.%5.%1.%2.%3").arg(rawFont.weight()).arg(stretch).
         arg(rawFont.style()).arg(rawFont.familyName(), rawFont.styleName());
   }
 
@@ -59,14 +60,7 @@ namespace
   {
     static QString s_basePath;
 
-    MULTI_ONCE {
-      QString basePath = Radiant::PlatformUtils::getModuleUserDataPath("MultiTouch", false) + "/fontcache";
-      if(!QDir().mkpath(basePath)) {
-        basePath = QDir::tempPath() + "/cornerstone-fontcache";
-        QDir().mkpath(basePath);
-      }
-      s_basePath = basePath;
-    }
+    MULTI_ONCE s_basePath = Radiant::CacheManager::instance()->createCacheDir("fonts");
 
     return s_basePath;
   }
@@ -210,7 +204,7 @@ namespace Luminous
   class FontCache::D
   {
   public:
-    D(const QRawFont & rawFont);
+    D(const QRawFont & rawFont, int stretch);
 
   public:
     struct FileCacheItem
@@ -468,15 +462,15 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  FontCache::D::D(const QRawFont & rawFont)
-    : m_rawFontKey(makeKey(rawFont))
+  FontCache::D::D(const QRawFont & rawFont, int stretch)
+    : m_rawFontKey(makeKey(rawFont, stretch))
   {
   }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  FontCache & FontCache::acquire(const QRawFont & rawFont)
+  FontCache & FontCache::acquire(const QRawFont & rawFont, int stretch)
   {
     MULTI_ONCE {
       QSettings settings(indexFileName(), QSettings::IniFormat);
@@ -494,12 +488,12 @@ namespace Luminous
 
     /// QRawFont doesn't work as a key, since it doesn't have operator== that works as expected.
     /// Also the pixelSize shouldn't matter
-    const QString fontKey = makeKey(rawFont);
+    const QString fontKey = makeKey(rawFont, stretch);
 
     Radiant::Guard g(s_fontCacheMutex);
     std::unique_ptr<Luminous::FontCache> & ptr = s_fontCache[fontKey];
     if (!ptr)
-      ptr.reset(new Luminous::FontCache(rawFont));
+      ptr.reset(new Luminous::FontCache(rawFont, stretch));
     return *ptr;
   }
 
@@ -631,8 +625,8 @@ namespace Luminous
     return s_distanceFieldPixelSize;
   }
 
-  FontCache::FontCache(const QRawFont & rawFont)
-    : m_d(new D(rawFont))
+  FontCache::FontCache(const QRawFont & rawFont, int stretch)
+    : m_d(new D(rawFont, stretch))
   {}
 
   FontCache::~FontCache()

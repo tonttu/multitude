@@ -36,7 +36,8 @@ namespace Luminous
   public:
     D(const Nimble::SizeF & size);
 
-    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun, const QTextCharFormat * format);
+    bool generate(const Nimble::Vector2f & location, const QGlyphRun & glyphRun,
+                  int stretch, const QTextCharFormat * format);
 
   protected:
     Group & findGroup(Texture & texture, QColor color);
@@ -75,7 +76,8 @@ namespace Luminous
   }
 
   bool TextLayout::D::generate(const Nimble::Vector2f & layoutLocation,
-                               const QGlyphRun & glyphRun, const QTextCharFormat * format)
+                               const QGlyphRun & glyphRun, int stretch,
+                               const QTextCharFormat * format)
   {
     bool missingGlyphs = false;
 
@@ -83,7 +85,7 @@ namespace Luminous
     const QVector<quint32> & glyphs = glyphRun.glyphIndexes();
     const QVector<QPointF> & positions = glyphRun.positions();
 
-    FontCache & cache = FontCache::acquire(font);
+    FontCache & cache = FontCache::acquire(font, stretch);
 
     const float scale = float(font.pixelSize()) / cache.pixelSize();
     const float invsize = 1.0f / float(font.pixelSize());
@@ -295,11 +297,12 @@ namespace Luminous
   }
 
   bool TextLayout::generateGlyphs(const Nimble::Vector2f & location,
-                                  const QGlyphRun & glyphRun, const QTextCharFormat * format)
+                                  const QGlyphRun & glyphRun, int stretch,
+                                  const QTextCharFormat * format)
   {
     if (glyphRun.glyphIndexes().isEmpty())
       return false;
-    return m_d->generate(location, glyphRun, format);
+    return m_d->generate(location, glyphRun, stretch, format);
   }
 
   float TextLayout::pixelToPointSize(float pixelSize)
