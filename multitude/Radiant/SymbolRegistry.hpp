@@ -22,11 +22,13 @@ namespace Radiant
   {
   public:
     typedef uint32_t Symbol;
+    static constexpr Symbol InvalidSymbol = 0;
+    static constexpr Symbol EmptySymbol = 1;
 
   public:
     SymbolRegistry();
 
-    Symbol lookupOrDefine(const QByteArray & name);
+    inline Symbol lookupOrDefine(const QByteArray & name);
 
     bool define(const QByteArray & name, Symbol symbol);
 
@@ -37,13 +39,24 @@ namespace Radiant
     inline Symbol lookup(const QByteArray & name) const;
 
   private:
+    Symbol lookupOrDefineImpl(const QByteArray & name);
+
+  private:
     std::map<QByteArray, Symbol> m_nameToSymbol;
     std::unordered_map<Symbol, QByteArray> m_symbolToName;
     mutable QReadWriteLock m_lock;
   };
 
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
+
+  SymbolRegistry::Symbol SymbolRegistry::lookupOrDefine(const QByteArray & name)
+  {
+    if (auto symbol = lookup(name))
+      return symbol;
+    return lookupOrDefineImpl(name);
+  }
 
   QByteArray SymbolRegistry::lookup(Symbol symbol) const
   {
@@ -56,7 +69,7 @@ namespace Radiant
   {
     QReadLocker locker(&m_lock);
     auto it = m_nameToSymbol.find(name);
-    return it == m_nameToSymbol.end() ? 0 : it->second;
+    return it == m_nameToSymbol.end() ? InvalidSymbol : it->second;
   }
 } // namespace Radiant
 

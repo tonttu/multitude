@@ -160,7 +160,7 @@ namespace Valuable
     return *this;
   }
 
-  bool SimpleExpression::operator==(const SimpleExpression & expr)
+  bool SimpleExpression::operator==(const SimpleExpression & expr) const
   {
     // no need to check m_paramCount, since it depends on m_tokens
     return m_d->m_tokens == expr.m_d->m_tokens;

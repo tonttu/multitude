@@ -7,9 +7,10 @@ namespace Radiant
 {
   SymbolRegistry::SymbolRegistry()
   {
+    define("", EmptySymbol);
   }
 
-  SymbolRegistry::Symbol SymbolRegistry::lookupOrDefine(const QByteArray & name)
+  SymbolRegistry::Symbol SymbolRegistry::lookupOrDefineImpl(const QByteArray & name)
   {
     QWriteLocker locker(&m_lock);
     auto it = m_nameToSymbol.find(name);
@@ -25,8 +26,9 @@ namespace Radiant
 
   bool SymbolRegistry::define(const QByteArray & name, Symbol symbol)
   {
-    if(symbol == 0) {
-      Radiant::error("SymbolRegistry::define # Trying to assign symbol 0 to name %s. Symbol 0 is reserved.", name.data());
+    if(symbol == InvalidSymbol) {
+      Radiant::error("SymbolRegistry::define # Trying to assign symbol %d to name %s. Symbol %d is reserved.",
+                     InvalidSymbol, name.data(), InvalidSymbol);
       return false;
     }
     QWriteLocker locker(&m_lock);

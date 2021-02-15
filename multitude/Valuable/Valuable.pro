@@ -60,6 +60,7 @@ HEADERS += Event.hpp
 HEADERS += EventImpl.hpp
 HEADERS += Reference.hpp
 HEADERS += NodeListener.hpp
+HEADERS += Symbol.hpp
 
 SOURCES += Archive.cpp \
     AttributeAlias.cpp \
@@ -88,6 +89,7 @@ SOURCES += State.cpp
 SOURCES += ListenerHolder.cpp
 SOURCES += AttributeSpline.cpp
 SOURCES += AttributeAsset.cpp
+SOURCES += Symbol.cpp
 
 LIBS += $$LIB_RADIANT $$LIB_NIMBLE $$LIB_PATTERNS $$LIB_PUNCTUAL
 

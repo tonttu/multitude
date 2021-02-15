@@ -43,7 +43,7 @@ namespace Valuable
     SimpleExpression & operator=(const SimpleExpression & expr);
     SimpleExpression & operator=(SimpleExpression && expr);
 
-    bool operator==(const SimpleExpression & expr);
+    bool operator==(const SimpleExpression & expr) const;
 
     bool isConstant() const;
 
