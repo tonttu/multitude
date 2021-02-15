@@ -18,6 +18,8 @@
 #include <QString>
 #include <Radiant/Color.hpp>
 
+#include <variant>
+
 namespace Valuable
 {
   /// CSS attribute value is a list of variant components.
@@ -37,7 +39,7 @@ namespace Valuable
       SEPARATOR_SLASH         ///< Components are separated by slash (/)
     };
 
-    /// Component variant type
+    /// Component variant type. This need to be in the same order as Component::m_data.
     enum ValueType
     {
       TYPE_NONE,    ///< Null type
@@ -127,7 +129,7 @@ namespace Valuable
       bool isNumber() const;
 
       /// @returns the type of the component
-      ValueType type() const { return m_type; }
+      ValueType type() const { return static_cast<ValueType>(m_data.index()); }
       /// @returns component type, VU_UNKNOWN if the type is not a number
       Attribute::ValueUnit unit() const { return m_unit; }
       /// @returns separator token preceding this component in a StyleValue
@@ -149,24 +151,16 @@ namespace Valuable
       bool operator==(const QByteArray & str) const;
 
     private:
-      union {
-        float m_float;
-        int m_int;
-        Radiant::Color * m_color;
-        Radiant::ColorPMA * m_colorPMA;
-        QString * m_string;
-        QByteArray * m_keyword;
-        SimpleExpression * m_expr;
-      } m_data;
-      ValueType m_type;
+      /// This need to be in the same order as ValueType.
+      std::variant<nullptr_t, float, int, Radiant::Color, Radiant::ColorPMA, QString, QByteArray, SimpleExpression> m_data;
       Attribute::ValueUnit m_unit;
       Separator m_separator;
     };
-    typedef QList<Component> ComponentList;
+    typedef QVector<Component> ComponentList;
 
   public:
     /// Creates an empty StyleValue
-    StyleValue();
+    StyleValue() {}
     /// Creates a new StyleValue with one float component
     /// @param v float value
     /// @param unit unit of v
@@ -199,6 +193,30 @@ namespace Valuable
     /// Deletes StyleValue and its components
     ~StyleValue();
 
+    StyleValue(const StyleValue & v)
+      : m_isUniform(v.m_isUniform)
+      , m_components(v.m_components)
+    {}
+
+    StyleValue & operator=(const StyleValue & v)
+    {
+      m_isUniform = v.m_isUniform;
+      m_components = v.m_components;
+      return *this;
+    }
+
+    StyleValue(StyleValue && v)
+      : m_isUniform(v.m_isUniform),
+        m_components(std::move(v.m_components))
+    {}
+
+    StyleValue & operator=(StyleValue && v)
+    {
+      m_isUniform = v.m_isUniform;
+      m_components = std::move(v.m_components);
+      return *this;
+    }
+
     /// @todo remove?
     int asInt(int idx = 0) const;
     float asFloat(int idx = 0) const;
@@ -212,11 +230,11 @@ namespace Valuable
 
     /// Concatenates another StyleValue to this object
     /// @param v StyleValue to append
-    void append(const StyleValue & v);
+    void append(StyleValue v);
     /// Concatenates another StyleValue to this object with given separator
     /// @param v StyleValue to append
     /// @param separator separator to use between this and v
-    void append(const StyleValue & v, Separator separator);
+    void append(StyleValue v, Separator separator);
     /// Appends one component to end of this StyleValue
     /// @param c component to append
     void append(const Component & c);
@@ -226,16 +244,16 @@ namespace Valuable
     void append(const Component & c, Separator separator);
 
     /// @returns the number of components
-    int size() const;
+    int size() const { return m_components.size(); }
 
     /// @returns true if size() == 0
-    bool isEmpty() const;
+    bool isEmpty() const { return m_components.isEmpty(); }
 
     /// In uniform StyleValue all components have same separators
     /// and types that can be converted to each other. Empty StyleValue is also
     /// uniform type.
     /// @returns true if StyleValue is uniform
-    bool isUniform() const;
+    bool isUniform() const { return m_isUniform; }
 
     /// @returns String representation that can be used in a CSS
     QString stringify() const;
@@ -280,7 +298,7 @@ namespace Valuable
     /// @endcond
 
   private:
-    bool m_isUniform;
+    bool m_isUniform = true;
     ComponentList m_components;
   };
 

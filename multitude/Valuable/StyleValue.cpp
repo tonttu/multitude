@@ -38,152 +38,88 @@ namespace Valuable
   }
 
   StyleValue::Component::Component()
-    : m_data()
-    , m_type(TYPE_NONE)
-    , m_unit(Attribute::VU_UNKNOWN)
+    : m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {}
 
   StyleValue::Component::Component(float f, Attribute::ValueUnit unit)
-    : m_data()
-    , m_type(TYPE_FLOAT)
+    : m_data(f)
     , m_unit(unit)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_float = f;
   }
 
   StyleValue::Component::Component(int i)
-    : m_data()
-    , m_type(TYPE_INT)
+    : m_data(i)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_int = i;
   }
 
   StyleValue::Component::Component(const Radiant::Color & color)
-    : m_data()
-    , m_type(TYPE_COLOR)
+    : m_data(color)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_color = new Radiant::Color(color);
   }
 
   StyleValue::Component::Component(const Radiant::ColorPMA & color)
-    : m_data()
-    , m_type(TYPE_COLOR_PMA)
+    : m_data(color)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_colorPMA = new Radiant::ColorPMA(color);
   }
 
   StyleValue::Component::Component(const QString & string)
-    : m_data()
-    , m_type(TYPE_STRING)
+    : m_data(string)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_string = new QString(string);
   }
 
   StyleValue::Component::Component(const QByteArray & keyword)
-    : m_data()
-    , m_type(TYPE_KEYWORD)
+    : m_data(keyword)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_keyword = new QByteArray(keyword);
   }
 
   StyleValue::Component::Component(const SimpleExpression & expr)
-    : m_data()
-    , m_type(TYPE_EXPR)
+    : m_data(expr)
     , m_unit(Attribute::VU_UNKNOWN)
     , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
   {
-    m_data.m_expr = new SimpleExpression(expr);
   }
 
   StyleValue::Component::~Component()
   {
-    switch (m_type) {
-    case TYPE_COLOR:
-      delete m_data.m_color;
-      break;
-    case TYPE_COLOR_PMA:
-      delete m_data.m_colorPMA;
-      break;
-    case TYPE_STRING:
-      delete m_data.m_string;
-      break;
-    case TYPE_KEYWORD:
-      delete m_data.m_keyword;
-      break;
-    case TYPE_EXPR:
-      delete m_data.m_expr;
-      break;
-    default:
-      break;
-    }
   }
 
   StyleValue::Component::Component(const Component & component)
-    : m_data()
-    , m_type(TYPE_NONE)
-    , m_unit(Attribute::VU_UNKNOWN)
-    , m_separator(StyleValue::SEPARATOR_WHITE_SPACE)
+    : m_data(component.m_data)
+    , m_unit(component.m_unit)
+    , m_separator(component.m_separator)
   {
-    operator=(component);
   }
 
   StyleValue::Component & StyleValue::Component::operator=(const Component & component)
   {
-    this->~Component();
-    m_type = component.m_type;
+    m_data = component.m_data;
     m_unit = component.m_unit;
     m_separator = component.m_separator;
-    switch (m_type) {
-    case TYPE_FLOAT:
-    case TYPE_INT:
-      m_data = component.m_data;
-      break;
-    case TYPE_COLOR:
-      m_data.m_color = new Radiant::Color(*component.m_data.m_color);
-      break;
-    case TYPE_COLOR_PMA:
-      m_data.m_colorPMA = new Radiant::ColorPMA(*component.m_data.m_colorPMA);
-      break;
-    case TYPE_STRING:
-      m_data.m_string = new QString(*component.m_data.m_string);
-      break;
-    case TYPE_KEYWORD:
-      m_data.m_keyword = new QByteArray(*component.m_data.m_keyword);
-      break;
-    case TYPE_EXPR:
-      m_data.m_expr = new SimpleExpression(*component.m_data.m_expr);
-      break;
-    default:
-      break;
-    }
     return *this;
   }
 
   StyleValue::Component::Component(Component && component)
-    : m_data(component.m_data)
-    , m_type(component.m_type)
+    : m_data(std::move(component.m_data))
     , m_unit(component.m_unit)
     , m_separator(component.m_separator)
   {
-    component.m_type = TYPE_NONE;
   }
 
   StyleValue::Component & StyleValue::Component::operator=(Component && component)
   {
-    std::swap(m_type, component.m_type);
-    std::swap(m_data, component.m_data);
+    m_data = std::move(component.m_data);
     m_unit = component.m_unit;
     m_separator = component.m_separator;
     return *this;
@@ -191,11 +127,11 @@ namespace Valuable
 
   int StyleValue::Component::asInt() const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_INT:
-      return m_data.m_int;
+      return std::get<int>(m_data);
     case TYPE_FLOAT:
-      return static_cast<int>(m_data.m_float);
+      return std::get<float>(m_data);
     default:
       Radiant::error("StyleValue::Component::asInt # cannot convert %s to int", typeName());
       return 0;
@@ -204,11 +140,11 @@ namespace Valuable
 
   float StyleValue::Component::asFloat() const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_FLOAT:
-      return m_data.m_float;
+      return std::get<float>(m_data);
     case TYPE_INT:
-      return static_cast<float>(m_data.m_int);
+      return std::get<int>(m_data);
     default:
       Radiant::error("StyleValue::Component::asFloat # cannot convert %s to float", typeName());
       return 0.f;
@@ -217,11 +153,11 @@ namespace Valuable
 
   QString StyleValue::Component::asString() const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_STRING:
-      return *m_data.m_string;
+      return std::get<QString>(m_data);
     case TYPE_KEYWORD:
-      return *m_data.m_keyword;
+      return QString::fromUtf8(std::get<QByteArray>(m_data));
     default:
       Radiant::error("StyleValue::Component::asString # cannot convert %s to string", typeName());
       return QString();
@@ -230,11 +166,11 @@ namespace Valuable
 
   QByteArray StyleValue::Component::asKeyword() const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_KEYWORD:
-      return *m_data.m_keyword;
+      return std::get<QByteArray>(m_data);
     case TYPE_STRING:
-      return m_data.m_string->toUtf8();
+      return std::get<QString>(m_data).toUtf8();
     default:
       Radiant::error("StyleValue::Component::asKeyword # cannot convert %s to keyword", typeName());
       return QByteArray();
@@ -243,15 +179,20 @@ namespace Valuable
 
   Radiant::Color StyleValue::Component::asColor() const
   {
-    if (m_type == TYPE_COLOR)
-      return *m_data.m_color;
-    if (m_type == TYPE_COLOR_PMA)
-      return m_data.m_colorPMA->toColor();
-    if (m_type == TYPE_KEYWORD) {
+    switch (type()) {
+    case TYPE_COLOR:
+      return std::get<Radiant::Color>(m_data);
+    case TYPE_COLOR_PMA:
+      return std::get<Radiant::ColorPMA>(m_data).toColor();
+    case TYPE_KEYWORD:
+    {
       Radiant::Color color;
-      if (color.set(*m_data.m_keyword)) {
+      if (color.set(std::get<QByteArray>(m_data)))
         return color;
-      }
+      break;
+    }
+    default:
+      break;
     }
     Radiant::error("StyleValue::Component::asColor # cannot convert %s to color", typeName());
     return Radiant::Color();
@@ -259,15 +200,20 @@ namespace Valuable
 
   Radiant::ColorPMA StyleValue::Component::asColorPMA() const
   {
-    if (m_type == TYPE_COLOR)
-      return *m_data.m_color;
-    if (m_type == TYPE_COLOR_PMA)
-      return *m_data.m_colorPMA;
-    if (m_type == TYPE_KEYWORD) {
+    switch (type()) {
+    case TYPE_COLOR_PMA:
+      return std::get<Radiant::ColorPMA>(m_data);
+    case TYPE_COLOR:
+      return std::get<Radiant::Color>(m_data);
+    case TYPE_KEYWORD:
+    {
       Radiant::Color color;
-      if (color.set(*m_data.m_keyword)) {
+      if (color.set(std::get<QByteArray>(m_data))) {
         return color;
       }
+    }
+    default:
+      break;
     }
     Radiant::error("StyleValue::Component::asColorPMA # cannot convert %s to color", typeName());
     return Radiant::Color();
@@ -275,25 +221,26 @@ namespace Valuable
 
   SimpleExpression StyleValue::Component::asExpr() const
   {
-    if (m_type == TYPE_EXPR)
-      return *m_data.m_expr;
+    if (type() == TYPE_EXPR)
+      return std::get<SimpleExpression>(m_data);
     Radiant::error("StyleValue::Component::asExpr # cannot convert %s to expr", typeName());
     return SimpleExpression(0.0f);
   }
 
   bool StyleValue::Component::canConvert(StyleValue::ValueType t) const
   {
-    return canConvertType(m_type, t);
+    return canConvertType(type(), t);
   }
 
   bool StyleValue::Component::isNumber() const
   {
-    return m_type == TYPE_FLOAT || m_type == TYPE_INT;
+    auto t = type();
+    return t == TYPE_FLOAT || t == TYPE_INT;
   }
 
   const char * StyleValue::Component::typeName() const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_FLOAT:
       return "float";
     case TYPE_INT:
@@ -315,38 +262,16 @@ namespace Valuable
 
   bool StyleValue::Component::operator==(const Component & v) const
   {
-    if (m_type != v.m_type || m_unit != v.m_unit || m_separator != v.m_separator)
-      return false;
-
-    switch (m_type) {
-    case TYPE_NONE:
-      return true;
-    case TYPE_FLOAT:
-      return m_data.m_float == v.m_data.m_float;
-    case TYPE_INT:
-      return m_data.m_int == v.m_data.m_int;
-    case TYPE_COLOR:
-      return *m_data.m_color == *v.m_data.m_color;
-    case TYPE_COLOR_PMA:
-      return *m_data.m_colorPMA == *v.m_data.m_colorPMA;
-    case TYPE_STRING:
-      return *m_data.m_string == *v.m_data.m_string;
-    case TYPE_KEYWORD:
-      return *m_data.m_keyword == *v.m_data.m_keyword;
-    case TYPE_EXPR:
-      return *m_data.m_expr == *v.m_data.m_expr;
-    default:
-      return false;
-    }
+    return m_data == v.m_data && m_unit == v.m_unit && m_separator == v.m_separator;
   }
 
   bool StyleValue::Component::operator==(const QByteArray & str) const
   {
-    switch (m_type) {
+    switch (type()) {
     case TYPE_STRING:
-      return m_data.m_string->toUtf8() == str;
+      return std::get<QString>(m_data).toUtf8() == str;
     case TYPE_KEYWORD:
-      return *m_data.m_keyword == str;
+      return std::get<QByteArray>(m_data) == str;
     default:
       return false;
     }
@@ -355,45 +280,37 @@ namespace Valuable
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  StyleValue::StyleValue() : m_isUniform(true)
-  {}
-
-  StyleValue::StyleValue(float v, Attribute::ValueUnit unit) : m_isUniform(true)
+  StyleValue::StyleValue(float v, Attribute::ValueUnit unit)
   {
     m_components << Component(v, unit);
   }
 
-  StyleValue::StyleValue(int v) : m_isUniform(true)
+  StyleValue::StyleValue(int v)
   {
     m_components << v;
   }
 
   StyleValue::StyleValue(const Radiant::Color & color)
-    : m_isUniform(true)
   {
     m_components << color;
   }
 
   StyleValue::StyleValue(const Radiant::ColorPMA & color)
-    : m_isUniform(true)
   {
     m_components << color;
   }
 
   StyleValue::StyleValue(const QString & string)
-    : m_isUniform(true)
   {
     m_components << string;
   }
 
   StyleValue::StyleValue(const QByteArray & keyword)
-    : m_isUniform(true)
   {
     m_components << keyword;
   }
 
   StyleValue::StyleValue(const Component & component)
-    : m_isUniform(true)
   {
     m_components << component;
   }
@@ -411,7 +328,6 @@ namespace Valuable
   }
 
   StyleValue::StyleValue(const SimpleExpression & expr)
-    : m_isUniform(true)
   {
     m_components << expr;
   }
@@ -464,13 +380,13 @@ namespace Valuable
     return m_components[idx].unit();
   }
 
-  void StyleValue::append(const StyleValue & v)
+  void StyleValue::append(StyleValue v)
   {
     assert(v.size() >= 1);
 
     if (m_components.isEmpty()) {
       m_isUniform = v.m_isUniform;
-      m_components = v.m_components;
+      m_components = std::move(v.m_components);
       return;
     }
 
@@ -478,11 +394,10 @@ namespace Valuable
       append(c);
   }
 
-  void StyleValue::append(const StyleValue & v, StyleValue::Separator separator)
+  void StyleValue::append(StyleValue styleValue, StyleValue::Separator separator)
   {
-    StyleValue styleValue(v);
     styleValue.m_components[0].setSeparator(separator);
-    append(styleValue);
+    append(std::move(styleValue));
   }
 
   void StyleValue::append(const StyleValue::Component & c)
@@ -499,21 +414,6 @@ namespace Valuable
     StyleValue::Component component(c);
     component.setSeparator(separator);
     append(component);
-  }
-
-  int StyleValue::size() const
-  {
-    return m_components.size();
-  }
-
-  bool StyleValue::isEmpty() const
-  {
-    return m_components.isEmpty();
-  }
-
-  bool StyleValue::isUniform() const
-  {
-    return m_isUniform;
   }
 
   QString StyleValue::stringify() const
