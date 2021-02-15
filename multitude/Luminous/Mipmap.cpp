@@ -1170,8 +1170,8 @@ namespace Luminous
       return nullptr;
 
     QFileInfo fi(filename);
-    QString id(fi.absoluteFilePath() + fi.lastModified().toString());
-    QPair<QByteArray, bool> key = qMakePair(id.toUtf8(), compressedMipmaps);
+    QByteArray id = fi.absoluteFilePath().toUtf8() + QByteArray::number(fi.lastModified().toSecsSinceEpoch());
+    QPair<QByteArray, bool> key = qMakePair(id, compressedMipmaps);
 
     if(key.first.isEmpty()) {
       Radiant::warning("Mipmap::acquire # file '%s' not found", filename.toUtf8().data());
