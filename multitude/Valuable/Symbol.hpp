@@ -27,7 +27,7 @@ namespace Valuable
       : m_id(g_symbolRegistry.lookupOrDefine(str))
     {}
 
-    inline Symbol(uint32_t id = 0)
+    inline Symbol(uint32_t id = Radiant::SymbolRegistry::EmptySymbol)
       : m_id(id)
     {}
 
@@ -47,7 +47,7 @@ namespace Valuable
     inline bool isValid() const { return m_id != Radiant::SymbolRegistry::InvalidSymbol; }
 
   private:
-    uint32_t m_id = Radiant::SymbolRegistry::InvalidSymbol;
+    uint32_t m_id = Radiant::SymbolRegistry::EmptySymbol;
   };
   static_assert(sizeof(Symbol) == sizeof(uint32_t), "Symbol size check");
 
@@ -84,7 +84,7 @@ namespace Valuable
       : Symbol(QByteArray(str).toLower())
     {}
 
-    inline LowercaseSymbol(uint32_t id = 0)
+    inline LowercaseSymbol(uint32_t id = Radiant::SymbolRegistry::EmptySymbol)
       : Symbol(id)
     {}
 
