@@ -146,22 +146,22 @@ namespace Luminous
     void layout(const Nimble::SizeF & size);
 
   public:
-    Radiant::Mutex m_generateMutex;
+    Radiant::Mutex m_generateMutex{true};
     Valuable::StyleValue m_lineHeight;
     Valuable::StyleValue m_letterSpacing;
     QTextLayout m_layout;
     QRectF m_boundingBox;
-    QThread * m_layoutThread;
-    float m_indent;
+    float m_untruncatedWidth = 0;
+    QThread * m_layoutThread = nullptr;
+    float m_indent = 0.f;
+    QString m_text;
+    bool m_elideText = false;
   };
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
   SimpleTextLayout::D::D()
-    : m_generateMutex(true),
-      m_layoutThread(nullptr),
-      m_indent(0)
   {
     QFont font;
     font.setHintingPreference(QFont::PreferNoHinting);
@@ -173,8 +173,6 @@ namespace Luminous
 
   SimpleTextLayout::D::D(const QTextLayout & copy)
     : m_layout(copy.text(), copy.font())
-    , m_layoutThread(nullptr)
-    , m_indent(0)
   {
     m_layout.setTextOption(copy.textOption());
   }
@@ -249,6 +247,16 @@ namespace Luminous
     QFontMetricsF fontMetrics(font);
     const float leading = static_cast<float>(fontMetrics.leading());
 
+    bool elided = false;
+    if (m_elideText) {
+      QString txt = fontMetrics.elidedText(m_text, Qt::ElideRight, lineWidth - m_indent);
+      if (m_text != txt)
+        elided = true;
+      m_layout.setText(txt);
+    } else {
+      m_layout.setText(m_text);
+    }
+
     m_boundingBox = QRectF();
     m_layout.beginLayout();
     float indent = m_indent;
@@ -273,6 +281,12 @@ namespace Luminous
     m_layout.endLayout();
 
     m_layoutThread = QThread::currentThread();
+
+    if (elided) {
+      m_untruncatedWidth = fontMetrics.horizontalAdvance(m_text);
+    } else {
+      m_untruncatedWidth = m_boundingBox.width();
+    }
 
 #if 0
     static QAtomicInt id;
@@ -356,14 +370,16 @@ namespace Luminous
 
   QString SimpleTextLayout::text() const
   {
-    return m_d->m_layout.text();
+    return m_d->m_text;
   }
 
   void SimpleTextLayout::setText(const QString & text)
   {
     QString tmp = text;
     tmp.replace(QRegExp("\\r\\n|\\n|\\r"), QString(QChar::LineSeparator));
-    m_d->m_layout.setText(tmp);
+    if (m_d->m_text == tmp)
+      return;
+    m_d->m_text = tmp;
     invalidate();
   }
 
@@ -444,6 +460,24 @@ namespace Luminous
   float SimpleTextLayout::indent() const
   {
     return m_d->m_indent;
+  }
+
+  void SimpleTextLayout::setElideText(bool elide)
+  {
+    if (m_d->m_elideText == elide)
+      return;
+    m_d->m_elideText = elide;
+    invalidate();
+  }
+
+  bool SimpleTextLayout::elideText() const
+  {
+    return m_d->m_elideText;
+  }
+
+  float SimpleTextLayout::untruncatedWidth() const
+  {
+    return m_d->m_untruncatedWidth;
   }
 
   QTextLayout & SimpleTextLayout::layout()
