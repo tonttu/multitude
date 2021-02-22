@@ -55,6 +55,14 @@ namespace Luminous
     LUMINOUS_API void setIndent(float indent);
     LUMINOUS_API float indent() const;
 
+    /// Truncate the text with "..." if the text can't otherwise fit.
+    LUMINOUS_API void setElideText(bool elide);
+    LUMINOUS_API bool elideText() const;
+
+    /// If the text was truncated with setElideText(), this is the width of the
+    /// untruncated text.
+    LUMINOUS_API float untruncatedWidth() const;
+
     /// If the QTextLayout is modified, it's required to call invalidate() manually
     LUMINOUS_API QTextLayout & layout();
     LUMINOUS_API const QTextLayout & layout() const;
