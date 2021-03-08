@@ -27,11 +27,21 @@ namespace Punctual
   {
     return folly::collectAllUnsafe(std::forward<T>(c));
   }
+  template <class T>
+  inline auto collectUnsafe(T && c) -> decltype(folly::collectUnsafe(c))
+  {
+    return folly::collectUnsafe(std::forward<T>(c));
+  }
 #else
   template <class T>
   inline auto collectAllUnsafe(T && c) -> decltype(folly::collectAll(c))
   {
     return folly::collectAll(std::forward<T>(c));
+  }
+  template <class T>
+  inline auto collectUnsafe(T && c) -> decltype(folly::collect(c))
+  {
+    return folly::collect(std::forward<T>(c));
   }
 #endif
 
