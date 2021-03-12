@@ -4,6 +4,8 @@
 
 #include <folly/futures/Future.h>
 
+#include <QStringList>
+
 namespace Punctual
 {
   /// Calls callback with values from all futures in order. The returned
@@ -44,6 +46,42 @@ namespace Punctual
     return folly::collect(std::forward<T>(c));
   }
 #endif
+
+  /// Finishes all futures, and then:
+  ///  - returns folly::Unit if nothing failed,
+  ///  - returns the error if there is just one error, or
+  ///  - returns an std::runtime_error with combined unique error messages of all errors
+  template <class T>
+  inline folly::Future<folly::Unit> collectErrors(T && c)
+  {
+    return collectAllUnsafe(std::forward<T>(c)).thenValue([] (auto v) {
+      int errs = 0;
+      for (auto & t: v)
+        if (t.hasException())
+          ++errs;
+
+      if (errs == 0)
+        return folly::Unit();
+
+      if (errs == 1)
+        for (auto & t: v)
+          t.throwIfFailed();
+
+      QStringList messages;
+      for (auto & t: v) {
+        if (auto ex = t.tryGetExceptionObject()) {
+          QString msg = ex->what();
+          if (!messages.contains(msg))
+            messages << msg;
+        }
+      }
+
+      if (messages.isEmpty())
+        throw std::runtime_error("Operation failed");
+
+      throw std::runtime_error("Operation failed: " + messages.join(", ").toStdString());
+    });
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
