@@ -36,10 +36,13 @@ namespace Valuable
     virtual bool set(int v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(float v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) OVERRIDE;
     virtual bool set(const StyleValue & v, Layer layer = USER) OVERRIDE;
+    virtual bool set(const QString & v, Layer layer = USER, ValueUnit unit = VU_UNKNOWN) override;
 
     virtual float asFloat(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
     virtual int asInt(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
     virtual QString asString(bool * const ok = nullptr, Layer layer = CURRENT_VALUE) const OVERRIDE;
+
+    virtual bool deserialize(const ArchiveElement & element) override;
 
     static inline bool interpolate(bool a, bool b, float m)
     {
