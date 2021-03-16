@@ -66,9 +66,27 @@ namespace Valuable
     return false;
   }
 
+  bool AttributeBool::set(const QString & v, Attribute::Layer layer, Attribute::ValueUnit)
+  {
+    QString tst = v.toLower();
+    if (tst == "true" || tst == "1") {
+      setValue(true, layer);
+      return true;
+    } else if (tst == "false" || tst == "0") {
+      setValue(false, layer);
+      return true;
+    }
+    return false;
+  }
+
   float AttributeBool::asFloat(bool * const ok, Attribute::Layer layer) const
   {
     if(ok) *ok = true;
     return value(layer);
+  }
+
+  bool AttributeBool::deserialize(const ArchiveElement & element)
+  {
+    return set(element.get());
   }
 }
