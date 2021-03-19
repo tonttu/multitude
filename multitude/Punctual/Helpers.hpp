@@ -54,7 +54,7 @@ namespace Punctual
   template <class T>
   inline folly::Future<folly::Unit> collectErrors(T && c)
   {
-    return collectAllUnsafe(std::forward<T>(c)).thenValue([] (auto v) {
+    return Punctual::collectAllUnsafe(std::forward<T>(c)).thenValue([] (auto v) {
       int errs = 0;
       for (auto & t: v)
         if (t.hasException())
