@@ -63,6 +63,9 @@ namespace Luminous
     /// untruncated text.
     LUMINOUS_API float untruncatedWidth() const;
 
+    LUMINOUS_API void setSelection(TextRange range);
+    LUMINOUS_API TextRange selection() const;
+
     /// If the QTextLayout is modified, it's required to call invalidate() manually
     LUMINOUS_API QTextLayout & layout();
     LUMINOUS_API const QTextLayout & layout() const;

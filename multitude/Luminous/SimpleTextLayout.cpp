@@ -156,6 +156,7 @@ namespace Luminous
     float m_indent = 0.f;
     QString m_text;
     bool m_elideText = false;
+    TextLayout::TextRange m_selection;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -480,6 +481,19 @@ namespace Luminous
     return m_d->m_untruncatedWidth;
   }
 
+  void SimpleTextLayout::setSelection(TextLayout::TextRange range)
+  {
+    if (m_d->m_selection == range)
+      return;
+    m_d->m_selection = range;
+    invalidate();
+  }
+
+  TextLayout::TextRange SimpleTextLayout::selection() const
+  {
+    return m_d->m_selection;
+  }
+
   QTextLayout & SimpleTextLayout::layout()
   {
     return m_d->m_layout;
@@ -583,7 +597,8 @@ namespace Luminous
 
     Q_FOREACH (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
       missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
-                                                m_d->m_layout.font().stretch());
+                                                m_d->m_layout.font().stretch(),
+                                                nullptr, &m_d->m_selection);
 
     nonConst->setGlyphsReady(!missingGlyphs);
   }
