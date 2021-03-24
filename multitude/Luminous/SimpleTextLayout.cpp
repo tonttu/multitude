@@ -258,6 +258,28 @@ namespace Luminous
       m_layout.setText(m_text);
     }
 
+    QVector<QTextLayout::FormatRange> formats;
+    if (m_selection.len > 0) {
+      /// Qt lacks a public API to map input text cursor locations to glyph
+      /// indexes, which is required for rendering selected text with
+      /// different color. We work around this by forcing selection to be
+      /// a separate glyph run with a "overline" font flag. This way we don't
+      /// need the glyph indexes, since the whole glyph run can be rendered
+      /// with different style.
+      ///
+      /// It seems that in some extreme cases when needing to use fallback font
+      /// for individual glyphs like unicode emojis that don't fit in a single
+      /// UTF-16 char, adding even an empty FormatRange to the layout generates
+      /// different ascent / descent values for the first line if the selection
+      /// ends at the newline. This feels like a Qt bug.
+      QTextLayout::FormatRange r;
+      r.start = m_selection.start;
+      r.length = m_selection.len;
+      r.format.setFontOverline(true);
+      formats.push_back(r);
+    }
+    m_layout.setFormats(formats);
+
     m_boundingBox = QRectF();
     m_layout.beginLayout();
     float indent = m_indent;
@@ -562,7 +584,7 @@ namespace Luminous
     SimpleTextLayout *nonConst = const_cast<SimpleTextLayout*>(this);
     if (!isLayoutReady() || m_d->m_layoutThread != QThread::currentThread()) {
       m_d->layout(maximumSize());
-      // We need to avoid calling bounding box here, becourse it calls generateInternal
+      // We need to avoid calling bounding box here, because it calls generateInternal
       nonConst->setBoundingBox(m_d->m_boundingBox);
 
       float contentHeigth = static_cast<float>(m_d->m_boundingBox.height());
@@ -595,10 +617,17 @@ namespace Luminous
     const Nimble::Vector2f layoutLocation(static_cast<float>(m_d->m_layout.position().x()),
                                           static_cast<float>(m_d->m_layout.position().y()));
 
-    Q_FOREACH (const QGlyphRun & glyphRun, m_d->m_layout.glyphRuns())
-      missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
-                                                m_d->m_layout.font().stretch(),
-                                                nullptr, &m_d->m_selection);
+    for (const QGlyphRun & glyphRun: m_d->m_layout.glyphRuns()) {
+      if (glyphRun.overline()) {
+        QTextCharFormat fmt;
+        fmt.setForeground(m_d->m_selection.textColor);
+        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
+                                                  m_d->m_layout.font().stretch(), &fmt);
+      } else {
+        missingGlyphs |= nonConst->generateGlyphs(layoutLocation, glyphRun,
+                                                  m_d->m_layout.font().stretch());
+      }
+    }
 
     nonConst->setGlyphsReady(!missingGlyphs);
   }
