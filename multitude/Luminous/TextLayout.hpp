@@ -48,6 +48,18 @@ namespace Luminous {
       std::vector<TextLayout::Item> items;
     };
 
+    struct TextRange
+    {
+      int start = 0;
+      int len = 0;
+      QColor textColor;
+
+      bool operator==(const TextRange & r) const
+      {
+        return start == r.start && len == r.len && textColor == r.textColor;
+      }
+    };
+
   public:
     LUMINOUS_API virtual ~TextLayout();
 

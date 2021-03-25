@@ -1209,11 +1209,14 @@ namespace Luminous
     if(!ignoreVerticalAlign)
       renderLocation.y += layout.verticalOffset();
 
+    Radiant::ColorPMA defaultColor = uniform.colorIn;
     for (int g = 0; g < layout.groupCount(); ++g) {
       textures["tex"] = layout.texture(g);
       auto & group = layout.group(g);
       if (group.color.isValid()) {
         uniform.colorIn = Radiant::ColorPMA(group.color) * opacity();
+      } else {
+        uniform.colorIn = defaultColor;
       }
 
       for (int i = 0; i < int(group.items.size());) {
