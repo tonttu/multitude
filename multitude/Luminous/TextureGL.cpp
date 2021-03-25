@@ -361,10 +361,8 @@ namespace Luminous
         if (created)
           createFence = m_state.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
         m_state.driver().worker().add([this, tex=texture.dataInfo(), mipmaps=texture.mipmapsEnabled(), toUpload, compressedFormat, createFence] {
-          if (createFence) {
+          if (createFence)
             m_state.opengl().glWaitSync(createFence, 0, GL_TIMEOUT_IGNORED);
-            m_state.opengl().glDeleteSync(createFence);
-          }
           m_state.opengl().glBindTexture(m_target, m_handle);
           GLERROR("TextureGL::upload2D # glBindTexture");
           upload2DImpl(tex, toUpload, compressedFormat, mipmaps);
@@ -373,6 +371,18 @@ namespace Luminous
             QMutexLocker g(&m_asyncUploadMutex);
             --m_asyncUploadTasks;
             m_fences.push_back(fence);
+
+            /// With some Intel GPUs on Windows, calling glDeleteSync for a fence
+            /// that has been created in the render thread and used in this worker
+            /// thread causes the already queued glWaitSync to have no apparent
+            /// effect at all. The spec says that in this situation glDeleteSync
+            /// should just raise a flag that causes the sync object to be deleted
+            /// later, but that doesn't seem to be the case.
+            ///
+            /// Workaround is to delete the sync object in the render thread after
+            /// the upload fence finishes.
+            if (createFence)
+              m_fences.push_back(createFence);
           }
           m_asyncUploadCond.wakeAll();
           unref();
