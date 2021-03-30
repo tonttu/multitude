@@ -117,6 +117,9 @@ namespace Valuable
     /// Setter of value from wrapped value
     void setWrapped(WrappedValue& v, int index, ElementType elem) const;
 
+    /// Getter for the tuple attributes. index must be between 0 and N - 1
+    AttributeT<ElementType> & get(int index);
+
   protected:
     /// CRTP implementation. override in subclass
     static QString priv_elementName(int tupleIndex, QString baseName);
@@ -188,6 +191,13 @@ namespace Valuable
     (void) v; (void) index; (void) elem;
     /// This needs to be overloaded in every class
     assert(0);
+  }
+
+  template <typename T, typename A>
+  AttributeT<typename AttributeTuple<T,A>::ElementType> & AttributeTuple<T,A>::get(int index)
+  {
+    assert(index >= 0 && index < N);
+    return *m_values[index];
   }
 
   template <typename T, typename A>
