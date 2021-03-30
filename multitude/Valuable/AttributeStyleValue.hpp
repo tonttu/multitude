@@ -81,6 +81,8 @@ namespace Valuable
 
     static inline StyleValue interpolate(StyleValue a, StyleValue b, float m)
     {
+      if (a.size() == 1 && b.size() == 1 && a.isNumber() && b.isNumber())
+        return a.asFloat() * (1.f - m) + b.asFloat() * m;
       return m >= 0.5f ? b : a;
     }
   };
