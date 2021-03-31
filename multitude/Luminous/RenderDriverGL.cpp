@@ -594,6 +594,11 @@ namespace Luminous
       Radiant::Semaphore s;
       worker().add([this, &s] {
         afterFlush().drain();
+        // We already called deInitialize once when render thread ended, but
+        // any ongoing texture uploads might have reserved some OpenGL objects
+        // that couldn't have been deleted then. Now since the worker thread
+        // has been drained, we can delete the remaining ones.
+        deInitialize();
         s.release();
       });
       s.acquire();
