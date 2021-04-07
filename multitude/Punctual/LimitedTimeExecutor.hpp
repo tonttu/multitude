@@ -20,13 +20,17 @@ namespace Punctual
     virtual void add(folly::Func func) override;
     virtual void addWithPriority(folly::Func func, int8_t priority) override;
 
-    /// Run graph executor tasks for a limited time in priority order
+    /// Run executor tasks for a limited time in priority order.
     /// Task is considered to be a low-priority, if its priority is less than
-    /// folly::Executor::MID_PRI
+    /// folly::Executor::MID_PRI.
     /// @returns false if some tasks didn't get executed due to time limits
     bool run(double timeBudgetS, double lowPriorityTimeBudgetS);
 
+    /// Delete all queued tasks
     void clear();
+
+    /// Calls clear() and prevents any more tasks to be added to the executor
+    void shutdown();
 
   private:
     class D;

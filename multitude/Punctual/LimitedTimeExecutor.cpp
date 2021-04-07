@@ -113,4 +113,10 @@ namespace Punctual
 
     m_d->m_closing = closing;
   }
+
+  void LimitedTimeExecutor::shutdown()
+  {
+    m_d->m_closing = true;
+    clear();
+  }
 }
