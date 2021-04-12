@@ -34,12 +34,11 @@ namespace Email
 
   // ------------------------------------------------------------------------
 
-  Valuable::EnumNames s_encryptionTypes[] = {
+  Valuable::EnumNames s_encryptionTypes = {
     {"none", (long)Sender::EncryptionType::NONE },
     {"ssl",  (long)Sender::EncryptionType::SSL  },
     {"tls",  (long)Sender::EncryptionType::TLS  },
     {"auto", (long)Sender::EncryptionType::AUTO },
-    {0, 0}
   };
 
   Sender::Sender()

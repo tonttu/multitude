@@ -71,7 +71,7 @@ namespace Valuable
           Node * child = dynamic_cast<Node*>(attr);
           if (child)
             monitor(child, path, depth + 1);
-        }, Node::AFTER_UPDATE);
+        });
 
         node->onAttributeRemoved.addListener(owner->sharedPtr(), [this, name, depth] (Valuable::Attribute * attr) {
           if (name != attr->name())
@@ -107,7 +107,7 @@ namespace Valuable
           });
           onChange.raise(result);
         }
-      }, Node::AFTER_UPDATE);
+      });
 
       node->onAttributeRemoved.addListener(owner->sharedPtr(), [this, result] (auto) {
         onChange.raise(result);
