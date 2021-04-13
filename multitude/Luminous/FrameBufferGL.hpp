@@ -102,8 +102,8 @@ namespace Luminous
     FrameBuffer::FrameBufferBind m_bind;
     Nimble::Size m_size;
     int m_generation{-1};
-    QMap<GLenum, RenderResource::Id> m_textureAttachments;
-    QMap<GLenum, RenderResource::Id> m_renderBufferAttachments;
+    QMap<GLenum, TextureGL*> m_textureAttachments;
+    QMap<GLenum, RenderBufferGL*> m_renderBufferAttachments;
     bool m_dirty{true};
   };
 

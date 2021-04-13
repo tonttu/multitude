@@ -71,6 +71,10 @@ namespace Luminous
 
   void RenderBufferGL::sync(const RenderBuffer & buffer)
   {
+    if (m_generation == buffer.generation()) {
+      touch();
+      return;
+    }
     bind();
     setStorageFormat(buffer);
   }
@@ -120,6 +124,10 @@ namespace Luminous
 
   FrameBufferGL::~FrameBufferGL()
   {
+    for (TextureGL * texGl: m_textureAttachments)
+      texGl->unref();
+    for (RenderBufferGL * renderTargetGl: m_renderBufferAttachments)
+      renderTargetGl->unref();
     m_state.opengl().glDeleteFramebuffers(1, &m_handle);
     GLERROR("FrameBufferGL::~FrameBufferGL # glDeleteFramebuffers");
   }
@@ -219,8 +227,85 @@ namespace Luminous
     m_type = target.targetType();
     m_bind = target.targetBind();
     m_size = target.size();
-    m_textureAttachments = target.textureAttachments();
-    m_renderBufferAttachments = target.renderBufferAttachments();
+
+    // Step m_textureAttachments and textures in sync, both are ordered by
+    // the attachment type
+    {
+      const QMap<GLenum, RenderResource::Id> & textures = target.textureAttachments();
+      auto git = m_textureAttachments.begin();
+
+      for (auto it = textures.begin(); it != textures.end(); ++it) {
+        Texture * tex = RenderManager::getResource<Texture>(it.value());
+        if (!tex)
+          continue;
+
+        auto & texGl = m_state.driver().handle(*tex);
+        texGl.upload(*tex, 0, TextureGL::UPLOAD_SYNC);
+
+        while (git != m_textureAttachments.end() && git.key() < it.key()) {
+          git.value()->unref();
+          git = m_textureAttachments.erase(git);
+        }
+
+        if (git != m_textureAttachments.end() && git.key() == it.key()) {
+          if (&texGl != git.value()) {
+            git.value()->unref();
+            texGl.ref();
+            *git = &texGl;
+          }
+          ++git;
+          continue;
+        }
+
+        texGl.ref();
+        git = m_textureAttachments.insert(it.key(), &texGl);
+        ++git;
+      }
+
+      while (git != m_textureAttachments.end()) {
+        git.value()->unref();
+        git = m_textureAttachments.erase(git);
+      }
+    }
+
+    // Same for m_renderBufferAttachments
+    {
+      const QMap<GLenum, RenderResource::Id> & renderBuffers = target.renderBufferAttachments();
+      auto git = m_renderBufferAttachments.begin();
+
+      for (auto it = renderBuffers.begin(); it != renderBuffers.end(); ++it) {
+        RenderBuffer * renderBuffer = RenderManager::getResource<RenderBuffer>(it.value());
+        if (!renderBuffer)
+          continue;
+
+        auto & renderBufferGl = m_state.driver().handle(*renderBuffer);
+        renderBufferGl.sync(*renderBuffer);
+
+        while (git != m_renderBufferAttachments.end() && git.key() < it.key()) {
+          git.value()->unref();
+          git = m_renderBufferAttachments.erase(git);
+        }
+
+        if (git != m_renderBufferAttachments.end() && git.key() == it.key()) {
+          if (&renderBufferGl != git.value()) {
+            git.value()->unref();
+            renderBufferGl.ref();
+            *git = &renderBufferGl;
+          }
+          ++git;
+          continue;
+        }
+
+        renderBufferGl.ref();
+        git = m_renderBufferAttachments.insert(it.key(), &renderBufferGl);
+        ++git;
+      }
+
+      while (git != m_renderBufferAttachments.end()) {
+        git.value()->unref();
+        git = m_renderBufferAttachments.erase(git);
+      }
+    }
   }
 
   void FrameBufferGL::syncImpl()
@@ -233,23 +318,12 @@ namespace Luminous
 
     /// @todo should also detach removed attachments
 
-    for (auto it = m_textureAttachments.begin(); it != m_textureAttachments.end(); ++it) {
-      GLenum attachment = it.key();
-      Texture * texture = RenderManager::getResource<Luminous::Texture>(it.value());
-      if (texture) {
-        auto & texgl = m_state.driver().handle(*texture);
-        texgl.upload(*texture, 0, TextureGL::UPLOAD_SYNC);
-        attach(attachment, texgl);
-      }
-    }
+    for (auto it = m_textureAttachments.begin(); it != m_textureAttachments.end(); ++it)
+      attach(it.key(), *it.value());
 
-    for (auto it = m_renderBufferAttachments.begin(); it != m_renderBufferAttachments.end(); ++it) {
-      GLenum attachment = it.key();
-      RenderBuffer * buffer = RenderManager::getResource<Luminous::RenderBuffer>(it.value());
-      if (buffer)
-        attach(attachment, m_state.driver().handle(*buffer));
-    }
+    for (auto it = m_renderBufferAttachments.begin(); it != m_renderBufferAttachments.end(); ++it)
+      attach(it.key(), *it.value());
+
     check();
   }
-
 }
