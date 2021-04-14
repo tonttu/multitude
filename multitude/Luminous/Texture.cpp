@@ -206,7 +206,7 @@ namespace Luminous
   unsigned int Texture::height() const { return m_d->m_height; }
   unsigned int Texture::depth() const { return m_d->m_depth; }
   const PixelFormat & Texture::dataFormat() const { return m_d->m_dataFormat; }
-  std::shared_ptr<const void> Texture::data() const { return m_d->m_data;}
+  const std::shared_ptr<const void> & Texture::data() const { return m_d->m_data; }
 
   QRegion Texture::dirtyRegion(unsigned int threadIndex) const
   {

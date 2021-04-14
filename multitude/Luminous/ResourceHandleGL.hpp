@@ -86,7 +86,7 @@ namespace Luminous
 
   private:
     Radiant::TimeStamp m_lastUsed;
-    unsigned int m_expirationSeconds;
+    unsigned int m_expirationSeconds = 3;
     std::atomic<int> m_externalRefs{0};
     bool m_manuallyExpired = false;
 

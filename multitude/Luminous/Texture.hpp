@@ -162,9 +162,8 @@ namespace Luminous
     /// Get the pixel format of the texture data
     /// @return data format
     LUMINOUS_API const PixelFormat & dataFormat() const;
-    /// Get the raw pointer to texture data.
-    /// @return pointer to texture data
-    LUMINOUS_API std::shared_ptr<const void> data() const;
+    /// Get the pointer to texture data.
+    LUMINOUS_API const std::shared_ptr<const void> & data() const;
 
     /// Mark a region of the texture as dirty. Dirty regions are used to
     /// determine which parts of the texture data must be uploaded to GPU
