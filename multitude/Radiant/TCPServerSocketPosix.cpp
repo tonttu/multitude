@@ -215,8 +215,12 @@ namespace Radiant
     for (int i = 0;; ++i) {
       nextPort = (port + 1 - minPort) % (maxPort - minPort + 1) + minPort;
       Radiant::TCPServerSocket server;
-      if (server.open("0.0.0.0", port) == 0)
-        break;
+      // The port we return needs to be open on both 0.0.0.0 and 127.0.0.1 interfaces.
+      if (server.open("0.0.0.0", port) == 0) {
+        server.close();
+        if (server.open("127.0.0.1", port) == 0)
+          break;
+      }
 
       if (i > 40000) {
         Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to find open port");

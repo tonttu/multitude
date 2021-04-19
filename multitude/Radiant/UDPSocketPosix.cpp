@@ -306,7 +306,12 @@ namespace Radiant
                                            true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
       if (errStr.isEmpty()) {
         SocketWrapper::close(fd);
-        break;
+        SocketUtilPosix::bindOrConnectSocket(fd, "127.0.0.1", port, errStr,
+                                             true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (errStr.isEmpty()) {
+          SocketWrapper::close(fd);
+          break;
+        }
       }
 
       if (i > 40000) {
