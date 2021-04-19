@@ -16,6 +16,7 @@
 #include "Trace.hpp"
 
 #include <Nimble/Math.hpp>
+#include <Nimble/Random.hpp>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -182,19 +183,6 @@ namespace Radiant
 
   int TCPServerSocket::randomOpenTCPPort()
   {
-    Radiant::LockFile lock(QDir::tempPath() + "/.cornerstone-random-tcp-port.lock", true);
-
-    QFile file(QDir::tempPath() + "/.cornerstone-random-tcp-port");
-    if (!file.open(QFile::ReadWrite)) {
-      Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to open %s: %s",
-                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
-      return 0;
-    }
-
-    // The file holds the next port available
-    uint32_t port = 0;
-    QTextStream(&file) >> port;
-
     // Use the IANA registered ports range (1024-49151) excluding the
     // ephemeral port range used by linux (32768-61000), since these ports
     // are most likely not used by anyone on the system between the time
@@ -202,23 +190,47 @@ namespace Radiant
     const uint32_t minPort = 1024;
     const uint32_t maxPort = 32767;
 
+    QString path = QDir::tempPath() + "/.cornerstone-random-tcp-port";
+#ifdef RADIANT_LINUX
+    /// QDir::tempPath is already user-specific on Windows, make 'path'
+    /// user-specific on Linux too. Otherwise we have write-permission
+    /// issues with the files.
+    path += "." + QString::number(geteuid());
+#endif
+    Radiant::LockFile lock(path + ".lock", true);
+
+    QFile file(path);
+    if (!file.open(QFile::ReadWrite)) {
+      Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to open %s: %s",
+                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
+      return Nimble::RandomUniform::instance().rand0X(maxPort - minPort + 1) + minPort;
+    }
+
+    // The file holds the next port available
+    uint32_t port = 0;
+    QTextStream(&file) >> port;
+
     port = Nimble::Math::Clamp(port, minPort, maxPort);
     uint32_t nextPort;
     for (int i = 0;; ++i) {
       nextPort = (port + 1 - minPort) % (maxPort - minPort + 1) + minPort;
       Radiant::TCPServerSocket server;
-      if (server.open("0.0.0.0", port) == 0)
-        break;
+      // The port we return needs to be open on both 0.0.0.0 and 127.0.0.1 interfaces.
+      if (server.open("0.0.0.0", port) == 0) {
+        server.close();
+        if (server.open("127.0.0.1", port) == 0)
+          break;
+      }
 
       if (i > 40000) {
         Radiant::error("TCPServerSocket::randomOpenTCPPort # Failed to find open port");
-        return 0;
+        return Nimble::RandomUniform::instance().rand0X(maxPort - minPort + 1) + minPort;
       }
       port = nextPort;
     }
 
+    file.resize(0);
     QTextStream stream(&file);
-    stream.seek(0);
     stream << nextPort;
     return port;
   }

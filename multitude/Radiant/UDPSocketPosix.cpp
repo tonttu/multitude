@@ -15,6 +15,7 @@
 #include "Trace.hpp"
 
 #include <Nimble/Math.hpp>
+#include <Nimble/Random.hpp>
 
 #include <sys/types.h>
 
@@ -267,25 +268,32 @@ namespace Radiant
 
   int UDPSocket::randomOpenUDPPort()
   {
-    Radiant::LockFile lock(QDir::tempPath() + "/.cornerstone-random-udp-port.lock", true);
-
-    QFile file(QDir::tempPath() + "/.cornerstone-random-udp-port");
-    if (!file.open(QFile::ReadWrite)) {
-      Radiant::error("UDPSocket::randomOpenUDPPort # Failed to open %s: %s",
-                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
-      return 0;
-    }
-
-    // The file holds the next port available
-    uint32_t port = 0;
-    QTextStream(&file) >> port;
-
     // Use the IANA registered ports range (1024-49151) excluding the
     // ephemeral port range used by linux (32768-61000), since these ports
     // are most likely not used by anyone on the system between the time
     // this function returns and the port is actually opened.
     const uint32_t minPort = 1024;
     const uint32_t maxPort = 32767;
+
+    QString path = QDir::tempPath() + "/.cornerstone-random-udp-port";
+#ifdef RADIANT_LINUX
+    /// QDir::tempPath is already user-specific on Windows, make 'path'
+    /// user-specific on Linux too. Otherwise we have write-permission
+    /// issues with the files.
+    path += "." + QString::number(geteuid());
+#endif
+    Radiant::LockFile lock(path + ".lock", true);
+
+    QFile file(path);
+    if (!file.open(QFile::ReadWrite)) {
+      Radiant::error("UDPSocket::randomOpenUDPPort # Failed to open %s: %s",
+                     file.fileName().toUtf8().data(), file.errorString().toUtf8().data());
+      return Nimble::RandomUniform::instance().rand0X(maxPort - minPort + 1) + minPort;
+    }
+
+    // The file holds the next port available
+    uint32_t port = 0;
+    QTextStream(&file) >> port;
 
     port = Nimble::Math::Clamp(port, minPort, maxPort);
     uint32_t nextPort;
@@ -298,18 +306,23 @@ namespace Radiant
                                            true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
       if (errStr.isEmpty()) {
         SocketWrapper::close(fd);
-        break;
+        SocketUtilPosix::bindOrConnectSocket(fd, "127.0.0.1", port, errStr,
+                                             true, AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (errStr.isEmpty()) {
+          SocketWrapper::close(fd);
+          break;
+        }
       }
 
       if (i > 40000) {
         Radiant::error("UDPSocket::randomOpenUDPPort # Failed to find open port");
-        return 0;
+        return Nimble::RandomUniform::instance().rand0X(maxPort - minPort + 1) + minPort;
       }
       port = nextPort;
     }
 
+    file.resize(0);
     QTextStream stream(&file);
-    stream.seek(0);
     stream << nextPort;
     return port;
   }
