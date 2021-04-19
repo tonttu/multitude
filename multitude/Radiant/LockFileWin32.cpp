@@ -51,7 +51,7 @@ namespace Radiant
     if (isLocked())
       return true;
 
-    m_d->m_fd = CreateFileA(m_d->m_filename.toUtf8().data(),
+    m_d->m_fd = CreateFileW(m_d->m_filename.toStdWString().data(),
                             GENERIC_READ | GENERIC_WRITE,
                             FILE_SHARE_READ | FILE_SHARE_WRITE,
                             nullptr,
