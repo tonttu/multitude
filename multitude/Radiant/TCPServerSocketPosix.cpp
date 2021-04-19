@@ -229,8 +229,8 @@ namespace Radiant
       port = nextPort;
     }
 
+    file.resize(0);
     QTextStream stream(&file);
-    stream.seek(0);
     stream << nextPort;
     return port;
   }
