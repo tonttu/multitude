@@ -75,9 +75,15 @@ namespace Radiant
 
   uint8_t BGThreadExecutor::getNumPriorities() const { return 255; }
 
-  const std::shared_ptr<BGThreadExecutor>& BGThreadExecutor::instance()
+  BGThreadExecutor * BGThreadExecutor::instance()
   {
-    static auto ptr = std::make_shared<BGThreadExecutor>();
-    return ptr;
+    static BGThreadExecutor s_instance;
+    return &s_instance;
+  }
+
+  BGThreadExecutor * BGThreadExecutor::instanceIo()
+  {
+    static BGThreadExecutor s_instance{BGThread::ioThreadPool()};
+    return &s_instance;
   }
 }

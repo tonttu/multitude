@@ -427,6 +427,21 @@ namespace Radiant
     m_isShuttingDown = false;
     ThreadPool::run(number);
   }
+
+  std::shared_ptr<BGThread> BGThread::ioThreadPool()
+  {
+    static Radiant::Mutex s_instanceMutex;
+    static std::weak_ptr<BGThread> s_instance;
+
+    Radiant::Guard g(s_instanceMutex);
+    auto bg = s_instance.lock();
+    if (!bg) {
+      bg = std::make_shared<BGThread>("IOThrd");
+      bg->run(8);
+      s_instance = bg;
+    }
+    return bg;
+  }
 }
 
 DEFINE_SINGLETON2(Radiant::BGThread,,, "BGThread")

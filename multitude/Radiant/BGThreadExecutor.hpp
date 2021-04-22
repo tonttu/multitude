@@ -26,7 +26,10 @@ namespace Radiant
     void addWithPriority(Func func, int8_t priority) override;
     uint8_t getNumPriorities() const override;
 
-    static const std::shared_ptr<BGThreadExecutor> & instance();
+    static BGThreadExecutor * instance();
+
+    /// BGThreadExecutor instance that is driven by BGThread::ioThreadPool().
+    static BGThreadExecutor * instanceIo();
 
     class D;
   private:

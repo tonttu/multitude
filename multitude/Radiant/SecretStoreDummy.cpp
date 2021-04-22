@@ -92,7 +92,6 @@ namespace Radiant
 
     const QString organization;
     const QString application;
-    std::shared_ptr<BGThreadExecutor> m_executor = BGThreadExecutor::instance();
   };
 
   SecretStoreDummy::SecretStoreDummy(const QString & org, const QString & app)
@@ -102,7 +101,7 @@ namespace Radiant
 
   folly::Future<QString> SecretStoreDummy::secret(const QString & key)
   {
-    return folly::via(m_executor.get(), [org = organization, app = application, key] {
+    return folly::via(BGThreadExecutor::instance(), [org = organization, app = application, key] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       if (settings.contains(key)) {
         return QString::fromUtf8(decrypt(settings.value(key).toByteArray()));
@@ -115,7 +114,7 @@ namespace Radiant
   folly::Future<folly::Unit> SecretStoreDummy::setSecret(
       const QString &, const QString & key, const QString & secret)
   {
-    return folly::via(m_executor.get(), [org = organization, app = application, key, secret] {
+    return folly::via(BGThreadExecutor::instance(), [org = organization, app = application, key, secret] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       settings.setValue(key, encrypt(secret.toUtf8()));
     });
@@ -123,7 +122,7 @@ namespace Radiant
 
   folly::Future<folly::Unit> SecretStoreDummy::clearSecret(const QString & key)
   {
-    return folly::via(m_executor.get(), [org = organization, app = application, key] {
+    return folly::via(BGThreadExecutor::instance(), [org = organization, app = application, key] {
       QSettings settings(prepareIniFilename(org, app), QSettings::IniFormat);
       settings.remove(key);
     });
