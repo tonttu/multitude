@@ -127,6 +127,17 @@ namespace Radiant
     /// Radiant::ThreadPool::run().
     virtual void run(int number = 1) override;
 
+    /// Return (create if needed) a BGThread dedicated for IO tasks that could
+    /// otherwise fill the standard BGThread instance. Use this for any
+    /// potentially long-running IO tasks like file copying etc.
+    ///
+    /// Adding slow IO tasks to normal BGThread with low priority is not
+    /// suitable alternative to this, since you might end up with a situation
+    /// where all BG threads are running a slow low-priority operation and
+    /// there's no a free thread to load a mipmap, font glyph on something else
+    /// time sensitive.
+    static std::shared_ptr<BGThread> ioThreadPool();
+
   private:
     virtual void childLoop() OVERRIDE;
 
