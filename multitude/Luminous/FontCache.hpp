@@ -59,6 +59,19 @@ namespace Luminous
     LUMINOUS_API static void deinitialize();
     LUMINOUS_API static void init();
 
+    /// FontCache can read from two different cache locations. There's the
+    /// normal read-write cache (see setCachePath) and this optional read-only
+    /// cache that is normally empty and unused, but can be set to point a
+    /// directory with pre-generated glyphs.
+    LUMINOUS_API static void setReadOnlyCachePath(const QString & path);
+
+    /// Normal glyph cache location. Normally there's no need to set this, the
+    /// default uses Radiant::CacheManager.
+    LUMINOUS_API static void setCachePath(const QString & path);
+
+    /// Number of glyphs waiting to be generated
+    LUMINOUS_API static size_t glyphGeneratorQueue();
+
     /// @cond
 
     LUMINOUS_API static TextureAtlasGroup<Glyph> & atlas();
