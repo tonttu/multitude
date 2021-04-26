@@ -194,7 +194,7 @@ namespace Valuable
     addAttribute("id", &m_id);
   }
 
-  Node::~Node()
+  Node::~Node() noexcept
   {
     REQUIRE_THREAD(m_ownerThread);
 
@@ -220,7 +220,7 @@ namespace Valuable
       delete m_attributes.begin()->second;
   }
 
-  Node::Node(Node && node)
+  Node::Node(Node && node) noexcept
     : Attribute(std::move(*this))
     , m_sender(std::move(node.m_sender))
     , m_attributes(std::move(node.m_attributes))
@@ -238,7 +238,7 @@ namespace Valuable
     m_attributes[m_id.name()] = &m_id;
   }
 
-  Node & Node::operator=(Node && node)
+  Node & Node::operator=(Node && node) noexcept
   {
     Attribute::operator=(std::move(*this));
     m_sender = std::move(node.m_sender);

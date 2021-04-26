@@ -61,10 +61,10 @@ namespace Luminous {
     };
 
   public:
-    LUMINOUS_API virtual ~TextLayout();
+    LUMINOUS_API virtual ~TextLayout() noexcept;
 
-    LUMINOUS_API TextLayout(TextLayout && t);
-    LUMINOUS_API TextLayout & operator=(TextLayout && t);
+    LUMINOUS_API TextLayout(TextLayout && t) noexcept;
+    LUMINOUS_API TextLayout & operator=(TextLayout && t) noexcept;
 
     LUMINOUS_API int groupCount() const;
     LUMINOUS_API Texture * texture(int groupIndex) const;

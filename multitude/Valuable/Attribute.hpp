@@ -76,8 +76,8 @@ namespace Valuable
   {
     MEMCHECKED
   public:
-    Serializable();
-    virtual ~Serializable() {}
+    Serializable() noexcept;
+    virtual ~Serializable() noexcept {}
 
     /// Serializes (writes) this object to an element.
     /// @param archive The serializer archive that is used to create the new
@@ -171,8 +171,8 @@ namespace Valuable
     Attribute(const Attribute & o) = delete;
     const Attribute & operator = (const Attribute &) = delete;
 
-    Attribute(Attribute && o);
-    const Attribute & operator = (Attribute &&);
+    Attribute(Attribute && o) noexcept;
+    const Attribute & operator = (Attribute &&) noexcept;
 
     /** Constructs a new value object and attaches it to its host.
 
@@ -184,7 +184,7 @@ namespace Valuable
     as they may be used in XML files etc.
     */
     Attribute(Node * host, const QByteArray & name);
-    virtual ~Attribute();
+    virtual ~Attribute() noexcept;
 
     /// Returns the name of the object.
     const QByteArray & name() const { return m_name; }

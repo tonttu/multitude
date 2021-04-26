@@ -76,7 +76,7 @@ namespace Valuable
       @param name Name of this object.
     */
     explicit Node(Node * host, const QByteArray &name = "");
-    virtual ~Node();
+    virtual ~Node() noexcept;
 
     /// @cond
 
@@ -87,11 +87,11 @@ namespace Valuable
 
     /// Moves a node, including all its attributes, events etc
     /// @param node node to move
-    Node(Node && node);
+    Node(Node && node) noexcept;
     /// Moves a node, replacing this
     /// @param node node to move
     /// @returns reference to this
-    Node & operator=(Node && node);
+    Node & operator=(Node && node) noexcept;
 
     /// Checks if the node is a descendant from a given ancestor.
     /// Node descends from another node if it is a direct child of the

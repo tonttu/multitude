@@ -364,13 +364,13 @@ namespace Luminous
     m_d->m_indent = that.m_d->m_indent;
   }
 
-  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that)
+  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that) noexcept
     : TextLayout(std::move(that)),
       m_d(std::move(that.m_d))
   {
   }
 
-  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that)
+  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that) noexcept
   {
     TextLayout::operator=(std::move(that));
     m_d = std::move(that.m_d);
@@ -387,7 +387,7 @@ namespace Luminous
     setText(text);
   }
 
-  SimpleTextLayout::~SimpleTextLayout()
+  SimpleTextLayout::~SimpleTextLayout() noexcept
   {
   }
 

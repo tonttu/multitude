@@ -153,17 +153,17 @@ namespace Luminous
     eventAddOut("layout");
   }
 
-  TextLayout::~TextLayout()
+  TextLayout::~TextLayout() noexcept
   {
   }
 
-  TextLayout::TextLayout(TextLayout && t)
+  TextLayout::TextLayout(TextLayout && t) noexcept
     : Node(std::move(t))
     , m_d(std::move(t.m_d))
   {
   }
 
-  TextLayout & TextLayout::operator=(TextLayout && t)
+  TextLayout & TextLayout::operator=(TextLayout && t) noexcept
   {
     Node::operator=(std::move(t));
     std::swap(m_d, t.m_d);
