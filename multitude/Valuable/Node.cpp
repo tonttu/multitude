@@ -221,7 +221,7 @@ namespace Valuable
   }
 
   Node::Node(Node && node) noexcept
-    : Attribute(std::move(*this))
+    : Attribute(std::move(node))
     , m_sender(std::move(node.m_sender))
     , m_attributes(std::move(node.m_attributes))
     , m_elisteners(std::move(node.m_elisteners))
@@ -240,7 +240,7 @@ namespace Valuable
 
   Node & Node::operator=(Node && node) noexcept
   {
-    Attribute::operator=(std::move(*this));
+    Attribute::operator=(std::move(node));
     m_sender = std::move(node.m_sender);
     m_attributes = std::move(node.m_attributes);
     m_elisteners = std::move(node.m_elisteners);
