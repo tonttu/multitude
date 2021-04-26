@@ -362,6 +362,9 @@ namespace Luminous
     m_d->m_letterSpacing = that.m_d->m_letterSpacing;
     m_d->m_lineHeight = that.m_d->m_lineHeight;
     m_d->m_indent = that.m_d->m_indent;
+    m_d->m_text = that.m_d->m_text;
+    m_d->m_elideText = that.m_d->m_elideText;
+    m_d->m_selection = that.m_d->m_selection;
   }
 
   SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that) noexcept
