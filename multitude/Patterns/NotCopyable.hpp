@@ -18,8 +18,8 @@ namespace Patterns
   class NotCopyable
   {
     protected:
-      NotCopyable() {}
-      ~NotCopyable() {}
+      NotCopyable() noexcept {}
+      ~NotCopyable() noexcept {}
 
     private:
       NotCopyable(const NotCopyable &);

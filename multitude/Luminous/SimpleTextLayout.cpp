@@ -362,15 +362,18 @@ namespace Luminous
     m_d->m_letterSpacing = that.m_d->m_letterSpacing;
     m_d->m_lineHeight = that.m_d->m_lineHeight;
     m_d->m_indent = that.m_d->m_indent;
+    m_d->m_text = that.m_d->m_text;
+    m_d->m_elideText = that.m_d->m_elideText;
+    m_d->m_selection = that.m_d->m_selection;
   }
 
-  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that)
+  SimpleTextLayout::SimpleTextLayout(SimpleTextLayout && that) noexcept
     : TextLayout(std::move(that)),
       m_d(std::move(that.m_d))
   {
   }
 
-  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that)
+  SimpleTextLayout & SimpleTextLayout::operator=(SimpleTextLayout && that) noexcept
   {
     TextLayout::operator=(std::move(that));
     m_d = std::move(that.m_d);
@@ -387,7 +390,7 @@ namespace Luminous
     setText(text);
   }
 
-  SimpleTextLayout::~SimpleTextLayout()
+  SimpleTextLayout::~SimpleTextLayout() noexcept
   {
   }
 

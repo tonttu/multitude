@@ -25,7 +25,7 @@ std::list<Valuable::Attribute::Doc> Valuable::Attribute::doc;
 
 namespace Valuable
 {
-  Serializable::Serializable()
+  Serializable::Serializable() noexcept
     : m_serializable(true)
   {}
 
@@ -77,7 +77,7 @@ namespace Valuable
     }
   }
 
-  Attribute::Attribute(Attribute && o)
+  Attribute::Attribute(Attribute && o) noexcept
     : m_host(nullptr)
     , m_ownerShorthand(o.m_ownerShorthand)
     , m_name(std::move(o.m_name))
@@ -93,7 +93,7 @@ namespace Valuable
     }
   }
 
-  const Attribute & Attribute::operator=(Attribute && o)
+  const Attribute & Attribute::operator=(Attribute && o) noexcept
   {
     removeHost();
     m_name = std::move(o.m_name);
@@ -112,7 +112,7 @@ namespace Valuable
     return *this;
   }
 
-  Attribute::~Attribute()
+  Attribute::~Attribute() noexcept
   {
     REQUIRE_THREAD(m_ownerThread);
     emitDelete();
