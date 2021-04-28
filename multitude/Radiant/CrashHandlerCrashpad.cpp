@@ -14,6 +14,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QDateTime>
 #include <QFileInfo>
 #include <QStandardPaths>
 
@@ -50,6 +51,92 @@ namespace Radiant
 {
   namespace CrashHandler
   {
+    namespace
+    {
+      using crashpad::CrashReportDatabase;
+
+      bool logHandler(logging::LogSeverity severity,
+                      const char * filePath,
+                      int line,
+                      size_t message_start,
+                      const std::string & string)
+      {
+        Radiant::Trace::Severity traceSeverity;
+        if (severity <= logging::LOG_VERBOSE ||
+            string.find("DuplicateHandle hStd") != std::string::npos) {
+          traceSeverity = Radiant::Trace::DEBUG;
+        } else if (severity == logging::LOG_INFO) {
+          traceSeverity = Radiant::Trace::INFO;
+        } else if (severity == logging::LOG_WARNING) {
+          traceSeverity = Radiant::Trace::WARNING;
+        } else {
+          traceSeverity = Radiant::Trace::FAILURE;
+        }
+
+        const char * file = filePath;
+        for (const char * it = filePath; *it; ++it)
+          if (*it == '/' || *it == '\\')
+            file = it + 1;
+
+        QByteArray msg = QByteArray::fromStdString(string).trimmed().
+            mid(static_cast<int>(message_start));
+        Radiant::Trace::trace("Crashpad", traceSeverity, "%s:%d # %s",
+                              file, line, msg.data());
+        return true;
+      }
+
+      void printError(const char * prefix, CrashReportDatabase::OperationStatus status)
+      {
+        switch (status) {
+        case CrashReportDatabase::kNoError:
+          break;
+
+        case CrashReportDatabase::kReportNotFound:
+          Radiant::error("%s: Report not found", prefix);
+          break;
+
+        case CrashReportDatabase::kFileSystemError:
+          Radiant::error("%s: File system error", prefix);
+          break;
+
+        case CrashReportDatabase::kDatabaseError:
+          Radiant::error("%s: DB error", prefix);
+          break;
+
+        case CrashReportDatabase::kBusyError:
+          Radiant::debug("%s: The DB is locked", prefix);
+          break;
+
+        case CrashReportDatabase::kCannotRequestUpload:
+          Radiant::error("%s: Can't request upload", prefix);
+          break;
+        }
+      }
+
+      void uploadPreviousCrashReport(CrashReportDatabase & db, std::vector<CrashReportDatabase::Report> & reports)
+      {
+        time_t latestTime = 0;
+        CrashReportDatabase::Report * latestReport = nullptr;
+        for (auto & r: reports) {
+          if (r.creation_time > latestTime) {
+            latestTime = r.creation_time;
+            latestReport = &r;
+          }
+        }
+
+        if (latestReport && !latestReport->uploaded) {
+          time_t age = QDateTime::currentDateTime().toTime_t() - latestTime;
+          if (age <= 60*60*24*7) {
+            Radiant::info("Crashpad # Trying to upload older crash report %s",
+                          latestReport->uuid.ToString().c_str());
+            auto op = db.RequestUpload(latestReport->uuid);
+            if (op != CrashReportDatabase::kNoError)
+              printError("Failed to request crash dump uploading", op);
+          }
+        }
+      }
+    }
+
 #ifdef RADIANT_WINDOWS
     static QString libraryPath()
     {
@@ -178,6 +265,8 @@ namespace Radiant
 
       Trace::findOrCreateFilter<Trace::CrashHandlerFilter>();
 
+      logging::SetLogMessageHandler(logHandler);
+
       const auto version = Radiant::cornerstoneVersionString();
 
       base::FilePath handlerPath(crashpadHandler().toStdWString());
@@ -193,12 +282,16 @@ namespace Radiant
 
       std::vector<std::string> arguments;
       arguments.push_back("--no-rate-limit");
+      arguments.push_back("--no-identify-client-via-url");
+      // The diagnostics server unfortunately doesn't accept gzip encoded data
+      arguments.push_back("--no-upload-gzip");
 
       bool restartable = true;
       bool asynchronous_start = false;
 
-      s_client->StartHandler(handlerPath, dbPath, metricsPath, url.toStdString(),
-                             annotations, arguments, restartable, asynchronous_start);
+      if (!s_client->StartHandler(handlerPath, dbPath, metricsPath, url.toStdString(),
+                                  annotations, arguments, restartable, asynchronous_start))
+        Radiant::error("Failed to initialize Crashpad handler. Crash reporting is disabled");
 
       crashpad::CrashpadInfo * info = crashpad::CrashpadInfo::GetCrashpadInfo();
       info->set_gather_indirectly_referenced_memory(crashpad::TriState::kDisabled, 0);
@@ -221,9 +314,35 @@ namespace Radiant
       info->set_extra_memory_ranges(s_extraMemoryRanges);
 
       s_database = crashpad::CrashReportDatabase::Initialize(dbPath);
+      // Create this dir manually, otherwise Crashpad will trigger a number of
+      // error messages every time we access the DB.
+      QDir().mkpath(db + "/attachments");
 
       crashpad::Settings * settings = s_database->GetSettings();
       settings->SetUploadsEnabled(true);
+
+      int cleaned = s_database->CleanDatabase(60*30);
+      if (cleaned > 0)
+        Radiant::info("Crashpad # cleaned %d invalid records from the crash report DB", cleaned);
+
+      std::vector<crashpad::CrashReportDatabase::Report> reports;
+      crashpad::CrashReportDatabase::OperationStatus status =
+          s_database->GetPendingReports(&reports);
+
+      if (status == crashpad::CrashReportDatabase::kNoError) {
+        if (reports.empty()) {
+          s_database->GetCompletedReports(&reports);
+          if (status == crashpad::CrashReportDatabase::kNoError) {
+            // If there are no pending reports, check if the last crash report
+            // weren't uploaded for some reason, and try again.
+            uploadPreviousCrashReport(*s_database, reports);
+          } else {
+            printError("Crashpad # Failed to get completed crash reports", status);
+          }
+        }
+      } else {
+        printError("Crashpad # Failed to get pending crash reports", status);
+      }
     }
 
     void setAnnotation(const QByteArray & key, const QByteArray & value)

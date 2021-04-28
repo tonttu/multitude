@@ -9,7 +9,13 @@
 #include <vector>
 
 #ifdef ENABLE_CI_BUILD
+#ifdef RADIANT_WINDOWS
+#define DEFAULT_MINIDUMP_URL "https://diagnostics.multitaction.com/crash-reports/upload-crash-dump"
+#else
+/// @todo Test and enable https also on Linux / breakpad, are there any
+///       certificate issues, maybe in some minimal docker images?
 #define DEFAULT_MINIDUMP_URL "http://diagnostics.multitaction.com/crash-reports/upload-crash-dump"
+#endif
 #else
 #define DEFAULT_MINIDUMP_URL QString()
 #endif
