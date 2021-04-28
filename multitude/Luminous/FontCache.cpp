@@ -33,6 +33,18 @@
 
 namespace
 {
+  struct FileCacheItem
+  {
+    FileCacheItem() {}
+    FileCacheItem(const QString & src, const QRectF & rect)
+      : src(src), rect(rect) {}
+
+    /// Filename (our own format)
+    QString src;
+    /// Glyph::m_location, Glyph::m_size
+    QRectF rect;
+  };
+
   std::map<QString, std::unique_ptr<Luminous::FontCache>> s_fontCache;
   Radiant::Mutex s_fontCacheMutex;
 
@@ -47,6 +59,18 @@ namespace
   int s_maxHiresSize = 3072;
   bool s_persistGlyphs = true;
 
+  /// Update this when something is changed with the generation code so that
+  /// the old cache needs to be invalidated
+  const int s_indexVersion = 5;
+
+  /// QSettings locking is inefficient and could cause needlessly long
+  /// waits when the resource is locked. Use a custom mutex instead.
+  Radiant::Mutex s_readOnlyIndexMutex;
+  Radiant::Mutex s_indexMutex;
+
+  QString s_readOnlyCachePath;
+  QString s_cachePath;
+
   // space character etc
   static Luminous::FontCache::Glyph s_emptyGlyph;
 
@@ -56,32 +80,41 @@ namespace
         arg(rawFont.style()).arg(rawFont.familyName(), rawFont.styleName());
   }
 
-  const QString & cacheBasePath()
+  const QString & cachePath()
   {
-    static QString s_basePath;
+    if (s_cachePath.isEmpty())
+      s_cachePath = Radiant::CacheManager::instance()->createCacheDir(
+            QString("fonts.%1").arg(s_indexVersion));
 
-    MULTI_ONCE s_basePath = Radiant::CacheManager::instance()->createCacheDir("fonts");
-
-    return s_basePath;
+    return s_cachePath;
   }
 
-  QString cacheFileName(QString fontKey, quint32 glyphIndex)
+  const QString & readOnlyCachePath()
   {
-    const QString path = cacheBasePath() + "/" + fontKey.replace('/', '_');
-    QDir().mkdir(path);
+    return s_readOnlyCachePath;
+  }
 
+  QString relativeCacheFileName(QString fontKey, quint32 glyphIndex)
+  {
+    const QString path = fontKey.replace('/', '_');
     return QString("%1/%2.glyph").arg(path).arg(glyphIndex);
   }
 
   QString indexFileName()
   {
-    return cacheBasePath() + "/index.ini";
+    return cachePath() + "/index.ini";
+  }
+
+  QString readOnlyIndexFileName()
+  {
+    return readOnlyCachePath() + "/index.ini";
   }
 
   /// for now, we use our own image format hack, since Luminous::Image doesn't support
   /// saving or loading 16 bit grayscale images.
   bool saveImage(const Luminous::Image & image, const QString & filename)
   {
+    QDir().mkpath(QFileInfo(filename).absolutePath());
     QSaveFile file(filename);
     if (file.open(QFile::WriteOnly)) {
       Luminous::ImageCodecCS codec;
@@ -178,6 +211,8 @@ namespace Luminous
 
   protected:
     virtual void doTask() OVERRIDE;
+    void populateCache(std::map<quint32, FileCacheItem> & cache,
+                       QSettings & settings, const QString & path);
 
   private:
     FontCache::D & m_cache;
@@ -207,19 +242,6 @@ namespace Luminous
     D(const QRawFont & rawFont, int stretch);
 
   public:
-    struct FileCacheItem
-    {
-      FileCacheItem() {}
-      FileCacheItem(const QString & src, const QRectF & rect)
-        : src(src), rect(rect) {}
-
-      /// Filename (our own format)
-      QString src;
-      /// Glyph::m_location, Glyph::m_size
-      QRectF rect;
-    };
-
-  public:
     const QString m_rawFontKey;
 
     /// This locks m_cache, m_fileCache
@@ -234,7 +256,7 @@ namespace Luminous
     std::shared_ptr<FileCacheLoader> m_fileCacheLoader;
 
     std::list<std::pair<quint32, QPainterPath> > m_glyphGenerationRequests;
-    std::shared_ptr<GlyphGenerator> m_glyphGenerator;
+    QList<std::shared_ptr<GlyphGenerator>> m_glyphGenerators;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -253,7 +275,7 @@ namespace Luminous
     {
       Radiant::Guard g(m_cache.m_cacheMutex);
       if (m_cache.m_glyphGenerationRequests.empty()) {
-        m_cache.m_glyphGenerator.reset();
+        m_cache.m_glyphGenerators.removeAll(std::static_pointer_cast<GlyphGenerator>(shared_from_this()));
       } else {
         p = m_cache.m_glyphGenerationRequests.front();
         m_cache.m_glyphGenerationRequests.pop_front();
@@ -357,24 +379,29 @@ namespace Luminous
     if(!s_persistGlyphs)
       return glyph;
 
-    const QString file = cacheFileName(m_cache.m_rawFontKey, glyphIndex);
+    const QString relativeFileName = relativeCacheFileName(m_cache.m_rawFontKey, glyphIndex);
+    const QString absFileName = cachePath() + "/" + relativeFileName;
 
-    if (saveImage(sdf, file)) {
-      FontCache::D::FileCacheItem item(file, QRectF(glyph->location().x, glyph->location().y,
-                                       glyph->size().x, glyph->size().y));
+    if (saveImage(sdf, absFileName)) {
+      FileCacheItem item(absFileName, QRectF(glyph->location().x, glyph->location().y,
+                                             glyph->size().x, glyph->size().y));
       {
         Radiant::Guard g(m_cache.m_cacheMutex);
         (*m_cache.m_fileCacheIndex)[glyphIndex] = item;
       }
 
-      QSettings settings(indexFileName(), QSettings::IniFormat);
+      {
+        Radiant::Guard g(s_indexMutex);
 
-      settings.beginGroup(m_cache.m_rawFontKey);
-      settings.beginGroup(QString::number(glyphIndex));
-      settings.setValue("rect", item.rect);
-      settings.setValue("src", file);
-      settings.endGroup();
-      settings.endGroup();
+        QSettings settings(indexFileName(), QSettings::IniFormat);
+
+        settings.beginGroup(m_cache.m_rawFontKey);
+        settings.beginGroup(QString::number(glyphIndex));
+        settings.setValue("rect", item.rect);
+        settings.setValue("src", relativeFileName);
+        settings.endGroup();
+        settings.endGroup();
+      }
     }
 
     return glyph;
@@ -390,23 +417,21 @@ namespace Luminous
 
   void FontCache::FileCacheIndexLoader::doTask()
   {
-    std::unique_ptr<std::map<quint32, FontCache::D::FileCacheItem> > fileCacheIndex(
-          new std::map<quint32, FontCache::D::FileCacheItem>());
+    auto fileCacheIndex = std::make_unique<std::map<quint32, FileCacheItem>>();
 
-    QSettings settings(indexFileName(), QSettings::IniFormat);
+    if (!readOnlyCachePath().isEmpty()) {
+      Radiant::Guard g(s_readOnlyIndexMutex);
+      QSettings settings(readOnlyIndexFileName(), QSettings::IniFormat);
 
-    settings.beginGroup(m_cache.m_rawFontKey);
-
-    for (const QString & index : settings.childGroups()) {
-      settings.beginGroup(index);
-      const quint32 glyphIndex = index.toUInt();
-      const QRectF r = settings.value("rect").toRectF();
-      const QString src = settings.value("src").toString();
-      fileCacheIndex->insert(std::make_pair(glyphIndex, FontCache::D::FileCacheItem(src, r)));
-      settings.endGroup();
+      populateCache(*fileCacheIndex, settings, readOnlyCachePath());
     }
 
-    settings.endGroup();
+    {
+      Radiant::Guard g(s_indexMutex);
+      QSettings settings(indexFileName(), QSettings::IniFormat);
+
+      populateCache(*fileCacheIndex, settings, cachePath());
+    }
 
     {
       Radiant::Guard g(m_cache.m_cacheMutex);
@@ -414,6 +439,23 @@ namespace Luminous
       m_cache.m_fileCacheIndex = std::move(fileCacheIndex);
     }
     setFinished();
+  }
+
+  void FontCache::FileCacheIndexLoader::populateCache(
+      std::map<quint32, FileCacheItem> & cache, QSettings & settings, const QString & path)
+  {
+    settings.beginGroup(m_cache.m_rawFontKey);
+
+    for (const QString & index : settings.childGroups()) {
+      settings.beginGroup(index);
+      const quint32 glyphIndex = index.toUInt();
+      const QRectF r = settings.value("rect").toRectF();
+      const QString src = settings.value("src").toString();
+      cache.insert(std::make_pair(glyphIndex, FileCacheItem(path + "/" + src, r)));
+      settings.endGroup();
+    }
+
+    settings.endGroup();
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -426,7 +468,7 @@ namespace Luminous
 
   void FontCache::FileCacheLoader::doTask()
   {
-    std::pair<quint32, FontCache::D::FileCacheItem> p;
+    std::pair<quint32, FileCacheItem> p;
     bool ok = false;
     {
       Radiant::Guard g(m_cache.m_cacheMutex);
@@ -473,15 +515,6 @@ namespace Luminous
   FontCache & FontCache::acquire(const QRawFont & rawFont, int stretch)
   {
     MULTI_ONCE {
-      QSettings settings(indexFileName(), QSettings::IniFormat);
-      /// Update this when something is changed with the generation code so that
-      /// the old cache needs to be invalidated
-      const int version = 4;
-      if (settings.value("cache-version").toInt() != version) {
-        settings.clear();
-        settings.setValue("cache-version", version);
-      }
-
       // Ensure correct deinitialization order
       atexit(deinitialize);
     }
@@ -500,6 +533,29 @@ namespace Luminous
   void FontCache::init()
   {
     ++s_atlasGeneration;
+  }
+
+  void FontCache::setReadOnlyCachePath(const QString & path)
+  {
+    s_readOnlyCachePath = path;
+  }
+
+  void FontCache::setCachePath(const QString & path)
+  {
+    QDir().mkpath(path);
+    s_cachePath = path;
+  }
+
+  size_t FontCache::glyphGeneratorQueue()
+  {
+    size_t count = 0;
+    Radiant::Guard g(s_fontCacheMutex);
+    for (auto & p: s_fontCache) {
+      Luminous::FontCache & f = *p.second;
+      Radiant::Guard g2(f.m_d->m_cacheMutex);
+      count += f.m_d->m_glyphGenerationRequests.size();
+    }
+    return count;
   }
 
   void FontCache::deinitialize()
@@ -612,9 +668,11 @@ namespace Luminous
     m_d->m_cacheMutex.lock();
     m_d->m_glyphGenerationRequests.push_back(std::make_pair(glyph, path));
 
-    if (!m_d->m_glyphGenerator) {
-      m_d->m_glyphGenerator = std::make_shared<GlyphGenerator>(*m_d);
-      Radiant::BGThread::instance()->addTask(m_d->m_glyphGenerator);
+    auto bgThread = Radiant::BGThread::instance();
+    if (m_d->m_glyphGenerators.size() < bgThread->threads()) {
+      auto generator = std::make_shared<GlyphGenerator>(*m_d);
+      m_d->m_glyphGenerators << generator;
+      Radiant::BGThread::instance()->addTask(std::move(generator));
     }
 
     return nullptr;
@@ -634,7 +692,7 @@ namespace Luminous
     {
       std::shared_ptr<FileCacheIndexLoader> indexLoader;
       std::shared_ptr<FileCacheLoader> loader;
-      std::shared_ptr<GlyphGenerator> glyphGenerator;
+      QList<std::shared_ptr<GlyphGenerator>> glyphGenerators;
 
       {
         Radiant::Guard g(m_d->m_cacheMutex);
@@ -642,7 +700,7 @@ namespace Luminous
         m_d->m_glyphGenerationRequests.clear();
         indexLoader = std::move(m_d->m_fileCacheIndexLoader);
         loader = std::move(m_d->m_fileCacheLoader);
-        glyphGenerator = std::move(m_d->m_glyphGenerator);
+        glyphGenerators = std::move(m_d->m_glyphGenerators);
       }
       if (indexLoader)
         Radiant::BGThread::instance()->removeTask(indexLoader, true, true);
@@ -650,7 +708,7 @@ namespace Luminous
       if (loader)
         Radiant::BGThread::instance()->removeTask(loader, true, true);
 
-      if (glyphGenerator)
+      for (auto & glyphGenerator: glyphGenerators)
         Radiant::BGThread::instance()->removeTask(glyphGenerator, true, true);
     }
 
