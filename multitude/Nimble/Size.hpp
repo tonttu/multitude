@@ -130,6 +130,8 @@ namespace Nimble {
     /// @return true if the sizes are not equal; otherwise false
     bool operator!=(const SizeT<T> & o) const;
 
+    SizeT<T>& operator=(const SizeT<T> & o);
+
     /// Convert the size to a vector
     /// @return vector representing the size with the components set to width
     /// and height of the size
@@ -379,6 +381,14 @@ namespace Nimble {
   bool SizeT<T>::operator!=(const SizeT<T> & o) const
   {
     return !(*this == o);
+  }
+
+  template<typename T>
+  SizeT<T> & SizeT<T>::operator=(const SizeT<T> & s)
+  {
+    m_width = s.m_width;
+    m_height = s.m_height;
+    return *this;
   }
 
   template<typename T>
