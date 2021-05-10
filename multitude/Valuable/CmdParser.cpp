@@ -60,6 +60,13 @@ namespace Valuable
         ++j;
       }
     }
+
+    // Set removed arguments to null. If argv is created by Qt in WinMain, we
+    // will get double-delete unless we clear these here. See
+    // https://redmine.multitaction.com/issues/16597
+    for (int i = argv_out; i < argc; ++i)
+      argv[i] = nullptr;
+
     argc = argv_out;
 
 #ifdef RADIANT_OSX
