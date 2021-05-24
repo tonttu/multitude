@@ -1282,7 +1282,7 @@ namespace Luminous
 
   void RenderContext::drawRoundedRect(
       const Nimble::Rectf & rect, const Nimble::Vector4f & radii,
-      const Nimble::Vector2f & range, Style & style)
+      const Nimble::Vector2f & range, const Style & style)
   {
     const float ymax = rect.height() / rect.width();
 
@@ -1303,10 +1303,12 @@ namespace Luminous
     const float epsilon = 0.5f / approximateScaling();
     inside.shrink(epsilon);
 
+    const Program & shader = style.fill().program() ? *style.fill().program() : roundedRectShader();
+
     RenderBuilder<BasicVertexUV, RoundedRectUniformBlock> b;
     if (inside.isEmpty()) {
       b = drawPrimitiveT<BasicVertexUV, RoundedRectUniformBlock>(
-            PRIMITIVE_TRIANGLE_STRIP, 0, 4, roundedRectShader(), style.fillColor(), 1.f, style);
+            PRIMITIVE_TRIANGLE_STRIP, 0, 4, shader, style.fillColor(), 1.f, style);
 
       b.vertex[0].location = rect.low();
       b.vertex[0].texCoord = {0.f, 0.f};
@@ -1321,7 +1323,7 @@ namespace Luminous
       b.vertex[3].texCoord = {1.f, ymax};
     } else {
       b = drawPrimitiveT<BasicVertexUV, RoundedRectUniformBlock>(
-            PRIMITIVE_TRIANGLE_STRIP, 0, 10, roundedRectShader(), style.fillColor(), 1.f, style);
+            PRIMITIVE_TRIANGLE_STRIP, 0, 10, shader, style.fillColor(), 1.f, style);
 
       Nimble::Rectf insideUvs {
         (inside.low().x - rect.low().x) / rect.width(),
