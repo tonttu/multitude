@@ -509,9 +509,9 @@ namespace Luminous
     ///              outer edge, [20, 30] would also render 10 pixel border, but
     ///              from 20 pixels from the outside edge. [0, max-corner-radius]
     ///              renders a solid rounded rectangle.
-    /// @param style Only the fill color is used
+    /// @param style Only the fill color and fill program is used
     void drawRoundedRect(const Nimble::Rectf & rect, const Nimble::Vector4f & radii,
-                         const Nimble::Vector2f & range, Luminous::Style & style);
+                         const Nimble::Vector2f & range, const Luminous::Style & style);
 
     /// Adds the render counter by one
     /// The render counter is used to track how many objects have been rendered since the counter was
