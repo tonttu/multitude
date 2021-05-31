@@ -328,6 +328,9 @@ namespace VideoDisplay
       PLAY_FLAG_NONE            = 0,
       /// Skip the buffering and sync, just take the latest decoded frame
       PLAY_FLAG_NO_BUFFERING    = 1 << 0,
+      /// Do not perform AV sync or invalidate old frames, just return
+      /// the frame without side-effects
+      PLAY_FLAG_NO_SYNC         = 1 << 1,
     };
     typedef Radiant::FlagsT<PlayFlag> PlayFlags;
 
