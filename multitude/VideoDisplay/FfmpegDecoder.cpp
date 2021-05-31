@@ -1327,7 +1327,7 @@ namespace VideoDisplay
 
     if (useNewestFrame) {
       std::shared_ptr<VideoFrameFfmpeg> frame = lastReadyDecodedFrame();
-      if (frame) {
+      if (frame && !(flags & PLAY_FLAG_NO_SYNC)) {
         m_forceNewestFrame = false;
         m_sync->sync(presentTimestamp, frame->timestamp());
       }
@@ -1341,7 +1341,7 @@ namespace VideoDisplay
 
     if (!m_sync->isValid()) {
       auto frame = firstReadyDecodedFrame();
-      if (frame)
+      if (frame && !(flags & PLAY_FLAG_NO_SYNC))
         m_sync->sync(presentTimestamp, frame->timestamp());
       return frame;
     }
@@ -1363,7 +1363,7 @@ namespace VideoDisplay
       }
     }
 
-    if (ret) {
+    if (ret && !(flags & PLAY_FLAG_NO_SYNC)) {
       const double maxDiff = 1.0;
       if (m_hasExternalSync) {
         /// If we are off by more than one second, it's time to seek
@@ -1754,8 +1754,8 @@ namespace VideoDisplay
   {
     auto current = m_d->playFrame(presentTimestamp, errors, flags);
 
-    bool changed = true;
-    if (current) {
+    bool changed = false;
+    if (current && !(flags & PLAY_FLAG_NO_SYNC)) {
       Radiant::Guard g(m_d->m_decodedVideoFramesMutex);
       for (auto it = m_d->m_decodedVideoFrames.begin(); it != m_d->m_decodedVideoFrames.end();) {
         VideoFrameFfmpeg & frame = **it;
