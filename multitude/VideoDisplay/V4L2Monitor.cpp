@@ -239,8 +239,9 @@ namespace VideoDisplay
             enabled = false;
           }
 
-          // This device doesn't really support anything, it's most likely a control device
-          if (cap.capabilities == 0) {
+          // This device doesn't support video capture, it's a control device,
+          // metadata capture device etc
+          if (!(cap.device_caps & V4L2_CAP_VIDEO_CAPTURE)) {
             s.invalid = true;
             close(s.fd);
             s.fd = -1;
@@ -298,7 +299,7 @@ namespace VideoDisplay
     errno = 0;
     if (ioctl(s.fd, VIDIOC_G_INPUT, &input.index)) {
       if (!s.queryInputFailed) {
-        Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to query input %s: %s",
+        Radiant::error("V4L2Monitor::checkIsEnabled # Failed to query input %s: %s",
                        s.device.data(), strerror(errno));
         s.queryInputFailed = true;
       }
@@ -307,7 +308,7 @@ namespace VideoDisplay
 
     if (ioctl(s.fd, VIDIOC_ENUMINPUT, &input) == -1) {
       if (!s.queryStatusFailed) {
-        Radiant::error("V4L2Monitor::scanSourceStatuses # Failed to query input status %s: %s",
+        Radiant::error("V4L2Monitor::checkIsEnabled # Failed to query input status %s: %s",
                        s.device.data(), strerror(errno));
         s.queryStatusFailed = true;
       }
