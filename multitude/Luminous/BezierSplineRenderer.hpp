@@ -74,6 +74,12 @@ namespace Luminous
       /// Set to true to render the splines as line strips instead of triangle
       /// strips. This is used just for debugging.
       bool renderAsLineStrip = false;
+
+      /// Skip bounding-box checking and assume all strokes are always visible.
+      /// The bbox checking only works properly with 2D transformations, this
+      /// needs to be set if the splines are rendered using a more complicate
+      /// transformations.
+      bool forceRendering = false;
     };
 
   public:

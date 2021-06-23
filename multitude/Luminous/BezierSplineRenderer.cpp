@@ -619,7 +619,7 @@ namespace Luminous
               ++idx;
             } else {
               StrokeCache & mipmap = m_d->m_mipmaps[mipmapLevelGpu.strokeId];
-              if (extendedArea.intersects(mipmap.stroke.bbox)) {
+              if (m_d->m_opts.forceRendering || extendedArea.intersects(mipmap.stroke.bbox)) {
                 mipmapLevelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
                 ++idx;
               } else {
@@ -636,7 +636,7 @@ namespace Luminous
 
       for (Valuable::Node::Uuid id: view.added) {
         StrokeCache & mipmap = m_d->m_mipmaps[id];
-        if (extendedArea.intersects(mipmap.stroke.bbox)) {
+        if (m_d->m_opts.forceRendering || extendedArea.intersects(mipmap.stroke.bbox)) {
           StrokeMipmapGpu & levelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
           view.renderables.push_back(levelGpu);
           view.depthChanged = true;
@@ -648,7 +648,7 @@ namespace Luminous
       // there, so check them separately.
       for (Valuable::Node::Uuid id: view.changed) {
         StrokeCache & mipmap = m_d->m_mipmaps[id];
-        if (extendedArea.intersects(mipmap.stroke.bbox)) {
+        if (m_d->m_opts.forceRendering || extendedArea.intersects(mipmap.stroke.bbox)) {
           StrokeMipmapGpu & levelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
           view.renderables.push_back(levelGpu);
           view.depthChanged = true;
@@ -668,7 +668,7 @@ namespace Luminous
 
       for (auto it = m_d->m_mipmaps.begin(), end = m_d->m_mipmaps.end(); it != end; ++it) {
         StrokeCache & mipmap = it->second;
-        if (extendedArea.intersects(mipmap.stroke.bbox)) {
+        if (m_d->m_opts.forceRendering || extendedArea.intersects(mipmap.stroke.bbox)) {
           StrokeMipmapGpu & levelGpu = m_d->createMipmapLevelGpu(gpuContext, mipmap, mipmapLevel, invScale);
           view.renderables.push_back(levelGpu);
         }

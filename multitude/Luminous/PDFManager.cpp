@@ -399,7 +399,7 @@ namespace
       case 3:
         return Rotation::CLOCKWISE_270;
       default:
-        return Rotation::UNKNWON;
+        return Rotation::UNKNOWN;
       }
     }
 
