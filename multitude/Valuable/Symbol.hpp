@@ -72,7 +72,12 @@ namespace Valuable
       return str();
     }
 
-    inline operator uint32_t() const { return m_id; }
+    inline bool operator==(Symbol o) const { return m_id == o.m_id; }
+    inline bool operator!=(Symbol o) const { return m_id != o.m_id; }
+    inline bool operator<(Symbol o) const { return m_id < o.m_id; }
+    inline bool operator<=(Symbol o) const { return m_id <= o.m_id; }
+    inline bool operator>(Symbol o) const { return m_id > o.m_id; }
+    inline bool operator>=(Symbol o) const { return m_id >= o.m_id; }
 
     /// Same as str() == "" but faster.
     inline bool isEmptyStr() const { return m_id == Radiant::SymbolRegistry::EmptySymbol; }
