@@ -7,6 +7,8 @@ namespace Punctual
     folly::ManualExecutor s_beforeInput;
     folly::ManualExecutor s_afterUpdate;
     folly::ManualExecutor s_beforeUpdate;
+    folly::ManualExecutor s_beforeRender;
+    folly::ManualExecutor s_afterRender;
     LimitedTimeExecutor s_mainThread;
   }
 
@@ -23,6 +25,16 @@ namespace Punctual
   folly::ManualExecutor * beforeUpdate()
   {
     return &s_beforeUpdate;
+  }
+
+  folly::ManualExecutor * beforeRender()
+  {
+    return &s_beforeRender;
+  }
+
+  folly::ManualExecutor * afterRender()
+  {
+    return &s_afterRender;
   }
 
   LimitedTimeExecutor * mainThread()
