@@ -12,6 +12,8 @@ namespace Punctual
   PUNCTUAL_API folly::ManualExecutor * beforeInput();
   PUNCTUAL_API folly::ManualExecutor * afterUpdate();
   PUNCTUAL_API folly::ManualExecutor * beforeUpdate();
+  PUNCTUAL_API folly::ManualExecutor * beforeRender();
+  PUNCTUAL_API folly::ManualExecutor * afterRender();
 
   /// This executor is driven by MultiWidgets::Application with a limited time
   /// budget per frame. Unless you need to get a task executed immediately, use
