@@ -9,10 +9,21 @@
 
 namespace Punctual
 {
+  /// Executed just before input() is called for the application root widget.
+  /// Typically called roughly once per frame, but that can vary if there
+  /// are no input samples to process, or if there are multiple ones.
+  PUNCTUAL_API folly::ManualExecutor * beforeProcessInput();
+  /// Executed once per frame before any input processing. Also called when no
+  /// input processing is done. Called once per frame, even if input processes
+  /// multiple samples.
   PUNCTUAL_API folly::ManualExecutor * beforeInput();
   PUNCTUAL_API folly::ManualExecutor * afterUpdate();
   PUNCTUAL_API folly::ManualExecutor * beforeUpdate();
+  /// Executed once per frame in the main thread before starting render collect
+  /// using the gfx driver.
   PUNCTUAL_API folly::ManualExecutor * beforeRender();
+  /// Executed once per frame in the main thread after render collect has been
+  /// finished.
   PUNCTUAL_API folly::ManualExecutor * afterRender();
 
   /// This executor is driven by MultiWidgets::Application with a limited time

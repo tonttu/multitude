@@ -4,12 +4,18 @@ namespace Punctual
 {
   namespace
   {
+    folly::ManualExecutor s_beforeProcessInput;
     folly::ManualExecutor s_beforeInput;
     folly::ManualExecutor s_afterUpdate;
     folly::ManualExecutor s_beforeUpdate;
     folly::ManualExecutor s_beforeRender;
     folly::ManualExecutor s_afterRender;
     LimitedTimeExecutor s_mainThread;
+  }
+
+  folly::ManualExecutor * beforeProcessInput()
+  {
+    return &s_beforeProcessInput;
   }
 
   folly::ManualExecutor * beforeInput()
