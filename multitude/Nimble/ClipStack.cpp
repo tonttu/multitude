@@ -90,6 +90,9 @@ bool ClipStack::isVisible(const Rectangle &r) const
   if(m_d->m_stack.empty())
     return true;
 
+  if (r.extent0() <= 0.f || r.extent1() <= 0.f)
+    return false;
+
   auto bb = r.boundingBox();
   for(D::Stack::reverse_iterator it = m_d->m_stack.rbegin(); it != m_d->m_stack.rend(); ++it) {
     if(!it->m_compoundedBoundingBox.intersects(bb))
