@@ -318,6 +318,14 @@ namespace VideoDisplay
     // (one 4k video could consume up to 475MB), so it is not enabled by default.
     bool m_frameUnrefMightBlock = false;
 
+    // Some video files report invalid color range, so even if they say they
+    // use AVCOL_RANGE_JPEG, we normally still render them with
+    // AVCOL_RANGE_MPEG, see https://redmine.multitouch.fi/issues/14426 and
+    // https://redmine.multitaction.com/issues/16638.
+    // Video capture devices and other local video streams are an exception
+    // implemented using this flag.
+    bool m_allowJpegRange = false;
+
     int m_index;
 
     bool m_hasDecodedAudioFrames = false;
@@ -642,6 +650,8 @@ namespace VideoDisplay
     if (isStream) {
       claimExclusiveAccess(src, 10.0);
     }
+
+    m_allowJpegRange = isStream;
 
     if (isStream && !m_options.demuxerOptions().contains("list_options")) {
       bool skipScanInputFormat = false;
@@ -1817,11 +1827,13 @@ namespace VideoDisplay
     const int * coeffs = sws_getCoefficients(colorspace);
     int l = 16, h = 235;
 
-    // See the discussion here: https://redmine.multitouch.fi/issues/14426
-    /*if(m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG) {
+    if (m_d->m_allowJpegRange && (
+          m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_JPEG ||
+          m_d->m_av.videoCodecContext->color_range == AVCOL_RANGE_UNSPECIFIED)) {
       l = 0;
       h = 255;
-    }*/
+    }
+
     // a and b scale the y value from [l, h] -> [0, 1]
     const float a = 255.0f/(h-l);
     const float b = l/255.0f;
