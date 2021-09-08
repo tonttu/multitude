@@ -20,6 +20,23 @@
 
 namespace Luminous
 {
+  /// Convert 2D homogeneous transformation matrix to 3D
+  inline Nimble::Matrix4f mat4(const Nimble::Matrix3f & m)
+  {
+    return Nimble::Matrix4f(m[0][0], m[0][1], 0, m[0][2],
+                            m[1][0], m[1][1], 0, m[1][2],
+                                  0,       0, 1,       0,
+                            m[2][0], m[2][1], 0, m[2][2]);
+  }
+
+  /// Convert 3D homogeneous transformation matrix to 2D by dropping Z coordinates
+  inline Nimble::Matrix3f mat3(const Nimble::Matrix4f & m)
+  {
+    return Nimble::Matrix3f(m[0][0], m[0][1], m[0][3],
+                            m[1][0], m[1][1], m[1][3],
+                            m[3][0], m[3][1], m[3][3]);
+  }
+
   /** Geometrical 3D transformation stack. This class encapsulates 3D
       transformation stack. The transformations are stored as 4x4
       matrices. */
