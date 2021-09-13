@@ -1561,7 +1561,7 @@ namespace Luminous
 
   float RenderContext::approximateScaling() const
   {
-    return std::sqrt(std::abs(transform3().upperLeft().det()));
+    return transform3().estimateScale();
   }
 
   const Texture & RenderContext::dashedLineTexture(float dashPortion) const

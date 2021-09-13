@@ -100,6 +100,18 @@ namespace Nimble {
     /// Compares if two matrices are different
     inline bool               operator!=(const Matrix3T<T>& that) const;
 
+    /// Estimates how much this linear transformation expands area in X/Y direction
+    inline T estimateScaleSqr() const
+    {
+      return std::abs(upperLeft().det());
+    }
+
+    /// Estimates scale in X/Y direction
+    inline T estimateScale() const
+    {
+      return std::sqrt(estimateScaleSqr());
+    }
+
     /// Returns the number of rows in the matrix
     /// This function can be used when you build template-based functions.
     /// @return 3
