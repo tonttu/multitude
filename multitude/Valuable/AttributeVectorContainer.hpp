@@ -277,6 +277,7 @@ namespace Valuable
     template <typename Y>
     void set(std::size_t index, Y && y)
     {
+      assert(index < m_vector.size());
       T & dest = m_vector[index];
       if (dest == y) return;
 
