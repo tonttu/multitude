@@ -569,6 +569,7 @@ namespace VideoDisplay
     m_exactVideoSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     m_exactAudioSeekRequestPts = std::numeric_limits<double>::quiet_NaN();
     m_hasDecodedAudioFrames = false;
+    m_allowJpegRange = false;
 
 #ifdef RADIANT_LINUX
     /// Detect video4linux2 devices automatically
@@ -592,6 +593,10 @@ namespace VideoDisplay
           // See also comments for m_frameUnrefMightBlock
           if (card.contains("Pro Capture Quad"))
             m_frameUnrefMightBlock = true;
+
+          // Datapath capture cards use JPEG color range by default
+          if (cap.driver && QByteArray(reinterpret_cast<const char*>(cap.driver)).startsWith("Vision"))
+            m_allowJpegRange = true;
         }
         ::close(fd);
       }
@@ -651,9 +656,7 @@ namespace VideoDisplay
       claimExclusiveAccess(src, 10.0);
     }
 
-    m_allowJpegRange = isStream;
-
-    if (isStream && !m_options.demuxerOptions().contains("list_options")) {
+    if (isStream) {
       bool skipScanInputFormat = false;
 #ifdef RADIANT_WINDOWS
       if (auto monitor = VideoCaptureMonitor::weakInstance().lock()) {
@@ -664,14 +667,19 @@ namespace VideoDisplay
             /// the same source that is scanned, can't be opened for a while.
             /// We don't need any of these options with this card anyway,
             /// since the card automatically selects all this.
-            if (vsrc.friendlyName.toLower().contains("datapath vision"))
+            ///
+            /// Datapath capture cards use JPEG color range by default
+            if (vsrc.friendlyName.toLower().contains("datapath vision")) {
               skipScanInputFormat = true;
+              m_allowJpegRange = true;
+            }
             break;
           }
         }
       }
 #endif
-      if (!skipScanInputFormat) {
+
+      if (!skipScanInputFormat && !m_options.demuxerOptions().contains("list_options")) {
         std::vector<VideoInputFormat> formats = scanInputFormats(
               src, inputFormat, m_options.demuxerOptions());
 
