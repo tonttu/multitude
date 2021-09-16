@@ -304,8 +304,19 @@ namespace Radiant
 
     m = m_valueRegex.match(txt);
     if (m.hasMatch()) {
+      bool commented = m.captured(1) == ";";
       QString key = unescapeKey(m.captured(2));
-      QString value = unescapeValue(m.captured(3).trimmed());
+      QString value;
+
+      try {
+        value = unescapeValue(m.captured(3).trimmed());
+      } catch (...) {
+        // You can have all kinds of broken values in comments
+        if (commented)
+          return;
+
+        throw;
+      }
 
       if (!currentSection)
         currentSection = &createGlobalSection();
@@ -317,7 +328,6 @@ namespace Radiant
 
       std::vector<Value> & values = it->second;
 
-      bool commented = m.captured(1) == ";";
       if (!commented) {
         for (const Value & v: values) {
           if (v.commented)
