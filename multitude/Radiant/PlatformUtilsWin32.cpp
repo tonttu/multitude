@@ -128,25 +128,25 @@ namespace Radiant
       return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     }
 
-    QString getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication[[maybe_unused]])
     {
-      (void) isapplication;
-
       assert(strlen(module) < 128);
 
       // Typically this retrieves "C:\Users\(username)\Application Data"
 
       QString   path;
 
-      char  buffer[_MAX_PATH] = "";
-      if(SHGetFolderPathA(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
+      PWSTR ppszPath = NULL;
+      if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_CREATE, 0, &ppszPath) == S_OK)
       {
-        path = QString(buffer) + QString("\\") + QString(module);
+        path = QString::fromWCharArray(ppszPath) + QString("\\") + QString(module);
       }
       else
       {
-        error("PlatformUtils::getModuleUserDataPath # SHGetFolderPath() failed");
+        error("PlatformUtils::getModuleUserDataPath # SHGetKnownFolderPath() failed");
       }
+
+      CoTaskMemFree(ppszPath);
 
       return path;
     }
