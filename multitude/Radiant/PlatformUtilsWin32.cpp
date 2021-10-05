@@ -61,11 +61,11 @@ namespace {
 
     const DWORD reason = SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED;
     const DWORD timeout = 30;
-    if (InitiateSystemShutdownExA(NULL, NULL,
+    if (InitiateSystemShutdownExW(NULL, NULL,
                                   timeout, TRUE, rebootAfterShutdown, reason) != 0) {
       return true;
     } else {
-      throw QString("InitiateSystemShutdownExA: %1").arg(Radiant::StringUtils::getLastErrorMessage());
+      throw QString("InitiateSystemShutdownExW: %1").arg(Radiant::StringUtils::getLastErrorMessage());
     }
   }
 
@@ -83,12 +83,12 @@ namespace Radiant
 
       QString   path;
 
-      char  buffer[_MAX_PATH] = "";
-      if(GetModuleFileNameA(0, buffer, _MAX_PATH) != 0)
+      WCHAR buffer[_MAX_PATH] = L"";
+      if(GetModuleFileNameW(0, buffer, _MAX_PATH) != 0)
       {
          // remove the filename part
-         PathRemoveFileSpecA(buffer);
-         path = QString(buffer);
+         PathRemoveFileSpecW(buffer);
+         path = QString::fromWCharArray(buffer);
       }
       else
       {
@@ -110,15 +110,17 @@ namespace Radiant
 
       QString   path;
 
-      char  buffer[_MAX_PATH] = "";
-      if(SHGetFolderPathA(0, CSIDL_PROFILE | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
+      PWSTR buffer = NULL;
+      if(SHGetKnownFolderPath(FOLDERID_Profile, KF_FLAG_CREATE, 0, &buffer) == S_OK)
       {
-        path = QString(buffer);
+        path = QString::fromWCharArray(buffer);
       }
       else
       {
-        error("PlatformUtils::getUserHomePath # SHGetFolderPath() failed");
+        error("PlatformUtils::getUserHomePath # SHGetKnowFolderPath() failed");
       }
+
+      CoTaskMemFree(buffer);
 
       return path;
     }
@@ -128,25 +130,25 @@ namespace Radiant
       return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     }
 
-    QString getModuleUserDataPath(const char * module, bool isapplication)
+    QString getModuleUserDataPath(const char * module, bool isapplication[[maybe_unused]])
     {
-      (void) isapplication;
-
       assert(strlen(module) < 128);
 
       // Typically this retrieves "C:\Users\(username)\Application Data"
 
       QString   path;
 
-      char  buffer[_MAX_PATH] = "";
-      if(SHGetFolderPathA(0, CSIDL_APPDATA | CSIDL_FLAG_CREATE, 0, 0, buffer) == S_OK)
+      PWSTR ppszPath = NULL;
+      if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_CREATE, 0, &ppszPath) == S_OK)
       {
-        path = QString(buffer) + QString("\\") + QString(module);
+        path = QString::fromWCharArray(ppszPath) + QString("\\") + QString(module);
       }
       else
       {
-        error("PlatformUtils::getModuleUserDataPath # SHGetFolderPath() failed");
+        error("PlatformUtils::getModuleUserDataPath # SHGetKnownFolderPath() failed");
       }
+
+      CoTaskMemFree(ppszPath);
 
       return path;
     }
@@ -157,10 +159,12 @@ namespace Radiant
       PWSTR path = nullptr;
       if (SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &path) == S_OK) {
         ret = QString::fromWCharArray(path).replace('\\', '/');
-        CoTaskMemFree(path);
       } else {
         error("PlatformUtils::localAppPath # SHGetKnownFolderPath() failed");
       }
+
+      CoTaskMemFree(path);
+
       return ret;
     }
 
@@ -432,9 +436,9 @@ namespace Radiant
 
         LocalFree(argv);
       } else {
-        char name[256];
-        GetModuleFileNameA(nullptr, name, sizeof(name));
-        result << QString(name);
+        WCHAR name[256];
+        GetModuleFileNameW(nullptr, name, sizeof(name));
+        result << QString::fromWCharArray(name);
       }
 
       return result;
