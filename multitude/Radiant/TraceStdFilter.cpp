@@ -180,7 +180,11 @@ namespace Radiant
           error("Radiant::StdFilter::setTraceFile # Failed to create path for %s",
                 filename.toUtf8().data());
         }
-        m_outFile = fopen(target.toUtf8().data(), "a");
+#ifdef RADIANT_WINDOWS
+       m_outFile = _wfopen(target.toStdWString().data(), L"a");
+#else
+       m_outFile = fopen(target.toUtf8().data(), "a");
+#endif
         if (!m_outFile) {
           error("Radiant::StdFilter::setTraceFile # Failed to open %s", filename.toUtf8().data());
           m_traceFile.clear();
