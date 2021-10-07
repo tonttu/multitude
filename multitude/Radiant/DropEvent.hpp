@@ -21,6 +21,8 @@
 
 #include <QDropEvent>
 
+#include <optional>
+
 namespace Radiant
 {
   class DropEvent;
@@ -72,6 +74,9 @@ namespace Radiant
     /// assuming that there is no complex view hierarchy that causes extra transformations.
     /// @return Location of the drop event in scene coordinates.
     Nimble::Vector2 location() const;
+
+    /// Returns the event as QDropEvent if it was originally created from one
+    std::optional<QDropEvent> qDropEvent() const;
 
     /// Registers a DropListener object. After calling this function, the listener is active
     /// and will receive drop events.
