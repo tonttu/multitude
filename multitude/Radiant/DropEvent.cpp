@@ -31,7 +31,7 @@ namespace Radiant
 
     QList<QUrl> m_urls;
     Nimble::Vector2 m_location;
-    // QDropEvent m_qevent;
+    std::optional<QDropEvent> m_qevent;
   };
 
   DropEvent::DropEvent(const QList<QUrl> & urls, Nimble::Vector2 loc)
@@ -48,6 +48,7 @@ namespace Radiant
       m_d->m_urls = de.mimeData()->urls();
     }
     m_d->m_location = loc;
+    m_d->m_qevent = de;
   }
 
   DropEvent::~DropEvent()
@@ -71,6 +72,11 @@ namespace Radiant
   Nimble::Vector2 DropEvent::location() const
   {
     return m_d->m_location;
+  }
+
+  std::optional<QDropEvent> DropEvent::qDropEvent() const
+  {
+    return m_d->m_qevent;
   }
 
   void DropEvent::addDropListener(DropListener * l)
@@ -100,4 +106,4 @@ namespace Radiant
     return false;
   }
 
-  }
+}
