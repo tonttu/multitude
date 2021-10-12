@@ -92,17 +92,17 @@ namespace Valuable {
 
         std::bitset<64> bitset(flag.flags);
         Alias & alias = m_aliases[flag.aliasIdx];
-        alias.sourcesBegin = alias.sourcesEnd = m_sources.size();
         for (std::size_t i = 0; i < bitset.size(); ++i) {
           if (!bitset[i])
             continue;
 
           const uint64_t t = static_cast<uint64_t>(1) << i;
           auto it = bits.find(t);
-          if (it == bits.end() || it->second == flag.aliasIdx)
+          if (it == bits.end() || it->second == flag.aliasIdx) {
+            alias.sources.clear();
             break;
-          m_sources.push_back(it->second);
-          alias.sourcesEnd = m_sources.size();
+          }
+          alias.sources.push_back(it->second);
         }
       }
     }
@@ -118,13 +118,11 @@ namespace Valuable {
     {
       QByteArray name;
       uint64_t flags = 0;
-      uint32_t sourcesBegin = 0;
-      uint32_t sourcesEnd = 0;
+      std::vector<uint32_t> sources;
     };
 
     boost::container::flat_map<QByteArray, FlagData> m_flags;
     std::vector<Alias> m_aliases;
-    std::vector<int32_t> m_sources;
   };
 
   class FlagAlias : public Attribute
@@ -211,10 +209,10 @@ namespace Valuable {
     virtual bool handleShorthand(const Valuable::StyleValue & value,
                                  Radiant::ArrayMap<Valuable::Attribute*, Valuable::StyleValue> & expanded) OVERRIDE
     {
-      if (m_data.sourcesBegin == m_data.sourcesEnd)
+      if (m_data.sources.empty())
         return false;
 
-      for (uint32_t idx = m_data.sourcesBegin, e = m_data.sourcesEnd; idx < e; ++idx)
+      for (uint32_t idx: m_data.sources)
         expanded[&m_master.m_aliases[idx]] = value;
 
       return true;
@@ -313,7 +311,7 @@ namespace Valuable {
       m_aliases.reserve(m_data.m_aliases.size());
       for (const FlagNames::Alias & a: m_data.m_aliases) {
         m_aliases.emplace_back(parent, *this, a);
-        if (a.sourcesBegin == a.sourcesEnd)
+        if (a.sources.empty())
           m_aliases.back().setOwnerShorthand(this);
       }
 
@@ -558,12 +556,15 @@ namespace Valuable {
       // If CSS parser could order components to some order and m_flags would
       // be in the same order, we could iterate them with two iterators
       // without need to have two passes.
-      for (uint32_t idx = 0, s = m_data.m_aliases.size(); idx < s; ++idx) {
-        const FlagNames::Alias & a = m_data.m_aliases[idx];
-        if (a.sourcesBegin != a.sourcesEnd)
+      for (auto it = m_data.m_flags.begin(); it != m_data.m_flags.end(); ++it) {
+        auto linkIdx = it->second.linkIdx;
+        if (linkIdx == -1)
+          continue;
+        auto & alias = m_data.m_aliases[linkIdx];
+        if (!alias.sources.empty())
           continue;
 
-        expanded[&m_aliases[idx]] = 0;
+        expanded[&m_aliases[linkIdx]] = 0;
       }
 
       for (const auto & var: value.components()) {
@@ -578,11 +579,11 @@ namespace Valuable {
           return false;
 
         const FlagNames::Alias & a = m_data.m_aliases[d.linkIdx];
-        if (a.sourcesBegin == a.sourcesEnd) {
+        if (a.sources.empty()) {
           expanded[&m_aliases[d.linkIdx]] = 1;
         } else {
-          for (uint32_t idx = a.sourcesBegin; idx < a.sourcesEnd; ++idx)
-            expanded[&m_aliases[m_data.m_sources[idx]]] = 1;
+          for (uint32_t idx: a.sources)
+            expanded[&m_aliases[idx]] = 1;
         }
       }
 

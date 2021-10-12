@@ -64,7 +64,7 @@ namespace Valuable
         Node * owner = m_listenerOwners.back().get();
 
         node->onAttributeAdded.addListener(owner->sharedPtr(), Punctual::afterUpdate(),
-                                           [this, node, path, name, depth] (Valuable::Attribute * attr) {
+                                           [this, path, name, depth] (Valuable::Attribute * attr) {
           if (name != attr->name())
             return;
 

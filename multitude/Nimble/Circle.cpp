@@ -15,13 +15,6 @@ namespace Nimble {
   {
   }
 
-  Circle::Circle(const Nimble::Circle & circle)
-  {
-    m_center = circle.center();
-    m_radius = circle.radius();
-    m_radiusSquared = m_radius*m_radius;
-  }
-
   Nimble::Rectf Circle::boundingBox() const {
     return Nimble::Rectf(m_center.x-m_radius,m_center.y-m_radius, m_center.x+m_radius,m_center.y+m_radius);
   }

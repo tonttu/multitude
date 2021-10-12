@@ -18,10 +18,6 @@ namespace Nimble {
       /// @param radius radius of the circle
       Circle(const Nimble::Vector2f & center, float radius);
 
-      /// Construct a copy of the given circle
-      /// @param circle circle to copy
-      Circle(const Nimble::Circle & circle);
-
       /// Obtain bounding box for circle
       /// @return Rect bounds
       Rectf boundingBox() const;
