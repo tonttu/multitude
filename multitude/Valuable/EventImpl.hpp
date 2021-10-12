@@ -1,3 +1,5 @@
+#include <boost/container/small_vector.hpp>
+
 namespace Valuable
 {
   template <typename... Args>
@@ -205,7 +207,7 @@ namespace Valuable
 
     int removed = 0;
     // Do not delete the callback functions while holding the lock
-    std::vector<Callback> deleted;
+    boost::container::small_vector<Callback, 4> deleted;
     {
       QMutexLocker g(&d->mutex);
       for (auto it = d->listeners.begin(); it != d->listeners.end();) {
