@@ -11,7 +11,9 @@
 
 #define STR(x) #x
 #define NVML_FUNC(name) decltype(::name) * name = nullptr
-#define RESOLVE_FUNC(name) name = reinterpret_cast<decltype(name)>(m_nvmlLib.resolve(STR(name)))
+#define RESOLVE_FUNC(name) name = reinterpret_cast<decltype(name)>(m_nvmlLib.resolve(STR(name))); \
+  if (!name) Radiant::warning("%s: %s not found - Nvidia driver might be too old", \
+  m_nvmlLib.fileName().toUtf8().data(), STR(name))
 
 namespace Luminous
 {
@@ -78,13 +80,16 @@ namespace Luminous
     QString name = QString("GPU %1").arg(m_openglIndex);
 
     QStringList specs;
-    if (m_nvml->m_d->nvmlDeviceGetSerial(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
+    if (m_nvml->m_d->nvmlDeviceGetSerial &&
+        m_nvml->m_d->nvmlDeviceGetSerial(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
       specs << QString("SN %1").arg(buffer);
 
-    if (m_nvml->m_d->nvmlDeviceGetBoardPartNumber(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
+    if (m_nvml->m_d->nvmlDeviceGetBoardPartNumber &&
+        m_nvml->m_d->nvmlDeviceGetBoardPartNumber(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
       specs << QString("Board part number %1").arg(buffer);
 
-    if (m_nvml->m_d->nvmlDeviceGetUUID(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
+    if (m_nvml->m_d->nvmlDeviceGetUUID &&
+        m_nvml->m_d->nvmlDeviceGetUUID(m_dev, buffer, sizeof(buffer)) == NVML_SUCCESS)
       specs << QString("UUID %1").arg(buffer);
 
     auto tmp = specs + state();
@@ -96,17 +101,23 @@ namespace Luminous
     Radiant::info("%s", info.toUtf8().data());
 
     nvmlEventSet_t set = nullptr;
-    m_nvml->m_d->nvmlEventSetCreate(&set);
-    nvmlReturn_t error = m_nvml->m_d->nvmlDeviceRegisterEvents(m_dev, nvmlEventTypeXidCriticalError, set);
-    if (error != NVML_SUCCESS && error != NVML_ERROR_NOT_SUPPORTED) {
-      Radiant::error("Failed to monitor Xid errors on %s [error code %d]", name.toUtf8().data(), error);
-      m_nvml->m_d->nvmlEventSetFree(set);
-      set = nullptr;
+    if (m_nvml->m_d->nvmlEventSetCreate && m_nvml->m_d->nvmlDeviceRegisterEvents &&
+        m_nvml->m_d->nvmlEventSetFree && m_nvml->m_d->nvmlEventSetWait) {
+      m_nvml->m_d->nvmlEventSetCreate(&set);
+      nvmlReturn_t error = m_nvml->m_d->nvmlDeviceRegisterEvents(m_dev, nvmlEventTypeXidCriticalError, set);
+      if (error != NVML_SUCCESS && error != NVML_ERROR_NOT_SUPPORTED) {
+        Radiant::error("Failed to monitor Xid errors on %s [error code %d]", name.toUtf8().data(), error);
+        m_nvml->m_d->nvmlEventSetFree(set);
+        set = nullptr;
+      }
     }
+
+    if (!m_nvml->m_d->nvmlDeviceGetPcieThroughput || !m_nvml->m_d->nvmlDeviceGetUtilizationRates)
+      m_running = false;
 
     while (m_running) {
       Nvml::DeviceQuery::Sample sample;
-      error = m_nvml->m_d->nvmlDeviceGetPcieThroughput(m_dev, NVML_PCIE_UTIL_RX_BYTES, &sample.pcieRxThroughputKBs);
+      nvmlReturn_t error = m_nvml->m_d->nvmlDeviceGetPcieThroughput(m_dev, NVML_PCIE_UTIL_RX_BYTES, &sample.pcieRxThroughputKBs);
       if (error != NVML_SUCCESS) {
         Radiant::error("Failed to monitor PCIe throughput on %s [error code %d]",
                        name.toUtf8().data(), error);
@@ -142,17 +153,20 @@ namespace Luminous
         Radiant::error("Nvidia GPU Xid error %llu on %s", data.eventData, tmp.join(", ").toUtf8().data());
       }
     }
-    m_nvml->m_d->nvmlEventSetFree(set);
+    if (set)
+      m_nvml->m_d->nvmlEventSetFree(set);
   }
 
   QStringList Nvml::DeviceQuery::D::state() const
   {
     QStringList ret;
     unsigned int value = 0;
-    if (m_nvml->m_d->nvmlDeviceGetFanSpeed(m_dev, &value) == NVML_SUCCESS)
+    if (m_nvml->m_d->nvmlDeviceGetFanSpeed &&
+        m_nvml->m_d->nvmlDeviceGetFanSpeed(m_dev, &value) == NVML_SUCCESS)
       ret << QString("Fan %1%").arg(value);
 
-    if (m_nvml->m_d->nvmlDeviceGetTemperature(m_dev, NVML_TEMPERATURE_GPU, &value) == NVML_SUCCESS)
+    if (m_nvml->m_d->nvmlDeviceGetTemperature &&
+        m_nvml->m_d->nvmlDeviceGetTemperature(m_dev, NVML_TEMPERATURE_GPU, &value) == NVML_SUCCESS)
       ret << QString("Temperature %1 C").arg(value);
 
     return ret;
