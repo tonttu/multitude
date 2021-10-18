@@ -6,7 +6,7 @@ if(UNIX)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
 
-  target_link_libraries(ListPortAudioDevices ${PORTAUDIO_LIBRARIES})
+  target_link_libraries(ListPortAudioDevices PRIVATE ${PORTAUDIO_LIBRARIES})
 elseif(WIN32)
   target_include_directories(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/include)
   target_link_libraries(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/lib/portaudio.lib)
