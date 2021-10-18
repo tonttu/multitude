@@ -16,8 +16,16 @@ if(UNIX)
     V4L2Monitor.cpp
   )
 
-  target_include_directories(VideoDisplay PRIVATE /opt/multitaction-ffmpeg40/include)
-  target_link_directories(VideoDisplay PRIVATE /opt/multitaction-ffmpeg40/lib)
+  target_include_directories(VideoDisplay PRIVATE ${FFMPEG_ROOT}/include)
+
+  find_library(AVDEVICE_LIB avdevice-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(AVCODEC_LIB avcodec-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(AVDEVICE_LIB avdevice-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(AVFILTER_LIB avfilter-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(AVFORMAT_LIB avformat-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(AVUTIL_LIB avutil-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(SWRESAMPLE_LIB swresample-multitaction PATHS ${FFMPEG_ROOT}/lib)
+  find_library(SWSCALE_LIB swscale-multitaction PATHS ${FFMPEG_ROOT}/lib)
 elseif(WIN32)
   list(APPEND SOURCES
     WindowsVideoMonitor.cpp
@@ -35,6 +43,18 @@ elseif(WIN32)
   target_link_libraries(VideoDisplay PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/lib/LibMWCapture.lib)
 
   target_link_libraries(VideoDisplay PRIVATE Strmiids.lib Propsys.lib)
+
+  find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
+  target_include_directories(VideoDisplay PRIVATE ${FFMPEG_INCLUDE_DIR})
+
+  find_library(AVDEVICE_LIB avdevice-multitaction)
+  find_library(AVCODEC_LIB avcodec-multitaction)
+  find_library(AVDEVICE_LIB avdevice-multitaction)
+  find_library(AVFILTER_LIB avfilter-multitaction)
+  find_library(AVFORMAT_LIB avformat-multitaction)
+  find_library(AVUTIL_LIB avutil-multitaction)
+  find_library(SWRESAMPLE_LIB swresample-multitaction)
+  find_library(SWSCALE_LIB swscale-multitaction)
 endif()
 
 set_target_properties(VideoDisplay PROPERTIES SOURCES "${SOURCES}")
@@ -44,9 +64,5 @@ target_compile_definitions(VideoDisplay PUBLIC -DENABLE_VIDEO_DISPLAY)
 
 target_link_libraries(VideoDisplay PUBLIC Radiant Resonant)
 
-#target_link_libraries(VideoDisplay PRIVATE ${FFMPEG_LIBS})
-
 # FFMPEG
-target_include_directories(VideoDisplay PRIVATE ${FFMPEG_INCLUDE_DIR})
-
 target_link_libraries(VideoDisplay PRIVATE ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB} ${AVUTIL_LIB} ${SWSCALE_LIB})
