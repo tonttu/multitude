@@ -44,7 +44,7 @@ set_target_properties(Resonant PROPERTIES SOURCES "${SOURCES}")
 target_compile_definitions(Resonant PRIVATE -DRESONANT_EXPORT)
 
 if(UNIX)
-  target_include_libraries(Resonant PRIVATE ${VCPKG_ROOT}/include)
+  target_include_directories(Resonant PRIVATE ${VCPKG_ROOT}/include)
 elseif(WIN32)
   target_link_libraries(Resonant PRIVATE ${VCPKG_ROOT}/lib/libsndfile-1.lib)
   target_link_libraries(Resonant PRIVATE ${VCPKG_ROOT}/lib/libsndfile-1.lib)
