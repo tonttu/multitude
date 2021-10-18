@@ -120,5 +120,5 @@ target_link_libraries(Luminous PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
 target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk)
 
-find_package(lz4 CONFIG REQUIRED)
-target_link_libraries(Luminous PRIVATE lz4::lz4)
+find_library(LZ4_LIBRARY lz4)
+target_link_libraries(Luminous PRIVATE lz4)
