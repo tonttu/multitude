@@ -16,6 +16,7 @@
 #include "SimpleExpression.hpp"
 
 #include <QString>
+#include <QVector>
 #include <Radiant/Color.hpp>
 
 #include <variant>

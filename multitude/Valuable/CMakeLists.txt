@@ -10,7 +10,7 @@ set(SOURCES
   TransitionManager.cpp
   SimpleExpression.cpp
   SimpleExpressionLink.cpp
-  Event.cpp
+  AttributeEvent.cpp
   GraphicsCoordinates.cpp
   CmdParser.cpp
   ConfigDocument.cpp
@@ -30,6 +30,7 @@ set(SOURCES
   ListenerHolder.cpp
   AttributeSpline.cpp
   AttributeAsset.cpp
+  Symbol.cpp
 )
 
 add_library(Valuable SHARED ${SOURCES})

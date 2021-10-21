@@ -10,6 +10,7 @@ set(SOURCES
   ScreenDetectorQt.cpp
   SwapGroups.cpp
   MemoryManager.cpp
+  Nvml.cpp
   ImageCodecCS.cpp
   ImageCodecTGA.cpp
   MipMapGenerator.cpp
@@ -72,6 +73,7 @@ set(SOURCES
   ImageCodecSVG.cpp
   ScreenDetectorAMD.cpp
   ScreenDetectorNV.cpp
+  UploadBuffer.cpp
 )
 
 if(UNIX)
@@ -118,7 +120,7 @@ target_link_libraries(Luminous PRIVATE Squish)
 target_link_libraries(Luminous PUBLIC Valuable Nimble)
 target_link_libraries(Luminous PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
-target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk)
+target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
 
 find_library(LZ4_LIBRARY lz4)
 target_link_libraries(Luminous PRIVATE lz4)

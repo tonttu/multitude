@@ -1,7 +1,8 @@
 include(../../common.cmake)
 
 set(SOURCES
-  TaskScheduler.cpp
+  Executors.cpp
+  LimitedTimeExecutor.cpp
 )
 
 add_library(Punctual SHARED ${SOURCES})

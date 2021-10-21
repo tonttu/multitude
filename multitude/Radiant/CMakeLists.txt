@@ -64,6 +64,7 @@ set(SOURCES
   SetupSearchPaths.cpp
   Version.cpp
   VersionString.cpp
+  CacheManager.cpp
   CrashHandlerCommon.cpp
   TraceCrashHandlerFilter.cpp
 )
@@ -88,7 +89,7 @@ if (UNIX)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(UDEV REQUIRED libudev)
 
-  target_link_libraries(Radiant PRIVATE ${UDEV_LIBRARIES})
+  target_link_libraries(Radiant PRIVATE ${UDEV_LIBRARIES} Nimble)
 elseif(WIN32)
   list(APPEND SOURCES
     CrashHandlerCrashpad.cpp
@@ -115,6 +116,9 @@ if (ENABLE_FOLLY)
   list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
 
   if(UNIX)
+    pkg_check_modules(GLOG REQUIRED libglog)
+    target_link_libraries(Radiant PUBLIC ${GLOG_LIBRARIES})
+
     target_link_libraries(Radiant PUBLIC /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
   elseif(WIN32)
     find_package(folly CONFIG REQUIRED)
@@ -132,5 +136,6 @@ target_compile_definitions(Radiant PRIVATE -DRADIANT_EXPORT)
 
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
+find_package(Qt5 COMPONENTS Sql PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Radiant PUBLIC Qt5::Network Qt5::Gui)
+target_link_libraries(Radiant PUBLIC Qt5::Network Qt5::Gui Qt5::Sql)
