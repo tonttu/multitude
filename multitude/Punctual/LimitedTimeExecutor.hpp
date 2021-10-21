@@ -32,6 +32,9 @@ namespace Punctual
     /// Calls clear() and prevents any more tasks to be added to the executor
     void shutdown();
 
+    /// Returns the number of tasks in the queue
+    size_t queueSize() const;
+
   private:
     class D;
     std::unique_ptr<D> m_d;
