@@ -119,4 +119,10 @@ namespace Punctual
     m_d->m_closing = true;
     clear();
   }
+
+  size_t LimitedTimeExecutor::queueSize() const
+  {
+    QMutexLocker g(&m_d->m_tasksMutex);
+    return m_d->m_tasks.size();
+  }
 }
