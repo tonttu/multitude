@@ -137,10 +137,12 @@ namespace Radiant
   };
 }
 
+// These are marked [[maybe_unused]], since it's normal to use this macro,
+// even in .cpp files, but not necessarily use all four operators.
 #define MULTI_FLAGS(T) \
-  inline Radiant::FlagsT<T> operator|(T a, T b) { return Radiant::FlagsT<T>(a) | b; } \
-  inline Radiant::FlagsT<T> operator&(T a, T b) { return Radiant::FlagsT<T>(a) & b; } \
-  inline Radiant::FlagsT<T> operator^(T a, T b) { return Radiant::FlagsT<T>(a) ^ b; } \
-  inline Radiant::FlagsT<T> operator~(T t) { return ~Radiant::FlagsT<T>(t); }
+  [[maybe_unused]] inline Radiant::FlagsT<T> operator|(T a, T b) { return Radiant::FlagsT<T>(a) | b; } \
+  [[maybe_unused]] inline Radiant::FlagsT<T> operator&(T a, T b) { return Radiant::FlagsT<T>(a) & b; } \
+  [[maybe_unused]] inline Radiant::FlagsT<T> operator^(T a, T b) { return Radiant::FlagsT<T>(a) ^ b; } \
+  [[maybe_unused]] inline Radiant::FlagsT<T> operator~(T t) { return ~Radiant::FlagsT<T>(t); }
 
 #endif // RADIANT_FLAGS_HPP
