@@ -80,7 +80,7 @@ if (UNIX)
 
   # CrashHandler
   list(APPEND SOURCES CrashHandlerBreakpad.cpp)
-  target_include_directories(Radiant PRIVATE /opt/multitaction-breakpad/include/breakpad)
+  target_include_directories(Radiant PRIVATE ${BREAKPAD_ROOT}/include/breakpad)
   target_link_libraries(Radiant PRIVATE
     "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad.a"
     "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad_client.a"
