@@ -51,6 +51,10 @@ namespace Radiant
     /// Creates a less secure "fallback" secret store.
     /// Obfuscated secrets are stored in PlatformUtils::localAppPath() + "/.secrets"
     static std::unique_ptr<SecretStore> createFallback(const QString & organization, const QString & application);
+
+    /// Creates a store that just stores everything in memory. Use this for
+    /// tests and debugging.
+    static std::unique_ptr<SecretStore> createInMemoryStore();
   };
   MULTI_FLAGS(SecretStore::Flag)
 }
