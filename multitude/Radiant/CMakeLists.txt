@@ -117,9 +117,12 @@ if (ENABLE_FOLLY)
 
   if(UNIX)
     pkg_check_modules(GLOG REQUIRED libglog)
-    target_link_libraries(Radiant PUBLIC ${GLOG_LIBRARIES})
-
-    target_link_libraries(Radiant PUBLIC /opt/multitaction-libfolly1/lib/libfolly-multitaction.so)
+    target_link_libraries(Radiant PUBLIC
+      ${GLOG_LIBRARIES}
+      ${FOLLY_ROOT}/lib/libfolly-multitaction.so
+    )
+    target_include_directories(Radiant PRIVATE ${FOLLY_ROOT}/include)
+    target_include_directories(Radiant INTERFACE ${FOLLY_ROOT}/include)
   elseif(WIN32)
     find_package(folly CONFIG REQUIRED)
     find_package(ZLIB REQUIRED)
