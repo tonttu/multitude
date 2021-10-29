@@ -80,6 +80,8 @@ namespace Radiant
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
   class SecretStoreDummy : public SecretStore
   {
   public:
@@ -128,9 +130,42 @@ namespace Radiant
     });
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
+  class SecretStoreInMemory : public SecretStore
+  {
+  public:
+    virtual folly::Future<QString> secret(const QString & key) override
+    {
+      return m_secrets.value(key);
+    }
+
+    virtual folly::Future<folly::Unit> setSecret(
+        const QString &, const QString & key, const QString & secret) override
+    {
+      m_secrets[key] = secret;
+      return {};
+    }
+
+    virtual folly::Future<folly::Unit> clearSecret(const QString & key) override
+    {
+      m_secrets.remove(key);
+      return {};
+    }
+
+    QMap<QString, QString> m_secrets;
+  };
+
+  /////////////////////////////////////////////////////////////////////////////
+
   std::unique_ptr<SecretStore> SecretStore::createFallback(const QString & organization, const QString & application)
   {
     return std::make_unique<SecretStoreDummy>(organization, application);
+  }
+
+  std::unique_ptr<SecretStore> SecretStore::createInMemoryStore()
+  {
+    return std::make_unique<SecretStoreInMemory>();
   }
 
 #if !defined(RADIANT_WINDOWS) && !defined(RADIANT_LINUX)
