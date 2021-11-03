@@ -1045,7 +1045,7 @@ namespace Luminous
       if (m_frameNum >= it->first) {
         tex.image().thenValue([promise=it->second] (DxSharedTexture::MappedImage img) {
           promise->setValue(std::move(img));
-        }).thenError<std::exception>([promise=it->second] (const std::exception & err) {
+        }).thenError([promise=it->second] (folly::exception_wrapper && err) {
           promise->setException(err);
         });
         it = m_promises.erase(it);
