@@ -33,15 +33,15 @@ set(SOURCES
   Symbol.cpp
 )
 
+if(ENABLE_FOLLY)
+  list(APPEND SOURCES EventWrapper.cpp)
+endif()
+
 add_library(Valuable SHARED ${SOURCES})
 
 target_compile_definitions(Valuable PRIVATE -DVALUABLE_EXPORT)
 
 target_link_libraries(Valuable PUBLIC Radiant)
-
-if(ENABLE_FOLLY)
-  list(APPEND SOURCES EventWrapper.cpp)
-endif()
 
 find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
