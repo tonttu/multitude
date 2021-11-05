@@ -85,7 +85,6 @@ if(UNIX)
 
   if(ENABLE_PDF)
     target_include_directories(Luminous PRIVATE /opt/multitaction-pdfium2/include)
-    target_link_libraries(Luminous PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.so)
     target_link_libraries(Luminous PRIVATE Punctual)
   endif()
 
