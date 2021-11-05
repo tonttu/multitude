@@ -4,6 +4,7 @@ add_library(Radiant SHARED)
 
 set(SOURCES
   Mime.cpp
+  IniFile.cpp
   ThreadChecks.cpp
   TraceDuplicateFilter.cpp
   TraceStdFilter.cpp
