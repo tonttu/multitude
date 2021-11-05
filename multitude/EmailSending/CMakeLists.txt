@@ -1,6 +1,8 @@
 include(../../common.cmake)
 
-project(EmailSending VERSION ${CORNERSTONE_VERSION} DESCRIPTION "Email sending library")
+set(LIBRARY EmailSending)
+
+project(${LIBRARY} ${CORNERSTONE_VERSION} DESCRIPTION "Email sending library")
 
 set(SOURCES
   Email.cpp
@@ -8,11 +10,13 @@ set(SOURCES
   SendImplementation.cpp
 )
 
-add_library(EmailSending SHARED ${SOURCES})
+add_library(${LIBRARY} SHARED ${SOURCES})
 
-target_compile_definitions(EmailSending PRIVATE -DEMAIL_EXPORT)
+target_compile_definitions(${LIBRARY} PRIVATE -DEMAIL_EXPORT)
 
-target_link_libraries(EmailSending PUBLIC Valuable)
-target_link_libraries(EmailSending PRIVATE Radiant SMTPEmail)
+target_link_libraries(${LIBRARY}
+  PUBLIC Valuable
+  PRIVATE Radiant SMTPEmail
+)
 
-target_include_directories(EmailSending PUBLIC ${THIRDPARTY_PATH})
+target_include_directories(${LIBRARY} PUBLIC ${THIRDPARTY_PATH})

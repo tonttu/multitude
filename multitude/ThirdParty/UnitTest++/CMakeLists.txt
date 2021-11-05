@@ -1,6 +1,8 @@
 include(../../../common.cmake)
 
-add_library(UnitTest++ SHARED)
+set(LIBRARY UnitTest++)
+
+add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   AssertException.cpp
@@ -33,13 +35,13 @@ if (UNIX)
   )
 endif()
 
-set_target_properties(UnitTest++ PROPERTIES SOURCES "${SOURCES}")
+set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
-target_compile_definitions(UnitTest++ PUBLIC
+target_compile_definitions(${LIBRARY} PUBLIC
   -DUNITTEST_DLL_EXPORT
   -DUNITTEST_USE_CUSTOM_STREAMS
 )
 
 find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(UnitTest++ PRIVATE Qt5::Xml Radiant)
+target_link_libraries(${LIBRARY} PRIVATE Qt5::Xml Radiant)

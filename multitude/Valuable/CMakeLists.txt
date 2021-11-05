@@ -1,6 +1,10 @@
 include(../../common.cmake)
 
-project(Valuable VERSION ${CORNERSTONE_VERSION} DESCRIPTION "Serialization and event library")
+set(LIBRARY Valuable)
+
+project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
+  DESCRIPTION "Serialization and event library"
+)
 
 set(SOURCES
   Archive.cpp
@@ -37,12 +41,13 @@ if(ENABLE_FOLLY)
   list(APPEND SOURCES EventWrapper.cpp)
 endif()
 
-add_library(Valuable SHARED ${SOURCES})
+add_library(${LIBRARY} SHARED ${SOURCES})
 
-target_compile_definitions(Valuable PRIVATE -DVALUABLE_EXPORT)
-
-target_link_libraries(Valuable PUBLIC Radiant)
+target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 
 find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Valuable PRIVATE Qt5::Xml)
+target_link_libraries(${LIBRARY}
+  PRIVATE Qt5::Xml
+  PUBLIC Radiant
+)

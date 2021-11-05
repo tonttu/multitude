@@ -1,6 +1,8 @@
 include(../../common.cmake)
 
-add_library(VideoDisplay SHARED)
+set(LIBRARY VideoDisplay)
+
+add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   AudioTransfer.cpp
@@ -21,7 +23,7 @@ if(UNIX)
     V4L2Monitor.cpp
   )
 
-  target_include_directories(VideoDisplay PRIVATE ${FFMPEG_ROOT}/include)
+  target_include_directories(${LIBRARY} PRIVATE ${FFMPEG_ROOT}/include)
 elseif(WIN32)
   macro(find_ffmpeg_library var name)
     find_library(${var} ${name})
@@ -35,25 +37,25 @@ elseif(WIN32)
     MWCapture.cpp
   )
 
-  #target_include_directories(VideoDisplay PRIVATE ${VCPKG_ROOT}/include)
-  target_include_directories(VideoDisplay PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/include)
-  target_include_directories(VideoDisplay PRIVATE ${CMAKE_CURRENT_LIST_DIR}/rgbeasy-sdk-v7.14.1/include)
+  #target_include_directories(${LIBRARY} PRIVATE ${VCPKG_ROOT}/include)
+  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/include)
+  target_include_directories(${LIBRARY} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/rgbeasy-sdk-v7.14.1/include)
 
 
-  target_link_libraries(VideoDisplay PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/lib/LibMWCapture.lib)
+  target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/lib/LibMWCapture.lib)
 
-  target_link_libraries(VideoDisplay PRIVATE Strmiids.lib Propsys.lib)
+  target_link_libraries(${LIBRARY} PRIVATE Strmiids.lib Propsys.lib)
 
   find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
-  target_include_directories(VideoDisplay PRIVATE ${FFMPEG_INCLUDE_DIR})
+  target_include_directories(${LIBRARY} PRIVATE ${FFMPEG_INCLUDE_DIR})
 endif()
 
-set_target_properties(VideoDisplay PROPERTIES SOURCES "${SOURCES}")
+set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
-target_compile_definitions(VideoDisplay PRIVATE -DVIDEODISPLAY_EXPORT)
-target_compile_definitions(VideoDisplay PUBLIC -DENABLE_VIDEO_DISPLAY)
+target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
+target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
-target_link_libraries(VideoDisplay PUBLIC Radiant Resonant)
+target_link_libraries(${LIBRARY} PUBLIC Radiant Resonant)
 
 # FFMPEG
 find_ffmpeg_library(AVDEVICE_LIB avdevice-multitaction)
@@ -65,4 +67,4 @@ find_ffmpeg_library(AVUTIL_LIB avutil-multitaction)
 find_ffmpeg_library(SWRESAMPLE_LIB swresample-multitaction)
 find_ffmpeg_library(SWSCALE_LIB swscale-multitaction)
 
-target_link_libraries(VideoDisplay PRIVATE ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB} ${AVUTIL_LIB} ${SWSCALE_LIB})
+target_link_libraries(${LIBRARY} PRIVATE ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB} ${AVUTIL_LIB} ${SWSCALE_LIB})

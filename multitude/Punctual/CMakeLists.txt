@@ -1,12 +1,14 @@
 include(../../common.cmake)
 
+set(LIBRARY Punctual)
+
 set(SOURCES
   Executors.cpp
   LimitedTimeExecutor.cpp
 )
 
-add_library(Punctual SHARED ${SOURCES})
+add_library(${LIBRARY} SHARED ${SOURCES})
 
-target_compile_definitions(Punctual PRIVATE -DPUNCTUAL_EXPORT)
+target_compile_definitions(${LIBRARY} PRIVATE -DPUNCTUAL_EXPORT)
 
-target_link_libraries(Punctual PUBLIC Radiant)
+target_link_libraries(${LIBRARY} PUBLIC Radiant)

@@ -1,6 +1,10 @@
 include(../../common.cmake)
 
-project(Nimble VERSION ${CORNERSTONE_VERSION} DESCRIPTION "A collection of C++ classes for math")
+set(LIBRARY Nimble)
+
+project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
+  DESCRIPTION "A collection of C++ classes for math"
+)
 
 set(SOURCES
   ClipStack.cpp
@@ -14,7 +18,7 @@ set(SOURCES
   Splines.cpp
 )
 
-add_library(Nimble SHARED ${SOURCES})
+add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 

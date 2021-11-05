@@ -1,6 +1,8 @@
 include(../../common.cmake)
 
-add_library(Luminous SHARED)
+set(LIBRARY Luminous)
+
+add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   ImageCodecDDS.cpp
@@ -84,13 +86,13 @@ if(UNIX)
   )
 
   if(ENABLE_PDF)
-    target_include_directories(Luminous PRIVATE /opt/multitaction-pdfium2/include)
-    target_link_libraries(Luminous PRIVATE Punctual)
+    target_include_directories(${LIBRARY} PRIVATE /opt/multitaction-pdfium2/include)
+    target_link_libraries(${LIBRARY} PRIVATE Punctual)
   endif()
 
   find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-  target_link_libraries(Luminous PRIVATE Qt5::X11Extras)
-  target_link_libraries(Luminous PRIVATE XNVCtrl Xrandr Xext Xinerama)
+  target_link_libraries(${LIBRARY} PRIVATE Qt5::X11Extras)
+  target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
 elseif(WIN32)
 
   list(APPEND SOURCES
@@ -99,27 +101,27 @@ elseif(WIN32)
     DxInterop.cpp
   )
 
-  target_include_directories(Luminous PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
-  target_link_libraries(Luminous PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
+  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
+  target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
 
-  target_link_libraries(Luminous PRIVATE Opengl32.lib Dwmapi.lib)
+  target_link_libraries(${LIBRARY} PRIVATE Opengl32.lib Dwmapi.lib)
 
 endif()
 
-set_target_properties(Luminous PROPERTIES SOURCES "${SOURCES}")
+set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
-target_compile_definitions(Luminous PRIVATE -DLUMINOUS_EXPORT)
+target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Svg PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
-target_link_libraries(Luminous PRIVATE Squish)
-target_link_libraries(Luminous PUBLIC Valuable Nimble)
-target_link_libraries(Luminous PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
+target_link_libraries(${LIBRARY} PRIVATE Squish)
+target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
+target_link_libraries(${LIBRARY} PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
-target_include_directories(Luminous PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
+target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
 
 find_library(LZ4_LIBRARY lz4)
-target_link_libraries(Luminous PRIVATE lz4)
+target_link_libraries(${LIBRARY} PRIVATE lz4)
