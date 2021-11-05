@@ -35,7 +35,7 @@ endif()
 
 set_target_properties(UnitTest++ PROPERTIES SOURCES "${SOURCES}")
 
-target_compile_definitions(UnitTest++ PRIVATE
+target_compile_definitions(UnitTest++ PUBLIC
   -DUNITTEST_DLL_EXPORT
   -DUNITTEST_USE_CUSTOM_STREAMS
 )
