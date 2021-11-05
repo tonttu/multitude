@@ -1,8 +1,7 @@
 #include "IniFile.hpp"
 #include "Trace.hpp"
 #include "QByteArrayHash.hpp"
-
-#include <Platform.hpp>
+#include "Platform.hpp"
 
 #include <QFile>
 #include <QRegularExpression>
