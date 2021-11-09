@@ -2,7 +2,10 @@ include(../../common.cmake)
 
 set(LIBRARY EmailSending)
 
-project(${LIBRARY} ${CORNERSTONE_VERSION} DESCRIPTION "Email sending library")
+project(${LIBRARY}
+  VERSION ${CORNERSTONE_VERSION}
+  DESCRIPTION "Email sending library"
+)
 
 set(SOURCES
   Email.cpp
