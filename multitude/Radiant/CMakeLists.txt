@@ -131,10 +131,7 @@ if (ENABLE_FOLLY)
     # the location of .so file from Folly target and link to that.
     get_target_property(FOLLY_SO Folly::folly IMPORTED_LOCATION_NOCONFIG)
 
-    target_link_libraries(${LIBRARY}
-      PRIVATE ${GLOG_LIBRARIES}
-      PUBLIC  ${FOLLY_SO}
-    )
+    target_link_libraries(${LIBRARY} PUBLIC ${GLOG_LIBRARIES} ${FOLLY_SO})
 
     target_include_directories(${LIBRARY} PUBLIC ${FOLLY_INCLUDE_DIR})
   elseif(WIN32)
