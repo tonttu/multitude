@@ -116,7 +116,11 @@ elseif(WIN32)
 endif()
 
 if (ENABLE_FOLLY)
-  list(APPEND SOURCES ThreadPoolExecutor.cpp BGThreadExecutor.cpp)
+  list(APPEND SOURCES
+    ThreadPoolExecutor.cpp
+    BGThreadExecutor.cpp
+    OnDemandExecutor.cpp
+  )
 
   if(UNIX)
     pkg_check_modules(GLOG REQUIRED libglog)
@@ -133,6 +137,20 @@ if (ENABLE_FOLLY)
     target_link_libraries(${LIBRARY} PUBLIC Folly::folly Folly::folly_deps)
 
     #target_include_directories(${LIBRARY} PUBLIC ${VCPKG_ROOT}/include)
+  endif()
+endif()
+
+if(ENABLE_SECRET_STORE)
+  list(APPEND SOURCES SecretStoreDummy.cpp)
+
+  if(UNIX)
+    list(APPEND SOURCES SecretStoreLinux.cpp)
+
+    pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
+    target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET)
+
+    target_include_directories(${LIBRARY}
+      PRIVATE ../ThirdParty/expected/include)
   endif()
 endif()
 
