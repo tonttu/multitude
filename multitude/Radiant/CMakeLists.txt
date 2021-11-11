@@ -84,11 +84,10 @@ if (UNIX)
   # CrashHandler
   list(APPEND SOURCES CrashHandlerBreakpad.cpp)
 
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(UDEV REQUIRED libudev)
+  pkg_check_modules(Udev REQUIRED IMPORTED_TARGET libudev)
 
   target_link_libraries(${LIBRARY} PRIVATE
-    ${UDEV_LIBRARIES} Nimble PkgConfig::BreakPad)
+    Nimble PkgConfig::Udev PkgConfig::BreakPad)
 elseif(WIN32)
   list(APPEND SOURCES
     CrashHandlerCrashpad.cpp
