@@ -78,6 +78,10 @@ set(SOURCES
   UploadBuffer.cpp
 )
 
+if(ENABLE_PDF)
+  list(APPEND SOURCES PDFManager.cpp)
+endif()
+
 if(UNIX)
 
   list(APPEND SOURCES
