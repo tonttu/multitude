@@ -83,16 +83,12 @@ if (UNIX)
 
   # CrashHandler
   list(APPEND SOURCES CrashHandlerBreakpad.cpp)
-  target_include_directories(${LIBRARY} PRIVATE ${BREAKPAD_ROOT}/include/breakpad)
-  target_link_libraries(${LIBRARY} PRIVATE
-    "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad.a"
-    "/opt/multitaction-breakpad/lib/x86_64-linux-gnu/libbreakpad_client.a"
-  )
 
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(UDEV REQUIRED libudev)
 
-  target_link_libraries(${LIBRARY} PRIVATE ${UDEV_LIBRARIES} Nimble)
+  target_link_libraries(${LIBRARY} PRIVATE
+    ${UDEV_LIBRARIES} Nimble PkgConfig::BreakPad)
 elseif(WIN32)
   list(APPEND SOURCES
     CrashHandlerCrashpad.cpp
