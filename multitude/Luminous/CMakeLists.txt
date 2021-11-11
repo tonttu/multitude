@@ -80,6 +80,11 @@ set(SOURCES
 
 if(ENABLE_PDF)
   list(APPEND SOURCES PDFManager.cpp)
+
+  target_include_directories(${LIBRARY} PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
+    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty/expected/include
+  )
 endif()
 
 if(UNIX)
@@ -91,7 +96,10 @@ if(UNIX)
 
   if(ENABLE_PDF)
     target_include_directories(${LIBRARY} PRIVATE /opt/multitaction-pdfium2/include)
-    target_link_libraries(${LIBRARY} PRIVATE Punctual)
+    target_link_libraries(${LIBRARY}
+      PUBLIC Punctual
+      PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.a
+    )
   endif()
 
   find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
