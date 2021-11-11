@@ -3,10 +3,9 @@ include(../../../common.cmake)
 add_executable(ListPortAudioDevices Main.cpp)
 
 if(UNIX)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
+  pkg_check_modules(PortAudio REQUIRED IMPORTED_TARGET portaudio-2.0)
 
-  target_link_libraries(ListPortAudioDevices PRIVATE ${PORTAUDIO_LIBRARIES})
+  target_link_libraries(ListPortAudioDevices PRIVATE PkgConfig::PortAudio)
 elseif(WIN32)
   target_include_directories(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/include)
   target_link_libraries(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/lib/portaudio.lib)
