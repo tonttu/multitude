@@ -13,22 +13,13 @@ set(SOURCES
 )
 
 if(UNIX)
-  # In linux we need to tell where to look for ffmpeg libs.
-  macro(find_ffmpeg_library var name)
-    find_library(${var} ${name} PATHS ${FFMPEG_ROOT}/lib)
-  endmacro()
-
   list(APPEND SOURCES
     FfmpegVideoFormatSelectorLinux.cpp
     V4L2Monitor.cpp
   )
 
-  target_include_directories(${LIBRARY} PRIVATE ${FFMPEG_ROOT}/include)
+  target_link_libraries(${LIBRARY} PRIVATE PkgConfig::MultiFFMPEG)
 elseif(WIN32)
-  macro(find_ffmpeg_library var name)
-    find_library(${var} ${name})
-  endmacro()
-
   list(APPEND SOURCES
     WindowsVideoMonitor.cpp
     WindowsVideoHelpers.cpp
@@ -48,6 +39,21 @@ elseif(WIN32)
 
   find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
   target_include_directories(${LIBRARY} PRIVATE ${FFMPEG_INCLUDE_DIR})
+
+  # FFMPEG
+  find_library(AVDEVICE_LIB avdevice-multitaction)
+  find_library(AVCODEC_LIB avcodec-multitaction)
+  find_library(AVDEVICE_LIB avdevice-multitaction)
+  find_library(AVFILTER_LIB avfilter-multitaction)
+  find_library(AVFORMAT_LIB avformat-multitaction)
+  find_library(AVUTIL_LIB avutil-multitaction)
+  find_library(SWRESAMPLE_LIB swresample-multitaction)
+  find_library(SWSCALE_LIB swscale-multitaction)
+
+  target_link_libraries(${LIBRARY} PRIVATE
+    ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB}
+    ${AVUTIL_LIB} ${SWSCALE_LIB}
+  )
 endif()
 
 set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
@@ -57,14 +63,3 @@ target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
 target_link_libraries(${LIBRARY} PUBLIC Radiant Resonant)
 
-# FFMPEG
-find_ffmpeg_library(AVDEVICE_LIB avdevice-multitaction)
-find_ffmpeg_library(AVCODEC_LIB avcodec-multitaction)
-find_ffmpeg_library(AVDEVICE_LIB avdevice-multitaction)
-find_ffmpeg_library(AVFILTER_LIB avfilter-multitaction)
-find_ffmpeg_library(AVFORMAT_LIB avformat-multitaction)
-find_ffmpeg_library(AVUTIL_LIB avutil-multitaction)
-find_ffmpeg_library(SWRESAMPLE_LIB swresample-multitaction)
-find_ffmpeg_library(SWSCALE_LIB swscale-multitaction)
-
-target_link_libraries(${LIBRARY} PRIVATE ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB} ${AVUTIL_LIB} ${SWSCALE_LIB})
