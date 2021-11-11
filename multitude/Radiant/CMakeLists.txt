@@ -118,7 +118,7 @@ if (ENABLE_FOLLY)
   )
 
   if(UNIX)
-    pkg_check_modules(GLOG REQUIRED libglog)
+    pkg_check_modules(Glog REQUIRED IMPORTED_TARGET libglog)
     find_package(Folly REQUIRED folly PATHS ${FOLLY_ROOT})
 
     # Linking to Folly::folly does not work for some reason. Missing
@@ -126,7 +126,7 @@ if (ENABLE_FOLLY)
     # the location of .so file from Folly target and link to that.
     get_target_property(FOLLY_SO Folly::folly IMPORTED_LOCATION_NOCONFIG)
 
-    target_link_libraries(${LIBRARY} PUBLIC ${GLOG_LIBRARIES} ${FOLLY_SO})
+    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog ${FOLLY_SO})
 
     target_include_directories(${LIBRARY} PUBLIC ${FOLLY_INCLUDE_DIR})
   elseif(WIN32)
