@@ -5,11 +5,15 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- *
+ * 
  */
 
 #ifndef NIMBLE_NIMBLE_HPP
 #define NIMBLE_NIMBLE_HPP
+
+#include <Radiant/Trace.hpp>
+
+#define debugNimble(...) (Radiant::trace("Nimble", Radiant::DEBUG, __VA_ARGS__))
 
 /// Nimble library is a collection of C++ classes for 2D/3D graphics.
 /** Nimble is used mostly for simple arithmetic/geometric

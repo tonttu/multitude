@@ -13,7 +13,7 @@
 
 #include "Export.hpp"
 
-#include <cstring>
+#include <QString>
 
 namespace Nimble {
 
@@ -43,7 +43,7 @@ namespace Nimble {
     ~Histogram() {}
 
     /// Sets all histogram bins to zero
-    void clear() { std::memset(m_data, 0, sizeof(m_data)); m_count = 0; }
+    void clear() { memset(m_data, 0, sizeof(m_data)); m_count = 0; }
 
     /// Adds the histogram bin "index" by one
     void put(int index) { m_data[index]++; m_count++; }
@@ -159,7 +159,7 @@ namespace Nimble {
       */
     int lowestNonEmpty() const
     {
-      for(int i = 0; i < N; i++) {
+      for(int i = 1; i < N; i++) {
         if(m_data[i])
           return i;
       }
@@ -214,6 +214,8 @@ namespace Nimble {
   typedef Histogram<unsigned int,256> Histogramu256;
   /// Histogram of 1024 unsigned integers
   typedef Histogram<unsigned int,1024> Histogramu1024;
+  /// Histogram of signed integers
+  typedef Histogram<int,256> Histogrami256;
 
   // This is needed on Windows
 #ifdef WIN32
@@ -221,6 +223,7 @@ namespace Nimble {
   template Histogram<unsigned int, 64>;
   template Histogram<unsigned int, 256>;
   template Histogram<unsigned int, 1024>;
+  template Histogram<int, 256>;
 #endif
 #endif
 

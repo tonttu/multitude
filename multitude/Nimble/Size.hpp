@@ -18,8 +18,6 @@
 #include <type_traits>
 #include <cassert>
 
-#include <Qt>
-
 namespace Nimble {
 
   /// This class defines the size of a two-dimensional object.
