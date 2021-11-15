@@ -72,6 +72,9 @@ set(SOURCES
   TraceCrashHandlerFilter.cpp
 )
 
+target_link_libraries(${LIBRARY} PRIVATE
+    Nimble)
+
 if (UNIX)
   list(APPEND SOURCES
     ProcessRunnerPosix.cpp
@@ -87,7 +90,7 @@ if (UNIX)
   pkg_check_modules(Udev REQUIRED IMPORTED_TARGET libudev)
 
   target_link_libraries(${LIBRARY} PRIVATE
-    Nimble PkgConfig::Udev PkgConfig::BreakPad)
+    PkgConfig::Udev PkgConfig::BreakPad)
 elseif(WIN32)
   list(APPEND SOURCES
     CrashHandlerCrashpad.cpp
@@ -106,7 +109,11 @@ elseif(WIN32)
 
   target_link_libraries(${LIBRARY} PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib)
 
-  target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpadd.lib)
+  else()
+    target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
+  endif()
 
 endif()
 
