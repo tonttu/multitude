@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QFileInfo>
+#include <QDir>
 
 #include <unordered_map>
 
@@ -493,6 +494,19 @@ namespace Radiant
   {
     QByteArray data = writeData();
 
+    QFileInfo fi(filename);
+    QString absolutePathToDirectory = fi.absolutePath();
+
+    QDir qdir;
+    bool pathWasCreated = false;
+    if (!QFileInfo::exists(absolutePathToDirectory)) {
+      if (pathWasCreated = qdir.mkpath(absolutePathToDirectory); !pathWasCreated) {
+        Radiant::error("IniFile # Failed to create path %s to save settings to %s", absolutePathToDirectory.toUtf8().data(),
+                       filename.toUtf8().data());
+        return false;
+      }
+    }
+
     QSaveFile file(filename);
     if (!file.open(QSaveFile::WriteOnly)) {
       QFileInfo fi(filename);
@@ -508,6 +522,9 @@ namespace Radiant
       }
       Radiant::error("IniFile # Failed to open %s for writing: %s", filename.toUtf8().data(),
                     file.errorString().toUtf8().data());
+      if (pathWasCreated) {
+        qdir.rmpath(absolutePathToDirectory);
+      }
       return false;
     }
 
@@ -515,6 +532,9 @@ namespace Radiant
     if (!file.commit()) {
       Radiant::error("IniFile # Failed to save to %s: %s", filename.toUtf8().data(),
                      file.errorString().toUtf8().data());
+      if (pathWasCreated) {
+        qdir.rmpath(absolutePathToDirectory);
+      }
       return false;
     }
     return true;
