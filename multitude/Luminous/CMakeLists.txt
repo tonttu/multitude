@@ -105,19 +105,25 @@ if(UNIX)
   find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
   target_link_libraries(${LIBRARY} PRIVATE Qt5::X11Extras)
   target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
+
+  find_library(LZ4_LIBRARY lz4)
+  target_link_libraries(${LIBRARY} PRIVATE lz4)
 elseif(WIN32)
 
   list(APPEND SOURCES
     GPUAffinity.cpp
     DisplayConfigWin.cpp
     DxInterop.cpp
+    DxSharedTexture.cpp
   )
 
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
 
-  target_link_libraries(${LIBRARY} PRIVATE Opengl32.lib Dwmapi.lib)
+  target_link_libraries(${LIBRARY} PRIVATE Opengl32.lib Dwmapi.lib DXGI.lib D3D11.lib WindowsApp.lib)
 
+  find_package(lz4 CONFIG REQUIRED)
+  target_link_libraries(${LIBRARY} PRIVATE lz4::lz4)
 endif()
 
 set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
@@ -134,6 +140,3 @@ target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
 target_link_libraries(${LIBRARY} PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
 target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
-
-find_library(LZ4_LIBRARY lz4)
-target_link_libraries(${LIBRARY} PRIVATE lz4)

@@ -41,14 +41,13 @@ elseif(WIN32)
   target_include_directories(${LIBRARY} PRIVATE ${FFMPEG_INCLUDE_DIR})
 
   # FFMPEG
-  find_library(AVDEVICE_LIB avdevice-multitaction)
-  find_library(AVCODEC_LIB avcodec-multitaction)
-  find_library(AVDEVICE_LIB avdevice-multitaction)
-  find_library(AVFILTER_LIB avfilter-multitaction)
-  find_library(AVFORMAT_LIB avformat-multitaction)
-  find_library(AVUTIL_LIB avutil-multitaction)
-  find_library(SWRESAMPLE_LIB swresample-multitaction)
-  find_library(SWSCALE_LIB swscale-multitaction)
+  find_library(AVDEVICE_LIB avdeviceMT REQUIRED)
+  find_library(AVCODEC_LIB avcodecMT REQUIRED)
+  find_library(AVFILTER_LIB avfilterMT REQUIRED)
+  find_library(AVFORMAT_LIB avformatMT REQUIRED)
+  find_library(AVUTIL_LIB avutilMT REQUIRED)
+  find_library(SWRESAMPLE_LIB swresampleMT REQUIRED)
+  find_library(SWSCALE_LIB swscaleMT REQUIRED)
 
   target_link_libraries(${LIBRARY} PRIVATE
     ${AVCODEC_LIB} ${AVDEVICE_LIB} ${AVFILTER_LIB} ${AVFORMAT_LIB}
