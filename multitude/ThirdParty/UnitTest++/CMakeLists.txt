@@ -35,11 +35,20 @@ if (UNIX)
   )
 endif()
 
+if(WIN32)
+  target_compile_definitions(${LIBRARY} PUBLIC
+      -DUNITTEST_WIN32_DLL -D_CRT_SECURE_NO_WARNINGS -DUNITTEST_USE_CUSTOM_STREAMS
+  )
+
+  list(APPEND SOURCES
+    Win32/TimeHelpers.cpp
+  )
+endif()
+
 set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
-target_compile_definitions(${LIBRARY} PUBLIC
+target_compile_definitions(${LIBRARY} PRIVATE
   -DUNITTEST_DLL_EXPORT
-  -DUNITTEST_USE_CUSTOM_STREAMS
 )
 
 find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
