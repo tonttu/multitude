@@ -7,8 +7,8 @@ if(UNIX)
 
   target_link_libraries(ListPortAudioDevices PRIVATE PkgConfig::PortAudio)
 elseif(WIN32)
-  target_include_directories(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/include)
-  target_link_libraries(ListPortAudioDevices PRIVATE ${VCPKG_ROOT}/lib/portaudio.lib)
+  find_package(portaudio CONFIG REQUIRED)
+  target_link_libraries(ListPortAudioDevices PRIVATE portaudio)
 endif()
 
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
