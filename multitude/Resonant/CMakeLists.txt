@@ -45,11 +45,12 @@ set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DRESONANT_EXPORT)
 
-if(UNIX)
-  target_include_directories(${LIBRARY} PRIVATE ${VCPKG_ROOT}/include)
-elseif(WIN32)
-  target_link_libraries(${LIBRARY} PRIVATE ${VCPKG_ROOT}/lib/libsndfile-1.lib)
-  target_link_libraries(${LIBRARY} PRIVATE ${VCPKG_ROOT}/lib/libsndfile-1.lib)
+if(WIN32)
+  find_package(SndFile CONFIG REQUIRED)
+  target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile)
+
+  find_package(portaudio CONFIG REQUIRED)
+  target_link_libraries(${LIBRARY} PRIVATE portaudio)
 endif()
 
 target_link_libraries(${LIBRARY} PUBLIC Radiant Valuable)
