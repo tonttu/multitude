@@ -44,7 +44,7 @@ namespace Valuable
       objects.
    */
   template<class VectorType>
-  class AttributeT<VectorType, typename std::enable_if<IsVector<VectorType>::value>::type>
+  class AttributeT<VectorType, typename std::enable_if_t<IsVector<VectorType>::value>>
       : public AttributeBaseT<VectorType>
   {
     /// GetVector<Nimble::Vector2i>::FloatVector == Nimble::Vector2f
@@ -146,7 +146,7 @@ namespace Valuable
 
       /// Interpolate integer vectors with normally, but round the final value back to int
       template <typename V>
-      static inline typename std::enable_if<std::is_integral<typename V::type>::value, V>::type
+      static inline typename std::enable_if_t<std::is_integral<typename V::type>::value, V>
       interpolate(V a, V b, float m)
       {
         return (a * (1.0f - m) + b * m).template round<typename V::type>();
