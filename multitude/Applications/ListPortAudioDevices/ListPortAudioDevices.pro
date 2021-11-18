@@ -9,6 +9,6 @@ QT += core network xml
 
 unix: PKGCONFIG += portaudio-2.0
 
-win*: LIBS += -lportaudio -llibsndfile-1
+win*: LIBS += -lportaudio -lsndfile
 
 include(../../../Applications/Applications_end.pri)

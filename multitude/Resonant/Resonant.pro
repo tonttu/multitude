@@ -62,6 +62,6 @@ include(../setup-lib.pri)
 
 DEFINES += RESONANT_EXPORT
 
-win32:LIBS += -llibsndfile-1
+win32:LIBS += -lsndfile
 unix:LIBS += -lsndfile
 mobile:LIBS += -lFLAC -lvorbisenc -lvorbis -logg
