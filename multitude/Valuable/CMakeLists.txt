@@ -51,3 +51,5 @@ target_link_libraries(${LIBRARY}
   PRIVATE Qt5::Xml
   PUBLIC Radiant
 )
+
+cornerstone_install_lib(${LIBRARY})

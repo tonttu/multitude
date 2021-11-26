@@ -140,3 +140,5 @@ target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
 target_link_libraries(${LIBRARY} PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
 
 target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
+
+cornerstone_install_lib(${LIBRARY})

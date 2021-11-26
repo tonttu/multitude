@@ -54,3 +54,5 @@ if(WIN32)
 endif()
 
 target_link_libraries(${LIBRARY} PUBLIC Radiant Valuable)
+
+cornerstone_install_lib(${LIBRARY})

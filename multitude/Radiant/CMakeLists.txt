@@ -169,3 +169,5 @@ find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 find_package(Qt5 COMPONENTS Sql PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
 target_link_libraries(${LIBRARY} PUBLIC Qt5::Network Qt5::Gui Qt5::Sql)
+
+cornerstone_install_lib(${LIBRARY})

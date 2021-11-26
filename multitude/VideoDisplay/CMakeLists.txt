@@ -62,3 +62,4 @@ target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
 target_link_libraries(${LIBRARY} PUBLIC Radiant Resonant)
 
+cornerstone_install_lib(${LIBRARY})

@@ -25,3 +25,5 @@ add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
 
 include_directories(${Qt5Core_INCLUDE_DIRS})
+
+cornerstone_install_lib(${LIBRARY})

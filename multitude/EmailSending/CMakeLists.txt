@@ -23,3 +23,5 @@ target_link_libraries(${LIBRARY}
 )
 
 target_include_directories(${LIBRARY} PUBLIC ${THIRDPARTY_PATH})
+
+cornerstone_install_lib(${LIBRARY})
