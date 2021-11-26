@@ -2,7 +2,7 @@ include(../../common.cmake)
 
 set(LIBRARY Resonant)
 
-add_library(${LIBRARY} SHARED)
+cornerstone_add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   AudioFileHandler.cpp

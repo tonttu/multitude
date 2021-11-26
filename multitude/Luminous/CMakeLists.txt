@@ -2,7 +2,7 @@ include(../../common.cmake)
 
 set(LIBRARY Luminous)
 
-add_library(${LIBRARY} SHARED)
+cornerstone_add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   ImageCodecDDS.cpp

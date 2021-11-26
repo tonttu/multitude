@@ -2,7 +2,7 @@ include(../../common.cmake)
 
 set(LIBRARY VideoDisplay)
 
-add_library(${LIBRARY} SHARED)
+cornerstone_add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   AudioTransfer.cpp

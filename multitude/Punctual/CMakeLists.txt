@@ -7,7 +7,7 @@ set(SOURCES
   LimitedTimeExecutor.cpp
 )
 
-add_library(${LIBRARY} SHARED ${SOURCES})
+cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DPUNCTUAL_EXPORT)
 

@@ -41,7 +41,7 @@ if(ENABLE_FOLLY)
   list(APPEND SOURCES EventWrapper.cpp)
 endif()
 
-add_library(${LIBRARY} SHARED ${SOURCES})
+cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 

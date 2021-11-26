@@ -2,7 +2,7 @@ include(../../common.cmake)
 
 set(LIBRARY Radiant)
 
-add_library(${LIBRARY} SHARED)
+cornerstone_add_library(${LIBRARY} SHARED)
 
 set(SOURCES
   Mime.cpp

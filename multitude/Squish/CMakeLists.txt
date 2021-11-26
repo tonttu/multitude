@@ -4,7 +4,7 @@ set(LIBRARY Squish)
 
 file(GLOB SOURCES *.cpp)
 
-add_library(${LIBRARY} STATIC ${SOURCES})
+cornerstone_add_library(${LIBRARY} STATIC ${SOURCES})
 
 add_definitions(-DUSE_SSE=2)
 

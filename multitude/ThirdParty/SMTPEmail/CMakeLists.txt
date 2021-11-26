@@ -4,7 +4,7 @@ set(LIBRARY SMTPEmail)
 
 file(GLOB SOURCES src/*.cpp)
 
-add_library(${LIBRARY} SHARED ${SOURCES})
+cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DSMTP_BUILD)
 

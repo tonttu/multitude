@@ -18,7 +18,7 @@ set(SOURCES
   Splines.cpp
 )
 
-add_library(${LIBRARY} SHARED ${SOURCES})
+cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 
