@@ -52,8 +52,8 @@ target_compile_definitions(${LIBRARY}
   PUBLIC -DUNITTEST_USE_CUSTOM_STREAMS
 )
 
-find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
+target_link_libraries(${LIBRARY} PRIVATE Radiant)
 
-target_link_libraries(${LIBRARY} PRIVATE Qt5::Xml Radiant)
+add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})

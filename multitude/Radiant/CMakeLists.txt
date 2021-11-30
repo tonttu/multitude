@@ -104,9 +104,6 @@ elseif(WIN32)
 
   target_compile_definitions(${LIBRARY} PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 
-  find_package(Qt5 COMPONENTS Widgets PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-  target_link_libraries(${LIBRARY} PRIVATE Qt5::Widgets)
-
   target_link_libraries(${LIBRARY} PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib)
 
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -115,6 +112,7 @@ elseif(WIN32)
     target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
   endif()
 
+  add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Widgets")
 endif()
 
 if (ENABLE_FOLLY)
@@ -164,10 +162,6 @@ set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
 
-find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Sql PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
-target_link_libraries(${LIBRARY} PUBLIC Qt5::Network Qt5::Gui Qt5::Sql)
+add_qt_libs(${QT_PATH} ${LIBRARY} PUBLIC "Gui;Sql")
 
 cornerstone_install_lib(${LIBRARY})

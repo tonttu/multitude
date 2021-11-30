@@ -102,12 +102,12 @@ if(UNIX)
     )
   endif()
 
-  find_package(Qt5 COMPONENTS X11Extras PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-  target_link_libraries(${LIBRARY} PRIVATE Qt5::X11Extras)
   target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
 
   find_library(LZ4_LIBRARY lz4)
   target_link_libraries(${LIBRARY} PRIVATE lz4)
+
+  add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "X11Extras")
 elseif(WIN32)
 
   list(APPEND SOURCES
@@ -130,14 +130,10 @@ set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
-find_package(Qt5 COMPONENTS Core PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Network PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Gui PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-find_package(Qt5 COMPONENTS Svg PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
 target_link_libraries(${LIBRARY} PRIVATE Squish)
 target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
-target_link_libraries(${LIBRARY} PUBLIC Qt5::Core Qt5::Network Qt5::Gui Qt5::Svg)
+
+add_qt_libs(${QT_PATH} ${LIBRARY} PUBLIC "Network;Gui;Svg")
 
 target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
 

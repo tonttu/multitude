@@ -45,11 +45,10 @@ cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 
-find_package(Qt5 COMPONENTS Xml PATHS ${QT_PATH} REQUIRED NO_DEFAULT_PATH)
-
 target_link_libraries(${LIBRARY}
-  PRIVATE Qt5::Xml
   PUBLIC Radiant
 )
+
+add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})
