@@ -8,6 +8,6 @@ cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DSMTP_BUILD)
 
-add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Core")
+cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 
 cornerstone_install_lib(${LIBRARY})

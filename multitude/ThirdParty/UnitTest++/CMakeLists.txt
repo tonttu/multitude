@@ -54,6 +54,6 @@ target_compile_definitions(${LIBRARY}
 
 target_link_libraries(${LIBRARY} PRIVATE Radiant)
 
-add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Xml")
+cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})

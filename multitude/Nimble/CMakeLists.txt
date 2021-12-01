@@ -22,6 +22,6 @@ cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 
-add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Core")
+cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 
 cornerstone_install_lib(${LIBRARY})

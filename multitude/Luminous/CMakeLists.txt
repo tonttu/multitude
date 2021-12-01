@@ -107,7 +107,7 @@ if(UNIX)
   find_library(LZ4_LIBRARY lz4)
   target_link_libraries(${LIBRARY} PRIVATE lz4)
 
-  add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "X11Extras")
+  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "X11Extras")
 elseif(WIN32)
 
   list(APPEND SOURCES
@@ -133,7 +133,7 @@ target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 target_link_libraries(${LIBRARY} PRIVATE Squish)
 target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
 
-add_qt_libs(${QT_PATH} ${LIBRARY} PUBLIC "Network;Gui;Svg")
+cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
 
 target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
 

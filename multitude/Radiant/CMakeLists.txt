@@ -112,7 +112,7 @@ elseif(WIN32)
     target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
   endif()
 
-  add_qt_libs(${QT_PATH} ${LIBRARY} PRIVATE "Widgets")
+  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
 endif()
 
 if (ENABLE_FOLLY)
@@ -162,6 +162,6 @@ set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
 
-add_qt_libs(${QT_PATH} ${LIBRARY} PUBLIC "Gui;Sql")
+cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
 
 cornerstone_install_lib(${LIBRARY})
