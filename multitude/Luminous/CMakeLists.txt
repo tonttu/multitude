@@ -4,7 +4,7 @@ set(LIBRARY Luminous)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
-set(SOURCES
+target_sources(${LIBRARY} PRIVATE
   ImageCodecDDS.cpp
   GPUAssociation.cpp
   MaskGuard.cpp
@@ -79,7 +79,7 @@ set(SOURCES
 )
 
 if(ENABLE_PDF)
-  list(APPEND SOURCES PDFManager.cpp)
+  target_sources(${LIBRARY} PRIVATE PDFManager.cpp)
 
   target_include_directories(${LIBRARY} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
@@ -89,7 +89,7 @@ endif()
 
 if(UNIX)
 
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     XRandR.cpp
     Xinerama.cpp
   )
@@ -110,7 +110,7 @@ if(UNIX)
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "X11Extras")
 elseif(WIN32)
 
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     GPUAffinity.cpp
     DisplayConfigWin.cpp
     DxInterop.cpp
@@ -125,8 +125,6 @@ elseif(WIN32)
   find_package(lz4 CONFIG REQUIRED)
   target_link_libraries(${LIBRARY} PRIVATE lz4::lz4)
 endif()
-
-set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
