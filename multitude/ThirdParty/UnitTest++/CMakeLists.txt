@@ -4,7 +4,7 @@ set(LIBRARY UnitTest++)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
-set(SOURCES
+target_sources(${LIBRARY} PRIVATE
   AssertException.cpp
   Checks.cpp
   CompositeTestReporter.cpp
@@ -29,7 +29,7 @@ set(SOURCES
 )
 
 if (UNIX)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     Posix/TimeHelpers.cpp
     Posix/SignalTranslator.cpp
   )
@@ -40,12 +40,8 @@ if(WIN32)
       -DUNITTEST_WIN32_DLL -D_CRT_SECURE_NO_WARNINGS
   )
 
-  list(APPEND SOURCES
-    Win32/TimeHelpers.cpp
-  )
+  target_sources(${LIBRARY} PRIVATE Win32/TimeHelpers.cpp)
 endif()
-
-set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY}
   PRIVATE -DUNITTEST_DLL_EXPORT
