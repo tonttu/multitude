@@ -4,7 +4,7 @@ set(LIBRARY Resonant)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
-set(SOURCES
+target_sources(${LIBRARY} PRIVATE
   AudioFileHandler.cpp
   LimiterAlgorithm.cpp
   ModuleBufferPlayer.cpp
@@ -21,7 +21,7 @@ set(SOURCES
 if(ENABLE_PORT_AUDIO)
   add_definitions(-DCORNERSTONE_ENABLE_PORT_AUDIO)
 
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     PortAudioSource.cpp
     AudioLoopPortAudio.cpp
   )
@@ -32,7 +32,7 @@ endif()
 if(ENABLE_PULSE_AUDIO)
   add_definitions(-DCORNERSTONE_ENABLE_PULSE)
 
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     PulseAudioSource.cpp
     AudioLoopPulseAudio.cpp
     PulseAudioContext.cpp
@@ -40,8 +40,6 @@ if(ENABLE_PULSE_AUDIO)
 
   target_link_libraries(${LIBRARY} PRIVATE pulse)
 endif()
-
-set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DRESONANT_EXPORT)
 
