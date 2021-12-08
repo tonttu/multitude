@@ -7,13 +7,13 @@ project(${LIBRARY}
   DESCRIPTION "Email sending library"
 )
 
-set(SOURCES
+cornerstone_add_library(${LIBRARY} SHARED)
+
+target_sources(${LIBRARY} PRIVATE
   Email.cpp
   Sender.cpp
   SendImplementation.cpp
 )
-
-cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DEMAIL_EXPORT)
 
