@@ -4,7 +4,7 @@ set(LIBRARY VideoDisplay)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
-set(SOURCES
+target_sources(${LIBRARY} PRIVATE
   AudioTransfer.cpp
   AVDecoder.cpp
   DummyDecoder.cpp
@@ -13,14 +13,14 @@ set(SOURCES
 )
 
 if(UNIX)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     FfmpegVideoFormatSelectorLinux.cpp
     V4L2Monitor.cpp
   )
 
   target_link_libraries(${LIBRARY} PRIVATE PkgConfig::MultiFFMPEG)
 elseif(WIN32)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     WindowsVideoMonitor.cpp
     WindowsVideoHelpers.cpp
     RGBEasy.cpp
@@ -54,8 +54,6 @@ elseif(WIN32)
     ${AVUTIL_LIB} ${SWSCALE_LIB}
   )
 endif()
-
-set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
 target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
