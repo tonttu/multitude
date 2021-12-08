@@ -4,7 +4,7 @@ set(LIBRARY Radiant)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
-set(SOURCES
+target_sources(${LIBRARY} PRIVATE
   Mime.cpp
   IniFile.cpp
   ThreadChecks.cpp
@@ -76,23 +76,21 @@ target_link_libraries(${LIBRARY} PRIVATE
     Nimble)
 
 if (UNIX)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     ProcessRunnerPosix.cpp
     DeviceMonitor.cpp
     TraceSyslogFilter.cpp
     SystemCpuTimeLinux.cpp
     CallStackUnix.cpp
+    CrashHandlerBreakpad.cpp # CrashHandler
   )
-
-  # CrashHandler
-  list(APPEND SOURCES CrashHandlerBreakpad.cpp)
 
   pkg_check_modules(Udev REQUIRED IMPORTED_TARGET libudev)
 
   target_link_libraries(${LIBRARY} PRIVATE
     PkgConfig::Udev PkgConfig::BreakPad)
 elseif(WIN32)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     CrashHandlerCrashpad.cpp
     DeviceUtilsWin.cpp
     TraceWindowsDebugConsoleFilter.cpp
@@ -116,7 +114,7 @@ elseif(WIN32)
 endif()
 
 if (ENABLE_FOLLY)
-  list(APPEND SOURCES
+  target_sources(${LIBRARY} PRIVATE
     ThreadPoolExecutor.cpp
     BGThreadExecutor.cpp
     OnDemandExecutor.cpp
@@ -145,10 +143,10 @@ if (ENABLE_FOLLY)
 endif()
 
 if(ENABLE_SECRET_STORE)
-  list(APPEND SOURCES SecretStoreDummy.cpp)
+  target_sources(${LIBRARY} PRIVATE SecretStoreDummy.cpp)
 
   if(UNIX)
-    list(APPEND SOURCES SecretStoreLinux.cpp)
+    target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
 
     pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
     target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET)
@@ -157,8 +155,6 @@ if(ENABLE_SECRET_STORE)
       PRIVATE ../ThirdParty/expected/include)
   endif()
 endif()
-
-set_target_properties(${LIBRARY} PROPERTIES SOURCES "${SOURCES}")
 
 target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
 
