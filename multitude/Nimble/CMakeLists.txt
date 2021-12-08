@@ -6,7 +6,9 @@ project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
   DESCRIPTION "A collection of C++ classes for math"
 )
 
-set(SOURCES
+cornerstone_add_library(${LIBRARY} SHARED)
+
+target_sources(${LIBRARY} PRIVATE
   ClipStack.cpp
   Circle.cpp
   KeyStone.cpp
@@ -17,8 +19,6 @@ set(SOURCES
   Rectangle.cpp
   Splines.cpp
 )
-
-cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 
