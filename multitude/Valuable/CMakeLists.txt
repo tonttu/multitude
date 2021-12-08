@@ -6,7 +6,9 @@ project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
   DESCRIPTION "Serialization and event library"
 )
 
-set(SOURCES
+cornerstone_add_library(${LIBRARY} SHARED)
+
+target_sources(${LIBRARY} PRIVATE
   Archive.cpp
   AttributeAlias.cpp
   AttributeStringList.cpp
@@ -38,10 +40,8 @@ set(SOURCES
 )
 
 if(ENABLE_FOLLY)
-  list(APPEND SOURCES EventWrapper.cpp)
+  target_sources(${LIBRARY} PRIVATE EventWrapper.cpp)
 endif()
-
-cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 
