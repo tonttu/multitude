@@ -2,12 +2,12 @@ include(../../common.cmake)
 
 set(LIBRARY Punctual)
 
-set(SOURCES
+cornerstone_add_library(${LIBRARY} SHARED)
+
+target_sources(${LIBRARY} PRIVATE
   Executors.cpp
   LimitedTimeExecutor.cpp
 )
-
-cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE -DPUNCTUAL_EXPORT)
 
