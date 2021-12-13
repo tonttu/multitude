@@ -1,6 +1,3 @@
-# Include files common to all so that individual subdirectory doesn't need to.
-include(${CMAKE_CURRENT_LIST_DIR}/../common.cmake)
-
 if(ENABLE_PUNCTUAL)
   add_subdirectory(Punctual)
 endif()
