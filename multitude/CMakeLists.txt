@@ -16,10 +16,13 @@ if(ENABLE_LUMINOUS)
   add_subdirectory(Luminous)
 endif()
 
-if(ENABLE_RESONANT)
+if(ENABLE_RESONANT OR ENABLE_MUSHY)
   add_subdirectory(Nimble)
   add_subdirectory(Radiant)
   add_subdirectory(Valuable)
+endif()
+
+if(ENABLE_RESONANT)
   add_subdirectory(Resonant)
 endif()
 
