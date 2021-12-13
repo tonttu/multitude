@@ -43,6 +43,17 @@ namespace Luminous
                              float sizeToleranceSqr,
                              std::vector<Nimble::Rangef> & curveIntersections);
 
+  /// Like splineIntersections2D, but only returns true if the shape intersects
+  /// with the spline without calculating the intersection points.
+  ///
+  /// This can be used for hit testing, for instance call this with
+  /// Nimble::Circle with center C and radius R to check if the point C is at
+  /// most R distance from the spline.
+  template <typename Shape>
+  bool splineIntersects(const BezierSpline & path,
+                        const Shape & shape,
+                        float sizeToleranceSqr);
+
   /// Extracts a range of a spline as a new spline
   LUMINOUS_API BezierSpline splineExtractRange(const BezierSpline & src,
                                                SplineRange range);
@@ -112,6 +123,22 @@ namespace Luminous
         }
       }
     }
+  }
+
+  template <typename Shape>
+  bool splineIntersects(const BezierSpline & path,
+                        const Shape & shape,
+                        float sizeToleranceSqr)
+  {
+    if (path.size() < 2)
+      return false;
+
+    for (size_t idx = 0, m = path.size() - 1; idx < m; ++idx) {
+      Luminous::CubicBezierCurve curve(path[idx], path[idx+1]);
+      if (curve.intersects(shape, sizeToleranceSqr))
+        return true;
+    }
+    return false;
   }
 
   template <typename PointVector>
