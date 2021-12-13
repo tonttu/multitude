@@ -1,5 +1,3 @@
-include(../../../common.cmake)
-
 set(LIBRARY UnitTest++)
 
 cornerstone_add_library(${LIBRARY} SHARED)

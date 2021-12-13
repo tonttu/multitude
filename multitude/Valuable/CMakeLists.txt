@@ -1,5 +1,3 @@
-include(../../common.cmake)
-
 set(LIBRARY Valuable)
 
 project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}

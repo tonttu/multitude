@@ -1,5 +1,3 @@
-include(../../../common.cmake)
-
 set(BINARY ListPortAudioDevices)
 add_executable(${BINARY} Main.cpp)
 

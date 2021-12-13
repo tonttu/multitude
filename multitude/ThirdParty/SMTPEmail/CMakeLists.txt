@@ -1,5 +1,3 @@
-include(../../../common.cmake)
-
 set(LIBRARY SMTPEmail)
 
 file(GLOB SOURCES src/*.cpp)

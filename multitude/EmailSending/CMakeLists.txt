@@ -1,5 +1,3 @@
-include(../../common.cmake)
-
 set(LIBRARY EmailSending)
 
 project(${LIBRARY}

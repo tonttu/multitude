@@ -1,5 +1,3 @@
-include(../../common.cmake)
-
 set(LIBRARY Luminous)
 
 cornerstone_add_library(${LIBRARY} SHARED)

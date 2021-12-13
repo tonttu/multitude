@@ -1,3 +1,7 @@
+# Include files common to all applications so that individual application
+# doesn't need to.
+include(${CMAKE_CURRENT_LIST_DIR}/../common.cmake)
+
 add_subdirectory(Nimble)
 add_subdirectory(Radiant)
 add_subdirectory(Valuable)

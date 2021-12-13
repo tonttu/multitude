@@ -1,5 +1,3 @@
-include(../../common.cmake)
-
 set(LIBRARY Resonant)
 
 cornerstone_add_library(${LIBRARY} SHARED)
