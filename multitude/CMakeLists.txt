@@ -2,10 +2,6 @@
 # doesn't need to.
 include(${CMAKE_CURRENT_LIST_DIR}/../common.cmake)
 
-add_subdirectory(Nimble)
-add_subdirectory(Radiant)
-add_subdirectory(Valuable)
-
 if(ENABLE_PUNCTUAL)
   add_subdirectory(Punctual)
 endif()
@@ -21,6 +17,9 @@ if(ENABLE_LUMINOUS)
 endif()
 
 if(ENABLE_RESONANT)
+  add_subdirectory(Nimble)
+  add_subdirectory(Radiant)
+  add_subdirectory(Valuable)
   add_subdirectory(Resonant)
 endif()
 
