@@ -79,6 +79,8 @@ target_sources(${LIBRARY} PRIVATE
 if(ENABLE_PDF)
   target_sources(${LIBRARY} PRIVATE PDFManager.cpp)
 
+  target_link_libraries(${LIBRARY} PUBLIC Punctual)
+
   target_include_directories(${LIBRARY} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
     ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty/expected/include
@@ -95,7 +97,6 @@ if(UNIX)
   if(ENABLE_PDF)
     target_include_directories(${LIBRARY} PRIVATE /opt/multitaction-pdfium2/include)
     target_link_libraries(${LIBRARY}
-      PUBLIC Punctual
       PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.a
     )
   endif()
@@ -114,6 +115,10 @@ elseif(WIN32)
     DxInterop.cpp
     DxSharedTexture.cpp
   )
+
+  if(ENABLE_PDF)
+    target_link_libraries(${LIBRARY} PRIVATE ${VCPKG_ROOT}/lib/pdfium.lib)
+  endif()
 
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
