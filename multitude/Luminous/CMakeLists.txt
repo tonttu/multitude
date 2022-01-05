@@ -85,6 +85,8 @@ if(ENABLE_PDF)
     ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
     ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty/expected/include
   )
+
+  cornerstone_add_pdfium_libs(${LIBRARY} PRIVATE)
 endif()
 
 if(UNIX)
@@ -93,13 +95,6 @@ if(UNIX)
     XRandR.cpp
     Xinerama.cpp
   )
-
-  if(ENABLE_PDF)
-    target_include_directories(${LIBRARY} PRIVATE /opt/multitaction-pdfium2/include)
-    target_link_libraries(${LIBRARY}
-      PRIVATE /opt/multitaction-pdfium2/lib/libmultitaction-pdfium2.a
-    )
-  endif()
 
   target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
 
@@ -115,10 +110,6 @@ elseif(WIN32)
     DxInterop.cpp
     DxSharedTexture.cpp
   )
-
-  if(ENABLE_PDF)
-    target_link_libraries(${LIBRARY} PRIVATE ${VCPKG_ROOT}/lib/pdfium.lib)
-  endif()
 
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
