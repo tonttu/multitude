@@ -150,7 +150,9 @@ namespace Luminous
     Vertex v;
     v.color = color.toVector();
 
-    Nimble::Vector3f prevPoint;
+    // Initialize this to keep gcc happy. -Werror=maybe-uninitialized generates
+    // a false positive later in the function.
+    Nimble::Vector3f prevPoint{0.f, 0.f, 0.f};
     Nimble::Vector2f prevUnitTangent;
     bool first = true;
     // 32-bit float is not accurate enough for smaller values
@@ -185,23 +187,23 @@ namespace Luminous
         float len = p.tangent2D.length();
         Nimble::Vector2f unitTangent;
 
-        if (first) {
-          if (len <= std::numeric_limits<float>::epsilon())
-            unitTangent = (polylineBuffer[1].point.vector2() -
-                polylineBuffer[0].point.vector2()).normalized();
-          else
-            unitTangent = p.tangent2D / len;
-          normal = unitTangent.perpendicular() * p.point.z;
-
-          m_d->renderCapBegin(p, normal, v);
-        } else if (len > std::numeric_limits<float>::epsilon()) {
-          unitTangent = p.tangent2D / len;
-          normal = unitTangent.perpendicular() * p.point.z;
+        if (len <= std::numeric_limits<float>::epsilon()) {
+          unitTangent = curve[3].vector2() - curve[0].vector2();
+          len = unitTangent.length();
+          if (!first && len <= std::numeric_limits<float>::epsilon()) {
+            unitTangent = prevUnitTangent;
+          } else {
+            unitTangent /= len;
+          }
         } else {
-          unitTangent = prevUnitTangent;
+          unitTangent = p.tangent2D / len;
         }
 
-        if (!first) {
+        normal = unitTangent.perpendicular() * p.point.z;
+
+        if (first) {
+          m_d->renderCapBegin(p, normal, v);
+        } else {
           float s = m_d->capSegmentAngleCos(p.point.z);
           float angleCos = dot(unitTangent, prevUnitTangent);
           /// The spline might not have c1 continuity, so we detect
