@@ -150,6 +150,9 @@ namespace Luminous
     Vertex v;
     v.color = color.toVector();
 
+    // Initialize this to keep gcc happy. -Werror=maybe-uninitialized generates
+    // a false positive later in the function.
+    Nimble::Vector3f prevPoint{0.f, 0.f, 0.f};
     Nimble::Vector2f prevUnitTangent;
     bool first = true;
     // 32-bit float is not accurate enough for smaller values
@@ -184,44 +187,44 @@ namespace Luminous
         float len = p.tangent2D.length();
         Nimble::Vector2f unitTangent;
 
-        if (first) {
-          if (len <= std::numeric_limits<float>::epsilon())
-            unitTangent = (polylineBuffer[1].point.vector2() -
-                polylineBuffer[0].point.vector2()).normalized();
-          else
-            unitTangent = p.tangent2D / len;
-          normal = unitTangent.perpendicular() * p.point.z;
-
-          m_d->renderCapBegin(p, normal, v);
-        } else if (len > std::numeric_limits<float>::epsilon()) {
-          unitTangent = p.tangent2D / len;
-          normal = unitTangent.perpendicular() * p.point.z;
+        if (len <= std::numeric_limits<float>::epsilon()) {
+          unitTangent = curve[3].vector2() - curve[0].vector2();
+          len = unitTangent.length();
+          if (!first && len <= std::numeric_limits<float>::epsilon()) {
+            unitTangent = prevUnitTangent;
+          } else {
+            unitTangent /= len;
+          }
         } else {
-          unitTangent = prevUnitTangent;
+          unitTangent = p.tangent2D / len;
         }
 
-        if (!first) {
+        normal = unitTangent.perpendicular() * p.point.z;
+
+        if (first) {
+          m_d->renderCapBegin(p, normal, v);
+        } else {
           float s = m_d->capSegmentAngleCos(p.point.z);
           float angleCos = dot(unitTangent, prevUnitTangent);
           /// The spline might not have c1 continuity, so we detect
-          /// sharp turns and render a round join here.
+          /// sharp turns and render a round join at the previous point.
           if (angleCos < s && s >= -1.f && s < 1.f) {
             float angle = std::acos(angleCos);
             if (std::isfinite(angle)) {
               int steps = angle / std::acos(s);
 
               bool left = cross(prevUnitTangent, unitTangent) > 0.f;
-              Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * p.point.z;
+              Nimble::Vector2f normal2 = prevUnitTangent.perpendicular() * prevPoint.z;
               angle = angle / (steps + 1) * (left ? 1 : -1);
 
               float s = std::sin(angle), c = std::cos(angle);
               for (int i = 0; i < steps; ++i) {
                 normal2.rotate(s, c);
 
-                v.location = p.point.vector2() - normal2;
+                v.location = prevPoint.vector2() - normal2;
                 out.push_back(v);
 
-                v.location = p.point.vector2() + normal2;
+                v.location = prevPoint.vector2() + normal2;
                 out.push_back(v);
               }
             }
@@ -229,6 +232,7 @@ namespace Luminous
         }
 
         first = false;
+        prevPoint = p.point;
         prevUnitTangent = unitTangent;
 
         v.location = p.point.vector2() - normal;
