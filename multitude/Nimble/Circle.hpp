@@ -42,6 +42,9 @@ namespace Nimble {
       /// @return radius
       float radius() const {return m_radius;}
 
+      /// Radius ^ 2
+      float radiusSqr() const { return m_radiusSquared; }
+
       /// Check if the circle contains the specified rectangle
       /// @param rect bounding box definition
       /// @return true if rect is fully contained within circle, including the case where

@@ -108,6 +108,13 @@ namespace Luminous
                          float sizeToleranceSqr,
                          float leftT = 0.f, float rightT = 1.f) const;
 
+    /// Like intersections2D, but only returns true if the shape intersects
+    /// with the curve without calculating the intersection points.
+    template <typename Shape>
+    bool intersects(const Shape & shape,
+                    float sizeToleranceSqr,
+                    float leftT = 0.f, float rightT = 1.f) const;
+
     /// Calculates the bezier value
     inline Nimble::Vector3f value(float t) const;
 
@@ -237,6 +244,33 @@ namespace Luminous
     float mid = 0.5f * (leftT + rightT);
     left.intersections2D(intersections, shape, sizeToleranceSqr, leftT, mid);
     right.intersections2D(intersections, shape, sizeToleranceSqr, mid, rightT);
+  }
+
+  template <typename Shape>
+  bool CubicBezierCurve::intersects(const Shape & shape,
+                                    float sizeToleranceSqr,
+                                    float leftT, float rightT) const
+  {
+    Nimble::Rectf curveBounds;
+    for (auto v: m_data)
+      curveBounds.expand(v.vector2(), v.z);
+
+    if (shape.contains(curveBounds))
+      return true;
+
+    if (!shape.intersects(curveBounds))
+      return false;
+
+    const float curveLengthSqr = (m_data[0] - m_data[3]).lengthSqr();
+    if (curveLengthSqr < sizeToleranceSqr)
+      return true;
+
+    Luminous::CubicBezierCurve left, right;
+    subdivide(left, right, 0.5f);
+
+    float mid = 0.5f * (leftT + rightT);
+    return left.intersects(shape, sizeToleranceSqr, leftT, mid) ||
+        right.intersects(shape, sizeToleranceSqr, mid, rightT);
   }
 
   Nimble::Vector3f CubicBezierCurve::value(float t) const
