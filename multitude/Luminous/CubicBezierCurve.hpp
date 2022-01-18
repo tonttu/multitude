@@ -47,6 +47,14 @@ namespace Luminous
       Nimble::Vector2f tangent2D;
     };
 
+    // Arc length from the curve beginning to a certain curve parameter location
+    struct ArcLength
+    {
+      float length;
+      // 0..1
+      float t;
+    };
+
   public:
     CubicBezierCurve()
     {}
@@ -76,6 +84,17 @@ namespace Luminous
     inline void evaluate2D(std::vector<PolylinePoint> & points, float toleranceSqr,
                            float angleToleranceCos,
                            Nimble::Vector2f prevUnitTangent) const;
+
+    /// Calculates the curve arc length using a recursive dividing method.
+    /// Ignores the z component. With a maxLength parameter this can also
+    /// return the curve parameter value at the given arc location.
+    /// @param toleranceSqr square of max error when determining if a divided
+    ///        curve is flat. See @ref isFlat.
+    /// @param maxLength limit arc length to this upper limit. If the curve arc
+    ///        length is longer than this, returns the parameter value at
+    ///        maxLength.
+    /// @return {maxLength, t at maxLength} or {curve arc length, 1.f}
+    inline ArcLength arcLength2D(float toleranceSqr, float maxLength) const;
 
     /// Splits curve into two curves at the given parameter
     /// @param curve Curve to split
@@ -127,6 +146,9 @@ namespace Luminous
     /// Calculates the second derivative, see tangent() for the first derivative
     inline Nimble::Vector3f derivative2(float t) const;
 
+    /// Reverse the curve direction
+    inline void flip();
+
   private:
     std::array<Nimble::Vector3f, 4> m_data;
   };
@@ -174,6 +196,30 @@ namespace Luminous
     subdivide(left, right, mid);
     left.evaluate2D(points, toleranceSqr, angleToleranceCos, prevUnitTangent);
     right.evaluate2D(points, toleranceSqr, angleToleranceCos, tangent2D(mid).normalized());
+  }
+
+  CubicBezierCurve::ArcLength CubicBezierCurve::arcLength2D(
+      float toleranceSqr, float maxLength) const
+  {
+    float lenSqr = (m_data[3].vector2() - m_data[0].vector2()).lengthSqr();
+
+    if (isFlat(toleranceSqr) || lenSqr < toleranceSqr) {
+      float len = std::sqrt(lenSqr);
+      if (len >= maxLength)
+        return {maxLength, maxLength / len};
+      return {len, 1.f};
+    }
+
+    CubicBezierCurve left, right;
+    subdivide(left, right, .5f);
+
+    auto l = left.arcLength2D(toleranceSqr, maxLength);
+    if (l.length >= maxLength)
+      return {l.length, l.t * .5f};
+
+    maxLength -= l.length;
+    auto r = right.arcLength2D(toleranceSqr, maxLength);
+    return {l.length + r.length, .5f + r.t * .5f};
   }
 
   void CubicBezierCurve::subdivide(CubicBezierCurve & left,
@@ -315,5 +361,11 @@ namespace Luminous
     auto p3 = m_data[3];
 
     return 6*tm*(p2 - 2.f * p1 + p0) + 6*t*(p3 - 2.f * p2 + p1);
+  }
+
+  void CubicBezierCurve::flip()
+  {
+    std::swap(m_data[0], m_data[3]);
+    std::swap(m_data[1], m_data[2]);
   }
 }
