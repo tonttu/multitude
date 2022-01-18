@@ -25,6 +25,23 @@ namespace Luminous
     float rightT;
   };
 
+  enum SplineCapStyle
+  {
+    CAP_NONE,
+    CAP_ROUND,
+  };
+
+  struct SplineStyle
+  {
+    SplineCapStyle capBegin = CAP_ROUND;
+    SplineCapStyle capEnd = CAP_ROUND;
+
+    bool operator==(const SplineStyle & s) const
+    {
+      return capBegin == s.capBegin && capEnd == s.capEnd;
+    }
+  };
+
   /// Calculates intersections of a cubic bezier spline with a shape and returns
   /// intersecting curve parts. This functions does the same for a spline that
   /// Luminous::CubicBezierCurve::intersections2D does for a single curve.

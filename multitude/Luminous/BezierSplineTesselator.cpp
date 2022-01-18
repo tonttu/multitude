@@ -14,8 +14,8 @@ namespace Luminous
     inline float capSegmentAngle(float strokeRadius) const;
     /// Optimized version of std::cos(capSegmentAngle(strokeWidth))
     inline float capSegmentAngleCos(float strokeRadius) const;
-    void renderCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
-    void renderCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
+    void renderRoundCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
+    void renderRoundCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
 
   public:
     std::vector<BezierSplineTesselator::Vertex> & m_vertices;
@@ -47,7 +47,7 @@ namespace Luminous
     return 2.f * a * a - 1.f;
   }
 
-  void BezierSplineTesselator::D::renderCapBegin(
+  void BezierSplineTesselator::D::renderRoundCapBegin(
       CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, Vertex v)
   {
     int segments = roundCapSegments(p.point.z);
@@ -85,7 +85,7 @@ namespace Luminous
 
   /// @todo we should take the .z tangent into account here and scale
   /// the round cap begin/end accordingly
-  void BezierSplineTesselator::D::renderCapEnd(
+  void BezierSplineTesselator::D::renderRoundCapEnd(
       CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v)
   {
     int segments = roundCapSegments(p.point.z);
@@ -131,7 +131,7 @@ namespace Luminous
   BezierSplineTesselator::~BezierSplineTesselator()
   {}
 
-  void BezierSplineTesselator::tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color)
+  void BezierSplineTesselator::tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color, SplineStyle style)
   {
     auto & out = m_d->m_vertices;
     /// @todo this could be incremental, only the last two nodes have changed in
@@ -202,7 +202,8 @@ namespace Luminous
         normal = unitTangent.perpendicular() * p.point.z;
 
         if (first) {
-          m_d->renderCapBegin(p, normal, v);
+          if (style.capBegin == CAP_ROUND)
+            m_d->renderRoundCapBegin(p, normal, v);
         } else {
           float s = m_d->capSegmentAngleCos(p.point.z);
           float angleCos = dot(unitTangent, prevUnitTangent);
@@ -243,6 +244,7 @@ namespace Luminous
       }
     }
 
-    m_d->renderCapEnd(p, normal, v);
+    if (style.capEnd == CAP_ROUND)
+      m_d->renderRoundCapEnd(p, normal, v);
   }
 }

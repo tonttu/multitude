@@ -271,7 +271,7 @@ namespace Luminous
       if (!level.ready) {
         BezierSplineTesselator tesselator(level.triangleStrip, m_opts.maxCurveError * invScale,
                                           m_opts.maxRoundCapError * invScale);
-        tesselator.tesselate(*mipmap.stroke.path, mipmap.stroke.color);
+        tesselator.tesselate(*mipmap.stroke.path, mipmap.stroke.color, mipmap.stroke.style);
         level.ready = true;
       }
     }
@@ -544,6 +544,32 @@ namespace Luminous
           gpu.depth = depth;
       }
     }
+  }
+
+  void BezierSplineRenderer::setStrokeStyle(Valuable::Node::Uuid id, SplineStyle style)
+  {
+    auto it = m_d->m_mipmaps.find(id);
+    if (it == m_d->m_mipmaps.end())
+      return;
+
+    StrokeCache & c = it->second;
+    if (c.stroke.style == style)
+      return;
+
+    c.stroke.style = style;
+
+    // Invalidate StrokeMipmapGpu
+    c.cpuGeneration++;
+
+    // Invalidate StrokeMipmap
+    for (StrokeMipmap & level: c.mipmaps)
+      level.ready = false;
+
+    // Invalidate View
+    for (GpuContext & context: m_d->m_gpuContext)
+      for (auto & p: context.views)
+        if (!p.second.added.count(id))
+          p.second.changed.insert(id);
   }
 
   void BezierSplineRenderer::render(RenderContext & r) const

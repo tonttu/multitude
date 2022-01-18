@@ -45,6 +45,7 @@ namespace Luminous
       const BezierSpline * path = nullptr;
       Radiant::ColorPMA color{1, 1, 1, 1};
       float depth = 0;
+      SplineStyle style;
     };
 
     struct RenderOptions
@@ -109,6 +110,7 @@ namespace Luminous
     void setStrokePath(Valuable::Node::Uuid id, const BezierSpline * path, Nimble::Rect bbox = Nimble::Rect());
     void setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color);
     void setStrokeDepth(Valuable::Node::Uuid id, float depth);
+    void setStrokeStyle(Valuable::Node::Uuid id, SplineStyle style);
 
     void render(RenderContext & r) const;
 
