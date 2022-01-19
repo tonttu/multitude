@@ -73,6 +73,10 @@ target_sources(${LIBRARY} PRIVATE
 target_link_libraries(${LIBRARY} PRIVATE
     Nimble)
 
+target_include_directories(${LIBRARY}
+  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
+)
+
 if (UNIX)
   target_sources(${LIBRARY} PRIVATE
     ProcessRunnerPosix.cpp
