@@ -74,7 +74,9 @@ target_link_libraries(${LIBRARY} PRIVATE
     Nimble)
 
 target_include_directories(${LIBRARY}
-  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
+  PUBLIC
+    ${Cornerstone_SOURCE_DIR}/multitude
+    ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
 )
 
 if (UNIX)
