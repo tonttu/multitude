@@ -152,7 +152,7 @@ namespace Luminous
     inline Nimble::Vector3f derivative2(float t) const;
 
     /// Reverse the curve direction
-    inline void flip();
+    inline void reverse();
 
   private:
     std::array<Nimble::Vector3f, 4> m_data;
@@ -386,7 +386,7 @@ namespace Luminous
     return 6*tm*(p2 - 2.f * p1 + p0) + 6*t*(p3 - 2.f * p2 + p1);
   }
 
-  void CubicBezierCurve::flip()
+  void CubicBezierCurve::reverse()
   {
     std::swap(m_data[0], m_data[3]);
     std::swap(m_data[1], m_data[2]);

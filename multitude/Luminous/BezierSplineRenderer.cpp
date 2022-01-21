@@ -196,6 +196,9 @@ namespace Luminous
     /// Returns true if there are no more active views
     bool clearOldViews(Radiant::TimeStamp oldestAcceptedTime);
 
+    /// Invalidate cpu and gpu mipmaps and views showing this stroke
+    void invalidate(StrokeCache & c);
+
   public:
     BezierSplineRenderer::RenderOptions m_opts;
     int m_minLod = 0;
@@ -330,6 +333,25 @@ namespace Luminous
     return empty;
   }
 
+  void BezierSplineRenderer::D::invalidate(StrokeCache & c)
+  {
+    // Invalidate StrokeMipmapGpu
+    c.cpuGeneration++;
+
+    // Invalidate StrokeMipmap
+    for (StrokeMipmap & level: c.mipmaps)
+      level.ready = false;
+
+    // Invalidate View
+    for (GpuContext & context: m_gpuContext) {
+      for (auto & p: context.views) {
+        View & view = p.second;
+        if (!view.added.count(c.stroke.id))
+          view.changed.insert(c.stroke.id);
+      }
+    }
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
@@ -421,9 +443,12 @@ namespace Luminous
     StrokeCache & mipmap = m_d->m_mipmaps[s.id];
     mipmap.stroke = s;
 
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        p.second.added.insert(s.id);
+    for (GpuContext & context: m_d->m_gpuContext) {
+      for (auto & p: context.views) {
+        View & view = p.second;
+        view.added.insert(s.id);
+      }
+    }
 
     return s.id;
   }
@@ -442,9 +467,10 @@ namespace Luminous
 
       for (GpuContext & context: m_d->m_gpuContext) {
         for (auto & p: context.views) {
-          p.second.added.erase(id);
-          p.second.changed.erase(id);
-          p.second.removed.insert(id);
+          View & view = p.second;
+          view.added.erase(id);
+          view.changed.erase(id);
+          view.removed.insert(id);
         }
       }
     }
@@ -474,18 +500,8 @@ namespace Luminous
 
     c.stroke.path = path;
     c.stroke.bbox = bbox;
-    // Invalidate StrokeMipmapGpu
-    c.cpuGeneration++;
 
-    // Invalidate StrokeMipmap
-    for (StrokeMipmap & level: c.mipmaps)
-      level.ready = false;
-
-    // Invalidate View
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        if (!p.second.added.count(id))
-          p.second.changed.insert(id);
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color)
@@ -502,19 +518,7 @@ namespace Luminous
 
     c.stroke.color = color;
 
-    // Invalidate StrokeMipmapGpu
-    c.cpuGeneration++;
-
-    // Invalidate StrokeMipmap - this could be optimized by just changing
-    // the color in triangleStrip
-    for (StrokeMipmap & level: c.mipmaps)
-      level.ready = false;
-
-    // Invalidate View
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        if (!p.second.added.count(id))
-          p.second.changed.insert(id);
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::setStrokeDepth(Valuable::Node::Uuid id, float depth)
@@ -558,18 +562,7 @@ namespace Luminous
 
     c.stroke.style = style;
 
-    // Invalidate StrokeMipmapGpu
-    c.cpuGeneration++;
-
-    // Invalidate StrokeMipmap
-    for (StrokeMipmap & level: c.mipmaps)
-      level.ready = false;
-
-    // Invalidate View
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        if (!p.second.added.count(id))
-          p.second.changed.insert(id);
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::render(RenderContext & r) const

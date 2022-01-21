@@ -202,7 +202,7 @@ namespace Luminous
         normal = unitTangent.perpendicular() * p.point.z;
 
         if (first) {
-          if (style.capBegin == CAP_ROUND)
+          if (style.capBegin == SplineCapStyle::ROUND)
             m_d->renderRoundCapBegin(p, normal, v);
         } else {
           float s = m_d->capSegmentAngleCos(p.point.z);
@@ -244,7 +244,7 @@ namespace Luminous
       }
     }
 
-    if (style.capEnd == CAP_ROUND)
+    if (style.capEnd == SplineCapStyle::ROUND)
       m_d->renderRoundCapEnd(p, normal, v);
   }
 }

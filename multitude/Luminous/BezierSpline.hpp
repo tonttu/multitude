@@ -25,16 +25,16 @@ namespace Luminous
     float rightT;
   };
 
-  enum SplineCapStyle
+  enum class SplineCapStyle
   {
-    CAP_NONE,
-    CAP_ROUND,
+    FLAT,
+    ROUND,
   };
 
   struct SplineStyle
   {
-    SplineCapStyle capBegin = CAP_ROUND;
-    SplineCapStyle capEnd = CAP_ROUND;
+    SplineCapStyle capBegin = SplineCapStyle::ROUND;
+    SplineCapStyle capEnd = SplineCapStyle::ROUND;
 
     bool operator==(const SplineStyle & s) const
     {
