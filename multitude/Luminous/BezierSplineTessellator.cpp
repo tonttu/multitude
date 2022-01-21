@@ -1,12 +1,12 @@
-#include "BezierSplineTesselator.hpp"
+#include "BezierSplineTessellator.hpp"
 #include "CubicBezierCurve.hpp"
 
 namespace Luminous
 {
-  class BezierSplineTesselator::D
+  class BezierSplineTessellator::D
   {
   public:
-    D(std::vector<BezierSplineTesselator::Vertex> & vertices);
+    D(std::vector<BezierSplineTessellator::Vertex> & vertices);
     /// In an arc of angle radians and radius of strokeRadius, the max error
     /// between a perfect arc and a polyline with roundCapSegments segments
     /// is at most m_maxRoundCapError
@@ -14,11 +14,11 @@ namespace Luminous
     inline float capSegmentAngle(float strokeRadius) const;
     /// Optimized version of std::cos(capSegmentAngle(strokeWidth))
     inline float capSegmentAngleCos(float strokeRadius) const;
-    void renderRoundCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
-    void renderRoundCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v);
+    void renderRoundCapBegin(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTessellator::Vertex v);
+    void renderRoundCapEnd(CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTessellator::Vertex v);
 
   public:
-    std::vector<BezierSplineTesselator::Vertex> & m_vertices;
+    std::vector<BezierSplineTessellator::Vertex> & m_vertices;
     float m_maxCurveError;
     float m_maxRoundCapError;
 
@@ -26,28 +26,28 @@ namespace Luminous
     std::vector<CubicBezierCurve::PolylinePoint> m_polylineBuffer;
   };
 
-  BezierSplineTesselator::D::D(std::vector<BezierSplineTesselator::Vertex> & vertices)
+  BezierSplineTessellator::D::D(std::vector<BezierSplineTessellator::Vertex> & vertices)
     : m_vertices(vertices)
   {
   }
 
-  int BezierSplineTesselator::D::roundCapSegments(float strokeRadius, float angle) const
+  int BezierSplineTessellator::D::roundCapSegments(float strokeRadius, float angle) const
   {
     return 1 + angle / capSegmentAngle(strokeRadius);
   }
 
-  float BezierSplineTesselator::D::capSegmentAngle(float strokeRadius) const
+  float BezierSplineTessellator::D::capSegmentAngle(float strokeRadius) const
   {
     return 2.f * std::acos(1.f - m_maxRoundCapError / strokeRadius);
   }
 
-  float BezierSplineTesselator::D::capSegmentAngleCos(float strokeRadius) const
+  float BezierSplineTessellator::D::capSegmentAngleCos(float strokeRadius) const
   {
     float a = 1.f - m_maxRoundCapError / strokeRadius;
     return 2.f * a * a - 1.f;
   }
 
-  void BezierSplineTesselator::D::renderRoundCapBegin(
+  void BezierSplineTessellator::D::renderRoundCapBegin(
       CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, Vertex v)
   {
     int segments = roundCapSegments(p.point.z);
@@ -85,8 +85,8 @@ namespace Luminous
 
   /// @todo we should take the .z tangent into account here and scale
   /// the round cap begin/end accordingly
-  void BezierSplineTesselator::D::renderRoundCapEnd(
-      CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTesselator::Vertex v)
+  void BezierSplineTessellator::D::renderRoundCapEnd(
+      CubicBezierCurve::PolylinePoint p, Nimble::Vector2f normal, BezierSplineTessellator::Vertex v)
   {
     int segments = roundCapSegments(p.point.z);
 
@@ -121,17 +121,17 @@ namespace Luminous
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
 
-  BezierSplineTesselator::BezierSplineTesselator(std::vector<Vertex> & vertices, float maxCurveError, float maxRoundCapError)
+  BezierSplineTessellator::BezierSplineTessellator(std::vector<Vertex> & vertices, float maxCurveError, float maxRoundCapError)
     : m_d(new D(vertices))
   {
     m_d->m_maxCurveError = maxCurveError;
     m_d->m_maxRoundCapError = maxRoundCapError;
   }
 
-  BezierSplineTesselator::~BezierSplineTesselator()
+  BezierSplineTessellator::~BezierSplineTessellator()
   {}
 
-  void BezierSplineTesselator::tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color, SplineStyle style)
+  void BezierSplineTessellator::tessellate(const BezierSpline & nodes, const Radiant::ColorPMA & color, SplineStyle style)
   {
     auto & out = m_d->m_vertices;
     /// @todo this could be incremental, only the last two nodes have changed in

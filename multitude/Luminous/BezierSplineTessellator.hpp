@@ -7,7 +7,7 @@
 namespace Luminous
 {
   /// Generates a triangle strip approximation of a cubic Bezier spline
-  class LUMINOUS_API BezierSplineTesselator
+  class LUMINOUS_API BezierSplineTessellator
   {
   public:
     struct Vertex
@@ -25,12 +25,12 @@ namespace Luminous
     ///        joins between non-continuous curves. In most cases this should be
     ///        the same as maxCurveError, but for debugging reasons this can also be
     ///        adjusted separately.
-    BezierSplineTesselator(std::vector<Vertex> & vertices, float maxCurveError, float maxRoundCapError);
-    ~BezierSplineTesselator();
+    BezierSplineTessellator(std::vector<Vertex> & vertices, float maxCurveError, float maxRoundCapError);
+    ~BezierSplineTessellator();
 
-    /// Tesselates the whole Bezier spline to a triangle strip. Output vector
+    /// Tessellates the whole Bezier spline to a triangle strip. Output vector
     /// given in the constructor is cleared automatically.
-    void tesselate(const BezierSpline & nodes, const Radiant::ColorPMA & color, SplineStyle style);
+    void tessellate(const BezierSpline & nodes, const Radiant::ColorPMA & color, SplineStyle style);
 
   private:
     class D;

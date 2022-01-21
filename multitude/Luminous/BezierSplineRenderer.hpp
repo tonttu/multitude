@@ -65,9 +65,9 @@ namespace Luminous
       /// You should probably never change the defaults.
       float minScale = 0.001f;
       float maxScale = 10000.f;
-      /// See maxCurveError parameter in Luminous::BezierSplineTesselator::BezierSplineTesselator
+      /// See maxCurveError parameter in Luminous::BezierSplineTessellator::BezierSplineTessellator
       float maxCurveError = 0.2f;
-      /// See maxRoundCapError parameter in Luminous::BezierSplineTesselator::BezierSplineTesselator
+      /// See maxRoundCapError parameter in Luminous::BezierSplineTessellator::BezierSplineTessellator
       float maxRoundCapError = 0.2f;
 
       /// Set to non-null to receive debug information about rendering

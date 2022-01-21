@@ -1,5 +1,5 @@
 #include "BezierSplineRenderer.hpp"
-#include "BezierSplineTesselator.hpp"
+#include "BezierSplineTessellator.hpp"
 #include "Buffer.hpp"
 #include "BufferGL.hpp"
 #include "ContextArray.hpp"
@@ -52,7 +52,7 @@ namespace Luminous
     std::atomic<bool> ready{false};
     QMutex generateMutex;
 
-    std::vector<BezierSplineTesselator::Vertex> triangleStrip;
+    std::vector<BezierSplineTessellator::Vertex> triangleStrip;
   };
 
   /// Stroke mipmap cache
@@ -149,7 +149,7 @@ namespace Luminous
     /// Ideally we wouldn't have this. All data should be maintained on GPU
     /// memory, but the current rendering pipeline makes it difficult, so
     /// we always keep a copy of the data on host memory as well.
-    std::vector<BezierSplineTesselator::Vertex> buffer;
+    std::vector<BezierSplineTessellator::Vertex> buffer;
 
     /// RenderContext::viewWidgetPathId() -> View
     Radiant::ArrayMap<QByteArray, View> views;
@@ -269,9 +269,9 @@ namespace Luminous
     if (!level.ready) {
       QMutexLocker locker(&level.generateMutex);
       if (!level.ready) {
-        BezierSplineTesselator tesselator(level.triangleStrip, m_opts.maxCurveError * invScale,
-                                          m_opts.maxRoundCapError * invScale);
-        tesselator.tesselate(*mipmap.stroke.path, mipmap.stroke.color, mipmap.stroke.style);
+        BezierSplineTessellator tessellator(level.triangleStrip, m_opts.maxCurveError * invScale,
+                                            m_opts.maxRoundCapError * invScale);
+        tessellator.tessellate(*mipmap.stroke.path, mipmap.stroke.color, mipmap.stroke.style);
         level.ready = true;
       }
     }
