@@ -47,6 +47,14 @@ namespace Luminous
       Nimble::Vector2f tangent2D;
     };
 
+    // Arc length from the curve beginning to a certain curve parameter location
+    struct ArcLength
+    {
+      float length;
+      // 0..1
+      float t;
+    };
+
   public:
     CubicBezierCurve()
     {}
@@ -77,6 +85,18 @@ namespace Luminous
                            float angleToleranceCos,
                            Nimble::Vector2f prevUnitTangent) const;
 
+    /// Approximates the curve arc length or the parameter t value at a certain
+    /// curve arc distance using a recursive dividing method. Ignores the z
+    /// component.
+    /// @param toleranceSqr square of max error when determining if a divided
+    ///        curve is flat. See @ref isFlat2D. Notice that this doesn't
+    ///        directly map to the arc length error bounds.
+    /// @param maxLength limit arc length to this upper limit. If the curve arc
+    ///        length is longer than this, returns the parameter value at
+    ///        maxLength.
+    /// @return {maxLength, t at maxLength} or {curve arc length, 1.f}
+    inline ArcLength arcLength2D(float toleranceSqr, float maxLength = std::numeric_limits<float>::infinity()) const;
+
     /// Splits curve into two curves at the given parameter
     /// @param curve Curve to split
     /// @param left First half of the curve (before t)
@@ -87,6 +107,10 @@ namespace Luminous
 
     /// Checks whether the curve is flat given the squared tolerance.
     inline bool isFlat(float toleranceSqr) const;
+
+    /// Checks whether the curve is flat given the squared tolerance.
+    /// Ignores the z component
+    inline bool isFlat2D(float toleranceSqr) const;
 
     /// Calculates intersections of the curve with a shape and return
     /// intersecting curve parts as t parameter ranges.
@@ -126,6 +150,9 @@ namespace Luminous
 
     /// Calculates the second derivative, see tangent() for the first derivative
     inline Nimble::Vector3f derivative2(float t) const;
+
+    /// Reverse the curve direction
+    inline void reverse();
 
   private:
     std::array<Nimble::Vector3f, 4> m_data;
@@ -176,6 +203,28 @@ namespace Luminous
     right.evaluate2D(points, toleranceSqr, angleToleranceCos, tangent2D(mid).normalized());
   }
 
+  CubicBezierCurve::ArcLength CubicBezierCurve::arcLength2D(
+      float toleranceSqr, float maxLength) const
+  {
+    if (isFlat2D(toleranceSqr)) {
+      const float len = (m_data[3].vector2() - m_data[0].vector2()).length();
+      if (len >= maxLength)
+        return {maxLength, maxLength / len};
+      return {len, 1.f};
+    }
+
+    CubicBezierCurve left, right;
+    subdivide(left, right, .5f);
+
+    auto l = left.arcLength2D(toleranceSqr, maxLength);
+    if (l.length >= maxLength)
+      return {l.length, l.t * .5f};
+
+    maxLength -= l.length;
+    auto r = right.arcLength2D(toleranceSqr, maxLength);
+    return {l.length + r.length, .5f + r.t * .5f};
+  }
+
   void CubicBezierCurve::subdivide(CubicBezierCurve & left,
                                    CubicBezierCurve & right, float t) const
   {
@@ -206,6 +255,26 @@ namespace Luminous
     float bSqr = cross(m_data[2] - m_data[0], m_data[2] - m_data[3]).lengthSqr() * invSqr;
 
     return std::max(aSqr, bSqr) <= toleranceSqr;
+  }
+
+  bool CubicBezierCurve::isFlat2D(float toleranceSqr) const
+  {
+    const Nimble::Vector2f p1 = m_data[1].vector2() - m_data[0].vector2();
+    const Nimble::Vector2f p2 = m_data[2].vector2() - m_data[0].vector2();
+    const Nimble::Vector2f line = m_data[3].vector2() - m_data[0].vector2();
+    const float lineLengthSqr = line.lengthSqr();
+    if (lineLengthSqr < 0.0001f) {
+      // Close to being a closed curve, just use the control point distance
+      return std::max(p1.lengthSqr(), p2.lengthSqr()) <= toleranceSqr;
+    } else {
+      // Project control points to the line
+      const float k1 = dot(p1, line) / lineLengthSqr;
+      const float k2 = dot(p2, line) / lineLengthSqr;
+      // Perpendicular vectors from the line to the control points
+      const Nimble::Vector2f n1 = line * k1 - p1;
+      const Nimble::Vector2f n2 = line * k2 - p2;
+      return std::max(n1.lengthSqr(), n2.lengthSqr()) <= toleranceSqr;
+    }
   }
 
   template <typename Shape>
@@ -315,5 +384,11 @@ namespace Luminous
     auto p3 = m_data[3];
 
     return 6*tm*(p2 - 2.f * p1 + p0) + 6*t*(p3 - 2.f * p2 + p1);
+  }
+
+  void CubicBezierCurve::reverse()
+  {
+    std::swap(m_data[0], m_data[3]);
+    std::swap(m_data[1], m_data[2]);
   }
 }
