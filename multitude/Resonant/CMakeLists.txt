@@ -24,6 +24,10 @@ if(ENABLE_PORT_AUDIO)
     AudioLoopPortAudio.cpp
   )
 
+  if(UNIX)
+    target_link_libraries(${LIBRARY} PRIVATE sndfile)
+  endif()
+
   target_link_libraries(${LIBRARY} PRIVATE portaudio)
 endif()
 
