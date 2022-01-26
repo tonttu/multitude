@@ -129,21 +129,17 @@ if (ENABLE_FOLLY)
 
   if(UNIX)
     pkg_check_modules(Glog REQUIRED IMPORTED_TARGET libglog)
-    find_package(Folly REQUIRED folly PATHS ${FOLLY_ROOT})
+    cornerstone_folly(FOLLY_LIB FOLLY_INC)
 
-    # Linking to Folly::folly does not work for some reason. Missing
-    # dependencies to Threads and libevent and what not. Lets just get
-    # the location of .so file from Folly target and link to that.
-    get_target_property(FOLLY_SO Folly::folly IMPORTED_LOCATION_NOCONFIG)
+    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog ${FOLLY_LIB})
 
-    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog ${FOLLY_SO})
-
-    target_include_directories(${LIBRARY} PUBLIC ${FOLLY_INCLUDE_DIR})
+    target_include_directories(${LIBRARY} PUBLIC ${FOLLY_INC})
   elseif(WIN32)
-    find_package(folly CONFIG REQUIRED)
+    cornerstone_folly(FOLLY_LIB)
+
     find_package(ZLIB REQUIRED)
 
-    target_link_libraries(${LIBRARY} PUBLIC Folly::folly Folly::folly_deps)
+    target_link_libraries(${LIBRARY} PUBLIC ${FOLLY_LIB})
 
     #target_include_directories(${LIBRARY} PUBLIC ${VCPKG_ROOT}/include)
   endif()
