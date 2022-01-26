@@ -1,7 +1,7 @@
 set(LIBRARY EmailSending)
 
 project(${LIBRARY}
-  VERSION ${CORNERSTONE_VERSION}
+  VERSION ${PROJECT_VERSION_FULL}
   DESCRIPTION "Email sending library"
 )
 

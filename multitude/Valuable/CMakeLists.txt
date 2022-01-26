@@ -1,6 +1,6 @@
 set(LIBRARY Valuable)
 
-project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
+project(${LIBRARY} VERSION ${PROJECT_VERSION_FULL}
   DESCRIPTION "Serialization and event library"
 )
 
