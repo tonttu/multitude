@@ -1,6 +1,6 @@
 set(LIBRARY Nimble)
 
-project(${LIBRARY} VERSION ${CORNERSTONE_VERSION}
+project(${LIBRARY} VERSION ${PROJECT_VERSION_FULL}
   DESCRIPTION "A collection of C++ classes for math"
 )
 
