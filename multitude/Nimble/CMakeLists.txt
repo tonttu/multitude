@@ -22,4 +22,8 @@ add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 
+target_include_directories(${LIBRARY}
+  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
+)
+
 cornerstone_install_lib(${LIBRARY})
