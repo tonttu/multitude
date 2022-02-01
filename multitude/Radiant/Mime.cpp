@@ -18,6 +18,8 @@
 
 #include <QFileInfo>
 #include <QSet>
+#include <QRegExp>
+#include <QStringList>
 
 namespace Radiant
 {

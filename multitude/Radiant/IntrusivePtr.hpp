@@ -5,7 +5,7 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 
 #if !defined (RADIANT_INTRUSIVEPTR_HPP)
@@ -20,8 +20,6 @@
 #include <QAtomicInt>
 
 #ifdef INTRUSIVE_PTR_DEBUG
-
-#include <Valuable/Export.hpp>
 
 #include "Export.hpp"
 #include "CallStack.hpp"

@@ -459,7 +459,7 @@ namespace Valuable
   ArchiveElement Node::serialize(Archive & archive) const
   {
     REQUIRE_THREAD(m_ownerThread);
-    QString name = m_name.isEmpty() ? "Node" : m_name;
+    QString name = m_name.isEmpty() ? QByteArray("Node") : m_name;
 
     ArchiveElement elem = archive.createElement(name.toUtf8().data());
     if(elem.isNull()) {
@@ -782,7 +782,7 @@ namespace Valuable
     if(vo) {
       // Radiant::info("Node::eventProcess # Sending message \"%s\" to %s",
       // id + skip, typeid(*vo).name());
-      vo->eventProcess(idx == -1 ? "" : id.mid(idx + 1), data);
+      vo->eventProcess(idx == -1 ? QByteArray() : id.mid(idx + 1), data);
     } else {
       if(!m_eventListenNames.contains(n)) {
         /*warning("Node::eventProcess # %s (%s %p) doesn't accept event '%s'",

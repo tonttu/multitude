@@ -1,6 +1,7 @@
 #include "MWCapture.hpp"
 
 #include <Radiant/Thread.hpp>
+#include <Radiant/Trace.hpp>
 
 #pragma warning(push)
 #pragma warning(disable:4091)

@@ -88,7 +88,7 @@ namespace Valuable
 
   Valuable::ArchiveElement AttributeSpline::serialize(Valuable::Archive& doc) const
   {
-    QString elementName = name().isEmpty() ? "AttributeSpline" : name();
+    QString elementName = name().isEmpty() ? QByteArray("AttributeSpline") : name();
 
     ArchiveElement elem = doc.createElement(elementName);
     for(auto it = m_points.begin(); it != m_points.end(); ++it) {

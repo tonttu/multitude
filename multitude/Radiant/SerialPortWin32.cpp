@@ -20,6 +20,7 @@
 #include <Radiant/Trace.hpp>
 
 #include <cassert>
+#include <algorithm>
 #include <QSettings>
 
 #include "SerialPortHelpers.hpp"

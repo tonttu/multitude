@@ -3,6 +3,8 @@
 #include "Export.hpp"
 #include "BezierSpline.hpp"
 
+#include <memory>
+
 namespace Luminous
 {
   /// Fits a cubic Bezier spline to an array of points. This is an

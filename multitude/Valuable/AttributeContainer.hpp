@@ -110,7 +110,7 @@ namespace Valuable
 
     virtual ArchiveElement serialize(Archive & archive) const OVERRIDE
     {
-      QString elementName = name().isEmpty() ? "AttributeContainerT" : name();
+      QString elementName = name().isEmpty() ? QByteArray("AttributeContainerT") : name();
 
       ArchiveElement elem = archive.createElement(elementName);
       for(const_iterator it = m_container.begin(); it != m_container.end(); ++it) {

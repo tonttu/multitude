@@ -5,11 +5,12 @@
  * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
  * distributed with this source package or obtained from the GNU organization
  * (www.gnu.org).
- * 
+ *
  */
 #ifndef RADIANT_PEN_EVENT_HPP
 #define RADIANT_PEN_EVENT_HPP
 
+#include "Export.hpp"
 #include "Flags.hpp"
 
 #include <Nimble/Vector2.hpp>

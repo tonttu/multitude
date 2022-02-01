@@ -1,7 +1,13 @@
 require 'rbconfig'
+require 'fileutils'
+
+if ARGV.length != 1
+  STDERR.puts "Usage: #{__FILE__} <filepath>"
+  exit 1
+end
 
 VERSION_FILENAME_IN=File.join File.dirname(__FILE__), '../../CORNERSTONE_VERSION'
-VERSION_FILENAME_OUT=File.join File.dirname(__FILE__), 'VersionGenerated.hpp'
+VERSION_FILENAME_OUT=ARGV[0]
 
 VERSION_STR=File.read(VERSION_FILENAME_IN).strip
 VERSION_MAJOR=VERSION_STR.split('.')[0].to_i
@@ -60,5 +66,6 @@ zzz
 if !File.exists?(VERSION_FILENAME_OUT) ||
     File.mtime(VERSION_FILENAME_OUT) < File.mtime(VERSION_FILENAME_IN) ||
     File.open(VERSION_FILENAME_OUT, 'rb').read != FILE_CONTENTS
+  FileUtils.mkdir_p File.dirname(VERSION_FILENAME_OUT)
   File.open(VERSION_FILENAME_OUT, 'wb') {|f| f.write FILE_CONTENTS }
 end
