@@ -127,19 +127,14 @@ if (ENABLE_FOLLY)
     OnDemandExecutor.cpp
   )
 
+  cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
+
   if(UNIX)
     pkg_check_modules(Glog REQUIRED IMPORTED_TARGET libglog)
-    cornerstone_folly(FOLLY_LIB FOLLY_INC)
 
-    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog ${FOLLY_LIB})
-
-    target_include_directories(${LIBRARY} PUBLIC ${FOLLY_INC})
+    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog)
   elseif(WIN32)
-    cornerstone_folly(FOLLY_LIB)
-
     find_package(ZLIB REQUIRED)
-
-    target_link_libraries(${LIBRARY} PUBLIC ${FOLLY_LIB})
 
     #target_include_directories(${LIBRARY} PUBLIC ${VCPKG_ROOT}/include)
   endif()
