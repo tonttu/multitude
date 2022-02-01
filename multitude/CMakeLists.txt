@@ -34,6 +34,6 @@ if(ENABLE_APPLICATIONS)
   add_subdirectory(Applications/ListPortAudioDevices)
 endif()
 
-if(ENABLE_TESTS)
+if(ENABLE_UNITTEST++)
   add_subdirectory(ThirdParty/UnitTest++)
 endif()
