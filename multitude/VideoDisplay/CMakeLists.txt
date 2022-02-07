@@ -56,6 +56,6 @@ endif()
 target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
 target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
-target_link_libraries(${LIBRARY} PUBLIC Radiant Resonant)
+target_link_libraries(${LIBRARY} PRIVATE Radiant Resonant)
 
 cornerstone_install_lib(${LIBRARY})
