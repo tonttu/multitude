@@ -47,6 +47,7 @@ target_compile_definitions(${LIBRARY}
 )
 
 target_link_libraries(${LIBRARY} PRIVATE Radiant)
+target_include_directories(${LIBRARY} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
 
