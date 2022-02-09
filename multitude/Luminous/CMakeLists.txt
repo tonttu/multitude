@@ -79,11 +79,9 @@ target_sources(${LIBRARY} PRIVATE
 if(ENABLE_PDF)
   target_sources(${LIBRARY} PRIVATE PDFManager.cpp)
 
-  target_link_libraries(${LIBRARY} PUBLIC Punctual)
-
-  target_include_directories(${LIBRARY} PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
-    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty/expected/include
+  target_link_libraries(${LIBRARY}
+    PRIVATE OurExpected
+    PUBLIC Punctual
   )
 
   cornerstone_add_pdfium_libs(${LIBRARY} PRIVATE)

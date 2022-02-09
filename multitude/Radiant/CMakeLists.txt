@@ -147,10 +147,7 @@ if(ENABLE_SECRET_STORE)
     target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
 
     pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
-    target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET)
-
-    target_include_directories(${LIBRARY}
-      PRIVATE ../ThirdParty/expected/include)
+    target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET OurExpected)
   endif()
 endif()
 
