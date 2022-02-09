@@ -120,11 +120,13 @@ endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
-target_link_libraries(${LIBRARY} PRIVATE Squish)
-target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
+target_link_libraries(${LIBRARY}
+  PRIVATE Squish NVML
+  PUBLIC Valuable Nimble
+)
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
 
-target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
+target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk)
 
 cornerstone_install_lib(${LIBRARY})

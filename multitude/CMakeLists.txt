@@ -10,6 +10,7 @@ if(ENABLE_SMTP)
 endif()
 
 if(ENABLE_LUMINOUS)
+  add_subdirectory(ThirdParty/nvml)
   add_subdirectory(Squish)
   add_subdirectory(Luminous)
 endif()
