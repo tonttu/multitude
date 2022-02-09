@@ -11,6 +11,7 @@ endif()
 
 if(ENABLE_LUMINOUS)
   add_subdirectory(ThirdParty/nvml)
+  add_subdirectory(ThirdParty/adl_sdk)
   add_subdirectory(Squish)
   add_subdirectory(Luminous)
 endif()
