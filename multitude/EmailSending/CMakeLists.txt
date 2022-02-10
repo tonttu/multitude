@@ -20,8 +20,6 @@ target_link_libraries(${LIBRARY}
   PRIVATE Radiant SMTPEmail
 )
 
-target_include_directories(${LIBRARY} PUBLIC ${THIRDPARTY_PATH})
-
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Network")
 
 cornerstone_install_lib(${LIBRARY})

@@ -1,3 +1,5 @@
+add_subdirectory(ThirdParty/expected)
+
 if(ENABLE_PUNCTUAL)
   add_subdirectory(Punctual)
 endif()
@@ -8,6 +10,8 @@ if(ENABLE_SMTP)
 endif()
 
 if(ENABLE_LUMINOUS)
+  add_subdirectory(ThirdParty/nvml)
+  add_subdirectory(ThirdParty/adl_sdk)
   add_subdirectory(Squish)
   add_subdirectory(Luminous)
 endif()

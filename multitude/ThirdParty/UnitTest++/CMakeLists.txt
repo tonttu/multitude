@@ -48,6 +48,10 @@ target_compile_definitions(${LIBRARY}
 
 target_link_libraries(${LIBRARY} PRIVATE Radiant)
 
+cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
+
+target_include_directories(${LIBRARY} PUBLIC ${dotdot})
+
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})

@@ -79,11 +79,9 @@ target_sources(${LIBRARY} PRIVATE
 if(ENABLE_PDF)
   target_sources(${LIBRARY} PRIVATE PDFManager.cpp)
 
-  target_link_libraries(${LIBRARY} PUBLIC Punctual)
-
-  target_include_directories(${LIBRARY} PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty
-    ${CMAKE_CURRENT_LIST_DIR}/../../multitude/ThirdParty/expected/include
+  target_link_libraries(${LIBRARY}
+    PRIVATE OurExpected
+    PUBLIC Punctual
   )
 
   cornerstone_add_pdfium_libs(${LIBRARY} PRIVATE)
@@ -122,11 +120,11 @@ endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
-target_link_libraries(${LIBRARY} PRIVATE Squish)
-target_link_libraries(${LIBRARY} PUBLIC Valuable Nimble)
+target_link_libraries(${LIBRARY}
+  PRIVATE Squish NVML ADL_SDK
+  PUBLIC Valuable Nimble
+)
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
-
-target_include_directories(${LIBRARY} PRIVATE ../ThirdParty/adl_sdk ../ThirdParty)
 
 cornerstone_install_lib(${LIBRARY})
