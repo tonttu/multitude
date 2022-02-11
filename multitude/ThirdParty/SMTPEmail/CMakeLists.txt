@@ -4,7 +4,7 @@ file(GLOB SOURCES src/*.cpp)
 
 cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
-add_definitions(-DSMTP_BUILD)
+target_compile_definitions(${LIBRARY} PRIVATE SMTP_BUILD)
 
 if(UNIX)
   # Linux build works just fine with just "Core".

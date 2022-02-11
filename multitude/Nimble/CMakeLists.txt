@@ -18,7 +18,7 @@ target_sources(${LIBRARY} PRIVATE
   Splines.cpp
 )
 
-add_definitions(-DNIMBLE_EXPORT -D_USE_MATH_DEFINES)
+target_compile_definitions(${LIBRARY} PRIVATE NIMBLE_EXPORT USE_MATH_DEFINES)
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 

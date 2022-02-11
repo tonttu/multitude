@@ -17,7 +17,7 @@ target_sources(${LIBRARY} PRIVATE
 )
 
 if(ENABLE_PORT_AUDIO)
-  add_definitions(-DCORNERSTONE_ENABLE_PORT_AUDIO)
+  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PORT_AUDIO)
 
   target_sources(${LIBRARY} PRIVATE
     PortAudioSource.cpp
@@ -32,7 +32,7 @@ if(ENABLE_PORT_AUDIO)
 endif()
 
 if(ENABLE_PULSE_AUDIO)
-  add_definitions(-DCORNERSTONE_ENABLE_PULSE)
+  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PULSE)
 
   target_sources(${LIBRARY} PRIVATE
     PulseAudioSource.cpp

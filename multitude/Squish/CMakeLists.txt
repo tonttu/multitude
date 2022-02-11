@@ -4,7 +4,7 @@ file(GLOB SOURCES *.cpp)
 
 cornerstone_add_library(${LIBRARY} STATIC ${SOURCES})
 
-add_definitions(-DUSE_SSE=2)
+target_compile_definitions(${LIBRARY} PRIVATE USE_SSE=2)
 
 target_include_directories(${LIBRARY} PRIVATE .)
 
