@@ -89,8 +89,6 @@ if (UNIX)
     CrashHandlerBreakpad.cpp # CrashHandler
   )
 
-  pkg_check_modules(Udev REQUIRED IMPORTED_TARGET libudev)
-
   target_link_libraries(${LIBRARY} PRIVATE
     PkgConfig::Udev PkgConfig::BreakPad)
 elseif(WIN32)
@@ -130,8 +128,6 @@ if (ENABLE_FOLLY)
   cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
 
   if(UNIX)
-    pkg_check_modules(Glog REQUIRED IMPORTED_TARGET libglog)
-
     target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog)
   elseif(WIN32)
     find_package(ZLIB REQUIRED)
@@ -146,7 +142,6 @@ if(ENABLE_SECRET_STORE)
   if(UNIX)
     target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
 
-    pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
     target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET OurExpected)
   endif()
 endif()
