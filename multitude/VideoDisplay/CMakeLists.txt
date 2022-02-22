@@ -56,6 +56,14 @@ endif()
 target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
 target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
+if(UNIX)
+  # TODO: Should update our code that uses deprecated FFMPEG API
+  # TODO: Should handle errors
+  target_compile_options(${LIBRARY} PRIVATE
+    -Wno-error=deprecated-declarations -Wno-error=unused-result
+    )
+endif()
+
 target_link_libraries(${LIBRARY} PRIVATE Radiant Resonant)
 
 cornerstone_install_lib(${LIBRARY})
