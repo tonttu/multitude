@@ -51,7 +51,8 @@ target_include_directories(${LIBRARY} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
 
-target_include_directories(${LIBRARY} PUBLIC ${dotdot})
+# Needs to be system include directory to hide warnings.
+target_include_directories(${LIBRARY} SYSTEM PUBLIC ${dotdot})
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
