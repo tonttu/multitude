@@ -146,6 +146,10 @@ if(ENABLE_SECRET_STORE)
   endif()
 endif()
 
+if(ENABLE_CI_BUILD)
+  target_compile_definitions(${LIBRARY} PRIVATE ENABLE_CI_BUILD)
+endif()
+
 target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
