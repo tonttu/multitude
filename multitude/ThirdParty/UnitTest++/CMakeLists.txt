@@ -37,6 +37,7 @@ if(WIN32)
   target_compile_definitions(${LIBRARY} PUBLIC
       -DUNITTEST_WIN32_DLL -D_CRT_SECURE_NO_WARNINGS
   )
+  target_compile_options(${LIBRARY} PRIVATE -wd4251)
 
   target_sources(${LIBRARY} PRIVATE Win32/TimeHelpers.cpp)
 endif()
