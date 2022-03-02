@@ -58,7 +58,7 @@ namespace
 
   Radiant::Mutex s_sharedDevicesMutex;
   std::vector<SharedDevice> s_sharedDevices;
-  const double s_sharedDevicesTimeoutSecs = 5.0;
+  double s_sharedDevicesTimeoutSecs = 5.0;
 
 // This is for debugging synchronization with CEF
 #if 0
@@ -263,11 +263,13 @@ namespace Luminous
       release(true);
       if (m_dev) {
         Radiant::Guard g(s_sharedDevicesMutex);
-        s_sharedDevices.emplace_back();
-        SharedDevice & adapter = s_sharedDevices.back();
-        adapter.dev = std::move(m_dev);
-        adapter.devMutex = std::move(m_devMutex);
-        adapter.adapterLuid = m_adapterLuid;
+        if (s_sharedDevicesTimeoutSecs > 0.0) {
+          s_sharedDevices.emplace_back();
+          SharedDevice & adapter = s_sharedDevices.back();
+          adapter.dev = std::move(m_dev);
+          adapter.devMutex = std::move(m_devMutex);
+          adapter.adapterLuid = m_adapterLuid;
+        }
       }
     }
 
@@ -1185,5 +1187,6 @@ namespace Luminous
   {
     Radiant::Guard g(s_sharedDevicesMutex);
     s_sharedDevices.clear();
+    s_sharedDevicesTimeoutSecs = 0.0;
   }
 }
