@@ -531,7 +531,7 @@ namespace Luminous
     gl.glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
     gl.glPixelStorei(GL_UNPACK_ROW_LENGTH, m_copyMapped.RowPitch / 4);
 
-    (*buffer)->bind(Buffer::UNPACK);
+    buffer->bind(Buffer::UNPACK);
 
     gl.glBindTexture(GL_TEXTURE_2D, ctx.glTex->handle());
     gl.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_tex.width(), m_tex.height(),

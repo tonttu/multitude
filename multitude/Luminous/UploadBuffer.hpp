@@ -1,6 +1,7 @@
 #pragma once
 
 #include "StateGL.hpp"
+#include "Buffer.hpp"
 
 namespace Luminous
 {
@@ -30,16 +31,20 @@ namespace Luminous
       return *this;
     }
 
-    LUMINOUS_API BufferGL * operator->();
+    LUMINOUS_API void bind(Buffer::Type type);
+    LUMINOUS_API void upload(Buffer::Type type, int offset, std::size_t length, const void * data);
+    LUMINOUS_API void * map(Buffer::Type type, int offset, std::size_t length, Radiant::FlagsT<Buffer::MapAccess> access);
+    LUMINOUS_API void unmap(Buffer::Type type, int offset, std::size_t length);
 
     /// If supported by system, this returns write-only coherent and
     /// unsynchronized persistent mapping to the buffer. Use this for ideal
     /// performance.
-    LUMINOUS_API void * persistentMapping() const;
+    LUMINOUS_API void * persistentMapping();
 
     LUMINOUS_API ~UploadBufferRef();
 
   private:
+    bool m_addFence = false;
     UploadBuffer * m_uploadBuffer = nullptr;
   };
 
