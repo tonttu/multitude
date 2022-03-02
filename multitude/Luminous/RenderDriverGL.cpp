@@ -620,10 +620,14 @@ namespace Luminous
     /// enough preallocated buffers so that Canvus performance tests using
     /// real customer data run jank-free.
     const double fractionOfMemoryToReserveForUploads = 0.15;
-    const double maxReservedMemoryGB = 1.2;
-    m_d->m_uploadBuffersTargetSize = std::min(
-          fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024,
-          maxReservedMemoryGB * 1024 * 1024 * 1024);
+    const double maxReservedMemoryMB = 1.2*1024;
+    const double minReservedMemoryMB = 64.0;
+    m_d->m_uploadBuffersTargetSize = static_cast<size_t>(
+          std::max(
+            minReservedMemoryMB * 1024.0 * 1024.0,
+            std::min(
+              fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024.0,
+              maxReservedMemoryMB * 1024.0 * 1024.0)));
     m_d->m_uploadBuffers.preallocate(m_d->m_uploadBuffersTargetSize);
 
     if (auto current = QOpenGLContext::currentContext()) {
