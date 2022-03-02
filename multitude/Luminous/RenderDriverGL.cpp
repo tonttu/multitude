@@ -49,6 +49,7 @@
 #include <QVector>
 
 #include <QOffscreenSurface>
+#include <QOpenGLFunctions>
 
 #include <folly/executors/ManualExecutor.h>
 
@@ -96,6 +97,7 @@ namespace Luminous
         Radiant::info("%s: Failed to make OpenGL context current", currentThreadName().data());
         return;
       }
+      QOpenGLFunctions * gl = m_context.functions();
 
       Radiant::Timer totalTimer;
       double idleTime = 0;
@@ -116,6 +118,11 @@ namespace Luminous
         (void)idleTime;
         m_executor.makeProgress();
 #endif
+        // Sometimes the worker thread is not as busy as the main thread, we
+        // need to flush everything manually to avoid extra buffering.
+        // On Intel flushing is mandatory here, otherwise fences added in
+        // DxSharedTexture will never finish.
+        gl->glFlush();
       }
     }
 
