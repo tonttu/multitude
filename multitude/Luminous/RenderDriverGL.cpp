@@ -27,6 +27,7 @@
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
 #include "Luminous/GPUAssociation.hpp"
+#include "Luminous/GfxDriver.hpp"
 #include "RenderQueues.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -36,6 +37,8 @@
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 #include <Radiant/PlatformUtils.hpp>
+
+#include <Punctual/Executors.hpp>
 
 #include <cassert>
 #include <map>
@@ -610,6 +613,8 @@ namespace Luminous
       });
       s.acquire();
     }
+    afterFlush().clear();
+    worker().clear();
 
     delete m_d;
   }
@@ -637,6 +642,13 @@ namespace Luminous
               maxReservedMemoryMB * 1024.0 * 1024.0)));
     m_d->m_uploadBuffers.preallocate(m_d->m_uploadBuffersTargetSize);
 
+    if (gfxDriver().renderThreadCount() > 1 &&
+        Luminous::glVersion().vendor == "Intel") {
+      MULTI_ONCE Radiant::warning("Disabling OpenGL worker threads, since they are unstable with Intel GPUs when using multiple windows");
+      Punctual::deleteLaterInMainThread(std::move(m_d->m_worker));
+      return;
+    }
+
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
         if (!gpuInfo().cpuList.empty()) {
@@ -648,7 +660,7 @@ namespace Luminous
         return;
       }
     }
-    m_d->m_worker.reset();
+    Punctual::deleteLaterInMainThread(std::move(m_d->m_worker));
   }
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil)
