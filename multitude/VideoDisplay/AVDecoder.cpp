@@ -126,16 +126,16 @@ namespace VideoDisplay
     m_d->m_previousDecoder = decoder;
   }
 
-  void AVDecoder::shutdown()
+  void AVDecoder::shutdown(double maxWaitTimeS)
   {
-    const double maxWaitTimeS = 5.0;
-
     Radiant::Guard g(s_decodersMutex);
     for (auto weak: s_decoders) {
       if (auto decoder = weak.lock()) {
         decoder->close();
       }
     }
+    if (maxWaitTimeS <= 0.0)
+      return;
 
     Radiant::Timer t;
     for (auto weak: s_decoders) {

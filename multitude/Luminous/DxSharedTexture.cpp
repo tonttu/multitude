@@ -510,8 +510,9 @@ namespace Luminous
     ctx.renderDriver->worker().add([self, this, &ctx, deviceCtx] {
       UploadBufferRef * buffer = new UploadBufferRef(ctx.renderDriver->uploadBuffer(
                                                        m_copyMapped.RowPitch * m_tex.height()));
-      Radiant::SingleShotTask::run([self, this, &ctx, buffer, deviceCtx] {
-        memcpy(buffer->persistentMapping(), m_copyMapped.pData, m_copyMapped.RowPitch * m_tex.height());
+      auto mapped = buffer->persistentMapping();
+      Radiant::SingleShotTask::run([self, this, &ctx, buffer, mapped, deviceCtx] {
+        memcpy(mapped, m_copyMapped.pData, m_copyMapped.RowPitch * m_tex.height());
         unrefCopy(deviceCtx);
         ctx.renderDriver->worker().add([self, this, &ctx, buffer] {
           finishCopy(ctx, buffer);
@@ -531,7 +532,7 @@ namespace Luminous
     gl.glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
     gl.glPixelStorei(GL_UNPACK_ROW_LENGTH, m_copyMapped.RowPitch / 4);
 
-    (*buffer)->bind(Buffer::UNPACK);
+    buffer->bind(Buffer::UNPACK);
 
     gl.glBindTexture(GL_TEXTURE_2D, ctx.glTex->handle());
     gl.glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_tex.width(), m_tex.height(),

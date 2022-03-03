@@ -175,7 +175,8 @@ LIBS += $$LIB_RADIANT \
     $$LIB_VALUABLE \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
-    $$LIB_FOLLY
+    $$LIB_FOLLY \
+    $$LIB_PUNCTUAL
 
 HEADERS += ImageCodecQT.hpp
 HEADERS += ImageCodecSVG.hpp

@@ -27,13 +27,8 @@ namespace Luminous
           | GL_MAP_WRITE_BIT
           | GL_MAP_PERSISTENT_BIT
           | GL_MAP_COHERENT_BIT;
-      GLbitfield mapFlags = GL_MAP_WRITE_BIT
-          | GL_MAP_PERSISTENT_BIT
-          | GL_MAP_COHERENT_BIT
-          | GL_MAP_UNSYNCHRONIZED_BIT;
-
       if (m_buffer.allocateImmutable(size, allocateFlags)) {
-        m_mapped = stateGl.opengl45()->glMapNamedBufferRange(m_buffer.handle(), 0, static_cast<GLsizei>(size), mapFlags);
+        m_immutableAllocation = true;
       } else {
         m_buffer.bind(Buffer::UNPACK);
         m_buffer.allocate(Buffer::UNPACK, size);
@@ -51,9 +46,10 @@ namespace Luminous
     UploadBuffer(UploadBuffer && b) = delete;
     UploadBuffer & operator=(UploadBuffer && b) = delete;
 
-    void release()
+    void release(bool addFence)
     {
-      m_sync = m_stateGl.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+      if (addFence)
+        m_sync = m_stateGl.opengl().glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
       m_inUse = false;
     }
 
@@ -79,6 +75,7 @@ namespace Luminous
     std::atomic<bool> m_inUse{true};
     GLsync m_sync = nullptr;
     void * m_mapped = nullptr;
+    bool m_immutableAllocation = false;
   };
 
   /////////////////////////////////////////////////////////////////////////////
@@ -197,19 +194,53 @@ namespace Luminous
 
   /////////////////////////////////////////////////////////////////////////////
 
-  BufferGL * UploadBufferRef::operator->()
+  void UploadBufferRef::bind(Buffer::Type type)
   {
-    return &m_uploadBuffer->m_buffer;
+    m_uploadBuffer->m_buffer.bind(type);
   }
 
-  void * UploadBufferRef::persistentMapping() const
+  void UploadBufferRef::upload(Buffer::Type type, int offset, size_t length, const void * data)
   {
-    return m_uploadBuffer->m_mapped;
+    m_uploadBuffer->m_buffer.upload(type, offset, length, data);
+  }
+
+  void * UploadBufferRef::map(Buffer::Type type, int offset, size_t length, Radiant::FlagsT<Buffer::MapAccess> access)
+  {
+    auto data = m_uploadBuffer->m_buffer.map(type, offset, length, access);
+    if ((access & Buffer::MAP_UNSYNCHRONIZED) && data)
+      m_addFence = true;
+    return data;
+  }
+
+  void UploadBufferRef::unmap(Buffer::Type type, int offset, size_t length)
+  {
+    m_uploadBuffer->m_buffer.unmap(type, offset, length);
+  }
+
+  void * UploadBufferRef::persistentMapping()
+  {
+    if (!m_uploadBuffer->m_immutableAllocation)
+      return nullptr;
+
+    if (!m_uploadBuffer->m_mapped) {
+      GLbitfield mapFlags = GL_MAP_WRITE_BIT
+          | GL_MAP_PERSISTENT_BIT
+          | GL_MAP_COHERENT_BIT
+          | GL_MAP_UNSYNCHRONIZED_BIT;
+      auto & buffer = m_uploadBuffer->m_buffer;
+      m_uploadBuffer->m_mapped = m_uploadBuffer->m_stateGl.opengl45()->glMapNamedBufferRange(
+            buffer.handle(), 0, static_cast<GLsizei>(buffer.allocatedSize()), mapFlags);
+    }
+
+    auto mapped = m_uploadBuffer->m_mapped;
+    if (mapped)
+      m_addFence = true;
+    return mapped;
   }
 
   UploadBufferRef::~UploadBufferRef()
   {
     if (m_uploadBuffer)
-      m_uploadBuffer->release();
+      m_uploadBuffer->release(m_addFence);
   }
 }
