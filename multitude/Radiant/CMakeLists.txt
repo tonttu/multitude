@@ -107,13 +107,13 @@ elseif(WIN32)
     -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
   )
 
-  target_link_libraries(${LIBRARY} PRIVATE Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib)
+  # Link against debug varriant when doing debug build.
+  set(crashpad $<IF:$<CONFIG:debug>,crashpadd.lib,crashpad.lib>)
 
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpadd.lib)
-  else()
-    target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/crashpad.lib)
-  endif()
+  target_link_libraries(${LIBRARY} PRIVATE
+    Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib
+    ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/${crashpad}
+  )
 
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
 endif()
