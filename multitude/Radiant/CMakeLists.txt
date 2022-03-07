@@ -107,8 +107,8 @@ elseif(WIN32)
     -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
   )
 
-  # Link against debug varriant when doing debug build.
-  set(crashpad $<IF:$<CONFIG:debug>,crashpadd.lib,crashpad.lib>)
+  # Link against debug variant when doing debug build.
+  set(crashpad "crashpad$<$<CONFIG:debug>:d>.lib")
 
   target_link_libraries(${LIBRARY} PRIVATE
     Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib
