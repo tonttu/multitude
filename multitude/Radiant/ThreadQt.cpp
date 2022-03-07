@@ -55,32 +55,34 @@ namespace
 
 namespace Radiant {
 
-  bool Thread::m_threadDebug = false;
-  bool Thread::m_threadWarnings = false;
-
-  class Thread::D : public QThread 
+  class Thread::D : public QThreadWrapper
   {
   public:
     D(Thread * host) : m_host(host) {}
 
-    virtual void run() {
-#ifdef RADIANT_WINDOWS
-      /// Qt only sets thread names to visual studio using vs-specific exceptions.
-      /// It doesn't set the thread name that is used by crash dumps and other
-      /// code. Fix that here. See more information about thread names in Windows:
-      /// https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
-      initializeThreadDescriptionFunctions();
-      if (setThreadDescription) {
-        HRESULT res = setThreadDescription(GetCurrentThread(), objectName().toStdWString().data());
-        if (FAILED(res))
-          Radiant::error("SetThreadDescription: %s", StringUtils::getLastErrorMessage().toUtf8().data());
-      }
-#endif
+    virtual void runImpl() override {
       m_host->childLoop();
     }
 
     Thread * m_host;
   };
+
+  void QThreadWrapper::run()
+  {
+#ifdef RADIANT_WINDOWS
+    /// Qt only sets thread names to visual studio using vs-specific exceptions.
+    /// It doesn't set the thread name that is used by crash dumps and other
+    /// code. Fix that here. See more information about thread names in Windows:
+    /// https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-a-thread-name-in-native-code
+    Thread::setCurrentThreadName(objectName());
+#endif
+    runImpl();
+  }
+
+  void QThreadWrapper::runImpl()
+  {
+    QThread::run();
+  }
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,9 +135,12 @@ namespace Radiant {
         HRESULT hr = getThreadDescription(handle, &data);
         CloseHandle(handle);
         if (SUCCEEDED(hr) && data) {
-          QByteArray name = QString::fromWCharArray(data).toUtf8();
+          if (*data) {
+            QByteArray name = QString::fromWCharArray(data).toUtf8();
+            LocalFree(data);
+            return name;
+          }
           LocalFree(data);
-          return name;
         }
       }
     }
@@ -152,13 +157,39 @@ namespace Radiant {
       PWSTR data = nullptr;
       HRESULT hr = getThreadDescription(GetCurrentThread(), &data);
       if (SUCCEEDED(hr) && data) {
-        QByteArray name = QString::fromWCharArray(data).toUtf8();
+        if (*data) {
+          QByteArray name = QString::fromWCharArray(data).toUtf8();
+          LocalFree(data);
+          return name;
+        }
         LocalFree(data);
-        return name;
       }
     }
-#endif
+
+    const auto threadId = currentThreadId();
+    if (threadId == ThreadChecks::mainThreadId)
+      return "Main thread";
+
+    return "#" + QByteArray::number(reinterpret_cast<qlonglong>(threadId));
+#else
     return threadName(currentThreadId());
+#endif
+  }
+
+  void Thread::setCurrentThreadName(const QString & name)
+  {
+#ifdef RADIANT_WINDOWS
+    initializeThreadDescriptionFunctions();
+    if (setThreadDescription) {
+      HRESULT res = setThreadDescription(GetCurrentThread(), name.toStdWString().data());
+      if (FAILED(res))
+        Radiant::error("SetThreadDescription: %s", StringUtils::getLastErrorMessage().toUtf8().data());
+    }
+#elif defined(RADIANT_LINUX)
+    pthread_setname_np(pthread_self(), name.toUtf8().left(15).data());
+#else
+    (void)name;
+#endif
   }
 
   void Thread::run()
