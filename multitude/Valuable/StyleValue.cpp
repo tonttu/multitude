@@ -453,12 +453,7 @@ namespace Valuable
       } else if(t == TYPE_STRING) {
         out += "\"" + v.asString() + "\"";
       } else if(t == TYPE_COLOR) {
-        /// @todo we lose information here
-        auto c = v.asColor().toQColor();
-        out += QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
-               arg(c.green(), 2, 16, QLatin1Char('0')).
-               arg(c.blue(), 2, 16, QLatin1Char('0')).
-               arg(c.alpha(), 2, 16, QLatin1Char('0'));
+        out += v.asColor().toHex();
       } else if(t == TYPE_COLOR_PMA) {
         out += QString("%1 %2 %3 %4").arg(v.asColorPMA().r).arg(v.asColorPMA().g).
                arg(v.asColorPMA().b).arg(v.asColorPMA().a);

@@ -199,6 +199,8 @@ namespace Radiant
     inline Nimble::Vector3f rgb() const { return {r, g, b}; }
 
     inline Nimble::Vector4f toVector() const { return {r, g, b, a}; }
+
+    RADIANT_API QString toHex() const;
   };
 
   /// Color that has premultiplied alpha

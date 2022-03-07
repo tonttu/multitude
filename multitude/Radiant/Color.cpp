@@ -255,4 +255,14 @@ namespace Radiant
   {
     return colors();
   }
+
+  QString Color::toHex() const
+  {
+    /// @todo we lose information here
+    auto c = toQColor();
+    return QString("#%1%2%3%4").arg(c.red(), 2, 16, QLatin1Char('0')).
+           arg(c.green(), 2, 16, QLatin1Char('0')).
+           arg(c.blue(), 2, 16, QLatin1Char('0')).
+           arg(c.alpha(), 2, 16, QLatin1Char('0'));
+  }
 }
