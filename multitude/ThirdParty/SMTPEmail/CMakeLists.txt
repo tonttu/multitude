@@ -11,6 +11,7 @@ if(UNIX)
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 elseif(WIN32)
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core;Network")
+  target_compile_options(${LIBRARY} PRIVATE -wd4251)
 endif()
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)

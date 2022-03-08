@@ -37,6 +37,7 @@ if(WIN32)
   target_compile_definitions(${LIBRARY} PUBLIC
       -DUNITTEST_WIN32_DLL -D_CRT_SECURE_NO_WARNINGS
   )
+  target_compile_options(${LIBRARY} PRIVATE -wd4251)
 
   target_sources(${LIBRARY} PRIVATE Win32/TimeHelpers.cpp)
 endif()
@@ -51,7 +52,8 @@ target_include_directories(${LIBRARY} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
 
-target_include_directories(${LIBRARY} PUBLIC ${dotdot})
+# Needs to be system include directory to hide warnings.
+target_include_directories(${LIBRARY} SYSTEM PUBLIC ${dotdot})
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
