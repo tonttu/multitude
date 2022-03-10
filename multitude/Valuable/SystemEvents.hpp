@@ -7,7 +7,7 @@ namespace Valuable
 #ifdef RADIANT_WINDOWS
   enum class PowerEvent
   {
-    // This is raised immediatey after we know we are entering suspend mode.
+    // This is raised immediately after we know we are entering suspend mode.
     // Do not block event handling, just start asynchronously preparing for
     // suspend.
     SUSPEND1,
