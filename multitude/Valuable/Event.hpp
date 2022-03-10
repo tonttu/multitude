@@ -96,7 +96,8 @@ namespace Valuable
     /// executors are not cancelled.
     ~Event();
 
-    /// Add a listener, return a listener id that can be used with removeListener.
+    /// Add a listener, return a non-negative listener id that can be used with
+    /// removeListener.
     int addListener(Callback callback);
 
     /// @param executor if not null, the listener is called through this executor.
