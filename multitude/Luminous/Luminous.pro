@@ -247,7 +247,7 @@ enable-pdf {
 
 
   macx {
-    INCLUDEPATH += /usr/local/include/pdfium
+    INCLUDEPATH += /opt/homebrew/include/pdfium
     LIBS += -lpdfium
   }
 
