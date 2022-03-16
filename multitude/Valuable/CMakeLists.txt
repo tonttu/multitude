@@ -35,6 +35,7 @@ target_sources(${LIBRARY} PRIVATE
   AttributeSpline.cpp
   AttributeAsset.cpp
   Symbol.cpp
+  SystemEvents.cpp
 )
 
 if(ENABLE_FOLLY)

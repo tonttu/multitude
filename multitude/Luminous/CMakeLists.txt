@@ -66,7 +66,7 @@ target_sources(${LIBRARY} PRIVATE
   SplineManager.cpp
   BezierSplineFitter.cpp
   BezierSplineBuilder.cpp
-  BezierSplineTesselator.cpp
+  BezierSplineTessellator.cpp
   BezierSplineRenderer.cpp
   BezierSpline.cpp
   ImageCodecQT.cpp
@@ -122,7 +122,7 @@ target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
 target_link_libraries(${LIBRARY}
   PRIVATE Squish NVML ADL_SDK
-  PUBLIC Valuable Nimble
+  PUBLIC Valuable Nimble Punctual
 )
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
