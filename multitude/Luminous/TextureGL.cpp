@@ -558,13 +558,13 @@ namespace Luminous
       UploadBufferRef buffer = m_state.driver().uploadBuffer(bytes);
 
       if (method == METHOD_BUFFER_UPLOAD) {
-        buffer->upload(Buffer::UNPACK, 0, bytes, data);
+        buffer.upload(Buffer::UNPACK, 0, bytes, data);
       } else if (method == METHOD_BUFFER_MAP ||
                  method == METHOD_BUFFER_MAP_NOSYNC ||
                  method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN) {
         if (void * target = buffer.persistentMapping()) {
           memcpy(target, data, bytes);
-          buffer->bind(Buffer::UNPACK);
+          buffer.bind(Buffer::UNPACK);
         } else {
           Radiant::FlagsT<Buffer::MapAccess> flags = Buffer::MAP_WRITE;
           if (method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
@@ -572,14 +572,14 @@ namespace Luminous
           if (method == METHOD_BUFFER_MAP_NOSYNC ||
               method == METHOD_BUFFER_MAP_NOSYNC_ORPHAN)
             flags |= Buffer::MAP_UNSYNCHRONIZED;
-          target = buffer->map(Buffer::UNPACK, 0, bytes, flags);
+          target = buffer.map(Buffer::UNPACK, 0, bytes, flags);
           if (!target) {
             m_state.opengl().glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
             uploadData(dataFormat, data, destRect, bytes, METHOD_TEXTURE);
             return;
           }
           memcpy(target, data, bytes);
-          buffer->unmap(Buffer::UNPACK, 0, bytes);
+          buffer.unmap(Buffer::UNPACK, 0, bytes);
         }
       } else {
         Radiant::error("TextureGL::uploadData # Unknown upload method %d", method);

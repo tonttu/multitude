@@ -1,5 +1,5 @@
 #include "BezierSplineRenderer.hpp"
-#include "BezierSplineTesselator.hpp"
+#include "BezierSplineTessellator.hpp"
 #include "Buffer.hpp"
 #include "BufferGL.hpp"
 #include "ContextArray.hpp"
@@ -52,7 +52,7 @@ namespace Luminous
     std::atomic<bool> ready{false};
     QMutex generateMutex;
 
-    std::vector<BezierSplineTesselator::Vertex> triangleStrip;
+    std::vector<BezierSplineTessellator::Vertex> triangleStrip;
   };
 
   /// Stroke mipmap cache
@@ -149,7 +149,7 @@ namespace Luminous
     /// Ideally we wouldn't have this. All data should be maintained on GPU
     /// memory, but the current rendering pipeline makes it difficult, so
     /// we always keep a copy of the data on host memory as well.
-    std::vector<BezierSplineTesselator::Vertex> buffer;
+    std::vector<BezierSplineTessellator::Vertex> buffer;
 
     /// RenderContext::viewWidgetPathId() -> View
     Radiant::ArrayMap<QByteArray, View> views;
@@ -195,6 +195,9 @@ namespace Luminous
     StrokeMipmapGpu & createMipmapLevelGpu(GpuContext & gpuContext, StrokeCache & mipmap, int mipmapLevel, float invScale);
     /// Returns true if there are no more active views
     bool clearOldViews(Radiant::TimeStamp oldestAcceptedTime);
+
+    /// Invalidate cpu and gpu mipmaps and views showing this stroke
+    void invalidate(StrokeCache & c);
 
   public:
     BezierSplineRenderer::RenderOptions m_opts;
@@ -269,9 +272,9 @@ namespace Luminous
     if (!level.ready) {
       QMutexLocker locker(&level.generateMutex);
       if (!level.ready) {
-        BezierSplineTesselator tesselator(level.triangleStrip, m_opts.maxCurveError * invScale,
-                                          m_opts.maxRoundCapError * invScale);
-        tesselator.tesselate(*mipmap.stroke.path, mipmap.stroke.color);
+        BezierSplineTessellator tessellator(level.triangleStrip, m_opts.maxCurveError * invScale,
+                                            m_opts.maxRoundCapError * invScale);
+        tessellator.tessellate(*mipmap.stroke.path, mipmap.stroke.color, mipmap.stroke.style);
         level.ready = true;
       }
     }
@@ -328,6 +331,25 @@ namespace Luminous
     if (empty)
       m_isActive.clear();
     return empty;
+  }
+
+  void BezierSplineRenderer::D::invalidate(StrokeCache & c)
+  {
+    // Invalidate StrokeMipmapGpu
+    c.cpuGeneration++;
+
+    // Invalidate StrokeMipmap
+    for (StrokeMipmap & level: c.mipmaps)
+      level.ready = false;
+
+    // Invalidate View
+    for (GpuContext & context: m_gpuContext) {
+      for (auto & p: context.views) {
+        View & view = p.second;
+        if (!view.added.count(c.stroke.id))
+          view.changed.insert(c.stroke.id);
+      }
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -421,9 +443,12 @@ namespace Luminous
     StrokeCache & mipmap = m_d->m_mipmaps[s.id];
     mipmap.stroke = s;
 
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        p.second.added.insert(s.id);
+    for (GpuContext & context: m_d->m_gpuContext) {
+      for (auto & p: context.views) {
+        View & view = p.second;
+        view.added.insert(s.id);
+      }
+    }
 
     return s.id;
   }
@@ -442,9 +467,10 @@ namespace Luminous
 
       for (GpuContext & context: m_d->m_gpuContext) {
         for (auto & p: context.views) {
-          p.second.added.erase(id);
-          p.second.changed.erase(id);
-          p.second.removed.insert(id);
+          View & view = p.second;
+          view.added.erase(id);
+          view.changed.erase(id);
+          view.removed.insert(id);
         }
       }
     }
@@ -474,18 +500,8 @@ namespace Luminous
 
     c.stroke.path = path;
     c.stroke.bbox = bbox;
-    // Invalidate StrokeMipmapGpu
-    c.cpuGeneration++;
 
-    // Invalidate StrokeMipmap
-    for (StrokeMipmap & level: c.mipmaps)
-      level.ready = false;
-
-    // Invalidate View
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        if (!p.second.added.count(id))
-          p.second.changed.insert(id);
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color)
@@ -502,19 +518,7 @@ namespace Luminous
 
     c.stroke.color = color;
 
-    // Invalidate StrokeMipmapGpu
-    c.cpuGeneration++;
-
-    // Invalidate StrokeMipmap - this could be optimized by just changing
-    // the color in triangleStrip
-    for (StrokeMipmap & level: c.mipmaps)
-      level.ready = false;
-
-    // Invalidate View
-    for (GpuContext & context: m_d->m_gpuContext)
-      for (auto & p: context.views)
-        if (!p.second.added.count(id))
-          p.second.changed.insert(id);
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::setStrokeDepth(Valuable::Node::Uuid id, float depth)
@@ -544,6 +548,21 @@ namespace Luminous
           gpu.depth = depth;
       }
     }
+  }
+
+  void BezierSplineRenderer::setStrokeStyle(Valuable::Node::Uuid id, SplineStyle style)
+  {
+    auto it = m_d->m_mipmaps.find(id);
+    if (it == m_d->m_mipmaps.end())
+      return;
+
+    StrokeCache & c = it->second;
+    if (c.stroke.style == style)
+      return;
+
+    c.stroke.style = style;
+
+    m_d->invalidate(c);
   }
 
   void BezierSplineRenderer::render(RenderContext & r) const

@@ -27,6 +27,7 @@
 #include "Luminous/DepthMode.hpp"
 #include "Luminous/StencilMode.hpp"
 #include "Luminous/GPUAssociation.hpp"
+#include "Luminous/GfxDriver.hpp"
 #include "RenderQueues.hpp"
 
 #include <Nimble/Matrix4.hpp>
@@ -36,6 +37,8 @@
 #include <Radiant/Timer.hpp>
 #include <Radiant/Platform.hpp>
 #include <Radiant/PlatformUtils.hpp>
+
+#include <Punctual/Executors.hpp>
 
 #include <cassert>
 #include <map>
@@ -49,6 +52,7 @@
 #include <QVector>
 
 #include <QOffscreenSurface>
+#include <QOpenGLFunctions>
 
 #include <folly/executors/ManualExecutor.h>
 
@@ -96,6 +100,7 @@ namespace Luminous
         Radiant::info("%s: Failed to make OpenGL context current", currentThreadName().data());
         return;
       }
+      QOpenGLFunctions * gl = m_context.functions();
 
       Radiant::Timer totalTimer;
       double idleTime = 0;
@@ -116,6 +121,11 @@ namespace Luminous
         (void)idleTime;
         m_executor.makeProgress();
 #endif
+        // Sometimes the worker thread is not as busy as the main thread, we
+        // need to flush everything manually to avoid extra buffering.
+        // On Intel flushing is mandatory here, otherwise fences added in
+        // DxSharedTexture will never finish.
+        gl->glFlush();
       }
     }
 
@@ -603,6 +613,8 @@ namespace Luminous
       });
       s.acquire();
     }
+    afterFlush().clear();
+    worker().clear();
 
     delete m_d;
   }
@@ -620,11 +632,22 @@ namespace Luminous
     /// enough preallocated buffers so that Canvus performance tests using
     /// real customer data run jank-free.
     const double fractionOfMemoryToReserveForUploads = 0.15;
-    const double maxReservedMemoryGB = 1.2;
-    m_d->m_uploadBuffersTargetSize = std::min(
-          fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024,
-          maxReservedMemoryGB * 1024 * 1024 * 1024);
+    const double maxReservedMemoryMB = 1.2*1024;
+    const double minReservedMemoryMB = 64.0;
+    m_d->m_uploadBuffersTargetSize = static_cast<size_t>(
+          std::max(
+            minReservedMemoryMB * 1024.0 * 1024.0,
+            std::min(
+              fractionOfMemoryToReserveForUploads * maximumGPUMemory() * 1024.0,
+              maxReservedMemoryMB * 1024.0 * 1024.0)));
     m_d->m_uploadBuffers.preallocate(m_d->m_uploadBuffersTargetSize);
+
+    if (gfxDriver().renderThreadCount() > 1 &&
+        Luminous::glVersion().vendor == "Intel") {
+      MULTI_ONCE Radiant::warning("Disabling OpenGL worker threads, since they are unstable with Intel GPUs when using multiple windows");
+      Punctual::deleteLaterInMainThread(std::move(m_d->m_worker));
+      return;
+    }
 
     if (auto current = QOpenGLContext::currentContext()) {
       if (m_d->m_worker->init(*current)) {
@@ -637,7 +660,7 @@ namespace Luminous
         return;
       }
     }
-    m_d->m_worker.reset();
+    Punctual::deleteLaterInMainThread(std::move(m_d->m_worker));
   }
 
   void RenderDriverGL::clear(ClearMask mask, const Radiant::ColorPMA & color, double depth, int stencil)

@@ -1,5 +1,6 @@
 #include "Nvml.hpp"
 
+#include <Radiant/Sleep.hpp>
 #include <Radiant/Trace.hpp>
 
 #include <nvml/nvml.h>
@@ -115,14 +116,21 @@ namespace Luminous
     if (!m_nvml->m_d->nvmlDeviceGetPcieThroughput || !m_nvml->m_d->nvmlDeviceGetUtilizationRates)
       m_running = false;
 
+    int consecutiveErrors = 0;
     while (m_running) {
       Nvml::DeviceQuery::Sample sample;
       nvmlReturn_t error = m_nvml->m_d->nvmlDeviceGetPcieThroughput(m_dev, NVML_PCIE_UTIL_RX_BYTES, &sample.pcieRxThroughputKBs);
       if (error != NVML_SUCCESS) {
         Radiant::error("Failed to monitor PCIe throughput on %s [error code %d]",
                        name.toUtf8().data(), error);
-        break;
+        // This operation can occasionally fail, at least when entering / resuming from sleep on Windows
+        if (++consecutiveErrors > 10)
+          break;
+        for (int i = 0; i < 40 && m_running; ++i)
+          Radiant::Sleep::sleepMs(100);
+        continue;
       }
+      consecutiveErrors = 0;
 
       nvmlUtilization_t utilization {0, 0};
       m_nvml->m_d->nvmlDeviceGetUtilizationRates(m_dev, &utilization);

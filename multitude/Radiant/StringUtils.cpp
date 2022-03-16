@@ -74,7 +74,28 @@ namespace Radiant
     }
 #endif
 
-  }
+    size_t utf8Substr(const char * str, size_t strLen, size_t pos)
+    {
+      if (pos == 0)
+        return 0;
+      if (strLen <= pos)
+        return strLen;
 
+      while (pos > 0) {
+        uint8_t b = *reinterpret_cast<const uint8_t*>(str + pos);
+
+        // This is an ascii character, we can cut the string here
+        if ((b & 0x80) == 0)
+          return pos;
+
+        // This is the first byte in multi-byte UTF-8 char, cut here
+        if ((b & 0xc0) == 0xc0)
+          return pos;
+
+        --pos;
+      }
+      return 0;
+    }
+  }
 }
 

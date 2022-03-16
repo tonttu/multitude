@@ -113,7 +113,7 @@ namespace Email
   // --------------------------------------------------------------------------
 
   WorkerThread::WorkerThread(SendImplementation& host)
-    : QThread()
+    : Radiant::QThreadWrapper()
     , m_host(host)
     , m_keepRunning(true)
   {
@@ -121,7 +121,7 @@ namespace Email
     qRegisterMetaType<QList<QSslError>>("QList<QSslError>");
   }
 
-  void WorkerThread::run()
+  void WorkerThread::runImpl()
   {
     while(m_keepRunning) {
 

@@ -18,6 +18,7 @@
 #include <Patterns/NotCopyable.hpp>
 
 #include <QString>
+#include <QThread>
 
 #include <cstring>
 #include <map>
@@ -27,6 +28,16 @@ class QThread;
 
 
 namespace Radiant {
+
+  /// Like QThread, but sets the thread name correctly on Windows
+  class RADIANT_API QThreadWrapper : public QThread
+  {
+  public:
+    using QThread::QThread;
+
+    virtual void run() final;
+    virtual void runImpl();
+  };
 
   class Mutex;
   /// Platform-independent threading
@@ -51,6 +62,8 @@ namespace Radiant {
     /// Returns user-given thread name for the current thread. The same as
     /// threadName(currentThreadId()) but potentially much faster on Windows.
     static QByteArray currentThreadName();
+
+    static void setCurrentThreadName(const QString & name);
 
     /// Construct a thread structure. The thread is NOT activated by this
     /// method.
@@ -95,15 +108,8 @@ namespace Radiant {
     virtual void childLoop() = 0;
 
   private:
-    static void *entry(void *);
-
     class D;
     D * m_d;
-
-    volatile int m_state;
-
-    static bool m_threadDebug;
-    static bool m_threadWarnings;
   };
 
   /// Thread Local Storage implementation.
