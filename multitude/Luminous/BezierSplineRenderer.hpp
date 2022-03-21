@@ -45,6 +45,7 @@ namespace Luminous
       const BezierSpline * path = nullptr;
       Radiant::ColorPMA color{1, 1, 1, 1};
       float depth = 0;
+      SplineStyle style;
     };
 
     struct RenderOptions
@@ -64,9 +65,9 @@ namespace Luminous
       /// You should probably never change the defaults.
       float minScale = 0.001f;
       float maxScale = 10000.f;
-      /// See maxCurveError parameter in Luminous::BezierSplineTesselator::BezierSplineTesselator
+      /// See maxCurveError parameter in Luminous::BezierSplineTessellator::BezierSplineTessellator
       float maxCurveError = 0.2f;
-      /// See maxRoundCapError parameter in Luminous::BezierSplineTesselator::BezierSplineTesselator
+      /// See maxRoundCapError parameter in Luminous::BezierSplineTessellator::BezierSplineTessellator
       float maxRoundCapError = 0.2f;
 
       /// Set to non-null to receive debug information about rendering
@@ -109,6 +110,7 @@ namespace Luminous
     void setStrokePath(Valuable::Node::Uuid id, const BezierSpline * path, Nimble::Rect bbox = Nimble::Rect());
     void setStrokeColor(Valuable::Node::Uuid id, Radiant::ColorPMA color);
     void setStrokeDepth(Valuable::Node::Uuid id, float depth);
+    void setStrokeStyle(Valuable::Node::Uuid id, SplineStyle style);
 
     void render(RenderContext & r) const;
 

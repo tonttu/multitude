@@ -15,6 +15,8 @@
 #include <Radiant/TouchEvent.hpp>
 #include <Radiant/Trace.hpp>
 
+#include <Valuable/SystemEvents.hpp>
+
 #include <Radiant/StringUtils.hpp>
 #include <QGuiApplication>
 #include <QOpenGLContext>

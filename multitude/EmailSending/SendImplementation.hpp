@@ -7,7 +7,7 @@
 #include <condition_variable>
 #include <mutex>
 
-#include <QThread>
+#include <Radiant/Thread.hpp>
 
 #include <SMTPEmail/src/SmtpMime>
 
@@ -23,14 +23,14 @@ namespace Email
 
   class SendImplementation;
 
-  class WorkerThread : public QThread
+  class WorkerThread : public Radiant::QThreadWrapper
   {
   Q_OBJECT
 
   public:
     WorkerThread(SendImplementation& host);
 
-    void run() override;
+    void runImpl() override;
 
     void stop();
 

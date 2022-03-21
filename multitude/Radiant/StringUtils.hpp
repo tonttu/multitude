@@ -157,6 +157,10 @@ namespace Radiant
     {
       return demangle(typeid(T).name());
     }
+
+    /// Truncates the given UTF-8 string to max pos bytes.
+    RADIANT_API size_t utf8Substr(const char * str, size_t strLen, size_t pos);
+    inline size_t utf8Substr(const QByteArray & str, size_t pos) { return utf8Substr(str.constData(), str.size(), pos); }
   }
 }
 

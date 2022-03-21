@@ -9,6 +9,7 @@
  */
 
 #include "ThreadPool.hpp"
+#include "Thread.hpp"
 
 #include <QMap>
 
@@ -26,7 +27,7 @@ namespace Radiant {
     class T;
     typedef QMap<QThread*, ThreadState> Threads;
 
-    class T : public QThread
+    class T : public QThreadWrapper
     {
       Private & m_private;
 
@@ -37,7 +38,7 @@ namespace Radiant {
       }
       virtual ~T() {}
 
-      void run()
+      void runImpl() override
       {
         {
           std::lock_guard<std::mutex> g(m_private.m_mutex);

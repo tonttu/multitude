@@ -837,7 +837,7 @@ namespace VideoDisplay
     virtual QString source() const = 0;
 
     /// Close all AVDecoders
-    static void shutdown();
+    static void shutdown(double maxWaitTimeSecs = 5.0);
 
     /// Creates a new decoder and loads it with given options
     /// @param options options given to load()

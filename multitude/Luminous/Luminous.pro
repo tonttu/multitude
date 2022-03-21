@@ -84,7 +84,7 @@ HEADERS += SplineManager.hpp
 HEADERS += CubicBezierCurve.hpp
 HEADERS += BezierSplineFitter.hpp
 HEADERS += BezierSplineBuilder.hpp
-HEADERS += BezierSplineTesselator.hpp
+HEADERS += BezierSplineTessellator.hpp
 HEADERS += BezierSplineRenderer.hpp
 HEADERS += BezierSpline.hpp
 HEADERS += BezierSplineEraser.hpp
@@ -161,7 +161,7 @@ SOURCES += Window.cpp
 SOURCES += SplineManager.cpp
 SOURCES += BezierSplineFitter.cpp
 SOURCES += BezierSplineBuilder.cpp
-SOURCES += BezierSplineTesselator.cpp
+SOURCES += BezierSplineTessellator.cpp
 SOURCES += BezierSplineRenderer.cpp
 SOURCES += BezierSpline.cpp
 SOURCES += UploadBuffer.cpp
@@ -175,7 +175,8 @@ LIBS += $$LIB_RADIANT \
     $$LIB_VALUABLE \
     $$LIB_NIMBLE \
     $$LIB_PATTERNS \
-    $$LIB_FOLLY
+    $$LIB_FOLLY \
+    $$LIB_PUNCTUAL
 
 HEADERS += ImageCodecQT.hpp
 HEADERS += ImageCodecSVG.hpp
@@ -246,7 +247,7 @@ enable-pdf {
 
 
   macx {
-    INCLUDEPATH += /usr/local/include/pdfium
+    INCLUDEPATH += /opt/homebrew/include/pdfium
     LIBS += -lpdfium
   }
 
