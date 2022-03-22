@@ -42,6 +42,11 @@ if(ENABLE_FOLLY)
   target_sources(${LIBRARY} PRIVATE EventWrapper.cpp)
 endif()
 
+if(ENABLE_PUNCTUAL)
+  target_compile_definitions(${LIBRARY} PRIVATE -DENABLE_PUNCTUAL)
+  target_link_libraries(${LIBRARY} PRIVATE Punctual)
+endif()
+
 target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 
 target_link_libraries(${LIBRARY}
