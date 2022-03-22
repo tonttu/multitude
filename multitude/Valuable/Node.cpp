@@ -184,10 +184,10 @@ namespace Valuable
       : Attribute(host, name),
       m_sender(nullptr),
       m_eventsEnabled(true),
-      m_id(nullptr, "id", generateId()),
+      m_id(nullptr, QByteArrayLiteral("id"), generateId()),
       m_listenersId(0)
   {
-    addAttribute(QByteArrayLiteral("id"), &m_id);
+    addAttribute(&m_id);
   }
 
   Node::~Node() noexcept
