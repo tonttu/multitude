@@ -104,15 +104,13 @@ namespace Valuable
    *
    * /// FunnyWidget.cpp
    *
-   * /// In CSS/Script you can use keywords "on" or "enabled / "off" or "disabled"
-   * Valuable::EnumNames s_modes[] = {{"on", FunnyWidget::ON, "enabled", FunnyWidget::ON},
-   *                                  {"off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF},
-   *                                  {0, 0}};
+   * /// In CSS you can use keywords "on" or "enabled / "off" or "disabled"
+   * Valuable::EnumNames s_modes = {{"on", FunnyWidget::ON, "enabled", FunnyWidget::ON},
+   *                                {"off", FunnyWidget::OFF, "disabled", FunnyWidget::OFF}};
    *
-   * Valuable::EnumNames s_priorities[] = {{"low", FunnyWidget::PriorityLow},
-   *                                       {"medium", FunnyWidget::PriorityMedium},
-   *                                       {"high", FunnyWidget::PriorityHigh},
-   *                                       {0, 0}};
+   * Valuable::EnumNames s_priorities = {{"low", FunnyWidget::PriorityLow},
+   *                                     {"medium", FunnyWidget::PriorityMedium},
+   *                                     {"high", FunnyWidget::PriorityHigh}};
    *
    * FunnyWidget::FunnyWidget()
    *  : m_mode(this, "mode", s_modes, ON)

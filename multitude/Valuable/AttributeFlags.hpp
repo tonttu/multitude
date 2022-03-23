@@ -271,26 +271,17 @@ namespace Valuable {
    *
    * /// FunnyWidget.cpp
    *
-   * /// In CSS/Script you can write "motion-x: true;" or "flags: motion-x motion-y;"
-   * Valuable::FlagNames s_flags[] = {{"translate-x", FunnyWidget::INPUT_TRANSLATE_X},
-   *                                  {"translate-y", FunnyWidget::INPUT_TRANSLATE_Y},
-   *                                  {"translate-xy", FunnyWidget::INPUT_TRANSLATE_XY},
-   *                                  {"INPUT_TRANSLATE_X", FunnyWidget::INPUT_TRANSLATE_X},
-   *                                  {"INPUT_TRANSLATE_Y", FunnyWidget::INPUT_TRANSLATE_Y},
-   *                                  {"INPUT_TRANSLATE_XY", FunnyWidget::INPUT_TRANSLATE_XY},
-   *                                  {0, 0}};
+   * /// In CSS you can write "input-translate-x: true;" or "flags: translate-x translate-y;"
+   * Valuable::FlagNames s_flags = {{"input-translate-x", FunnyWidget::INPUT_TRANSLATE_X, true},
+   *                                {"input-translate-y", FunnyWidget::INPUT_TRANSLATE_Y, true},
+   *                                {"input-translate-xy", FunnyWidget::INPUT_TRANSLATE_XY, true},
+   *                                {"translate-x", FunnyWidget::INPUT_TRANSLATE_X, false},
+   *                                {"translate-y", FunnyWidget::INPUT_TRANSLATE_Y, false},
+   *                                {"translate-xy", FunnyWidget::INPUT_TRANSLATE_XY, false}};
    *
    * FunnyWidget::FunnyWidget()
    *  : m_flags(this, "flags", s_flags, INPUT_TRANSLATE_XY)
-   * {
-   *   m_flags.mask("input-translate")
-   *     ("xy", INPUT_TRANSLATE_XY)
-   *     ("x", INPUT_TRANSLATE_X)
-   *     ("y", INPUT_TRANSLATE_Y);
-   *   m_flags.mask("fixed")
-   *     (true, INPUT_TRANSLATE_XY)
-   *     (false, 0);
-   *
+   * {}
    * @endcode
    */
   template <typename Flags>
