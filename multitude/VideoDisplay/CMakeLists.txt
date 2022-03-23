@@ -26,18 +26,11 @@ elseif(WIN32)
     MWCapture.cpp
   )
 
-  #target_include_directories(${LIBRARY} PRIVATE ${VCPKG_ROOT}/include)
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/mwcapture/include)
   target_include_directories(${LIBRARY} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/rgbeasy-sdk-v7.14.1/include)
 
-
   target_link_libraries(${LIBRARY}
-    PRIVATE
-      ${MULTITACTION_DEPS_PATH}/manual/mwcapture/lib/LibMWCapture.lib
-      MultiFFMPEG
-      Strmiids.lib
-      Propsys.lib
-    )
+    PRIVATE MultiMWCapture MultiFFMPEG Strmiids.lib Propsys.lib
+  )
 endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
