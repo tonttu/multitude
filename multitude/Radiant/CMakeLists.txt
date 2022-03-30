@@ -143,6 +143,10 @@ if(ENABLE_SECRET_STORE)
     target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
 
     target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET OurExpected)
+  elseif(WIN32)
+    target_sources(${LIBRARY} PRIVATE SecretStoreWin32.cpp)
+
+    target_link_libraries(${LIBRARY} PRIVATE Crypt32)
   endif()
 endif()
 
