@@ -76,17 +76,6 @@ target_sources(${LIBRARY} PRIVATE
   UploadBuffer.cpp
 )
 
-if(ENABLE_PDF)
-  target_sources(${LIBRARY} PRIVATE PDFManager.cpp)
-
-  target_link_libraries(${LIBRARY}
-    PRIVATE OurExpected
-    PUBLIC Punctual
-  )
-
-  cornerstone_add_pdfium_libs(${LIBRARY} PRIVATE)
-endif()
-
 if(UNIX)
 
   target_sources(${LIBRARY} PRIVATE

@@ -16,6 +16,10 @@ if(ENABLE_LUMINOUS)
   add_subdirectory(Luminous)
 endif()
 
+if(ENABLE_PDF)
+  add_subdirectory(Pdf)
+endif()
+
 if(ENABLE_RESONANT OR ENABLE_MUSHY)
   add_subdirectory(Nimble)
   add_subdirectory(Radiant)
