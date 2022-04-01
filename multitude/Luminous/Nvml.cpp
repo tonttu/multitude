@@ -116,24 +116,40 @@ namespace Luminous
     if (!m_nvml->m_d->nvmlDeviceGetPcieThroughput || !m_nvml->m_d->nvmlDeviceGetUtilizationRates)
       m_running = false;
 
+    bool isThroughputSupported = true;
+    bool isUtilizationSupported = true;
+    bool isXidSupported = set != nullptr;
     int consecutiveErrors = 0;
     while (m_running) {
+      if (!isThroughputSupported && !isUtilizationSupported && !isXidSupported) {
+        m_running = false;
+        break;
+      }
+
       Nvml::DeviceQuery::Sample sample;
-      nvmlReturn_t error = m_nvml->m_d->nvmlDeviceGetPcieThroughput(m_dev, NVML_PCIE_UTIL_RX_BYTES, &sample.pcieRxThroughputKBs);
-      if (error != NVML_SUCCESS) {
-        Radiant::error("Failed to monitor PCIe throughput on %s [error code %d]",
-                       name.toUtf8().data(), error);
-        // This operation can occasionally fail, at least when entering / resuming from sleep on Windows
-        if (++consecutiveErrors > 10)
-          break;
-        for (int i = 0; i < 40 && m_running; ++i)
-          Radiant::Sleep::sleepMs(100);
-        continue;
+      if (isThroughputSupported) {
+        nvmlReturn_t error = m_nvml->m_d->nvmlDeviceGetPcieThroughput(m_dev, NVML_PCIE_UTIL_RX_BYTES, &sample.pcieRxThroughputKBs);
+        if (error == NVML_ERROR_NOT_SUPPORTED) {
+          isThroughputSupported = false;
+        } else if (error != NVML_SUCCESS) {
+          Radiant::warning("Failed to monitor PCIe throughput on %s [error code %d]",
+                           name.toUtf8().data(), error);
+          // This operation can occasionally fail, at least when entering / resuming from sleep on Windows
+          if (++consecutiveErrors > 10)
+            break;
+          for (int i = 0; i < 40 && m_running; ++i)
+            Radiant::Sleep::sleepMs(100);
+          continue;
+        }
       }
       consecutiveErrors = 0;
 
       nvmlUtilization_t utilization {0, 0};
-      m_nvml->m_d->nvmlDeviceGetUtilizationRates(m_dev, &utilization);
+      if (isUtilizationSupported) {
+        nvmlReturn_t error = m_nvml->m_d->nvmlDeviceGetUtilizationRates(m_dev, &utilization);
+        if (error == NVML_ERROR_NOT_SUPPORTED)
+          isUtilizationSupported = false;
+      }
       sample.gpuUtilization = utilization.gpu / 100.0f;
       sample.memUtilization = utilization.memory / 100.0f;
       {
@@ -148,8 +164,14 @@ namespace Luminous
         }
       }
 
+      if (!isXidSupported)
+        continue;
+
       nvmlEventData_t data;
-      if (set && m_nvml->m_d->nvmlEventSetWait(set, &data, 0) == NVML_SUCCESS) {
+      nvmlReturn_t error = m_nvml->m_d->nvmlEventSetWait(set, &data, 0);
+      if (error == NVML_ERROR_NOT_SUPPORTED) {
+        isXidSupported = false;
+      } else if (error == NVML_SUCCESS) {
         QStringList tmp;
         tmp << name;
         tmp += specs + state();
