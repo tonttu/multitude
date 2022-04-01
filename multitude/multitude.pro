@@ -43,8 +43,13 @@ enable-luminous {
   SUBDIRS += Squish
   SUBDIRS += Luminous
   Luminous.depends = Valuable Radiant
-  enable-pdf {
-    Luminous.depends += Punctual
+}
+
+enable-pdf {
+  SUBDIRS += Pdf
+  Pdf.depends += Punctual
+  enable-luminous {
+    Pdf.depends += Luminous
   }
 }
 

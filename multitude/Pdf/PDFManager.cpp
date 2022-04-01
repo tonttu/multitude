@@ -1,5 +1,8 @@
 #include "PDFManager.hpp"
-#include "Image.hpp"
+
+#ifdef ENABLE_LUMINOUS
+#include <Luminous/Image.hpp>
+#endif
 
 #include <Radiant/CacheManager.hpp>
 #include <Radiant/FileUtils.hpp>
@@ -35,7 +38,7 @@ namespace
   struct BatchConverter
   {
     // Keep the manager alive while we are using pdfium
-    Luminous::PDFManagerPtr manager;
+    Pdf::PDFManagerPtr manager;
     QString pdfAbsoluteFilePath;
     Radiant::TimeStamp pdfModified;
     QString path;
@@ -158,7 +161,7 @@ namespace
     return targetResolution;
   }
 
-  void clearOldFiles(BatchConverter & batch, const Luminous::PDFManager::PDFCachingOptions & opts)
+  void clearOldFiles(BatchConverter & batch, const Pdf::PDFManager::PDFCachingOptions & opts)
   {
     QString targetFileGlob = QString("?????.%1").arg(opts.imageFormat);
     QDir dir(batch.path);
@@ -179,10 +182,9 @@ namespace
     }
   }
 
-  void batchConvert(BatchConverterPtr batchPtr, const Luminous::PDFManager::PDFCachingOptions & opts)
+  void batchConvert(BatchConverterPtr batchPtr, const Pdf::PDFManager::PDFCachingOptions & opts)
   {
     BatchConverter & batch = *batchPtr;
-    QRgb bg = opts.bgColor.toQColor().rgba();
 
     /// Work max one second at a time
     const double maxWorkTime = 1.0;
@@ -236,32 +238,64 @@ namespace
       targetResolution.fit(opts.resolution.cast<float>(), Qt::KeepAspectRatio);
       Nimble::SizeI pixelSize = targetResolution.cast<int>();
 
-      std::shared_ptr<Luminous::Image> image(new Luminous::Image());
-      Luminous::PixelFormat pixelFormat = Luminous::PixelFormat::bgrUByte();
-      int bitmapFormat = FPDFBitmap_BGR;
+      std::shared_ptr<QImage> image;
+      int bitmapFormat;
 
-      /// Use BGR with non-alpha images, BGRA otherwise
+      /// Use BGRx with non-alpha images, BGRA otherwise
       if (opts.bgColor.alpha() < 0.999f) {
-        pixelFormat = Luminous::PixelFormat::bgraUByte();
+        image = std::make_shared<QImage>(pixelSize.width(), pixelSize.height(), QImage::Format_ARGB32);
         bitmapFormat = FPDFBitmap_BGRA;
+      } else {
+        image = std::make_shared<QImage>(pixelSize.width(), pixelSize.height(), QImage::Format_RGB32);
+        bitmapFormat = FPDFBitmap_BGRx;
       }
 
-      image->allocate(pixelSize.width(), pixelSize.height(), pixelFormat);
-      /// Render directly to Luminous::Image buffer, no need to copy anything
+      /// Render directly to QImage buffer, no need to copy anything
       FPDF_BITMAP bitmap = FPDFBitmap_CreateEx(pixelSize.width(), pixelSize.height(),
-                                               bitmapFormat, image->data(), image->lineSize());
+                                               bitmapFormat, image->bits(), image->bytesPerLine());
 
       /// Fill the bitmap first with the chosen color
-      FPDFBitmap_FillRect(bitmap, 0, 0, pixelSize.width(), pixelSize.height(), bg);
+      image->fill(opts.bgColor.toQColor());
       FPDF_RenderPageBitmap(bitmap, page, 0, 0, pixelSize.width(), pixelSize.height(), 0, FPDF_ANNOT);
 
-      int pageNumber = batch.pageNumber;
-      auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, pageNumber, batchPtr] () mutable {
-        image->write(targetFile);
+      const int pageNumber = batch.pageNumber;
+      const QString imageFormat = opts.imageFormat;
+      auto saveTask = std::make_shared<Radiant::SingleShotTask>([targetFile, image, pageNumber, batchPtr, imageFormat] () mutable {
+#ifdef ENABLE_LUMINOUS
+        if (imageFormat == "csimg") {
+          Luminous::Image limg;
+          const int w = image->width();
+          const int h = image->height();
+          const int bpl = image->bytesPerLine();
+          if (image->format() == QImage::Format_RGB32) {
+            // This format is not supported by Luminous::Image, it also wouldn't
+            // be very efficient with csimg format, so convert it to BGR
+            uint8_t * out = image->bits();
+            const uint8_t * src = image->bits();
+            for (int y = 0; y < h; ++y) {
+              const uint8_t * in = src + y * bpl;
+              for (const uint8_t * end = in + w * 4; in < end; ++in) {
+                *out++ = *in++;
+                *out++ = *in++;
+                *out++ = *in++;
+              }
+            }
+            limg.setData(image->bits(), w, h, Luminous::PixelFormat::bgrUByte(), w*3);
+          } else {
+            limg.setData(image->bits(), w, h, Luminous::PixelFormat::bgraUByte(), bpl);
+          }
+          limg.write(targetFile);
+        } else
+#endif
+        {
+          int quality = imageFormat == "webp" ? 85 : imageFormat == "jpg" ? 95 : -1;
+          image->save(targetFile, nullptr, quality);
+        }
         batchPtr->promises[pageNumber].setValue(targetFile);
         image.reset();
         --batchPtr->queuedTasks;
       });
+
       saveTask->setPriority(Radiant::Task::PRIORITY_NORMAL - 1);
       ++batch.queuedTasks;
       Radiant::BGThread::instance()->addTask(std::move(saveTask));
@@ -282,7 +316,7 @@ namespace
 
 #if !defined(__APPLE__)
 
-  class PDFPAnnotationImpl : public Luminous::PDFPAnnotation
+  class PDFPAnnotationImpl : public Pdf::PDFPAnnotation
   {
   public:
     PDFPAnnotationImpl(FPDF_ANNOTATION annotation)
@@ -359,7 +393,7 @@ namespace
 
   /////////////////////////////////////////////////////////////////////////////
 
-  class PDFPageImpl : public Luminous::PDFPage
+  class PDFPageImpl : public Pdf::PDFPage
   {
   public:
     PDFPageImpl(FPDF_PAGE page)
@@ -403,7 +437,7 @@ namespace
       }
     }
 
-    Luminous::PDFPAnnotationPtr createAnnotation() override
+    Pdf::PDFPAnnotationPtr createAnnotation() override
     {
       assert(m_page);
       std::lock_guard<std::mutex> guard(s_pdfiumMutex);
@@ -481,10 +515,10 @@ namespace
 
   /////////////////////////////////////////////////////////////////////////////
 
-  class PDFDocumentImpl : public Luminous::PDFDocument
+  class PDFDocumentImpl : public Pdf::PDFDocument
   {
   public:
-    PDFDocumentImpl(FPDF_DOCUMENT doc, Luminous::PDFManagerPtr manager)
+    PDFDocumentImpl(FPDF_DOCUMENT doc, Pdf::PDFManagerPtr manager)
       : m_doc(doc)
       , m_manager(std::move(manager))
     {
@@ -505,7 +539,7 @@ namespace
       return FPDF_GetPageCount(m_doc);
     }
 
-    Luminous::PDFPagePtr openPage(int index) override
+    Pdf::PDFPagePtr openPage(int index) override
     {
       assert(m_doc);
       std::lock_guard<std::mutex> guard(s_pdfiumMutex);
@@ -529,14 +563,14 @@ namespace
   private:
     FPDF_DOCUMENT m_doc = nullptr;
     // Keep the manager alive while we are using pdfium
-    Luminous::PDFManagerPtr m_manager;
+    Pdf::PDFManagerPtr m_manager;
   };
 
 #endif // #if !defined(__APPLE__)
 
 } // anonymous namespace
 
-namespace Luminous
+namespace Pdf
 {
 
 #if !defined(__APPLE__)
@@ -643,10 +677,20 @@ namespace Luminous
   }
 
   folly::Future<PDFManager::CachedPDFDocument> PDFManager::renderDocumentToCacheDir(
-      const QString & pdfFilename, const PDFCachingOptions & opts, int maxPageCount)
+      const QString & pdfFilename, PDFCachingOptions opts, int maxPageCount)
   {
     BatchConverterPtr batchConverter { new BatchConverter() };
     batchConverter->manager = weakInstance().lock();
+
+#ifdef ENABLE_LUMINOUS
+    if (opts.imageFormat.isEmpty())
+      opts.imageFormat = "csimg";
+#else
+    if (opts.imageFormat.isEmpty())
+      opts.imageFormat = "webp";
+    else if (opts.imageFormat == "csimg")
+      return std::invalid_argument("csimg image format support not compiled in");
+#endif
 
     /// Make a copy of the default cache path now and not asynchronously when
     /// it could have been changed.

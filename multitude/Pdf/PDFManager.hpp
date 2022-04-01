@@ -13,13 +13,13 @@
 #include <QImage>
 #include <QIODevice>
 
-namespace Luminous
+namespace Pdf
 {
 #if !defined(__APPLE__)
   ///
   /// @brief Represents stamp annotation
   /// This API is experimental one and are subject to change in future
-  class LUMINOUS_API PDFPAnnotation
+  class PDF_API PDFPAnnotation
   {
   public:
     virtual ~PDFPAnnotation();
@@ -58,7 +58,7 @@ namespace Luminous
   ///
   /// @brief Represents PDF document page
   /// This API is experimental one and are subject to change in future
-  class LUMINOUS_API PDFPage
+  class PDF_API PDFPage
   {
   public:
     virtual ~PDFPage();
@@ -102,7 +102,7 @@ namespace Luminous
   ///
   /// @brief Represent PDF document that is possible to edit
   /// This API is experimental one and are subject to change in future
-  class LUMINOUS_API PDFDocument
+  class PDF_API PDFDocument
   {
   public:
     virtual ~PDFDocument();
@@ -128,7 +128,7 @@ namespace Luminous
   using PDFDocumentPtr = std::shared_ptr<PDFDocument>;
 #endif // #if !defined(__APPLE__)
 
-  class LUMINOUS_API PDFManager
+  class PDF_API PDFManager
   {
     DECLARE_SINGLETON(PDFManager);
 
@@ -174,10 +174,13 @@ namespace Luminous
       /// Actual files will be written to a subdirectory, for example the first
       /// page will look like: <cachePath>/<sha1(file, params)>/00000.csimg
       QString cachePath;
-      /// Image format (file extension) for the cached files. Unless you have a
-      /// great reason to change it, use the default "csimg" which is by far
+      /// Image format (file extension) for the cached files.
+      /// The default is "csimg" if ENABLE_LUMINOUS is defined. This is by far
       /// the fastest image format to encode and decode.
-      QString imageFormat = "csimg";
+      /// If ENABLE_LUMINOUS is not defined, the default is then "webp", which
+      /// is great for optimizing disk space / bandwidth, but is lossy and
+      /// takes more resources to encode and decode.
+      QString imageFormat;
     };
 
   public:
@@ -230,7 +233,7 @@ namespace Luminous
     ///         directory and futures for individual pages. If the operation
     ///         fails, the returned future contains std::runtime_error
     folly::Future<CachedPDFDocument> renderDocumentToCacheDir(const QString & pdfFilename,
-                                                              const PDFCachingOptions & opts,
+                                                              PDFCachingOptions opts,
                                                               int maxPageCount = std::numeric_limits<int>::max());
 #if !defined(__APPLE__)
     /// @brief Opens PDF file for edit
