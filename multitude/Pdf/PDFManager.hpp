@@ -2,6 +2,8 @@
 
 #include <folly/futures/Future.h>
 
+#include <boost/expected/expected.hpp>
+
 #include "Export.hpp"
 
 #include <Radiant/Color.hpp>
@@ -200,6 +202,10 @@ namespace Pdf
     folly::Future<QImage> renderPage(const QString& pdfAbsoluteFilePath, int pageNumber,
                                      const Nimble::SizeI& resolution, QRgb color = 0x00FFFFFF);
 
+    /// Like renderPage, but works synchronously
+    boost::expected<QImage, QString> renderPageSync(const QString & pdfAbsoluteFilePath, int pageNumber,
+                                                    const Nimble::SizeI & resolution, QRgb color = 0x00FFFFFF);
+
     /// @param pdfAbsoluteFilePath absolute file path of the pdf file
     /// @param pageNumber page to render. Page indexing starts from zero.
     /// @param pageAbsoluteFilePath file path for the rendered result
@@ -218,6 +224,11 @@ namespace Pdf
     /// @return page size in points where single point is ~0.3528mm. If operation
     ///         failed contains std::exception with error message
     folly::Future<Nimble::SizeF> getPageSize(const QString& pdfAbsoluteFilePath, int pageNumber);
+
+    /// Like getPageSize, but works synchronously
+    /// @returns page size and the number of pages
+    boost::expected<std::pair<Nimble::SizeF, int>, QString> pageSizeSync(
+        const QString & pdfAbsoluteFilePath, int pageNumber);
 
     /// Set the default cache path used with renderDocumentToCacheDir
     void setDefaultCachePath(const QString & cachePath);

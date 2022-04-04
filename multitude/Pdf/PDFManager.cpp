@@ -109,7 +109,7 @@ namespace
     Nimble::SizeF targetResolution(FPDF_GetPageWidth(page), FPDF_GetPageHeight(page));
     targetResolution.fit(resolution.cast<float>(), Qt::KeepAspectRatio);
 
-    Nimble::SizeI pixelSize = targetResolution.cast<int>();
+    Nimble::SizeI pixelSize = targetResolution.round<int>();
 
     FPDF_BITMAP bitmap = FPDFBitmap_Create(pixelSize.width(), pixelSize.height(), 1);
     /// Will the bitmap first with the chosen color
@@ -130,7 +130,7 @@ namespace
   }
 
   boost::expected<Nimble::SizeF>
-  getPageSize(const QString& pdfAbsoluteFilePath, int pageNumber)
+  getPageSize(const QString& pdfAbsoluteFilePath, int pageNumber, int * pageCount = nullptr)
   {
     QFile file(pdfAbsoluteFilePath);
     if (!file.open(QFile::ReadOnly)) {
@@ -146,6 +146,9 @@ namespace
             std::runtime_error(QString("Could not open document %1 [1].").
                                arg(pdfAbsoluteFilePath).toStdString()));
     }
+
+    if (pageCount)
+      *pageCount = FPDF_GetPageCount(doc);
 
     FPDF_PAGE page = FPDF_LoadPage(doc, pageNumber);
     if(!page) {
@@ -236,7 +239,7 @@ namespace
 
       Nimble::SizeF targetResolution(FPDF_GetPageWidth(page), FPDF_GetPageHeight(page));
       targetResolution.fit(opts.resolution.cast<float>(), Qt::KeepAspectRatio);
-      Nimble::SizeI pixelSize = targetResolution.cast<int>();
+      Nimble::SizeI pixelSize = targetResolution.round<int>();
 
       std::shared_ptr<QImage> image;
       int bitmapFormat;
@@ -642,6 +645,17 @@ namespace Pdf
     return Punctual::createWrappedTask<QImage>(std::move(taskFunc));
   }
 
+  boost::expected<QImage, QString> PDFManager::renderPageSync(
+      const QString & pdfAbsoluteFilePath, int pageNumber, const Nimble::SizeI & resolution, QRgb color)
+  {
+    std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+    try {
+      return ::renderPage(pdfAbsoluteFilePath, pageNumber, resolution, color).value();
+    } catch (std::exception & error) {
+      return boost::make_unexpected(error.what());
+    }
+  }
+
   folly::Future<folly::Unit> PDFManager::renderPageToFile(const QString& pdfAbsoluteFilePath,
                                                           int pageNumber,
                                                           const QString& pageAbsoluteFilePath,
@@ -674,6 +688,19 @@ namespace Pdf
       return size;
     };
     return Punctual::createWrappedTask<Nimble::SizeF>(std::move(taskFunc));
+  }
+
+  boost::expected<std::pair<Nimble::SizeF, int>, QString> PDFManager::pageSizeSync(
+      const QString & pdfAbsoluteFilePath, int pageNumber)
+  {
+    std::lock_guard<std::mutex> guard(s_pdfiumMutex);
+    try {
+      int pageCount;
+      Nimble::SizeF size = ::getPageSize(pdfAbsoluteFilePath, pageNumber, &pageCount).value();
+      return std::make_pair(size, pageCount);
+    } catch (std::exception & error) {
+      return boost::make_unexpected(error.what());
+    }
   }
 
   folly::Future<PDFManager::CachedPDFDocument> PDFManager::renderDocumentToCacheDir(
