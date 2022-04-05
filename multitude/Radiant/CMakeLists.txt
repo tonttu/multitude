@@ -102,10 +102,6 @@ target_include_directories(${LIBRARY}
     ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
 )
 
-if(WIN32)
-  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
-endif()
-
 if (ENABLE_FOLLY)
   cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
 
@@ -135,5 +131,9 @@ target_compile_definitions(${LIBRARY} PRIVATE
 )
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
+
+if(WIN32)
+  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
+endif()
 
 cornerstone_install_lib(${LIBRARY})
