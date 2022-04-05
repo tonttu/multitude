@@ -26,6 +26,7 @@ if(ENABLE_RESONANT OR ENABLE_MUSHY)
   add_subdirectory(Valuable)
 
   include(Radiant/Version.cmake)
+  include(Radiant/RadiantHdr.cmake)
 endif()
 
 if(ENABLE_RESONANT)

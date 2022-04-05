@@ -22,8 +22,6 @@ target_compile_definitions(${LIBRARY} PRIVATE NIMBLE_EXPORT _USE_MATH_DEFINES)
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
 
-target_include_directories(${LIBRARY}
-  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
-)
+target_link_libraries(${LIBRARY} PRIVATE RadiantHdr)
 
 cornerstone_install_lib(${LIBRARY})
