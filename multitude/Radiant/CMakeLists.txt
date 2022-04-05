@@ -111,10 +111,6 @@ if (ENABLE_FOLLY)
 
   if(UNIX)
     target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog)
-  elseif(WIN32)
-    find_package(ZLIB REQUIRED)
-
-    #target_include_directories(${LIBRARY} PUBLIC ${VCPKG_ROOT}/include)
   endif()
 endif()
 
