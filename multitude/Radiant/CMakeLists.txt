@@ -99,11 +99,6 @@ target_include_directories(${LIBRARY}
 )
 
 if(WIN32)
-  target_compile_definitions(${LIBRARY} PRIVATE
-    -D_CRT_SECURE_NO_WARNINGS
-    -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
-  )
-
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
 endif()
 
@@ -138,11 +133,12 @@ if(ENABLE_SECRET_STORE)
   )
 endif()
 
-if(ENABLE_CI_BUILD)
-  target_compile_definitions(${LIBRARY} PRIVATE ENABLE_CI_BUILD)
-endif()
-
-target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
+target_compile_definitions(${LIBRARY} PRIVATE
+  RADIANT_EXPORT
+  $<$<BOOL:${ENABLE_CI_BUILD}>:ENABLE_CI_BUILD>
+  $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
+  $<$<PLATFORM_ID:Windows>:MULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}>
+)
 
 cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
 
