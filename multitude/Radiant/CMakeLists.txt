@@ -68,9 +68,29 @@ target_sources(${LIBRARY} PRIVATE
   CacheManager.cpp
   CrashHandlerCommon.cpp
   TraceCrashHandlerFilter.cpp
+  # For Linux
+  $<$<PLATFORM_ID:Linux>:ProcessRunnerPosix.cpp>
+  $<$<PLATFORM_ID:Linux>:DeviceMonitor.cpp>
+  $<$<PLATFORM_ID:Linux>:TraceSyslogFilter.cpp>
+  $<$<PLATFORM_ID:Linux>:SystemCpuTimeLinux.cpp>
+  $<$<PLATFORM_ID:Linux>:CallStackUnix.cpp>
+  $<$<PLATFORM_ID:Linux>:CrashHandlerBreakpad.cpp>
+  # For Windows
+  $<$<PLATFORM_ID:Windows>:CrashHandlerCrashpad.cpp>
+  $<$<PLATFORM_ID:Windows>:DeviceUtilsWin.cpp>
+  $<$<PLATFORM_ID:Windows>:TraceWindowsDebugConsoleFilter.cpp>
+  $<$<PLATFORM_ID:Windows>:SystemCpuTimeWin32.cpp>
 )
 
-target_link_libraries(${LIBRARY} PRIVATE Nimble PUBLIC VersionHdr)
+target_link_libraries(${LIBRARY}
+  PRIVATE
+    Nimble
+    "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
+    "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
+    "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
+  PUBLIC
+    VersionHdr
+)
 
 target_include_directories(${LIBRARY}
   PUBLIC
@@ -78,33 +98,10 @@ target_include_directories(${LIBRARY}
     ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
 )
 
-if (UNIX)
-  target_sources(${LIBRARY} PRIVATE
-    ProcessRunnerPosix.cpp
-    DeviceMonitor.cpp
-    TraceSyslogFilter.cpp
-    SystemCpuTimeLinux.cpp
-    CallStackUnix.cpp
-    CrashHandlerBreakpad.cpp # CrashHandler
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE
-    PkgConfig::Udev PkgConfig::BreakPad)
-elseif(WIN32)
-  target_sources(${LIBRARY} PRIVATE
-    CrashHandlerCrashpad.cpp
-    DeviceUtilsWin.cpp
-    TraceWindowsDebugConsoleFilter.cpp
-    SystemCpuTimeWin32.cpp
-  )
-
+if(WIN32)
   target_compile_definitions(${LIBRARY} PRIVATE
     -D_CRT_SECURE_NO_WARNINGS
     -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE
-    Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib MultiCrashpad
   )
 
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
