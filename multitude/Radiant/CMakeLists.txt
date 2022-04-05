@@ -136,17 +136,16 @@ if (ENABLE_FOLLY)
 endif()
 
 if(ENABLE_SECRET_STORE)
-  target_sources(${LIBRARY} PRIVATE SecretStoreDummy.cpp)
+  target_sources(${LIBRARY} PRIVATE
+    SecretStoreDummy.cpp
+    $<$<PLATFORM_ID:Linux>:SecretStoreLinux.cpp>
+    $<$<PLATFORM_ID:Windows>:SecretStoreWin32.cpp>
+  )
 
-  if(UNIX)
-    target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
-
-    target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET OurExpected)
-  elseif(WIN32)
-    target_sources(${LIBRARY} PRIVATE SecretStoreWin32.cpp)
-
-    target_link_libraries(${LIBRARY} PRIVATE Crypt32)
-  endif()
+  target_link_libraries(${LIBRARY} PRIVATE
+    "$<$<PLATFORM_ID:Linux>:OurExpected;PkgConfig::LIBSECRET>"
+    $<$<PLATFORM_ID:Windows>:Crypt32>
+  )
 endif()
 
 if(ENABLE_CI_BUILD)
