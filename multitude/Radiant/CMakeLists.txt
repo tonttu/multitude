@@ -68,6 +68,10 @@ target_sources(${LIBRARY} PRIVATE
   CacheManager.cpp
   CrashHandlerCommon.cpp
   TraceCrashHandlerFilter.cpp
+  # With Folly
+  $<$<BOOL:${ENABLE_FOLLY}>:ThreadPoolExecutor.cpp>
+  $<$<BOOL:${ENABLE_FOLLY}>:BGThreadExecutor.cpp>
+  $<$<BOOL:${ENABLE_FOLLY}>:OnDemandExecutor.cpp>
   # For Linux
   $<$<PLATFORM_ID:Linux>:ProcessRunnerPosix.cpp>
   $<$<PLATFORM_ID:Linux>:DeviceMonitor.cpp>
@@ -103,12 +107,6 @@ if(WIN32)
 endif()
 
 if (ENABLE_FOLLY)
-  target_sources(${LIBRARY} PRIVATE
-    ThreadPoolExecutor.cpp
-    BGThreadExecutor.cpp
-    OnDemandExecutor.cpp
-  )
-
   cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
 
   if(UNIX)
