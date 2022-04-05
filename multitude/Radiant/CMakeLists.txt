@@ -98,20 +98,13 @@ elseif(WIN32)
     SystemCpuTimeWin32.cpp
   )
 
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include)
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include/third_party/mini_chromium/mini_chromium)
-
   target_compile_definitions(${LIBRARY} PRIVATE
     -D_CRT_SECURE_NO_WARNINGS
     -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
   )
 
-  # Link against debug variant when doing debug build.
-  set(crashpad "crashpad$<$<CONFIG:debug>:d>.lib")
-
   target_link_libraries(${LIBRARY} PRIVATE
-    Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib
-    ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/${crashpad}
+    Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib MultiCrashpad
   )
 
   cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
