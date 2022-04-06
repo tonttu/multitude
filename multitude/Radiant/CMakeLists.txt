@@ -89,12 +89,12 @@ target_sources(${LIBRARY} PRIVATE
 target_link_libraries(${LIBRARY}
   PRIVATE
     Nimble
-    $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
     "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
     "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
     "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
   PUBLIC
     VersionHdr
+    $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
 )
 
 target_include_directories(${LIBRARY}
