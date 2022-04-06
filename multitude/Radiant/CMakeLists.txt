@@ -89,6 +89,7 @@ target_sources(${LIBRARY} PRIVATE
 target_link_libraries(${LIBRARY}
   PRIVATE
     Nimble
+    $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
     "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
     "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
     "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
@@ -101,14 +102,6 @@ target_include_directories(${LIBRARY}
     ${Cornerstone_SOURCE_DIR}/multitude
     ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
 )
-
-if (ENABLE_FOLLY)
-  cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
-
-  if(UNIX)
-    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog)
-  endif()
-endif()
 
 if(ENABLE_SECRET_STORE)
   target_sources(${LIBRARY} PRIVATE

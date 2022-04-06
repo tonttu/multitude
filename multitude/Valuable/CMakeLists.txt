@@ -49,9 +49,7 @@ endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
 
-target_link_libraries(${LIBRARY}
-  PUBLIC Radiant
-)
+target_link_libraries(${LIBRARY} PUBLIC Radiant MultiFolly)
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
