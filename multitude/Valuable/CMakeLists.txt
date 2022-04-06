@@ -36,20 +36,17 @@ target_sources(${LIBRARY} PRIVATE
   AttributeAsset.cpp
   Symbol.cpp
   SystemEvents.cpp
+  # With Folly
+  $<$<BOOL:${ENABLE_FOLLY}>:EventWrapper.cpp>
 )
 
-if(ENABLE_FOLLY)
-  target_sources(${LIBRARY} PRIVATE EventWrapper.cpp)
-endif()
+target_compile_definitions(${LIBRARY} PRIVATE
+  VALUABLE_EXPORT $<$<BOOL:${ENABLE_PUNCTUAL}>:ENABLE_PUNCTUAL>
+)
 
-if(ENABLE_PUNCTUAL)
-  target_compile_definitions(${LIBRARY} PRIVATE -DENABLE_PUNCTUAL)
-  target_link_libraries(${LIBRARY} PRIVATE Punctual)
-endif()
-
-target_compile_definitions(${LIBRARY} PRIVATE -DVALUABLE_EXPORT)
-
-target_link_libraries(${LIBRARY} PUBLIC Radiant MultiFolly)
+target_link_libraries(${LIBRARY}
+  PUBLIC Radiant MultiFolly $<$<BOOL:${ENABLE_PUNCTUAL}>:Punctual>
+)
 
 cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
