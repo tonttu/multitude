@@ -20,8 +20,6 @@ target_sources(${LIBRARY} PRIVATE
 
 target_compile_definitions(${LIBRARY} PRIVATE NIMBLE_EXPORT _USE_MATH_DEFINES)
 
-cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Core")
-
-target_link_libraries(${LIBRARY} PRIVATE RadiantHdr)
+target_link_libraries(${LIBRARY} PRIVATE RadiantHdr Qt5::Core)
 
 cornerstone_install_lib(${LIBRARY})
