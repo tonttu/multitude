@@ -45,9 +45,8 @@ target_compile_definitions(${LIBRARY} PRIVATE
 )
 
 target_link_libraries(${LIBRARY}
+  PRIVATE Qt5::Xml
   PUBLIC Radiant MultiFolly $<$<BOOL:${ENABLE_PUNCTUAL}>:Punctual>
 )
-
-cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})
