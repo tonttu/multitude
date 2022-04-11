@@ -87,8 +87,6 @@ if(UNIX)
 
   find_library(LZ4_LIBRARY lz4)
   target_link_libraries(${LIBRARY} PRIVATE lz4)
-
-  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "X11Extras")
 elseif(WIN32)
 
   target_sources(${LIBRARY} PRIVATE
@@ -110,10 +108,18 @@ endif()
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
 target_link_libraries(${LIBRARY}
-  PRIVATE Squish NVML ADL_SDK
-  PUBLIC Valuable Nimble Punctual
+  PRIVATE
+    Squish
+    NVML
+    ADL_SDK
+    Qt5::Widgets
+    Qt5::Svg
+    $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+  PUBLIC
+    Valuable
+    Nimble
+    Punctual
+    Qt5::Core
 )
-
-cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
 
 cornerstone_install_lib(${LIBRARY})
