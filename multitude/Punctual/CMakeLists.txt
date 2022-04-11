@@ -9,6 +9,6 @@ target_sources(${LIBRARY} PRIVATE
 
 target_compile_definitions(${LIBRARY} PRIVATE -DPUNCTUAL_EXPORT)
 
-target_link_libraries(${LIBRARY} PUBLIC Radiant MultiFolly)
+target_link_libraries(${LIBRARY} PRIVATE Qt5::Core PUBLIC Radiant MultiFolly)
 
 cornerstone_install_lib(${LIBRARY})

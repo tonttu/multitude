@@ -53,6 +53,6 @@ if(WIN32)
   target_link_libraries(${LIBRARY} PRIVATE portaudio)
 endif()
 
-target_link_libraries(${LIBRARY} PUBLIC Radiant Valuable)
+target_link_libraries(${LIBRARY} PRIVATE Qt5::Core PUBLIC Radiant Valuable)
 
 cornerstone_install_lib(${LIBRARY})

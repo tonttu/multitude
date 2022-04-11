@@ -45,7 +45,7 @@ target_compile_definitions(${LIBRARY} PRIVATE
 )
 
 target_link_libraries(${LIBRARY}
-  PRIVATE Qt5::Xml
+  PRIVATE Qt5::Xml Qt5::Gui
   PUBLIC Radiant MultiFolly $<$<BOOL:${ENABLE_PUNCTUAL}>:Punctual>
 )
 

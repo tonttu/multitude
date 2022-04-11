@@ -89,11 +89,14 @@ target_sources(${LIBRARY} PRIVATE
 target_link_libraries(${LIBRARY}
   PRIVATE
     Nimble
+    Qt5::Sql
+    "$<$<PLATFORM_ID:Windows>:Qt5::Widgets>"
     "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
     "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
     "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
   PUBLIC
     VersionHdr
+    Qt5::Gui
     $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
 )
 
@@ -123,11 +126,5 @@ target_compile_definitions(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:
     MULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}>
 )
-
-cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
-
-if(WIN32)
-  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
-endif()
 
 cornerstone_install_lib(${LIBRARY})
