@@ -47,14 +47,12 @@ target_compile_definitions(${LIBRARY}
   PUBLIC -DUNITTEST_USE_CUSTOM_STREAMS
 )
 
-target_link_libraries(${LIBRARY} PRIVATE Radiant)
+target_link_libraries(${LIBRARY} PRIVATE Radiant Qt5::Xml)
 target_include_directories(${LIBRARY} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # Needs to be system include directory to hide warnings.
 target_include_directories(${LIBRARY} SYSTEM PUBLIC ${dotdot})
-
-cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Xml")
 
 cornerstone_install_lib(${LIBRARY})
