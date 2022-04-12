@@ -19,12 +19,6 @@ target_sources(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:MWCapture.cpp>
 )
 
-if(WIN32)
-  target_link_libraries(${LIBRARY}
-    PRIVATE MultiMWCapture Strmiids.lib Propsys.lib
-  )
-endif()
-
 target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
 target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
 
@@ -37,7 +31,11 @@ if(UNIX)
 endif()
 
 target_link_libraries(${LIBRARY}
-  PRIVATE Radiant Resonant MultiFFMPEG $<$<PLATFORM_ID:Windows>:RGBEasy>
+  PRIVATE
+    Radiant
+    Resonant
+    MultiFFMPEG
+    "$<$<PLATFORM_ID:Windows>:RGBEasy;MultiMWCapture;Strmiids;Propsys>"
 )
 
 cornerstone_install_lib(${LIBRARY})
