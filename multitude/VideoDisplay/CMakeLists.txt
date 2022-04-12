@@ -24,13 +24,12 @@ target_compile_definitions(${LIBRARY}
   PUBLIC ENABLE_VIDEO_DISPLAY
 )
 
-if(UNIX)
-  # TODO: Should update our code that uses deprecated FFMPEG API
-  # TODO: Should handle errors
-  target_compile_options(${LIBRARY} PRIVATE
-    -Wno-error=deprecated-declarations -Wno-error=unused-result
-    )
-endif()
+# TODO: Should update our code that uses deprecated FFMPEG API
+# TODO: Should handle errors
+target_compile_options(${LIBRARY} PRIVATE
+  $<$<PLATFORM_ID:Linux>:-Wno-error=deprecated-declarations>
+  $<$<PLATFORM_ID:Linux>:-Wno-error=unused-result>
+)
 
 target_link_libraries(${LIBRARY}
   PRIVATE
