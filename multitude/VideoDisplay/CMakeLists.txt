@@ -15,8 +15,6 @@ if(UNIX)
     FfmpegVideoFormatSelectorLinux.cpp
     V4L2Monitor.cpp
   )
-
-  target_link_libraries(${LIBRARY} PRIVATE PkgConfig::MultiFFMPEG)
 elseif(WIN32)
   target_sources(${LIBRARY} PRIVATE
     WindowsVideoMonitor.cpp
@@ -29,7 +27,7 @@ elseif(WIN32)
   target_include_directories(${LIBRARY} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/rgbeasy-sdk-v7.14.1/include)
 
   target_link_libraries(${LIBRARY}
-    PRIVATE MultiMWCapture MultiFFMPEG Strmiids.lib Propsys.lib
+    PRIVATE MultiMWCapture Strmiids.lib Propsys.lib
   )
 endif()
 
@@ -44,6 +42,6 @@ if(UNIX)
     )
 endif()
 
-target_link_libraries(${LIBRARY} PRIVATE Radiant Resonant)
+target_link_libraries(${LIBRARY} PRIVATE Radiant Resonant MultiFFMPEG)
 
 cornerstone_install_lib(${LIBRARY})
