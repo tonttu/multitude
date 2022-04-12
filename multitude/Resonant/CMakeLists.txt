@@ -23,18 +23,6 @@ target_sources(${LIBRARY} PRIVATE
   $<$<BOOL:${ENABLE_PULSE_AUDIO}>:PulseAudioContext.cpp>
 )
 
-if(ENABLE_PORT_AUDIO)
-  if(UNIX)
-    target_link_libraries(${LIBRARY} PRIVATE sndfile)
-  endif()
-
-  target_link_libraries(${LIBRARY} PRIVATE portaudio)
-endif()
-
-if(ENABLE_PULSE_AUDIO)
-  target_link_libraries(${LIBRARY} PRIVATE pulse)
-endif()
-
 target_compile_definitions(${LIBRARY}
   PRIVATE
     RESONANT_EXPORT
@@ -42,10 +30,14 @@ target_compile_definitions(${LIBRARY}
     $<$<BOOL:${ENABLE_PULSE_AUDIO}>:CORNERSTONE_ENABLE_PULSE>
 )
 
-if(WIN32)
-  target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile portaudio)
-endif()
-
-target_link_libraries(${LIBRARY} PRIVATE Qt5::Core PUBLIC Radiant Valuable)
+target_link_libraries(${LIBRARY}
+  PRIVATE
+    Qt5::Core
+    "$<$<BOOL:${ENABLE_PORT_AUDIO}>:portaudio;MultiSndFile>"
+    $<$<BOOL:${ENABLE_PULSE_AUDIO}>:pulse>
+  PUBLIC
+    Radiant
+    Valuable
+)
 
 cornerstone_install_lib(${LIBRARY})
