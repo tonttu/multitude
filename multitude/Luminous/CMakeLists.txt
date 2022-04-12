@@ -84,9 +84,7 @@ target_sources(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:DxSharedTexture.cpp>
 )
 
-if(UNIX)
-  target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
-elseif(WIN32)
+if(WIN32)
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
 
@@ -104,6 +102,7 @@ target_link_libraries(${LIBRARY}
     Qt5::Widgets
     Qt5::Svg
     $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+    "$<$<PLATFORM_ID:Linux>:XNVCtrl;Xrandr;Xext;Xinerama>"
   PUBLIC
     Valuable
     Nimble
