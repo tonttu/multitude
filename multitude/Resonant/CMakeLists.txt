@@ -17,8 +17,6 @@ target_sources(${LIBRARY} PRIVATE
 )
 
 if(ENABLE_PORT_AUDIO)
-  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PORT_AUDIO)
-
   target_sources(${LIBRARY} PRIVATE
     PortAudioSource.cpp
     AudioLoopPortAudio.cpp
@@ -32,8 +30,6 @@ if(ENABLE_PORT_AUDIO)
 endif()
 
 if(ENABLE_PULSE_AUDIO)
-  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PULSE)
-
   target_sources(${LIBRARY} PRIVATE
     PulseAudioSource.cpp
     AudioLoopPulseAudio.cpp
@@ -43,7 +39,12 @@ if(ENABLE_PULSE_AUDIO)
   target_link_libraries(${LIBRARY} PRIVATE pulse)
 endif()
 
-target_compile_definitions(${LIBRARY} PRIVATE -DRESONANT_EXPORT)
+target_compile_definitions(${LIBRARY}
+  PRIVATE
+    RESONANT_EXPORT
+    $<$<BOOL:${ENABLE_PORT_AUDIO}>:CORNERSTONE_ENABLE_PORT_AUDIO>
+    $<$<BOOL:${ENABLE_PULSE}>:CORNERSTONE_ENABLE_PULSE>
+)
 
 if(WIN32)
   target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile portaudio)
