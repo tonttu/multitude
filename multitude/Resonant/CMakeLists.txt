@@ -38,6 +38,7 @@ target_link_libraries(${LIBRARY}
   PUBLIC
     Radiant
     Valuable
+    Nimble
 )
 
 cornerstone_install_lib(${LIBRARY})
