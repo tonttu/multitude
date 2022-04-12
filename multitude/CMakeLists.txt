@@ -36,6 +36,7 @@ endif()
 
 if(ENABLE_VIDEODISPLAY)
   add_subdirectory(VideoDisplay)
+  add_subdirectory(VideoDisplay/rgbeasy-sdk-v7.14.1)
 endif()
 
 if(ENABLE_APPLICATIONS)

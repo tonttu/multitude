@@ -20,8 +20,6 @@ target_sources(${LIBRARY} PRIVATE
 )
 
 if(WIN32)
-  target_include_directories(${LIBRARY} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/rgbeasy-sdk-v7.14.1/include)
-
   target_link_libraries(${LIBRARY}
     PRIVATE MultiMWCapture Strmiids.lib Propsys.lib
   )
@@ -38,6 +36,8 @@ if(UNIX)
     )
 endif()
 
-target_link_libraries(${LIBRARY} PRIVATE Radiant Resonant MultiFFMPEG)
+target_link_libraries(${LIBRARY}
+  PRIVATE Radiant Resonant MultiFFMPEG $<$<PLATFORM_ID:Windows>:RGBEasy>
+)
 
 cornerstone_install_lib(${LIBRARY})
