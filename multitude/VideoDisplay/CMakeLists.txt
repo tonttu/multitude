@@ -19,8 +19,10 @@ target_sources(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:MWCapture.cpp>
 )
 
-target_compile_definitions(${LIBRARY} PRIVATE -DVIDEODISPLAY_EXPORT)
-target_compile_definitions(${LIBRARY} PUBLIC -DENABLE_VIDEO_DISPLAY)
+target_compile_definitions(${LIBRARY}
+  PRIVATE VIDEODISPLAY_EXPORT
+  PUBLIC ENABLE_VIDEO_DISPLAY
+)
 
 if(UNIX)
   # TODO: Should update our code that uses deprecated FFMPEG API
