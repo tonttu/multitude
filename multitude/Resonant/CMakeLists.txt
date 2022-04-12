@@ -46,11 +46,7 @@ endif()
 target_compile_definitions(${LIBRARY} PRIVATE -DRESONANT_EXPORT)
 
 if(WIN32)
-  find_package(SndFile CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile)
-
-  find_package(portaudio CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE portaudio)
+  target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile portaudio)
 endif()
 
 target_link_libraries(${LIBRARY} PRIVATE Qt5::Core PUBLIC Radiant Valuable)
