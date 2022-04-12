@@ -31,9 +31,7 @@ target_sources(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:Win32/TimeHelpers.cpp>
 )
 
-if(WIN32)
-  target_compile_options(${LIBRARY} PRIVATE -wd4251)
-endif()
+target_compile_options(${LIBRARY} PRIVATE $<$<PLATFORM_ID:Windows>:-wd4251>)
 
 target_compile_definitions(${LIBRARY}
   PRIVATE
