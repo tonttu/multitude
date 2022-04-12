@@ -96,6 +96,7 @@ target_link_libraries(${LIBRARY}
     "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
   PUBLIC
     VersionHdr
+    Patterns
     Qt5::Gui
     $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
 )

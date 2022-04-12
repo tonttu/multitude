@@ -102,6 +102,7 @@ target_link_libraries(${LIBRARY}
     Valuable
     Nimble
     Punctual
+    Patterns
     Qt5::Core
 )
 

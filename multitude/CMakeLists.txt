@@ -1,4 +1,5 @@
 add_subdirectory(ThirdParty/expected)
+add_subdirectory(Patterns)
 
 if(ENABLE_PUNCTUAL)
   add_subdirectory(Punctual)
