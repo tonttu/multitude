@@ -84,11 +84,6 @@ target_sources(${LIBRARY} PRIVATE
   $<$<PLATFORM_ID:Windows>:DxSharedTexture.cpp>
 )
 
-if(WIN32)
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
-  target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
-endif()
-
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
 target_link_libraries(${LIBRARY}
@@ -102,6 +97,7 @@ target_link_libraries(${LIBRARY}
     $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
     "$<$<PLATFORM_ID:Linux>:XNVCtrl;Xrandr;Xext;Xinerama>"
     "$<$<PLATFORM_ID:Windows>:Opengl32;Dwmapi;DXGI;D3D11;WindowsApp>"
+    $<$<PLATFORM_ID:Windows>:MultiNVApi>
   PUBLIC
     Valuable
     Nimble
