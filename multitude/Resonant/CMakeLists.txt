@@ -14,14 +14,16 @@ target_sources(${LIBRARY} PRIVATE
   ModulePanner.cpp
   ModuleSamplePlayer.cpp
   SoundRectangle.cpp
+  # For port audio.
+  $<$<BOOL:${ENABLE_PORT_AUDIO}>:PortAudioSource.cpp>
+  $<$<BOOL:${ENABLE_PORT_AUDIO}>:AudioLoopPortAudio.cpp>
+  # For pulse audio.
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:PulseAudioSource.cpp>
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:AudioLoopPulseAudio.cpp>
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:PulseAudioContext.cpp>
 )
 
 if(ENABLE_PORT_AUDIO)
-  target_sources(${LIBRARY} PRIVATE
-    PortAudioSource.cpp
-    AudioLoopPortAudio.cpp
-  )
-
   if(UNIX)
     target_link_libraries(${LIBRARY} PRIVATE sndfile)
   endif()
@@ -30,12 +32,6 @@ if(ENABLE_PORT_AUDIO)
 endif()
 
 if(ENABLE_PULSE_AUDIO)
-  target_sources(${LIBRARY} PRIVATE
-    PulseAudioSource.cpp
-    AudioLoopPulseAudio.cpp
-    PulseAudioContext.cpp
-  )
-
   target_link_libraries(${LIBRARY} PRIVATE pulse)
 endif()
 
