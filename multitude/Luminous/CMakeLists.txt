@@ -74,28 +74,22 @@ target_sources(${LIBRARY} PRIVATE
   ScreenDetectorAMD.cpp
   ScreenDetectorNV.cpp
   UploadBuffer.cpp
+  # For Linux
+  $<$<PLATFORM_ID:Linux>:XRandR.cpp>
+  $<$<PLATFORM_ID:Linux>:Xinerama.cpp>
+  # For Windows
+  $<$<PLATFORM_ID:Windows>:GPUAffinity.cpp>
+  $<$<PLATFORM_ID:Windows>:DisplayConfigWin.cpp>
+  $<$<PLATFORM_ID:Windows>:DxInterop.cpp>
+  $<$<PLATFORM_ID:Windows>:DxSharedTexture.cpp>
 )
 
 if(UNIX)
-
-  target_sources(${LIBRARY} PRIVATE
-    XRandR.cpp
-    Xinerama.cpp
-  )
-
   target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
 
   find_library(LZ4_LIBRARY lz4)
   target_link_libraries(${LIBRARY} PRIVATE lz4)
 elseif(WIN32)
-
-  target_sources(${LIBRARY} PRIVATE
-    GPUAffinity.cpp
-    DisplayConfigWin.cpp
-    DxInterop.cpp
-    DxSharedTexture.cpp
-  )
-
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
 
