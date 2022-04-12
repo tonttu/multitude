@@ -24,6 +24,8 @@ if(ENABLE_RESONANT OR ENABLE_MUSHY)
   add_subdirectory(Nimble)
   add_subdirectory(Radiant)
   add_subdirectory(Valuable)
+
+  include(Radiant/Version.cmake)
 endif()
 
 if(ENABLE_RESONANT)

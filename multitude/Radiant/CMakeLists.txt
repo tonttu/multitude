@@ -70,8 +70,7 @@ target_sources(${LIBRARY} PRIVATE
   TraceCrashHandlerFilter.cpp
 )
 
-target_link_libraries(${LIBRARY} PRIVATE
-    Nimble)
+target_link_libraries(${LIBRARY} PRIVATE Nimble PUBLIC VersionHdr)
 
 target_include_directories(${LIBRARY}
   PUBLIC
