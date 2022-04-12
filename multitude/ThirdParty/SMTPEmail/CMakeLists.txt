@@ -6,9 +6,7 @@ cornerstone_add_library(${LIBRARY} SHARED ${SOURCES})
 
 target_compile_definitions(${LIBRARY} PRIVATE SMTP_BUILD)
 
-if(WIN32)
-  target_compile_options(${LIBRARY} PRIVATE -wd4251)
-endif()
+target_compile_options(${LIBRARY} PRIVATE $<$<PLATFORM_ID:Windows>:-wd4251>)
 
 cmake_path(SET dotdot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/..)
 
