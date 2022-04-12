@@ -86,17 +86,11 @@ target_sources(${LIBRARY} PRIVATE
 
 if(UNIX)
   target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
-
-  find_library(LZ4_LIBRARY lz4)
-  target_link_libraries(${LIBRARY} PRIVATE lz4)
 elseif(WIN32)
   target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
   target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
 
   target_link_libraries(${LIBRARY} PRIVATE Opengl32.lib Dwmapi.lib DXGI.lib D3D11.lib WindowsApp.lib)
-
-  find_package(lz4 CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE lz4::lz4)
 endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
@@ -104,6 +98,7 @@ target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 target_link_libraries(${LIBRARY}
   PRIVATE
     Squish
+    MultiLz4
     NVML
     ADL_SDK
     Qt5::Widgets
