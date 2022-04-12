@@ -2,6 +2,9 @@ set(LIBRARY Radiant)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
+set(SecretLinux $<AND:$<BOOL:${ENABLE_SECRET_STORE}>,$<PLATFORM_ID:Linux>>)
+set(SecretWindows $<AND:$<BOOL:${ENABLE_SECRET_STORE}>,$<PLATFORM_ID:Windows>>)
+
 target_sources(${LIBRARY} PRIVATE
   Mime.cpp
   IniFile.cpp
@@ -72,6 +75,10 @@ target_sources(${LIBRARY} PRIVATE
   $<$<BOOL:${ENABLE_FOLLY}>:ThreadPoolExecutor.cpp>
   $<$<BOOL:${ENABLE_FOLLY}>:BGThreadExecutor.cpp>
   $<$<BOOL:${ENABLE_FOLLY}>:OnDemandExecutor.cpp>
+  # With SecretStore
+  $<$<BOOL:${ENABLE_SECRET_STORE}>:SecretStoreDummy.cpp>
+  $<${SecretLinux}:SecretStoreLinux.cpp>
+  $<${SecretWindows}:SecretStoreWin32.cpp>
   # For Linux
   $<$<PLATFORM_ID:Linux>:ProcessRunnerPosix.cpp>
   $<$<PLATFORM_ID:Linux>:DeviceMonitor.cpp>
@@ -94,6 +101,8 @@ target_link_libraries(${LIBRARY}
     "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
     "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
     "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
+    "$<${SecretLinux}:OurExpected;PkgConfig::LIBSECRET>"
+    $<${SecretWindows}:Crypt32>
   PUBLIC
     VersionHdr
     Patterns
@@ -106,19 +115,6 @@ target_include_directories(${LIBRARY}
     ${Cornerstone_SOURCE_DIR}/multitude
     ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
 )
-
-if(ENABLE_SECRET_STORE)
-  target_sources(${LIBRARY} PRIVATE
-    SecretStoreDummy.cpp
-    $<$<PLATFORM_ID:Linux>:SecretStoreLinux.cpp>
-    $<$<PLATFORM_ID:Windows>:SecretStoreWin32.cpp>
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE
-    "$<$<PLATFORM_ID:Linux>:OurExpected;PkgConfig::LIBSECRET>"
-    $<$<PLATFORM_ID:Windows>:Crypt32>
-  )
-endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE
   RADIANT_EXPORT
