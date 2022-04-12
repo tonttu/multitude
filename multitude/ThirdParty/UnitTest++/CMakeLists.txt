@@ -32,15 +32,16 @@ target_sources(${LIBRARY} PRIVATE
 )
 
 if(WIN32)
-  target_compile_definitions(${LIBRARY} PUBLIC
-      -DUNITTEST_WIN32_DLL -D_CRT_SECURE_NO_WARNINGS
-  )
   target_compile_options(${LIBRARY} PRIVATE -wd4251)
 endif()
 
 target_compile_definitions(${LIBRARY}
-  PRIVATE -DUNITTEST_DLL_EXPORT
-  PUBLIC -DUNITTEST_USE_CUSTOM_STREAMS
+  PRIVATE
+    UNITTEST_DLL_EXPORT
+  PUBLIC
+    UNITTEST_USE_CUSTOM_STREAMS
+    $<$<PLATFORM_ID:Windows>:UNITTEST_WIN32_DLL>
+    $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
 )
 
 target_link_libraries(${LIBRARY} PRIVATE Radiant Qt5::Xml)
