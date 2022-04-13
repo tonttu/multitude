@@ -111,9 +111,7 @@ target_link_libraries(${LIBRARY}
 )
 
 target_include_directories(${LIBRARY}
-  PUBLIC
-    ${Cornerstone_SOURCE_DIR}/multitude
-    ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
+  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
 )
 
 target_compile_definitions(${LIBRARY} PRIVATE
