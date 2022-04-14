@@ -14,45 +14,31 @@ target_sources(${LIBRARY} PRIVATE
   ModulePanner.cpp
   ModuleSamplePlayer.cpp
   SoundRectangle.cpp
+  # For port audio.
+  $<$<BOOL:${ENABLE_PORT_AUDIO}>:PortAudioSource.cpp>
+  $<$<BOOL:${ENABLE_PORT_AUDIO}>:AudioLoopPortAudio.cpp>
+  # For pulse audio.
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:PulseAudioSource.cpp>
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:AudioLoopPulseAudio.cpp>
+  $<$<BOOL:${ENABLE_PULSE_AUDIO}>:PulseAudioContext.cpp>
 )
 
-if(ENABLE_PORT_AUDIO)
-  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PORT_AUDIO)
+target_compile_definitions(${LIBRARY}
+  PRIVATE
+    RESONANT_EXPORT
+    $<$<BOOL:${ENABLE_PORT_AUDIO}>:CORNERSTONE_ENABLE_PORT_AUDIO>
+    $<$<BOOL:${ENABLE_PULSE_AUDIO}>:CORNERSTONE_ENABLE_PULSE>
+)
 
-  target_sources(${LIBRARY} PRIVATE
-    PortAudioSource.cpp
-    AudioLoopPortAudio.cpp
-  )
-
-  if(UNIX)
-    target_link_libraries(${LIBRARY} PRIVATE sndfile)
-  endif()
-
-  target_link_libraries(${LIBRARY} PRIVATE portaudio)
-endif()
-
-if(ENABLE_PULSE_AUDIO)
-  target_compile_definitions(${LIBRARY} PRIVATE CORNERSTONE_ENABLE_PULSE)
-
-  target_sources(${LIBRARY} PRIVATE
-    PulseAudioSource.cpp
-    AudioLoopPulseAudio.cpp
-    PulseAudioContext.cpp
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE pulse)
-endif()
-
-target_compile_definitions(${LIBRARY} PRIVATE -DRESONANT_EXPORT)
-
-if(WIN32)
-  find_package(SndFile CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE SndFile::sndfile)
-
-  find_package(portaudio CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE portaudio)
-endif()
-
-target_link_libraries(${LIBRARY} PUBLIC Radiant Valuable)
+target_link_libraries(${LIBRARY}
+  PRIVATE
+    Qt5::Core
+    "$<$<BOOL:${ENABLE_PORT_AUDIO}>:portaudio;MultiSndFile>"
+    $<$<BOOL:${ENABLE_PULSE_AUDIO}>:pulse>
+  PUBLIC
+    Radiant
+    Valuable
+    Nimble
+)
 
 cornerstone_install_lib(${LIBRARY})

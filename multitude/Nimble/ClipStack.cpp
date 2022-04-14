@@ -10,8 +10,6 @@
 
 #include "ClipStack.hpp"
 
-#include <Radiant/Trace.hpp>
-
 #include <vector>
 
 namespace Nimble

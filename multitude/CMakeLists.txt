@@ -1,4 +1,5 @@
 add_subdirectory(ThirdParty/expected)
+add_subdirectory(Patterns)
 
 if(ENABLE_PUNCTUAL)
   add_subdirectory(Punctual)
@@ -26,6 +27,7 @@ if(ENABLE_RESONANT OR ENABLE_MUSHY)
   add_subdirectory(Valuable)
 
   include(Radiant/Version.cmake)
+  include(Radiant/RadiantHdr.cmake)
 endif()
 
 if(ENABLE_RESONANT)
@@ -34,6 +36,7 @@ endif()
 
 if(ENABLE_VIDEODISPLAY)
   add_subdirectory(VideoDisplay)
+  add_subdirectory(VideoDisplay/rgbeasy-sdk-v7.14.1)
 endif()
 
 if(ENABLE_APPLICATIONS)

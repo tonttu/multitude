@@ -2,6 +2,9 @@ set(LIBRARY Radiant)
 
 cornerstone_add_library(${LIBRARY} SHARED)
 
+set(SecretLinux $<AND:$<BOOL:${ENABLE_SECRET_STORE}>,$<PLATFORM_ID:Linux>>)
+set(SecretWindows $<AND:$<BOOL:${ENABLE_SECRET_STORE}>,$<PLATFORM_ID:Windows>>)
+
 target_sources(${LIBRARY} PRIVATE
   Mime.cpp
   IniFile.cpp
@@ -68,93 +71,55 @@ target_sources(${LIBRARY} PRIVATE
   CacheManager.cpp
   CrashHandlerCommon.cpp
   TraceCrashHandlerFilter.cpp
+  # With Folly
+  $<$<BOOL:${ENABLE_FOLLY}>:ThreadPoolExecutor.cpp>
+  $<$<BOOL:${ENABLE_FOLLY}>:BGThreadExecutor.cpp>
+  $<$<BOOL:${ENABLE_FOLLY}>:OnDemandExecutor.cpp>
+  # With SecretStore
+  $<$<BOOL:${ENABLE_SECRET_STORE}>:SecretStoreDummy.cpp>
+  $<${SecretLinux}:SecretStoreLinux.cpp>
+  $<${SecretWindows}:SecretStoreWin32.cpp>
+  # For Linux
+  $<$<PLATFORM_ID:Linux>:ProcessRunnerPosix.cpp>
+  $<$<PLATFORM_ID:Linux>:DeviceMonitor.cpp>
+  $<$<PLATFORM_ID:Linux>:TraceSyslogFilter.cpp>
+  $<$<PLATFORM_ID:Linux>:SystemCpuTimeLinux.cpp>
+  $<$<PLATFORM_ID:Linux>:CallStackUnix.cpp>
+  $<$<PLATFORM_ID:Linux>:CrashHandlerBreakpad.cpp>
+  # For Windows
+  $<$<PLATFORM_ID:Windows>:CrashHandlerCrashpad.cpp>
+  $<$<PLATFORM_ID:Windows>:DeviceUtilsWin.cpp>
+  $<$<PLATFORM_ID:Windows>:TraceWindowsDebugConsoleFilter.cpp>
+  $<$<PLATFORM_ID:Windows>:SystemCpuTimeWin32.cpp>
 )
 
-target_link_libraries(${LIBRARY} PRIVATE Nimble PUBLIC VersionHdr)
+target_link_libraries(${LIBRARY}
+  PRIVATE
+    Nimble
+    Qt5::Sql
+    "$<$<PLATFORM_ID:Windows>:Qt5::Widgets>"
+    "$<$<PLATFORM_ID:Linux>:PkgConfig::Udev;PkgConfig::BreakPad>"
+    "$<$<PLATFORM_ID:Windows>:Ws2_32.lib;Winmm.lib;ShLwApi.lib;Setupapi.lib>"
+    "$<$<PLATFORM_ID:Windows>:MultiCrashpad>"
+    "$<${SecretLinux}:OurExpected;PkgConfig::LIBSECRET>"
+    $<${SecretWindows}:Crypt32>
+  PUBLIC
+    VersionHdr
+    Patterns
+    Qt5::Gui
+    $<$<BOOL:ENABLE_FOLLY>:MultiFolly>
+)
 
 target_include_directories(${LIBRARY}
-  PUBLIC
-    ${Cornerstone_SOURCE_DIR}/multitude
-    ${Cornerstone_BINARY_DIR}/multitude # Generated version header.
+  PUBLIC ${Cornerstone_SOURCE_DIR}/multitude
 )
 
-if (UNIX)
-  target_sources(${LIBRARY} PRIVATE
-    ProcessRunnerPosix.cpp
-    DeviceMonitor.cpp
-    TraceSyslogFilter.cpp
-    SystemCpuTimeLinux.cpp
-    CallStackUnix.cpp
-    CrashHandlerBreakpad.cpp # CrashHandler
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE
-    PkgConfig::Udev PkgConfig::BreakPad)
-elseif(WIN32)
-  target_sources(${LIBRARY} PRIVATE
-    CrashHandlerCrashpad.cpp
-    DeviceUtilsWin.cpp
-    TraceWindowsDebugConsoleFilter.cpp
-    SystemCpuTimeWin32.cpp
-  )
-
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include)
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/crashpad/include/third_party/mini_chromium/mini_chromium)
-
-  target_compile_definitions(${LIBRARY} PRIVATE
-    -D_CRT_SECURE_NO_WARNINGS
-    -DMULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}
-  )
-
-  # Link against debug variant when doing debug build.
-  set(crashpad "crashpad$<$<CONFIG:debug>:d>.lib")
-
-  target_link_libraries(${LIBRARY} PRIVATE
-    Ws2_32.lib Winmm.lib ShLwApi.lib Setupapi.lib
-    ${MULTITACTION_DEPS_PATH}/manual/crashpad/lib/${crashpad}
-  )
-
-  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Widgets")
-endif()
-
-if (ENABLE_FOLLY)
-  target_sources(${LIBRARY} PRIVATE
-    ThreadPoolExecutor.cpp
-    BGThreadExecutor.cpp
-    OnDemandExecutor.cpp
-  )
-
-  cornerstone_add_folly_libs(${LIBRARY} PUBLIC)
-
-  if(UNIX)
-    target_link_libraries(${LIBRARY} PUBLIC PkgConfig::Glog)
-  elseif(WIN32)
-    find_package(ZLIB REQUIRED)
-
-    #target_include_directories(${LIBRARY} PUBLIC ${VCPKG_ROOT}/include)
-  endif()
-endif()
-
-if(ENABLE_SECRET_STORE)
-  target_sources(${LIBRARY} PRIVATE SecretStoreDummy.cpp)
-
-  if(UNIX)
-    target_sources(${LIBRARY} PRIVATE SecretStoreLinux.cpp)
-
-    target_link_libraries(${LIBRARY} PRIVATE PkgConfig::LIBSECRET OurExpected)
-  elseif(WIN32)
-    target_sources(${LIBRARY} PRIVATE SecretStoreWin32.cpp)
-
-    target_link_libraries(${LIBRARY} PRIVATE Crypt32)
-  endif()
-endif()
-
-if(ENABLE_CI_BUILD)
-  target_compile_definitions(${LIBRARY} PRIVATE ENABLE_CI_BUILD)
-endif()
-
-target_compile_definitions(${LIBRARY} PRIVATE -DRADIANT_EXPORT)
-
-cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Gui;Sql")
+target_compile_definitions(${LIBRARY} PRIVATE
+  RADIANT_EXPORT
+  $<$<BOOL:${ENABLE_CI_BUILD}>:ENABLE_CI_BUILD>
+  $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
+  $<$<PLATFORM_ID:Windows>:
+    MULTITACTION_DEPENDENCY_PATH=${MULTITACTION_DEPS_PATH}>
+)
 
 cornerstone_install_lib(${LIBRARY})

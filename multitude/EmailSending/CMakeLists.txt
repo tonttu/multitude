@@ -16,10 +16,8 @@ target_sources(${LIBRARY} PRIVATE
 target_compile_definitions(${LIBRARY} PRIVATE -DEMAIL_EXPORT)
 
 target_link_libraries(${LIBRARY}
+  PRIVATE Radiant SMTPEmail Qt5::Network
   PUBLIC Valuable
-  PRIVATE Radiant SMTPEmail
 )
-
-cornerstone_add_qt_libs(${LIBRARY} PRIVATE "Network")
 
 cornerstone_install_lib(${LIBRARY})

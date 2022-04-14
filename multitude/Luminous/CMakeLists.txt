@@ -74,46 +74,36 @@ target_sources(${LIBRARY} PRIVATE
   ScreenDetectorAMD.cpp
   ScreenDetectorNV.cpp
   UploadBuffer.cpp
+  # For Linux
+  $<$<PLATFORM_ID:Linux>:XRandR.cpp>
+  $<$<PLATFORM_ID:Linux>:Xinerama.cpp>
+  # For Windows
+  $<$<PLATFORM_ID:Windows>:GPUAffinity.cpp>
+  $<$<PLATFORM_ID:Windows>:DisplayConfigWin.cpp>
+  $<$<PLATFORM_ID:Windows>:DxInterop.cpp>
+  $<$<PLATFORM_ID:Windows>:DxSharedTexture.cpp>
 )
-
-if(UNIX)
-
-  target_sources(${LIBRARY} PRIVATE
-    XRandR.cpp
-    Xinerama.cpp
-  )
-
-  target_link_libraries(${LIBRARY} PRIVATE XNVCtrl Xrandr Xext Xinerama)
-
-  find_library(LZ4_LIBRARY lz4)
-  target_link_libraries(${LIBRARY} PRIVATE lz4)
-
-  cornerstone_add_qt_libs(${LIBRARY} PRIVATE "X11Extras")
-elseif(WIN32)
-
-  target_sources(${LIBRARY} PRIVATE
-    GPUAffinity.cpp
-    DisplayConfigWin.cpp
-    DxInterop.cpp
-    DxSharedTexture.cpp
-  )
-
-  target_include_directories(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/include)
-  target_link_libraries(${LIBRARY} PRIVATE ${MULTITACTION_DEPS_PATH}/manual/nvapi/lib/nvapi64.lib)
-
-  target_link_libraries(${LIBRARY} PRIVATE Opengl32.lib Dwmapi.lib DXGI.lib D3D11.lib WindowsApp.lib)
-
-  find_package(lz4 CONFIG REQUIRED)
-  target_link_libraries(${LIBRARY} PRIVATE lz4::lz4)
-endif()
 
 target_compile_definitions(${LIBRARY} PRIVATE -DLUMINOUS_EXPORT)
 
 target_link_libraries(${LIBRARY}
-  PRIVATE Squish NVML ADL_SDK
-  PUBLIC Valuable Nimble Punctual
+  PRIVATE
+    Squish
+    MultiLz4
+    NVML
+    ADL_SDK
+    Qt5::Widgets
+    Qt5::Svg
+    $<$<PLATFORM_ID:Linux>:Qt5::X11Extras>
+    "$<$<PLATFORM_ID:Linux>:XNVCtrl;Xrandr;Xext;Xinerama>"
+    "$<$<PLATFORM_ID:Windows>:Opengl32;Dwmapi;DXGI;D3D11;WindowsApp>"
+    $<$<PLATFORM_ID:Windows>:MultiNVApi>
+  PUBLIC
+    Valuable
+    Nimble
+    Punctual
+    Patterns
+    Qt5::Core
 )
-
-cornerstone_add_qt_libs(${LIBRARY} PUBLIC "Network;Gui;Svg")
 
 cornerstone_install_lib(${LIBRARY})
