@@ -28,22 +28,35 @@ namespace Radiant
   public:
     SymbolRegistry();
 
+    /// @param name typically a lowercase string
+    /// @param originalName the original string, for debug purposes
+    inline Symbol lookupOrDefine(const QByteArray & name, const QByteArray & originalName);
     inline Symbol lookupOrDefine(const QByteArray & name);
 
-    bool define(const QByteArray & name, Symbol symbol);
+    inline bool define(const QByteArray & name, Symbol symbol);
+    bool define(const QByteArray & name, const QByteArray & originalName, Symbol symbol);
 
     /// @return QByteArray() if not found
     inline QByteArray lookup(Symbol symbol) const;
+
+    /// @return QByteArray() if not found
+    inline QByteArray lookupOriginal(Symbol symbol) const;
 
     /// @return 0 if the symbol wasn't found
     inline Symbol lookup(const QByteArray & name) const;
 
   private:
-    Symbol lookupOrDefineImpl(const QByteArray & name);
+    Symbol lookupOrDefineImpl(const QByteArray & name, const QByteArray & originalName);
 
   private:
+    struct SymbolName
+    {
+      QByteArray name;
+      QByteArray originalName;
+    };
+
     std::map<QByteArray, Symbol> m_nameToSymbol;
-    std::unordered_map<Symbol, QByteArray> m_symbolToName;
+    std::unordered_map<Symbol, SymbolName> m_symbolToName;
     mutable QReadWriteLock m_lock;
   };
 
@@ -53,16 +66,34 @@ namespace Radiant
 
   SymbolRegistry::Symbol SymbolRegistry::lookupOrDefine(const QByteArray & name)
   {
+    return lookupOrDefine(name, name);
+  }
+
+  SymbolRegistry::Symbol SymbolRegistry::lookupOrDefine(
+      const QByteArray & name, const QByteArray & originalName)
+  {
     if (auto symbol = lookup(name))
       return symbol;
-    return lookupOrDefineImpl(name);
+    return lookupOrDefineImpl(name, originalName);
+  }
+
+  bool SymbolRegistry::define(const QByteArray & name, SymbolRegistry::Symbol symbol)
+  {
+    return define(name, name, symbol);
   }
 
   QByteArray SymbolRegistry::lookup(Symbol symbol) const
   {
     QReadLocker locker(&m_lock);
     auto it = m_symbolToName.find(symbol);
-    return it == m_symbolToName.end() ? QByteArray() : it->second;
+    return it == m_symbolToName.end() ? QByteArray() : it->second.name;
+  }
+
+  QByteArray SymbolRegistry::lookupOriginal(Symbol symbol) const
+  {
+    QReadLocker locker(&m_lock);
+    auto it = m_symbolToName.find(symbol);
+    return it == m_symbolToName.end() ? QByteArray() : it->second.originalName;
   }
 
   SymbolRegistry::Symbol SymbolRegistry::lookup(const QByteArray & name) const

@@ -18,36 +18,21 @@ namespace Valuable
   class Symbol
   {
   public:
-#ifdef RADIANT_DEBUG
     inline Symbol(const QString & str)
-      : m_originalString(str.toUtf8())
     {
-      m_id = g_symbolRegistry.lookupOrDefine(m_originalString.toLower());
+      QByteArray id = str.toUtf8();
+      m_id = g_symbolRegistry.lookupOrDefine(id.toLower(), id);
     }
 
     inline Symbol(const QByteArray & str)
-      : m_id(g_symbolRegistry.lookupOrDefine(str.toLower()))
-      , m_originalString(str)
+      : m_id(g_symbolRegistry.lookupOrDefine(str.toLower(), str))
     {}
 
     inline Symbol(const char * str)
-      : m_originalString(str)
     {
-      m_id = g_symbolRegistry.lookupOrDefine(m_originalString.toLower());
+      QByteArray id{str};
+      m_id = g_symbolRegistry.lookupOrDefine(id.toLower(), id);
     }
-#else
-    inline Symbol(const QString & str)
-      : m_id(g_symbolRegistry.lookupOrDefine(str.toUtf8().toLower()))
-    {}
-
-    inline Symbol(const QByteArray & str)
-      : m_id(g_symbolRegistry.lookupOrDefine(str.toLower()))
-    {}
-
-    inline Symbol(const char * str)
-      : m_id(g_symbolRegistry.lookupOrDefine(QByteArray(str).toLower()))
-    {}
-#endif
 
     inline Symbol(uint32_t id = Radiant::SymbolRegistry::EmptySymbol)
       : m_id(id)
@@ -61,15 +46,10 @@ namespace Valuable
       return g_symbolRegistry.lookup(m_id);
     }
 
-    /// Returns the original string (not converted to lowercase) in debug mode,
-    /// in release mode this is the same as str().
+    /// Returns the original string (not converted to lowercase).
     inline QByteArray debugStr() const
     {
-#ifdef RADIANT_DEBUG
-      if (!m_originalString.isEmpty())
-        return m_originalString;
-#endif
-      return str();
+      return g_symbolRegistry.lookupOriginal(m_id);
     }
 
     inline bool operator==(Symbol o) const { return m_id == o.m_id; }
@@ -86,11 +66,6 @@ namespace Valuable
 
   private:
     uint32_t m_id = Radiant::SymbolRegistry::EmptySymbol;
-#ifdef RADIANT_DEBUG
-    QByteArray m_originalString;
-#endif
   };
-#ifndef RADIANT_DEBUG
   static_assert(sizeof(Symbol) == sizeof(uint32_t), "Symbol size check");
-#endif
 }
