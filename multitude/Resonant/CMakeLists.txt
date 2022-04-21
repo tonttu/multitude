@@ -33,7 +33,8 @@ target_compile_definitions(${LIBRARY}
 target_link_libraries(${LIBRARY}
   PRIVATE
     Qt5::Core
-    "$<$<BOOL:${ENABLE_PORT_AUDIO}>:portaudio;MultiSndFile>"
+    MultiSndFile
+    $<$<BOOL:${ENABLE_PORT_AUDIO}>:portaudio>
     $<$<BOOL:${ENABLE_PULSE_AUDIO}>:pulse>
   PUBLIC
     Radiant
