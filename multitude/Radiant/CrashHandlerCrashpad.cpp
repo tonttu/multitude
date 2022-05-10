@@ -289,8 +289,10 @@ namespace Radiant
       bool restartable = true;
       bool asynchronous_start = false;
 
-      if (!s_client->StartHandler(handlerPath, dbPath, metricsPath, url.toStdString(),
-                                  annotations, arguments, restartable, asynchronous_start))
+      bool ok = false;
+      ok = s_client->StartHandler(handlerPath, dbPath, metricsPath, url.toStdString(),
+                                  annotations, arguments, restartable, asynchronous_start);
+      if (!ok)
         Radiant::error("Failed to initialize Crashpad handler. Crash reporting is disabled");
 
       crashpad::CrashpadInfo * info = crashpad::CrashpadInfo::GetCrashpadInfo();
@@ -342,6 +344,15 @@ namespace Radiant
         }
       } else {
         printError("Crashpad # Failed to get pending crash reports", status);
+      }
+
+      if (ok) {
+        crashpad::UUID clientId;
+        clientId.InitializeToZero();
+        settings->GetClientID(&clientId);
+        Radiant::info("Crashpad # Initialized, db: %s, client id: %s",
+                      QString::fromStdWString(dbPath.value()).toLocal8Bit().data(),
+                      clientId.ToString().c_str());
       }
     }
 
