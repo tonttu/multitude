@@ -1,4 +1,19 @@
-Compilation
+# Multitude library collection
+
+Multitude is a collection of C++ libraries. It contains components for a 2D
+OpenGL rendering engine, event and attribute system, PDF processing library,
+video decoding system using Ffmpeg, audio processing library, asynchronous
+programming tools and various platform-specific utilities.
+
+Multitude is part of MultiTaction Cornerstone SDK, a framework for building
+interactive applications for large touch walls. While Cornerstone is a
+proprietary framework, Multitude is released under LGPLv3 license.
+
+Large part of the code is there for legacy reasons and most of the code it
+not super useful without Cornerstone, but it's all here mainly for archival
+purposes.
+
+# Compilation
 
 Multitude is intended to be used as a part of a third-party software, so that the third-party
 software defines the critical qmake compilation parameters. To do this, you need to pass argument
