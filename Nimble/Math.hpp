@@ -21,8 +21,6 @@
 # include <float.h>
 #endif
 
-#include <QtGlobal>
-
 #include <cstdint>
 #include <limits>
 #include <cstdlib>
