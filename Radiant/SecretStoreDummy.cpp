@@ -1,3 +1,13 @@
+/* Copyright (C) 2007-2022: Multi Touch Oy, Helsinki University of Technology
+ * and others.
+ *
+ * This file is licensed under GNU Lesser General Public License (LGPL),
+ * version 2.1. The LGPL conditions can be found in file "LGPL.txt" that is
+ * distributed with this source package or obtained from the GNU organization
+ * (www.gnu.org).
+ *
+ */
+
 /// This file contains a dummy implementation of SecretStore. It relies purely
 /// on file system security to protect the data, although there is an additional
 /// obfuscation layer to avoid storing anything in plain-text.
